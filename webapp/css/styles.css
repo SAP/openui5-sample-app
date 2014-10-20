@@ -1,0 +1,9 @@
+.todoInput {
+	padding-left: 0.25rem;
+
+}
+
+.todoInput,
+.todoListInput {
+	padding-right: 0.25rem;
+}

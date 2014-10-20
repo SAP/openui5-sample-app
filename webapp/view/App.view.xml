@@ -1,0 +1,29 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="todo.view.App" resourceBundleName="todo.i18n.messageBundle" resourceBundleAlias="i18n" displayBlock="true">
+	<Shell>
+		<App>
+			<Page title="{i18n>TITLE}" backgroundDesign="Solid">
+				<content>
+					<Input class="todoInput" value="{/newTodo}" placeholder="{i18n>INPUT_PLACEHOLDER}" change="addTodo" />
+					<List id="todo-list" items="{/todos}" select="toggleCompleted"
+						mode="MultiSelect"
+						growing="true"
+						growingScrollToLoad="true"
+						showNoData="false"
+						showSeparators="None"
+						rememberSelections="false">
+						<CustomListItem selected="{completed}">
+							<Input class="todoListInput" value="{title}" />
+						</CustomListItem>
+					</List>
+				</content>
+				<footer>
+					<Bar>
+						<contentMiddle>
+							<Button visible="{/someCompleted}" icon="sap-icon://delete" text="Clear completed ({/completedCount})" press="clearCompleted" />
+						</contentMiddle>
+					</Bar>
+				</footer>
+			</Page>
+		</App>
+	</Shell>
+</mvc:View>
