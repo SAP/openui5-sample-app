@@ -12,7 +12,8 @@ module.exports = function(grunt) {
 		connect: {
 			options: {
 				port: 8080,
-				hostname: 'localhost'
+				hostname: 'localhost',
+				livereload: 35729
 			},
 			src: {},
 			dist: {}
@@ -83,13 +84,17 @@ module.exports = function(grunt) {
 		},
 
 		watch: {
-			//gruntfile: {
-			//	files: "<%%= jshint.gruntfile.src %>",
-			//	tasks: ["jshint:gruntfile"]
-			//},
 			webapp: {
-				files: '<%= dir.webapp %>',
+				files: '<%= dir.webapp %>/**',
 				tasks: ["eslint"]
+			},
+			livereload: {
+				options: {
+					livereload: '<%= connect.options.livereload %>'
+				},
+				files: [
+					'<%= dir.webapp %>/**'
+				]
 			}
 		}
 
@@ -107,7 +112,7 @@ module.exports = function(grunt) {
 	// Server task
 	grunt.registerTask('serve', function(target) {
 		//grunt.task.run('openui5_connect:' + (target || 'src') + ':keepalive');
-		grunt.task.run('openui5_connect:' + (target || 'src'));
+		grunt.task.run('openui5_connect:' + target || 'src:livereload');
 	});
 
 	// Linting task
