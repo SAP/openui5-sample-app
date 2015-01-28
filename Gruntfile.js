@@ -112,7 +112,7 @@ module.exports = function(grunt) {
 	// Server task
 	grunt.registerTask('serve', function(target) {
 		//grunt.task.run('openui5_connect:' + (target || 'src') + ':keepalive');
-		grunt.task.run('openui5_connect:' + target || 'src:livereload');
+		grunt.task.run('openui5_connect:' + (target || 'src:livereload'));
 	});
 
 	// Linting task
