@@ -121,6 +121,7 @@ module.exports = function(grunt) {
 	// Build task
 	grunt.registerTask("build", ["openui5_preload", "copy"]);
 
+	// Develop task (live-reloading)
 	grunt.registerTask("develop", [
 		"serve",
 		"open",
