@@ -12,7 +12,7 @@ module.exports = function(grunt) {
 		connect: {
 			options: {
 				port: 8080,
-				hostname: '*'
+				hostname: 'localhost'
 			},
 			src: {},
 			dist: {}
@@ -71,6 +71,26 @@ module.exports = function(grunt) {
 
 		eslint: {
 			webapp: ['<%= dir.webapp %>']
+		},
+
+		open: {
+			root: {
+				path: "http://<%= connect.options.hostname %>:<%= connect.options.port %>",
+				options: {
+					delay: 500
+				}
+			}
+		},
+
+		watch: {
+			//gruntfile: {
+			//	files: "<%%= jshint.gruntfile.src %>",
+			//	tasks: ["jshint:gruntfile"]
+			//},
+			webapp: {
+				files: '<%= dir.webapp %>',
+				tasks: ["eslint"]
+			}
 		}
 
 	});
@@ -81,10 +101,13 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-openui5');
 	grunt.loadNpmTasks('grunt-eslint');
+	grunt.loadNpmTasks('grunt-open');
+	grunt.loadNpmTasks("grunt-contrib-watch");
 
 	// Server task
 	grunt.registerTask('serve', function(target) {
-		grunt.task.run('openui5_connect:' + (target || 'src') + ':keepalive');
+		//grunt.task.run('openui5_connect:' + (target || 'src') + ':keepalive');
+		grunt.task.run('openui5_connect:' + (target || 'src'));
 	});
 
 	// Linting task
@@ -98,6 +121,8 @@ module.exports = function(grunt) {
 		'lint',
 		'clean',
 		'build',
-		'serve:dist'
+		'serve:dist',
+		'open',
+		'watch'
 	]);
 };
