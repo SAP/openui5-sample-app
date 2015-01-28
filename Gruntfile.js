@@ -116,6 +116,12 @@ module.exports = function(grunt) {
 	// Build task
 	grunt.registerTask('build', ['openui5_preload', 'copy']);
 
+	grunt.registerTask('develop', [
+		'serve',
+		'open',
+		'watch'
+	]);
+
 	// Default task
 	grunt.registerTask('default', [
 		'lint',
