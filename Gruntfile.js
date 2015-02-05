@@ -12,7 +12,10 @@ module.exports = function(grunt) {
 		connect: {
 			options: {
 				port: 8080,
-				hostname: "localhost",
+				// Listen on all network interfaces instead of just the local
+				// loopback, so that this works within Docker containers.
+				// Was: hostname: "localhost",
+				hostname: "0.0.0.0",
 				livereload: 35729
 			},
 			src: {},
@@ -76,7 +79,7 @@ module.exports = function(grunt) {
 
 		open: {
 			root: {
-				path: "http://<%= connect.options.hostname %>:<%= connect.options.port %>",
+				path: "http://localhost:<%= connect.options.port %>",
 				options: {
 					delay: 500
 				}
@@ -125,6 +128,13 @@ module.exports = function(grunt) {
 	grunt.registerTask("develop", [
 		"serve",
 		"open",
+		"watch"
+	]);
+
+	// Develop task (live-reloading) when running in a docker container - open
+	// won't work as there is no screen.
+	grunt.registerTask("docker_develop", [
+		"serve",
 		"watch"
 	]);
 
