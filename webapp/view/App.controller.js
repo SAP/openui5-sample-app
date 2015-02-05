@@ -1,18 +1,18 @@
 (function() {
-	'use strict';
+	"use strict";
 
-	sap.ui.controller('todo.view.App', {
+	sap.ui.controller("todo.view.App", {
 
 		onInit: function() {
 			this.oModel = new sap.ui.model.json.JSONModel({
-				newTodo: '',
+				newTodo: "",
 				todos: [
 					{
-						title: 'Start this app',
+						title: "Start this app",
 						completed: true
 					},
 					{
-						title: 'Learn OpenUI5',
+						title: "Learn OpenUI5",
 						completed: false
 					}
 				],
@@ -23,18 +23,18 @@
 		},
 
 		addTodo: function() {
-			var aTodos = this.oModel.getObject('/todos');
+			var aTodos = this.oModel.getObject("/todos");
 			aTodos.unshift({
-				title: this.oModel.getProperty('/newTodo'),
+				title: this.oModel.getProperty("/newTodo"),
 				completed: false
 			});
-			this.oModel.setProperty('/newTodo', '');
+			this.oModel.setProperty("/newTodo", "");
 			this.oModel.refresh();
 		},
 
 		toggleCompleted: function(oEvent) {
 			var iCompletedCount = 0;
-			var aTodos = this.oModel.getObject('/todos');
+			var aTodos = this.oModel.getObject("/todos");
 			var i = aTodos.length;
 			while (i--) {
 				var oTodo = aTodos[i];
@@ -47,7 +47,7 @@
 		},
 
 		clearCompleted: function(oEvent) {
-			var aTodos = this.oModel.getObject('/todos');
+			var aTodos = this.oModel.getObject("/todos");
 			var i = aTodos.length;
 			while (i--) {
 				var oTodo = aTodos[i];
@@ -60,8 +60,8 @@
 		},
 
 		setCompletedCount: function(iCount) {
-			this.oModel.setProperty('/completedCount', iCount);
-			this.oModel.setProperty('/someCompleted', iCount > 0);
+			this.oModel.setProperty("/completedCount", iCount);
+			this.oModel.setProperty("/someCompleted", iCount > 0);
 			this.oModel.refresh();
 		}
 

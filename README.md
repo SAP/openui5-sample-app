@@ -2,7 +2,14 @@
 
 # openui5-sample-app
 
-> [OpenUI5](https://github.com/SAP/openui5) sample app using Grunt & Bower
+> [OpenUI5](https://github.com/SAP/openui5) sample app using Grunt & Bower.
+
+Added grunt tasks for Watch, Livereload and Open.
+
+```grunt``` will lint then build the application into the dist folder; launch a connect web server and open the default browser. The application in dist can be copied to an ABAP server.
+Building includes creating a component preload file and minification.
+
+```grunt develop``` will run the connect webserver and open the default browser. Web application files are watched with changes causing an automatic browser reload.
 
 ## Getting started
 
