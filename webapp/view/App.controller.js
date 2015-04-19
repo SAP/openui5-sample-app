@@ -29,7 +29,6 @@
 				completed: false
 			});
 			this.oModel.setProperty('/newTodo', '');
-			this.oModel.refresh();
 		},
 
 		toggleCompleted: function(oEvent) {
@@ -43,7 +42,6 @@
 				}
 			}
 			this.setCompletedCount(iCompletedCount);
-			this.oModel.refresh();
 		},
 
 		clearCompleted: function(oEvent) {
@@ -56,13 +54,11 @@
 				}
 			}
 			this.setCompletedCount(0);
-			this.oModel.refresh();
 		},
 
 		setCompletedCount: function(iCount) {
 			this.oModel.setProperty('/completedCount', iCount);
 			this.oModel.setProperty('/someCompleted', iCount > 0);
-			this.oModel.refresh();
 		}
 
 	});
