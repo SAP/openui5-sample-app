@@ -1,3 +1,10 @@
+# Background
+This repo is a very basic OpenUI5 app with grunt as a build tool.
+It uses some leading edge bootstrap tags which need to be tested in your OpenUI5 version.
+This app provide a single fullscreen view - todo list and can be used for any fullscreen stype app.
+For a master-detail app use the md-template repo instead which also includes unit and OPA tests. 
+
+
 ![openui5](http://openui5.org/images/OpenUI5_new_big_side.png)
 
 # openui5-sample-app
