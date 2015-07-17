@@ -114,22 +114,20 @@ module.exports = function(grunt) {
 
 	// Server task
 	grunt.registerTask("serve", function(target) {
-		//grunt.task.run('openui5_connect:' + (target || 'src') + ':keepalive');
-		grunt.task.run("openui5_connect:" + (target || "src:livereload"));
+		grunt.task.run('openui5_connect:' + (target || 'src') + ':keepalive');
 	});
 
+	// Server task - with live reloading
+	grunt.registerTask('serveLive', function(target) {
+		grunt.task.run("openui5_connect:" + (target || "src:livereload"));
+		grunt.task.run("watch");
+	});
+	
 	// Linting task
 	grunt.registerTask("lint", ["eslint"]);
 
 	// Build task
 	grunt.registerTask("build", ["openui5_preload", "copy"]);
-
-	// Develop task (live-reloading)
-	grunt.registerTask("develop", [
-		"serve",
-		"open",
-		"watch"
-	]);
 
 	// Develop task (live-reloading) when running in a docker container - open
 	// won't work as there is no screen.
@@ -141,10 +139,5 @@ module.exports = function(grunt) {
 	// Default task
 	grunt.registerTask("default", [
 		"lint",
-		"clean",
-		"build",
-		"serve:dist",
-		"open",
-		"watch"
 	]);
 };
