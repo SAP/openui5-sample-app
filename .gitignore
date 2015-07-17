@@ -1,4 +1,28 @@
-node_modules
-bower_components
-dist
+# Ignore Mac folder settings
 .DS_Store
+
+# Ignore .gitignore and target folders
+src/*/.gitignore
+src/*/target/
+/target
+dist
+
+# Ignore Eclipse project and settings files
+.classpath
+.settings
+.project
+.externalToolBuilders
+
+# Ignore IntelliJ project and settings files
+.idea
+*.iml
+
+# Ignore temp folders
+grunt/bin
+
+# Ignore npm files/folders
+node_modules
+npm-debug.log
+
+# Ignore bower folder
+bower_components
