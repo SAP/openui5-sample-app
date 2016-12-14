@@ -14,7 +14,7 @@
 git clone https://github.com/SAP/openui5-sample-app.git
 cd openui5-sample-app
 ```
-* Install all npm dependencies
+* Install all npm dependencies (also installs all bower dependencies)
 ```sh
 npm install
 ```
