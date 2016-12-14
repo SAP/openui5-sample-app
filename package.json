@@ -4,6 +4,7 @@
   "description": "Sample of an OpenUI5 app",
   "private": true,
   "scripts": {
+    "test": "echo \"Error: no test specified. Please add some.\" && exit 1",
     "postinstall": "bower install",
     "start": "grunt"
   },
