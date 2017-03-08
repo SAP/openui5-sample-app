@@ -1,0 +1,32 @@
+{
+	"sap.app": {
+		"id": "todo",
+		"type": "application"
+	},
+	"sap.ui5": {
+		"rootView": {
+			"viewName": "todo.view.App",
+			"type": "XML",
+			"id": "app"
+		},
+		"models": {
+			"i18n": {
+				"type": "sap.ui.model.resource.ResourceModel",
+				"settings": {
+					"bundleName": "todo.i18n.messageBundle"
+				}
+			},
+			"": {
+				"type": "sap.ui.model.json.JSONModel",
+				"settings": "/model/todoitems.json"
+			}
+		},
+		"resources": {
+			"css": [
+				{
+					"uri": "css/styles.css"
+				}
+			]
+		}
+	}
+}
