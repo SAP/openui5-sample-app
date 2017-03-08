@@ -29,40 +29,25 @@
 				completed: false
 			});
 			this.oModel.setProperty('/newTodo', '');
-			this.oModel.refresh();
 		},
 
 		toggleCompleted: function(oEvent) {
-			var iCompletedCount = 0;
-			var aTodos = this.oModel.getObject('/todos');
-			var i = aTodos.length;
-			while (i--) {
-				var oTodo = aTodos[i];
-				if (oTodo.completed) {
-					iCompletedCount++;
-				}
-			}
-			this.setCompletedCount(iCompletedCount);
-			this.oModel.refresh();
+			this.setCompletedCount(this.oModel.getObject('/todos').filter(function(mTodo) {
+				return mTodo.completed;
+			}).length);
 		},
 
 		clearCompleted: function(oEvent) {
-			var aTodos = this.oModel.getObject('/todos');
-			var i = aTodos.length;
-			while (i--) {
-				var oTodo = aTodos[i];
-				if (oTodo.completed) {
-					aTodos.splice(i, 1);
-				}
-			}
+			var aTodos = this.oModel.getProperty('/todos');
+			this.oModel.setProperty('/todos', aTodos.filter(function(mTodo) {
+				return !mTodo.completed;
+			}));
 			this.setCompletedCount(0);
-			this.oModel.refresh();
 		},
 
 		setCompletedCount: function(iCount) {
 			this.oModel.setProperty('/completedCount', iCount);
 			this.oModel.setProperty('/someCompleted', iCount > 0);
-			this.oModel.refresh();
 		}
 
 	});
