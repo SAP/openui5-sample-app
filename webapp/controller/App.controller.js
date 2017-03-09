@@ -66,7 +66,7 @@ sap.ui.define([
 			}
 
 			// update list binding
-			var oList = this.getView().byId("todoList");
+			var oList = this.byId("todoList");
 			var oBinding = oList.getBinding("items");
 			oBinding.filter(aFilters, "todos");
 		}
