@@ -22,8 +22,8 @@ sap.ui.define([
 		},
 
 		/**
-		 * marks an item in the to-do-list as completed
-		 * @param oEvt
+		 * Marks an item in the to-do-list as completed.
+		 * @param {Object} oEvt - List item selected event.
 		 */
 		toggleCompleted: function (oEvt) {
 			this._setCompletedCount(oEvt.getSource().getSelectedItems().length);
@@ -31,7 +31,7 @@ sap.ui.define([
 
 		/**
 		 * Removes all completed items from the to-do list
-		 * @param oEvt
+		 * @param {Object} oEvt - Button pressed event.
 		 */
 		clearCompleted: function (oEvt) {
 			var aTodos = this.getView().getModel().getObject('/todos');
@@ -52,8 +52,8 @@ sap.ui.define([
 		},
 
 		/**
-		 * searches within
-		 * @param oEvt
+		 * Trigger search for specific items.
+		 * @param {Object} oEvt - Input changed event.
 		 */
 		onSearch: function (oEvt) {
 
