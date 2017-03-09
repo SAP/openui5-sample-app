@@ -2,13 +2,13 @@ sap.ui.define([
 	"sap/ui/thirdparty/qunit",
 	"sap/ui/qunit/qunit-css",
 	"sap/ui/qunit/qunit-junit",
-	"sap/ui/core/mvc/View",
+	"sap/ui/base/ManagedObject",
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/todo/controller/App.controller",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/thirdparty/sinon",
 	"sap/ui/thirdparty/sinon-qunit"
-], function(qunit, qunitCss, qunitjunit, View, Controller, AppController, JSONModel/*, sinon, sinonQunit*/) {
+], function(qunit, qunitCss, qunitjunit, ManagedObject, Controller, AppController, JSONModel/*, sinon, sinonQunit*/) {
 	"use strict";
 
 	QUnit.module("Test model modification", {
@@ -16,13 +16,12 @@ sap.ui.define([
 		beforeEach : function () {
 
 			this.oAppController = new AppController();
-			this.oViewStub = new View({});
+			this.oViewStub = new ManagedObject({});
 			sinon.stub(Controller.prototype, "getView").returns(this.oViewStub);
 
-			this.oModelData = {
+			this.oODataModelStub = new JSONModel({
 				todos: []
-			};
-			this.oODataModelStub = new JSONModel(this.oModelData);
+			});
 			this.oViewStub.setModel(this.oODataModelStub);
 		},
 
@@ -60,10 +59,10 @@ sap.ui.define([
 
 		// stub the event
 		var oEvt = {
-			getSource: function(){}
+			getSource: jQuery.noop
 		};
 		var oMockupSource = {
-			getSelectedItems: function () {}
+			getSelectedItems: jQuery.noop
 		};
 		var aSelectedItems = new Array(3);
 		sinon.stub(oEvt, "getSource").returns(oMockupSource);

@@ -1,12 +1,10 @@
 sap.ui.require([
-	"sap/ui/thirdparty/qunit",
-	"sap/ui/qunit/qunit-css",
 	"sap/ui/qunit/qunit-junit",
 	"sap/ui/test/Opa5",
 	"sap/ui/test/opaQUnit",
 	"sap/ui/todo/test/integration/TodoList"
 
-], function (qunit, qunitCss, qunitjunit, Opa5, opaTest, TodoList) {
+], function (qunitjunit, Opa5, opaTest, TodoList) {
 	"use strict";
 
 	QUnit.module("Actions");
