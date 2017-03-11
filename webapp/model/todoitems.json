@@ -9,6 +9,7 @@
 			"completed": false
 		}
 	],
+	"itemsRemovable": true,
 	"someCompleted": true,
 	"completedCount": 1
 }

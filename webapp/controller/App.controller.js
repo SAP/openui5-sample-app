@@ -9,12 +9,12 @@ sap.ui.define([
 	return Controller.extend('todo.controller.App', {
 
 		/**
-		 * adds a new to-do item using property <code>newTodo</code>
+		 * adds a new to-do item to the list.
 		 */
-		addTodo: function () {
+		addTodo: function() {
 			var oModel = this.getView().getModel();
 			var aTodos = oModel.getObject('/todos');
-			aTodos.unshift({
+			aTodos.push({
 				title: oModel.getProperty('/newTodo'),
 				completed: false
 			});
@@ -25,15 +25,17 @@ sap.ui.define([
 		 * Marks an item in the to-do-list as completed.
 		 * @param {Object} oEvt - List item selected event.
 		 */
-		toggleCompleted: function (oEvt) {
-			this._setCompletedCount(oEvt.getSource().getSelectedItems().length);
+		toggleCompleted: function(oEvt) {
+			var iCount = this.getView().getModel().getProperty('/completedCount');
+			var iModification = oEvt.getParameters().selected ? 1 : -1;
+			this._updateCompletedCount(iCount + iModification);
 		},
 
 		/**
 		 * Removes all completed items from the to-do list
 		 * @param {Object} oEvt - Button pressed event.
 		 */
-		clearCompleted: function (oEvt) {
+		clearCompleted: function(oEvt) {
 			var aTodos = this.getView().getModel().getObject('/todos');
 			var i = aTodos.length;
 			while (i--) {
@@ -42,10 +44,10 @@ sap.ui.define([
 					aTodos.splice(i, 1);
 				}
 			}
-			this._setCompletedCount(0);
+			this._updateCompletedCount(0);
 		},
 
-		_setCompletedCount: function (iCount) {
+		_updateCompletedCount: function(iCount) {
 			var oModel = this.getView().getModel();
 			oModel.setProperty('/completedCount', iCount);
 			oModel.setProperty('/someCompleted', iCount > 0);
@@ -55,14 +57,18 @@ sap.ui.define([
 		 * Trigger search for specific items.
 		 * @param {Object} oEvt - Input changed event.
 		 */
-		onSearch: function (oEvt) {
+		onSearch: function(oEvt) {
+			var oModel = this.getView().getModel();
 
 			// add filter for search
 			var aFilters = [];
 			var sQuery = oEvt.getSource().getValue();
 			if (sQuery && sQuery.length > 0) {
+				oModel.setProperty('/itemsRemovable', false);
 				var filter = new Filter("title", FilterOperator.Contains, sQuery);
 				aFilters.push(filter);
+			} else {
+				oModel.setProperty('/itemsRemovable', true);
 			}
 
 			// update list binding

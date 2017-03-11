@@ -33,7 +33,7 @@
 				<footer>
 					<Bar>
 						<contentMiddle>
-							<Button id="idClearCompleted" visible="{/someCompleted}" icon="sap-icon://delete" text="Clear completed ({/completedCount})" press="clearCompleted" />
+							<Button id="idClearCompleted" visible="{/itemsRemovable}" icon="sap-icon://delete" text="Clear completed ({/completedCount})" press="clearCompleted" />
 						</contentMiddle>
 					</Bar>
 				</footer>

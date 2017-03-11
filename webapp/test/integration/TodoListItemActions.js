@@ -46,10 +46,10 @@ sap.ui.require([
 
 		//Actions
 		When.onTheTodoListPage.iEnterTextForNewItemAndPressEnter()
-			.and.iSelectTheFirstItem();
+			.and.iSelectTheLastItem();
 
 		// Assertions
-		Then.onTheTodoListPage.iShouldSeeTheFirstItemBeingCompleted().
+		Then.onTheTodoListPage.iShouldSeeTheLastItemBeingCompleted().
 			and.iTeardownMyAppFrame();
 	});
 
@@ -63,11 +63,11 @@ sap.ui.require([
 			.and.iSelectAllItems()
 			.and.iClearTheCompletedItems()
 			.and.iEnterTextForNewItemAndPressEnter()
-			.and.iSelectTheFirstItem()
-			.and.iSelectTheFirstItem(false);
+			.and.iSelectTheLastItem()
+			.and.iSelectTheLastItem(false);
 
 		// Assertions
-		Then.onTheTodoListPage.iShouldSeeTheFirstItemBeingCompleted(false).
+		Then.onTheTodoListPage.iShouldSeeTheLastItemBeingCompleted(false).
 			and.iTeardownMyAppFrame();
 	});
 
@@ -81,13 +81,13 @@ sap.ui.require([
 			.and.iSelectAllItems()
 			.and.iClearTheCompletedItems()
 			.and.iEnterTextForNewItemAndPressEnter("first")
-			.and.iSelectTheFirstItem()
+			.and.iSelectTheLastItem()
 			.and.iEnterTextForNewItemAndPressEnter("second")
 			.and.iEnterTextForNewItemAndPressEnter("third")
-			.and.iSelectTheFirstItem();
+			.and.iSelectTheLastItem();
 
 		// Assertions
 		Then.onTheTodoListPage.iShouldSeeSelectedCount(2).
-			and.iTeardownMyAppFrame();
+		and.iTeardownMyAppFrame();
 	});
 });

@@ -13,7 +13,7 @@ sap.ui.define([
 
 	QUnit.module("Test model modification", {
 
-		beforeEach : function () {
+		beforeEach: function() {
 
 			this.oAppController = new AppController();
 			this.oViewStub = new ManagedObject({});
@@ -25,14 +25,14 @@ sap.ui.define([
 			this.oViewStub.setModel(this.oODataModelStub);
 		},
 
-		afterEach : function () {
+		afterEach: function() {
 			Controller.prototype.getView.restore();
 
 			this.oViewStub.destroy();
 		}
 	});
 
-	QUnit.test("Should add a todo element to the model", function (assert) {
+	QUnit.test("Should add a todo element to the model", function(assert) {
 		// Arrange
 		// initial assumption: to-do list is empty
 		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 0, "There must be no todos defined.");
@@ -42,50 +42,48 @@ sap.ui.define([
 		this.oAppController.addTodo();
 
 		// Assumption
-		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 1, "There is one new element.");
+		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 1, "There is one new item.");
 	});
 
-	QUnit.test("Should toggle the completed items in the model", function (assert) {
+	QUnit.test("Should toggle the completed items in the model", function(assert) {
 		// Arrange
 		var oModelData = {
 			todos: [{
 				"title": "Start this app",
-				"completed": false
+				"completed": true
 			}],
-			completedCount: 0
+			completedCount: 1
 		};
 		this.oODataModelStub.setData(oModelData);
 
 
 		// stub the event
 		var oEvt = {
-			getSource: jQuery.noop
+			getParameters: function() {
+				return {
+					selected: true
+				};
+			}
 		};
-		var oMockupSource = {
-			getSelectedItems: jQuery.noop
-		};
-		var aSelectedItems = new Array(3);
-		sinon.stub(oEvt, "getSource").returns(oMockupSource);
-		sinon.stub(oMockupSource, "getSelectedItems").returns(aSelectedItems);
 
 		// initial assumption
-		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 1, "There is one new element.");
-		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 0, "There must be no todos defined.");
+		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 1, "There is one item.");
+		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 1, "There no completed item.");
 
 		// Act
 		this.oAppController.toggleCompleted(oEvt);
 
 		// Assumption
-		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 3, "There must be 2 todos completed.");
+		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 2, "There two completed items.");
 	});
 
-	QUnit.test("Should clear the completed items", function (assert) {
+	QUnit.test("Should clear the completed items", function(assert) {
 		// Arrange
 		var oModelData = {
 			todos: [{
 				"title": "Start this app1",
 				"completed": false
-			},{
+			}, {
 				"title": "Start this app2",
 				"completed": true
 			}],
@@ -95,15 +93,15 @@ sap.ui.define([
 
 
 		// initial assumption
-		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 2, "There is one new element.");
-		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 1, "There must be no todos defined.");
+		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 2, "There are two items.");
+		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 1, "There one completed item.");
 
 		// Act
 		this.oAppController.clearCompleted();
 
 		// Assumption
-		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 1, "There is one new element.");
-		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 0, "There must be 2 todos completed.");
+		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 1, "There is one item left.");
+		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 0, "There no completed item.");
 	});
 
 });
