@@ -9,7 +9,7 @@ sap.ui.define([
 	return Controller.extend('todo.controller.App', {
 
 		/**
-		 * adds a new to-do item to the list.
+		 * Adds a new to-do item to the list.
 		 */
 		addTodo: function() {
 			var oModel = this.getView().getModel();
@@ -51,6 +51,7 @@ sap.ui.define([
 			var oModel = this.getView().getModel();
 			oModel.setProperty('/completedCount', iCount);
 			oModel.setProperty('/someCompleted', iCount > 0);
+			oModel.setProperty('/itemsRemovable', iCount > 0);
 		},
 
 		/**
