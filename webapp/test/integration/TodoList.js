@@ -137,18 +137,18 @@ sap.ui.require([
 							errorMessage: "List does not have expected entry '" + sLastItemText + "'."
 						});
 					},
-					iShouldSeeSelectedCount: function(numberCompleted) {
-						numberCompleted = numberCompleted || 0;
+					iShouldSeeSelectedCount: function(iNumberCompleted) {
+						iNumberCompleted = iNumberCompleted || 0;
 						return this.waitFor({
 							id: sSelectedLabelId,
 							viewName: sViewName,
 							matchers: [new PropertyStrictEquals({
 								name: "text",
-								value: numberCompleted + " completed"
+								value: iNumberCompleted + " completed"
 							})
 							],
 							success: function() {
-								Opa5.assert.ok(true, "" + numberCompleted + " items are selected");
+								Opa5.assert.ok(true, "" + iNumberCompleted + " items are selected");
 							},
 							errorMessage: "Items are not selected."
 						});

@@ -9,7 +9,7 @@ sap.ui.define([
 	return Controller.extend('todo.controller.App', {
 
 		/**
-		 * Adds a new to-do item to the list.
+		 * Adds a new to-do item to the bottom of the list.
 		 */
 		addTodo: function() {
 			var oModel = this.getView().getModel();
@@ -32,7 +32,7 @@ sap.ui.define([
 		},
 
 		/**
-		 * Removes all completed items from the to-do list
+		 * Removes all completed items from the to-do list.
 		 * @param {Object} oEvt - Button pressed event.
 		 */
 		clearCompleted: function(oEvt) {
@@ -55,7 +55,7 @@ sap.ui.define([
 		},
 
 		/**
-		 * Trigger search for specific items.
+		 * Trigger search for specific items. The removal of items is disable as long as the search is used.
 		 * @param {Object} oEvt - Input changed event.
 		 */
 		onSearch: function(oEvt) {
