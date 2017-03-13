@@ -51,7 +51,6 @@ sap.ui.define([
 			var oModel = this.getView().getModel();
 			oModel.setProperty('/completedCount', iCount);
 			oModel.setProperty('/someCompleted', iCount > 0);
-			oModel.setProperty('/itemsRemovable', iCount > 0);
 		},
 
 		/**
