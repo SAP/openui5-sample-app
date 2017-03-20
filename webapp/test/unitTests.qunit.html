@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Unit tests for App controller</title>
+		<meta http-equiv='X-UA-Compatible' content='IE=edge'>
+		<meta charset="utf-8">
+		<script id="sap-ui-bootstrap"
+				src="../resources/sap-ui-core.js"
+				data-sap-ui-bindingSyntax="complex"
+				data-sap-ui-compatVersion="edge"
+				data-sap-ui-preload="async"
+				data-sap-ui-resourceroots='{"sap.ui.todo": "../"}'>
+		</script>
+	</head>
+	<body>
+		<div id="content"></div>
+		<h1 id="qunit-header">Unit tests for App controller</h1>
+		<h2 id="qunit-banner"></h2>
+		<h2 id="qunit-userAgent"></h2>
+		<div id="qunit-testrunner-toolbar"></div>
+		<ol id="qunit-tests"></ol>
+		<div id="qunit-fixture"></div>
+		<script>
+			sap.ui.getCore().attachInit(function () {
+				sap.ui.require(["sap/ui/todo/test/unit/controller/App.controller"]);
+			});
+		</script>
+	</body>
+</html>

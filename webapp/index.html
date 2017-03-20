@@ -17,9 +17,19 @@
 	</script>
 	<script>
 		sap.ui.getCore().attachInit(function() {
-			new sap.ui.core.ComponentContainer({
-				name: "todo"
-			}).placeAt("root");
+			sap.ui.require([
+				"sap/ui/core/Component",
+				"sap/ui/core/ComponentContainer"
+			], function(Component, ComponentContainer) {
+				sap.ui.component({
+					name: "todo",
+					async: true
+				}).then(function(oComponent) {
+					new ComponentContainer({
+						component: oComponent
+					}).placeAt("root");
+				});
+			});
 		});
 	</script>
 

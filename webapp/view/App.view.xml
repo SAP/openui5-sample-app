@@ -1,25 +1,39 @@
-<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="todo.view.App" resourceBundleName="todo.i18n.messageBundle" resourceBundleAlias="i18n" displayBlock="true">
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="todo.controller.App" displayBlock="true">
 	<Shell>
 		<App>
 			<Page title="{i18n>TITLE}" backgroundDesign="Solid">
+				<subHeader>
+					<Toolbar>
+						<SearchField
+							liveChange="onSearch"
+							width="100%" />
+					</Toolbar>
+				</subHeader>
 				<content>
-					<Input class="todoInput" value="{/newTodo}" placeholder="{i18n>INPUT_PLACEHOLDER}" change="addTodo" />
-					<List id="todo-list" items="{/todos}" select="toggleCompleted"
+					<Input class="todoInput" id="addTodoItemInput" value="{/newTodo}" placeholder="{i18n>INPUT_PLACEHOLDER}" change="addTodo" />
+					<List id="todoList" items="{/todos}" selectionChange="toggleCompleted"
 						mode="MultiSelect"
 						growing="true"
 						growingScrollToLoad="true"
 						showNoData="false"
 						showSeparators="None"
 						rememberSelections="false">
+						<infoToolbar>
+							<Toolbar
+								visible="{/someCompleted}"
+								id="idInfoToolbar" >
+								<Label id="idSelectedLabel" text="{/completedCount} completed"/>
+							</Toolbar>
+						</infoToolbar>
 						<CustomListItem selected="{completed}">
-							<Input class="todoListInput" value="{title}" />
+							<Input class="todoListInput" enabled="{=!${completed}}" value="{title}"/>
 						</CustomListItem>
 					</List>
 				</content>
 				<footer>
 					<Bar>
 						<contentMiddle>
-							<Button visible="{/someCompleted}" icon="sap-icon://delete" text="Clear completed ({/completedCount})" press="clearCompleted" />
+							<Button id="idClearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="Clear completed ({/completedCount})" press="clearCompleted" />
 						</contentMiddle>
 					</Bar>
 				</footer>
