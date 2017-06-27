@@ -1,14 +1,11 @@
 sap.ui.define([
-	"sap/ui/thirdparty/qunit",
-	"sap/ui/qunit/qunit-css",
-	"sap/ui/qunit/qunit-junit",
 	"sap/ui/base/ManagedObject",
 	"sap/ui/core/mvc/Controller",
-	"sap/ui/todo/controller/App.controller",
+	"sap/ui/demo/todo/controller/App.controller",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/thirdparty/sinon",
 	"sap/ui/thirdparty/sinon-qunit"
-], function(qunit, qunitCss, qunitjunit, ManagedObject, Controller, AppController, JSONModel/*, sinon, sinonQunit*/) {
+], function(ManagedObject, Controller, AppController, JSONModel/*, sinon, sinonQunit*/) {
 	"use strict";
 
 	QUnit.module("Test model modification", {
@@ -19,10 +16,10 @@ sap.ui.define([
 			this.oViewStub = new ManagedObject({});
 			sinon.stub(Controller.prototype, "getView").returns(this.oViewStub);
 
-			this.oODataModelStub = new JSONModel({
+			this.oJSONModelStub = new JSONModel({
 				todos: []
 			});
-			this.oViewStub.setModel(this.oODataModelStub);
+			this.oViewStub.setModel(this.oJSONModelStub);
 		},
 
 		afterEach: function() {
@@ -35,14 +32,14 @@ sap.ui.define([
 	QUnit.test("Should add a todo element to the model", function(assert) {
 		// Arrange
 		// initial assumption: to-do list is empty
-		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 0, "There must be no todos defined.");
+		assert.strictEqual(this.oJSONModelStub.getObject('/todos').length, 0, "There must be no todos defined.");
 
 		// Act
-		this.oODataModelStub.setProperty('/newTodo', "new todo item");
+		this.oJSONModelStub.setProperty('/newTodo', "new todo item");
 		this.oAppController.addTodo();
 
 		// Assumption
-		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 1, "There is one new item.");
+		assert.strictEqual(this.oJSONModelStub.getObject('/todos').length, 1, "There is one new item.");
 	});
 
 	QUnit.test("Should toggle the completed items in the model", function(assert) {
@@ -50,31 +47,23 @@ sap.ui.define([
 		var oModelData = {
 			todos: [{
 				"title": "Start this app",
-				"completed": true
+				"completed": false
 			}],
-			completedCount: 1
+			completedCount: 0
 		};
-		this.oODataModelStub.setData(oModelData);
+		this.oJSONModelStub.setData(oModelData);
 
-
-		// stub the event
-		var oEvt = {
-			getParameters: function() {
-				return {
-					selected: true
-				};
-			}
-		};
 
 		// initial assumption
-		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 1, "There is one item.");
-		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 1, "There no completed item.");
+		assert.strictEqual(this.oJSONModelStub.getObject('/todos').length, 1, "There is one item.");
+		assert.strictEqual(this.oJSONModelStub.getProperty('/completedCount'), 0, "There is no completed item.");
 
 		// Act
-		this.oAppController.toggleCompleted(oEvt);
+		this.oJSONModelStub.setProperty("/todos/0/completed", true);
+		this.oAppController.updateCompletedCount();
 
 		// Assumption
-		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 2, "There two completed items.");
+		assert.strictEqual(this.oJSONModelStub.getProperty('/completedCount'), 1, "There is one completed items.");
 	});
 
 	QUnit.test("Should clear the completed items", function(assert) {
@@ -89,19 +78,20 @@ sap.ui.define([
 			}],
 			completedCount: 1
 		};
-		this.oODataModelStub.setData(oModelData);
+		this.oJSONModelStub.setData(oModelData);
 
 
 		// initial assumption
-		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 2, "There are two items.");
-		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 1, "There one completed item.");
+		assert.strictEqual(this.oJSONModelStub.getObject('/todos').length, 2, "There are two items.");
+		assert.strictEqual(this.oJSONModelStub.getProperty('/completedCount'), 1, "There is one completed item.");
 
 		// Act
 		this.oAppController.clearCompleted();
+		this.oAppController.updateCompletedCount();
 
 		// Assumption
-		assert.strictEqual(this.oODataModelStub.getObject('/todos').length, 1, "There is one item left.");
-		assert.strictEqual(this.oODataModelStub.getProperty('/completedCount'), 0, "There no completed item.");
+		assert.strictEqual(this.oJSONModelStub.getObject('/todos').length, 1, "There is one item left.");
+		assert.strictEqual(this.oJSONModelStub.getProperty('/completedCount'), 0, "There is no completed item.");
 	});
 
 });

@@ -4,12 +4,6 @@ module.exports = function(grunt) {
 
 	grunt.initConfig({
 
-		dir: {
-			webapp: 'webapp',
-			dist: 'dist',
-			bower_components: 'bower_components'
-		},
-
 		connect: {
 			options: {
 				port: 8080,
@@ -22,19 +16,27 @@ module.exports = function(grunt) {
 		openui5_connect: {
 			options: {
 				resources: [
-					'<%= dir.bower_components %>/openui5-sap.ui.core/resources',
-					'<%= dir.bower_components %>/openui5-sap.m/resources',
-					'<%= dir.bower_components %>/openui5-themelib_sap_belize/resources'
-				]
+					'bower_components/openui5-sap.ui.core/resources',
+					'bower_components/openui5-sap.m/resources',
+					'bower_components/openui5-themelib_sap_belize/resources'
+				],
+				testresources: [
+					'bower_components/openui5-sap.ui.core/test-resources',
+					'bower_components/openui5-sap.m/test-resources',
+					'bower_components/openui5-themelib_sap_belize/test-resources'
+				],
+				cors: {
+					origin: 'http://localhost:<%= karma.options.port %>'
+				}
 			},
 			src: {
 				options: {
-					appresources: '<%= dir.webapp %>'
+					appresources: 'webapp'
 				}
 			},
 			dist: {
 				options: {
-					appresources: '<%= dir.dist %>'
+					appresources: 'dist'
 				}
 			}
 		},
@@ -43,35 +45,137 @@ module.exports = function(grunt) {
 			component: {
 				options: {
 					resources: {
-						cwd: '<%= dir.webapp %>',
-						prefix: 'todo'
+						cwd: 'webapp',
+						prefix: 'sap.ui.demo.todo',
+						src: [
+							'**/*.js',
+							'**/*.fragment.html',
+							'**/*.fragment.json',
+							'**/*.fragment.xml',
+							'**/*.view.html',
+							'**/*.view.json',
+							'**/*.view.xml',
+							'**/*.properties',
+							'manifest.json',
+							'!test/**'
+						]
 					},
-					dest: '<%= dir.dist %>'
+					dest: 'dist'
 				},
 				components: true
 			}
 		},
 
 		clean: {
-			dist: '<%= dir.dist %>/'
+			dist: 'dist',
+			coverage: 'coverage'
 		},
 
 		copy: {
 			dist: {
 				files: [ {
 					expand: true,
-					cwd: '<%= dir.webapp %>',
+					cwd: 'webapp',
 					src: [
 						'**',
 						'!test/**'
 					],
-					dest: '<%= dir.dist %>'
+					dest: 'dist'
 				} ]
 			}
 		},
 
 		eslint: {
-			webapp: ['<%= dir.webapp %>']
+			webapp: ['webapp']
+		},
+
+		karma: {
+			options: {
+				basePath: 'webapp',
+				frameworks: ['openui5', 'qunit'],
+				openui5: {
+					path: 'http://localhost:8080/resources/sap-ui-core.js'
+				},
+				client: {
+					openui5: {
+						config: {
+							theme: 'sap_belize',
+							bindingSyntax: 'complex',
+							compatVersion: 'edge',
+							preload:'async',
+							resourceroots: {'sap.ui.demo.todo': './base'}
+						}
+					}
+				},
+				files: [
+					{ pattern: 'test/karma-main.js', included: true,  served: true, watched: true },
+					{ pattern: '**',                 included: false, served: true, watched: true }
+				],
+				proxies: {
+					'/base/resources': 'http://localhost:8080/resources',
+					'/base/test-resources': 'http://localhost:8080/test-resources',
+				},
+				reporters: ['progress'],
+				port: 9876,
+				logLevel: 'INFO',
+				browsers: ['Chrome']
+			},
+			ci: {
+				singleRun: true,
+				browsers: ['PhantomJS'],
+				preprocessors: {
+					'{webapp,webapp/!(test)}/*.js': ['coverage']
+				},
+				coverageReporter: {
+					includeAllSources: true,
+					reporters: [
+						{
+							type: 'html',
+							dir: '../coverage/'
+						},
+						{
+							type: 'text'
+						}
+					],
+					check: {
+						each: {
+							statements: 100,
+							branches: 100,
+							functions: 100,
+							lines: 100
+						}
+					}
+				},
+				reporters: ['progress', 'coverage'],
+			},
+			watch: {
+				client: {
+					clearContext: false,
+					qunit: {
+						showUI: true
+					}
+				}
+			},
+			coverage: {
+				singleRun: true,
+				browsers: ['PhantomJS'],
+				preprocessors: {
+					'{webapp,webapp/!(test)}/*.js': ['coverage']
+				},
+				coverageReporter: {
+					includeAllSources: true,
+					reporters: [
+						{
+							type: 'html',
+							dir: '../coverage/'
+						},
+						{
+							type: 'text'
+						}
+					]
+				},
+				reporters: ['progress', 'coverage'],
+			}
 		}
 
 	});
@@ -82,6 +186,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-openui5');
 	grunt.loadNpmTasks('grunt-eslint');
+	grunt.loadNpmTasks('grunt-karma');
 
 	// Server task
 	grunt.registerTask('serve', function(target) {
@@ -91,14 +196,14 @@ module.exports = function(grunt) {
 	// Linting task
 	grunt.registerTask('lint', ['eslint']);
 
+	// Test tasks
+	grunt.registerTask('test', ['clean:coverage', 'openui5_connect:src', 'karma:ci']);
+	grunt.registerTask('watch', ['openui5_connect:src', 'karma:watch']);
+	grunt.registerTask('coverage', ['clean:coverage', 'openui5_connect:src', 'karma:coverage']);
+
 	// Build task
-	grunt.registerTask('build', ['openui5_preload', 'copy']);
+	grunt.registerTask('build', ['clean:dist', 'openui5_preload', 'copy']);
 
 	// Default task
-	grunt.registerTask('default', [
-		'lint',
-		'clean',
-		'build',
-		'serve:dist'
-	]);
+	grunt.registerTask('default', ['serve']);
 };

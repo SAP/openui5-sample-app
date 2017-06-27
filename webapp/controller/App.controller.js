@@ -6,37 +6,31 @@ sap.ui.define([
 ], function(Controller, JSONModel, Filter, FilterOperator) {
 	'use strict';
 
-	return Controller.extend('todo.controller.App', {
+	return Controller.extend('sap.ui.demo.todo.controller.App', {
 
 		/**
-		 * Adds a new to-do item to the bottom of the list.
+		 * Adds a new todo item to the bottom of the list.
 		 */
 		addTodo: function() {
 			var oModel = this.getView().getModel();
-			var aTodos = oModel.getObject('/todos');
+			var aTodos = jQuery.extend(true, [], oModel.getProperty('/todos'));
+
 			aTodos.push({
 				title: oModel.getProperty('/newTodo'),
 				completed: false
 			});
+
+			oModel.setProperty('/todos', aTodos);
 			oModel.setProperty('/newTodo', '');
 		},
 
 		/**
-		 * Marks an item in the to-do-list as completed.
-		 * @param {Object} oEvt - List item selected event.
+		 * Removes all completed items from the todo list.
 		 */
-		toggleCompleted: function(oEvt) {
-			var iCount = this.getView().getModel().getProperty('/completedCount');
-			var iModification = oEvt.getParameters().selected ? 1 : -1;
-			this._updateCompletedCount(iCount + iModification);
-		},
+		clearCompleted: function() {
+			var oModel = this.getView().getModel();
+			var aTodos = jQuery.extend(true, [], oModel.getProperty('/todos'));
 
-		/**
-		 * Removes all completed items from the to-do list.
-		 * @param {Object} oEvt - Button pressed event.
-		 */
-		clearCompleted: function(oEvt) {
-			var aTodos = this.getView().getModel().getObject('/todos');
 			var i = aTodos.length;
 			while (i--) {
 				var oTodo = aTodos[i];
@@ -44,25 +38,34 @@ sap.ui.define([
 					aTodos.splice(i, 1);
 				}
 			}
-			this._updateCompletedCount(0);
+
+			oModel.setProperty('/todos', aTodos);
 		},
 
-		_updateCompletedCount: function(iCount) {
+		/**
+		 * Updates the number of completed items in the model.
+		 */
+		updateCompletedCount: function() {
 			var oModel = this.getView().getModel();
-			oModel.setProperty('/completedCount', iCount);
-			oModel.setProperty('/someCompleted', iCount > 0);
+			var aTodos = oModel.getProperty('/todos') || [];
+
+			var iCompleted = aTodos.filter(function(oTodo) {
+				return oTodo.completed === true;
+			}).length;
+
+			oModel.setProperty('/completedCount', iCompleted);
 		},
 
 		/**
 		 * Trigger search for specific items. The removal of items is disable as long as the search is used.
-		 * @param {Object} oEvt - Input changed event.
+		 * @param {sap.ui.base.Event} oEvent Input changed event
 		 */
-		onSearch: function(oEvt) {
+		onSearch: function(oEvent) {
 			var oModel = this.getView().getModel();
 
 			// add filter for search
 			var aFilters = [];
-			var sQuery = oEvt.getSource().getValue();
+			var sQuery = oEvent.getSource().getValue();
 			if (sQuery && sQuery.length > 0) {
 				oModel.setProperty('/itemsRemovable', false);
 				var filter = new Filter("title", FilterOperator.Contains, sQuery);
