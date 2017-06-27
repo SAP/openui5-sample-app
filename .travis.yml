@@ -1,0 +1,15 @@
+language: node_js
+
+node_js:
+  - 'stable'
+
+before_deploy:
+  - npm run build
+
+deploy:
+  provider: script
+  script:
+    - 'echo "TODO: deploy the app. Directory listing:" && ls -R dist'
+  skip_cleanup: true
+  on:
+    branch: ui5con17-ci-lecture
