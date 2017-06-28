@@ -13,7 +13,7 @@
 				<content>
 					<Input class="todoInput" id="addTodoItemInput" value="{/newTodo}" placeholder="{i18n>INPUT_PLACEHOLDER}" change="addTodo" />
 					<List id="todoList"
-						items="{ path: '/todos', events: { change: '.updateCompletedCount' } }"
+						items="{ path: '/todos', events: { change: '.updateItemsLeftCount' } }"
 						mode="MultiSelect"
 						growing="true"
 						growingScrollToLoad="true"
@@ -22,7 +22,7 @@
 						rememberSelections="false">
 						<infoToolbar>
 							<Toolbar>
-								<Label id="selectedLabel" text="{= ${/completedCount} > 0 ? ${/completedCount} + ' completed' : '' }"/>
+								<Label id="itemsLeftLabel" text="{= ${/itemsLeftCount} === 1 ? ${/itemsLeftCount} + ' item left' : ${/itemsLeftCount} + ' items left' }"/>
 							</Toolbar>
 						</infoToolbar>
 						<CustomListItem selected="{completed}">
@@ -33,7 +33,7 @@
 				<footer>
 					<Bar>
 						<contentMiddle>
-							<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="Clear completed ({/completedCount})" press="clearCompleted" />
+							<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="Clear completed" press="clearCompleted" />
 						</contentMiddle>
 					</Bar>
 				</footer>

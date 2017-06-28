@@ -43,17 +43,17 @@ sap.ui.define([
 		},
 
 		/**
-		 * Updates the number of completed items in the model.
+		 * Updates the number of items not yet completed
 		 */
-		updateCompletedCount: function() {
+		updateItemsLeftCount: function() {
 			var oModel = this.getView().getModel();
 			var aTodos = oModel.getProperty('/todos') || [];
 
-			var iCompleted = aTodos.filter(function(oTodo) {
-				return oTodo.completed === true;
+			var iItemsLeft = aTodos.filter(function(oTodo) {
+				return oTodo.completed !== true;
 			}).length;
 
-			oModel.setProperty('/completedCount', iCompleted);
+			oModel.setProperty('/itemsLeftCount', iItemsLeft);
 		},
 
 		/**

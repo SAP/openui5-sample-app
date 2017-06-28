@@ -49,21 +49,21 @@ sap.ui.define([
 				"title": "Start this app",
 				"completed": false
 			}],
-			completedCount: 0
+			itemsLeftCount: 1
 		};
 		this.oJSONModelStub.setData(oModelData);
 
 
 		// initial assumption
 		assert.strictEqual(this.oJSONModelStub.getObject('/todos').length, 1, "There is one item.");
-		assert.strictEqual(this.oJSONModelStub.getProperty('/completedCount'), 0, "There is no completed item.");
+		assert.strictEqual(this.oJSONModelStub.getProperty('/itemsLeftCount'), 1, "There is one item left.");
 
 		// Act
 		this.oJSONModelStub.setProperty("/todos/0/completed", true);
-		this.oAppController.updateCompletedCount();
+		this.oAppController.updateItemsLeftCount();
 
 		// Assumption
-		assert.strictEqual(this.oJSONModelStub.getProperty('/completedCount'), 1, "There is one completed items.");
+		assert.strictEqual(this.oJSONModelStub.getProperty('/itemsLeftCount'), 0, "There is no item left.");
 	});
 
 	QUnit.test("Should clear the completed items", function(assert) {
@@ -76,22 +76,22 @@ sap.ui.define([
 				"title": "Start this app2",
 				"completed": true
 			}],
-			completedCount: 1
+			itemsLeftCount: 1
 		};
 		this.oJSONModelStub.setData(oModelData);
 
 
 		// initial assumption
 		assert.strictEqual(this.oJSONModelStub.getObject('/todos').length, 2, "There are two items.");
-		assert.strictEqual(this.oJSONModelStub.getProperty('/completedCount'), 1, "There is one completed item.");
+		assert.strictEqual(this.oJSONModelStub.getProperty('/itemsLeftCount'), 1, "There is no item left.");
 
 		// Act
 		this.oAppController.clearCompleted();
-		this.oAppController.updateCompletedCount();
+		this.oAppController.updateItemsLeftCount();
 
 		// Assumption
 		assert.strictEqual(this.oJSONModelStub.getObject('/todos').length, 1, "There is one item left.");
-		assert.strictEqual(this.oJSONModelStub.getProperty('/completedCount'), 0, "There is no completed item.");
+		assert.strictEqual(this.oJSONModelStub.getProperty('/itemsLeftCount'), 1, "There is one item left.");
 	});
 
 });

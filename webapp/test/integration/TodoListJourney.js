@@ -85,7 +85,7 @@ sap.ui.define([
 			.and.iSelectTheLastItem(true);
 
 		// Assertions
-		Then.onTheAppPage.iShouldSeeSelectedCount(2).
+		Then.onTheAppPage.iShouldSeeItemLeftCount(1).
 		and.iTeardownTheApp();
 	});
 

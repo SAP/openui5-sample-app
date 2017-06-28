@@ -13,7 +13,7 @@ sap.ui.require([
 	var sSearchTodoItemsInputId = "searchTodoItemsInput";
 	var sItemListId = "todoList";
 	var sClearCompletedId = "clearCompleted";
-	var sSelectedLabelId = "selectedLabel";
+	var sItemsLeftLabelId = "itemsLeftLabel";
 
 	Opa5.createPageObjects({
 		onTheAppPage: {
@@ -140,17 +140,17 @@ sap.ui.require([
 						errorMessage: "List does not have expected entry '" + sLastItemText + "'."
 					});
 				},
-				iShouldSeeSelectedCount: function(iNumberCompleted) {
+				iShouldSeeItemLeftCount: function(iNumberItemsLeft) {
 					return this.waitFor({
-						id: sSelectedLabelId,
+						id: sItemsLeftLabelId,
 						viewName: sViewName,
 						matchers: [new PropertyStrictEquals({
 							name: "text",
-							value: iNumberCompleted + " completed"
+							value: iNumberItemsLeft + (iNumberItemsLeft === 1 ? " item left" : " items left")
 						})
 						],
 						success: function() {
-							Opa5.assert.ok(true, "" + iNumberCompleted + " items are selected");
+							Opa5.assert.ok(true, "" + iNumberItemsLeft + " items left");
 						},
 						errorMessage: "Items are not selected."
 					});
