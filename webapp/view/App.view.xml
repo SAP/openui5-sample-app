@@ -22,7 +22,7 @@
 						rememberSelections="false">
 						<infoToolbar>
 							<Toolbar>
-								<Label id="itemsLeftLabel" text="{= ${/itemsLeftCount} === 1 ? ${/itemsLeftCount} + ' item left' : ${/itemsLeftCount} + ' items left' }"/>
+								<Label id="itemsLeftLabel" text="{= ${/itemsLeftCount} === 1 ? ${/itemsLeftCount} + ' ' + ${i18n>ITEM_LEFT} : ${/itemsLeftCount} + ' ' + ${i18n>ITEMS_LEFT} }"/>
 							</Toolbar>
 						</infoToolbar>
 						<CustomListItem selected="{completed}">
@@ -33,7 +33,7 @@
 				<footer>
 					<Bar>
 						<contentMiddle>
-							<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="Clear completed" press="clearCompleted" />
+							<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press="clearCompleted" />
 						</contentMiddle>
 					</Bar>
 				</footer>
