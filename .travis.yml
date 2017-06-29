@@ -10,6 +10,8 @@ cache:
   directories:
     # Cache local npm cache files for faster install
     - $HOME/.npm
+    # Cache local bower cache files for faster install
+    - $HOME/.cache/bower
 
 before_deploy:
   - npm run build
