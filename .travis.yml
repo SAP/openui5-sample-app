@@ -1,7 +1,15 @@
+# Use container-based infrastructure
+sudo: false
+
 language: node_js
 
 node_js:
   - 'stable'
+
+cache:
+  directories:
+    # Cache local npm cache files for faster install
+    - $HOME/.npm
 
 before_deploy:
   - npm run build
@@ -12,4 +20,4 @@ deploy:
     - 'echo "TODO: deploy the app. Directory listing:" && ls -R dist'
   skip_cleanup: true
   on:
-    branch: ui5con17-ci-lecture
+    branch: master
