@@ -1,15 +1,7 @@
-# Use container-based infrastructure
-sudo: false
-
 language: node_js
 
 node_js:
   - 'stable'
-
-cache:
-  directories:
-    # Cache local bower cache files for faster install
-    - $HOME/.cache/bower
 
 before_deploy:
   - npm run build
