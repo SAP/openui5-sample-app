@@ -100,6 +100,7 @@ module.exports = function(grunt) {
 					openui5: {
 						config: {
 							theme: 'sap_belize',
+							language: 'EN',
 							bindingSyntax: 'complex',
 							compatVersion: 'edge',
 							preload:'async',
