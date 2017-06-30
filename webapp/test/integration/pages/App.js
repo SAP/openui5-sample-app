@@ -3,9 +3,10 @@ sap.ui.require([
 	"sap/ui/demo/todo/test/integration/pages/Common",
 	"sap/ui/test/matchers/AggregationLengthEquals",
 	"sap/ui/test/matchers/PropertyStrictEquals",
+	"sap/ui/test/matchers/Properties",
 	"sap/ui/test/actions/EnterText",
 	"sap/ui/test/actions/Press"
-], function (Opa5, Common, AggregationLengthEquals, PropertyStrictEquals, EnterText, Press) {
+], function (Opa5, Common, AggregationLengthEquals, PropertyStrictEquals, Properties, EnterText, Press) {
 	"use strict";
 
 	var sViewName = "sap.ui.demo.todo.view.App";
@@ -79,6 +80,17 @@ sap.ui.require([
 						viewName: sViewName,
 						actions: [new Press()],
 						errorMessage: "checkbox cannot be pressed"
+					});
+				},
+				iFilterForItems: function(filterKey) {
+					return this.waitFor({
+						viewName: sViewName,
+						controlType: "sap.m.SegmentedButtonItem",
+						matchers: [
+							new Properties({ key: filterKey })
+						],
+						actions: [new Press()],
+						errorMessage: "SegmentedButton can not be pressed"
 					});
 				}
 			},

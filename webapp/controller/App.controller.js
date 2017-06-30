@@ -8,6 +8,11 @@ sap.ui.define([
 
 	return Controller.extend('sap.ui.demo.todo.controller.App', {
 
+		onInit: function() {
+			this.aSearchFilters = [];
+			this.aTabFilters = [];
+		},
+
 		/**
 		 * Adds a new todo item to the bottom of the list.
 		 */
@@ -63,21 +68,51 @@ sap.ui.define([
 		onSearch: function(oEvent) {
 			var oModel = this.getView().getModel();
 
+			// First reset current filters
+			this.aSearchFilters = [];
+
 			// add filter for search
-			var aFilters = [];
 			var sQuery = oEvent.getSource().getValue();
 			if (sQuery && sQuery.length > 0) {
 				oModel.setProperty('/itemsRemovable', false);
 				var filter = new Filter("title", FilterOperator.Contains, sQuery);
-				aFilters.push(filter);
+				this.aSearchFilters.push(filter);
 			} else {
 				oModel.setProperty('/itemsRemovable', true);
 			}
 
-			// update list binding
+			this._applyListFilters();
+		},
+
+		onFilter: function(oEvent) {
+
+			// First reset current filters
+			this.aTabFilters = [];
+
+			// add filter for search
+			var sFilterKey = oEvent.getParameter("key");
+
+			// eslint-disable-line default-case
+			switch (sFilterKey) {
+				case "active":
+					this.aTabFilters.push(new Filter("completed", FilterOperator.EQ, false));
+					break;
+				case "completed":
+					this.aTabFilters.push(new Filter("completed", FilterOperator.EQ, true));
+					break;
+				case "all":
+				default:
+					// Don't use any filter
+			}
+
+			this._applyListFilters();
+		},
+
+		_applyListFilters: function() {
 			var oList = this.byId("todoList");
 			var oBinding = oList.getBinding("items");
-			oBinding.filter(aFilters, "todos");
+
+			oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");
 		}
 
 	});

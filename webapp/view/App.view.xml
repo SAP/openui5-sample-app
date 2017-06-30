@@ -33,8 +33,17 @@
 				<footer>
 					<Bar>
 						<contentMiddle>
-							<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press="clearCompleted" />
+							<SegmentedButton selectedKey="all" select="onFilter" class="sapMSegmentedButtonNoAutoWidth">
+								<items>
+									<SegmentedButtonItem id="filterButton-all" text="All" key="all" />
+									<SegmentedButtonItem id="filterButton-active" text="Active" key="active" />
+									<SegmentedButtonItem id="filterButton-completed" text="Completed" key="completed" />
+								</items>
+							</SegmentedButton>
 						</contentMiddle>
+						<contentRight>
+							<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press="clearCompleted" />
+						</contentRight>
 					</Bar>
 				</footer>
 			</Page>
