@@ -13,3 +13,7 @@ deploy:
   skip_cleanup: true
   on:
     branch: master
+
+notifications:
+  webhooks: 
+    - https://outlook.office.com/webhook/c191f7c8-2f30-4c31-8e42-ae78a4f67146@2d2187e3-345d-432e-927e-a5c39ea9d086/TravisCI/9cb677c87fb5421cb0e2bd762a23f378/2dea6bd2-2b1e-4062-898c-ca91fabe35de
