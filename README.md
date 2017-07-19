@@ -1,9 +1,18 @@
 ![OpenUI5 logo](http://openui5.org/images/OpenUI5_new_big_side.png)
 
+[![Build Status](https://travis-ci.org/ZEIT-GmbH/openui5-sample-app.png?branch=master)](https://travis-ci.org/ZEIT-GmbH/openui5-sample-app)
+
 # openui5-sample-app
 > [OpenUI5](https://github.com/SAP/openui5) sample app using Grunt & Bower
 
 ## Getting started
+
+### Travis Test
+
+Anpassung weil wir so tun als wäre ein Fehler in Travis aufgetreten.
+
+Weitere Anpassung zu Demozwecken. Hoffentlich ist Robin jetzt zufrieden!
+
 * Install Node.js (from [nodejs.org](http://nodejs.org/)).
 * Install the Grunt CLI
     ```sh
