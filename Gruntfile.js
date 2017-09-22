@@ -46,7 +46,7 @@ module.exports = function(grunt) {
 				options: {
 					resources: {
 						cwd: 'webapp',
-						prefix: 'sap.ui.demo.todo',
+						prefix: 'sap/ui/demo/todo',
 						src: [
 							'**/*.js',
 							'**/*.fragment.html',
