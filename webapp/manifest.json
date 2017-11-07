@@ -13,6 +13,7 @@
 		"rootView": {
 			"viewName": "sap.ui.demo.todo.view.App",
 			"type": "XML",
+			"async": true,
 			"id": "app"
 		},
 		"models": {
