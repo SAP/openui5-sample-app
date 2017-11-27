@@ -25,8 +25,8 @@
 								<Label id="itemsLeftLabel" text="{= ${/itemsLeftCount} === 1 ? ${/itemsLeftCount} + ' ' + ${i18n>ITEM_LEFT} : ${/itemsLeftCount} + ' ' + ${i18n>ITEMS_LEFT} }"/>
 							</Toolbar>
 						</infoToolbar>
-						<CustomListItem selected="{completed}">
-							<Input class="todoListInput" enabled="{=!${completed}}" value="{title}"/>
+						<CustomListItem class="todoListItem" selected="{completed}">
+							<Input enabled="{=!${completed}}" value="{title}"/>
 						</CustomListItem>
 					</List>
 				</content>
