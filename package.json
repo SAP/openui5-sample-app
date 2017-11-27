@@ -21,7 +21,7 @@
     "karma": "^1.5.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.1",
-    "karma-openui5": "~0.2.2",
+    "karma-openui5": "~0.2.3",
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-qunit": "^1.2.1",
     "karma-sinon": "^1.0.5",
