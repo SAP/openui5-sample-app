@@ -92,7 +92,7 @@ module.exports = function(grunt) {
 		karma: {
 			options: {
 				basePath: 'webapp',
-				frameworks: ['openui5', 'qunit'],
+				frameworks: ['qunit', 'openui5'],
 				openui5: {
 					path: 'http://localhost:8080/resources/sap-ui-core.js'
 				},
@@ -105,17 +105,16 @@ module.exports = function(grunt) {
 							compatVersion: 'edge',
 							preload:'async',
 							resourceroots: {'sap.ui.demo.todo': './base'}
-						}
+						},
+						tests: [
+							'sap/ui/demo/todo/test/unit/allTests',
+							'sap/ui/demo/todo/test/integration/AllJourneys'
+						]
 					}
 				},
 				files: [
-					{ pattern: 'test/karma-main.js', included: true,  served: true, watched: true },
-					{ pattern: '**',                 included: false, served: true, watched: true }
+					{ pattern: '**', included: false, served: true, watched: true }
 				],
-				proxies: {
-					'/base/resources': 'http://localhost:8080/resources',
-					'/base/test-resources': 'http://localhost:8080/test-resources',
-				},
 				reporters: ['progress'],
 				port: 9876,
 				logLevel: 'INFO',
