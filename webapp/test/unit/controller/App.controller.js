@@ -94,4 +94,21 @@ sap.ui.define([
 		assert.strictEqual(this.oJSONModelStub.getProperty('/itemsLeftCount'), 1, "There is one item left.");
 	});
 
+	QUnit.test("Should update items left count when no todos are loaded, yet", function(assert) {
+		// Arrange
+		var oModelData = {};
+		this.oJSONModelStub.setData(oModelData);
+
+
+		// initial assumption
+		assert.strictEqual(this.oJSONModelStub.getObject('/todos'), undefined, "There are no items.");
+		assert.strictEqual(this.oJSONModelStub.getProperty('/itemsLeftCount'), undefined, "Items left is not set");
+
+		// Act
+		this.oAppController.updateItemsLeftCount();
+
+		// Assumption
+		assert.strictEqual(this.oJSONModelStub.getProperty('/itemsLeftCount'), 0, "There is no item left.");
+	});
+
 });
