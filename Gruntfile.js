@@ -103,7 +103,7 @@ module.exports = function(grunt) {
 							language: 'EN',
 							bindingSyntax: 'complex',
 							compatVersion: 'edge',
-							preload:'async',
+							preload: 'async',
 							resourceroots: {'sap.ui.demo.todo': './base'}
 						},
 						tests: [
@@ -118,6 +118,9 @@ module.exports = function(grunt) {
 				reporters: ['progress'],
 				port: 9876,
 				logLevel: 'INFO',
+				browserConsoleLogOptions: {
+					level: 'warn'
+				},
 				browsers: ['Chrome']
 			},
 			ci: {
@@ -146,7 +149,7 @@ module.exports = function(grunt) {
 						}
 					}
 				},
-				reporters: ['progress', 'coverage'],
+				reporters: ['progress', 'coverage']
 			},
 			watch: {
 				client: {
@@ -174,7 +177,7 @@ module.exports = function(grunt) {
 						}
 					]
 				},
-				reporters: ['progress', 'coverage'],
+				reporters: ['progress', 'coverage']
 			}
 		}
 
