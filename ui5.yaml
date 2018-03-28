@@ -1,0 +1,4 @@
+specVersion: '0.1'
+metadata:
+  name: openui5-sample-app
+type: application
