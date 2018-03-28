@@ -1,30 +1,18 @@
 {
   "name": "openui5-sample-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Sample of an OpenUI5 app",
   "private": true,
   "scripts": {
-    "test": "grunt lint && grunt test",
-    "start": "grunt serve",
-    "build": "grunt build",
-    "postinstall": "bower install"
+    "start": "ui5 serve --open index.html",
+    "opa5": "ui5 serve --open test/integration/opaTests.qunit.html",
+    "qunit": "ui5 serve --open test/unit/unitTests.qunit.html"
   },
-  "devDependencies": {
-    "bower": "^1.8.0",
-    "grunt": "^1.0.1",
-    "grunt-contrib-clean": "^1.0.0",
-    "grunt-contrib-connect": "^1.0.2",
-    "grunt-contrib-copy": "^1.0.0",
-    "grunt-eslint": "^20.0.0",
-    "grunt-karma": "^1.0.0",
-    "grunt-openui5": "^0.12.0",
-    "karma": "^2.0.0",
-    "karma-chrome-launcher": "^2.2.0",
-    "karma-coverage": "^1.1.1",
-    "karma-openui5": "~0.2.3",
-    "karma-phantomjs-launcher": "^1.0.4",
-    "karma-qunit": "^1.2.1",
-    "karma-sinon": "^1.0.5",
-    "qunitjs": "^2.0.0"
-  }
+  "dependencies": {
+    "@openui5/sap.m": "^1.52.5",
+    "@openui5/sap.ui.core": "^1.52.5",
+    "@openui5/sap.ui.layout": "^1.52.5",
+    "@openui5/themelib_sap_belize": "^1.52.5"
+  },
+  "devDependencies": {}
 }
