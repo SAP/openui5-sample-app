@@ -11,9 +11,9 @@
     - *Note that you can use npm instead of Yarn if you do not plan to work with a local copy of the [OpenUI5 main repository](https://github.com/SAP/openui5). See [FAQ: What's the thing with yarn?](https://github.com/SAP/ui5-tooling#whats-the-thing-with-yarn)*
 
 ## Getting started
-1. Clone the repository and navigate into it
+1. Clone the repository (on the `ui5-tooling` branch) and navigate into it
     ```sh
-    git clone git@github.wdf.sap.corp:bob/openui5-sample-app.git
+    git clone -b ui5-tooling git@github.wdf.sap.corp:bob/openui5-sample-app.git
     cd openui5-sample-app
     ```
 1. ~Install all dependencies~
