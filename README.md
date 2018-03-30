@@ -13,7 +13,7 @@
 ## Getting started
 1. Clone the repository (on the `ui5-tooling` branch) and navigate into it
     ```sh
-    git clone -b ui5-tooling git@github.wdf.sap.corp:bob/openui5-sample-app.git
+    git clone -b ui5-tooling git@github.com:SAP/openui5-sample-app.git
     cd openui5-sample-app
     ```
 1. ~Install all dependencies~
