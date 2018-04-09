@@ -20,7 +20,7 @@
     ```sh
     yarn install
     ```
-    ⚠️ **Note:** This will currently fail. Please follow [Working with local dependencies](https://github.com/SAP/ui5-tooling#working-with-local-dependencies) instead. See [FAQ: Where are the npm packages?](https://github.com/SAP/ui5-tooling#where-are-the-npm-packages) for details.
+    ⚠️ **Note:** This will currently fail. Please follow [Working with local dependencies](#working-with-local-dependencies) instead. See [FAQ: Where are the npm packages?](https://github.com/SAP/ui5-tooling#where-are-the-npm-packages) for details.
 
 1. Start a local server and run the application (http://localhost:8080/index.html)
     ```sh
@@ -95,23 +95,11 @@ The following needs to be done just once per setup.
     ```sh
     yarn
     ```
-1. Make all required projects available as global links
+1. Make all projects available as global links. **Note**: The OpenUI5 project uses [wsrun](https://github.com/whoeverest/wsrun) to link all libraries with one command. See [Linking Projects](https://github.com/SAP/ui5-tooling#linking-projects) for general information about project linking.
     ```sh
-    cd src/sap.ui.core
-    yarn link
-
-    cd ../sap.m
-    yarn link
-
-    cd ../sap.ui.layout
-    yarn link
-
-    cd ../themelib_sap_belize
-    yarn link
-
-    cd ../..
+    yarn run link-all
     ```
-    
+
 ### Linking
 1. In your application directory: Link the required OpenUI5 libraries
     ```sh
