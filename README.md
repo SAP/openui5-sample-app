@@ -105,7 +105,6 @@ The following needs to be done just once per setup.
     ```sh
     yarn link @openui5/sap.ui.core
     yarn link @openui5/sap.m
-    yarn link @openui5/sap.ui.layout
     yarn link @openui5/themelib_sap_belize
     ```
 
@@ -118,7 +117,6 @@ To return to using the OpenUI5 npm packages
     ```sh
     yarn unlink @openui5/sap.ui.core
     yarn unlink @openui5/sap.m
-    yarn unlink @openui5/sap.ui.layout
     yarn unlink @openui5/themelib_sap_belize
     ```
 1. Re-install the packages from the registry
