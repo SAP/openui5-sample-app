@@ -24,15 +24,18 @@
     ```
 
 ## Testing
-* Start a local server and run the unit tests (http://localhost:8080/test/unit/unitTests.qunit.html)
+* Run ESLint code validation
     ```sh
-    ui5 serve -o /test/unit/unitTests.qunit.html
+    npm run lint
     ```
-* Start a local server and run the OPA5 tests (http://localhost:8080/test/integration/opaTests.qunit.html)
+* Start a local server and execute the tests automatically after every change
     ```sh
-    ui5 serve -o /test/integration/opaTests.qunit.html
+    npm run watch
     ```
-
+* Run ESLint, start a local server and run the tests in CI mode
+    ```sh
+    npm test
+    ```
 ## Building
 ### Option 1: Standard preload build
 1. Execute the build
