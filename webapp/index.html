@@ -18,18 +18,15 @@
 	<script>
 		sap.ui.getCore().attachInit(function() {
 			sap.ui.require([
-				"sap/ui/core/Component",
 				"sap/ui/core/ComponentContainer"
-			], function(Component, ComponentContainer) {
-				sap.ui.component({
-					id: "todo",
+			], function(ComponentContainer) {
+				new ComponentContainer({
 					name: "sap.ui.demo.todo",
-					async: true
-				}).then(function(oComponent) {
-					new ComponentContainer({
-						component: oComponent
-					}).placeAt("root");
-				});
+					settings: {
+						id: "todo"
+					},
+					manifest: true
+				}).placeAt("root");
 			});
 		});
 	</script>
