@@ -104,7 +104,7 @@ module.exports = function(grunt) {
 							bindingSyntax: 'complex',
 							compatVersion: 'edge',
 							preload: 'async',
-							resourceroots: {'sap.ui.demo.todo': './base'}
+							resourceRoots: {'sap.ui.demo.todo': './base'}
 						},
 						tests: [
 							'sap/ui/demo/todo/test/unit/allTests',
