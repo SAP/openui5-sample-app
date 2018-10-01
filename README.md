@@ -67,7 +67,7 @@
     1. Install an HTTP server like [zeit/serve](https://www.npmjs.com/package/serve) (if not already done)
         ```sh
         # Install zeit/serve
-        npm install --global serve
+        npm install --global serve@6
         ```
     1. Start an HTTP server for the newly created `/dist` directory
         ```sh
