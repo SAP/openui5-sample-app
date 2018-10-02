@@ -43,10 +43,10 @@
     ui5 build -a
     ```
 1. Run the result
-    1. Install an HTTP server like [zeit/serve](https://www.npmjs.com/package/serve) (**Note:** You can use any HTTP server)
+    1. Install an HTTP server like [zeit/serve](https://www.npmjs.com/package/serve) (**Note:** You can use any HTTP server. If you use zeit/serve, please use version 6 as gzip support has been removed in newer versions.)
         ```sh
         # Install zeit/serve
-        npm install --global serve
+        npm install --global serve@6
         ```
     1. Start an HTTP server for the newly created `/dist` directory
         ```sh
@@ -64,9 +64,9 @@
     ui5 build self-contained -a
     ```
 1. Run the result
-    1. Install an HTTP server like [zeit/serve](https://www.npmjs.com/package/serve) (if not already done)
+    1. Install an HTTP server like [zeit/serve](https://www.npmjs.com/package/serve) (**Note:** You can use any HTTP server. If you use zeit/serve, please use version 6 as gzip support has been removed in newer versions.)
         ```sh
-        # Install zeit/serve
+        # Install zeit/serve in version 6, as gzip support has been removed in newer versions
         npm install --global serve@6
         ```
     1. Start an HTTP server for the newly created `/dist` directory
