@@ -20,11 +20,10 @@
   "devDependencies": {
     "@ui5/cli": "^0.2.1",
     "eslint": "^4.19.1",
-    "karma": "^2.0.2",
+    "karma": "^2.0.5",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
     "karma-openui5": "^0.2.3",
-    "karma-phantomjs-launcher": "^1.0.4",
     "karma-qunit": "^1.2.1",
     "qunitjs": "^2.4.1",
     "rimraf": "^2.6.2",
