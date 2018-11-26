@@ -17,10 +17,11 @@ sap.ui.define([
 		When.onTheAppPage.iFilterForItems("active");
 
 		// Assertions
-		Then.onTheAppPage.iShouldSeeItemCount(1)
+		Then.onTheAppPage.iShouldSeeItemCount(1);
 
 		// Cleanup
-		Then.iTeardownMyApp();	});
+		Then.iTeardownMyApp();
+	});
 
 	opaTest("should show correct items when filtering for 'Completed' items", function (Given, When, Then) {
 
@@ -31,10 +32,11 @@ sap.ui.define([
 		When.onTheAppPage.iFilterForItems("completed");
 
 		// Assertions
-		Then.onTheAppPage.iShouldSeeItemCount(1)
+		Then.onTheAppPage.iShouldSeeItemCount(1);
 
 		// Cleanup
-		Then.iTeardownMyApp();	});
+		Then.iTeardownMyApp();
+	});
 
 	opaTest("should show correct items when filtering for 'Completed' items and switch back to 'All'", function (Given, When, Then) {
 
@@ -51,9 +53,10 @@ sap.ui.define([
 		When.onTheAppPage.iFilterForItems("all");
 
 		// Assertions
-		Then.onTheAppPage.iShouldSeeItemCount(2)
+		Then.onTheAppPage.iShouldSeeItemCount(2);
 
 		// Cleanup
-		Then.iTeardownMyApp();	});
+		Then.iTeardownMyApp();
+	});
 
 });
