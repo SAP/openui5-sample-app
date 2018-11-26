@@ -2,16 +2,13 @@ sap.ui.define([
 	"sap/ui/base/ManagedObject",
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/demo/todo/controller/App.controller",
-	"sap/ui/model/json/JSONModel",
-	"sap/ui/thirdparty/sinon",
-	"sap/ui/thirdparty/sinon-qunit"
-], function(ManagedObject, Controller, AppController, JSONModel/*, sinon, sinonQunit*/) {
+	"sap/ui/model/json/JSONModel"
+], function(ManagedObject, Controller, AppController, JSONModel) {
 	"use strict";
 
 	QUnit.module("Test model modification", {
 
 		beforeEach: function() {
-
 			this.oAppController = new AppController();
 			this.oViewStub = new ManagedObject({});
 			sinon.stub(Controller.prototype, "getView").returns(this.oViewStub);
@@ -52,7 +49,6 @@ sap.ui.define([
 			itemsLeftCount: 1
 		};
 		this.oJSONModelStub.setData(oModelData);
-
 
 		// initial assumption
 		assert.strictEqual(this.oJSONModelStub.getObject('/todos').length, 1, "There is one item.");
@@ -98,7 +94,6 @@ sap.ui.define([
 		// Arrange
 		var oModelData = {};
 		this.oJSONModelStub.setData(oModelData);
-
 
 		// initial assumption
 		assert.strictEqual(this.oJSONModelStub.getObject('/todos'), undefined, "There are no items.");

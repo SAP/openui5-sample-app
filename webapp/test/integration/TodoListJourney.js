@@ -11,20 +11,22 @@ sap.ui.define([
 	opaTest("should add an item", function (Given, When, Then) {
 
 		// Arrangements
-		Given.iStartTheApp();
+		Given.iStartMyApp();
 
 		//Actions
 		When.onTheAppPage.iEnterTextForNewItemAndPressEnter("my test");
 
 		// Assertions
-		Then.onTheAppPage.iShouldSeeTheItemBeingAdded(3, "my test").
-			and.iTeardownTheApp();
+		Then.onTheAppPage.iShouldSeeTheItemBeingAdded(3, "my test");
+
+		// Cleanup
+		Then.iTeardownMyApp();
 	});
 
 	opaTest("should remove a completed item", function (Given, When, Then) {
 
 		// Arrangements
-		Given.iStartTheApp();
+		Given.iStartMyApp();
 
 		//Actions
 		When.onTheAppPage.iEnterTextForNewItemAndPressEnter("my test")
@@ -33,28 +35,32 @@ sap.ui.define([
 			.and.iEnterTextForNewItemAndPressEnter("my test");
 
 		// Assertions
-		Then.onTheAppPage.iShouldSeeAllButOneItemBeingRemoved("my test").
-			and.iTeardownTheApp();
+		Then.onTheAppPage.iShouldSeeAllButOneItemBeingRemoved("my test");
+
+		// Cleanup
+		Then.iTeardownMyApp();
 	});
 
 	opaTest("should select an item", function (Given, When, Then) {
 
 		// Arrangements
-		Given.iStartTheApp();
+		Given.iStartMyApp();
 
 		//Actions
 		When.onTheAppPage.iEnterTextForNewItemAndPressEnter("my test")
 			.and.iSelectTheLastItem(true);
 
 		// Assertions
-		Then.onTheAppPage.iShouldSeeTheLastItemBeingCompleted(true).
-			and.iTeardownTheApp();
+		Then.onTheAppPage.iShouldSeeTheLastItemBeingCompleted(true);
+
+		// Cleanup
+		Then.iTeardownMyApp();
 	});
 
 	opaTest("should unselect an item", function (Given, When, Then) {
 
 		// Arrangements
-		Given.iStartTheApp();
+		Given.iStartMyApp();
 
 		//Actions
 		When.onTheAppPage.iEnterTextForNewItemAndPressEnter("my test")
@@ -65,14 +71,16 @@ sap.ui.define([
 			.and.iSelectTheLastItem(false);
 
 		// Assertions
-		Then.onTheAppPage.iShouldSeeTheLastItemBeingCompleted(false).
-			and.iTeardownTheApp();
+		Then.onTheAppPage.iShouldSeeTheLastItemBeingCompleted(false);
+
+		// Cleanup
+		Then.iTeardownMyApp();
 	});
 
 	opaTest("should show correct count for completed items", function (Given, When, Then) {
 
 		// Arrangements
-		Given.iStartTheApp();
+		Given.iStartMyApp();
 
 		//Actions
 		When.onTheAppPage.iEnterTextForNewItemAndPressEnter("my test")
@@ -85,8 +93,10 @@ sap.ui.define([
 			.and.iSelectTheLastItem(true);
 
 		// Assertions
-		Then.onTheAppPage.iShouldSeeItemLeftCount(1).
-		and.iTeardownTheApp();
+		Then.onTheAppPage.iShouldSeeItemLeftCount(1);
+
+		// Cleanup
+		Then.iTeardownMyApp();
 	});
 
 });

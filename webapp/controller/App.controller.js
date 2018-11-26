@@ -4,7 +4,7 @@ sap.ui.define([
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator"
 ], function(Controller, JSONModel, Filter, FilterOperator) {
-	'use strict';
+	"use strict";
 
 	return Controller.extend('sap.ui.demo.todo.controller.App', {
 
@@ -18,7 +18,7 @@ sap.ui.define([
 		 */
 		addTodo: function() {
 			var oModel = this.getView().getModel();
-			var aTodos = jQuery.extend(true, [], oModel.getProperty('/todos'));
+			var aTodos = oModel.getProperty('/todos').map(function (oTodo) { return Object.assign({}, oTodo); });
 
 			aTodos.push({
 				title: oModel.getProperty('/newTodo'),
@@ -34,7 +34,7 @@ sap.ui.define([
 		 */
 		clearCompleted: function() {
 			var oModel = this.getView().getModel();
-			var aTodos = jQuery.extend(true, [], oModel.getProperty('/todos'));
+			var aTodos = oModel.getProperty('/todos').map(function (oTodo) { return Object.assign({}, oTodo); });
 
 			var i = aTodos.length;
 			while (i--) {
@@ -85,7 +85,6 @@ sap.ui.define([
 		},
 
 		onFilter: function(oEvent) {
-
 			// First reset current filters
 			this.aTabFilters = [];
 

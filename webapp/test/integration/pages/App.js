@@ -1,12 +1,11 @@
 sap.ui.require([
 	"sap/ui/test/Opa5",
-	"sap/ui/demo/todo/test/integration/pages/Common",
 	"sap/ui/test/matchers/AggregationLengthEquals",
 	"sap/ui/test/matchers/PropertyStrictEquals",
 	"sap/ui/test/matchers/Properties",
 	"sap/ui/test/actions/EnterText",
 	"sap/ui/test/actions/Press"
-], function (Opa5, Common, AggregationLengthEquals, PropertyStrictEquals, Properties, EnterText, Press) {
+], function (Opa5, AggregationLengthEquals, PropertyStrictEquals, Properties, EnterText, Press) {
 	"use strict";
 
 	var sViewName = "sap.ui.demo.todo.view.App";
@@ -18,8 +17,6 @@ sap.ui.require([
 
 	Opa5.createPageObjects({
 		onTheAppPage: {
-
-			baseClass: Common,
 
 			actions: {
 				iEnterTextForNewItemAndPressEnter: function(text) {
