@@ -33,7 +33,7 @@
 				<footer>
 					<Bar>
 						<contentMiddle>
-							<SegmentedButton selectedKey="all" select=".onFilter" class="sapMSegmentedButtonNoAutoWidth">
+							<SegmentedButton selectedKey="all" selectionChange=".onFilter" class="sapMSegmentedButtonNoAutoWidth">
 								<items>
 									<SegmentedButtonItem id="filterButton-all" text="All" key="all"/>
 									<SegmentedButtonItem id="filterButton-active" text="Active" key="active"/>

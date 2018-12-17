@@ -89,7 +89,7 @@ sap.ui.define([
 			this.aTabFilters = [];
 
 			// add filter for search
-			var sFilterKey = oEvent.getParameter("key");
+			var sFilterKey = oEvent.getParameter("item").getKey();
 
 			// eslint-disable-line default-case
 			switch (sFilterKey) {
