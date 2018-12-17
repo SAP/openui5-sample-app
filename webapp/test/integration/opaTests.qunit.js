@@ -7,7 +7,7 @@ sap.ui.getCore().attachInit(function () {
 
 	sap.ui.require([
 		"sap/ui/demo/todo/test/integration/AllJourneys"
-	], function () {
+	], function() {
 		QUnit.start();
 	});
 });
