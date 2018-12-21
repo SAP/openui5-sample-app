@@ -13,14 +13,14 @@
     "build": "rimraf dist && ui5 build --a"
   },
   "dependencies": {
-    "@openui5/sap.m": "^1.52.5",
-    "@openui5/sap.ui.core": "^1.52.5",
-    "@openui5/themelib_sap_belize": "^1.52.5"
+    "@openui5/sap.m": "^1.60.0",
+    "@openui5/sap.ui.core": "^1.60.0",
+    "@openui5/themelib_sap_belize": "^1.60.0"
   },
   "devDependencies": {
-    "@ui5/cli": "^0.2.1",
+    "@ui5/cli": "^0.2.8",
     "eslint": "^4.19.1",
-    "karma": "^2.0.5",
+    "karma": "^3.1.3",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
     "karma-openui5": "^0.2.3",

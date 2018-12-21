@@ -6,12 +6,12 @@
 					<Toolbar>
 						<SearchField
 							id="searchTodoItemsInput"
-							liveChange="onSearch"
-							width="100%" />
+							liveChange=".onSearch"
+							width="100%"/>
 					</Toolbar>
 				</subHeader>
 				<content>
-					<Input class="todoInput" id="addTodoItemInput" value="{/newTodo}" placeholder="{i18n>INPUT_PLACEHOLDER}" change="addTodo" />
+					<Input class="todoInput" id="addTodoItemInput" value="{/newTodo}" placeholder="{i18n>INPUT_PLACEHOLDER}" change=".addTodo"/>
 					<List id="todoList"
 						items="{ path: '/todos', events: { change: '.updateItemsLeftCount' } }"
 						mode="MultiSelect"
@@ -33,16 +33,16 @@
 				<footer>
 					<Bar>
 						<contentMiddle>
-							<SegmentedButton selectedKey="all" select="onFilter" class="sapMSegmentedButtonNoAutoWidth">
+							<SegmentedButton selectedKey="all" selectionChange=".onFilter" class="sapMSegmentedButtonNoAutoWidth">
 								<items>
-									<SegmentedButtonItem id="filterButton-all" text="All" key="all" />
-									<SegmentedButtonItem id="filterButton-active" text="Active" key="active" />
-									<SegmentedButtonItem id="filterButton-completed" text="Completed" key="completed" />
+									<SegmentedButtonItem id="filterButton-all" text="All" key="all"/>
+									<SegmentedButtonItem id="filterButton-active" text="Active" key="active"/>
+									<SegmentedButtonItem id="filterButton-completed" text="Completed" key="completed"/>
 								</items>
 							</SegmentedButton>
 						</contentMiddle>
 						<contentRight>
-							<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press="clearCompleted" />
+							<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".clearCompleted"/>
 						</contentRight>
 					</Bar>
 				</footer>

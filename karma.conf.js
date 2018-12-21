@@ -26,7 +26,7 @@ module.exports = function(config) {
 					resourceroots: {'sap.ui.demo.todo': './base'}
 				},
 				tests: [
-					'sap/ui/demo/todo/test/unit/allTests',
+					'sap/ui/demo/todo/test/unit/AllTests',
 					'sap/ui/demo/todo/test/integration/AllJourneys'
 				]
 			},

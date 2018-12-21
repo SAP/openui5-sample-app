@@ -1,36 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>OpenUI5 Todo App</title>
 
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<meta charset="UTF-8">
-
-	<script id="sap-ui-bootstrap" type="text/javascript"
+	<script id="sap-ui-bootstrap"
 		src="resources/sap-ui-core.js"
-		data-sap-ui-theme="sap_belize"
 		data-sap-ui-libs="sap.m"
-		data-sap-ui-bindingSyntax="complex"
+		data-sap-ui-xx-waitForTheme="true"
+		data-sap-ui-theme="sap_belize_plus"
+		data-sap-ui-resourceRoots='{
+			"sap.ui.demo.todo": "./"
+		}'
+		data-sap-ui-onInit="module:sap/ui/core/ComponentSupport"
 		data-sap-ui-compatVersion="edge"
-		data-sap-ui-preload="async"
-		data-sap-ui-resourceRoots='{"sap.ui.demo.todo": "./"}'>
+		data-sap-ui-async="true">
 	</script>
-	<script>
-		sap.ui.getCore().attachInit(function() {
-			sap.ui.require([
-				"sap/ui/core/ComponentContainer"
-			], function(ComponentContainer) {
-				new ComponentContainer({
-					name: "sap.ui.demo.todo",
-					settings: {
-						id: "todo"
-					},
-					manifest: true
-				}).placeAt("root");
-			});
-		});
-	</script>
-
 </head>
-<body class="sapUiBody" id="root" role="application"></body>
+
+<body class="sapUiBody">
+	<div data-sap-ui-component data-name="sap.ui.demo.todo" data-id="container" data-settings='{"id" : "todo"}'></div>
+</body>
 </html>
