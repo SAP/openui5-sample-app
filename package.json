@@ -13,9 +13,9 @@
     "build": "rimraf dist && ui5 build --a"
   },
   "dependencies": {
-    "@openui5/sap.m": "^1.52.5",
-    "@openui5/sap.ui.core": "^1.52.5",
-    "@openui5/themelib_sap_belize": "^1.52.5"
+    "@openui5/sap.m": "^1.60.0",
+    "@openui5/sap.ui.core": "^1.60.0",
+    "@openui5/themelib_sap_belize": "^1.60.0"
   },
   "devDependencies": {
     "@ui5/cli": "^0.2.1",
