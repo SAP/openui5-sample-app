@@ -73,7 +73,7 @@
         ```sh
         serve ./dist
         ```
-    1. Open the app at http://localhost:5000/index-self-contained.html (Note the different path)
+    1. Open the app at http://localhost:5000/index.html
 
 ## Working with local dependencies
 
