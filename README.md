@@ -73,11 +73,11 @@
         ```sh
         serve ./dist
         ```
-    1. Open the app at http://localhost:5000/index-self-contained.html (Note the different path)
+    1. Open the app at http://localhost:5000/index.html
 
 ## Working with local dependencies
 
-For local development of your applications' dependencies (like OpenUI5 libraries) you can link them by using Yarn. This will allow you to make changes to your applications dependencies locally and the impact in your application immediately.
+For local development of your applications' dependencies (like OpenUI5 libraries) you can link them by using Yarn. This will allow you to make changes to your applications dependencies locally and see the impact in your application immediately.
 
 **Note:** Currently only Yarn understands the [workspace](https://yarnpkg.com/lang/en/docs/workspaces/) package setting used in the OpenUI5 repository. If you do not plan to work with OpenUI5 you might as well use npm. But keep in mind that linking the same module with npm and Yarn might lead to issues. Also, Yarn can't work with links created by npm and vice versa. See [FAQ: What's the thing with yarn?](https://github.com/SAP/ui5-tooling#whats-the-thing-with-yarn) for details.
 
