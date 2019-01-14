@@ -9,7 +9,8 @@ sap.ui.define([
 			this.iStartMyUIComponent({
 				componentConfig: {
 					name: "sap.ui.demo.todo",
-					async: true
+					async: true,
+					manifest: true
 				}
 			});
 		}
