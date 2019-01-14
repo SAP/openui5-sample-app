@@ -22,7 +22,7 @@ module.exports = function(config) {
 					language: 'EN',
 					bindingSyntax: 'complex',
 					compatVersion: 'edge',
-					preload: 'async',
+					async: true,
 					resourceroots: {'sap.ui.demo.todo': './base'}
 				},
 				tests: [
