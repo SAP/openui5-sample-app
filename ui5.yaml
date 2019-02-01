@@ -2,3 +2,35 @@ specVersion: '1.0'
 metadata:
   name: openui5-sample-app
 type: application
+builder:
+  bundles:
+  - bundleDefinition:
+      name: sap-ui-custom.js
+      defaultFileTypes:
+      - ".js"
+      - ".fragment.xml"
+      - ".view.xml"
+      - ".properties"
+      - ".json"
+      sections:
+      - mode: raw
+        filters:
+        - ui5loader-autoconfig.js
+        resolve: true
+        sort: true
+        declareModules: false
+      - mode: preload
+        filters:
+        - "sap/ui/demo/todo/"
+        - "!sap/ui/demo/todo/test/"
+        - "!sap/ui/demo/todo/*.html"
+        - "sap/ui/core/Core.js"
+        resolve: true
+        resolveConditional: true
+        renderer: true
+      - mode: require
+        filters:
+        - "sap/ui/core/Core.js"
+    bundleOptions:
+      optimize: true
+      numberOfParts: 2
