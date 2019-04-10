@@ -24,15 +24,15 @@
     ```
 
 ## Testing
-* Run ESLint code validation
+* Run [ESLint](https://eslint.org/) code validation
     ```sh
     npm run lint
     ```
-* Start a local server and execute the tests automatically after every change
+* Start the [Karma Test Runner](https://karma-runner.github.io/latest/index.html) with the [UI5 Plugin](https://github.com/SAP/karma-ui5) and execute the tests automatically after every change
     ```sh
     npm run watch
     ```
-* Run ESLint, start a local server and run the tests in CI mode
+* Run both ESLint and Karma in CI mode
     ```sh
     npm test
     ```
