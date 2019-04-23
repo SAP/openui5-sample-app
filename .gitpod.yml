@@ -1,0 +1,8 @@
+image:
+  file: Dockerfile
+ports:
+- port: 8080
+  onOpen: ignore
+tasks:
+- init: npm install
+  command: sleep 5 && gp preview $(gp url 8080)index.html & ui5 serve
