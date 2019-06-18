@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@ui5/cli": "^1.2.0",
-    "eslint": "^4.19.1",
+    "eslint": "^5.16.0",
     "karma": "^4.0.1",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
