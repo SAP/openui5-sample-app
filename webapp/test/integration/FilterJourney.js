@@ -19,6 +19,8 @@ sap.ui.define([
 		// Assertions
 		Then.onTheAppPage.iShouldSeeItemCount(1);
 
+		Then.iShouldNotHaveAnySupportRuleFailures();
+
 		// Cleanup
 		Then.iTeardownMyApp();
 	});
@@ -33,6 +35,8 @@ sap.ui.define([
 
 		// Assertions
 		Then.onTheAppPage.iShouldSeeItemCount(1);
+
+		Then.iShouldNotHaveAnySupportRuleFailures();
 
 		// Cleanup
 		Then.iTeardownMyApp();
@@ -54,6 +58,8 @@ sap.ui.define([
 
 		// Assertions
 		Then.onTheAppPage.iShouldSeeItemCount(2);
+
+		Then.iShouldNotHaveAnySupportRuleFailures();
 
 		// Cleanup
 		Then.iTeardownMyApp();

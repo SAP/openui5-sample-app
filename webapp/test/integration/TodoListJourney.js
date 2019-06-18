@@ -19,6 +19,8 @@ sap.ui.define([
 		// Assertions
 		Then.onTheAppPage.iShouldSeeTheItemBeingAdded(3, "my test");
 
+		Then.iShouldNotHaveAnySupportRuleFailures();
+
 		// Cleanup
 		Then.iTeardownMyApp();
 	});
@@ -37,6 +39,8 @@ sap.ui.define([
 		// Assertions
 		Then.onTheAppPage.iShouldSeeAllButOneItemBeingRemoved("my test");
 
+		Then.iShouldNotHaveAnySupportRuleFailures();
+
 		// Cleanup
 		Then.iTeardownMyApp();
 	});
@@ -52,6 +56,8 @@ sap.ui.define([
 
 		// Assertions
 		Then.onTheAppPage.iShouldSeeTheLastItemBeingCompleted(true);
+
+		Then.iShouldNotHaveAnySupportRuleFailures();
 
 		// Cleanup
 		Then.iTeardownMyApp();
@@ -72,6 +78,8 @@ sap.ui.define([
 
 		// Assertions
 		Then.onTheAppPage.iShouldSeeTheLastItemBeingCompleted(false);
+
+		Then.iShouldNotHaveAnySupportRuleFailures();
 
 		// Cleanup
 		Then.iTeardownMyApp();
@@ -94,6 +102,8 @@ sap.ui.define([
 
 		// Assertions
 		Then.onTheAppPage.iShouldSeeItemLeftCount(1);
+
+		Then.iShouldNotHaveAnySupportRuleFailures();
 
 		// Cleanup
 		Then.iTeardownMyApp();
