@@ -7,9 +7,9 @@
     "start": "ui5 serve",
     "lint": "eslint webapp",
     "karma": "karma start",
-    "karma-ci": "karma start karma-ci.conf.js",
+    "karma-ci": "rimraf coverage && karma start karma-ci.conf.js",
     "watch": "npm run karma",
-    "test": "npm run lint && rimraf coverage && npm run karma-ci",
+    "test": "npm run lint && npm run karma-ci",
     "build": "rimraf dist && ui5 build -a",
     "build-self-contained": "rimraf dist && ui5 build self-contained -a",
     "serve-dist": "ws --compress -d dist"
