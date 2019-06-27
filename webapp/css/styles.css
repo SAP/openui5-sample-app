@@ -5,6 +5,6 @@
 }
 
 /* strikes through the completed input fields */
-.todoListInput input:disabled {
+.todoListItem input:disabled {
 	text-decoration: line-through;
 }

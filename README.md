@@ -43,16 +43,12 @@
     ui5 build -a
     ```
 1. Run the result
-    1. Install an HTTP server like [zeit/serve](https://www.npmjs.com/package/serve) (**Note:** You can use any HTTP server. If you use zeit/serve, please use version 6 as gzip support has been removed in newer versions.)
+    1. Run a local HTTP server on the build results (`/dist` directory)  
+	(**Note:** This script is using the [local-web-server](https://www.npmjs.com/package/local-web-server) npm module, but you can use any HTTP server for that)
         ```sh
-        # Install zeit/serve
-        npm install --global serve@6
+        npm run serve-dist
         ```
-    1. Start an HTTP server for the newly created `/dist` directory
-        ```sh
-        serve ./dist
-        ```
-    1. Open the app at http://localhost:5000/index.html
+    1. Open the app at http://localhost:8000
 
 ### Option 2: Self-contained build
 1. (Optional) Remove previous build results
@@ -64,16 +60,12 @@
     ui5 build self-contained -a
     ```
 1. Run the result
-    1. Install an HTTP server like [zeit/serve](https://www.npmjs.com/package/serve) (**Note:** You can use any HTTP server. If you use zeit/serve, please use version 6 as gzip support has been removed in newer versions.)
+    1. Run a local HTTP server on the build results (`/dist` directory)  
+	(**Note:** This script is using the [local-web-server](https://www.npmjs.com/package/local-web-server) npm module, but you can use any HTTP server for that)
         ```sh
-        # Install zeit/serve in version 6, as gzip support has been removed in newer versions
-        npm install --global serve@6
+        npm run serve-dist
         ```
-    1. Start an HTTP server for the newly created `/dist` directory
-        ```sh
-        serve ./dist
-        ```
-    1. Open the app at http://localhost:5000/index.html
+    1. Open the app at http://localhost:8000
 
 ## Working with local dependencies
 
@@ -90,7 +82,7 @@ For local development of your applications' dependencies (like OpenUI5 libraries
 The following needs to be done just once per setup.
 
 1. Clone the OpenUI5 repository and navigate into it
-    **Note:** The UI5 version must be 1.52.5 or higher, you can check that in the root `package.json` file
+    **Note:** The UI5 version must be 1.65.0 or higher, you can check that in the root `package.json` file
     ```sh
     git clone https://github.com/SAP/openui5.git
     cd openui5
@@ -109,7 +101,7 @@ The following needs to be done just once per setup.
     ```sh
     yarn link @openui5/sap.ui.core
     yarn link @openui5/sap.m
-    yarn link @openui5/themelib_sap_belize
+    yarn link @openui5/themelib_sap_fiori_3
     ```
 
 You can now make changes in your local OpenUI5 repository and see the impact directly when serving or building your application.
@@ -121,7 +113,7 @@ To return to using the OpenUI5 npm packages
     ```sh
     yarn unlink @openui5/sap.ui.core
     yarn unlink @openui5/sap.m
-    yarn unlink @openui5/themelib_sap_belize
+    yarn unlink @openui5/themelib_sap_fiori_3
     ```
 1. Re-install the packages from the registry
     ```sh
