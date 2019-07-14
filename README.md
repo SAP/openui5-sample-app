@@ -2,8 +2,8 @@
 
 
 # Used openui5-sample-app for including openui5-fhir for testing
-> [OpenUI5-fhir](https://github.com/gb-it/openui5-fhir/blob/master/docs/tutorials/1%20Getting%20Started.md) 
-> [OpenUI5](https://github.com/SAP/openui5) sample app using the [UI5 Tooling](https://github.com/SAP/ui5-tooling).
+*  [OpenUI5-fhir](https://github.com/gb-it/openui5-fhir/blob/master/docs/tutorials/1%20Getting%20Started.md).
+* [OpenUI5](https://github.com/SAP/openui5) sample app using the [UI5 Tooling](https://github.com/SAP/ui5-tooling).
 
 ## Prerequisites
 - The **UI5 CLI** of the [UI5 Tooling](https://github.com/SAP/ui5-tooling#installing-the-ui5-cli).
