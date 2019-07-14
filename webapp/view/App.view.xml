@@ -1,52 +1,7 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="sap.ui.demo.todo.controller.App" displayBlock="true">
 	<Shell>
 		<App>
-			<!-- <Page title="{i18n>TITLE}" backgroundDesign="Solid">
-				<subHeader>
-					<Toolbar>
-						<SearchField
-							id="searchTodoItemsInput"
-							liveChange=".onSearch"
-							width="100%"/>
-					</Toolbar>
-				</subHeader>
-				<content>
-					<Input class="todoInput" id="addTodoItemInput" value="{/newTodo}" placeholder="{i18n>INPUT_PLACEHOLDER}" change=".addTodo"/>
-					<List id="todoList"
-						items="{ path: '/todos', events: { change: '.updateItemsLeftCount' } }"
-						mode="MultiSelect"
-						growing="true"
-						growingScrollToLoad="true"
-						showNoData="false"
-						showSeparators="None"
-						rememberSelections="false">
-						<infoToolbar>
-							<Toolbar>
-								<Label id="itemsLeftLabel" text="{= ${/itemsLeftCount} === 1 ? ${/itemsLeftCount} + ' ' + ${i18n>ITEM_LEFT} : ${/itemsLeftCount} + ' ' + ${i18n>ITEMS_LEFT} }"/>
-							</Toolbar>
-						</infoToolbar>
-						<CustomListItem class="todoListItem" selected="{completed}">
-							<Input enabled="{=!${completed}}" value="{title}"/>
-						</CustomListItem>
-					</List>
-				</content>
-				<footer>
-					<Bar>
-						<contentMiddle>
-							<SegmentedButton selectedKey="all" selectionChange=".onFilter" class="sapMSegmentedButtonNoAutoWidth">
-								<items>
-									<SegmentedButtonItem id="filterButton-all" text="All" key="all"/>
-									<SegmentedButtonItem id="filterButton-active" text="Active" key="active"/>
-									<SegmentedButtonItem id="filterButton-completed" text="Completed" key="completed"/>
-								</items>
-							</SegmentedButton>
-						</contentMiddle>
-						<contentRight>
-							<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".clearCompleted"/>
-						</contentRight>
-					</Bar>
-				</footer>
-			</Page> -->
+
 	<Page title="{i18n>title}">
 		<content>
 			<GenericTile id="myPatientsTile" binding="{/Patient}" class="sapUiTinyMarginBegin sapUiTinyMarginTop" header="My Patients" press="onMyPatientsTilePress">
@@ -59,13 +14,23 @@
 					<NumericContent value="{%total%}" icon="sap-icon://org-chart"/>
 				</TileContent>
 			</GenericTile>
+			
+	<List id="PatientList"
+						items="{ path: '/Patient' }"
+						mode="MultiSelect"
+						growing="true"
+						growingScrollToLoad="true"
+						showNoData="false"
+						showSeparators="None"
+						rememberSelections="false">
+					<StandardListItem
+			title="{birthDate}"
+			description="{gender}"
+			iconInset="false" />
+						
+					</List>
 		</content>
-		<footer>
-			<Toolbar>
-				<Label text="{i18n>homeFooterText}"/>
-			</Toolbar>
-		</footer>
-	</Page>
+			</Page>
 		</App>
 	</Shell>
 </mvc:View>
