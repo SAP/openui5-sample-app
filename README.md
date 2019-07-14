@@ -1,6 +1,8 @@
-![OpenUI5 logo](http://openui5.org/images/OpenUI5_new_big_side.png)
 
-# openui5-sample-app
+
+
+# Used openui5-sample-app for including openui5-fhir for testing
+> [OpenUI5-fhir](https://github.com/gb-it/openui5-fhir/blob/master/docs/tutorials/1%20Getting%20Started.md) 
 > [OpenUI5](https://github.com/SAP/openui5) sample app using the [UI5 Tooling](https://github.com/SAP/ui5-tooling).
 
 ## Prerequisites
