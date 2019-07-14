@@ -1,7 +1,7 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="sap.ui.demo.todo.controller.App" displayBlock="true">
 	<Shell>
 		<App>
-			<Page title="{i18n>TITLE}" backgroundDesign="Solid">
+			<!-- <Page title="{i18n>TITLE}" backgroundDesign="Solid">
 				<subHeader>
 					<Toolbar>
 						<SearchField
@@ -46,7 +46,26 @@
 						</contentRight>
 					</Bar>
 				</footer>
-			</Page>
+			</Page> -->
+	<Page title="{i18n>title}">
+		<content>
+			<GenericTile id="myPatientsTile" binding="{/Patient}" class="sapUiTinyMarginBegin sapUiTinyMarginTop" header="My Patients" press="onMyPatientsTilePress">
+				<TileContent unit="Patients">
+					<NumericContent value="{%total%}" icon="sap-icon://stethoscope"/>
+				</TileContent>
+			</GenericTile>
+			<GenericTile id="myOrganizationsTile" binding="{/Organization}" class="sapUiTinyMarginBegin sapUiTinyMarginTop" header="My Organizations" press="onMyOrganzationsTilePress">
+				<TileContent unit="Organizations">
+					<NumericContent value="{%total%}" icon="sap-icon://org-chart"/>
+				</TileContent>
+			</GenericTile>
+		</content>
+		<footer>
+			<Toolbar>
+				<Label text="{i18n>homeFooterText}"/>
+			</Toolbar>
+		</footer>
+	</Page>
 		</App>
 	</Shell>
 </mvc:View>
