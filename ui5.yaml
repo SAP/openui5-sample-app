@@ -2,3 +2,6 @@ specVersion: '1.0'
 metadata:
   name: openui5-sample-app
 type: application
+resources:
+  configuration:
+    propertiesFileSourceEncoding: "UTF-8"
