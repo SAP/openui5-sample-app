@@ -15,9 +15,9 @@
     "serve-dist": "ws --compress -d dist"
   },
   "dependencies": {
-    "@openui5/sap.m": "^1.68.1",
-    "@openui5/sap.ui.core": "^1.68.1",
-    "@openui5/themelib_sap_fiori_3": "^1.68.1"
+    "@openui5/sap.m": "^1.69.1",
+    "@openui5/sap.ui.core": "^1.69.1",
+    "@openui5/themelib_sap_fiori_3": "^1.69.1"
   },
   "devDependencies": {
     "@ui5/cli": "^1.7.0",
@@ -27,6 +27,6 @@
     "karma-coverage": "^1.1.2",
     "karma-ui5": "^1.0.0",
     "local-web-server": "^3.0.7",
-    "rimraf": "^2.6.2"
+    "rimraf": "^2.7.1"
   }
 }
