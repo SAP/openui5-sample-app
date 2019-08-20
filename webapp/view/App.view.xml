@@ -1,7 +1,7 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="sap.ui.demo.todo.controller.App" displayBlock="true">
 	<Shell>
 		<App>
-			<Page title="{i18n>TITLE}" backgroundDesign="Solid">
+			<Page title="{i18n>TITLE}" backgroundDesign="List">
 				<subHeader>
 					<Toolbar>
 						<SearchField
