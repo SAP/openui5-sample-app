@@ -14,13 +14,9 @@
     "build-self-contained": "ui5 build self-contained -a --clean-dest",
     "serve-dist": "ws --compress -d dist"
   },
-  "dependencies": {
-    "@openui5/sap.m": "^1.76.0",
-    "@openui5/sap.ui.core": "^1.76.0",
-    "@openui5/themelib_sap_fiori_3": "^1.76.0"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@ui5/cli": "^1.14.0",
+    "@ui5/cli": "^2.0.0",
     "eslint": "^5.16.0",
     "karma": "^4.4.1",
     "karma-chrome-launcher": "^3.1.0",
