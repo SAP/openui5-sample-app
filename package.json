@@ -10,8 +10,8 @@
     "karma-ci": "rimraf coverage && karma start karma-ci.conf.js",
     "watch": "npm run karma",
     "test": "npm run lint && npm run karma-ci",
-    "build": "rimraf dist && ui5 build -a",
-    "build-self-contained": "rimraf dist && ui5 build self-contained -a",
+    "build": "ui5 build -a --clean-dest",
+    "build-self-contained": "ui5 build self-contained -a --clean-dest",
     "serve-dist": "ws --compress -d dist"
   },
   "dependencies": {
@@ -23,10 +23,10 @@
     "@ui5/cli": "^1.9.0",
     "eslint": "^5.16.0",
     "karma": "^4.3.0",
-    "karma-chrome-launcher": "^2.2.0",
-    "karma-coverage": "^1.1.2",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-coverage": "^2.0.1",
     "karma-ui5": "^1.0.0",
     "local-web-server": "^3.0.7",
-    "rimraf": "^2.7.1"
+    "rimraf": "^3.0.0"
   }
 }
