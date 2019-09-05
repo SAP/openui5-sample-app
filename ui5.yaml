@@ -1,7 +1,11 @@
-specVersion: '1.0'
+specVersion: '2.0'
 metadata:
   name: openui5-sample-app
 type: application
-resources:
-  configuration:
-    propertiesFileSourceEncoding: "UTF-8"
+framework:
+  name: OpenUI5
+  version: 1.76.0
+  libraries:
+    - name: sap.m
+    - name: sap.ui.core
+    - name: themelib_sap_fiori_3
