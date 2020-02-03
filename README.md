@@ -75,7 +75,7 @@ For local development of your applications' dependencies (like OpenUI5 libraries
 
 ### Prerequisites
 
-- [Yarn](https://yarnpkg.com/en/docs/install) (**version must be 1.0 or higher**)
+- [Yarn](https://yarnpkg.com/en/docs/install) (**version must be 1.x**)
     - *Note that you can use npm instead of Yarn if you do not plan to work with a local copy of the [OpenUI5 main repository](https://github.com/SAP/openui5). See [FAQ: What's the thing with yarn?](https://github.com/SAP/ui5-tooling#whats-the-thing-with-yarn)*
 
 ### Preparation
