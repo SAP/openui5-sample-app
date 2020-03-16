@@ -15,9 +15,9 @@
     "serve-dist": "ws --compress -d dist"
   },
   "dependencies": {
-    "@openui5/sap.m": "^1.74.0",
-    "@openui5/sap.ui.core": "^1.74.0",
-    "@openui5/themelib_sap_fiori_3": "^1.74.0"
+    "@openui5/sap.m": "^1.75.0",
+    "@openui5/sap.ui.core": "^1.75.0",
+    "@openui5/themelib_sap_fiori_3": "^1.75.0"
   },
   "devDependencies": {
     "@ui5/cli": "^1.14.0",
