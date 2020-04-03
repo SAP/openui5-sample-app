@@ -1,28 +1,28 @@
 {
-  "name": "openui5-sample-app",
-  "version": "0.2.0",
-  "description": "Sample of an OpenUI5 app",
-  "private": true,
-  "scripts": {
-    "start": "ui5 serve",
-    "lint": "eslint webapp",
-    "karma": "karma start",
-    "karma-ci": "rimraf coverage && karma start karma-ci.conf.js",
-    "watch": "npm run karma",
-    "test": "npm run lint && npm run karma-ci",
-    "build": "ui5 build -a --clean-dest",
-    "build-self-contained": "ui5 build self-contained -a --clean-dest",
-    "serve-dist": "ws --compress -d dist"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "@ui5/cli": "^2.0.2",
-    "eslint": "^5.16.0",
-    "karma": "^4.4.1",
-    "karma-chrome-launcher": "^3.1.0",
-    "karma-coverage": "^2.0.1",
-    "karma-ui5": "^2.0.0",
-    "local-web-server": "^3.0.7",
-    "rimraf": "^3.0.2"
-  }
+	"name": "openui5-sample-app",
+	"version": "0.2.0",
+	"description": "Sample of an OpenUI5 app",
+	"private": true,
+	"scripts": {
+		"start": "ui5 serve",
+		"lint": "eslint webapp",
+		"karma": "karma start",
+		"karma-ci": "rimraf coverage && karma start karma-ci.conf.js",
+		"watch": "npm run karma",
+		"test": "npm run lint && npm run karma-ci",
+		"build": "ui5 build -a --clean-dest",
+		"build-self-contained": "ui5 build self-contained -a --clean-dest",
+		"serve-dist": "ws --compress -d dist"
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"@ui5/cli": "^2.0.2",
+		"eslint": "^5.16.0",
+		"karma": "^4.4.1",
+		"karma-chrome-launcher": "^3.1.0",
+		"karma-coverage": "^2.0.1",
+		"karma-ui5": "^2.0.0",
+		"local-web-server": "^3.0.7",
+		"rimraf": "^3.0.2"
+	}
 }
