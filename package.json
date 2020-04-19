@@ -20,7 +20,7 @@
 		"eslint": "^5.16.0",
 		"karma": "^4.4.1",
 		"karma-chrome-launcher": "^3.1.0",
-		"karma-coverage": "^2.0.1",
+		"karma-coverage": "^2.0.2",
 		"karma-ui5": "^2.1.0",
 		"local-web-server": "^3.0.7",
 		"rimraf": "^3.0.2"
