@@ -26,9 +26,9 @@
 										<SearchField id="searchTodoItemsInput" liveChange=".onSearch" width="20rem"/>
 										<SegmentedButton selectedKey="all" selectionChange=".onFilter" class="sapMSegmentedButtonNoAutoWidth">
 											<items>
-												<SegmentedButtonItem text="All" key="all"/>
-												<SegmentedButtonItem text="Active" key="active"/>
-												<SegmentedButtonItem text="Completed" key="completed"/>
+												<SegmentedButtonItem text="{i18n>LABEL_ALL}" key="all"/>
+												<SegmentedButtonItem text="{i18n>LABEL_ACTIVE}" key="active"/>
+												<SegmentedButtonItem text="{i18n>LABEL_COMPLETED}" key="completed"/>
 											</items>
 										</SegmentedButton>
 										<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".clearCompleted"/>
