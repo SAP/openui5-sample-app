@@ -42,7 +42,7 @@ sap.ui.require([
 						// selectionChange
 						actions: [function(oList) {
 							var iLength = oList.getItems().length;
-							var oListItem = oList.getItems()[iLength - 1];
+							var oListItem = oList.getItems()[iLength - 1].getContent()[0].getItems()[0];
 							this._triggerCheckboxSelection(oListItem, bSelected);
 						}.bind(this)],
 						errorMessage: "Last checkbox cannot be pressed"
@@ -55,7 +55,8 @@ sap.ui.require([
 						actions: [function(oList) {
 
 							oList.getItems().forEach(function(oListItem) {
-								this._triggerCheckboxSelection(oListItem, bSelected)
+								var oCheckbox = oListItem.getContent()[0].getItems()[0];
+								this._triggerCheckboxSelection(oCheckbox, bSelected)
 
 							}.bind(this));
 						}.bind(this)],
@@ -102,9 +103,9 @@ sap.ui.require([
 							length: iItemCount
 						}), function(oControl) {
 							var iLength = oControl.getItems().length;
-							var oInput = oControl.getItems()[iLength - 1].getContent()[0];
+							var oInput = oControl.getItems()[iLength - 1].getContent()[0].getItems()[1].getItems()[0];
 							return new PropertyStrictEquals({
-								name: "value",
+								name: "text",
 								value: sLastAddedText
 							}).isMatching(oInput);
 						}],
@@ -120,8 +121,8 @@ sap.ui.require([
 						viewName: sViewName,
 						matchers: [function(oControl) {
 							var iLength = oControl.getItems().length;
-							var oInput = oControl.getItems()[iLength - 1].getContent()[0];
-							return bSelected && !oInput.getEnabled() || !bSelected && oInput.getEnabled();
+							var oCheckbox = oControl.getItems()[iLength - 1].getContent()[0].getItems()[0];
+							return bSelected && oCheckbox.getSelected() || !bSelected && !oCheckbox.getSelected();
 						}],
 						success: function() {
 							Opa5.assert.ok(true, "The last item is marked as completed");
@@ -137,9 +138,9 @@ sap.ui.require([
 							name: "items",
 							length: 1
 						}), function(oControl) {
-							var oInput = oControl.getItems()[0].getContent()[0];
+							var oInput = oControl.getItems()[0].getContent()[0].getItems()[1].getItems()[0];
 							return new PropertyStrictEquals({
-								name: "value",
+								name: "text",
 								value: sLastItemText
 							}).isMatching(oInput);
 						}],

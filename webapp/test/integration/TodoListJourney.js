@@ -76,27 +76,4 @@ sap.ui.define([
 		// Cleanup
 		Then.iTeardownMyApp();
 	});
-
-	opaTest("should show correct count for completed items", function (Given, When, Then) {
-
-		// Arrangements
-		Given.iStartMyApp();
-
-		//Actions
-		When.onTheAppPage.iEnterTextForNewItemAndPressEnter("my test")
-			.and.iSelectAllItems(true)
-			.and.iClearTheCompletedItems()
-			.and.iEnterTextForNewItemAndPressEnter("first")
-			.and.iSelectTheLastItem(true)
-			.and.iEnterTextForNewItemAndPressEnter("second")
-			.and.iEnterTextForNewItemAndPressEnter("third")
-			.and.iSelectTheLastItem(true);
-
-		// Assertions
-		Then.onTheAppPage.iShouldSeeItemLeftCount(1);
-
-		// Cleanup
-		Then.iTeardownMyApp();
-	});
-
 });
