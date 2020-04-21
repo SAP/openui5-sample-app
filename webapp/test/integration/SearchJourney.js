@@ -54,4 +54,52 @@ sap.ui.define([
 		Then.iTeardownMyApp();
 	});
 
+	opaTest("should show correct item count after search and active items filter", function (Given, When, Then) {
+
+		// Arrangements
+		Given.iStartMyApp();
+
+		//Actions
+		When.onTheAppPage.iEnterTextForSearchAndPressEnter("earn")
+			.and.iFilterForItems("active");
+
+		// Assertions
+		Then.onTheAppPage.iShouldSeeItemCount(1);
+
+		// Cleanup
+		Then.iTeardownMyApp();
+	});
+
+	opaTest("should show correct item count after search and completed items filter", function (Given, When, Then) {
+
+		// Arrangements
+		Given.iStartMyApp();
+
+		//Actions
+		When.onTheAppPage.iEnterTextForSearchAndPressEnter("earn")
+			.and.iFilterForItems("completed");
+
+		// Assertions
+		Then.onTheAppPage.iShouldSeeItemCount(0);
+
+		// Cleanup
+		Then.iTeardownMyApp();
+	});
+
+	opaTest("should show correct item count after search and all items filter", function (Given, When, Then) {
+
+		// Arrangements
+		Given.iStartMyApp();
+
+		//Actions
+		When.onTheAppPage.iEnterTextForSearchAndPressEnter("earn")
+			.and.iFilterForItems("all");
+
+		// Assertions
+		Then.onTheAppPage.iShouldSeeItemCount(1);
+
+		// Cleanup
+		Then.iTeardownMyApp();
+	});
+
 });

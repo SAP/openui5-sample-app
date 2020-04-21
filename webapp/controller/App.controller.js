@@ -123,7 +123,8 @@ sap.ui.define([
 			if (this.sFilterKey && this.sFilterKey !== "all") {
 				if (this.sFilterKey === "active") {
 					sI18nKey = "ACTIVE_ITEMS";
-				} else if (this.sFilterKey === "completed") {
+				} else {
+					// completed items: sFilterKey = "completed"
 					sI18nKey = "COMPLETED_ITEMS";
 				}
 				if (this.sSearchQuery) {

@@ -31,7 +31,7 @@ module.exports = function(config) {
 
 		reporters: ["progress", "coverage"],
 
-		browsers: ["ChromeHeadless"],
+		browsers: ["CustomChromeHeadless"],
 
 		singleRun: true
 
