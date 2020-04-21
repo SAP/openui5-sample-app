@@ -1,10 +1,4 @@
-.todoInput,
-.todoListItem{
-	padding-left: 0.25rem;
-	padding-right: 0.25rem;
-}
-
-/* strikes through the completed input fields */
-.todoListItem input:disabled {
+/* Strikes through the completed items */
+li[data-todo-item-completed="true"] span {
 	text-decoration: line-through;
 }

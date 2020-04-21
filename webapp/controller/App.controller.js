@@ -1,8 +1,10 @@
 sap.ui.define([
+	"sap/ui/Device",
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/Filter",
-	"sap/ui/model/FilterOperator"
-], function(Controller, Filter, FilterOperator) {
+	"sap/ui/model/FilterOperator",
+	"sap/ui/model/json/JSONModel"
+], function(Device, Controller, Filter, FilterOperator, JSONModel) {
 	"use strict";
 
 	return Controller.extend("sap.ui.demo.todo.controller.App", {
@@ -10,6 +12,11 @@ sap.ui.define([
 		onInit: function() {
 			this.aSearchFilters = [];
 			this.aTabFilters = [];
+
+			this.getView().setModel(new JSONModel({
+				isMobile: Device.browser.mobile,
+				filterText: undefined
+			}), "view");
 		},
 
 		/**
@@ -71,10 +78,10 @@ sap.ui.define([
 			this.aSearchFilters = [];
 
 			// add filter for search
-			var sQuery = oEvent.getSource().getValue();
-			if (sQuery && sQuery.length > 0) {
+			this.sSearchQuery = oEvent.getSource().getValue();
+			if (this.sSearchQuery && this.sSearchQuery.length > 0) {
 				oModel.setProperty("/itemsRemovable", false);
-				var filter = new Filter("title", FilterOperator.Contains, sQuery);
+				var filter = new Filter("title", FilterOperator.Contains, this.sSearchQuery);
 				this.aSearchFilters.push(filter);
 			} else {
 				oModel.setProperty("/itemsRemovable", true);
@@ -88,10 +95,10 @@ sap.ui.define([
 			this.aTabFilters = [];
 
 			// add filter for search
-			var sFilterKey = oEvent.getParameter("item").getKey();
+			this.sFilterKey = oEvent.getParameter("item").getKey();
 
 			// eslint-disable-line default-case
-			switch (sFilterKey) {
+			switch (this.sFilterKey) {
 				case "active":
 					this.aTabFilters.push(new Filter("completed", FilterOperator.EQ, false));
 					break;
@@ -111,7 +118,30 @@ sap.ui.define([
 			var oBinding = oList.getBinding("items");
 
 			oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");
-		}
+
+			var sI18nKey;
+			if (this.sFilterKey && this.sFilterKey !== "all") {
+				if (this.sFilterKey === "active") {
+					sI18nKey = "ACTIVE_ITEMS";
+				} else {
+					// completed items: sFilterKey = "completed"
+					sI18nKey = "COMPLETED_ITEMS";
+				}
+				if (this.sSearchQuery) {
+					sI18nKey += "_CONTAINING";
+				}
+			} else if (this.sSearchQuery) {
+				sI18nKey = "ITEMS_CONTAINING";
+			}
+
+			var sFilterText;
+			if (sI18nKey) {
+				var oResourceBundle = this.getView().getModel("i18n").getResourceBundle();
+				sFilterText = oResourceBundle.getText(sI18nKey, [this.sSearchQuery]);
+			}
+
+			this.getView().getModel("view").setProperty("/filterText", sFilterText);
+		},
 
 	});
 
