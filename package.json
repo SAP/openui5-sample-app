@@ -6,16 +6,18 @@
 	"scripts": {
 		"start": "ui5 serve",
 		"lint": "eslint webapp",
+		"check": "tsc-silent -p tsconfig.json --suppress @node_modules/@sapui5/ts-types/",
 		"karma": "karma start",
 		"karma-ci": "rimraf coverage && karma start karma-ci.conf.js",
 		"watch": "npm run karma",
-		"test": "npm run lint && npm run karma-ci",
+		"test": "npm run lint && npm run check && npm run karma-ci",
 		"build": "ui5 build -a --clean-dest",
 		"build-self-contained": "ui5 build self-contained -a --clean-dest",
 		"serve-dist": "ws --compress -d dist"
 	},
 	"dependencies": {},
 	"devDependencies": {
+		"@sapui5/ts-types": "1.77.2",
 		"@ui5/cli": "^2.1.0",
 		"eslint": "^6.8.0",
 		"karma": "^4.4.1",
@@ -23,6 +25,8 @@
 		"karma-coverage": "^2.0.2",
 		"karma-ui5": "^2.1.0",
 		"local-web-server": "^3.0.7",
-		"rimraf": "^3.0.2"
+		"rimraf": "^3.0.2",
+		"tsc-silent": "^1.2.1",
+		"typescript": "^3.8.3"
 	}
 }

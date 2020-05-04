@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"types": [
+			"@sapui5/ts-types"
+		],
+		"target": "ES2017",
+		"lib": [
+			"ES2017",
+			"DOM"
+		],
+		"noEmit": true,
+		"module": "none",
+		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
+		"checkJs": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"strict": true
+	},
+	"include": [
+		"webapp/**/*.js",
+		"types/**/*.d.ts"
+	],
+	"exclude": [
+		"webapp/test/**"
+	]
+}
