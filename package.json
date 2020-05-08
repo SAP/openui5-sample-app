@@ -12,6 +12,7 @@
 		"test": "npm run lint && npm run karma-ci",
 		"build": "ui5 build -a --clean-dest",
 		"build-self-contained": "ui5 build self-contained -a --clean-dest",
+		"rollup-build": "rollup -c",
 		"serve-dist": "ws --compress -d dist"
 	},
 	"dependencies": {},
@@ -23,6 +24,8 @@
 		"karma-coverage": "^2.0.3",
 		"karma-ui5": "^2.2.0",
 		"local-web-server": "^4.2.1",
-		"rimraf": "^3.0.2"
+		"rimraf": "^3.0.2",
+		"rollup": "^2.26.4",
+		"rollup-plugin-ui5": "^1.0.0"
 	}
 }

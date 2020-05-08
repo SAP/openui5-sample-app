@@ -6,6 +6,9 @@
 		"sap": true,
 		"jQuery": true
 	},
+	"parserOptions": {
+		"ecmaVersion": 2017
+	},
 	"rules": {
 		"block-scoped-var": 1,
 		"brace-style": [2, "1tbs", { "allowSingleLine": true }],
