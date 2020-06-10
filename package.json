@@ -23,6 +23,7 @@
 		"karma-coverage": "^2.0.2",
 		"karma-ui5": "^2.1.2",
 		"local-web-server": "^3.0.7",
+		"puppeteer": "^3.3.0",
 		"rimraf": "^3.0.2"
 	}
 }
