@@ -1,13 +1,21 @@
-process.env.CHROME_BIN = require("puppeteer").executablePath();
-
+// @ts-nocheck - Ignore Karma config, see https://github.com/karma-runner/karma/issues/3329
 module.exports = function(config) {
 	"use strict";
 
 	require("./karma.conf")(config);
+
+	var isPiper = false; // TODO: Detect piper execution via environment variable or parameter
+	var browser = "ChromeRemote"; // Piper provides a Selenium grid to connect to
+	if (!isPiper) {
+		// If not executed in Piper, use Chrome installation provided by puppeteer
+		process.env.CHROME_BIN = require("puppeteer").executablePath();
+		browser = "CustomChromeHeadlessNoSandbox";
+	}
+
 	config.set({
 
 		preprocessors: {
-			"{webapp,webapp/!(test)}/*.js": ["coverage"]
+			"{webapp,webapp/!(test)}/!(mock*).js": ["coverage"]
 		},
 
 		coverageReporter: {
@@ -33,7 +41,7 @@ module.exports = function(config) {
 
 		reporters: ["progress", "coverage"],
 
-		browsers: ["CustomChromeHeadlessNoSandbox"],
+		browsers: [browser],
 
 		singleRun: true
 
