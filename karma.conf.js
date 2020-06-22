@@ -5,6 +5,8 @@ module.exports = function(config) {
 		"--window-size=1280,1024"
 	];
 
+	var chromeNoSandboxFlags = ["--no-sandbox"].unshift.apply(chromeFlags)
+
 	config.set({
 
 		frameworks: ["ui5"],
@@ -26,10 +28,17 @@ module.exports = function(config) {
 			},
 			CustomChromeHeadlessNoSandbox: {
 				base: "ChromeHeadless",
-				flags: [
-					...chromeFlags,
-					"--no-sandbox"
-				]
+				flags: chromeNoSandboxFlags
+			},
+			ChromeRemote: {
+				base: "WebDriver",
+				browserName: "chrome",
+				name: "Karma",
+				pseudoActivityInterval: 30000,
+				config: {
+					hostname: "localhost",
+					port: 4444
+				}
 			}
 		},
 
