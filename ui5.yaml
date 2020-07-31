@@ -11,3 +11,20 @@ framework:
     - name: sap.ui.core
     - name: sap.ui.unified
     - name: themelib_sap_fiori_3
+
+builder:
+  customTasks:
+    - name: omit-files
+      afterTask: generateVersionInfo
+
+---
+
+specVersion: '2.2'
+kind: extension
+type: task
+
+metadata:
+  name: omit-files
+
+task:
+  path: omit-files-task.js
