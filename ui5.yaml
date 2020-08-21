@@ -14,3 +14,20 @@ server:
   customMiddleware:
     - name: "@ui5/middleware-code-coverage"
       afterMiddleware: compression
+---
+specVersion: '2.0'
+metadata:
+  name: sinon-shim
+kind: extension
+type: project-shim
+shims:
+  configurations:
+    sinon:
+      specVersion: '2.0'
+      metadata:
+        name: sinon
+      type: module
+      resources:
+        configuration:
+          paths:
+            "/resources/node_modules/sinon/": "."
