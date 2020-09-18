@@ -23,6 +23,12 @@
 		"karma-coverage": "^2.0.3",
 		"karma-ui5": "^2.3.0",
 		"local-web-server": "^4.2.1",
-		"rimraf": "^3.0.2"
+		"rimraf": "^3.0.2",
+		"ui5-middleware-livereload": "^0.4.1"
+	},
+	"ui5": {
+		"dependencies": [
+			"ui5-middleware-livereload"
+		]
 	}
 }
