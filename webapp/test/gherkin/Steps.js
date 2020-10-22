@@ -13,15 +13,15 @@ sap.ui.define([
 ) {
 	"use strict";
 
-	var sViewName = "sap.ui.demo.todo.view.App";
+	const sViewName = "sap.ui.demo.todo.view.App";
 	// var sAddToItemInputId = "addTodoItemInput";
 	// var sSearchTodoItemsInputId = "searchTodoItemsInput";
-	var sItemListId = "todoList";
+	const sItemListId = "todoList";
 	// var sClearCompletedId = "clearCompleted";
 
-	var oOpa5 = new Opa5();
+	const oOpa5 = new Opa5();
 
-	var Steps = StepDefinitions.extend("sap.ui.demo.todo.test.gherkin.Steps", {
+	const Steps = StepDefinitions.extend("sap.ui.demo.todo.test.gherkin.Steps", {
 		init: function() {
 
 			this.register(/^I have started the app$/i, function() {
@@ -35,7 +35,7 @@ sap.ui.define([
 			});
 
 			this.register(/^I can see ([0-9]+) items? in the list$/i, function(sItemCount) {
-				var iItemCount = parseInt(sItemCount, 10);
+				const iItemCount = parseInt(sItemCount, 10);
 				oOpa5.waitFor({
 					id: sItemListId,
 					viewName: sViewName,

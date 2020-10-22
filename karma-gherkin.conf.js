@@ -6,7 +6,7 @@ module.exports = function(config) {
 
 		ui5: {
 			logAssertions: true,
-			logHTMLFilePath: true,
+			logHTMLFilePath: false,
 			testpage: "webapp/test/gherkin/gherkinTests.qunit.html"
 		},
 
