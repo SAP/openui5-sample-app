@@ -1,4 +1,4 @@
-# Contributing to connect-openui5
+# Contributing to openui5-sample-app
 
 In general the contributing guidelines of OpenUI5 also apply to this project. They can be found here:  
 https://github.com/SAP/openui5/blob/master/CONTRIBUTING.md
