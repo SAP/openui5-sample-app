@@ -93,11 +93,13 @@ The following needs to be done just once per setup.
     ```sh
     yarn
     ```
-1. Make all projects available as global links. **Note**: The OpenUI5 project uses [wsrun](https://github.com/whoeverest/wsrun) to link all libraries with one command. See [Linking Projects](https://github.com/SAP/ui5-tooling#linking-projects) for general information about project linking.
+1. Make all projects available as global links. **Note**: The OpenUI5 project uses [wsrun](https://github.com/whoeverest/wsrun) to link all libraries with one command. See [Linking Projects](https://sap.github.io/ui5-tooling/pages/Overview/#linking-projects) for general information about project linking.  
+    In the OpenUI5 root directory, execute:
     ```sh
     yarn run link-all
     ```
-2. The UI5 Tooling currently does not support linking of framework libraries defined in the `ui5.yaml` (see [[RFC] 0006 Local Dependency Resolution](https://github.com/SAP/ui5-tooling/pull/157)). Therefore you need to first remove them from there. Instead, you need to add the dependencies via Yarn, so that they can be linked in the next step.
+2. The UI5 Tooling currently does not support linking of framework libraries defined in the `ui5.yaml` (see [[RFC] 0006 Local Dependency Resolution](https://github.com/SAP/ui5-tooling/pull/157)). Therefore you need to first remove them from there. Instead, you need to add the dependencies via Yarn, so that they can be linked in the next step.  
+	In the application directory, execute:
     ```sh
     ui5 remove sap.f sap.m sap.ui.core sap.ui.unified themelib_sap_fiori_3
     ```
