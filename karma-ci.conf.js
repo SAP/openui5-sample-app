@@ -4,11 +4,6 @@ module.exports = function(config) {
 
 	require("./karma.conf")(config);
 
-	if (!process.env.CHROME_BIN) {
-		// If no Chrome installation is provided by the environment. Use the one installed by puppeteer
-		process.env.CHROME_BIN = require("puppeteer").executablePath();
-	}
-
 	config.set({
 
 		preprocessors: {
@@ -38,7 +33,7 @@ module.exports = function(config) {
 
 		reporters: ["progress", "coverage"],
 
-		browsers: ["CustomChromeHeadlessNoSandbox"],
+		browsers: ["CustomChromiumHeadlesssNoSandbox"],
 
 		singleRun: true
 

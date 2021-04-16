@@ -23,12 +23,8 @@ module.exports = function(config) {
 				base: "Chrome",
 				flags: chromeFlags
 			},
-			CustomChromeHeadless: {
-				base: "ChromeHeadless",
-				flags: chromeFlags
-			},
-			CustomChromeHeadlessNoSandbox: {
-				base: "ChromeHeadless",
+			CustomChromiumHeadlesssNoSandbox: {
+				base: "ChromiumHeadless",
 				flags: chromeNoSandboxFlags
 			},
 			ChromeRemote: {
