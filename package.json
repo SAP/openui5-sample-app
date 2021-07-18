@@ -22,7 +22,7 @@
 		"karma-chrome-launcher": "^3.1.0",
 		"karma-coverage": "^2.0.3",
 		"karma-ui5": "^2.3.4",
-		"local-web-server": "^4.2.1",
+		"local-web-server": "^5.0.0",
 		"rimraf": "^3.0.2"
 	}
 }
