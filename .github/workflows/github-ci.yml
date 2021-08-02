@@ -1,0 +1,32 @@
+name: GitHub CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    name: General checks, tests and build
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Use Node.js LTS 14.x
+      uses: actions/setup-node@v2.3.0
+      with:
+        node-version: 14.x
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Perform checks and tests
+      run: npm test
+
+    - name: Perform preload build
+      run: npm run build
+
+    - name: Perform self-contained build
+      run: npm run build-self-contained
