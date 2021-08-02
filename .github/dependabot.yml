@@ -1,5 +1,9 @@
 version: 2
 updates:
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: "weekly"
 - package-ecosystem: npm
   directory: "/"
   schedule:
@@ -9,5 +13,5 @@ updates:
     timezone: Etc/UCT
   reviewers:
   - matz3
-  - randombyte
+  - RandomByte
   versioning-strategy: increase
