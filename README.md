@@ -101,13 +101,12 @@ The following needs to be done just once per setup.
 2. The UI5 Tooling currently does not support linking of framework libraries defined in the `ui5.yaml` (see [[RFC] 0006 Local Dependency Resolution](https://github.com/SAP/ui5-tooling/pull/157)). Therefore you need to first remove them from there. Instead, you need to add the dependencies via Yarn, so that they can be linked in the next step.  
 	In the application directory, execute:
     ```sh
-    ui5 remove sap.f sap.m sap.ui.core sap.ui.unified themelib_sap_fiori_3
+    ui5 remove sap.f sap.m sap.ui.core themelib_sap_fiori_3
     ```
     ```sh
     yarn add @openui5/sap.f
     yarn add @openui5/sap.m
     yarn add @openui5/sap.ui.core
-    yarn add @openui5/sap.ui.unified
     yarn add @openui5/themelib_sap_fiori_3
     ```
 
@@ -117,7 +116,6 @@ The following needs to be done just once per setup.
     yarn link @openui5/sap.f
     yarn link @openui5/sap.m
     yarn link @openui5/sap.ui.core
-    yarn link @openui5/sap.ui.unified
     yarn link @openui5/themelib_sap_fiori_3
     ```
 
@@ -131,10 +129,9 @@ To return to using the OpenUI5 npm packages
     yarn remove @openui5/sap.f
     yarn remove @openui5/sap.m
     yarn remove @openui5/sap.ui.core
-    yarn remove @openui5/sap.ui.unified
     yarn remove @openui5/themelib_sap_fiori_3
     ```
 2. Re-add the libraries to the framework section of the `ui5.yaml`
     ```sh
-    ui5 add sap.f sap.m sap.ui.core sap.ui.unified themelib_sap_fiori_3
+    ui5 add sap.f sap.m sap.ui.core themelib_sap_fiori_3
     ```
