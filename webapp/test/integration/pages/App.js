@@ -1,18 +1,19 @@
 sap.ui.require([
+	"sap/ui/Device",
 	"sap/ui/test/Opa5",
 	"sap/ui/test/matchers/AggregationLengthEquals",
 	"sap/ui/test/matchers/PropertyStrictEquals",
 	"sap/ui/test/matchers/Properties",
 	"sap/ui/test/actions/EnterText",
 	"sap/ui/test/actions/Press"
-], function (Opa5, AggregationLengthEquals, PropertyStrictEquals, Properties, EnterText, Press) {
+], function (Device, Opa5, AggregationLengthEquals, PropertyStrictEquals, Properties, EnterText, Press) {
 	"use strict";
 
 	var sViewName = "sap.ui.demo.todo.view.App";
 	var sAddToItemInputId = "addTodoItemInput";
 	var sSearchTodoItemsInputId = "searchTodoItemsInput";
 	var sItemListId = "todoList";
-	var sClearCompletedId = "clearCompleted";
+	var sClearCompletedId = Device.browser.mobile ? "clearCompleted-footer" : "clearCompleted";
 
 	Opa5.createPageObjects({
 		onTheAppPage: {

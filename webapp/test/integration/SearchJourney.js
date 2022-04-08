@@ -1,12 +1,18 @@
 /* global QUnit */
 
 sap.ui.define([
+	"sap/ui/Device",
 	"sap/ui/test/opaQunit",
 	"sap/ui/demo/todo/test/integration/pages/App"
-], function (opaTest) {
+], function (Device, opaTest) {
 	"use strict";
 
 	QUnit.module("Search");
+
+	if (Device.browser.mobile) {
+		// Search functionality is currently not support on mobile devices
+		return;
+	}
 
 	opaTest("should show correct item count after search (1)", function (Given, When, Then) {
 
