@@ -3,10 +3,11 @@ sap.ui.require([
 	"sap/ui/test/Opa5",
 	"sap/ui/test/matchers/AggregationLengthEquals",
 	"sap/ui/test/matchers/PropertyStrictEquals",
+	"sap/ui/test/matchers/Ancestor",
 	"sap/ui/test/matchers/Properties",
 	"sap/ui/test/actions/EnterText",
 	"sap/ui/test/actions/Press"
-], function (Device, Opa5, AggregationLengthEquals, PropertyStrictEquals, Properties, EnterText, Press) {
+], function (Device, Opa5, AggregationLengthEquals, PropertyStrictEquals, Ancestor, Properties, EnterText, Press) {
 	"use strict";
 
 	var sViewName = "sap.ui.demo.todo.view.App";
@@ -73,6 +74,7 @@ sap.ui.require([
 					}
 				},
 				iClearTheCompletedItems: function() {
+					this._waitForToolbar();
 					return this.waitFor({
 						id: sClearCompletedId,
 						viewName: sViewName,
@@ -81,6 +83,7 @@ sap.ui.require([
 					});
 				},
 				iFilterForItems: function(filterKey) {
+					this._waitForToolbar();
 					return this.waitFor({
 						viewName: sViewName,
 						controlType: "sap.m.SegmentedButtonItem",
@@ -90,6 +93,44 @@ sap.ui.require([
 						actions: [new Press()],
 						errorMessage: "SegmentedButton can not be pressed"
 					});
+				},
+				_waitForToolbar: function() {
+					this.waitFor({
+						viewName: sViewName,
+						controlType: "sap.m.OverflowToolbar",
+						success: function (oToolbar) {
+							return this.waitFor({
+								controlType: "sap.m.ToggleButton",
+								visible: false, // look for ANY toggle button in the toolbar
+								matchers: new Ancestor(oToolbar),
+								success: function (aToggleButton) {
+									if (aToggleButton[0].$().length) {
+										// if the button exists, press on it
+										this.waitFor({
+											controlType: "sap.m.ToggleButton",
+											matchers: new Ancestor(oToolbar),
+											actions: new Press()
+										});
+									} else {
+										Opa5.assert.ok(true, "The overflow toggle button is not present");
+									}
+								}
+							})
+						}
+					});
+					// this.waitFor({
+					// 	viewName: sViewName,
+					// 	controlType: "sap.m.OverflowToolbar",
+					// 	matchers: [
+					// 		new Properties({ visible: true })
+					// 	],
+					// 	actions: [function(oToolbar) {
+
+
+
+					// 	}.bind(this)],
+					// 	errorMessage: "OverflowToolbar is not visible"
+					// });
 				}
 			},
 
