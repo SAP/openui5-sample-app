@@ -14,6 +14,7 @@ sap.ui.require([
 	var sAddToItemInputId = "addTodoItemInput";
 	var sSearchTodoItemsInputId = "searchTodoItemsInput";
 	var sItemListId = "todoList";
+	var sToolbarId = Device.browser.mobile ? "toolbar-footer" : "toolbar";
 	var sClearCompletedId = Device.browser.mobile ? "clearCompleted-footer" : "clearCompleted";
 
 	Opa5.createPageObjects({
@@ -29,6 +30,7 @@ sap.ui.require([
 					});
 				},
 				iEnterTextForSearchAndPressEnter: function(text) {
+					this._waitForToolbar();
 					return this.waitFor({
 						id: sSearchTodoItemsInputId,
 						viewName: sViewName,
@@ -96,19 +98,19 @@ sap.ui.require([
 				},
 				_waitForToolbar: function() {
 					this.waitFor({
+						id: sToolbarId,
 						viewName: sViewName,
-						controlType: "sap.m.OverflowToolbar",
 						success: function (oToolbar) {
 							return this.waitFor({
 								controlType: "sap.m.ToggleButton",
-								visible: false, // look for ANY toggle button in the toolbar
-								matchers: new Ancestor(oToolbar),
-								success: function (aToggleButton) {
-									if (aToggleButton[0].$().length) {
-										// if the button exists, press on it
+								visible: false,
+								success: function (aToggleButtons) {
+									var oToggleButton = aToggleButtons.find(function(oButton) {
+										return oButton.getId().startsWith(oToolbar.getId()) && oButton.getParent() === oToolbar;
+									});
+									if (oToggleButton) {
 										this.waitFor({
-											controlType: "sap.m.ToggleButton",
-											matchers: new Ancestor(oToolbar),
+											id: oToggleButton.getId(),
 											actions: new Press()
 										});
 									} else {
@@ -118,19 +120,6 @@ sap.ui.require([
 							})
 						}
 					});
-					// this.waitFor({
-					// 	viewName: sViewName,
-					// 	controlType: "sap.m.OverflowToolbar",
-					// 	matchers: [
-					// 		new Properties({ visible: true })
-					// 	],
-					// 	actions: [function(oToolbar) {
-
-
-
-					// 	}.bind(this)],
-					// 	errorMessage: "OverflowToolbar is not visible"
-					// });
 				}
 			},
 
