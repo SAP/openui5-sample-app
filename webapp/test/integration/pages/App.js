@@ -1,18 +1,21 @@
 sap.ui.require([
+	"sap/ui/Device",
 	"sap/ui/test/Opa5",
 	"sap/ui/test/matchers/AggregationLengthEquals",
 	"sap/ui/test/matchers/PropertyStrictEquals",
+	"sap/ui/test/matchers/Ancestor",
 	"sap/ui/test/matchers/Properties",
 	"sap/ui/test/actions/EnterText",
 	"sap/ui/test/actions/Press"
-], function (Opa5, AggregationLengthEquals, PropertyStrictEquals, Properties, EnterText, Press) {
+], function (Device, Opa5, AggregationLengthEquals, PropertyStrictEquals, Ancestor, Properties, EnterText, Press) {
 	"use strict";
 
 	var sViewName = "sap.ui.demo.todo.view.App";
 	var sAddToItemInputId = "addTodoItemInput";
 	var sSearchTodoItemsInputId = "searchTodoItemsInput";
 	var sItemListId = "todoList";
-	var sClearCompletedId = "clearCompleted";
+	var sToolbarId = Device.browser.mobile ? "toolbar-footer" : "toolbar";
+	var sClearCompletedId = Device.browser.mobile ? "clearCompleted-footer" : "clearCompleted";
 
 	Opa5.createPageObjects({
 		onTheAppPage: {
@@ -27,6 +30,7 @@ sap.ui.require([
 					});
 				},
 				iEnterTextForSearchAndPressEnter: function(text) {
+					this._waitForToolbar();
 					return this.waitFor({
 						id: sSearchTodoItemsInputId,
 						viewName: sViewName,
@@ -72,6 +76,7 @@ sap.ui.require([
 					}
 				},
 				iClearTheCompletedItems: function() {
+					this._waitForToolbar();
 					return this.waitFor({
 						id: sClearCompletedId,
 						viewName: sViewName,
@@ -80,6 +85,7 @@ sap.ui.require([
 					});
 				},
 				iFilterForItems: function(filterKey) {
+					this._waitForToolbar();
 					return this.waitFor({
 						viewName: sViewName,
 						controlType: "sap.m.SegmentedButtonItem",
@@ -88,6 +94,31 @@ sap.ui.require([
 						],
 						actions: [new Press()],
 						errorMessage: "SegmentedButton can not be pressed"
+					});
+				},
+				_waitForToolbar: function() {
+					this.waitFor({
+						id: sToolbarId,
+						viewName: sViewName,
+						success: function (oToolbar) {
+							return this.waitFor({
+								controlType: "sap.m.ToggleButton",
+								visible: false,
+								success: function (aToggleButtons) {
+									var oToggleButton = aToggleButtons.find(function(oButton) {
+										return oButton.getId().startsWith(oToolbar.getId()) && oButton.getParent() === oToolbar;
+									});
+									if (oToggleButton) {
+										this.waitFor({
+											id: oToggleButton.getId(),
+											actions: new Press()
+										});
+									} else {
+										Opa5.assert.ok(true, "The overflow toggle button is not present");
+									}
+								}
+							})
+						}
 					});
 				}
 			},

@@ -21,7 +21,7 @@
 								showNoData="false"
 								showSeparators="None">
 								<headerToolbar>
-									<OverflowToolbar class="sapUiSizeCompact" visible="{= !${view>/isMobile} }">
+									<OverflowToolbar id="toolbar" class="sapUiSizeCompact" visible="{= !${view>/isMobile} }">
 										<ToolbarSpacer />
 										<SearchField id="searchTodoItemsInput" liveChange=".onSearch" width="20rem"/>
 										<SegmentedButton selectedKey="all" selectionChange=".onFilter" class="sapMSegmentedButtonNoAutoWidth">
@@ -59,7 +59,7 @@
 				</content>
 
 				<footer>
-					<OverflowToolbar visible="{= !!${view>/isMobile} }">
+					<OverflowToolbar id="toolbar-footer" visible="{= !!${view>/isMobile} }">
 						<SegmentedButton selectedKey="all" selectionChange=".onFilter" class="sapMSegmentedButtonNoAutoWidth">
 							<items>
 								<SegmentedButtonItem text="All" key="all"/>
