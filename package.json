@@ -14,10 +14,9 @@
 		"build-self-contained": "ui5 build self-contained -a --clean-dest",
 		"serve-dist": "ws --compress -d dist"
 	},
-	"dependencies": {},
 	"devDependencies": {
 		"@ui5/cli": "^2.14.14",
-		"eslint": "^8.26.0",
+		"eslint": "^8.27.0",
 		"karma": "^6.4.1",
 		"karma-chrome-launcher": "^3.1.1",
 		"karma-coverage": "^2.2.0",
