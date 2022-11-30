@@ -15,7 +15,7 @@
 		"serve-dist": "ws --compress -d dist"
 	},
 	"devDependencies": {
-		"@ui5/cli": "^2.14.14",
+		"@ui5/cli": "^2.14.15",
 		"eslint": "^8.28.0",
 		"karma": "^6.4.1",
 		"karma-chrome-launcher": "^3.1.1",
