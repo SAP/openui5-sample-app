@@ -1,7 +1,8 @@
 const path = require("path");
 
 module.exports = async function({workspace, dependencies, log, taskUtil, options}) {
-	const {createReaderCollection, createResource} = taskUtil.resourceFactory;
+	const {resourceFactory, getProject, getDependencies} = taskUtil;
+	const {createReaderCollection, createResource} = resourceFactory;
 
 	const reader = createReaderCollection({
 		readers: [workspace, dependencies]
@@ -44,4 +45,53 @@ module.exports = async function({workspace, dependencies, log, taskUtil, options
 		string: JSON.stringify(Object.fromEntries(fileExtensionsMap), null, "\t")
 	});
 	await workspace.write(indexResource);
+
+	/*
+		Collect the versions of all dependencies
+	*/
+	const dependencyVersionMap = new Map();
+	function collectDependencyVersions(projectName) {
+		if (dependencyVersionMap.has(projectName)) {
+			return;
+		}
+		const project = getProject(projectName);
+		dependencyVersionMap.set(projectName, project.getVersion());
+		getDependencies(projectName).forEach((depName) => {
+			collectDependencyVersions(depName);
+		});
+	}
+	collectDependencyVersions(options.projectName);
+
+	const depVersionsResource = createResource({
+		path: "/dependency-versions.json",
+		string: JSON.stringify(Object.fromEntries(dependencyVersionMap), null, "\t")
+	});
+	await workspace.write(depVersionsResource);
 }
+
+module.exports.determineRequiredDependencies = async function({availableDependencies, getProject, getDependencies, options}) {
+
+	// Only require sap.ui.core
+	availableDependencies.forEach((depName) => {
+		if (depName !== "sap.ui.core") {
+			availableDependencies.delete(depName)
+		}
+	});
+
+	// Only require direct dependencies
+	// const directDependencies = getDependencies();
+	// availableDependencies.forEach((depName) => {
+	// 	if (!directDependencies.includes(depName)) {
+	// 		availableDependencies.delete(depName)
+	// 	}
+	// });
+
+	// Alternative: Ignore all framework libraries:
+	// availableDependencies.forEach((depName) => {
+	// 	if (getProject(depName).isFrameworkProject()) {
+	// 		availableDependencies.delete(depName)
+	// 	}
+	// });
+
+	return availableDependencies;
+};
