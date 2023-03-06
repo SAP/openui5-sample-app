@@ -71,7 +71,7 @@
 
 ## Working with local dependencies
 
-For local development of your applications' dependencies (like OpenUI5 libraries) you can link them by using npm. This will allow you to make changes to your applications dependencies locally and see the impact in your application immediately.
+For local development of your applications' dependencies (like OpenUI5 libraries) you can link them by using npm. This will allow you to make changes to your applications' dependencies locally and see the impact in your application immediately.
 
 ### Preparation
 The following needs to be done just once per setup.
