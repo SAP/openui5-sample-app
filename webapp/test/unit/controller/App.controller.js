@@ -2,9 +2,42 @@ sap.ui.define([
 	"sap/ui/base/ManagedObject",
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/demo/todo/controller/App.controller",
-	"sap/ui/model/json/JSONModel"
-], function(ManagedObject, Controller, AppController, JSONModel) {
+	"sap/ui/model/json/JSONModel",
+	"sap/ui/Device"
+], function(ManagedObject, Controller, AppController, JSONModel, Device) {
 	"use strict";
+	
+	QUnit.module("Test init state", {
+
+		beforeEach: function() {
+			this.oAppController = new AppController();
+			this.oViewStub = new ManagedObject({});
+			sinon.stub(Controller.prototype, "getView").returns(this.oViewStub);
+
+			this.oJSONModelStub = new JSONModel({
+				todos: []
+			});
+			this.oViewStub.setModel(this.oJSONModelStub);
+		},
+
+		afterEach: function() {
+			Controller.prototype.getView.restore();
+
+			this.oViewStub.destroy();
+		}
+	});
+	
+	QUnit.test("Check controller's initial state", function (assert) {
+		// Act
+		this.oAppController.onInit();
+		
+		// Assert
+		assert.deepEqual(this.oAppController.aSearchFilters, [], "Search filters have been instantiated empty");
+		assert.deepEqual(this.oAppController.aTabFilters, [], "Tab filters have been instantiated empty");
+		
+		var oModel = this.oAppController.getView().getModel("view").getData();
+		assert.deepEqual(oModel, {isMobile: Device.browser.mobile, filterText: undefined});
+	});
 
 	QUnit.module("Test model modification", {
 
@@ -32,11 +65,12 @@ sap.ui.define([
 		assert.strictEqual(this.oJSONModelStub.getObject("/todos").length, 0, "There must be no todos defined.");
 
 		// Act
+		this.oJSONModelStub.setProperty("/todos", [{title: "Completed item", completed: true}]);
 		this.oJSONModelStub.setProperty("/newTodo", "new todo item");
 		this.oAppController.addTodo();
 
 		// Assumption
-		assert.strictEqual(this.oJSONModelStub.getObject("/todos").length, 1, "There is one new item.");
+		assert.strictEqual(this.oJSONModelStub.getObject("/todos").length, 2, "There are couple items in ToDo list.");
 	});
 
 	QUnit.test("Should toggle the completed items in the model", function(assert) {
