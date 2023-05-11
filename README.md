@@ -104,27 +104,49 @@ The following needs to be done just once per setup.
     ```
 
 ### Linking
-1. In your application directory: Link the required OpenUI5 libraries
-    ```sh
-    npm link @openui5/sap.f
-    npm link @openui5/sap.m
-    npm link @openui5/sap.ui.core
-    npm link @openui5/themelib_sap_fiori_3
+
+Would you like to work on the application project and one or more of its dependencies at the same time? We got you covered!
+
+1. Create a new file `ui5-workspaces.yaml` in the root folder of the project, right next to the `ui5.yaml`
+2. In `ui5-workspace.yaml` add the paths to the local dependencies you'd like to use from the local machine:
+    ```yaml
+    specVersion: workspace/1.0
+    metadata:
+        name: default
+    dependencyManagement:
+        resolutions:
+            - path: /local/path/to/sap.f # path to the local sap.f library
+            - path: /local/path/to/sap.m # path to the local sap.m library
+            - path: /local/path/to/sap.ui.core # path to the local sap.ui.core library
+            - path: /local/path/to/themelib_sap_fiori_3 # path to the local themelib_sap_fiori_3 library
     ```
 
 You can now make changes in your local OpenUI5 repository and see the impact directly when serving or building your application.
 
-### Unlinking
-To return to using the OpenUI5 npm packages
+If a dependency that is listed in `ui5.yaml` is ommited in the `resolutions` section of `ui5-workspace.yaml`, then the library would be resolved the usual way by dowloading the library from `npm` registry or `Maven` repository (if using a SNAPHOT version). More about dependency resolutions, please check [here](https://sap.github.io/ui5-tooling/v3/pages/Workspace/#dependency-management)
 
-1. Remove the dependencies via npm
-    ```sh
-    npm uninstall @openui5/sap.f
-    npm uninstall @openui5/sap.m
-    npm uninstall @openui5/sap.ui.core
-    npm uninstall @openui5/themelib_sap_fiori_3
-    ```
-2. Re-add the libraries to the framework section of the `ui5.yaml`
-    ```sh
-    ui5 add sap.f sap.m sap.ui.core themelib_sap_fiori_3
-    ```
+Workspaces conscept always uses the `default` workspace. So, it would always try to resolve the dependencies from the workspace. If you'd like to have the ability to use the workspaces for local development, but want to resolve the libraries the normal way by default, then you might name the workspace and use that name later. For example:
+
+```yaml
+specVersion: workspace/1.0
+metadata:
+    name: local-dependencies # Not "default"
+dependencyManagement:
+    resolutions:
+        - path: /local/path/to/sap.f
+        - path: /local/path/to/sap.m
+        - path: /local/path/to/sap.ui.core
+        - path: /local/path/to/themelib_sap_fiori_3
+```
+
+```sh
+# Starts a server with a named workspace
+npm run start -- -w local-dependencies
+# OR
+ui5 serve -w local-dependencies
+
+# Starts a server with default depenedncy resolution
+npm run start
+# OR
+ui5 serve
+```
