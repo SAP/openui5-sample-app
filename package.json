@@ -4,8 +4,8 @@
 	"description": "Sample of an OpenUI5 app",
 	"private": true,
 	"engines": {
-		"node": "^16.18.0 || >=18.12.0",
-		"npm": ">= 8"
+		"node": ">=18.14.0",
+		"npm": ">=9"
 	},
 	"scripts": {
 		"start": "ui5 serve",
