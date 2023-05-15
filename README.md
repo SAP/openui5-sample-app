@@ -125,7 +125,7 @@ You can now make changes in your local OpenUI5 repository and see the impact dir
 
 If a dependency that is listed in `ui5.yaml` is ommited in the `resolutions` section of `ui5-workspace.yaml`, then the library would be resolved the usual way by dowloading the library from `npm` registry or `Maven` repository (if using a SNAPHOT version). More about dependency resolutions, please check [here](https://sap.github.io/ui5-tooling/v3/pages/Workspace/#dependency-management)
 
-Workspaces conscept always uses the `default` workspace. So, it would always try to resolve the dependencies from the workspace. If you'd like to have the ability to use the workspaces for local development, but want to resolve the libraries the normal way by default, then you might name the workspace and use that name later. For example:
+The workspace feature always uses the `default` workspace. So, it would always try to resolve the dependencies from the workspace. If you'd like to have the ability to use the workspaces for local development, but want to resolve the libraries the normal way by default, then you might name the workspace and use that name later. For example:
 
 ```yaml
 specVersion: workspace/1.0
