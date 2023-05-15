@@ -123,7 +123,7 @@ Would you like to work on the application project and one or more of its UI5 fra
 
 You can now make changes in your local OpenUI5 repository and see the impact directly when serving or building your application.
 
-If a dependency that is listed in `ui5.yaml` is ommited in the `resolutions` section of `ui5-workspace.yaml`, then the library would be resolved the usual way by dowloading the library from `npm` registry or `Maven` repository (if using a SNAPHOT version). More about dependency resolutions, please check [here](https://sap.github.io/ui5-tooling/v3/pages/Workspace/#dependency-management)
+If a dependency that is listed in `ui5.yaml` is ommited in the `resolutions` section of `ui5-workspace.yaml`, then the library would be resolved the usual way by dowloading the library from the registry. More about dependency resolutions, please check [here](https://sap.github.io/ui5-tooling/v3/pages/Workspace/#dependency-management).
 
 The workspace feature always uses the `default` workspace. So, it would always try to resolve the dependencies from the workspace. If you'd like to have the ability to use the workspaces for local development, but want to resolve the libraries the normal way by default, then you might name the workspace and use that name later. For example:
 
@@ -142,11 +142,7 @@ dependencyManagement:
 ```sh
 # Starts a server with a named workspace
 npm run start -- -w local-dependencies
-# OR
-ui5 serve -w local-dependencies
 
 # Starts a server with default dependency resolution
 npm run start
-# OR
-ui5 serve
 ```
