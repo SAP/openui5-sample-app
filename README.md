@@ -115,10 +115,8 @@ Would you like to work on the application project and one or more of its UI5 fra
         name: default
     dependencyManagement:
         resolutions:
-            - path: /local/path/to/sap.f # path to the local sap.f library
-            - path: /local/path/to/sap.m # path to the local sap.m library
-            - path: /local/path/to/sap.ui.core # path to the local sap.ui.core library
-            - path: /local/path/to/themelib_sap_fiori_3 # path to the local themelib_sap_fiori_3 library
+            # local path to OpenUI5. It'd resolve all required libraries and transitive dependencies.
+            - path: /local/path/to/openui5
     ```
 
 You can now make changes in your local OpenUI5 repository and see the impact directly when serving or building your application.
@@ -133,10 +131,7 @@ metadata:
     name: local-dependencies # Not "default"
 dependencyManagement:
     resolutions:
-        - path: /local/path/to/sap.f
-        - path: /local/path/to/sap.m
-        - path: /local/path/to/sap.ui.core
-        - path: /local/path/to/themelib_sap_fiori_3
+        - path: /local/path/to/openui5
 ```
 
 ```sh
