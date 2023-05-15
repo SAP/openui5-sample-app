@@ -145,7 +145,7 @@ npm run start -- -w local-dependencies
 # OR
 ui5 serve -w local-dependencies
 
-# Starts a server with default depenedncy resolution
+# Starts a server with default dependency resolution
 npm run start
 # OR
 ui5 serve
