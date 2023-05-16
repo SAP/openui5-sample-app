@@ -108,7 +108,7 @@ The following needs to be done just once per setup.
 Would you like to work on the application project and one or more of its UI5 framework dependencies at the same time? We got you covered!
 
 1. Create a new file `ui5-workspace.yaml` in the root folder of the project, right next to the `ui5.yaml`
-2. In `ui5-workspace.yaml` add the paths to the local dependencies you'd like to use from the local machine:
+2. In `ui5-workspace.yaml`, add the paths to the local dependencies you'd like to use from your local machine:
     ```yaml
     specVersion: workspace/1.0
     metadata:
