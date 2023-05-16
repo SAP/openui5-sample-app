@@ -120,7 +120,8 @@ Would you like to work on the application project and one or more of its UI5 fra
     ```
 
     ```sh
-    # Starts a server with default dependency resolution
+3. Start the development server with default dependency resolution
+`npm start`
     npm run start
     ```
 
