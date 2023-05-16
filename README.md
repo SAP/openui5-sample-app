@@ -118,10 +118,8 @@ Would you like to work on the application project and one or more of its UI5 fra
             # local path to OpenUI5. It will resolve all required libraries and transitive dependencies.
             - path: /local/path/to/openui5
     ```
-
-    ```sh
 3. Start the development server with default dependency resolution
-`npm start`
+    ```sh
     npm run start
     ```
 
