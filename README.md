@@ -104,27 +104,43 @@ The following needs to be done just once per setup.
     ```
 
 ### Linking
-1. In your application directory: Link the required OpenUI5 libraries
+
+Would you like to work on the application project and one or more of its UI5 framework dependencies at the same time? We got you covered!
+
+1. Create a new file `ui5-workspace.yaml` in the root folder of the project, right next to the `ui5.yaml`
+2. In `ui5-workspace.yaml`, add the paths to the local dependencies you'd like to use from your local machine:
+    ```yaml
+    specVersion: workspace/1.0
+    metadata:
+        name: default
+    dependencyManagement:
+        resolutions:
+            # local path to OpenUI5. It will resolve all required libraries and transitive dependencies.
+            - path: /local/path/to/openui5
+    ```
+3. Start the development server with default dependency resolution
     ```sh
-    npm link @openui5/sap.f
-    npm link @openui5/sap.m
-    npm link @openui5/sap.ui.core
-    npm link @openui5/themelib_sap_fiori_3
+    npm run start
     ```
 
 You can now make changes in your local OpenUI5 repository and see the impact directly when serving or building your application.
 
-### Unlinking
-To return to using the OpenUI5 npm packages
+If a dependency that is listed in `ui5.yaml` is omitted in the `resolutions` section of `ui5-workspace.yaml`, the library is resolved in the usual way by dowloading it from the registry. For more information about dependency resolutions, check [here](https://sap.github.io/ui5-tooling/v3/pages/Workspace/#dependency-management).
 
-1. Remove the dependencies via npm
-    ```sh
-    npm uninstall @openui5/sap.f
-    npm uninstall @openui5/sap.m
-    npm uninstall @openui5/sap.ui.core
-    npm uninstall @openui5/themelib_sap_fiori_3
-    ```
-2. Re-add the libraries to the framework section of the `ui5.yaml`
-    ```sh
-    ui5 add sap.f sap.m sap.ui.core themelib_sap_fiori_3
-    ```
+#### Non-default workspace
+
+The workspace feature always uses the `default` workspace and always attempts to resolve any dependencies from it. If you'd like to use the workspace for local development but want to resolve the libraries in the usual way by default, you can name the workspace and use that name later, for example like this:
+
+```yaml
+specVersion: workspace/1.0
+metadata:
+    name: local-dependencies # Not "default"
+dependencyManagement:
+    resolutions:
+        - path: /local/path/to/openui5
+```
+
+```sh
+# Starts a server with a named workspace
+npm run start -- -w local-dependencies
+```
