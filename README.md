@@ -71,7 +71,7 @@
 
 ## Working with local dependencies
 
-For local development of your applications' dependencies (like OpenUI5 libraries) you can link them by using npm. This will allow you to make changes to your applications' dependencies locally and see the impact in your application immediately.
+For local development of your applications' dependencies (like OpenUI5 libraries) you can use [UI5 Workspaces](https://sap.github.io/ui5-tooling/stable/pages/Workspace/). This will allow you to make changes to those dependencies locally and see the impact in your application immediately.
 
 ### Preparation
 The following needs to be done just once per setup.
@@ -86,24 +86,8 @@ The following needs to be done just once per setup.
     ```sh
     npm install
     ```
-1. Make all projects available as global links. **Note**: The OpenUI5 project uses [wsrun](https://github.com/whoeverest/wsrun) to link all libraries with one command. See [Linking Projects](https://sap.github.io/ui5-tooling/pages/Overview/#linking-projects) for general information about project linking.  
-    In the OpenUI5 root directory, execute:
-    ```sh
-    npm run link-all
-    ```
-2. The UI5 Tooling currently does not support linking of framework libraries defined in the `ui5.yaml` (see [[RFC] 0006 Local Dependency Resolution](https://github.com/SAP/ui5-tooling/pull/157)). Therefore you need to first remove them from there. Instead, you need to add the dependencies via npm, so that they can be linked in the next step.  
-	In the application directory, execute:
-    ```sh
-    ui5 remove sap.f sap.m sap.ui.core themelib_sap_fiori_3
-    ```
-    ```sh
-    npm install @openui5/sap.f
-    npm install @openui5/sap.m
-    npm install @openui5/sap.ui.core
-    npm install @openui5/themelib_sap_fiori_3
-    ```
 
-### Linking
+### Setup UI5 Workspace
 
 Would you like to work on the application project and one or more of its UI5 framework dependencies at the same time? We got you covered!
 
@@ -125,7 +109,7 @@ Would you like to work on the application project and one or more of its UI5 fra
 
 You can now make changes in your local OpenUI5 repository and see the impact directly when serving or building your application.
 
-If a dependency that is listed in `ui5.yaml` is omitted in the `resolutions` section of `ui5-workspace.yaml`, the library is resolved in the usual way by dowloading it from the registry. For more information about dependency resolutions, check [here](https://sap.github.io/ui5-tooling/v3/pages/Workspace/#dependency-management).
+If a dependency that is listed in `ui5.yaml` is omitted in the `resolutions` section of `ui5-workspace.yaml`, the library is resolved in the usual way by downloading it from the registry. For more information about dependency resolutions, check [here](https://sap.github.io/ui5-tooling/v3/pages/Workspace/#dependency-management).
 
 #### Non-default workspace
 
