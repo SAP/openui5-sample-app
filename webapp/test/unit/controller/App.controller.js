@@ -7,7 +7,7 @@ sap.ui.define([
 	"sap/ui/Device"
 ], function(ManagedObject, Controller, AppController, JSONModel, ResourceModel, Device) {
 	"use strict";
-	
+
 	QUnit.module("Test init state", {
 
 		beforeEach: function() {
@@ -27,15 +27,15 @@ sap.ui.define([
 			this.oViewStub.destroy();
 		}
 	});
-	
+
 	QUnit.test("Check controller's initial state", function (assert) {
 		// Act
 		this.oAppController.onInit();
-		
+
 		// Assert
 		assert.deepEqual(this.oAppController.aSearchFilters, [], "Search filters have been instantiated empty");
 		assert.deepEqual(this.oAppController.aTabFilters, [], "Tab filters have been instantiated empty");
-		
+
 		var oModel = this.oAppController.getView().getModel("view").getData();
 		assert.deepEqual(oModel, {isMobile: Device.browser.mobile, filterText: undefined});
 	});
@@ -162,7 +162,7 @@ sap.ui.define([
 				this.oViewStub.setModel(this.oJSONModelStub);
 				this.oViewStub.setModel(new JSONModel({}), "view");
 				this.oViewStub.setModel(
-					new ResourceModel({ bundleName: "i18n_en_US" }),
+					new ResourceModel({ bundleName: "sap.ui.demo.todo.i18n.i18n" }),
 					"i18n"
 				);
 			},
@@ -260,7 +260,7 @@ sap.ui.define([
 				this.oViewStub.setModel(this.oJSONModelStub);
 				this.oViewStub.setModel(new JSONModel({}), "view");
 				this.oViewStub.setModel(
-					new ResourceModel({ bundleName: "i18n_en_US" }),
+					new ResourceModel({ bundleName: "sap.ui.demo.todo.i18n.i18n" }),
 					"i18n"
 				);
 			},
