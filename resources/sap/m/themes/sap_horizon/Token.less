@@ -1,0 +1,77 @@
+/* ============================ */
+/* CSS for control sap.m/Token  */
+/* Horizon theme                */
+/* ============================ */
+
+@_sap_m_Token_TokenPadding: 0.5rem;
+@_sap_m_Token_TokenCompactPadding: 0.25rem;
+@_sap_m_Token_LeftPadding: 0.3125rem;
+@_sap_m_Token_TokenSize: @sapMFontSmallSize + (2 * @_sap_m_Token_TokenPadding) - @_sap_m_Token_LeftPadding;
+@_sap_m_Token_TokenCompactSize: @sapMFontSmallSize + @_sap_m_Token_TokenCompactPadding;
+
+.sapMToken {
+	overflow: visible;
+	padding-left: @_sap_m_Token_LeftPadding;
+}
+
+.sapMTokenSelected:not(:focus),
+.sapMToken.sapMTokenReadOnly.sapMTokenSelected {
+	background: @sapUiButtonSelectedBackground;
+	border: @sapUiButtonBorderWidth solid @sapUiButtonSelectedBorderColor;
+	border-radius: @sapUiButtonBorderCornerRadius;
+}
+
+html.sap-desktop .sapMToken:not(.sapMTokenSelected):not(.sapMTokenReadOnly):not(:focus):hover {
+	background: @sapUiButtonTokenBackground;
+	border: 1px solid @sapUiButtonTokenBorderColor;
+	border-radius: @sapUiButtonBorderCornerRadius;
+	box-shadow: @sapUiContentInteractionShadow;
+}
+
+html.sap-desktop .sapMToken.sapMTokenSelected:not(.sapMTokenReadOnly):hover {
+	background: @sapUiButtonSelectedBackground;
+	border: @sapUiButtonBorderWidth solid @sapUiButtonSelectedBorderColor;
+	border-radius: @sapUiButtonBorderCornerRadius;
+}
+
+html.sap-desktop .sapMToken.sapMTokenSelected:not(.sapMTokenReadOnly):not(:focus):hover {
+	box-shadow: @sapUiContentInteractionShadow;
+}
+
+.sapMToken.sapMTokenReadOnly,
+.sapMToken.sapMTokenReadOnly.sapMTokenSelected {
+	color: @sapUiContentLabelColor;
+}
+
+html.sap-desktop .sapMToken:focus {
+	outline: none;
+}
+
+html.sap-desktop .sapMToken:focus::after {
+	content: '';
+	position: absolute;
+	pointer-events: none;
+	z-index: 2;
+	border: @sapUiContentFocusWidth @sapUiContentFocusStyle @sapUiFieldActiveBorderColor;
+	border-radius: 0.625rem;
+	top: -0.25rem;
+	bottom: -0.25rem;
+	left: -0.25rem;
+	right: -0.25rem;
+}
+
+html.sap-desktop .sapMToken:not(.sapMTokenSelected):not(.sapMTokenReadOnly):focus:hover {
+	border: @sapUiButtonBorderWidth solid @sapUiButtonTokenBorderColor;
+}
+
+html.sap-desktop .sapUiSizeCompact .sapMToken:focus::after,
+html.sap-desktop .sapUiSizeCondensed .sapMToken:focus::after {
+	top: -0.125rem;
+	bottom: -0.125rem;
+	left: -0.125rem;
+	right: -0.125rem;
+}
+
+html.sap-desktop .sapMToken.sapMTokenSelected:focus {
+	color: @sapUiButtonSelectedTextColor;
+}
