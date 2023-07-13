@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<title>Device - sap.ui.core</title>
+
+		<link rel="stylesheet" href="../../../../resources/sap/ui/core/themes/sap_horizon/library.css" id="sap-ui-theme-sap.ui.core" data-sap-ui-ready="true">
+		<link rel="stylesheet" href="./Device.css">
+		<script id="sap-ui-bootstrap" 
+			src="../../../../resources/sap-ui-core.js"
+			data-sap-ui-async="true"
+			data-sap-ui-compatVersion="edge"
+			data-sap-ui-oninit="module:local/Device"
+			data-sap-ui-resourceroots='{"local":"./"}'
+			data-sap-ui-theme="sap_horizon"></script>
+	</head>
+
+	<body class="sapUiBody">
+		<h1 id="title">Device - Test Page</h1>
+		<h2>Detection Features</h2>
+		<div id="output"></div>
+		<br><br><br>
+		<h2>Mediaquery Test</h2>
+		<div id="media"></div>
+		<div id="mediareport"></div>
+		<h2>Raw Browser Data</h2>
+		<div id="rawDataNavigator">
+			<button id="btnShowNavigatorValues">Show window.navigator values...</button>
+		</div>
+	</body>
+</html>

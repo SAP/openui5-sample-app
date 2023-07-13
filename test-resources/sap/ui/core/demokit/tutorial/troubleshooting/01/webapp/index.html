@@ -1,0 +1,37 @@
+<!--/**************************************************************************
+* Note: This file intentionally contains errors for illustration purposes!    *
+*  The Troubleshooting Tutorial in the official UI5 documentation will show   *
+*  how to analyze and debug them with the support tools delivered by UI5.     *
+******************************************************************************/-->
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<title>Heap Of Shards</title>
+
+	<!-- set data-sap-ui-async="true" to enable the user to fix it in the
+	troubleshooting tutorial step 4: Diagnostics Window -->
+	<script id="sap-ui-bootstrap"
+		src="https://sdk.openui5.org/resources/sap-ui-core.js"
+		data-sap-ui-theme="sap_belize"
+		data-sap-ui-libs="sap.f"
+		data-sap-ui-resourceroots='{
+			"sap.ui.demo.HeapOfShards": "./",
+			"sap.ui.demo.DoesNotExist": "./DoesNotExist"
+		}'
+		data-sap-ui-oninit="module:sap/ui/core/ComponentSupport"
+		data-sap-ui-compatVersion="edge"
+		data-sap-ui-async="true">
+	</script>
+
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+
+</head>
+
+<body class="sapUiBody">
+	<div data-sap-ui-component data-name="sap.ui.demo.HeapOfShards" data-id="container" data-settings='{"id" : "HeapOfShards"}'></div>
+</body>
+
+</html>

@@ -1,0 +1,557 @@
+html,body {
+	font-size: 1rem;
+	font-family: "72","72full",Arial,Helvetica,sans-serif;
+	border-style: none;
+	margin: 0px;
+	padding: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+body {
+	/* make the body always fill the client window */
+	display: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+
+	color: #32363a;
+	background-color: #f7f7f7;
+}
+
+/* ---------------------------------------
+ * Main Layout Container
+ * --------------------------------------- */
+
+.mainLayoutContainer {
+	display: grid;
+	grid-gap: 0.5rem;
+	width: 100%;
+	height: 100%;
+}
+
+.mainLayoutContainer > div {
+	position: relative;
+	background-color: white;
+	box-shadow: 0 0 0 0.0625rem rgba(0,0,0,0.1), 0 0.125rem 0.5rem 0 rgba(0,0,0,0.1);
+	border-radius: .25rem;
+	border: .0625rem solid transparent;
+}
+
+#sap-ui-TitleWindow {
+	grid-column: 1 / 4;
+	grid-row: 1 / 1;
+}
+
+#sap-ui-SampleWindow {
+	grid-column: 1;
+	grid-row: 2 / 4;
+}
+
+#sap-ui-SettingsWindow {
+	grid-column: 1;
+	grid-row: 4;
+}
+
+#sap-ui-ContentWindow {
+	grid-column: 2;
+	grid-row: 2 / 4;
+}
+
+#sap-ui-TraceWindow {
+	grid-column: 2;
+	grid-row: 4;
+}
+
+#sap-ui-ControlTreeWindow {
+	grid-column: 3;
+	grid-row: 2;
+}
+
+#sap-ui-PropertyListWindow {
+	grid-column: 3;
+	grid-row: 3 / 5;
+}
+
+/*
+ * Layout variant which shows only the current sample page only
+ */
+.mainLayoutContainer.sampleonly {
+	grid-template-columns: 0 auto 0;
+	grid-template-rows: 35px auto 0 0;
+}
+
+.mainLayoutContainer.sampleonly #sap-ui-SampleWindow,
+.mainLayoutContainer.sampleonly #sap-ui-SettingsWindow,
+.mainLayoutContainer.sampleonly #sap-ui-TraceWindow,
+.mainLayoutContainer.sampleonly #sap-ui-ControlTreeWindow,
+.mainLayoutContainer.sampleonly #sap-ui-PropertyListWindow {
+	display: none;
+}
+
+/*
+ * Layout variant which shows the tree of samples and the sample
+ */
+.mainLayoutContainer.sampletree {
+	grid-template-columns: 16rem auto 0;
+	grid-template-rows: 35px auto 100px 250px;
+}
+
+.mainLayoutContainer.sampletree #sap-ui-ControlTreeWindow,
+.mainLayoutContainer.sampletree #sap-ui-PropertyListWindow {
+	display: none;
+}
+
+.mainLayoutContainer.sampletree #sap-ui-ContentWindow {
+	grid-column: 2;
+	grid-row: 2 / 5;
+}
+
+.mainLayoutContainer.sampletree #sap-ui-TraceWindow {
+	display: none;
+}
+
+/*
+ * Layout variant which shows the sample page and the control tree / control properties
+ */
+.mainLayoutContainer.controltree {
+	grid-template-columns: 0 auto 15rem;
+	grid-template-rows: 35px auto 100px 250px;
+}
+
+.mainLayoutContainer.controltree #sap-ui-SampleWindow,
+.mainLayoutContainer.controltree #sap-ui-SettingsWindow {
+	display: none;
+}
+
+.mainLayoutContainer.controltree #sap-ui-ContentWindow {
+	grid-column: 2;
+	grid-row: 2 / 5;
+}
+
+.mainLayoutContainer.controltree #sap-ui-TraceWindow {
+	display: none;
+}
+
+/*
+ * Layout variant that shows all areas: sample tree, sample page, control tree & properties, log viewer
+ */
+.mainLayoutContainer.full {
+	grid-template-columns: 16rem auto 15rem;
+	grid-template-rows: 35px auto 100px 250px;
+}
+
+h2 {
+	color: #0a6ed1;
+	font-weight: bold;
+	font-size: 1rem;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 5px;
+	line-height: 1.2rem;
+	height: 2rem;
+}
+
+/* ---------------------------------------
+ * Common styles used in different areas
+ * --------------------------------------- */
+
+.scrollpanel {
+	background-color: transparent;
+	overflow: auto;
+	/* height:100%; */
+}
+
+.toolbar {
+	box-sizing: border-box;
+	font-size: 0.75rem;
+	padding: 2px;
+}
+
+/* ---------------------------------------
+ * Title area styles
+ * --------------------------------------- */
+
+/* Note: selector must be more specific than .mainLayoutContainer > div */
+.mainLayoutContainer > div.banner {
+	border-radius: 0;
+	font-weight:bold;
+	color: #fafafa;
+	background-color: #3f5161;
+	text-shadow: 0 0 0.125rem #000;
+	box-shadow: inset 0 -0.0625rem #4f667a;
+}
+
+.banner > div:first-child {
+	position:absolute;
+	top:0;
+	left:0;
+}
+
+.banner > div:last-child {
+	position:absolute;
+	top:0;
+	right:0;
+}
+
+.banner > div > * {
+	display: inline-block;
+}
+
+.banner .logo-ui5 {
+	width: 90px;
+	height: 30px;
+	margin-left: 10px;
+}
+
+.banner span {
+	margin-top: 9px;
+	vertical-align: top;
+}
+
+.banner img.btn {
+	cursor: pointer;
+	height: 20px;
+	width: 20px;
+	margin: 6px 5px 4px;
+}
+
+.banner img.btn.disabled {
+	cursor: default;
+	opacity: 0.2;
+}
+
+.banner .logo-sap {
+	margin-left: 30px;
+	margin-right: 10px;
+	right: 10px;
+	height: 30px;
+}
+
+/* ---------------------------------------
+ * Sample Tree area styles
+ * --------------------------------------- */
+
+#samples {
+	font-size: 0.8rem;
+	padding: 0 3px;
+	position: absolute;
+	box-sizing: border-box;
+	left: 2px;
+	right: 2px;
+	bottom: 2px;
+	overflow: auto;
+}
+
+#samples .node,
+#samples .leaf {
+	overflow: hidden;
+	white-space: nowrap;
+	margin: 4px 0 0 0;
+}
+
+#samples .node > .caption {
+	cursor: pointer;
+	cursor: hand;
+}
+
+#samples .node > .caption:before {
+	font-family: 'SAP-icons';
+	width: 1.2em;
+	display: inline-block;
+	text-align: center;
+}
+
+#samples .children {
+	margin-left: 1.2em;
+	font-style: normal;
+	cursor: default;
+}
+
+#samples .leaf:before {
+	content: '\2022';
+	width: 1.2em;
+	display: inline-block;
+	text-align: center;
+}
+
+#samples .leaf a {
+	color: black;
+	text-decoration: none;
+}
+
+#samples .leaf a:hover {
+	color: #0a6ed1;
+	text-decoration: underline;
+}
+
+#samples .node.expanded > .children {
+	display: block;
+}
+
+#samples .node.expanded > .caption:before {
+	content: '\e1e2';
+}
+
+#samples .node.collapsed > .children {
+	display: none;
+}
+
+#samples .node.collapsed > .caption:before {
+	content: '\e066';
+}
+
+#samples > .node:first-child {
+	margin-top: 0;
+}
+
+#samples .node.section > .caption {
+	font-weight: bold;
+	font-size: 0.8rem;
+	background-color: #e5e5e5;
+	vertical-align: middle;
+	padding: 3px 5px;
+}
+
+#samples .node.library > .caption {
+	font-weight: bold;
+}
+
+#samples .node.library > .caption > .icon {
+	color: #d16e0a;
+	text-align: center;
+	width: 1.2em;
+}
+
+#samples .node.folder {
+	font-style: italic;
+}
+
+#samples .node > .caption > .matches {
+	padding-left: 5px;
+	color: #888;
+	font-weight: normal;
+	font-style: italic;
+}
+
+#refreshTests {
+	position: absolute;
+	right: 2rem;
+}
+
+.expander {
+	font-family: 'SAP-icons';
+	font-weight: normal;
+	color: #aaa;
+	position: absolute;
+	display:inline-block;
+	right: 0.5em;
+	cursor: pointer;
+	cursor: hand;
+}
+
+.expanded .expander, .collapsed .expander:hover {
+	color: #0a8ef1;
+	font-weight: bold;
+	text-shadow: 0 0 0.125rem #8cf;
+}
+
+.icon {
+	font-family: 'SAP-icons';
+	display: inline-block;
+	cursor: pointer;
+	cursor: hand;
+}
+
+#sap-ui-SampleWindow > #toolbar {
+	float: right;
+}
+
+#sap-ui-SampleWindow.expanded > #toolbar {
+	display: block;
+	height: 1.75rem;
+}
+
+#sap-ui-SampleWindow.expanded > #samples {
+	top: calc(2rem + 1.75rem);
+	height: calc(100% - 2rem - 1.75rem);
+}
+
+#sap-ui-SampleWindow.collapsed > #toolbar {
+	display: none;
+}
+
+#sap-ui-SampleWindow.collapsed > #samples {
+	top: 2rem;
+	height: calc(100% - 2rem);
+}
+
+#sap-ui-SampleWindow #add-custom-test {
+	padding-left:10px;
+	margin-top:10px
+}
+
+#sap-ui-SettingsWindow > div {
+	box-sizing: border-box;
+	padding: 5px;
+}
+
+#sap-ui-ContentWindowFrame {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+#samples > .section > .children > .loading {
+	display:block;
+	margin-left:auto;
+	margin-right:auto;
+	border:none;
+	vertical-align:middle;
+}
+
+#samples > .section > .children > .error-msg {
+	font-size:10pt;
+	font-style:italic;
+	color:red;
+}
+
+#samples > .section > .children > .info-msg {
+	font-size:10pt;
+	font-style:italic;
+	padding-left:22px;
+}
+
+/* ---------------------------------------
+ * TraceWindow styles
+ * --------------------------------------- */
+#sap-ui-TraceWindow {
+	box-sizing: border-box;
+	padding: 2px;
+	height: 100%;
+	font-size: 8pt;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+#sap-ui-TraceWindow .expander {
+	font-size: 1rem;
+	padding: 0.2rem;
+	width: 1.5rem;
+	right: 1rem;
+	text-align: center;
+	background-color: rgba(255,255,255,0.8);
+}
+
+#sap-ui-ControlTreeRoot, #sap-ui-PropertyWindowRoot {
+	position: absolute;
+	box-sizing: border-box;
+	top: 2rem;
+	height: calc(100% - 2rem);
+	right: 4px;
+	left: 4px;
+	bottom: 4px;
+	font-size: 8pt;
+	overflow-x: hidden;
+	padding: 2px;
+}
+
+#sap-ui-PropertyWindowRoot input {
+	border: 1px solid #ccc
+}
+
+#sap-ui-TraceWindow.expanded > #trace-toolbar {
+	display: block;
+	height: 1.75rem;
+}
+
+#sap-ui-TraceWindow.expanded .expander {
+	background-color: transparent;
+}
+
+
+#sap-ui-TraceWindow.expanded > #sap-ui-TraceWindowRoot {
+	top: 1.75rem;
+	height: calc(100% - 1.75rem - 4px);
+}
+
+#sap-ui-TraceWindow.collapsed > #trace-toolbar {
+	display: none;
+}
+
+#sap-ui-TraceWindow.collapsed > #sap-ui-TraceWindowRoot {
+	top: 0px;
+	height: calc(100% - 4px);
+}
+
+#sap-ui-TraceWindow > #trace-toolbar {
+	background-color: #ddd;
+}
+
+#sap-ui-TraceWindow > #trace-toolbar > * {
+	font-size: 0.75rem;
+	margin: 0 0.2rem;
+}
+
+
+.logviewer {
+	font-size: 8pt;
+	background-color: transparent;
+	line-height: 1.3em;
+}
+
+.logviewer div {
+	font-family: Arial monospaced for SAP, monospace;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.3em;
+	/* width : 100%;*/
+	white-space: nowrap;
+	color: black;
+}
+
+.logviewer .lvl0 { /* FATAL */
+	background-color: #f06;
+	color: #ff8 !important;
+}
+
+.logviewer .lvl1 { /* ERROR */
+	background-color: #f66;
+}
+
+.logviewer .lvl2 { /* WARNING */
+	background-color: #ff6;
+}
+
+.logviewer .lvl3 { /* INFO */
+	background-color: transparent;
+}
+
+.logviewer .lvl4 { /* DEBUG */
+	background-color: transparent;
+	color: #888 !important;
+}
+
+.logviewer .lvl5 { /* FINE */
+	background-color: transparent;
+	color: #aaa !important;
+}
+
+#loglevel {
+	font-size: 8pt;
+	line-height: 1rem;
+}
+
+/* ---------------------------------------
+ * Other, special styles
+ * --------------------------------------- */
+
+body > #sap-ui-ide-less-mode {
+	display: none; /* hide the no-less indicator */
+}

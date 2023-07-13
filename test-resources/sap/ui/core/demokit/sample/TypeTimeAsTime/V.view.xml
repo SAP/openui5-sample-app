@@ -1,0 +1,67 @@
+<mvc:View
+	controllerName="sap.ui.core.sample.TypeTimeAsTime.C"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:form="sap.ui.layout.form"
+	xmlns="sap.m">
+
+	<form:SimpleForm
+		width="auto"
+		class="sapUiResponsiveMargin"
+		layout="ResponsiveGridLayout"
+		editable="true"
+		labelSpanL="3"
+		labelSpanM="3"
+		emptySpanL="4"
+		emptySpanM="4"
+		columnsL="1"
+		columnsM="1"
+		title="Time Input" >
+		<form:content>
+			<Label text="Time" />
+			<TimePicker value="{
+				path: '/time',
+				type: 'sap.ui.model.type.Time'}" />
+		</form:content>
+	</form:SimpleForm>
+
+	<form:SimpleForm
+		width="auto"
+		class="sapUiResponsiveMargin"
+		layout="ResponsiveGridLayout"
+		labelSpanL="3"
+		labelSpanM="3"
+		emptySpanL="4"
+		emptySpanM="4"
+		columnsL="1"
+		columnsM="1"
+		title="Style" >
+		<form:content>
+			<Label text="Short" />
+			<Text text="{
+				path: '/time',
+				type: 'sap.ui.model.type.Time',
+				formatOptions: {
+					style: 'short'
+				}
+			}" />
+
+			<Label text="Medium" />
+			<Text text="{
+				path: '/time',
+				type: 'sap.ui.model.type.Time',
+				formatOptions: {
+					style: 'medium'
+				}
+			}" />
+
+			<Label text="Long" />
+			<Text text="{
+				path: '/time',
+				type: 'sap.ui.model.type.Time',
+				formatOptions: {
+					style: 'long'
+				}
+			}" />
+		</form:content>
+	</form:SimpleForm>
+</mvc:View>

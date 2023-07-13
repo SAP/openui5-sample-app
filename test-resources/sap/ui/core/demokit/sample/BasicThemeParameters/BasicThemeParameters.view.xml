@@ -1,0 +1,23 @@
+<mvc:View
+	controllerName="sap.ui.core.sample.BasicThemeParameters.BasicThemeParameters"
+	xmlns:l="sap.ui.layout"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+<l:VerticalLayout
+		class="sapUiContentPadding"
+		width="100%">
+		<l:content>
+			<MessageStrip
+				text="This sample is replaced with the Theme Parameter Toolbox. You can easily search, preview, and filter semantic theme parameters."
+				type="Information"
+				showIcon="true"
+				class="sapUiMediumMarginBottom">
+			</MessageStrip>
+			<Link
+			text="Click here to open the Theme Parameter Toolbox "
+			target="_blank"
+			href="test-resources/sap/m/demokit/theming/webapp/index.html" />
+		</l:content>
+	</l:VerticalLayout>
+</mvc:View>

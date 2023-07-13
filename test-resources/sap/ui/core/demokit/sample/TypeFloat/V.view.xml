@@ -1,0 +1,171 @@
+<mvc:View
+	controllerName="sap.ui.core.sample.TypeFloat.C"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:form="sap.ui.layout.form"
+	xmlns="sap.m">
+
+	<form:SimpleForm
+		width="auto"
+		class="sapUiResponsiveMargin"
+		layout="ResponsiveGridLayout"
+		editable="true"
+		labelSpanL="3"
+		labelSpanM="3"
+		emptySpanL="4"
+		emptySpanM="4"
+		columnsL="1"
+		columnsM="1"
+		title="Number Input" >
+		<form:content>
+			<Label text="Number" />
+			<Input value="{path:'/number', type:'sap.ui.model.type.Float'}"/>
+		</form:content>
+	</form:SimpleForm>
+
+	<form:SimpleForm
+		width="auto"
+		class="sapUiResponsiveMargin"
+		layout="ResponsiveGridLayout"
+		labelSpanL="3"
+		labelSpanM="3"
+		emptySpanL="4"
+		emptySpanM="4"
+		columnsL="1"
+		columnsM="1"
+		title="Minimal Number of Non-Fraction Digits (minIntegerDigits)">
+		<form:content>
+			<Label text="3 digits" />
+			<Text text="{
+				path: '/number',
+				type: 'sap.ui.model.type.Float',
+				formatOptions: {
+					minIntegerDigits: 3
+				}
+			}" />
+
+			<Label text="5 digits" />
+			<Text text="{
+				path: '/number',
+				type: 'sap.ui.model.type.Float',
+				formatOptions: {
+					minIntegerDigits: 5
+				}
+			}" />
+		</form:content>
+	</form:SimpleForm>
+
+	<form:SimpleForm
+		width="auto"
+		class="sapUiResponsiveMargin"
+		layout="ResponsiveGridLayout"
+		labelSpanL="3"
+		labelSpanM="3"
+		emptySpanL="4"
+		emptySpanM="4"
+		columnsL="1"
+		columnsM="1"
+		title="Maximal Number of Non-Fraction Digits (maxIntegerDigits)">
+		<form:content>
+			<Label text="2 digits" />
+			<Text text="{
+				path: '/number',
+				type: 'sap.ui.model.type.Float',
+				formatOptions: {
+					maxIntegerDigits: 2
+				}
+			}" />
+
+			<Label text="5 digits" />
+			<Text text="{
+				path: '/number',
+				type: 'sap.ui.model.type.Float',
+				formatOptions: {
+					maxIntegerDigits: 5
+				}
+			}" />
+		</form:content>
+	</form:SimpleForm>
+
+	<form:SimpleForm
+		width="auto"
+		class="sapUiResponsiveMargin"
+		layout="ResponsiveGridLayout"
+		labelSpanL="3"
+		labelSpanM="3"
+		emptySpanL="4"
+		emptySpanM="4"
+		columnsL="1"
+		columnsM="1"
+		title="Minimal Number of Fraction Digits (minFractionDigits)">
+		<form:content>
+			<Label text="2 digits" />
+			<Text text="{
+				path: '/number',
+				type: 'sap.ui.model.type.Float',
+				formatOptions: {
+					minFractionDigits: 2
+				}
+			}" />
+
+			<Label text="5 digits" />
+			<Text text="{
+				path: '/number',
+				type: 'sap.ui.model.type.Float',
+				formatOptions: {
+					minFractionDigits: 5
+				}
+			}" />
+		</form:content>
+	</form:SimpleForm>
+
+	<form:SimpleForm
+		width="auto"
+		class="sapUiResponsiveMargin"
+		layout="ResponsiveGridLayout"
+		labelSpanL="3"
+		labelSpanM="3"
+		emptySpanL="4"
+		emptySpanM="4"
+		columnsL="1"
+		columnsM="1"
+		title="Maximal Number of Fraction Digits (maxFractionDigits, overruled by default by preserveDecimals)">
+		<form:content>
+			<Label text="2 digits, default preserveDecimals (true)" />
+			<Text text="{
+				path: '/number',
+				type: 'sap.ui.model.type.Float',
+				formatOptions: {
+					maxFractionDigits: 2
+				}
+			}" />
+
+			<Label text="5 digits, default preserveDecimals (true)" />
+			<Text text="{
+				path: '/number',
+				type: 'sap.ui.model.type.Float',
+				formatOptions: {
+					maxFractionDigits: 5
+				}
+			}" />
+			<Label text="2 digits, preserveDecimals=false" />
+			<Text text="{
+				path: '/number',
+				type: 'sap.ui.model.type.Float',
+				formatOptions: {
+					maxFractionDigits: 2,
+					preserveDecimals: false
+				}
+			}" />
+
+			<Label text="5 digits, preserveDecimals=false" />
+			<Text text="{
+				path: '/number',
+				type: 'sap.ui.model.type.Float',
+				formatOptions: {
+					maxFractionDigits: 5,
+					preserveDecimals: false
+				}
+			}" />
+		</form:content>
+	</form:SimpleForm>
+</mvc:View>

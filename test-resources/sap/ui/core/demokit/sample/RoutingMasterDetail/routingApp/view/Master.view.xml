@@ -1,0 +1,19 @@
+<mvc:View
+	xmlns="sap.m"
+	xmlns:layout="sap.ui.layout"
+	xmlns:mvc="sap.ui.core.mvc"
+	controllerName="sap.ui.core.sample.RoutingMasterDetail.routingApp.controller.Master">
+	<Page
+		title="Orders List">
+		<List id="orders" 
+				items="{/orders}"
+				mode="SingleSelectMaster"
+				selectionChange="onSelectionChange">
+			<items>
+				<StandardListItem title="{orderName}" 
+					type="Active"
+					press="onSelectionChange"/>
+			</items>
+		</List>
+	</Page>
+</mvc:View>

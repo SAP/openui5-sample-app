@@ -1,0 +1,49 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+
+		<title>Frame Options Testpage - sap.ui.core</title>
+
+		<script>
+			function selectParentPage(url) {
+				location.href = url;
+			}
+			function selectChildPage(url) {
+				document.getElementById("currentChild").innerHTML = url;
+				if (url == "sameorigin_denied.html" || url == "allowlistservice_allowed.html" ||
+					url == "allowlistservice_denied.html" || url == "allowlistservice_inactive.html" ||
+					url == "allowlistservice_metatag_allowed.html" || url == "allowlistservice_metatag_denied.html") {
+					url = location.protocol + "//" + location.hostname.substr(0,location.hostname.indexOf(".")) + ":" +
+						location.port + location.pathname.substr(0,location.pathname.lastIndexOf("/") + 1) + url;
+				}
+				document.getElementById("iframe").src = url;
+			}
+		</script>
+	</head>
+	<body class="sapUiBody">
+	<h1>Frame Options Testpage</h1>
+	<p>Please open this page with full qualified domain name for tests to work properly.
+	<h2>Page Selection</h2>
+	<label for="parent">Parent page:</label>
+	<select id="parent" onchange="selectParentPage(event.target.value)">
+		<option value="ui5parent.html">UI5 Parent</option>
+		<option value="htmlparent.html" selected>HTML Parent</option>
+	</select>
+	<label for="child">Child page:</label>
+	<select id="child" onchange="selectChildPage(event.target.value)">
+		<option value="allow.html" selected>Allow</option>
+		<option value="deny.html">Deny</option>
+		<option value="sameorigin_allowed.html">Trusted (same origin, allowed)</option>
+		<option value="sameorigin_denied.html">Trusted (same origin, denied)</option>
+		<option value="sameorigin_metatag_allowed.html">Trusted (same origin, allowed, &lt;meta&gt; tag)</option>
+		<option value="allowlistservice_allowed.html">Trusted (allowlist service, allowed)</option>
+		<option value="allowlistservice_denied.html">Trusted (allowlist service, denied)</option>
+		<option value="allowlistservice_inactive.html">Trusted (allowlist service, inactive)</option>
+		<option value="allowlistservice_metatag_allowed.html">Trusted (allowlist service, allowed, &lt;meta&gt; tag)</option>
+		<option value="allowlistservice_metatag_denied.html">Trusted (allowlist service, denied, &lt;meta&gt; tag)</option>
+	</select>
+	<h2>IFrame with <span id="currentChild">allow.html</span></h2>
+		<iframe id="iframe" src="allow.html" style="width:100%;height:500px"></iframe>
+	</body>
+</html>

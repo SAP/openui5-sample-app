@@ -1,0 +1,25 @@
+{
+	"sap.app": {
+		"id": "sap.ui.core.sample.View.preprocessor",
+		"applicationVersion": {
+			"version": "1.0.0"
+		}
+	},
+	"sap.ui5": {
+		"dependencies": {
+			"libs": {
+				"sap.m": {}
+			}
+		},
+		"config": {
+			"sample": {
+				"files": [
+					"Sample.view.xml",
+					"SampleView.js",
+					"Component.js",
+					"manifest.json"
+				]
+			}
+		}
+	}
+}

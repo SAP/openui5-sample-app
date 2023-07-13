@@ -1,0 +1,60 @@
+<mvc:View
+	controllerName="view.Main"
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:core="sap.ui.core">
+	<App id="app">
+		<Page id="list">
+			<Table
+				id="itemList"
+				items="{items>/items}">
+				<headerToolbar>
+					<Toolbar>
+						<Title text="Item List"/>
+						<ToolbarSpacer/>
+						<SearchField width="50%" search="onFilterList" selectOnFocus="false"/>
+					</Toolbar>
+				</headerToolbar>
+				<columns>
+					<Column>
+						<Text text="Name"/>
+					</Column>
+				</columns>
+				<items>
+					<ColumnListItem
+						type="Navigation"
+						press="onPress">
+						<cells>
+							<Text text="{items>name}"/>
+						</cells>
+					</ColumnListItem>
+				</items>
+			</Table>
+		</Page>
+		<Page id="Sample11"
+			showNavButton="true"
+			navButtonPress="onBack">
+			<Title text="Sample11"/>
+		</Page>
+		<Page id="Sample12"
+			showNavButton="true"
+			navButtonPress="onBack">
+			<headerContent>
+				<Title text="Sample12"/>
+			</headerContent>
+			<Select
+				selectedKey="{items>/items/0/key}"
+				items="{
+					path: 'items>/items',
+					sorter: { path: 'items>name' }
+				}">
+				<core:Item key="{items>key}" text="{items>name}"/>
+			</Select>
+		</Page>
+		<Page id="Sample3"
+			showNavButton="true"
+			navButtonPress="onBack">
+			<Title text="Sample3"/>
+		</Page>
+	</App>
+</mvc:View>

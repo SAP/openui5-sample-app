@@ -1,0 +1,122 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>SAPUI5 Testsuite</title>
+		<link rel="stylesheet" id="sap-ui-theme-sap.ui.core" href="../../resources/sap/ui/core/themes/sap_fiori_3/library.css">
+		<link rel="stylesheet" id="sap-ui-theme-sap.ui.layout" href="../../resources/sap/ui/layout/themes/sap_fiori_3/library.css">
+		<link rel="stylesheet" id="sap-ui-theme-sap.m" href="../../resources/sap/m/themes/sap_fiori_3/library.css">
+		<link rel="stylesheet" href="styles/main.css">
+		<script id="sap-ui-bootstrap"
+				src="../../resources/sap-ui-core.js"
+				data-sap-ui-async="true"
+				data-sap-ui-theme="sap_fiori_3"
+				data-sap-ui-modules="test-resources.testsuite.js.testframe,sap.m.library,sap.ui.layout.library"
+				data-sap-ui-resourceroots='{"test-resources":"../"}'>
+		</script>
+	</head>
+	<body>
+		<div class="mainLayoutContainer full">
+			<div id="sap-ui-TitleWindow" class="banner">
+				<div>
+					<img src="../../resources/sap/ui/core/mimes/logo/icotxt_white_220x72_blue.png" class="logo-ui5" alt="SAPUI5">
+					<span>Testsuite</span>
+				</div>
+				<div>
+					<span>UI5 version 1.115.1</span>
+					<img src="images/newwindow.png" data-layout="newwindow" class="btn" title="Open this sample in a new window.">
+					<img src="images/sampletree.png" data-layout="sampletree" class="btn" title="Sample Tree">
+					<img src="images/sampleonly.png" data-layout="sampleonly" class="btn" title="Sample Only">
+					<img src="images/controltree.png" data-layout="controltree" class="btn" title="Control Tree">
+					<img src="images/full.png" data-layout="full" class="btn" title="Full Testsuite">
+					<img src="images/edit.png" id="snippixButton" class="btn disabled" title="Edit in Snippix">
+					<img src="images/jsunit.png" id="jsunit" class="btn" title="Open QUnit Testrunner">
+					<img src="../../resources/sap/ui/core/mimes/logo/sap_73x36.gif" class="logo-sap" alt="SAP SE">
+				</div>
+			</div>
+			<div id="sap-ui-SampleWindow" class="expanded">
+				<h2>Tests &amp; Samples
+					<span id="refreshTests" title="Refresh List of TestStarter tests (expensive)" class="icon">&#xe010;</span>
+					<span class="expander" data-expands="sap-ui-SampleWindow">&#xe076;</span>
+				</h2>
+				<div id="toolbar" class="toolbar">
+					<span>Filter: </span>
+					<input tabindex="2" id="filter" title="Filter tests by name or path">
+					<span id="clearFilter" class="icon" title="Clear filter">&#xe249;</span>
+				</div>
+				<div id="samples" class="scrollpanel">
+
+					<div id="library-tests-node" class='node section expanded'>
+						<div class="caption">
+							<span>Library Tests</span>
+							<span class="matches"></span>
+						</div>
+						<div id="library-tests" class="children">
+						</div>
+					</div>
+
+					<div id="application-pages-node" class='node section expanded'>
+						<div class="caption">
+							<span>Application Pages</span>
+							<span class="matches"></span>
+						</div>
+						<div id="application-pages" class="children">
+						</div>
+					</div>
+
+					<div id="custom-tests-node" class='node section expanded'>
+						<div class="caption">
+							<span>Custom Tests</span>
+							<span class="matches"></span>
+						</div>
+						<div id="custom-tests" class="children">
+							<span id="custom-tests-empty" class="info-msg">none so far...</span>
+							<div id="add-custom-test">
+								<label>URL to HTML resource:</label>
+								<div>
+									<input id="sampleurl" value="">
+									<button id="add-sampleurl">Add</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="sap-ui-SettingsWindow">
+				<h2>Settings</h2>
+				<div id="uiArea1" class="sapUiSizeCompact"></div>
+			</div>
+			<div id="sap-ui-ContentWindow">
+				<iframe id="sap-ui-ContentWindowFrame" src="welcome.html"></iframe>
+			</div>
+			<div id="sap-ui-TraceWindow" class="collapsed">
+				<div class="expander" data-expands="sap-ui-TraceWindow">&#xe0a6;</div>
+				<div id="trace-toolbar" class="toolbar">
+					<span id="clear" class="icon" title="Clear">&#xe03d;</span>
+					<select id="loglevel" title="Select the recording level of the sample page loggers">
+						<option value="-1">NONE</option>
+						<option value="0">FATAL</option>
+						<option value="1">ERROR</option>
+						<option value="2">WARNING</option>
+						<option value="3" selected>INFO</option>
+						<option value="4">DEBUG</option>
+						<!-- <option value="5">FINE</option> -->
+						<option value="6">ALL</option>
+					</select>
+					<input id="filterString" type="text" placeholder="Filter" title="Show only those entries that contain the given text">
+					<span id="resetFilter" class="icon">&#xe249;</span>
+				</div>
+				<div id="sap-ui-TraceWindowRoot" class="logviewer scrollpanel">
+				</div>
+			</div>
+			<div id="sap-ui-ControlTreeWindow">
+				<h2>Control Tree</h2>
+				<div id="sap-ui-ControlTreeRoot" class="scrollpanel"></div>
+			</div>
+			<div id="sap-ui-PropertyListWindow">
+				<h2>Properties</h2>
+				<div id="sap-ui-PropertyWindowRoot" class="scrollpanel"></div>
+			</div>
+		</div>
+	</body>
+</html>

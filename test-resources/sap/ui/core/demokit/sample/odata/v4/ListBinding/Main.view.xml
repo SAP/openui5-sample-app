@@ -1,0 +1,293 @@
+<mvc:View
+	class="sapUiSizeCompact"
+	controllerName="sap.ui.core.sample.odata.v4.ListBinding.Main"
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+	<form:SimpleForm ariaLabelledBy="teamTitle" id="TeamDetails"
+			layout="ResponsiveGridLayout">
+		<form:toolbar>
+			<Toolbar>
+				<Title id="teamTitle" text="Team" level="H3"/>
+				<Select ariaLabelledBy="teamTitle" id="TeamSelect" change="onTeamSelect"
+					autoAdjustWidth="true"
+					items="{
+						events : {
+							dataRequested : '.onTeamsRequested',
+							dataReceived : '.onTeamsReceived'
+						},
+						path : '/TEAMS',
+						parameters : {
+							$expand : {
+								'TEAM_2_EMPLOYEES' : {
+									$expand : {
+										'EMPLOYEE_2_EQUIPMENTS' : {
+											$expand : {
+												'EQUIPMENT_2_PRODUCT' : {
+													$expand : {
+														'PRODUCT_2_CATEGORY' : true,
+														'PRODUCT_2_SUPPLIER' : true
+													}
+												}
+											}
+										}
+									},
+									$orderby : 'LOCATION/City/CITYNAME'
+								},
+								'TEAM_2_MANAGER' : true
+							}
+						}
+					}" >
+					<core:Item key="{Team_Id}" text="{Name}"/>
+				</Select>
+				<Button id="openChangeTeamBudgetDialog" enabled="{ui>/bRealOData}" text="Budget"
+						icon="sap-icon://edit" press="openChangeTeamBudgetDialog">
+					<dependents>
+						<Dialog id="ChangeTeamBudgetDialog" title="Change Team Budget"
+							binding="{/ChangeTeamBudgetByID(...)}">
+							<buttons>
+								<Button icon="sap-icon://sys-cancel-2"
+									press="cancelChangeTeamBudget" text="Cancel" type="Reject"/>
+								<Button id="changeTeamBudget" icon="sap-icon://save"
+									press="changeTeamBudget" text="Change" type="Accept"/>
+							</buttons>
+							<form:SimpleForm ariaLabelledBy="ChangeTeamBudgetDialog"
+								binding="{$Parameter}" editable="true"
+								id="ChangeTeamBudgetByID" layout="ResponsiveGridLayout">
+								<Label text="Team ID"/>
+								<Input id="ChangeTeamBudgetDialog::TeamID" value="{TeamID}"
+									editable="false"/>
+								<Label text="Budget"/>
+								<Input id="ChangeTeamBudgetDialog::Budget" value="{Budget}"/>
+							</form:SimpleForm>
+						</Dialog>
+					</dependents>
+				</Button>
+				<Button id="openChangeManagerOfTeamDialog" enabled="{ui>/bRealOData}" text="Manager"
+						icon="sap-icon://edit" press="openChangeManagerOfTeamDialog"/>
+			</Toolbar>
+		</form:toolbar>
+		<Label text="Team ID"/>
+		<Text id="Team_Id" text="{Team_Id}"/>
+		<Label text="Team Name"/>
+		<Text text="{Name}"/>
+		<Label text="Member Count"/>
+		<Text text="{MEMBER_COUNT}"/>
+		<Label text="Manager ID"/>
+		<Text id="ManagerID" text="{TEAM_2_MANAGER/ID}"/>
+		<Label text="Budget"/>
+		<Text id="Budget" text="{Budget}"/>
+		<Label text="Currency"/>
+		<Text text="{BudgetCurrency}"/>
+		<form:dependents>
+			<Dialog id="ChangeManagerOfTeamDialog" title="Change Team Manager">
+				<buttons>
+					<Button icon="sap-icon://sys-cancel-2" press="cancelChangeManagerOfTeam"
+						text="Cancel" type="Reject"/>
+					<Button icon="sap-icon://save" id="changeManagerOfTeam"
+						press="changeManagerOfTeam" text="Change" type="Accept"/>
+				</buttons>
+				<form:SimpleForm ariaLabelledBy="ChangeManagerOfTeamDialog"
+						editable="true" id="ChangeTeamManagerByID"
+						layout="ResponsiveGridLayout">
+					<Label text="Manager ID"/>
+					<Input id="ChangeManagerOfTeamDialog::Manager" value="{parameterContext>ManagerID}"/>
+				</form:SimpleForm>
+			</Dialog>
+		</form:dependents>
+	</form:SimpleForm>
+	<Table id="Employees" growing="true" growingThreshold="1"
+		items="{TEAM_2_EMPLOYEES}"
+		mode="SingleSelectMaster" selectionChange="onEmployeeSelect">
+		<headerToolbar>
+			<Toolbar>
+				<Title text="Employees" level="H4"/>
+				<ToolbarSpacer/>
+				<Button icon="sap-icon://sys-cancel-2" text="Cancel"
+					press="onCancel"/>
+				<Button enabled="{ui>/bRealOData}" icon="sap-icon://save" text="Save"
+					press="onSave"/>
+				<Button icon="sap-icon://refresh" id="refreshEmployees" press="onRefresh"
+					text="Refresh"/>
+			</Toolbar>
+		</headerToolbar>
+		<columns>
+			<Column>
+				<Button app:sorterPath="Name" app:sorterControlId="Employees"
+					enabled="{ui>/bRealOData}" icon="{ui>/Employees/Name/icon}" iconFirst="false"
+					press="onSort" text="Employee Name"/>
+			</Column>
+			<Column minScreenWidth="Medium" demandPopin="true">
+				<Text text="Employee ID"/>
+			</Column>
+			<Column minScreenWidth="Large" demandPopin="true">
+				<Text text="Is Manager"/>
+			</Column>
+			<Column minScreenWidth="Small" demandPopin="true">
+				<Button app:sorterPath="AGE" app:sorterControlId="Employees"
+					enabled="{ui>/bRealOData}" icon="{ui>/Employees/AGE/icon}" iconFirst="false"
+					press="onSort" text="Age"/>
+			</Column>
+			<Column minScreenWidth="Medium" demandPopin="true">
+				<Button enabled="false" icon="sap-icon://sort-ascending" iconFirst="false"
+					press="onSort" text="City"/>
+			</Column>
+			<Column minScreenWidth="Large" demandPopin="true">
+				<Text text="Entry Date"/>
+			</Column>
+			<Column minScreenWidth="XXLarge" demandPopin="true">
+				<Text text="ETag"/>
+			</Column>
+			<Column minScreenWidth="XXLarge" demandPopin="true">
+				<Text text="Delete"/>
+			</Column>
+		</columns>
+		<ColumnListItem>
+			<Input id="Employee_Name" value="{Name}"/>
+			<Text id="Employee_ID" text="{ID}"/>
+			<CheckBox selected="{Is_Manager}"/>
+			<Input value="{AGE}"/>
+			<Text text="{LOCATION/City/CITYNAME}"/>
+			<Input value="{ENTRYDATE}"/>
+			<!-- Note: automatic type determination cannot work here and triggers a warning -->
+			<Text text="{path : '@odata.etag', type : 'sap.ui.model.odata.type.String'}"/>
+			<Button icon="sap-icon://delete" text="Delete" press="onDeleteEmployee"/>
+		</ColumnListItem>
+	</Table>
+	<Table id="EmployeeEquipments" headerText="Employee Equipments"
+		items="{EMPLOYEE_2_EQUIPMENTS}">
+		<columns>
+			<Column>
+				<Text text="Equipment ID"/>
+			</Column>
+			<Column>
+				<Text text="Product Image"/>
+			</Column>
+			<Column>
+				<Text text="Product Name"/>
+			</Column>
+			<Column>
+				<Text text="Category"/>
+			</Column>
+			<Column>
+				<Text text="Product Categories"/>
+			</Column>
+			<Column>
+				<Text text="Supplier"/>
+			</Column>
+		</columns>
+		<ColumnListItem>
+			<Text text="{ID}"/>
+			<Image densityAware="false" src="{EQUIPMENT_2_PRODUCT/ProductPicture/Picture}"/>
+			<Input id="EQUIPMENT_2_PRODUCT:Name" value="{EQUIPMENT_2_PRODUCT/Name}"/>
+			<Text text="{Category}"/>
+			<SelectList enabled="false"
+				items="{path : 'EQUIPMENT_2_PRODUCT/PRODUCT_2_CATEGORY',
+					templateShareable : false}">
+				<core:Item text="{CategoryName}" key="{CategoryName}"/>
+			</SelectList>
+			<Input value="{EQUIPMENT_2_PRODUCT/PRODUCT_2_SUPPLIER/Supplier_Name}"/>
+		</ColumnListItem>
+	</Table>
+	<form:SimpleForm ariaLabelledBy="maxEmployeeAge" layout="ResponsiveGridLayout">
+		<form:toolbar>
+			<Toolbar id="GetEmployeeMaxAge" binding="{/GetEmployeeMaxAge(...)}">
+				<Title id="maxEmployeeAge" text="Max. Employee Age" level="H4"/>
+				<ToolbarSpacer width="1em"/>
+				<Text text="{value}"/>
+				<Button press="getEmployeeMaxAge" text="Execute"/>
+			</Toolbar>
+		</form:toolbar>
+	</form:SimpleForm>
+	<VBox>
+		<form:SimpleForm ariaLabelledBy="EmployeeSearch" binding="{/GetEmployeeByID(...)}"
+				id="GetEmployeeByID" layout="ResponsiveGridLayout">
+			<form:toolbar>
+				<Toolbar>
+					<Title id="EmployeeSearch" text="Employee Search" level="H4">
+						<layoutData>
+							<ToolbarLayoutData shrinkable="false"/>
+						</layoutData>
+					</Title>
+					<ToolbarSpacer width="1em"/>
+					<Label labelFor="EmployeeId" text="Employee ID">
+						<layoutData>
+							<ToolbarLayoutData shrinkable="false"/>
+						</layoutData>
+					</Label>
+					<Input enabled="{ui>/bRealOData}" id="EmployeeId" value="{ui>/EmployeeID}"
+						width="4em"/>
+					<Button text="Search" enabled="{ui>/bRealOData}" press="getEmployeeByID"/>
+				</Toolbar>
+			</form:toolbar>
+			<Label text="Name"/>
+			<Text text="{Name}"/>
+			<Label text="Age"/>
+			<Text text="{AGE}"/>
+			<Label text="Entry Date"/>
+			<Text text="{ENTRYDATE}"/>
+		</form:SimpleForm>
+	</VBox>
+	<VBox>
+		<Table growing="true" growingThreshold="5" id="Equipments"
+			items="{
+					events : {
+						change : '.onEquipmentsChanged'
+					},
+					path : '/Equipments',
+					parameters : {
+						$$operationMode : 'Server',
+						$count : true,
+						$orderby : 'Name',
+						$select : 'Category,ID,Name,EmployeeId'
+					},
+					sorter : {
+						path : 'Category',
+						group : true
+					}
+				}">
+			<headerToolbar>
+				<Toolbar>
+					<Title text="Sort Equipments" level="H4">
+						<layoutData>
+							<ToolbarLayoutData shrinkable="false"/>
+						</layoutData>
+					</Title>
+					<ToolbarSpacer width="1em"/>
+					<Button enabled="false" icon="sap-icon://refresh" text="Refresh"
+						press="onEquipmentsRefresh"/>
+				</Toolbar>
+			</headerToolbar>
+			<columns>
+				<Column>
+					<Button app:sorterPath="Category" app:sorterControlId="Equipments"
+						enabled="{ui>/bRealOData}" icon="{ui>/Equipments/Category/icon}"
+						iconFirst="false" press="onSort" text="Category"/>
+				</Column>
+				<Column>
+					<Button app:sorterPath="ID" app:sorterControlId="Equipments"
+						enabled="{ui>/bRealOData}" icon="{ui>/Equipments/ID/icon}"
+						iconFirst="false" press="onSort" text="ID"/>
+				</Column>
+				<Column>
+					<Button app:sorterPath="Name" app:sorterControlId="Equipments"
+						enabled="{ui>/bRealOData}" icon="{ui>/Equipments/Name/icon}"
+						iconFirst="false" press="onSort" text="Name"/>
+				</Column>
+				<Column>
+					<Button app:sorterPath="EmployeeId" app:sorterControlId="Equipments"
+						enabled="{ui>/bRealOData}" icon="{ui>/Equipments/EmployeeId/icon}"
+						iconFirst="false" press="onSort" text="EmployeeId"/>
+				</Column>
+			</columns>
+			<ColumnListItem>
+				<Text text="{Category}"/>
+				<Text text="{ID}"/>
+				<Text text="{Name}"/>
+				<Text text="{EmployeeId}"/>
+			</ColumnListItem>
+		</Table>
+	</VBox>
+</mvc:View>
