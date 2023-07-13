@@ -1,0 +1,1 @@
+{"version":3,"file":"RangeSlider.designtime.js","names":["sap","ui","define","palette","group","templates","create","name","singular","plural"],"sources":["RangeSlider-dbg.designtime.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,GACb,WACA,aAEA,MAAO,CACNC,QAAS,CACRC,MAAO,SAERC,UAAW,CACVC,OAAQ,oDAETC,KAAM,CACLC,SAAU,mBACVC,OAAQ,2BAIX"}

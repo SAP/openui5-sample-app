@@ -1,0 +1,1 @@
+{"version":3,"file":"Toolbar.designtime.js","names":["sap","ui","define","aggregations","content","domRef","actions","move","templates","create"],"sources":["Toolbar-dbg.designtime.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,GACb,WACA,aAEA,MAAO,CACNC,aAAc,CACbC,QAAS,CACRC,OAAQ,cACRC,QAAS,CACRC,KAAM,kBAITC,UAAW,CACVC,OAAQ,gDAIX"}

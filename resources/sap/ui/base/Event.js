@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["./Object","sap/base/assert"],function(t,e){"use strict";var r=t.extend("sap.ui.base.Event",{constructor:function(e,r,n){t.apply(this);if(arguments.length>0){this.init(e,r,n)}}});r.prototype.init=function(r,n,s){e(typeof r==="string","Event.init: sId must be a string");e(t.isA(n,"sap.ui.base.EventProvider"),"Event.init: oSource must be an EventProvider");this.sId=r;this.oSource=n;this.mParameters=s||{};this.bCancelBubble=false;this.bPreventDefault=false};r.prototype.reset=function(){this.sId="";this.oSource=null;this.mParameters=null;this.bCancelBubble=false;this.bPreventDefault=false};r.prototype.getId=function(){return this.sId};r.prototype.getSource=function(){return this.oSource};r.prototype.getParameters=function(){return this.mParameters};r.prototype.getParameter=function(t){e(typeof t==="string"&&t,"Event.getParameter: sName must be a non-empty string");return this.mParameters[t]};r.prototype.cancelBubble=function(){this.bCancelBubble=true};r.prototype.preventDefault=function(){this.bPreventDefault=true};return r});
+//# sourceMappingURL=Event.js.map

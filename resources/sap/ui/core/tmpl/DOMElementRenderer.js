@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/base/Log","sap/base/security/encodeXML"],function(e,t){"use strict";var r={apiVersion:2};var a=/^(?:area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i;r.render=function(r,i){var n=t(i.getTag()),s=a.test(n);if(s){r.voidStart(n,i)}else{r.openStart(n,i)}i.getAttributes().forEach(function(a){var i=a.getName().toLowerCase();if(i==="class"){var n=a.getValue().split(" ");n.forEach(function(e){var e=e.trim();if(e){r.class(e)}})}else if(i==="style"){var s=a.getValue().split(";");s.forEach(function(e){var a=e.indexOf(":");if(a!=-1){var i=e.substring(0,a).trim();var n=e.substring(a+1).trim();r.style(t(i),n)}})}else if(a.getName()){r.attr(t(a.getName()),a.getValue())}else{e.error("Attributes must have a non-empty name")}});if(s){r.voidEnd()}else{r.openEnd()}var o=i.getElements(),f=!!i.getText()||o.length>0;if(f){if(s){e.error("Void element '"+n+"' is rendered with children")}if(i.getText()){r.text(i.getText())}o.forEach(function(e,t){r.renderControl(t)})}if(!s){r.close(n)}};return r},true);
+//# sourceMappingURL=DOMElementRenderer.js.map

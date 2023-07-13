@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/thirdparty/URI"],function(e){"use strict";var r={};r._processResourceConfiguration=function(e,a){a=a||{};var i=a.alreadyResolvedOnRoot||false;var n=e.bundleUrlRelativeTo||a.relativeTo;var o;if(n==="manifest"){o=a.manifestBaseURI}else if(n==="component"){o=a.baseURI}else{o=n||a.baseURI}Object.keys(e).forEach(function(s){if(s==="bundleUrl"&&!i){var t=e[s];var f=r._resolveUri(t,o);e[s]=f&&f.toString()}if(s==="terminologies"){var u=e[s];for(var l in u){r._processResourceConfiguration(u[l],{relativeTo:n,baseURI:a.baseURI,manifestBaseURI:a.manifestBaseURI})}}if(s==="enhanceWith"){var v=e[s]||[];for(var R=0;R<v.length;R++){r._processResourceConfiguration(v[R],{relativeTo:n,baseURI:a.baseURI,manifestBaseURI:a.manifestBaseURI})}}})};function a(r){if(r&&r instanceof e){return r}return new e(r)}r._resolveUri=function(e,i){return r._resolveUriRelativeTo(a(e),a(i))};r._resolveUriRelativeTo=function(r,a){if(r.is("absolute")||r.path()&&r.path()[0]==="/"){return r}var i=new e(document.baseURI).search("");a=a.absoluteTo(i);return r.absoluteTo(a).relativeTo(i)};return r});
+//# sourceMappingURL=_UrlResolver.js.map

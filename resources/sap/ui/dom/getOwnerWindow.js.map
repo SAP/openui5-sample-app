@@ -1,0 +1,1 @@
+{"version":3,"file":"getOwnerWindow.js","names":["sap","ui","define","fnGetOwnerWindow","ownerWindow","oDomRef","ownerDocument","parentWindow","defaultView"],"sources":["getOwnerWindow-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,GAAI,WACjB,aAYA,IAAIC,EAAmB,SAASC,EAAYC,GAC3C,GAAIA,EAAQC,cAAcC,aAAc,CACvC,OAAOF,EAAQC,cAAcC,YAC9B,CACA,OAAOF,EAAQC,cAAcE,WAC9B,EAEA,OAAOL,CAER"}

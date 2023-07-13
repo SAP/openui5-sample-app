@@ -1,0 +1,1 @@
+{"version":3,"file":"OpaExtension.js","names":["sap","ui","define","Ui5Object","Extension","extend","metadata","publicMethods"],"sources":["OpaExtension-dbg.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,CAAC,sBAAsB,SAASC,GAC1C,aAgBA,IAAIC,EAAYD,EAAUE,OAAO,2BAA4B,CACzDC,SAAW,CACPC,cAAgB,CACZ,cACA,eACA,oBAyJZ,OAAOH,CACX"}

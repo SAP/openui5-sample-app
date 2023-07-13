@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/m/p13n/modification/ModificationHandler","sap/m/p13n/Engine"],function(e,t){"use strict";var n;var r=new WeakMap;var a=e.extend("sap.m.p13n.modification.LocalStorageModificationHandler");a.prototype.processChanges=function(n,r){var a=e.prototype.processChanges.apply(this,arguments);var o=n&&n[0]?n[0].selectorElement:undefined;return a.then(function(){return t.getInstance().retrieveState(o).then(function(e){localStorage.setItem("$p13n.Engine.data--"+o.getId(),JSON.stringify(e))})})};a.prototype.initialize=function(e){var n=JSON.parse(localStorage.getItem("$p13n.Engine.data--"+e.getId()));var a;if(!n){a=t.getInstance().retrieveState(e).then(function(e){n=e})}else{a=t.getInstance().applyState(e,n,true)}r.set(e,n);return a};a.prototype.waitForChanges=function(e,t){return Promise.resolve()};a.prototype.reset=function(e,n){var a=e.selector;localStorage.removeItem("$p13n.Engine.data--"+a.getId());return t.getInstance().applyState(a,r.get(a),true)};a.prototype.isModificationSupported=function(e,t){return false};a.getInstance=function(){if(!n){n=new a}return n};return a});
+//# sourceMappingURL=LocalStorageModificationHandler.js.map

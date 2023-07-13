@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/base/util/deepExtend","sap/ui/base/Object"],function(e,t){"use strict";var i=t.extend("sap.ui.test.gherkin.StepDefinitions",{constructor:function(){t.apply(this,arguments);this._aDefinitions=[];this.init()},init:function(){},closeApplication:function(){},register:function(t,i){if(!(t instanceof RegExp)){throw new Error("StepDefinitions.register: parameter 'rRegex' must be a valid RegExp object")}if(typeof i!=="function"){throw new Error("StepDefinitions.register: parameter 'fnFunc' must be a valid Function")}this._aDefinitions.forEach(function(e){if(e.rRegex.source===t.source){throw new Error("StepDefinitions.register: Duplicate step definition '"+t+"'")}});this._aDefinitions.push({rRegex:t,generateTestStep:function(n){var r=n.text.match(t);if(!r){return{isMatch:false}}var s=r.slice(1);if(n.data){s.push(e([],n.data))}return{isMatch:true,text:n.text,regex:t,parameters:s,func:i}}})},_generateTestStep:function(e){var t=[];this._aDefinitions.forEach(function(i){var n=i.generateTestStep(e);if(n.isMatch){t.push(n)}});if(t.length===1){return t[0]}else if(t.length>1){var i=t.map(function(e){return"'"+e.regex+"'"}).join(", ").replace(/,([^,]*)$/," and$1");throw new Error("Ambiguous step definition error: "+t.length+" step definitions "+i+" match the feature file step '"+e.text+"'")}return{isMatch:false,text:"(NOT FOUND) "+e.text}}});return i});
+//# sourceMappingURL=StepDefinitions.js.map

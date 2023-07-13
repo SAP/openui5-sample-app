@@ -1,0 +1,1 @@
+{"version":3,"file":"FormElement.flexibility.js","names":["sap","ui","define","RenameFormElement","hideControl","unhideControl","renameField"],"sources":["FormElement.flexibility-dbg.js"],"mappings":";;;;;AAQAA,IAAIC,GAAGC,OAAO,CACb,iDACE,SAAUC,GACZ,aAEA,MAAO,CACNC,YAAe,UACfC,cAAiB,UACjBC,YAAeH,EAEjB,EAAiB"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"SegmentedButton.designtime.js","names":["sap","ui","define","palette","group","icons","svg","templates","create","aggregations","items","ignore"],"sources":["SegmentedButton-dbg.designtime.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,GACb,WACA,aAEA,MAAO,CACNC,QAAS,CACRC,MAAO,SACPC,MAAO,CACNC,IAAK,8CAGPC,UAAW,CACVC,OAAQ,wDAETC,aAAc,CACbC,MAAS,CACRC,OAAQ,OAKZ"}

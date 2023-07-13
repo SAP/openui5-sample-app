@@ -1,0 +1,147 @@
+{
+  "_version": "1.21.0",
+  "sap.app": {
+    "id": "sap.ui.unified",
+    "type": "library",
+    "embeds": [],
+    "applicationVersion": {
+      "version": "1.115.1"
+    },
+    "title": "Unified controls intended for both, mobile and desktop scenarios",
+    "description": "Unified controls intended for both, mobile and desktop scenarios",
+    "ach": "CA-UI5-CTR",
+    "resources": "resources.json",
+    "offline": true
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "supportedThemes": [
+      "base",
+      "sap_hcb"
+    ]
+  },
+  "sap.ui5": {
+    "dependencies": {
+      "minUI5Version": "1.115",
+      "libs": {
+        "sap.ui.core": {
+          "minVersion": "1.115.1"
+        }
+      }
+    },
+    "library": {
+      "i18n": {
+        "bundleUrl": "messagebundle.properties",
+        "supportedLocales": [
+          "",
+          "ar",
+          "bg",
+          "ca",
+          "cs",
+          "cy",
+          "da",
+          "de",
+          "el",
+          "en",
+          "en-GB",
+          "en-US-sappsd",
+          "en-US-saprigi",
+          "en-US-saptrc",
+          "es",
+          "es-MX",
+          "et",
+          "fi",
+          "fr",
+          "fr-CA",
+          "hi",
+          "hr",
+          "hu",
+          "id",
+          "it",
+          "iw",
+          "ja",
+          "kk",
+          "ko",
+          "lt",
+          "lv",
+          "ms",
+          "nl",
+          "no",
+          "pl",
+          "pt",
+          "pt-PT",
+          "ro",
+          "ru",
+          "sh",
+          "sk",
+          "sl",
+          "sv",
+          "th",
+          "tr",
+          "uk",
+          "vi",
+          "zh-CN",
+          "zh-TW"
+        ]
+      },
+      "content": {
+        "controls": [
+          "sap.ui.unified.calendar.DatesRow",
+          "sap.ui.unified.calendar.Header",
+          "sap.ui.unified.calendar.Month",
+          "sap.ui.unified.calendar.MonthPicker",
+          "sap.ui.unified.calendar.MonthsRow",
+          "sap.ui.unified.calendar.TimesRow",
+          "sap.ui.unified.calendar.YearPicker",
+          "sap.ui.unified.calendar.YearRangePicker",
+          "sap.ui.unified.Calendar",
+          "sap.ui.unified.CalendarDateInterval",
+          "sap.ui.unified.CalendarWeekInterval",
+          "sap.ui.unified.CalendarMonthInterval",
+          "sap.ui.unified.CalendarTimeInterval",
+          "sap.ui.unified.CalendarLegend",
+          "sap.ui.unified.CalendarRow",
+          "sap.ui.unified.ContentSwitcher",
+          "sap.ui.unified.ColorPicker",
+          "sap.ui.unified.ColorPickerPopover",
+          "sap.ui.unified.Currency",
+          "sap.ui.unified.FileUploader",
+          "sap.ui.unified.Menu",
+          "sap.ui.unified.Shell",
+          "sap.ui.unified.ShellLayout",
+          "sap.ui.unified.ShellOverlay",
+          "sap.ui.unified.SplitContainer"
+        ],
+        "elements": [
+          "sap.ui.unified.CalendarAppointment",
+          "sap.ui.unified.CalendarLegendItem",
+          "sap.ui.unified.DateRange",
+          "sap.ui.unified.DateTypeRange",
+          "sap.ui.unified.FileUploaderParameter",
+          "sap.ui.unified.FileUploaderXHRSettings",
+          "sap.ui.unified.MenuItem",
+          "sap.ui.unified.MenuItemBase",
+          "sap.ui.unified.MenuTextFieldItem",
+          "sap.ui.unified.ShellHeadItem",
+          "sap.ui.unified.ShellHeadUserItem"
+        ],
+        "types": [
+          "sap.ui.unified.CalendarAppointmentVisualization",
+          "sap.ui.unified.CalendarDayType",
+          "sap.ui.unified.CalendarIntervalType",
+          "sap.ui.unifief.CalendarAppointmentHeight",
+          "sap.ui.unifief.CalendarAppointmentRoundWidth",
+          "sap.ui.unified.ColorPickerDisplayMode",
+          "sap.ui.unified.ColorPickerMode",
+          "sap.ui.unified.ContentSwitcherAnimation",
+          "sap.ui.unified.GroupAppointmentsMode",
+          "sap.ui.unified.FileUploaderHttpRequestMethod",
+          "sap.ui.unified.StandardCalendarLegendItem"
+        ],
+        "interfaces": [
+          "sap.ui.unified.IProcessableBlobs"
+        ]
+      }
+    }
+  }
+}

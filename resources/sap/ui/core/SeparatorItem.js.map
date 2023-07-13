@@ -1,0 +1,1 @@
+{"version":3,"file":"SeparatorItem.js","names":["sap","ui","define","Item","SeparatorItem","extend","metadata","library"],"sources":["SeparatorItem-dbg.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,CAAC,SAAU,aACxB,SAASC,GACT,aAqBA,IAAIC,EAAgBD,EAAKE,OAAO,4BAA+E,CAAEC,SAAW,CAE3HC,QAAU,iBAGX,OAAOH,CAER"}

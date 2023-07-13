@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/layout/cssgrid/GridLayoutBase","sap/ui/layout/cssgrid/GridSettings","sap/ui/layout/library"],function(t,i){"use strict";var a=t.extend("sap.ui.layout.cssgrid.GridBasicLayout",{metadata:{library:"sap.ui.layout",properties:{gridTemplateColumns:{type:"sap.ui.layout.cssgrid.CSSGridTrack",defaultValue:""},gridTemplateRows:{type:"sap.ui.layout.cssgrid.CSSGridTrack",defaultValue:""},gridRowGap:{type:"sap.ui.core.CSSSize",defaultValue:""},gridColumnGap:{type:"sap.ui.core.CSSSize",defaultValue:""},gridGap:{type:"sap.ui.layout.cssgrid.CSSGridGapShortHand",defaultValue:""},gridAutoRows:{type:"sap.ui.layout.cssgrid.CSSGridTrack",defaultValue:""},gridAutoColumns:{type:"sap.ui.layout.cssgrid.CSSGridTrack",defaultValue:""},gridAutoFlow:{type:"sap.ui.layout.cssgrid.CSSGridAutoFlow",defaultValue:"Row"}}}});a.prototype.getActiveGridSettings=function(){return new i({gridTemplateColumns:this.getGridTemplateColumns(),gridTemplateRows:this.getGridTemplateRows(),gridRowGap:this.getGridRowGap(),gridColumnGap:this.getGridColumnGap(),gridGap:this.getGridGap(),gridAutoRows:this.getGridAutoRows(),gridAutoColumns:this.getGridAutoColumns(),gridAutoFlow:this.getGridAutoFlow()})};return a});
+//# sourceMappingURL=GridBasicLayout.js.map

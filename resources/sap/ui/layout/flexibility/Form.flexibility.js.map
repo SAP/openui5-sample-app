@@ -1,0 +1,1 @@
+{"version":3,"file":"Form.flexibility.js","names":["sap","ui","define","AddGroup","AddFormField","moveControls","addGroup","addFormField"],"sources":["Form.flexibility-dbg.js"],"mappings":";;;;;AAQAA,IAAIC,GAAGC,OAAO,CACb,+CACA,4CACE,SAAUC,EAAUC,GACtB,aAEA,MAAO,CACNC,aAAgB,UAChBC,SAAYH,EACZI,aAAiBH,EAGnB,EAAiB"}

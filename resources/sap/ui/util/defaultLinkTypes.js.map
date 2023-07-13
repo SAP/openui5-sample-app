@@ -1,0 +1,1 @@
+{"version":3,"file":"defaultLinkTypes.js","names":["sap","ui","define","fnDerive","defaultLinkTypes","sRel","sTarget","trim"],"sources":["defaultLinkTypes-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,GAAI,WACjB,aAkBA,IAAIC,EAAW,SAASC,EAAiBC,EAAMC,GAE9CD,SAAcA,IAAS,SAAWA,EAAKE,OAASF,EAGhD,IAAKA,GAAQC,GAAWA,IAAY,QAAS,CAC5C,MAAO,qBACR,CACA,OAAOD,CACR,EACA,OAAOF,CACR"}

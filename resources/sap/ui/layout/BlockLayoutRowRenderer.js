@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["./library"],function(e){"use strict";var l=e.BlockBackgroundType;var t={apiVersion:2};t.render=function(e,l){this.startRow(e,l);this.renderContent(e,l);this.endRow(e,l)};t.startRow=function(e,l){e.openStart("div",l).class("sapUiBlockLayoutRow");this.addRowRenderingClass(e,l);e.openEnd()};t.addRowRenderingClass=function(e,l){if(l.getScrollable()){e.class("sapUiBlockScrollingRow");if(l.getContent().length>=6){e.class("sapUiBlockScrollingNarrowCells")}}else{e.class("sapUiBlockHorizontalCellsRow")}};t.renderContent=function(e,t){var n=t.getContent(),o=t.getScrollable(),a=t.getParent().getBackground(),s=t.getAccentCells(),r=0,i;n.forEach(function(e,l){l%2==0?e.addStyleClass("sapUiBlockLayoutOddCell"):e.addStyleClass("sapUiBlockLayoutEvenCell");if(o){e.addStyleClass("sapUiBlockScrollableCell")}else{e.addStyleClass("sapUiBlockHorizontalCell")}});switch(a){case l.Mixed:if(s.length>0){t._processMixedCellStyles(s[s.length-1],n)}break;case l.Accent:t._processAccentCellStyles(s,n);break}var c=t._getCellArangementForCurrentSize();if(o){n.forEach(e.renderControl,e)}else if(c){for(var d=0;d<c.length;d++){var C=c[d];e.openStart("div");e.style("display","flex");e.openEnd();for(var g=0;g<C.length;g++){i=C[g];n[r]._setFlexWidth(i);e.renderControl(n[r]);r++}e.close("div")}}};t.endRow=function(e){e.close("div")};return t},true);
+//# sourceMappingURL=BlockLayoutRowRenderer.js.map

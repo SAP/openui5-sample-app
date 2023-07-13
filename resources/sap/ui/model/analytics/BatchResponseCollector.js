@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(function(){"use strict";function e(e){if(e){this.setup(e)}}e.TYPE_SUCCESS="success";e.TYPE_ERROR="error";e.prototype.setup=function(e){this.iRequestCollectionCount=0;this.aCollectedSuccesses=[];this.aCollectedErrors=[];this.aExecutedRequestDetails=e.executedRequests;this.oAnalyticalBinding=e.binding;this.fnSuccessHandler=e.success;this.fnErrorHandler=e.error};e.prototype.success=function(t){this.collect(t,e.TYPE_SUCCESS)};e.prototype.error=function(t){this.collect(t,e.TYPE_ERROR)};e.prototype.collect=function(t,s){this.iRequestCollectionCount++;if(s===e.TYPE_SUCCESS){this.aCollectedSuccesses.push(t)}else{this.aCollectedErrors.push(t)}var c=this.aCollectedSuccesses.length+this.aCollectedErrors.length;if(c===this.aExecutedRequestDetails.length){if(this.aCollectedSuccesses.length===c&&this.aCollectedErrors.length===0){this.fnSuccessHandler.call(window,{__batchResponses:this.aCollectedSuccesses},{requestUri:this.oAnalyticalBinding.oModel.sServiceUrl+"/$batch"})}else{this.fnErrorHandler.call(window,this.aCollectedErrors[0]||{})}}};return e},true);
+//# sourceMappingURL=BatchResponseCollector.js.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"IconTabBar.flexibility.js","names":["sap","ui","define","SelectIconTabBarFilter","moveControls","selectIconTabBarFilter","changeHandler","layers","USER"],"sources":["IconTabBar.flexibility-dbg.js"],"mappings":";;;;;AAMAA,IAAIC,GAAGC,OAAO,CACb,8CACE,SAAUC,GACZ,aAEA,MAAO,CACNC,aAAgB,UAChBC,uBAA0B,CACzBC,cAAiBH,EACjBI,OAAU,CACTC,KAAQ,OAIZ"}

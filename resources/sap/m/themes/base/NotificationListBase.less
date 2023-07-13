@@ -1,0 +1,60 @@
+/* =========================================== */
+/* CSS for control sap.m/NotificationListBase  */
+/* Base theme                                  */
+/* =========================================== */
+
+.sapMNLIB {
+	position: relative;
+
+	&:focus {
+		outline: none;
+	}
+
+	.sapMNLICloseBtn:not(:empty) {
+		margin: 0 0.5rem;
+	}
+}
+// Priority icons
+
+.sapMNLIBPriority {
+	padding-right: 0.625rem;
+
+	.sapUiIcon {
+		font-size: 1rem;
+		line-height: 1rem;
+	}
+}
+
+.sapMNLIBPriorityLow .sapUiIcon {
+	color: @sapUiSuccessBorder;
+
+	&::before {
+		content: '\e203';
+	}
+}
+
+.sapMNLIBPriorityMedium .sapUiIcon {
+	color: @sapUiWarningBorder;
+
+	&::before {
+		content: '\e201';
+	}
+}
+
+.sapMNLIBPriorityHigh .sapUiIcon {
+	color: @sapUiErrorBorder;
+
+	&::before {
+		content: '\e0b1';
+	}
+}
+
+.sapMNLIBHiddenButton {
+	display: none;
+}
+
+.sapUiSizeCompact {
+	.sapMNLIBPriority {
+		padding-right: 0.5rem;
+	}
+}

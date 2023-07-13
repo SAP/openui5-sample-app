@@ -1,0 +1,1 @@
+{"version":3,"file":"SearchField.designtime.js","names":["sap","ui","define","name","singular","plural","palette","group","icons","svg","templates","create"],"sources":["SearchField-dbg.designtime.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,GACb,WACC,aAEA,MAAO,CACNC,KAAM,CACLC,SAAU,oBACVC,OAAQ,4BAETC,QAAS,CACRC,MAAO,QACPC,MAAO,CACNC,IAAK,0CAGPC,UAAW,CACVC,OAAQ,oDAGX"}

@@ -1,0 +1,66 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+
+sap.ui.define([
+	"sap/ui/test/_OpaLogger",
+	"sap/ui/base/ManagedObject"
+], function (_OpaLogger, ManagedObject) {
+	"use strict";
+
+	/**
+	 * @class Matchers for Opa5 - needs to implement an isMatching function that returns a boolean and will get a control instance as parameter
+	 * @abstract
+	 * @extends sap.ui.base.ManagedObject
+	 * @public
+	 * @alias sap.ui.test.matchers.Matcher
+	 * @author SAP SE
+	 * @since 1.23
+	 */
+	var Matcher = ManagedObject.extend("sap.ui.test.matchers.Matcher", /** @lends sap.ui.test.matchers.Matcher.prototype */ {
+
+		metadata : {
+			publicMethods : [ "isMatching" ]
+		},
+
+		constructor: function () {
+			this._oLogger = _OpaLogger.getLogger(this.getMetadata().getName());
+			return ManagedObject.prototype.constructor.apply(this, arguments);
+		},
+
+		/**
+		 * Checks if the matcher is matching - will get an instance of sap.ui.core.Control as parameter.
+		 *
+		 * Should be overwritten by subclasses
+		 *
+		 * @param {sap.ui.core.Control} oControl the control that is checked by the matcher
+		 * @return {boolean} true if the Control is matching the condition of the matcher
+		 * @protected
+		 */
+		isMatching : function (oControl) {
+			return true;
+		},
+
+		/**
+		 * @returns {Window} window of the application under test, or the current window if Opa5 is not loaded
+		 * Note: declared matchers are instantiated in the app context (by MatcherFactory)
+		 * while users instantiate matchers in the test context (in a waitFor)
+		 * @private
+		 */
+		_getApplicationWindow: function () {
+			var Opa5 = sap.ui.require("sap/ui/test/Opa5");
+			if (Opa5) {
+				// matcher context === test context, because Opa5 is loaded
+				return Opa5.getWindow();
+			} else {
+				// matcher context === app context
+				return window;
+			}
+		}
+
+	});
+
+	return Matcher;
+});

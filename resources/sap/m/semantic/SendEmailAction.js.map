@@ -1,0 +1,1 @@
+{"version":3,"file":"SendEmailAction.js","names":["sap","ui","define","SemanticButton","SendEmailAction","extend","metadata","library"],"sources":["SendEmailAction-dbg.js"],"mappings":";;;;;AAMAA,IAAIC,GAAGC,OAAO,CAAC,iCAAkC,SAASC,GACzD,aAsBA,IAAIC,EAAkBD,EAAeE,OAAO,iCAAyF,CACpIC,SAAU,CACTC,QAAS,WAIX,OAAOH,CAER"}

@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/base/assert"],function(e){"use strict";function t(e,t,r,i){var n=function(){var n=document.createElement("link");n.rel="stylesheet";n.href=e;if(t&&typeof t==="object"){Object.keys(t).forEach(function(e){if(t[e]!=null){n.setAttribute(e,t[e])}})}function a(e){var t=e.type==="error";n.setAttribute("data-sap-ui-ready",!t);n.removeEventListener("load",a);n.removeEventListener("error",a);var o=t?i:r;if(typeof o==="function"){o()}}n.addEventListener("load",a);n.addEventListener("error",a);return n};var a=t&&t.id;var o=document.getElementById(a);var s=n();if(o&&o.tagName==="LINK"&&o.rel==="stylesheet"){if(typeof r==="function"||typeof i==="function"||o.href!==s.href){if(o.getAttribute("data-sap-ui-foucmarker")===a){o.removeAttribute("id");o.parentNode.insertBefore(s,o)}else{o.parentNode.replaceChild(s,o)}}else if(o.getAttribute("data-sap-ui-foucmarker")===a){o.removeAttribute("data-sap-ui-foucmarker")}}else{var u=document.getElementById("sap-ui-core-customcss");if(u){u.parentNode.insertBefore(s,u)}else{document.head.appendChild(s)}}}var r=function r(i,n,a,o){var s;if(typeof i==="string"){s=typeof n==="string"?{id:n}:n;t(i,s,a,o)}else{e(typeof i==="object"&&i.url,"vUrl must be an object and requires a URL");s=Object.assign({},i.attributes);if(i.id){s.id=i.id}return new Promise(function(e,r){t(i.url,s,e,r)})}};return r});
+//# sourceMappingURL=includeStylesheet.js.map

@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/base/Object","sap/ui/test/_OpaLogger","sap/base/Log"],function(t,e,n){"use strict";var o={};var s=e.getLogger("sap.ui.test._LogCollector");var r=t.extend("sap.ui.test._LogCollector",{constructor:function(t){this._aLogs=[];if(t){this._oListener=i(t,this._aLogs)}else{this._oListener=a(this._aLogs)}},start:function(){n.addLogListener(this._oListener)},getAndClearLog:function(){var t=this._aLogs.join("\n");this._aLogs.length=0;return t},stop:function(){n.removeLogListener(this._oListener)},destroy:function(){this._aLogs.length=0;this.stop()}});r.getInstance=function(t){var e=t||"noMessagePattern";o[e]=o[e]||new r(t);return o[e]};function i(t,e){return{onLogEntry:function(n){var o=new RegExp(t);if(g(n)&&o.test(n.component)){e.push(u(n))}}}}function a(t){return{onLogEntry:function(e){if(g(e)){t.push(u(e));if(t.length>500){t.length=0;s.error("Opa has received 500 logs without a consumer - "+"maybe you loaded Opa.js inside of an IFrame? "+"The logs are now cleared to prevent memory leaking")}}}}}function u(t){return t.message+" - "+t.details+" "+t.component}function g(t){return t.component.startsWith("sap.ui.test")}return r},true);
+//# sourceMappingURL=_LogCollector.js.map

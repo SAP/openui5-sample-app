@@ -1,0 +1,20 @@
+/* ====================================== */
+/* CSS for control sap.m/RatingIndicator  */
+/* High Contrast Black theme              */
+/* ====================================== */
+
+.sapMRIIconSel,
+.sapMRIIconHov,
+.sapMPointer .sapMRIIconUnsel {
+	color: @sapUiContentIconColor;
+}
+
+.sapMRIIconUnsel {
+	color: @sapUiHcReducedAltForeground;
+}
+
+/* Custom focus outline */
+html.sap-desktop .sapMRI:focus:not(.sapMRIDisabled) {
+	outline: 0.125rem dotted @sapUiContentFocusColor;
+	outline-offset: -0.125rem;
+}

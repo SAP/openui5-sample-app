@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define([],function(){"use strict";var e={apiVersion:2};e.render=function(e,i){e.openStart("div",i).class("sapUiFixFlex");if(i.getMinFlexSize()!==0){e.class("sapUiFixFlexInnerScrolling")}if(!i.getVertical()){e.class("sapUiFixFlexRow")}e.openEnd();if(i.getFixFirst()){this.renderFixChild(e,i);this.renderFlexChild(e,i)}else{this.renderFlexChild(e,i);this.renderFixChild(e,i)}e.close("div")};e.renderFixChild=function(e,i){e.openStart("div",i.getId()+"-Fixed").class("sapUiFixFlexFixed");if(i.getFixContentSize()!=="auto"){if(i.getVertical()){e.style("height",i.getFixContentSize())}else{e.style("width",i.getFixContentSize())}}e.openEnd();i.getFixContent().forEach(e.renderControl,e);e.close("div")};e.renderFlexChild=function(e,i){e.openStart("div",i.getId()+"-Flexible").class("sapUiFixFlexFlexible").openEnd();e.openStart("div",i.getId()+"-FlexibleContainer").class("sapUiFixFlexFlexibleContainer");if(i.getMinFlexSize()!==0){if(i.getVertical()){e.style("min-height",i.getMinFlexSize()+"px")}else{e.style("min-width",i.getMinFlexSize()+"px")}}e.openEnd();e.renderControl(i.getFlexContent());e.close("div").close("div")};return e},true);
+//# sourceMappingURL=FixFlexRenderer.js.map

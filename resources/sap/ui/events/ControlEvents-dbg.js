@@ -1,0 +1,91 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define([
+	'sap/ui/thirdparty/jquery'
+], function(jQuery) {
+	"use strict";
+
+	/**
+	 * @namespace
+	 * @since 1.58
+	 * @alias module:sap/ui/events/ControlEvents
+	 * @public
+	 */
+	var oControlEvents = {};
+
+	/**
+	 * List of DOM events that a UIArea automatically takes care of.
+	 *
+	 * A control/element doesn't have to bind listeners for these events.
+	 * It instead can implement an <code>on<i>event</i>(oEvent)</code> method
+	 * for any of the following events that it wants to be notified about:
+	 *
+	 * click, dblclick, contextmenu, focusin, focusout, keydown, keypress, keyup, mousedown, mouseout, mouseover,
+	 * mouseup, select, selectstart, dragstart, dragenter, dragover, dragleave, dragend, drop, paste, cut, input,
+	 * touchstart, touchend, touchmove, touchcancel, tap, swipe, swipeleft, swiperight, scrollstart, scrollstop
+	 *
+	 * The mouse events and touch events are supported simultaneously on both desktop and mobile browsers. Do NOT
+	 * create both onmouse* and ontouch* functions to avoid one event being handled twice on the same control.
+	 *
+	 * @public
+	 */
+	oControlEvents.events = [ // IMPORTANT: update the public documentation when extending this list
+		"click",
+		"dblclick",
+		"contextmenu",
+		"focusin",
+		"focusout",
+		"keydown",
+		"keypress",
+		"keyup",
+		"mousedown",
+		"mouseout",
+		"mouseover",
+		"mouseup",
+		"select",
+		"selectstart",
+		"dragstart",
+		"dragenter",
+		"dragover",
+		"dragleave",
+		"dragend",
+		"drop",
+		"compositionstart",
+		"compositionend",
+		"paste",
+		"cut",
+		"input",
+		"change"
+	];
+
+	/**
+	 * Binds all events for listening with the given callback function.
+	 *
+	 * @param {function(Event)} fnCallback Callback function
+	 * @static
+	 * @public
+	 */
+	oControlEvents.bindAnyEvent = function(fnCallback) {
+		if (fnCallback) {
+			jQuery(document).on(oControlEvents.events.join(" "), fnCallback);
+		}
+	};
+
+	/**
+	 * Unbinds all events for listening with the given callback function.
+	 *
+	 * @param {function(Event)} fnCallback Callback function
+	 * @static
+	 * @public
+	 */
+	oControlEvents.unbindAnyEvent = function unbindAnyEvent(fnCallback) {
+		if (fnCallback) {
+			jQuery(document).off(oControlEvents.events.join(" "), fnCallback);
+		}
+	};
+
+	return oControlEvents;
+});

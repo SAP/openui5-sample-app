@@ -1,0 +1,1 @@
+{"version":3,"file":"ReadyState.js","names":["sap","ui","define","ReadyState","CONNECTING","OPEN","CLOSING","CLOSED"],"sources":["ReadyState-dbg.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,WACb,aAWA,IAAIC,EAAa,CAMhBC,WAAY,EAMZC,KAAM,EAMNC,QAAS,EAMTC,OAAQ,GAKT,OAAOJ,CAER,EAAkB"}

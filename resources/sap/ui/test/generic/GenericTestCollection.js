@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define([],function(){"use strict";var e={ExcludeReason:{OnlyChangeableViaBinding:"OnlyChangeableViaBinding",NotChangeableAfterInit:"NotChangeableAfterInit",SetterNeedsSpecificSettings:"SetterNeedsSpecificSettings",CantSetDefaultValue:"CantSetDefaultValue"},Test:{ControlMemoryLeaks:"ControlMemoryLeaks",ControlRenderer:"ControlRenderer",DuplicateIdCheck:"DuplicateIdCheck",EnforceSemanticRendering:"EnforceSemanticRendering",SettersContextReturn:"SettersContextReturn"},createTestsuiteConfig:function(e){var t={name:"Testsuite for Generic Control Tests for library: "+e.library,defaults:{ui5:{libs:[e.library]},qunit:{reorder:false,version:2},testConfig:e,module:"test-resources/sap/ui/core/qunit/generic/{name}.qunit"},tests:{ControlMemoryLeaks:{title:"QUnit Page for memory leak detection in UI5 controls"},ControlRenderer:{title:"QUnit Page for Control Renderer Tests"},DuplicateIdCheck:{title:"QUnit Page for duplicate ID issues detection in UI5 controls"},SettersContextReturn:{title:"All setters should return correct context (Reason: https://github.com/SAP/openui5/blob/master/docs/guidelines.md#creating-classes)"},EnforceSemanticRendering:{title:"QUnit Page for Semantic Rendering Coverage"}}};var n=e.skipTests||[];n.forEach(function(e){delete t.tests[e]});return t}};return e});
+//# sourceMappingURL=GenericTestCollection.js.map

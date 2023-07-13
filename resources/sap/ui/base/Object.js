@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["./Metadata","sap/base/Log"],function(t,e){"use strict";var n=t.createClass("sap.ui.base.Object",{constructor:function(){if(!(this instanceof n)){throw Error('Cannot instantiate object: "new" is missing!')}}});n.prototype.destroy=function(){};n.prototype.getInterface=function(){var t=new n._Interface(this,this.getMetadata().getAllPublicMethods());this.getInterface=function(){return t};return t};n.defineClass=function(n,r,a){var i=new(a||t)(n,r);var s=i.getClass();s.getMetadata=s.prototype.getMetadata=function(){return i};if(!i.isFinal()){s.extend=function(e,n,r){return t.createClass(s,e,n,r||a)}}e.debug("defined class '"+n+"'"+(i.getParent()?" as subclass of "+i.getParent().getName():""));return i};n.prototype.isA=function(t){return this.getMetadata().isA(t)};n.isA=function(t,e){return t instanceof n&&t.isA(e)};n._Interface=function(t,e,r){if(!t){return t}function a(t,e){return function(){var a=t[e].apply(t,arguments);if(r){return this}else{return a instanceof n?a.getInterface():a}}}if(!e){return{}}var i;for(var s=0,o=e.length;s<o;s++){i=e[s];if(!t[i]||typeof t[i]==="function"){this[i]=a(t,i)}}};return n},true);
+//# sourceMappingURL=Object.js.map

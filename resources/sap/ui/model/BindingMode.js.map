@@ -1,0 +1,1 @@
+{"version":3,"file":"BindingMode.js","names":["sap","ui","define","BindingMode","Default","OneTime","OneWay","TwoWay"],"sources":["BindingMode-dbg.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,WACb,aAUA,IAAIC,EAAc,CAMhBC,QAAS,UAMTC,QAAS,UAMTC,OAAQ,SAMRC,OAAQ,UAIV,OAAOJ,CAER,EAAkB"}

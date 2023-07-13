@@ -1,0 +1,99 @@
+#sapUiInteractionTimelineOverview {
+	display: flex;
+
+	flex-direction: column;
+
+	height: 50px;
+	left: 0;
+	position: absolute;
+	right: 0;
+	top: 0;
+
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+
+	border-bottom: solid 1px #ddd;
+	border-bottom: solid 1px #ddd;
+	padding-left: 0px;
+	position: relative;
+	flex-grow: 1;
+}
+
+#sapUiInteractionTimelineOverview .InteractionTimeline {
+	background: #fafafa;
+	bottom: 0;
+	display: flex;
+	left: 0;
+	position: absolute;
+	right: 0;
+	top: 0;
+	-webkit-padding-start: 0;
+	list-style: none;
+	margin: 2px;
+	padding: 0;
+}
+
+#sapUiInteractionTimelineOverview .InteractionTimeline ol {
+	bottom: 0;
+	display: flex;
+	left: 0px;
+	position: absolute;
+	right: 0;
+	top: 2px;
+}
+
+#sapUiInteractionTimelineOverview .InteractionTimeline li {
+	display: flex;
+	position: relative;
+	flex: 1;
+}
+
+#sapUiInteractionTimelineOverview .InteractionTimeline li .duration {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+}
+
+#sapUiInteractionTimelineOverview .InteractionTimeline li .duration {
+	margin-right: 1px;
+	width: 7px;
+}
+
+
+#sapUiInteractionTimelineOverview .bars-wrapper {
+	bottom: 0;
+	display: flex;
+	left: 0;
+	position: absolute;
+	right: 0;
+	top: 0;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.InteractionTimeline .requestType {
+	background: #007cc0;
+}
+
+.sapUiInteractionTimelineStepRight {
+	flex-grow: 1;
+
+	box-sizing: border-box;
+	border-right: 1px solid #F2F2F2;
+}
+
+.sapUiInteractionTimelineStepRightBold {
+	flex-grow: 1;
+
+	box-sizing: border-box;
+	border-right: 1px solid #d8d8d8;
+}
+
+.sapUiInteractionTimelineTimeLbl {
+	font-size: 9px;
+	color: #333;
+	position: absolute;
+	top: 1px;
+	margin-left: 2px;
+}

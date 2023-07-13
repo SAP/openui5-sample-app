@@ -1,0 +1,1 @@
+{"version":3,"file":"FormContainer.flexibility.js","names":["sap","ui","define","RenameFormContainer","AddFormField","hideControl","renameGroup","moveControls","addFormField"],"sources":["FormContainer.flexibility-dbg.js"],"mappings":";;;;;AAQAA,IAAIC,GAAGC,OAAO,CACb,kDACA,4CACE,SAAUC,EAAqBC,GACjC,aAEA,MAAO,CACNC,YAAe,UACfC,YAAeH,EACfI,aAAgB,UAChBC,aAAiBJ,EAGnB,EAAiB"}

@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/base/Object","sap/base/util/isPlainObject"],function(t,e){"use strict";var o=t.extend("sap.ui.model.Context",{constructor:function(e,o){t.apply(this);this.oModel=e;this.sPath=o;this.bForceRefresh=false;this.sDeepPath=""},metadata:{abstract:true,publicMethods:["getModel","getPath","getProperty","getObject"]}});o.prototype.getModel=function(){return this.oModel};o.prototype.getPath=function(t){return this.sPath+(t?"/"+t:"")};o.prototype.getProperty=function(t){return this.oModel.getProperty(t,this)};o.prototype.getObject=function(t,o){if(e(t)){o=t;t=undefined}return this.oModel.getObject(t,this,o)};o.prototype.setForceRefresh=function(t){this.bForceRefresh=t};o.prototype.isRefreshForced=function(){return this.bForceRefresh};o.prototype.setPreliminary=function(t){this.bPreliminary=t};o.prototype.isPreliminary=function(){return this.bPreliminary};o.prototype.setUpdated=function(t){this.bUpdated=t};o.prototype.isUpdated=function(){return this.bUpdated};o.prototype.hasChanged=function(){return false};o.hasChanged=function(t,e){return t!==e||!!e&&!!e.hasChanged()};o.prototype.toString=function(){return this.sPath};o.prototype.getMessages=function(){return this.oModel.getMessages(this)};return o});
+//# sourceMappingURL=Context.js.map

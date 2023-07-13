@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/m/library","sap/ui/core/Core"],function(e,t){"use strict";var n={apiVersion:2};var a=e.EmptyIndicatorMode;var r=t.getLibraryResourceBundle("sap.m");n.render=function(e,t){var n=t.getTooltip_AsString();e.openStart("div",t);if(n){e.attr("title",n)}e.class("sapUiUfdCurrency");if(t.getEmptyIndicatorMode()!==a.Off&&!t.getValue()){e.openEnd();this.renderEmptyIndicator(e,t)}else{e.openEnd();e.openStart("div");e.class("sapUiUfdCurrencyAlign");e.openEnd();e.openStart("span");e.attr("dir","ltr");e.class("sapUiUfdCurrencyValue");e.openEnd();e.text(t.getFormattedValue());e.close("span");e.openStart("span");e.class("sapUiUfdCurrencyCurrency");e.openEnd();e.text(t._getCurrency());e.close("span");e.close("div")}e.close("div")};n.renderEmptyIndicator=function(e,t){e.openStart("span");e.class("sapMEmptyIndicator");if(t.getEmptyIndicatorMode()===a.Auto){e.class("sapMEmptyIndicatorAuto")}e.openEnd();e.openStart("span");e.attr("aria-hidden",true);e.openEnd();e.text(r.getText("EMPTY_INDICATOR"));e.close("span");e.openStart("span");e.class("sapUiPseudoInvisibleText");e.openEnd();e.text(r.getText("EMPTY_INDICATOR_TEXT"));e.close("span");e.close("span")};return n},true);
+//# sourceMappingURL=CurrencyRenderer.js.map

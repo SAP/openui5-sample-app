@@ -1,0 +1,3931 @@
+/*
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+
+// Provides class sap.ui.core.util.MockServer for mocking a server
+sap.ui
+	.define(
+		[
+			'sap/base/Log',
+			'sap/base/util/isEmptyObject',
+			'sap/ui/base/ManagedObject',
+			'sap/ui/core/util/MockServerAnnotationsHandler',
+			'sap/ui/core/util/DraftEnabledMockServer',
+			'sap/ui/thirdparty/jquery',
+			'sap/ui/thirdparty/sinon'
+		],
+		function(Log, isEmptyObject, ManagedObject, MockServerAnnotationsHandler, DraftEnabledMockServer, jQuery, sinon) {
+			"use strict";
+
+			/**
+			 * Creates a mocked server. This helps to mock some back-end calls, e.g. for OData V2/JSON Models or simple XHR calls, without
+			 * changing the application code. This class can also be used for qunit tests.
+			 *
+			 * <b>Note:</b> Not all features of mock and all properties are supported.
+			 *
+			 * @param {string} [sId] id for the new server object; generated automatically if no non-empty id is given
+			 *      Note: this can be omitted, no matter whether <code>mSettings</code> will be given or not!
+			 * @param {object} [mSettings] optional map/JSON-object with initial property values, aggregated objects etc. for the new object
+			 *
+			 * @class Class to mock http requests made to a remote server supporting the OData V2 REST protocol.
+			 * @extends sap.ui.base.ManagedObject
+			 * @abstract
+			 * @author SAP SE
+			 * @version 1.115.1
+			 * @public
+			 * @alias sap.ui.core.util.MockServer
+			 */
+			var MockServer = ManagedObject.extend("sap.ui.core.util.MockServer", /** @lends sap.ui.core.util.MockServer.prototype */ {
+				constructor: function(sId, mSettings) {
+					ManagedObject.apply(this, arguments);
+					MockServer._aServers.push(this);
+				},
+
+				metadata: {
+					library: "sap.ui.core",
+					properties: {
+
+						/**
+						 * Setter for property <code>rootUri</code>. All request path URI are prefixed with this root URI if set.
+						 *
+						 * Default value is empty/<code>undefined</code>
+						 * @param {string} rootUri new value for property <code>rootUri</code>
+						 * @public
+						 * @name sap.ui.core.util.MockServer#setRootUri
+						 * @function
+						 */
+
+						/**
+						 * Getter for property <code>rootUri</code>. Has to be relative and requires a trailing '/'. It also needs to match the URI set in OData/JSON models or simple XHR calls in order for the mock server to intercept them.
+						 *
+						 * Default value is empty/<code>undefined</code>.
+						 * Must end with a a trailing slash ("/").
+						 * @return {string} the value of property <code>rootUri</code>
+						 * @public
+						 * @name sap.ui.core.util.MockServer#getRootUri
+						 * @function
+						 */
+						rootUri: "string",
+
+						/**
+						 * Setter for property <code>recordRequests</code>. Defines whether or not the requests performed should be recorded (stored).
+						 *
+						 * Default value is <code>true</code>
+						 * @param {boolean} recordRequests new value for property <code>recordRequests</code>
+						 * @public
+						 * @name sap.ui.core.util.MockServer#setRecordRequests
+						 * @function
+						 */
+
+						/**
+						 * Getter for property <code>recordRequests</code>. Returns whether or not the requests performed should be recorded (stored).
+						 *
+						 * Default value is <code>true</code>
+						 *
+						 * @return {boolean} the value of property <code>recordRequests</code>
+						 * @public
+						 * @name sap.ui.core.util.MockServer#getRecordRequests
+						 * @function
+						 */
+
+						/**
+						 * Whether or not the requests performed should be recorded (stored).
+						 * This could be memory intense if each request is recorded.
+						 * For unit testing purposes it should be set to <code>true</code> to compare requests performed
+						 * otherwise this flag should be set to <code>false</code> e.g. for demonstration/app purposes.
+						 */
+						recordRequests: {type : "boolean", defaultValue : true},
+
+						/**
+						 * Methods that can be used to respond to a request.
+						 *
+						 * @interface
+						 * @name sap.ui.core.util.MockServer.Response
+						 * @public
+						 */
+
+						/**
+						 * Responds to the incoming request with the given <code>iStatusCode</code>,
+						 * <code>mHeaders</code> and <code>sBody</code>.
+						 *
+						 * @param {int} [StatusCode=200]
+						 *    HTTP status code to send with the response
+						 * @param {Object<string,string>} [mHeaders={}]
+						 *    HTTP headers to send with the response
+						 * @param {string} [sBody=""]
+						 *    A string that will be sent as response body
+						 * @public
+						 * @function
+						 * @name sap.ui.core.util.MockServer.Response.prototype.respond
+						 */
+
+						/**
+						 * Convenience variant of {@link #respond} which simplifies sending a JSON response.
+						 *
+						 * The response content <code>vBody</code> can either be given as a string, which is then
+						 * assumed to be in JSON format. Or it can be any JSON-stringifiable value which then will
+						 * be converted to a string using <code>JSON.stringify</code>. If no <code>vBody</code>
+						 * is given, an empty response will be sent.
+						 *
+						 * If no <code>Content-Type</code> header is given, it will be set to <code>application/json</code>.
+						 *
+						 * @param {int} [iStatusCode=200]
+						 *    HTTP status code to send with the response
+						 * @param {Object<string,string>} [mHeaders={}]
+						 *    HTTP Headers to send with the response
+						 * @param {object|string|any[]|number|boolean} [vBody=""]
+						 *    A valid JSON-string or a JSON-stringifiable object that should be sent as response body
+						 * @public
+						 * @function
+						 * @name sap.ui.core.util.MockServer.Response.prototype.respondJSON
+						 */
+
+						/**
+						 * Convenience variant of {@link #respond} which simplifies sending an XML response.
+						 *
+						 * If no <code>Content-Type</code> header is given, it will be set to <code>application/xml</code>.
+						 *
+						 * @param {int} [iStatusCode=200]
+						 *    HTTP status code to send with the response
+						 * @param {Object<string,string>} [mHeaders={}]
+						 *    HTTP Headers to send with the response
+						 * @param {string} [sXmlString='']
+						 *    XML string to send as response body
+						 * @public
+						 * @function
+						 * @name sap.ui.core.util.MockServer.Response.prototype.respondXML
+						 */
+
+						/**
+						 * Convenience variant of {@link #respond} which allows to send the content of an external
+						 * resource as response.
+						 *
+						 * This method first synchronously fetches the given <code>sFileUrl</code>. Depending on the
+						 * extension and path of the <code>sFileUrl</code>, it propagates the received response body
+						 * to {@link #respondJSON}, {@link #respondXML} or {@link #respond}, using the given
+						 * <code>iStatus</code> and <code>mHeaders</code>.
+						 *
+						 * The status code and headers of the received response are ignored. In particular, the
+						 * <code>Content-Type</code> header is not used for the mock server's response.
+						 *
+						 * @param {int} [iStatusCode=200]
+						 *    HTTP status code to send with the response
+						 * @param {Object<string,string>} [mHeaders={}]
+						 *    HTTP Headers to send with the response
+						 * @param {string} sFileUrl
+						 *    URL to get the response body from
+						 * @throws {Error} if the external resource cannot be fetched
+						 * @public
+						 * @function
+						 * @name sap.ui.core.util.MockServer.Response.prototype.respondFile
+						 */
+
+						/**
+						 * @typedef {object} sap.ui.core.util.MockServer.RequestHandler
+						 * @property {sap.ui.core.util.MockServer.HTTPMETHOD} method Any HTTP verb
+						 * @property {string|RegExp} path
+						 *    A string path is converted to a regular expression, so it can contain normal regular expression syntax.
+						 *
+						 *    All regular expression groups are forwarded as arguments to the <code>response</code> function.
+						 *    In addition to this, parameters can be written in this notation: <code>:param</code>.
+						 *    These placeholders will be replaced by regular expression groups.
+						 * @property {function(sap.ui.core.util.MockServer.Response,...any)} response
+						 *    A response handler function that will be called when an incoming request
+						 *    matches <code>method</code> and <code>path</code>.
+						 *    The first parameter of the handler will be a <code>Response</code> object which can be used
+						 *    to respond on the request.
+						 * @public
+						 */
+
+						/**
+						 * Setter for property <code>requests</code>.
+						 *
+						 * Default value is <code>[]</code>
+						 *
+						 * @param {sap.ui.core.util.MockServer.RequestHandler[]} requests new value for the <code>requests</code> property
+						 * @returns {this} Returns <code>this</code> to allow method chaining
+						 * @public
+						 * @name sap.ui.core.util.MockServer#setRequests
+						 * @function
+						 */
+
+						/**
+						 * Getter for property <code>requests</code>.
+						 *
+						 * Default value is <code>[]</code>
+						 *
+						 * @returns {sap.ui.core.util.MockServer.RequestHandler[]} the value of property <code>requests</code>
+						 * @public
+						 * @name sap.ui.core.util.MockServer#getRequests
+						 * @function
+						 */
+						requests: {
+							type: "object[]",
+							defaultValue: []
+						}
+					}
+				},
+
+				_oServer: null,
+				_aFilter: null,
+				_oMockdata: null,
+				_oMetadata: null,
+				_sMetadataUrl: null,
+				_sMockdataBaseUrl: null,
+				_mEntitySets: null,
+				_oErrorMessages: {
+					INVALID_SYSTEM_QUERY_OPTION_VALUE: "Invalid system query options value",
+					IS_NOT_A_VALID_SYSTEM_QUERY_OPTION: "## is not a valid system query option",
+					URI_VIOLATING_CONSTRUCTION_RULES: "The URI is violating the construction rules defined in the Data Services specification",
+					UNSUPPORTED_FORMAT_VALUE: "Unsupported format value. Only json format is supported",
+					MALFORMED_SYNTAX: "The Data Services Request could not be understood due to malformed syntax",
+					RESOURCE_NOT_FOUND: "Resource not found",
+					INVALID_SORTORDER_DETECTED: "Invalid sortorder ## detected",
+					PROPERTY_NOT_FOUND: "Property ## not found",
+					INVALID_FILTER_QUERY_STATEMENT: "Invalid filter query statement",
+					INVALID_FILTER_OPERATOR: "Invalid $filter operator ##",
+					RESOURCE_NOT_FOUND_FOR_SEGMENT: "Resource not found for the segment ##",
+					MALFORMED_URI_LITERAL_SYNTAX_IN_KEY: "Malformed URI literal syntax in key ##",
+					INVALID_KEY_NAME: "Invalid key name in key predicate. Expected name is ##",
+					INVALID_KEY_PREDICATE_QUANTITY: "Invalid key predicate. The quantity of provided keys does not match the expected value",
+					INVALID_KEY_TYPE: "Invalid key predicate. The key literal for key property ## does not match its type."
+				},
+				_oRandomSeed: {}
+
+			});
+
+
+			/**
+			 * Generates a floating-point, pseudo-random number in the range [0, 1[
+			 * using a linear congruential generator with drand48 parameters.
+			 *
+			 * The seed is fixed, so the generated random sequence is always the same
+			 * each property type has an own seed. Valid types are:
+			 * String, DateTime, Int, Decimal, Boolean, Byte, Double, Single, SByte, Time, Guid, Binary, DateTimeOffset
+			 * @private
+			 * @param {string} sType specific property type of random mock value to be generated
+			 * @return (number) pseudo-random number
+			 */
+			MockServer.prototype._getPseudoRandomNumber = function (sType) {
+				if (!this._oRandomSeed) {
+					this._oRandomSeed = {};
+				}
+				if (!this._oRandomSeed.hasOwnProperty(sType)) {
+					this._oRandomSeed[sType] = 0;
+				}
+				this._oRandomSeed[sType] = (this._oRandomSeed[sType] + 11 ) * 25214903917 % 281474976710655;
+				return this._oRandomSeed[sType] / 281474976710655;
+			};
+
+			/**
+			 * reset seed of pseudo-random number generator
+			 * @private
+			 */
+			MockServer.prototype._resetPseudoRandomNumberGenerator = function () {
+				this._oRandomSeed = {};
+			};
+
+
+			/**
+			 * Starts the server.
+			 * @public
+			 */
+			MockServer.prototype.start = function() {
+				this._oServer = MockServer._getInstance();
+				this._aFilters = [];
+				var aRequests = this.getRequests();
+				var that = this;
+				aRequests.forEach(function(oRequest) {
+
+					var fnResponse;
+					if (that.getRecordRequests() === false && oRequest.response) {
+						fnResponse = function() {
+							oRequest.response.apply(this, arguments);
+							// reset recorded requests for memory savings as mockserver is also used for apps and not only testing
+							that._oServer.requests = [];
+						};
+					} else {
+						fnResponse = oRequest.response;
+					}
+
+					that._addRequestHandler(oRequest.method, oRequest.path, fnResponse);
+				});
+			};
+
+			/**
+			 * Stops the server.
+			 * @public
+			 */
+			MockServer.prototype.stop = function() {
+				if (this.isStarted()) {
+					this._removeAllRequestHandlers();
+					this._removeAllFilters();
+					this._oServer = null;
+				}
+			};
+
+			/**
+			 * Attaches an event handler to be called before the built-in request processing of the mock server
+			 * @param {string} sHttpMethod - event type according to HTTP Method
+			 * @param {function} fnCallback - the name of the function that will be called at this exit.
+			 * The callback function exposes an event with parameters, depending on the type of the request.
+			 * oEvent.getParameters() lists the parameters as per the request. Examples are:
+			 * oXhr : the request object; sUrlParams : the URL parameters of the request; sKeys : key properties of the requested entry; sNavProp/sNavName : name of navigation
+			 * @param {string} sEntitySet - (optional) the name of the entity set
+			 * @public
+			 */
+			MockServer.prototype.attachBefore = function(sHttpMethod, fnCallback, sEntitySet) {
+				sEntitySet = sEntitySet ? sEntitySet : "";
+				this.attachEvent(sHttpMethod + sEntitySet + ":before", fnCallback);
+			};
+
+			/**
+			 * Attaches an event handler to be called after the built-in request processing of the mock server
+			 * @param {string} sHttpMethod - event type according to HTTP Method
+			 * @param {function} fnCallback - the name of the function that will be called at this exit
+			 * The callback function exposes an event with parameters, depending on the type of the request.
+			 * oEvent.getParameters() lists the parameters as per the request. Examples are:
+			 * oXhr : the request object; oFilteredData : the mock data entries that are about to be returned in the response; oEntry : the mock data entry that is about to be returned in the response;
+			 * @param {string} sEntitySet - (optional) the name of the entity set
+			 * @public
+			 */
+			MockServer.prototype.attachAfter = function(sHttpMethod, fnCallback, sEntitySet) {
+				sEntitySet = sEntitySet ? sEntitySet : "";
+				this.attachEvent(sHttpMethod + sEntitySet + ":after", fnCallback);
+			};
+
+			/**
+			 * Removes a previously attached event handler
+			 * @param {string} sHttpMethod - event type according to HTTP Method
+			 * @param {function} fnCallback - the name of the function that will be called at this exit
+			 * @param {string} sEntitySet - (optional) the name of the entity set
+			 * @public
+			 */
+			MockServer.prototype.detachBefore = function(sHttpMethod, fnCallback, sEntitySet) {
+				sEntitySet = sEntitySet ? sEntitySet : "";
+				this.detachEvent(sHttpMethod + sEntitySet + ":before", fnCallback);
+			};
+
+			/**
+			 * Removes a previously attached event handler
+			 * @param {string} sHttpMethod - event type according to HTTP Method
+			 * @param {function} fnCallback - the name of the function that will be called at this exit
+			 * @param {string} sEntitySet - (optional) the name of the entity set
+			 * @public
+			 */
+			MockServer.prototype.detachAfter = function(sHttpMethod, fnCallback, sEntitySet) {
+				sEntitySet = sEntitySet ? sEntitySet : "";
+				this.detachEvent(sHttpMethod + sEntitySet + ":after", fnCallback);
+			};
+
+			/**
+			 * Returns whether the server is started or not.
+			 *
+			 * @return {boolean} whether the server is started or not.
+			 * @public
+			 */
+			MockServer.prototype.isStarted = function() {
+				return !!this._oServer;
+			};
+
+			/**
+			 * Returns the data model of the given EntitySet name.
+			 *
+			 * @param {string} sEntitySetName EntitySet name
+			 * @return {array} data model of the given EntitySet
+			 * @public
+			 */
+			MockServer.prototype.getEntitySetData = function(sEntitySetName) {
+				var that = this;
+				var aCopiedMockdata;
+				if (this._oMockdata && this._oMockdata.hasOwnProperty(sEntitySetName)) {
+					aCopiedMockdata = jQuery.extend(true, [], that._oMockdata[sEntitySetName]);
+				} else {
+					Log.error("Unrecognized EntitySet name: " + sEntitySetName);
+				}
+				return aCopiedMockdata;
+			};
+
+			/**
+			 * Sets the data of the given EntitySet name with the given array.
+			 * @param {string} sEntitySetName EntitySet name
+			 * @param {array} aData
+			 * @public
+			 */
+			MockServer.prototype.setEntitySetData = function(sEntitySetName, aData) {
+				if (this._oMockdata && this._oMockdata.hasOwnProperty(sEntitySetName)) {
+					this._oMockdata[sEntitySetName] = aData;
+				} else {
+					Log.error("Unrecognized EntitySet name: " + sEntitySetName);
+				}
+			};
+
+			/**
+			 * Applies the OData system query option string on the given array
+			 * @param {object} oFilteredData
+			 * @param {string} sQuery string in the form {query}={value}
+			 * @param {string} sEntitySetName the name of the entitySet the oFilteredData belongs to
+			 * @param {array} aUrlParamStrings all query string parts of the request (array of {query}={value})
+			 * @private
+			 */
+			MockServer.prototype._applyQueryOnCollection = function(oFilteredData, sQuery, sEntitySetName, aUrlParamStrings) {
+				var aQuery = sQuery.split('=');
+				var sODataQueryValue = aQuery[1];
+				if (sODataQueryValue === "") {
+					return;
+				}
+				if (sODataQueryValue.lastIndexOf(',') === sODataQueryValue.length - 1) {
+					this._logAndThrowMockServerCustomError(400, this._oErrorMessages.URI_VIOLATING_CONSTRUCTION_RULES);
+				}
+				switch (aQuery[0]) {
+					case "$top":
+						if (!(new RegExp(/^\d+$/).test(sODataQueryValue))) {
+							this._logAndThrowMockServerCustomError(400, this._oErrorMessages.INVALID_SYSTEM_QUERY_OPTION_VALUE);
+						}
+						oFilteredData.results = oFilteredData.results.slice(0, sODataQueryValue);
+						break;
+					case "$skip":
+						if (!(new RegExp(/^\d+$/).test(sODataQueryValue))) {
+							this._logAndThrowMockServerCustomError(400, this._oErrorMessages.INVALID_SYSTEM_QUERY_OPTION_VALUE);
+						}
+						oFilteredData.results = oFilteredData.results.slice(sODataQueryValue, oFilteredData.results.length);
+						break;
+					case "$orderby":
+						oFilteredData.results = this._getOdataQueryOrderby(oFilteredData.results, sODataQueryValue, sEntitySetName);
+						break;
+					case "$filter":
+						oFilteredData.results = this._recursiveOdataQueryFilter(oFilteredData.results, sODataQueryValue);
+						break;
+					case "search-focus":
+						// query parameter "search-focus" is evaluated together with parameter "search"
+						break;
+					case "search":
+						//Look for "search-focus" first...
+						var sSearchFocus = "";
+						for (var i = 0; i < aUrlParamStrings.length; i++ ) {
+							if ( aUrlParamStrings[i].indexOf("search-focus") != -1 ){
+								sSearchFocus = aUrlParamStrings[i].split('=')[1];
+								break;
+							}
+						}
+						oFilteredData.results = this._recursiveOdataQuerySearch( oFilteredData.results, sODataQueryValue, sSearchFocus, sEntitySetName );
+						break;
+					case "$select":
+						oFilteredData.results = this._getOdataQuerySelect(oFilteredData.results, sODataQueryValue, sEntitySetName);
+						break;
+					case "$inlinecount":
+						var iCount = this._getOdataInlineCount(oFilteredData.results, sODataQueryValue);
+						if (iCount) {
+							oFilteredData.__count = iCount;
+						}
+						break;
+					case "$expand":
+						oFilteredData.results = this._getOdataQueryExpand(oFilteredData.results, sODataQueryValue, sEntitySetName);
+						break;
+					case "$format":
+						oFilteredData.results = this._getOdataQueryFormat(oFilteredData.results, sODataQueryValue);
+						break;
+					default:
+						this._logAndThrowMockServerCustomError(400, this._oErrorMessages.IS_NOT_A_VALID_SYSTEM_QUERY_OPTION, aQuery[0]);
+				}
+			};
+
+			/**
+			 * Applies the OData system query option string on the given entry
+			 * @param {object} oEntry
+			 * @param {string} sQuery string of the form {query}={value}
+			 * @param {string} sEntitySetName the name of the entitySet the oEntry belongs to
+			 * @private
+			 */
+			MockServer.prototype._applyQueryOnEntry = function(oEntry, sQuery, sEntitySetName) {
+				var aQuery = sQuery.split('=');
+				var sODataQueryValue = aQuery[1];
+				if (sODataQueryValue === "") {
+					return;
+				}
+				if (sODataQueryValue.lastIndexOf(',') === sODataQueryValue.length - 1) {
+					this._logAndThrowMockServerCustomError(400, this._oErrorMessages.URI_VIOLATING_CONSTRUCTION_RULES);
+				}
+				switch (aQuery[0]) {
+					case "$filter":
+						return this._recursiveOdataQueryFilter([oEntry], sODataQueryValue)[0];
+					case "$select":
+						return this._getOdataQuerySelect([oEntry], sODataQueryValue, sEntitySetName)[0];
+					case "$expand":
+						return this._getOdataQueryExpand([oEntry], sODataQueryValue, sEntitySetName)[0];
+					case "$format":
+						return this._getOdataQueryFormat([oEntry], sODataQueryValue);
+					default:
+						this._logAndThrowMockServerCustomError(400, this._oErrorMessages.IS_NOT_A_VALID_SYSTEM_QUERY_OPTION, aQuery[0]);
+				}
+			};
+
+			/**
+			 * Applies the Orderby OData system query option string on the given array
+			 * @param {object} aDataSet
+			 * @param {string} sODataQueryValue a comma separated list of property navigation paths to sort by, where each property navigation path terminates on a primitive property
+			 * @private
+			 */
+			MockServer.prototype._getOdataQueryOrderby = function(aDataSet, sODataQueryValue, sEntitySetName) {
+				// sort properties lookup
+				var aProperties = sODataQueryValue.split(',');
+				var that = this;
+				//trim all properties
+				jQuery.each(aProperties, function(i, sPropertyName) {
+					aProperties[i] = that._trim(sPropertyName);
+				});
+
+				var fnComparator = function compare(a, b) {
+
+					for (var i = 0; i < aProperties.length; i++) {
+						// sort order lookup asc / desc
+						var aSort = aProperties[i].split(' ');
+						// by default the sort is in asc order
+						var iSorter = 1;
+						if (aSort.length > 1) {
+							switch (aSort[1]) {
+								case 'asc':
+									iSorter = 1;
+									break;
+								case 'desc':
+									iSorter = -1;
+									break;
+								default:
+									that._logAndThrowMockServerCustomError(400, that._oErrorMessages.INVALID_SORTORDER_DETECTED, aSort[1]);
+							}
+						}
+						// support for 1 level complex type property
+						var sPropName, sComplexType;
+						var iComplexType = aSort[0].indexOf("/");
+						if (iComplexType !== -1) {
+							sPropName = aSort[0].substring(iComplexType + 1);
+							sComplexType = aSort[0].substring(0, iComplexType);
+							if (!a[sComplexType].hasOwnProperty(sPropName)) {
+								var bExist = false;
+								var aTypeProperties = [];
+								if (sComplexType) {
+									var sTargetEntitySet = that._mEntitySets[sEntitySetName].navprops[sComplexType].to.entitySet;
+									aTypeProperties = that._mEntityTypes[that._mEntitySets[sTargetEntitySet].type].properties;
+									for (var i = 0; i < aTypeProperties.length; i++) {
+										if (aTypeProperties[i].name === sPropName) {
+											bExist = true;
+											break;
+										}
+									}
+								}
+								if (!bExist) {
+									that._logAndThrowMockServerCustomError(400, that._oErrorMessages.PROPERTY_NOT_FOUND, sPropName);
+								}
+							}
+							if (a[sComplexType][sPropName] < b[sComplexType][sPropName]) {
+								return -1 * iSorter;
+							}
+							if (a[sComplexType][sPropName] > b[sComplexType][sPropName]) {
+								return 1 * iSorter;
+							}
+						} else {
+							sPropName = aSort[0];
+							if (!a.hasOwnProperty(sPropName)) {
+								that._logAndThrowMockServerCustomError(400, that._oErrorMessages.PROPERTY_NOT_FOUND, sPropName);
+							}
+							if (a[sPropName] < b[sPropName]) {
+								return -1 * iSorter;
+							}
+							if (a[sPropName] > b[sPropName]) {
+								return 1 * iSorter;
+							}
+						}
+					}
+					return 0;
+				};
+				return aDataSet.sort(fnComparator);
+			};
+
+			/**
+			 * Removes duplicate entries from the given array
+			 * @param {array} array the data set
+			 * @private
+			 */
+			MockServer.prototype._arrayUnique = function(array) {
+				var a = array.concat();
+				for (var i = 0; i < a.length; ++i) {
+					for (var j = i + 1; j < a.length; ++j) {
+						if (a[i] === a[j]) {
+							a.splice(j--, 1);
+						}
+					}
+				}
+				return a;
+			};
+
+			/**
+			 * Returns the indices of the first brackets appearance, excluding brackets of $filter reserved functions
+			 * @param {string} sString
+			 * @private
+			 */
+			MockServer.prototype._getBracketIndices = function(sString) {
+				var aStack = [];
+				var iReserved = 0;
+				var iStartIndex, iEndIndex = 0;
+				for (var character = 0; character < sString.length; character++) {
+					if (sString[character] === '(') {
+						if (/[substringof|endswith|startswith]$/.test(sString.substring(0, character))) {
+							++iReserved;
+						} else {
+							aStack.push(sString[character]);
+							if (iStartIndex === undefined) {
+								iStartIndex = character;
+							}
+						}
+					} else if (sString[character] === ')') {
+						if (!iReserved) {
+							aStack.pop();
+							iEndIndex = character;
+							if (aStack.length === 0) {
+								return {
+									start: iStartIndex,
+									end: iEndIndex
+								};
+							}
+						} else {
+							--iReserved;
+						}
+					}
+				}
+				return {
+					start: iStartIndex,
+					end: iEndIndex
+				};
+			};
+
+			/**
+			 * Applies the $filter OData system query option string on the given array.
+			 * This function is called recursively on expressions in brackets.
+			 * @param {array} aDataSet
+			 * @param {string} sODataQueryValue
+			 * @private
+			 */
+			MockServer.prototype._recursiveOdataQueryFilter = function(aDataSet, sODataQueryValue) {
+
+				// check for wrapping brackets, e.g. (A), (A op B), (A op (B)), (((A)))
+				var oIndices = this._getBracketIndices(sODataQueryValue);
+				if (oIndices.start === 0 && oIndices.end === sODataQueryValue.length - 1) {
+					sODataQueryValue = this._trim(sODataQueryValue.substring(oIndices.start + 1, oIndices.end));
+					return this._recursiveOdataQueryFilter(aDataSet, sODataQueryValue);
+				}
+
+				// find brackets that are not related to the reserved words
+				var rExp = /([^substringof|endswith|startswith]|^)\((.*)\)/,
+					aSet2,
+					aParts;
+
+				var sOperator;
+				if (rExp.test(sODataQueryValue)) {
+					var sBracketed = sODataQueryValue.substring(oIndices.start, oIndices.end + 1);
+					var rExp1 = new RegExp("(.*) +(or|and) +(" + this._trim(this._escapeStringForRegExp(sBracketed)) + ".*)");
+					if (oIndices.start === 0) {
+						rExp1 = new RegExp("(" + this._trim(this._escapeStringForRegExp(sBracketed)) + ") +(or|and) +(.*)");
+					}
+
+					var aExp1Parts = rExp1.exec(sODataQueryValue);
+					if (aExp1Parts === null) {
+						return this._getOdataQueryFilter(aDataSet, this._trim(sODataQueryValue));
+					}
+					var sExpression = aExp1Parts[1];
+					sOperator = aExp1Parts[2];
+					var sExpression2 = aExp1Parts[3];
+
+					var aSet1 = this._recursiveOdataQueryFilter(aDataSet, sExpression);
+					if (sOperator === "or") {
+						aSet2 = this._recursiveOdataQueryFilter(aDataSet, sExpression2);
+						return this._arrayUnique(aSet1.concat(aSet2));
+					}
+					if (sOperator === "and") {
+						return this._recursiveOdataQueryFilter(aSet1, sExpression2);
+					}
+				} else {
+					//there are only brackets with the reserved words
+					// e.g. A or B and C or D
+					aParts = sODataQueryValue.split(/ +and | or +/);
+
+					// base case
+					if (aParts.length === 1) {
+						return this._getOdataQueryFilter(aDataSet, this._trim(sODataQueryValue));
+					}
+
+					var aResult = this._recursiveOdataQueryFilter(aDataSet, aParts[0]);
+					var rRegExp;
+					for (var i = 1; i < aParts.length; i++) {
+						rRegExp = new RegExp(this._trim(this._escapeStringForRegExp(aParts[i - 1])) + " +(and|or) +" + this._trim(this._escapeStringForRegExp(
+							aParts[i])));
+						sOperator = rRegExp.exec(sODataQueryValue)[1];
+
+						if (sOperator === "or") {
+							aSet2 = this._recursiveOdataQueryFilter(aDataSet, aParts[i]);
+							aResult = this._arrayUnique(aResult.concat(aSet2));
+						}
+						if (sOperator === "and") {
+							aResult = this._recursiveOdataQueryFilter(aResult, aParts[i]);
+						}
+					}
+					return aResult;
+				}
+			};
+
+			/**
+			 * Applies the Filter OData system query option string on the given array
+			 * @param {object} aDataSet
+			 * @param {string} sODataQueryValue a boolean expression
+			 * @private
+			 */
+			MockServer.prototype._getOdataQueryFilter = function(aDataSet, sODataQueryValue) {
+				if (aDataSet.length === 0) {
+					return aDataSet;
+				}
+				var rExp = new RegExp("(.*) (eq|ne|gt|lt|le|ge) (.*)");
+				var rExp2 = new RegExp("(endswith|startswith|substringof)\\((.*)");
+				var sODataFilterMethod = null;
+				var aODataFilterValues = rExp.exec(sODataQueryValue);
+				if (aODataFilterValues) {
+					sODataFilterMethod = aODataFilterValues[2];
+				} else {
+					aODataFilterValues = rExp2.exec(sODataQueryValue);
+					if (aODataFilterValues) {
+						sODataFilterMethod = aODataFilterValues[1];
+					} else {
+						this._logAndThrowMockServerCustomError(400, this._oErrorMessages.INVALID_FILTER_QUERY_STATEMENT);
+					}
+				}
+				var that = this;
+				var fnGetFilteredData = function(bValue, iValueIndex, iPathIndex, fnSelectFilteredData) {
+					// TODO: do the check using the property type and not value
+					//       or consider the reuse of sap/ui/model/odata/ODataUtils.parseValue
+					var aODataFilterValues, sValue, sPath;
+					if (!bValue) { //e.g eq, ne, gt, lt, le, ge
+						aODataFilterValues = rExp.exec(sODataQueryValue);
+						sValue = that._trim(aODataFilterValues[iValueIndex + 1]);
+						sPath = that._trim(aODataFilterValues[iPathIndex + 1]);
+					} else { //e.g.substringof, startswith, endswith
+						var rStringFilterExpr = new RegExp("(substringof|startswith|endswith)\\(([^\\)]*),(.*)\\)");
+						aODataFilterValues = rStringFilterExpr.exec(sODataQueryValue);
+						sValue = that._trim(aODataFilterValues[iValueIndex + 2]);
+						sPath = that._trim(aODataFilterValues[iPathIndex + 2]);
+					}
+					// remove brackets around value (if value is present)
+					if (/^\(.+\)$/.test(sValue)) {
+						sValue = sValue.replace(/^\(|\)$/g, "");
+					}
+					// fix for filtering on date time properties
+					if (sValue.indexOf("datetime") === 0) {
+						sValue = that._getJsonDate(sValue);
+					} else if (sValue.indexOf("guid") === 0) {
+						// strip the "guid'" (5) from the front and the "'" (-1) from the back
+						sValue = sValue.substring(5, sValue.length - 1);
+					} else if (sValue === "true") { // fix for filtering on boolean properties
+						sValue = true;
+					} else if (sValue === "false") {
+						sValue = false;
+					} else if (that._isValidNumber(sValue)) { //fix for filtering on properties of type number
+						sValue = parseFloat(sValue);
+					} else if ((sValue.charAt(0) === "'") && (sValue.charAt(sValue.length - 1) === "'")) {
+						//fix for filtering on properties of type string
+						sValue = sValue.substr(1, sValue.length - 2);
+					}
+					// support for 1 level complex type property
+					var iComplexType = sPath.indexOf("/");
+					if (iComplexType !== -1) {
+						var sPropName = sPath.substring(iComplexType + 1);
+						var sComplexType = sPath.substring(0, iComplexType);
+						if (aDataSet[0][sComplexType]) {
+							if (!aDataSet[0][sComplexType].hasOwnProperty(sPropName)) {
+								var sErrorMessage = that._oErrorMessages.PROPERTY_NOT_FOUND.replace("##", "'" + sPropName + "'");
+								Log.error("MockServer: navigation property '" + sComplexType + "' was not expanded, so " + sErrorMessage);
+								return aDataSet;
+							}
+						} else {
+							that._logAndThrowMockServerCustomError(400, that._oErrorMessages.PROPERTY_NOT_FOUND, sPath);
+						}
+						return fnSelectFilteredData(sPath, sValue, sComplexType, sPropName);
+					} else {
+						//check if sPath exists as property of the entityset
+						if (!aDataSet[0].hasOwnProperty(sPath)) {
+							that._logAndThrowMockServerCustomError(400, that._oErrorMessages.PROPERTY_NOT_FOUND, sPath);
+						}
+						return fnSelectFilteredData(sPath, sValue);
+					}
+
+				};
+
+				switch (sODataFilterMethod) {
+					case "substringof":
+						return fnGetFilteredData(true, 0, 1, function(sPath, sValue, sComplexType, sPropName) {
+							return aDataSet.filter(function(oMockData) {
+								if (sComplexType && sPropName) {
+									return (typeof oMockData[sComplexType][sPropName] === "string" && oMockData[sComplexType][sPropName].indexOf(sValue) !== -1);
+								}
+								return (typeof oMockData[sPath] === "string" && oMockData[sPath].indexOf(sValue) !== -1);
+							});
+						});
+					case "startswith":
+						return fnGetFilteredData(true, 1, 0, function(sPath, sValue, sComplexType, sPropName) {
+							return aDataSet.filter(function(oMockData) {
+								if (sComplexType && sPropName) {
+									return (typeof oMockData[sComplexType][sPropName] === "string" && oMockData[sComplexType][sPropName].indexOf(sValue) === 0);
+								}
+								return (typeof oMockData[sPath] === "string" && oMockData[sPath].indexOf(sValue) === 0);
+							});
+						});
+					case "endswith":
+						return fnGetFilteredData(true, 1, 0, function(sPath, sValue, sComplexType, sPropName) {
+							return aDataSet.filter(function(oMockData) {
+								if (sComplexType && sPropName) {
+									return (typeof oMockData[sComplexType][sPropName] === "string" && oMockData[sComplexType][sPropName].indexOf(sValue) === (oMockData[sComplexType][sPropName].length - sValue.length));
+								}
+								return (typeof oMockData[sPath] === "string" && oMockData[sPath].indexOf(sValue) === (oMockData[sPath].length - sValue.length));
+							});
+						});
+					case "eq":
+						return fnGetFilteredData(false, 2, 0, function(sPath, sValue, sComplexType, sPropName) {
+							return aDataSet.filter(function(oMockData) {
+								if (sComplexType && sPropName) {
+									return (oMockData[sComplexType][sPropName] === sValue);
+								}
+								return (oMockData[sPath] === sValue);
+							});
+						});
+					case "ne":
+						return fnGetFilteredData(false, 2, 0, function(sPath, sValue, sComplexType, sPropName) {
+							return aDataSet.filter(function(oMockData) {
+								if (sComplexType && sPropName) {
+									return (oMockData[sComplexType][sPropName] !== sValue);
+								}
+								return (oMockData[sPath] !== sValue);
+							});
+						});
+					case "gt":
+						return fnGetFilteredData(false, 2, 0, function(sPath, sValue, sComplexType, sPropName) {
+							return aDataSet.filter(function(oMockData) {
+								if (sComplexType && sPropName) {
+									return (oMockData[sComplexType][sPropName] > sValue);
+								}
+								return (oMockData[sPath] > sValue);
+							});
+						});
+					case "lt":
+						return fnGetFilteredData(false, 2, 0, function(sPath, sValue, sComplexType, sPropName) {
+							return aDataSet.filter(function(oMockData) {
+								if (sComplexType && sPropName) {
+									return (oMockData[sComplexType][sPropName] < sValue);
+								}
+								return (oMockData[sPath] < sValue);
+							});
+						});
+					case "ge":
+						return fnGetFilteredData(false, 2, 0, function(sPath, sValue, sComplexType, sPropName) {
+							return aDataSet.filter(function(oMockData) {
+								if (sComplexType && sPropName) {
+									return (oMockData[sComplexType][sPropName] >= sValue);
+								}
+								return (oMockData[sPath] >= sValue);
+							});
+						});
+					case "le":
+						return fnGetFilteredData(false, 2, 0, function(sPath, sValue, sComplexType, sPropName) {
+							return aDataSet.filter(function(oMockData) {
+								if (sComplexType && sPropName) {
+									return (oMockData[sComplexType][sPropName] <= sValue);
+								}
+								return (oMockData[sPath] <= sValue);
+							});
+						});
+					default:
+						this._logAndThrowMockServerCustomError(400, that._oErrorMessages.INVALID_FILTER_OPERATOR, sODataFilterMethod);
+				}
+			};
+
+			/**
+			 * Processes the search operation:
+			 * Technically a filter is applied with "substringof" filter on the given property (given as
+			 * search-focus URL parameter).
+			 *
+			 * @param {object} aDataSet
+			 * @param {string} sODataQueryValue search string
+			 * @param {string} sODataSearchFocusValue A property name on which entries should be searched
+			 * @return {object} Changed result data set
+			 *
+			 * @private
+			 */
+			MockServer.prototype._recursiveOdataQuerySearch = function(aDataSet, sODataQueryValue, sODataSearchFocusValue, sEntitySetName) {
+				var sFilterString = "";
+
+				if ( sODataSearchFocusValue == "" || sODataSearchFocusValue == undefined ){
+					for ( var i = 0; i < this._mEntitySets[sEntitySetName].keys.length; i++ ) {
+						if (i != 0){
+							sFilterString = sFilterString + " or ";
+						}
+						sFilterString = sFilterString + "startswith(" + this._mEntitySets[sEntitySetName].keys[i] + ",'" + sODataQueryValue + "')";
+					}
+				} else {
+					sFilterString = "substringof('" + sODataQueryValue + "'," + sODataSearchFocusValue + ")";
+				}
+
+				return this._recursiveOdataQueryFilter(aDataSet, sFilterString);
+			};
+
+			/**
+			 * Applies the Select OData system query option string on the given array
+			 * @param {object} aDataSet
+			 * @param {string} sODataQueryValue a comma separated list of property paths, qualified action names, qualified function names, or the star operator (*)
+			 * @private
+			 */
+			MockServer.prototype._getOdataQuerySelect = function(aDataSet, sODataQueryValue, sEntitySetName) {
+				var that = this;
+				var aProperties = sODataQueryValue.split(',');
+				var aSelectedDataSet = [];
+				var oDataEntry = aDataSet[0] ? aDataSet[0][aProperties[0].split('/')[0]] : null;
+				if (!(oDataEntry != null && oDataEntry.results && oDataEntry.results.length > 0)) {
+					var fnCreatePushedEntry = function (aProperties, oData, oPushedObject, sParentName) {
+						jQuery.each(aProperties, function (i, sPropertyName) {
+							// Take over __metadata for complex types or properties
+							if (oData["__metadata"]) {
+								oPushedObject["__metadata"] = oData["__metadata"];
+							}
+							// Resolve complex types (determined by path syntax)
+							if (sPropertyName.indexOf("/") > -1) {
+								var aPropParts = sPropertyName.split("/");
+								var sPropName = aPropParts[0];
+								var sPath = aPropParts.splice(1).join("/");
+								oPushedObject[sPropName] = oPushedObject[sPropName] || {};
+								if (oData[sPropName] && oData[sPropName].results) {
+									// Navigation property - filter the results for each navigation property based on the properties defined by $select
+									var results = oPushedObject[sPropName].results = oPushedObject[sPropName].results || [];
+									jQuery.each(oData[sPropName].results, function (i, oResult) {
+										results[i] = fnCreatePushedEntry([sPath], oResult, results[i] || {}, sPropName);
+									});
+								} else {
+									// call recursively to get the properties of each complex type or navigation property
+									oPushedObject[sPropName] = fnCreatePushedEntry([sPath], oData[sPropName], oPushedObject[sPropName] || {}, sPropName);
+								}
+							} else {
+								if (oData && !oData.hasOwnProperty(sPropertyName)) {
+									var bExist = false;
+									var aTypeProperties = [];
+									if (sParentName) {
+										var sTargetEntitySet = that._mEntitySets[sEntitySetName].navprops[sParentName].to.entitySet;
+										aTypeProperties = that._mEntityTypes[that._mEntitySets[sTargetEntitySet].type].properties;
+										for (var i = 0; i < aTypeProperties.length; i++) {
+											if (aTypeProperties[i].name === sPropertyName) {
+												bExist = true;
+												break;
+											}
+										}
+									}
+									if (!bExist) {
+										that._logAndThrowMockServerCustomError(404, that._oErrorMessages.RESOURCE_NOT_FOUND_FOR_SEGMENT, sPropertyName);
+									}
+								}
+								oPushedObject[sPropertyName] = oData[sPropertyName];
+							}
+						});
+						return oPushedObject;
+					};
+
+					// in case of $select=* return the data as is
+					if (aProperties.indexOf("*") !== -1) {
+						return aDataSet;
+					}
+
+					// trim all properties
+					jQuery.each(aProperties, function(i, sPropertyName) {
+						aProperties[i] = that._trim(sPropertyName);
+					});
+
+					// for each entry in the dataset create a new object that contains only the properties in $select clause
+					jQuery.each(aDataSet, function(iIndex, oData) {
+						aSelectedDataSet.push(fnCreatePushedEntry(aProperties, oData, {}));
+					});
+				} else {
+					//Add Support for multiple select return 1...n
+					var fnMultiSelect = function(data, select, currentPath) {
+						var result = {};
+						// traversed path to get to data:
+						currentPath = currentPath || '';
+						if (typeof data !== 'object') {
+							return data;
+						}
+						if (typeof data.slice === 'function') {
+							return data.map(function(el, index) {
+								return fnMultiSelect(el, select, currentPath); // on same path
+							});
+						}
+						// If Object:
+						// Handle "__metadata" property
+						if (data.__metadata !== undefined && currentPath.length === 0) {
+							result.__metadata = data.__metadata;
+						}
+						// Take the relevant paths only.
+						select.filter(function(path) {
+							return (path + '/').indexOf(currentPath) === 0;
+						}).forEach(function(path, _, innerSelect) {
+							// then get the next property in given path
+							var propertyKey = path.substr(currentPath.length).split('/')[0];
+							// Check if we have that propertyKey on the current object
+							if (data[propertyKey] !== undefined) {
+								// in this case recurse again while adding this to the current path
+								result[propertyKey] = fnMultiSelect(data[propertyKey], innerSelect, currentPath + propertyKey + '/');
+							}
+						});
+						// Add specific results case handling
+						if (data.results !== undefined) { // recurse with same path
+							result.results = fnMultiSelect(data.results, select, currentPath);
+						}
+						return result;
+					};
+					//invoke recursive function
+					aSelectedDataSet = fnMultiSelect(aDataSet, aProperties);
+				}
+				return aSelectedDataSet;
+			};
+
+			/**
+			 * Applies the InlineCount OData system query option string on the given array
+			 * @param {object} aDataSet
+			 * @param {string} sODataQueryValue a value of allpages, or a value of none
+			 * @private
+			 */
+			MockServer.prototype._getOdataInlineCount = function(aDataSet, sODataQueryValue) {
+				var aProperties = sODataQueryValue.split(',');
+
+				if (aProperties.length !== 1 || (aProperties[0] !== 'none' && aProperties[0] !== 'allpages')) {
+					this._logAndThrowMockServerCustomError(400, this._oErrorMessages.INVALID_SYSTEM_QUERY_OPTION_VALUE);
+				}
+				if (aProperties[0] === 'none') {
+					return;
+				}
+				return aDataSet.length;
+			};
+
+			/**
+			 * Applies the Format OData system query option
+			 * @param {array} aDataSet
+			 * @param {string} sODataQueryValue
+			 * @private
+			 */
+			MockServer.prototype._getOdataQueryFormat = function(aDataSet, sODataQueryValue) {
+				if (sODataQueryValue !== 'json') {
+					this._logAndThrowMockServerCustomError(400, this._oErrorMessages.UNSUPPORTED_FORMAT_VALUE);
+				}
+				return aDataSet;
+			};
+
+			/**
+			 * Applies the Expand OData system query option string on the given array
+			 * @param {object} aDataSet
+			 * @param {string} sODataQueryValue a comma separated list of navigation property paths
+			 * @param {string} sEntitySetName the name of the entitySet the aDataSet belongs to
+			 * @private
+			 */
+			MockServer.prototype._getOdataQueryExpand = function(aDataSet, sODataQueryValue, sEntitySetName) {
+				var that = this;
+				var aNavProperties = sODataQueryValue.split(',');
+				//trim all nav properties
+				jQuery.each(aNavProperties, function(i, sPropertyName) {
+					aNavProperties[i] = that._trim(sPropertyName);
+				});
+				var oEntitySetNavProps = that._mEntitySets[sEntitySetName].navprops;
+				jQuery.each(aDataSet, function(iIndex, oRecord) {
+					jQuery.each(aNavProperties, function(iIndex, sNavPropFull) {
+						var aNavProps = sNavPropFull.split("/");
+						var sNavProp = aNavProps[0];
+
+						if (!oRecord[sNavProp]) {
+							that._logAndThrowMockServerCustomError(404, that._oErrorMessages.RESOURCE_NOT_FOUND_FOR_SEGMENT, sNavProp);
+						}
+
+						//check if an expanded operation was already executed. for 1:* check results . otherwise, check if there is __deferred for clean start.
+						var aNavEntry = oRecord[sNavProp].results || oRecord[sNavProp];
+						if (!aNavEntry || aNavEntry.__deferred) {
+							aNavEntry = jQuery.extend(true, [], that._resolveNavigation(sEntitySetName, oRecord, sNavProp, oRecord));
+						} else if (!Array.isArray(aNavEntry)) {
+							aNavEntry = [aNavEntry];
+						}
+
+						if (aNavEntry && aNavProps.length > 1) {
+							var sRestNavProps = aNavProps.splice(1, aNavProps.length).join("/");
+							aNavEntry = that._getOdataQueryExpand(aNavEntry, sRestNavProps,
+								oEntitySetNavProps[sNavProp].to.entitySet);
+						}
+
+						if (oEntitySetNavProps[sNavProp].to.multiplicity === "*") {
+							oRecord[sNavProp] = {
+								results: aNavEntry
+							};
+						} else {
+							oRecord[sNavProp] = aNavEntry[0] ? aNavEntry[0] : {};
+						}
+					});
+				});
+				return aDataSet;
+			};
+
+			/**
+			 * Refreshes the service metadata document and the mockdata
+			 *
+			 * @private
+			 */
+			MockServer.prototype._refreshData = function() {
+
+				// load the metadata
+				var oMetadata = this._loadMetadata(this._sMetadataString);
+				if (!oMetadata) {
+					return;
+				}
+
+				// here we need to analyse the EDMX and identify the entity sets
+				this._mEntitySets = this._findEntitySets(this._oMetadata);
+				this._mEntityTypes = this._findEntityTypes(this._oMetadata);
+
+				if (!this._sMockdataBaseUrl) {
+					// load the mockdata
+					this._generateMockdata(this._mEntitySets, this._oMetadata);
+				} else {
+					// check the mockdata base URL to end with a slash
+					if (!this._sMockdataBaseUrl.endsWith("/") && !this._sMockdataBaseUrl.endsWith(".json")) {
+						this._sMockdataBaseUrl += "/";
+					}
+					// load the mockdata
+					this._loadMockdata(this._mEntitySets, this._sMockdataBaseUrl);
+				}
+			};
+
+			/**
+			 * Returns the root URI without query or hash parameters
+			 * @return {string} the root URI without query or hash parameters
+			 */
+			MockServer.prototype._getRootUri = function() {
+				var sUri = this.getRootUri();
+				sUri = sUri && /([^?#]*)([?#].*)?/.exec(sUri)[1]; // remove URL parameters or anchors
+				return sUri;
+			};
+
+			/**
+			 * Loads the service metadata for the given url
+			 * @param {string} sMetadata url to the service metadata document or content of the metadata document
+			 * @return {XMLDocument} the xml document object
+			 * @private
+			 */
+			MockServer.prototype._loadMetadata = function(sMetadata) {
+				var sMetadata;
+				sMetadata = sMetadata.trim();
+
+				// "<" as first character is a strong indicator for an XML-containing string. Everything else: URL...
+				if (sMetadata.substring(0,1) !== "<") {
+					// load the metadata as string to avoid usage of serializer
+					sMetadata = syncAjax({
+						url: sMetadata,
+						dataType: "text"
+					}).data;
+					if (!sMetadata) {
+						Log.error("MockServer: The metadata for url \"" + sMetadata + "\" could not be found!");
+					}
+				}
+
+				this._sMetadata = sMetadata;
+				try {
+					this._oMetadata = jQuery.parseXML(sMetadata);
+				} catch (oError) {
+					Log.error("MockServer: Invalid metadata XML! Reason: " + oError);
+				}
+				return this._oMetadata;
+			};
+
+			/**
+			 * find the entity sets in the metadata XML document
+			 * @param {XMLDocument} oMetadata the metadata XML document
+			 * @return {map} map of entity sets
+			 * @private
+			 */
+			MockServer.prototype._findEntitySets = function(oMetadata) {
+
+				// here we need to analyse the EDMX and identify the entity sets
+				var mEntitySets = {};
+				var oPrincipals = jQuery(oMetadata).find("Principal");
+				var oDependents = jQuery(oMetadata).find("Dependent");
+
+				jQuery(oMetadata).find("EntitySet").each(function(iIndex, oEntitySet) {
+					var $EntitySet = jQuery(oEntitySet);
+					// split the namespace and the name of the entity type (namespace could have dots inside)
+					var aEntityTypeParts = /((.*)\.)?(.*)/.exec($EntitySet.attr("EntityType"));
+					mEntitySets[$EntitySet.attr("Name")] = {
+						"name": $EntitySet.attr("Name"),
+						"schema": aEntityTypeParts[2],
+						"type": aEntityTypeParts[3],
+						"keys": [],
+						"keysType": {},
+						"navprops": {}
+					};
+				});
+
+				// helper function to find the entity set and property reference
+				// for the given role name
+				var fnResolveNavProp = function(sRole, aAssociation, aAssociationSet, bFrom) {
+					var sEntitySet = jQuery(aAssociationSet).find("End[Role='" + sRole + "']").attr("EntitySet");
+					var sMultiplicity = jQuery(aAssociation).find("End[Role='" + sRole + "']").attr("Multiplicity");
+
+					var aPropRef = [];
+					var aConstraint = jQuery(aAssociation).find("ReferentialConstraint > [Role='" + sRole + "']");
+					if (aConstraint && aConstraint.length > 0) {
+						jQuery(aConstraint[0]).children("PropertyRef").each(function(iIndex, oPropRef) {
+							aPropRef.push(jQuery(oPropRef).attr("Name"));
+						});
+					} else {
+						var oPrinDeps = (bFrom) ? oPrincipals : oDependents;
+						jQuery(oPrinDeps).each(function(iIndex, oPrinDep) {
+							if (sRole === (jQuery(oPrinDep).attr("Role"))) {
+								jQuery(oPrinDep).children("PropertyRef").each(function(iIndex, oPropRef) {
+									aPropRef.push(jQuery(oPropRef).attr("Name"));
+								});
+								return false;
+							}
+						});
+					}
+
+					return {
+						"role": sRole,
+						"entitySet": sEntitySet,
+						"propRef": aPropRef,
+						"multiplicity": sMultiplicity
+					};
+				};
+
+				// find the keys and the navigation properties of the entity types
+				jQuery.each(mEntitySets, function(sEntitySetName, oEntitySet) {
+					// find the keys
+					var $EntityType = jQuery(oMetadata).find("EntityType[Name='" + oEntitySet.type + "']");
+					var aKeys = jQuery($EntityType).find("PropertyRef");
+					jQuery.each(aKeys, function(iIndex, oPropRef) {
+						var sKeyName = jQuery(oPropRef).attr("Name");
+						oEntitySet.keys.push(sKeyName);
+						oEntitySet.keysType[sKeyName] = jQuery($EntityType).find("Property[Name='" + sKeyName + "']").attr("Type");
+					});
+					// resolve the navigation properties
+					var aNavProps = jQuery(oMetadata).find("EntityType[Name='" + oEntitySet.type + "'] NavigationProperty");
+					jQuery.each(aNavProps, function(iIndex, oNavProp) {
+						var $NavProp = jQuery(oNavProp);
+						var aRelationship = $NavProp.attr("Relationship").split(".");
+						var aAssociationSet = jQuery(oMetadata).find("AssociationSet[Association = '" + aRelationship.join(".") + "']");
+						var sName = aRelationship.pop();
+						var aAssociation = jQuery(oMetadata).find("Association[Name = '" + sName + "']");
+						oEntitySet.navprops[$NavProp.attr("Name")] = {
+							"name": $NavProp.attr("Name"),
+							"from": fnResolveNavProp($NavProp.attr("FromRole"), aAssociation, aAssociationSet, true),
+							"to": fnResolveNavProp($NavProp.attr("ToRole"), aAssociation, aAssociationSet, false)
+						};
+					});
+				});
+
+				// return the entity sets
+				return mEntitySets;
+
+			};
+
+			/**
+			 * find the entity types in the metadata XML document
+			 * @param {XMLDocument} oMetadata the metadata XML document
+			 * @return {map} map of entity types
+			 * @private
+			 */
+			MockServer.prototype._findEntityTypes = function(oMetadata) {
+				var mEntityTypes = {};
+				jQuery(oMetadata).find("EntityType").each(function(iIndex, oEntityType) {
+					var $EntityType = jQuery(oEntityType);
+					mEntityTypes[$EntityType.attr("Name")] = {
+						"name": $EntityType.attr("Name"),
+						"properties": [],
+						"keys": []
+					};
+					$EntityType.find("Property").each(function(iIndex, oProperty) {
+						var $Property = jQuery(oProperty);
+						var type = $Property.attr("Type");
+						mEntityTypes[$EntityType.attr("Name")].properties.push({
+							"schema": type.substring(0, type.lastIndexOf(".")),
+							"type": type.substring(type.lastIndexOf(".") + 1),
+							"name": $Property.attr("Name"),
+							"precision": $Property.attr("Precision"),
+							"scale": $Property.attr("Scale")
+						});
+					});
+					$EntityType.find("PropertyRef").each(function(iIndex, oKey) {
+						var $Key = jQuery(oKey);
+						var sPropertyName = $Key.attr("Name");
+						mEntityTypes[$EntityType.attr("Name")].keys.push(sPropertyName);
+					});
+				});
+				return mEntityTypes;
+			};
+
+			/**
+			 * find the complex types in the metadata XML document
+			 * @param {XMLDocument} oMetadata the metadata XML document
+			 * @return {map} map of complex types
+			 * @private
+			 */
+			MockServer.prototype._findComplexTypes = function(oMetadata) {
+				var mComplexTypes = {};
+				jQuery(oMetadata).find("ComplexType").each(function(iIndex, oComplexType) {
+					var $ComplexType = jQuery(oComplexType);
+					mComplexTypes[$ComplexType.attr("Name")] = {
+						"name": $ComplexType.attr("Name"),
+						"properties": []
+					};
+					$ComplexType.find("Property").each(function(iIndex, oProperty) {
+						var $Property = jQuery(oProperty);
+						var type = $Property.attr("Type");
+						mComplexTypes[$ComplexType.attr("Name")].properties.push({
+							"schema": type.substring(0, type.lastIndexOf(".")),
+							"type": type.substring(type.lastIndexOf(".") + 1),
+							"name": $Property.attr("Name"),
+							"precision": $Property.attr("Precision"),
+							"scale": $Property.attr("Scale")
+						});
+					});
+				});
+				return mComplexTypes;
+			};
+
+			/**
+			 * creates a key string for the given keys and entry
+			 * @param {object} oEntitySet the entity set info
+			 * @param {object} oEntry entity set entry which contains the keys as properties
+			 * @return {string} the keys string
+			 * @private
+			 */
+			MockServer.prototype._createKeysString = function(oEntitySet, oEntry) {
+				// creates the key string for an entity
+				var that = this;
+				var sKeys = "";
+				if (oEntry) {
+					jQuery.each(oEntitySet.keys, function(iIndex, sKey) {
+						if (sKeys) {
+							sKeys += ",";
+						}
+						var oKeyValue = oEntry[sKey];
+						if (oEntitySet.keysType[sKey] === "Edm.String") {
+							oKeyValue = encodeURIComponent("'" + oKeyValue + "'");
+						} else if (oEntitySet.keysType[sKey] === "Edm.DateTime") {
+							oKeyValue = that._getDateTime(oKeyValue);
+							oKeyValue = encodeURIComponent(oKeyValue);
+						} else if (oEntitySet.keysType[sKey] === "Edm.Guid") {
+							oKeyValue = "guid'" + oKeyValue + "'";
+						}
+						if (oEntitySet.keys.length === 1) {
+							sKeys += oKeyValue;
+							return sKeys;
+						}
+						sKeys += sKey + "=" + oKeyValue;
+					});
+				}
+				return sKeys;
+			};
+
+			/**
+			 * loads the mock data for the given entity sets and tries
+			 * to load them from the files inside the given base url.
+			 * The name of the JSON files containing the mock data
+			 * should be either the name of the entity set or the name
+			 * of the underlying entity type. As an alternative you
+			 * could also specify the url to a single JSON file
+			 * containing the mock data for all entity types.
+			 *
+			 * @param {map}
+			 *                mEntitySets map of entity sets
+			 * @param {string}
+			 *                sBaseUrl the base url which contains the
+			 *                mock data in JSON files or if the url is
+			 *                pointing to a JSON file containing all
+			 *                entity types
+			 * @return {array} the mockdata arary containing the data
+			 *         for the entity sets
+			 * @private
+			 */
+			MockServer.prototype._loadMockdata = function(mEntitySets, sBaseUrl) {
+				var that = this,
+					mData = {};
+				this._oMockdata = {};
+				var fnLoadMockData = function(sUrl, oEntitySet) {
+					var oResponse = syncAjax({
+						url: sUrl,
+						dataType: "json"
+					});
+					if (oResponse.success) {
+						if (oResponse.data.d) {
+							if (oResponse.data.d.results) {
+								mData[oEntitySet.name] = oResponse.data.d.results;
+							} else {
+								Log.error("The mock data format for entity set \"" + oEntitySet.name + "\" invalid");
+							}
+						} else {
+							if (Array.isArray(oResponse.data)) {
+								mData[oEntitySet.name] = oResponse.data;
+							} else {
+								Log.error("The mock data for entity set \"" + oEntitySet.name + "\" could not be loaded due to wrong format!");
+								return false;
+							}
+						}
+						return true;
+					} else {
+						if (oResponse.status === "parsererror") {
+							Log.error("The mock data for entity set \"" + oEntitySet.name + "\" could not be loaded due to a parsing error!");
+						}
+						return false;
+					}
+				};
+
+				// load all the mock data in one single file
+				if (sBaseUrl.endsWith(".json")) {
+					var oResponse = syncAjax({
+						url: sBaseUrl,
+						dataType: "json"
+					});
+					if (oResponse.success) {
+						mData = oResponse.data;
+					} else {
+						Log.warning("The mock data for all the entity types could not be found at \"" + sBaseUrl + "\"!");
+					}
+				} else {
+					var oEntitySets = {};
+					if (that._aEntitySetsNames && that._aEntitySetsNames.length > 0) {
+						var sEntitySet;
+						// In case _aEntitySetsNames is specified - get data only for the specified entity sets
+						for (var i = 0; i < that._aEntitySetsNames.length; i++) {
+							sEntitySet = that._aEntitySetsNames[i];
+							if (mEntitySets[sEntitySet]) {
+								oEntitySets[sEntitySet] = mEntitySets[sEntitySet];
+							}
+						}
+					} else {
+						// In case _aEntitySetsNames is not specified get data for all entity sets
+						oEntitySets = mEntitySets;
+					}
+					// load the mock data individually
+					jQuery.each(oEntitySets, function(sEntitySetName, oEntitySet) {
+						if (!mData[oEntitySet.type] || !mData[oEntitySet.name]) {
+							// first look for a file by
+							// the entity set name
+							var sEntitySetUrl = sBaseUrl + oEntitySet.name + ".json";
+							if (!fnLoadMockData(sEntitySetUrl, oEntitySet)) {
+								Log.warning("The mock data for entity set \"" + oEntitySet.name + "\" could not be found at \"" + sBaseUrl + "\"!");
+								var sEntityTypeUrl = sBaseUrl + oEntitySet.type + ".json";
+								if (!fnLoadMockData(sEntityTypeUrl, oEntitySet)) {
+									Log.warning("The mock data for entity type \"" + oEntitySet.type + "\" could not be found at \"" + sBaseUrl + "\"!");
+									// generate random
+									// mock data
+									if (that._bGenerateMissingMockData) {
+										var mEntitySet = {};
+										mEntitySet[oEntitySet.name] = oEntitySet;
+										mData[oEntitySet.type] = that._generateODataMockdataForEntitySet(mEntitySet, that._oMetadata)[oEntitySet.name];
+									}
+								}
+							}
+						}
+					});
+				}
+				// create the mock data for the entity sets
+				jQuery.each(mEntitySets, function(sEntitySetName, oEntitySet) {
+					// we clone because of unique metadata for
+					// individual entity sets otherwise the data of the
+					// entity types would be a
+					// reference and thus it overrides the metadata from
+					// the other entity type.
+					// this happens especially then when we have two
+					// entity sets for the same
+					// entity type => maybe we move the metdata
+					// generation to the response creation!
+					that._oMockdata[sEntitySetName] = [];
+					if (mData[oEntitySet.name]) {
+						jQuery.each(mData[oEntitySet.name], function(iIndex, oEntity) {
+							that._oMockdata[sEntitySetName].push(jQuery.extend(true, {}, oEntity));
+						});
+					} else if (mData[oEntitySet.type]) {
+						jQuery.each(mData[oEntitySet.type], function(iIndex, oEntity) {
+							that._oMockdata[sEntitySetName].push(jQuery.extend(true, {}, oEntity));
+						});
+					}
+				});
+				//enhance the mock data with metadata
+				jQuery.each(mEntitySets, function(sEntitySetName, oEntitySet) {
+					// enhance with OData metadata if exists
+					if (that._oMockdata[sEntitySetName].length > 0) {
+						that._enhanceWithMetadata(oEntitySet, that._oMockdata[sEntitySetName]);
+					}
+				});
+				// return the new mockdata
+				return this._oMockdata;
+			};
+
+			/**
+			 * enhances the mock data for the given entity set with the necessary metadata.
+			 * Important is at least to have a metadata entry incl. uri for the entry and
+			 * for the navigation property it is required to have a deferred infor in case
+			 * of not expanding it.
+			 * @param {object} oEntitySet the entity set info
+			 * @param {object} oMockData mock data for the entity set
+			 * @private
+			 */
+			MockServer.prototype._enhanceWithMetadata = function(oEntitySet, oMockData) {
+				if (oMockData) {
+					var that = this,
+						sRootUri = this._getRootUri(),
+						sEntitySetName = oEntitySet && oEntitySet.name;
+					jQuery.each(oMockData, function(iIndex, oEntry) {
+						oEntry.__metadata = oEntry.__metadata || {};
+						// add the metadata for the entry
+						oEntry.__metadata.id = sRootUri + sEntitySetName + "(" + that._createKeysString(oEntitySet, oEntry) + ")";
+						oEntry.__metadata.type = oEntitySet.schema + "." + oEntitySet.type;
+						oEntry.__metadata.uri = sRootUri + sEntitySetName + "(" + that._createKeysString(oEntitySet, oEntry) + ")";
+						// add the navigation properties
+						jQuery.each(oEntitySet.navprops, function(sKey, oNavProp) {
+							if (oEntry[sKey] && !isEmptyObject(oEntry[sKey]) && !oEntry[sKey]["__deferred"] ) {
+								that._oMockdata[oNavProp.to.entitySet] = that._oMockdata[oNavProp.to.entitySet]
+									.concat(oEntry[sKey]);
+							}
+							oEntry[sKey] = {
+								__deferred: {
+									uri: sRootUri + sEntitySetName + "(" + that._createKeysString(oEntitySet, oEntry) + ")/" + sKey
+								}
+							};
+						});
+					});
+				}
+			};
+
+			/**
+			 * verify entitytype keys type ((e.g. Int, String, SByte, Time, DateTimeOffset, Decimal, Double, Single, Boolean, DateTime)
+			 * @param {Object} oEntitySet the entity set for verification
+			 * @param {string[]} aRequestedKeys aRequestedKeys the requested Keys
+			 * @return boolean
+			 * @private
+			 */
+			MockServer.prototype._isRequestedKeysValid = function(oEntitySet, aRequestedKeys) {
+
+				// If the Entry has a single key Property the predicate may include only the value of the key Property
+				if (aRequestedKeys.length === 1) {
+					var aSplitEq = aRequestedKeys[0].split('=');
+					if (this._trim(aSplitEq[0]) !== oEntitySet.keys[0]) {
+						aRequestedKeys = [oEntitySet.keys[0] + "=" + aRequestedKeys[0]];
+					}
+				}
+
+				for (var i = 0; i < aRequestedKeys.length; i++) {
+					var sKey = this._trim(aRequestedKeys[i].substring(0, aRequestedKeys[i].indexOf('=')));
+					var sRequestValue = this._trim(aRequestedKeys[i].substring(aRequestedKeys[i].indexOf('=') + 1));
+					var sFirstChar = sRequestValue.charAt(0);
+					var sLastChar = sRequestValue.charAt(sRequestValue.length - 1);
+
+					if (oEntitySet.keysType[sKey] === "Edm.String") {
+						if (sFirstChar !== "'" || sLastChar !== "'") {
+							this._logAndThrowMockServerCustomError(400, this._oErrorMessages.MALFORMED_URI_LITERAL_SYNTAX_IN_KEY, sKey);
+						}
+					} else if (oEntitySet.keysType[sKey] === "Edm.DateTime") {
+						if (sFirstChar === "'" || sLastChar !== "'") {
+							this._logAndThrowMockServerCustomError(400, this._oErrorMessages.MALFORMED_URI_LITERAL_SYNTAX_IN_KEY, sKey);
+						}
+					} else if (oEntitySet.keysType[sKey] === "Edm.Guid") {
+						if (sFirstChar === "'" || sLastChar !== "'") {
+							this._logAndThrowMockServerCustomError(400, this._oErrorMessages.MALFORMED_URI_LITERAL_SYNTAX_IN_KEY, sKey);
+						}
+					} else if (oEntitySet.keysType[sKey] === "Edm.Binary") {
+						if (!(new RegExp("(binary|X)'[A-Fa-f0-9][A-Fa-f0-9]*'").test(sRequestValue))) {
+							this._logAndThrowMockServerCustomError(400, this._oErrorMessages.MALFORMED_URI_LITERAL_SYNTAX_IN_KEY, sKey);
+						}
+					} else {
+						if ((sFirstChar === "'" && sLastChar !== "'") || (sLastChar === "'" && sFirstChar !== "'")) {
+							this._logAndThrowMockServerCustomError(400, this._oErrorMessages.MALFORMED_URI_LITERAL_SYNTAX_IN_KEY, sKey);
+						}
+					}
+
+					var sKeys = oEntitySet.keys.join(",");
+					if (oEntitySet.keys.indexOf(sKey) === -1) {
+						this._logAndThrowMockServerCustomError(400, this._oErrorMessages.INVALID_KEY_NAME, sKeys);
+					}
+				}
+			};
+
+			/**
+			 * Takes a string '<poperty1>=<value1>, <poperty2>=<value2>,...' and creates an
+			 * object (hash map) out of it.
+			 *
+			 * @param {string} sKeys
+			 *            the string of property/value pairs
+			 * @param {object} oEntitySet
+			 *            object consisting of the parsed properties
+			 */
+			MockServer.prototype._parseKeys = function(sKeys, oEntitySet) {
+				var oResult = {}; // default is an empty hash map
+				var aProps = sKeys.split(",");
+				var sKeyName, sKeyValue, aPair;
+				for (var i = 0; i < aProps.length; i++) {
+					aPair = aProps[i].split("=");
+					if (aPair.length === 1 && oEntitySet.keys.length === 1) {
+						sKeyName = oEntitySet.keys[0];
+						sKeyValue = aPair[0];
+					} else {
+						if (aPair.length === 2) {
+							sKeyName = aPair[0];
+							sKeyValue = aPair[1];
+						}
+					}
+					oResult[sKeyName] = sKeyValue;
+					switch (oEntitySet.keysType[sKeyName]) {
+						case "Edm.String":
+							oResult[sKeyName] = oResult[sKeyName].replace(/^\'|\'$/g, "");
+							break;
+						case "Edm.Int16":
+						case "Edm.Int32":
+						case "Edm.Int64":
+						case "Edm.Decimal":
+						case "Edm.Byte":
+						case "Edm.Double":
+						case "Edm.Single":
+						case "Edm.SByte":
+							oResult[sKeyName] = parseFloat(oResult[sKeyName]);
+							break;
+						case "Edm.Guid":
+							oResult[sKeyName] = oResult[sKeyName].replace(/^guid\'|\'$/g, "");
+							break;
+						case "Edm.Boolean":
+						case "Edm.Binary":
+						case "Edm.DateTimeOffset":
+						default:
+							// no value update needed
+					}
+
+				}
+				return oResult;
+			};
+
+			/**
+			 * Generate mock value for a specific property type. String value will be
+			 * based on the property name and an index Integer / Decimal value will be
+			 * generated randomly Date / Time / DateTime value will also be generated
+			 * randomly
+			 *
+			 * @param {string}
+			 *            sKey the property name
+			 * @param {string}
+			 *            sType the property type without the Edm prefix
+			 * @param {map}
+			 *            mComplexTypes map of the complex types
+			 * @return {object} the mocked value
+			 * @private
+			 */
+			MockServer.prototype._generatePropertyValue = function(sKey, sType, mComplexTypes, iIndexParameter) {
+				var iIndex = iIndexParameter;
+				if (!iIndex) {
+					iIndex = Math.floor(this._getPseudoRandomNumber("String") * 10000) + 101;
+				}
+				switch (sType) {
+					case "String":
+						return sKey + " " + iIndex;
+					case "DateTime":
+						var date = new Date();
+						date.setFullYear(2000 + Math.floor(this._getPseudoRandomNumber("DateTime") * 20));
+						date.setDate(Math.floor(this._getPseudoRandomNumber("DateTime") * 30));
+						date.setMonth(Math.floor(this._getPseudoRandomNumber("DateTime") * 12));
+						date.setMilliseconds(0);
+						return "/Date(" + date.getTime() + ")/";
+					case "Int16":
+					case "Int32":
+					case "Int64":
+						return Math.floor(this._getPseudoRandomNumber("Int") * 10000);
+					case "Decimal":
+						return Math.floor(this._getPseudoRandomNumber("Decimal") * 1000000) / 100;
+					case "Boolean":
+						return this._getPseudoRandomNumber("Boolean") < 0.5;
+					case "Byte":
+						return Math.floor(this._getPseudoRandomNumber("Byte") * 10);
+					case "Double":
+						return this._getPseudoRandomNumber("Double") * 10;
+					case "Single":
+						return this._getPseudoRandomNumber("Single") * 1000000000;
+					case "SByte":
+						return Math.floor(this._getPseudoRandomNumber("SByte") * 10);
+					case "Time":
+						// ODataModel expects ISO8601 duration format
+						return "PT" + Math.floor(this._getPseudoRandomNumber("Time") * 23) + "H" + Math.floor(this._getPseudoRandomNumber("Time") * 59) + "M" + Math.floor(this._getPseudoRandomNumber("Time") * 59) + "S";
+					case "Guid":
+						return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+							var r = this._getPseudoRandomNumber("Guid") * 16 | 0,
+								v = c === 'x' ? r : (r & 0x3 | 0x8);
+							return v.toString(16);
+						}.bind(this));
+					case "Binary":
+						var nMask = Math.floor(-2147483648 + this._getPseudoRandomNumber("Binary") * 4294967295),
+							sMask = "";
+						/*eslint-disable */
+						for (var nFlag = 0, nShifted = nMask; nFlag < 32; nFlag++, sMask += String(nShifted >>> 31), nShifted <<= 1)
+						;
+						/*eslint-enable */
+						return sMask;
+					case "DateTimeOffset":
+						var date = new Date();
+						date.setFullYear(2000 + Math.floor(this._getPseudoRandomNumber("DateTimeOffset") * 20));
+						date.setDate(Math.floor(this._getPseudoRandomNumber("DateTimeOffset") * 30));
+						date.setMonth(Math.floor(this._getPseudoRandomNumber("DateTimeOffset") * 12));
+						date.setMilliseconds(0);
+						return "/Date(" + date.getTime() + "+0000)/";
+					default:
+						return this._generateDataFromEntity(mComplexTypes[sType], iIndex, mComplexTypes);
+				}
+			};
+
+			/**
+			 * This method returns true if the value is a falsey value
+			 * (Falsey: Something which evaluates to FALSE.)
+			 * @param {vKeyValue}
+			 *            vKeyValue the key value
+			 * @param {sKey}
+			 *            sKey is the key name
+			 * @param {sKeyType}
+			 *            sKeyType the edm type of the property
+			 */
+			MockServer.prototype._isFalseyValue = function(vKeyValue, sKey, sKeyType) {
+				switch (sKeyType) {
+					case "Edm.String":
+						return vKeyValue === "";
+					case "Edm.Boolean":
+						return vKeyValue === false;
+					case "Edm.Int16":
+					case "Edm.Int32":
+					case "Edm.Int64":
+					case "Edm.Decimal":
+					case "Edm.Byte":
+					case "Edm.Double":
+					case "Edm.Single":
+					case "Edm.SByte":
+						return vKeyValue === 0 || isNaN(vKeyValue);
+					default:
+						return false;
+				}
+			};
+
+			/**
+			 * This method takes over the already existing key values from oKeys and
+			 * adds values for all remaining keys specified by oEntitySet.
+			 * The result is merged into oEntity.
+			 *
+			 * @param {object}
+			 *            oEntitySet description of the entity set, conatins the full list of key fields
+			 * @param {object}
+			 *            oKeys contains already defined key values
+			 * @param {oEntity}
+			 *            oEntity the result object, where the key property/value pairs merged into
+			 */
+			MockServer.prototype._completeKey = function(oEntitySet, oKeys, oEntity) {
+				if (oEntity) {
+					for (var i = 0; i < oEntitySet.keys.length; i++) {
+						var sKey = oEntitySet.keys[i];
+						// if the key has value, just use it
+						if (oKeys[sKey] !== undefined && oKeys[sKey] !== null) {
+							if (!oEntity[sKey]) {
+								// take over the specified key value
+								switch (oEntitySet.keysType[sKey]) {
+									case "Edm.DateTime":
+										oEntity[sKey] = this._getJsonDate(oKeys[sKey]);
+										break;
+									case "Edm.Guid":
+										oEntity[sKey] = oKeys[sKey].replace(/^guid\'|\'$/g, "");
+										break;
+									default:
+										oEntity[sKey] = oKeys[sKey];
+								}
+							}
+						} else {
+							//the key has no value, generate value
+							if (!oEntity[sKey]) {
+								// take over the specified key value
+								oEntity[sKey] = this._generatePropertyValue(sKey, oEntitySet.keysType[sKey]
+									.substring(oEntitySet.keysType[sKey].lastIndexOf('.') + 1));
+							}
+						}
+					}
+				}
+			};
+
+			/**
+			 * Generate some mock data for a specific entityType. String value will be
+			 * based on the property name and an index Integer / Decimal value will be
+			 * generated randomly Date / Time / DateTime value will also be generated
+			 * randomly
+			 *
+			 * @param {object}
+			 *            oEntityType the entity type used to generate the data
+			 * @param {int}
+			 *            iIndex index of this particular object in the parent
+			 *            collection
+			 * @param {map}
+			 *            mComplexTypes map of the complex types
+			 * @return {object} the mocked entity
+			 * @private
+			 */
+			MockServer.prototype._generateDataFromEntity = function(oEntityType, iIndex, mComplexTypes) {
+				var oEntity = {};
+				if (!oEntityType) {
+					return oEntity;
+				}
+				for (var i = 0; i < oEntityType.properties.length; i++) {
+					var oProperty = oEntityType.properties[i];
+					oEntity[oProperty.name] = this._generatePropertyValue(oProperty.name, oProperty.type, mComplexTypes, iIndex);
+				}
+				return oEntity;
+
+			};
+
+			/**
+			 * Generate some mock data for a specific entityset.
+			 * @param {object} oEntitySet the entity set for which we want to generate the data
+			 * @param {map} mEntityTypes map of the entity types
+			 * @param {map} mComplexTypes map of the complex types
+			 * @return {array} the array of mocked data
+			 * @private
+			 */
+			MockServer.prototype._generateDataFromEntitySet = function(oEntitySet, mEntityTypes, mComplexTypes) {
+				var oEntityType = mEntityTypes[oEntitySet.type];
+				var aMockedEntries = [];
+				for (var i = 0; i < 100; i++) {
+					aMockedEntries.push(this._generateDataFromEntity(oEntityType, i + 1, mComplexTypes));
+				}
+				return aMockedEntries;
+			};
+
+			/**
+			 * Generate some mock data based on the metadata specified for the odata service.
+			 * @param {map} mEntitySets map of the entity sets
+			 * @param {object} oMetadata the complete metadata for the service
+			 * @private
+			 */
+			MockServer.prototype._generateMockdata = function(mEntitySets, oMetadata) {
+				var that = this;
+				var oMockData = {};
+				var sRootUri = this._getRootUri();
+				jQuery.each(mEntitySets, function(sEntitySetName, oEntitySet) {
+					var mEntitySet = {};
+					mEntitySet[oEntitySet.name] = oEntitySet;
+					oMockData[sEntitySetName] = that._generateODataMockdataForEntitySet(mEntitySet, oMetadata)[sEntitySetName];
+				});
+				// changing the values if there is a referential constraint
+				jQuery.each(mEntitySets, function(sEntitySetName, oEntitySet) {
+					for (var navprop in oEntitySet.navprops) {
+						var oNavProp = oEntitySet.navprops[navprop];
+						var iPropRefLength = oNavProp.from.propRef.length;
+						for (var j = 0; j < iPropRefLength; j++) {
+							for (var i = 0; i < oMockData[sEntitySetName].length; i++) {
+								var oEntity = oMockData[sEntitySetName][i];
+								// copy the value from the principle to the dependant;
+								oMockData[oNavProp.to.entitySet][i][oNavProp.to.propRef[j]] = oEntity[oNavProp.from.propRef[j]];
+							}
+						}
+					}
+					jQuery.each(oMockData[sEntitySetName], function(iIndex, oEntry) {
+						// add the metadata for the entry
+						oEntry.__metadata = {
+							uri: sRootUri + sEntitySetName + "(" + that._createKeysString(oEntitySet, oEntry) + ")",
+							type: oEntitySet.schema + "." + oEntitySet.type
+						};
+						// add the navigation properties
+						jQuery.each(oEntitySet.navprops, function(sKey, oNavProp) {
+							oEntry[sKey] = {
+								__deferred: {
+									uri: sRootUri + sEntitySetName + "(" + that._createKeysString(oEntitySet, oEntry) + ")/" + sKey
+								}
+							};
+						});
+					});
+				});
+				this._oMockdata = oMockData;
+			};
+
+			/**
+			 * Generate some mock data based on the metadata specified for the odata service.
+			 * @param {map} mEntitySets map of the entity sets
+			 * @param {object} oMetadata the complete metadata for the service
+			 * @private
+			 */
+			MockServer.prototype._generateODataMockdataForEntitySet = function(mEntitySets, oMetadata) {
+				// load the entity sets (map the entity type data to the entity set)
+				var that = this,
+					// sRootUri = this._getRootUri(),
+					oMockData = {};
+
+				// here we need to analyse the EDMX and identify the entity types and complex types
+				var mEntityTypes = this._findEntityTypes(oMetadata);
+				var mComplexTypes = this._findComplexTypes(oMetadata);
+
+				jQuery.each(mEntitySets, function(sEntitySetName, oEntitySet) {
+					oMockData[sEntitySetName] = that._generateDataFromEntitySet(oEntitySet, mEntityTypes, mComplexTypes);
+				});
+				return oMockData;
+			};
+
+			// helper function to resolve a navigation and return the matching entities
+			MockServer.prototype._resolveNavigation = function(sEntitySetName, oFromRecord, sNavProp) {
+				var oEntitySet = this._mEntitySets[sEntitySetName];
+				var oNavProp = oEntitySet.navprops[sNavProp];
+				if (!oNavProp) {
+					this._logAndThrowMockServerCustomError(404, this._oErrorMessages.RESOURCE_NOT_FOUND);
+				}
+
+				var aEntries = [];
+				var iPropRefLength = oNavProp.from.propRef.length;
+				//if there is no ref.constraint, the data is return according to the multiplicity
+				if (iPropRefLength === 0) {
+					if (oNavProp.to.multiplicity === "*") {
+						return this._oMockdata[oNavProp.to.entitySet];
+					} else {
+						aEntries.push(this._oMockdata[oNavProp.to.entitySet][0]);
+						return aEntries;
+					}
+				}
+				// maybe we can do symbolic links with a function to handle the navigation properties
+				// instead of copying the data into the nested structures
+				jQuery.each(this._oMockdata[oNavProp.to.entitySet], function(iIndex, oToRecord) {
+
+					// check for property ref being identical
+					var bEquals = true;
+					for (var i = 0; i < iPropRefLength; i++) {
+						if (oFromRecord[oNavProp.from.propRef[i]] !== oToRecord[oNavProp.to.propRef[i]]) {
+							bEquals = false;
+							break;
+						}
+					}
+					// if identical we add the to record
+					if (bEquals) {
+						aEntries.push(oToRecord);
+					}
+
+				});
+				return aEntries;
+			};
+
+			/**
+			 * Simulates an existing OData service by sepcifying the metadata URL and the base URL for the mockdata. The server
+			 * configures the request handlers depending on the service metadata. The mockdata needs to be stored individually for
+			 * each entity type in a separate JSON file. The name of the JSON file needs to match the name of the entity type. If
+			 * no base url for the mockdata is specified then the mockdata are generated from the metadata
+			 *
+			 * @param {string} sMetadataString Either the URL to the service metadata document or the metadata document as xml string itself (starting with "<?xml")
+			 * @param {string|object} [vMockdataSettings] (optional) base url which contains the path to the mockdata, or an object which contains the following properties: sMockdataBaseUrl, bGenerateMissingMockData, aEntitySetsNames. See below for descriptions of these parameters. Ommit this parameter to produce random mock data based on the service metadata.
+			 * @param {string} [vMockdataSettings.sMockdataBaseUrl] base url which contains the mockdata as single .json files or the .json file containing the complete mock data
+			 * @param {boolean} [vMockdataSettings.bGenerateMissingMockData=false] if the MockServer should generate mock data for missing .json files that are not found in sMockdataBaseUrl
+			 * @param {array} [vMockdataSettings.aEntitySetsNames=[]] list of entity set names to fetch. If the list is empty or <code>undefined</code>, all entity sets will be retrieved. This parameter should be used to improve performance in case there are a lot of entity sets but only a few are needed to be fetched.
+			 *
+			 * @since 1.13.2
+			 * @public
+			 */
+			MockServer.prototype.simulate = function(sMetadataString, vMockdataSettings) {
+				var that = this;
+				this._sMetadataString = sMetadataString;
+				if (!vMockdataSettings || typeof vMockdataSettings === "string") {
+					this._sMockdataBaseUrl = vMockdataSettings;
+				} else {
+					this._sMockdataBaseUrl = vMockdataSettings.sMockdataBaseUrl;
+					this._bGenerateMissingMockData = vMockdataSettings.bGenerateMissingMockData;
+					this._aEntitySetsNames = vMockdataSettings.aEntitySetsNames;
+				}
+
+				// load the metadata
+				var oMetadata = this._loadMetadata(this._sMetadataString);
+				if (!oMetadata) {
+					return;
+				}
+				// create mockserver annotations handler only when metadata exists
+				if (this._sMetadata) {
+					var oAnnotations = MockServerAnnotationsHandler.parse(this._oMetadata, this._sMetadata);
+					DraftEnabledMockServer.handleDraft(oAnnotations, this);
+				}
+				this._resetPseudoRandomNumberGenerator();
+				this._refreshData();
+
+				// helper to handle xsrf token
+				var fnHandleXsrfTokenHeader = function(oXhr, mHeaders) {
+					if (oXhr.requestHeaders["x-csrf-token"] === "Fetch" || oXhr.requestHeaders["X-CSRF-Token"] === "Fetch") {
+						mHeaders["X-CSRF-Token"] = "42424242424242424242424242424242";
+					}
+				};
+
+				// helper to find the entity set entry for a given entity set name and the keys of the entry
+				var fnGetEntitySetEntry = function(sEntitySetName, sKeys) {
+					sKeys = decodeURIComponent(sKeys);
+					var oFoundEntry;
+					var oEntitySet = that._mEntitySets[sEntitySetName];
+					var aKeys = oEntitySet.keys;
+					// split keys
+					var aRequestedKeys = sKeys.split(',');
+
+					// check number of keys to be equal to the entity keys and validates keys type for quotations
+					if (aRequestedKeys.length !== aKeys.length) {
+						that._logAndThrowMockServerCustomError(400, that._oErrorMessages.INVALID_KEY_PREDICATE_QUANTITY);
+					}
+					that._isRequestedKeysValid(oEntitySet, aRequestedKeys);
+					if (aRequestedKeys.length === 1 && !aRequestedKeys[0].split('=')[1]) {
+						aRequestedKeys = [aKeys[0] + "=" + aRequestedKeys[0]];
+					}
+					jQuery.each(that._oMockdata[sEntitySetName], function(iIndex, oEntry) {
+						// check each key for existence and value
+						for (var i = 0; i < aRequestedKeys.length; i++) {
+							var aKeyVal = aRequestedKeys[i].split('=');
+							var sKey = that._trim(aKeyVal[0]);
+							//key doesn't match, continue to next entry
+							if (!aKeys || aKeys.indexOf(sKey) === -1) {
+								return true; // = continue
+							}
+
+							var sNewValue = that._trim(aKeyVal[1]);
+							var sOrigiValue = oEntry[sKey];
+
+							switch (oEntitySet.keysType[sKey]) {
+								case "Edm.String":
+									sNewValue = sNewValue.replace(/^\'|\'$/g, '');
+									break;
+								case "Edm.Time":
+								case "Edm.DateTime":
+									sOrigiValue = that._getDateTime(sOrigiValue);
+									break;
+								case "Edm.Int16":
+								case "Edm.Int32":
+								//case "Edm.Int64": In ODataModel this type is represented as a string. (https://sdk.openui5.org/api/sap.ui.model.odata.type.Int64)
+								// eslint-ignore-next-line no-fallthrough
+								case "Edm.Decimal":
+								case "Edm.Byte":
+								case "Edm.Double":
+								case "Edm.Single":
+								case "Edm.SByte":
+									if (!that._isValidNumber(sNewValue)) {
+										//TODO check better handling
+										return false; // = break
+									}
+									sNewValue = parseFloat(sNewValue);
+									break;
+								case "Edm.Guid":
+									sNewValue = sNewValue.replace(/^guid\'|\'$/g, '');
+									break;
+								case "Edm.Boolean":
+									if (["true", "false"].indexOf(sNewValue) === -1) {
+										that._logAndThrowMockServerCustomError(400, that._oErrorMessages.INVALID_KEY_TYPE, sKey);
+									}
+									sNewValue = sNewValue === "true";
+									break;
+								case "Edm.Binary":
+								case "Edm.DateTimeOffset":
+								default:
+									// no value update needed
+							}
+
+							//value doesn't match, continue to next entry
+							if (sOrigiValue !== sNewValue) {
+								return true; // = continue
+							}
+						}
+						oFoundEntry = {
+							index: iIndex,
+							entry: oEntry
+						};
+						return false; // = break
+					});
+					return oFoundEntry;
+				};
+
+				// helper to resolve an entity set for insert/delete/update operations
+				var fnResolveTargetEntityName = function(oEntitySet, sKeys, sUrlParams) {
+					// Set the default entity name
+					var sSetName = oEntitySet.name;
+					// If there are sUrlParams try to find a navigation property
+					var navProp;
+					if (sUrlParams) {
+						navProp = oEntitySet.navprops[sUrlParams];
+					}
+					if (navProp) {
+						// instead of the default entity name use the endpoints entity
+						// name
+						sSetName = navProp.to.entitySet;
+					}
+					return sSetName;
+				};
+
+				//helper to handle url param value with '&'
+				var fnHandleAmpersandUrlParam = function(aUrlParams) {
+
+					var aUrlParamsNormalized = [];
+
+					var fnStartsWith = function(sValue) {
+						var apostLocation = sValue.indexOf("'");
+						var doubleQuotesLocation = sValue.indexOf("\"");
+						if (apostLocation === -1 && doubleQuotesLocation === -1) {
+							return null;
+						} else {
+							if (apostLocation > -1 && doubleQuotesLocation === -1) {
+								return "appost";
+							}
+							if (doubleQuotesLocation > -1 && apostLocation === -1) {
+								return "doublequotes";
+							}
+							if (apostLocation > -1 && doubleQuotesLocation > -1 && apostLocation < doubleQuotesLocation) {
+								return "appost";
+							}
+							if (apostLocation > -1 && doubleQuotesLocation > -1 && doubleQuotesLocation < apostLocation) {
+								return "doublequotes";
+							}
+						}
+
+					};
+
+					var fnAmpersandHandler = function(aParams, aParamsNorm, index, apostType) {
+						var stringAmpersand = aParams[index];
+						var j = index + 1;
+						while (j < aParams.length && aParams[j].indexOf(apostType) === -1) {
+							stringAmpersand = stringAmpersand + "&" + aParams[j];
+							j++;
+						}
+
+						stringAmpersand = stringAmpersand + "&" + aParams[j];
+
+						aParamsNorm.push(stringAmpersand);
+						index = j;
+						return index;
+					};
+
+					for (var i = 0; i < aUrlParams.length; i++) {
+						// there is no ' and no " in param values
+						if (!fnStartsWith(aUrlParams[i])) {
+							aUrlParamsNormalized.push(aUrlParams[i]);
+						}
+						// there is ' in param value
+						if (fnStartsWith(aUrlParams[i]) === "appost") {
+							var firstLocation = aUrlParams[i].indexOf("'");
+							if (aUrlParams[i].indexOf("'", firstLocation + 1) === -1) {
+								i = fnAmpersandHandler(aUrlParams, aUrlParamsNormalized, i, "'");
+							} else {
+								aUrlParamsNormalized.push(aUrlParams[i]);
+							}
+						}
+						// there is " in param value
+						if (fnStartsWith(aUrlParams[i]) === "doublequotes") {
+							var firstQuotesLocation = aUrlParams[i].indexOf("\"");
+							if (aUrlParams[i].indexOf("\"", firstQuotesLocation + 1) === -1) {
+								i = fnAmpersandHandler(aUrlParams, aUrlParamsNormalized, i, "\"");
+							} else {
+								aUrlParamsNormalized.push(aUrlParams[i]);
+							}
+						}
+					}
+
+					return aUrlParamsNormalized;
+				};
+
+				var initNewEntity = function(oXhr, sTargetEntityName, sKeys, sUrlParams) {
+					sKeys = sKeys ? decodeURIComponent(sKeys) : sKeys;
+					var oEntity = JSON.parse(oXhr.requestBody);
+					if (oEntity) {
+						var oKeys = {};
+						if (sKeys) {
+							oKeys = that._parseKeys(sKeys, that._mEntitySets[sTargetEntityName]);
+						}
+						that._completeKey(that._mEntitySets[sTargetEntityName], oKeys, oEntity);
+						that._enhanceWithMetadata(that._mEntitySets[sTargetEntityName], [oEntity]);
+						return oEntity;
+					}
+					return null;
+				};
+
+				// create the request handlers
+				var aRequests = [];
+
+				// add the $metadata request
+				aRequests.push({
+					method: "GET",
+					path: new RegExp("\\$metadata([?#].*)?"),
+					response: function(oXhr) {
+						Log.debug("MockServer: incoming request for url: " + oXhr.url);
+						var mHeaders = {
+							"Content-Type": "application/xml;charset=utf-8"
+						};
+						fnHandleXsrfTokenHeader(oXhr, mHeaders);
+
+						oXhr.respond(200, mHeaders, that._sMetadata);
+						Log.debug("MockServer: response sent with: 200, " + that._sMetadata);
+						return true;
+					}
+				});
+
+				// add the service request (HEAD request for CSRF Token)
+				aRequests.push({
+					method: "HEAD",
+					path: new RegExp("$"),
+					response: function(oXhr) {
+						Log.debug("MockServer: incoming request for url: " + oXhr.url);
+						var mHeaders = {
+							"Content-Type": "application/json;charset=utf-8"
+						};
+						fnHandleXsrfTokenHeader(oXhr, mHeaders);
+						oXhr.respond(200, mHeaders);
+						Log.debug("MockServer: response sent with: 200");
+						return true;
+					}
+				});
+
+				// add the service request
+				aRequests.push({
+					method: "GET",
+					path: new RegExp("$"),
+					response: function(oXhr) {
+						Log.debug("MockServer: incoming request for url: " + oXhr.url);
+						var mHeaders = {
+							"Content-Type": "application/json;charset=utf-8"
+						};
+						fnHandleXsrfTokenHeader(oXhr, mHeaders);
+						var aEntitysets = [];
+						jQuery.each(that._mEntitySets, function(sEntitySetName, oEntitySet) {
+							aEntitysets.push(sEntitySetName);
+						});
+						var oResponse = {
+							EntitySets: aEntitysets
+						};
+						oXhr.respond(200, mHeaders, JSON.stringify({
+							d: oResponse
+						}));
+						Log.debug("MockServer: response sent with: 200, " + JSON.stringify({
+							d: oResponse
+						}));
+						return true;
+					}
+				});
+
+				// batch processing
+				aRequests
+					.push({
+						method: "POST",
+						path: new RegExp("\\$batch([?#].*)?"),
+						response: function(oXhr) {
+							Log.debug("MockServer: incoming request for url: " + oXhr.url);
+							var fnResovleStatus = function(oResponse) {
+								switch (oResponse.statusCode) {
+									case 200:
+										return "200 OK";
+									case 201:
+										return "201 Created";
+									case 204:
+										return "204 No Content";
+									case 400:
+										return "400 Bad Request";
+									case 401:
+										return "401 Unauthorized";
+									case 403:
+										return "403 Forbidden";
+									case 404:
+										return "404 Not Found";
+									case 405:
+										return "405 Method Not Allowed";
+									case 409:
+										return "409 Conflict";
+									case 412:
+										return "412 Precondition Failed";
+									case 415:
+										return "415 Unsupported Media Type";
+									case 500:
+										return "500 Internal Server Error";
+									case 501:
+										return "501 Not Implemented";
+									case 503:
+										return "503 Service Unavailable";
+									default:
+										return oResponse.statusCode + " " + oResponse.status;
+								}
+							};
+
+							var fnBuildResponseString = function(oResponse, sContentType) {
+
+								// create the response data string => convert to JSON if possible or use the content directly
+								var sResponseData;
+								if (oResponse.success) {
+									sResponseData = JSON.stringify(oResponse.data) || "";
+								} else {
+									sResponseData = oResponse.errorResponse;
+								}
+
+								// default the content type to application/json
+								sContentType = sContentType || "application/json";
+
+								// by default the dataserviceversion header will be attached to the response headers
+								if (oResponse.responseHeaders) {
+									// if the response contains the headers we include them into the
+									// response string which will be added to the BATCH
+									return "HTTP/1.1 " + fnResovleStatus(oResponse) + "\r\n" + oResponse.responseHeaders +
+										"dataserviceversion: 2.0\r\n\r\n" + sResponseData + "\r\n";
+								} else {
+									// if a content type is defined we override the incoming response content type
+									return "HTTP/1.1 " + fnResovleStatus(oResponse) + "\r\nContent-Type: " + sContentType + "\r\nContent-Length: " +
+										sResponseData.length + "\r\ndataserviceversion: 2.0\r\n\r\n" + sResponseData + "\r\n";
+								}
+
+							};
+
+							var fnCUDRequest = function(sUrl, sData, sType,aChangesetResponses, mHeaders) {
+								var oResponse;
+								var fnAjaxSuccess = function(data, textStatus, xhr){
+									oResponse = {
+										success: true,
+										data: data,
+										status: textStatus,
+										statusCode: xhr && xhr.status,
+										responseHeaders: xhr && xhr.getAllResponseHeaders()
+									};
+								};
+								var fnAjaxError = function(xhr, textStatus, error) {
+									oResponse = {
+										success: false,
+										data: undefined,
+										status: textStatus,
+										error: error,
+										statusCode: xhr.status,
+										errorResponse:  xhr.responseText,
+										responseHeaders: xhr && xhr.getAllResponseHeaders()
+									};
+								};
+								jQuery.ajax({
+									type: sType,
+									async: false,
+									url: sUrl,
+									headers: mHeaders,
+									data: sData,
+									dataType: "json",
+									success: fnAjaxSuccess,
+									error: fnAjaxError
+								});
+								if (oResponse.statusCode === 400 || oResponse.statusCode === 404) {
+									// the response of the failing request needs to be propagated
+									// but the changeset should not be further processed => ERROR!
+									var sError = fnBuildResponseString(oResponse);
+									throw new Error(sError);
+								}
+								aChangesetResponses.push(fnBuildResponseString(oResponse));
+							};
+
+							var fnRRequest = function(sUrl, aBatchBodyResponse) {
+								var oResponse;
+								var sResponseString;
+								var fnAjaxSuccess = function(data, textStatus, xhr){
+									oResponse = {
+										success: true,
+										data: data,
+										status: textStatus,
+										statusCode: xhr && xhr.status,
+										responseHeaders: xhr && xhr.getAllResponseHeaders()
+									};
+								};
+								var fnAjaxError = function(xhr, textStatus, error) {
+									oResponse = {
+										success: false,
+										data: undefined,
+										status: textStatus,
+										error: error,
+										statusCode: xhr.status,
+										errorResponse:  xhr.responseText,
+										responseHeaders: xhr && xhr.getAllResponseHeaders()
+									};
+								};
+								jQuery.ajax({
+									async: false,
+									url: sUrl,
+									dataType: "json",
+									success: fnAjaxSuccess,
+									error: fnAjaxError
+								});
+								var sResponseString;
+								if (sUrl.indexOf('$count') !== -1) {
+									sResponseString = fnBuildResponseString(oResponse, "text/plain");
+								} else {
+									sResponseString = fnBuildResponseString(oResponse);
+								}
+								aBatchBodyResponse.push("\r\nContent-Type: application/http\r\n" + "Content-Length: " + sResponseString.length + "\r\n" +
+									"content-transfer-encoding: binary\r\n\r\n" + sResponseString);
+							};
+
+							var fnParseHeaders = function (sChangesetRequest) {
+								var mHeaders = {};
+								sChangesetRequest.split("HTTP/1.1")[1].split("{")[0].split("\n").forEach(function (headerLine) {
+									if (headerLine.indexOf(":") !== -1) {
+										var headerPair = headerLine.split(":");
+										mHeaders[headerPair[0].trim()] = headerPair[1].trim();
+									}
+								});
+								delete mHeaders["Content-Length"];
+								return mHeaders;
+							};
+
+							// START BATCH HANDLING
+							var sRequestBody = oXhr.requestBody;
+							var oBoundaryRegex = new RegExp("--batch_[a-z0-9-]*");
+							var sBoundary = oBoundaryRegex.exec(sRequestBody)[0];
+							// boundary is defined in request header
+							if (sBoundary) {
+								var aBatchBodyResponse = [];
+								//split requests by boundary
+								var aBatchRequests = sRequestBody.split(sBoundary);
+								var sServiceURL = oXhr.url.split("$")[0];
+
+								var rPut = new RegExp("PUT (.*) HTTP");
+								var rMerge = new RegExp("MERGE (.*) HTTP"); //TODO temporary solution to handle merge as put
+								var rPost = new RegExp("POST (.*) HTTP");
+								var rDelete = new RegExp("DELETE (.*) HTTP");
+								var rGet = new RegExp("GET (.*) HTTP");
+
+								for (var i = 1; i < aBatchRequests.length - 1; i++) {
+									var sBatchRequest = aBatchRequests[i];
+									//GET Handling
+									if (rGet.test(sBatchRequest) && sBatchRequest.indexOf("multipart/mixed") === -1) {
+										//In case of POST, PUT or DELETE not in ChangeSet
+										if (rPut.test(sBatchRequest) || rPost.test(sBatchRequest) || rDelete.test(sBatchRequest)) {
+											oXhr.respond(400, null, "The Data Services Request could not be understood due to malformed syntax");
+											Log.debug("MockServer: response sent with: 400");
+											return true;
+										}
+										fnRRequest(sServiceURL + rGet.exec(sBatchRequest)[1], aBatchBodyResponse);
+										} else {
+										//CUD handling within changesets
+										// copying the mock data to support rollback
+										var oCopiedMockdata = jQuery.extend(true, {}, that._oMockdata);
+										var aChangesetResponses = [];
+
+										// extract changeset
+										var sChangesetBoundary = sBatchRequest.substring(
+											sBatchRequest.indexOf("boundary=") + 9, sBatchRequest.indexOf("\r\n\r\n"));
+										var aChangesetRequests = sBatchRequest.split("--" + sChangesetBoundary);
+
+										try {
+											for (var j = 1; j < aChangesetRequests.length - 1; j++) {
+												var sChangesetRequest = aChangesetRequests[j];
+												//Check if GET exists in ChangeSet - Return 400
+												var sData;
+												if (rGet.test(sChangesetRequest)) {
+													// rollback
+													that._oMockdata = oCopiedMockdata;
+													oXhr
+														.respond(400, null,
+															"The Data Services Request could not be understood due to malformed syntax");
+													Log.debug("MockServer: response sent with: 400");
+													return;
+												} else {
+													var sData = sChangesetRequest.substring(sChangesetRequest.indexOf("{"),
+															sChangesetRequest.lastIndexOf("}") + 1),
+														mHeaders = fnParseHeaders(sChangesetRequest),
+														sRelativeUrl,
+														sVerb;
+													if (rPut.test(sChangesetRequest)) {
+														sVerb = "PUT";
+														sRelativeUrl = rPut.exec(sChangesetRequest)[1];
+													} else if (rMerge.test(sChangesetRequest)) {
+														sVerb = "MERGE";
+														sRelativeUrl = rMerge.exec(sChangesetRequest)[1];
+													} else if (rPost.test(sChangesetRequest)) {
+														// POST
+														sVerb = "POST";
+														sRelativeUrl = rPost.exec(sChangesetRequest)[1];
+													} else if (rDelete.test(sChangesetRequest)) {
+														// DELETE
+														sVerb = "DELETE";
+														sData = undefined;
+														sRelativeUrl = rDelete.exec(sChangesetRequest)[1];
+													}
+													fnCUDRequest(sServiceURL + sRelativeUrl, sData, sVerb, aChangesetResponses, mHeaders);
+												}
+											} //END ChangeSets FOR
+											var sChangesetRespondData = "\r\nContent-Type: multipart/mixed; boundary=ejjeeffe1\r\n\r\n--ejjeeffe1";
+											for (var k = 0; k < aChangesetResponses.length; k++) {
+												sChangesetRespondData += "\r\nContent-Type: application/http\r\n"
+													+ "Content-Length: "
+													+ aChangesetResponses[k].length
+													+ "\r\n"
+													+ "content-transfer-encoding: binary\r\n\r\n"
+													+ aChangesetResponses[k]
+													+ "--ejjeeffe1";
+											}
+											sChangesetRespondData += "--\r\n";
+											aBatchBodyResponse.push(sChangesetRespondData);
+										} catch (oError) {
+											that._oMockdata = oCopiedMockdata;
+											var sError = "\r\nContent-Type: application/http\r\n" + "Content-Length: " + oError.message.length + "\r\n" +
+												"content-transfer-encoding: binary\r\n\r\n" + oError.message;
+											aBatchBodyResponse.push(sError);
+										}
+									} //END ChangeSets handling
+								} //END Main FOR
+								//CREATE BATCH RESPONSE
+								var sRespondData = "--ejjeeffe0";
+								for (var m = 0; m < aBatchBodyResponse.length; m++) {
+									sRespondData += aBatchBodyResponse[m] + "--ejjeeffe0";
+								}
+								sRespondData += "--";
+								var mHeaders = {
+									'Content-Type': "multipart/mixed; boundary=ejjeeffe0"
+								};
+								fnHandleXsrfTokenHeader(oXhr, mHeaders);
+								oXhr.respond(202, mHeaders, sRespondData);
+								Log.debug("MockServer: response sent with: 202, " + sRespondData);
+								//no boundary is defined
+							} else {
+								oXhr.respond(202);
+							}
+							return true;
+						}
+					});
+
+				// add entity sets
+				jQuery
+					.each(
+						this._mEntitySets,
+						function(sEntitySetName, oEntitySet) {
+							// support $count requests on entity set
+							aRequests.push({
+								method: "GET",
+								path: new RegExp("(" + sEntitySetName + ")/\\$count/?(.*)?"),
+								response: function(oXhr, sEntitySetName, sUrlParams) {
+									Log.debug("MockServer: incoming request for url: " + oXhr.url);
+									//trigger the before callback funtion
+									that.fireEvent(MockServer.HTTPMETHOD.GET + sEntitySetName + ":before", {
+										oXhr: oXhr,
+										sUrlParams: sUrlParams
+									});
+									that.fireEvent(MockServer.HTTPMETHOD.GET + ":before", {
+										oXhr: oXhr,
+										sUrlParams: sUrlParams
+									});
+									var mHeaders = {
+										"Content-Type": "text/plain;charset=utf-8"
+									};
+									fnHandleXsrfTokenHeader(oXhr, mHeaders);
+									try {
+										var aData = that._oMockdata[sEntitySetName];
+										if (aData) {
+											// using extend to copy the data to a new array
+											var oFilteredData = {
+												results: jQuery.extend(true, [], aData)
+											};
+											if (sUrlParams) {
+												// sUrlParams should not contains ?, but only & in its stead
+												var aUrlParams = decodeURIComponent(sUrlParams).replace("?", "&").split("&");
+												aUrlParams = fnHandleAmpersandUrlParam(aUrlParams);
+												if (aUrlParams.length > 1) {
+													aUrlParams = that._orderQueryOptions(aUrlParams);
+												}
+												jQuery.each(aUrlParams, function(iIndex, sQuery) {
+													that._applyQueryOnCollection(oFilteredData, sQuery,
+														sEntitySetName, aUrlParams);
+												});
+											}
+
+											//trigger the after callback funtion
+											that.fireEvent(MockServer.HTTPMETHOD.GET + sEntitySetName + ":after", {
+												oXhr: oXhr,
+												oFilteredData: oFilteredData
+											});
+											that.fireEvent(MockServer.HTTPMETHOD.GET + ":after", {
+												oXhr: oXhr,
+												oFilteredData: oFilteredData
+											});
+
+											oXhr.respond(200, mHeaders, "" + oFilteredData.results.length);
+
+											Log.debug("MockServer: response sent with: 200, " +
+												oFilteredData.results.length);
+
+										} else {
+											that._logAndThrowMockServerCustomError(404, that._oErrorMessages.RESOURCE_NOT_FOUND);
+										}
+
+									} catch (e) {
+										if (e.error) {
+											oXhr.respond(e.error.code, mHeaders, JSON.stringify(e));
+										} else {
+											Log.error("MockServer: request failed due to invalid system query options value!");
+											oXhr.respond(parseInt(e.message || e.number));
+										}
+									}
+									return true;
+								}
+							});
+
+							// support entity set with and without OData system query options
+							aRequests
+								.push({
+									method: "GET",
+									path: new RegExp(
+										"(" + sEntitySetName + ")/?(\\?(.*))?"),
+									response: function(oXhr, sEntitySetName, sUrlParams) {
+										Log.debug("MockServer: incoming request for url: " + oXhr.url);
+
+										//trigger the before callback funtion
+										that.fireEvent(MockServer.HTTPMETHOD.GET + sEntitySetName + ":before", {
+											oXhr: oXhr,
+											sUrlParams: sUrlParams
+										});
+										that.fireEvent(MockServer.HTTPMETHOD.GET + ":before", {
+											oXhr: oXhr,
+											sUrlParams: sUrlParams
+										});
+
+										var mHeaders = {
+											"Content-Type": "application/json;charset=utf-8"
+										};
+										fnHandleXsrfTokenHeader(oXhr, mHeaders);
+										try {
+											var aData = that._oMockdata[sEntitySetName];
+											if (aData) {
+												// using extend to copy the data to a new array
+												var oFilteredData = {
+													results: jQuery.extend(true, [], aData)
+												};
+												if (sUrlParams) {
+													// sUrlParams should not contains ?, but only & in its stead
+													var aUrlParams = decodeURIComponent(sUrlParams).replace("?", "&").split("&");
+													aUrlParams = fnHandleAmpersandUrlParam(aUrlParams);
+													if (aUrlParams.length > 1) {
+														aUrlParams = that._orderQueryOptions(aUrlParams);
+													}
+													jQuery.each(aUrlParams, function(iIndex, sQuery) {
+														that._applyQueryOnCollection(oFilteredData, sQuery,
+															sEntitySetName, aUrlParams);
+													});
+												}
+												//trigger the after callback funtion
+												that.fireEvent(MockServer.HTTPMETHOD.GET + sEntitySetName + ":after", {
+													oXhr: oXhr,
+													oFilteredData: oFilteredData
+												});
+												that.fireEvent(MockServer.HTTPMETHOD.GET + ":after", {
+													oXhr: oXhr,
+													oFilteredData: oFilteredData
+												});
+												oXhr.respond(200, mHeaders, JSON.stringify({
+													d: oFilteredData
+												}));
+												Log.debug("MockServer: response sent with: 200, " + JSON.stringify({
+													d: oFilteredData
+												}));
+											} else {
+												that._logAndThrowMockServerCustomError(404, that._oErrorMessages.RESOURCE_NOT_FOUND);
+											}
+										} catch (e) {
+											if (e.error) {
+												oXhr.respond(e.error.code, mHeaders, JSON.stringify(e));
+											} else {
+												Log.debug("MockServer: response sent with: " + parseInt(e.message || e.number));
+												oXhr.respond(parseInt(e.message || e.number));
+											}
+										}
+										return true;
+									}
+								});
+
+							// support access of a single entry of an entity set with and without OData system query options
+							aRequests
+								.push({
+									method: "GET",
+									path: new RegExp(
+										"(" + sEntitySetName + ")\\(([^/\\?#]+)\\)/?(\\?(.*))?"),
+									response: function(oXhr, sEntitySetName, sKeys, sUrlParams) {
+										Log.debug("MockServer: incoming request for url: " + oXhr.url);
+
+										//trigger the before callback funtion
+										that.fireEvent(MockServer.HTTPMETHOD.GET + sEntitySetName + ":before", {
+											oXhr: oXhr,
+											sKeys: sKeys,
+											sUrlParams: sUrlParams
+										});
+										that.fireEvent(MockServer.HTTPMETHOD.GET + ":before", {
+											oXhr: oXhr,
+											sKeys: sKeys,
+											sUrlParams: sUrlParams
+										});
+										var mHeaders = {
+											"Content-Type": "application/json;charset=utf-8"
+										};
+										try {
+											var oEntry = jQuery
+												.extend(true, {}, fnGetEntitySetEntry(sEntitySetName, sKeys));
+											if (!isEmptyObject(oEntry)) {
+												if (sUrlParams) {
+													// sUrlParams should not contains ?, but only & in its stead
+													var aUrlParams = decodeURIComponent(sUrlParams).replace("?", "&").split("&");
+													aUrlParams = fnHandleAmpersandUrlParam(aUrlParams);
+
+													if (aUrlParams.length > 1) {
+														aUrlParams = that._orderQueryOptions(aUrlParams);
+													}
+
+													jQuery.each(aUrlParams, function(iIndex, sQuery) {
+														oEntry.entry = that._applyQueryOnEntry(oEntry.entry, sQuery,
+															sEntitySetName);
+													});
+												}
+
+												//trigger the after callback funtion
+												that.fireEvent(MockServer.HTTPMETHOD.GET + sEntitySetName + ":after", {
+													oXhr: oXhr,
+													oEntry: oEntry.entry
+												});
+												that.fireEvent(MockServer.HTTPMETHOD.GET + ":after", {
+													oXhr: oXhr,
+													oEntry: oEntry.entry
+												});
+												oXhr.respond(200, mHeaders, JSON.stringify({
+													d: oEntry.entry
+												}));
+												Log.debug("MockServer: response sent with: 200, " + JSON.stringify({
+													d: oEntry.entry
+												}));
+											} else {
+												that._logAndThrowMockServerCustomError(404, that._oErrorMessages.RESOURCE_NOT_FOUND);
+											}
+										} catch (e) {
+											if (e.error) {
+												oXhr.respond(e.error.code, mHeaders, JSON.stringify(e));
+											} else {
+												Log.debug("MockServer: response sent with: " + parseInt(e.message || e.number));
+												oXhr.respond(parseInt(e.message || e.number));
+											}
+										}
+										return true;
+									}
+								});
+
+							// support navigation property
+							jQuery
+								.each(
+									oEntitySet.navprops,
+									function(sNavName, oNavProp) {
+										// support $count requests on navigation properties
+										aRequests.push({
+											method: "GET",
+											path: new RegExp("(" + sEntitySetName + ")\\(([^/\\?#]+)\\)/(" + sNavName + ")/\\$count/?(.*)?"),
+											response: function(oXhr, sEntitySetName, sKeys, sNavProp, sUrlParams) {
+												Log.debug("MockServer: incoming request for url: " + oXhr.url);
+
+												//trigger the before callback funtion
+												that.fireEvent(MockServer.HTTPMETHOD.GET + sEntitySetName + ":before", {
+													oXhr: oXhr,
+													sKeys: sKeys,
+													sNavProp: sNavProp,
+													sUrlParams: sUrlParams
+												});
+												that.fireEvent(MockServer.HTTPMETHOD.GET + ":before", {
+													oXhr: oXhr,
+													sKeys: sKeys,
+													sNavProp: sNavProp,
+													sUrlParams: sUrlParams
+												});
+
+												var mHeaders = {
+													"Content-Type": "text/plain;charset=utf-8"
+												};
+												fnHandleXsrfTokenHeader(oXhr, mHeaders);
+
+												try {
+													var oEntry = fnGetEntitySetEntry(sEntitySetName, sKeys);
+													if (oEntry) {
+														var aEntries, oFilteredData = {};
+
+														aEntries = that._resolveNavigation(sEntitySetName,
+															oEntry.entry, sNavProp);
+														var sMultiplicity = that._mEntitySets[sEntitySetName].navprops[sNavProp].to.multiplicity;
+														if (sMultiplicity === "*") {
+															oFilteredData = {
+																results: jQuery.extend(true, [],
+																	aEntries)
+															};
+														} else {
+															oFilteredData = jQuery.extend(true, {},
+																aEntries[0]);
+														}
+														if (aEntries && aEntries.length !== 0) {
+															if (sUrlParams) {
+																// sUrlParams should not contains ?, but only & in its stead
+																var aUrlParams = decodeURIComponent(
+																	sUrlParams).replace("?", "&").split("&");
+																aUrlParams = fnHandleAmpersandUrlParam(aUrlParams);
+
+																if (aUrlParams.length > 1) {
+																	aUrlParams = that
+																		._orderQueryOptions(aUrlParams);
+																}
+
+																if (sMultiplicity === "*") {
+																	jQuery.each(aUrlParams, function(iIndex, sQuery) {
+																				that._applyQueryOnCollection(oFilteredData, sQuery,
+																						that._mEntitySets[sEntitySetName].navprops[sNavProp].to.entitySet,
+																						aUrlParams);
+																	});
+																} else {
+																	jQuery
+																		.each(
+																			aUrlParams,
+																			function(iIndex, sQuery) {
+																				oFilteredData = that
+																					._applyQueryOnEntry(
+																						oFilteredData,
+																						sQuery,
+																						that._mEntitySets[sEntitySetName].navprops[sNavProp].to.entitySet);
+																			});
+																}
+															}
+														}
+
+														//trigger the after callback funtion
+														that.fireEvent(MockServer.HTTPMETHOD.GET + sEntitySetName + ":after", {
+															oXhr: oXhr,
+															oFilteredData: oFilteredData
+														});
+														that.fireEvent(MockServer.HTTPMETHOD.GET + ":after", {
+															oXhr: oXhr,
+															oFilteredData: oFilteredData
+														});
+
+														oFilteredData.results = oFilteredData.results || [];
+														oXhr
+															.respond(
+																200,
+																mHeaders, "" + oFilteredData.results.length);
+
+														Log
+															.debug("MockServer: response sent with: 200, " + oFilteredData.results.length);
+
+													} else {
+														that._logAndThrowMockServerCustomError(404, that._oErrorMessages.RESOURCE_NOT_FOUND);
+													}
+												} catch (e) {
+													if (e.error) {
+														oXhr.respond(e.error.code, mHeaders, JSON.stringify(e));
+													} else {
+														Log.debug("MockServer: response sent with: " + parseInt(e.message || e.number));
+														oXhr.respond(parseInt(e.message || e.number));
+													}
+												}
+												return true;
+											}
+										});
+
+										// support access of navigation property with and without OData system query options
+										aRequests
+											.push({
+												method: "GET",
+												path: new RegExp(
+													"(" + sEntitySetName + ")\\(([^/\\?#]+)\\)/(" + sNavName + ")/?(\\?(.*))?"),
+												response: function(oXhr, sEntitySetName, sKeys, sNavProp, sUrlParams) {
+													Log
+														.debug("MockServer: incoming request for url: " + oXhr.url);
+
+													//trigger the before callback funtion
+													that.fireEvent(MockServer.HTTPMETHOD.GET + sEntitySetName + ":before", {
+														oXhr: oXhr,
+														sKeys: sKeys,
+														sNavProp: sNavProp,
+														sUrlParams: sUrlParams
+													});
+													that.fireEvent(MockServer.HTTPMETHOD.GET + ":before", {
+														oXhr: oXhr,
+														sKeys: sKeys,
+														sNavProp: sNavProp,
+														sUrlParams: sUrlParams
+													});
+													var mHeaders = {
+														"Content-Type": "application/json;charset=utf-8"
+													};
+													fnHandleXsrfTokenHeader(oXhr, mHeaders);
+													try {
+														var oEntry = fnGetEntitySetEntry(sEntitySetName, sKeys);
+														if (oEntry) {
+															var aEntries, oFilteredData = {};
+
+															aEntries = that._resolveNavigation(sEntitySetName,
+																oEntry.entry, sNavProp, oEntry.entry);
+															var sMultiplicity = that._mEntitySets[sEntitySetName].navprops[sNavProp].to.multiplicity;
+															if (sMultiplicity === "*") {
+																oFilteredData = {
+																	results: jQuery.extend(true, [],
+																		aEntries)
+																};
+															} else {
+																oFilteredData = jQuery.extend(true, {},
+																	aEntries[0]);
+															}
+															if (aEntries && aEntries.length !== 0) {
+																if (sUrlParams) {
+																	// sUrlParams should not contains ?, but only & in its stead
+																	var aUrlParams = decodeURIComponent(
+																		sUrlParams).replace("?", "&").split("&");
+																	aUrlParams = fnHandleAmpersandUrlParam(aUrlParams);
+
+																	if (aUrlParams.length > 1) {
+																		aUrlParams = that
+																			._orderQueryOptions(aUrlParams);
+																	}
+
+																	if (sMultiplicity === "*") {
+																		jQuery.each(aUrlParams, function(iIndex, sQuery) {
+																			that._applyQueryOnCollection(
+																			oFilteredData,
+																			sQuery,
+																			that._mEntitySets[sEntitySetName].navprops[sNavProp].to.entitySet,
+																			aUrlParams);
+																		});
+																	} else {
+																		jQuery
+																			.each(
+																				aUrlParams,
+																				function(iIndex, sQuery) {
+																					oFilteredData = that
+																						._applyQueryOnEntry(
+																							oFilteredData,
+																							sQuery,
+																							that._mEntitySets[sEntitySetName].navprops[sNavProp].to.entitySet);
+																				});
+																	}
+																}
+															}
+
+															//trigger the after callback funtion
+															that.fireEvent(MockServer.HTTPMETHOD.GET + sEntitySetName + ":after", {
+																oXhr: oXhr,
+																oFilteredData: oFilteredData
+															});
+															that.fireEvent(MockServer.HTTPMETHOD.GET + ":after", {
+																oXhr: oXhr,
+																oFilteredData: oFilteredData
+															});
+
+															oXhr
+																.respond(
+																	200,
+																	mHeaders, JSON.stringify({
+																		d: oFilteredData
+																	}));
+
+															Log
+																.debug("MockServer: response sent with: 200, " + JSON.stringify({
+																	d: oFilteredData
+																}));
+														} else {
+															that._logAndThrowMockServerCustomError(404, that._oErrorMessages.RESOURCE_NOT_FOUND);
+														}
+													} catch (e) {
+														if (e.error) {
+															oXhr.respond(e.error.code, mHeaders, JSON.stringify(e));
+														} else {
+															oXhr.respond(parseInt(e.message || e.number));
+															Log
+																.debug("MockServer: response sent with: " + parseInt(e.message || e.number));
+														}
+													}
+													return true;
+												}
+											});
+
+									});
+
+							// support creation of an entity of a specific type
+							aRequests.push({
+								method: "POST",
+								path: new RegExp("(" + sEntitySetName + ")(\\(([^/\\?#]+)\\)/?(.*)?)?"),
+								response: function(oXhr, sEntitySetName, group2, sKeys, sNavName) {
+									var bMerge = false;
+									// check for method tunneling
+									if (oXhr.requestHeaders["x-http-method"] === "MERGE") {
+										bMerge = true;
+									}
+									Log.debug("MockServer: incoming create request for url: " + oXhr.url);
+									//trigger the before callback funtion
+									that.fireEvent(MockServer.HTTPMETHOD.POST + sEntitySetName + ":before", {
+										oXhr: oXhr,
+										sKeys: sKeys,
+										sNavName: sNavName
+									});
+									that.fireEvent(MockServer.HTTPMETHOD.POST + ":before", {
+										oXhr: oXhr,
+										sKeys: sKeys,
+										sNavName: sNavName
+									});
+									var sRespondData = null;
+									var sRespondContentType = null;
+									var iResult = 405; // default: method not allowed
+									try {
+										if (sKeys && !sKeys.split('=')[1]) {
+											sKeys = that._mEntitySets[sEntitySetName].keys[0] + "=" + sKeys;
+										}
+										var sTargetEntityName = fnResolveTargetEntityName(oEntitySet,
+											decodeURIComponent(sKeys), sNavName);
+										if (sTargetEntityName) {
+											var oEntity = initNewEntity(oXhr, sTargetEntityName, sKeys, sNavName);
+											if (oEntity) {
+												sRespondContentType = {
+													"Content-Type": "application/json;charset=utf-8"
+												};
+
+												//trigger the after callback funtion
+												that.fireEvent(MockServer.HTTPMETHOD.POST + sEntitySetName + ":after", {
+													oXhr: oXhr,
+													oEntity: oEntity
+												});
+												that.fireEvent(MockServer.HTTPMETHOD.POST + ":after", {
+													oXhr: oXhr,
+													oEntity: oEntity
+												});
+
+												if (bMerge) {
+													var oExistingEntry = fnGetEntitySetEntry(sEntitySetName, sKeys);
+													if (oExistingEntry) {
+														jQuery.extend(that._oMockdata[sEntitySetName][oExistingEntry.index], oEntity);
+													}
+													iResult = 204;
+												} else {
+													var sUri = that._getRootUri() + sTargetEntityName + "(" + that._createKeysString(that._mEntitySets[sTargetEntityName],
+														oEntity) + ")";
+													sRespondData = JSON.stringify({
+														d: oEntity,
+														uri: sUri
+													});
+													that._oMockdata[sTargetEntityName] = that._oMockdata[sTargetEntityName]
+														.concat([oEntity]);
+													iResult = 201;
+												}
+											}
+										}
+
+										oXhr.respond(iResult, sRespondContentType, sRespondData);
+										Log
+											.debug("MockServer: response sent with: " + iResult + ", " + sRespondData);
+
+									} catch (e) {
+										if (e.error) {
+											var mHeaders = {
+												"Content-Type": "text/plain;charset=utf-8"
+											};
+											oXhr.respond(e.error.code, mHeaders, JSON.stringify(e));
+										} else {
+											oXhr.respond(parseInt(e.message || e.number));
+											Log
+												.debug("MockServer: response sent with: " + parseInt(e.message || e.number));
+										}
+
+									}
+									return true;
+								}
+							});
+
+							// support update of an entity of a specific type
+							aRequests.push({
+								method: "PUT",
+								path: new RegExp("(" + sEntitySetName + ")\\(([^/\\?#]+)\\)/?(.*)?"),
+								response: function(oXhr, sEntitySetName, sKeys, sNavName) {
+									Log.debug("MockServer: incoming update request for url: " + oXhr.url);
+
+									//trigger the before callback funtion
+									that.fireEvent(MockServer.HTTPMETHOD.PUT + sEntitySetName + ":before", {
+										oXhr: oXhr,
+										sKeys: sKeys,
+										sNavName: sNavName
+									});
+									that.fireEvent(MockServer.HTTPMETHOD.PUT + ":before", {
+										oXhr: oXhr,
+										sKeys: sKeys,
+										sNavName: sNavName
+									});
+									var iResult = 405; // default: method not allowed
+									var sRespondData = null;
+									var sRespondContentType = null;
+									try {
+										var sTargetEntityName = fnResolveTargetEntityName(oEntitySet,
+											decodeURIComponent(sKeys), sNavName);
+										if (sTargetEntityName) {
+											var oEntity = initNewEntity(oXhr, sTargetEntityName, sKeys, sNavName);
+											if (oEntity) {
+												sRespondContentType = {
+													"Content-Type": "application/json;charset=utf-8"
+												};
+												//trigger the after callback funtion
+												that.fireEvent(MockServer.HTTPMETHOD.PUT + sEntitySetName + ":after", {
+													oXhr: oXhr,
+													oEntity: oEntity
+												});
+												that.fireEvent(MockServer.HTTPMETHOD.PUT + ":after", {
+													oXhr: oXhr,
+													oEntity: oEntity
+												});
+												var oExistingEntry = fnGetEntitySetEntry(sEntitySetName, sKeys);
+												if (oExistingEntry) { // Overwrite existing
+													that._oMockdata[sEntitySetName][oExistingEntry.index] = oEntity;
+												}
+												iResult = 204;
+											}
+										}
+
+										oXhr.respond(iResult, sRespondContentType, sRespondData);
+										Log
+											.debug("MockServer: response sent with: " + iResult + ", " + sRespondData);
+									} catch (e) {
+										if (e.error) {
+											var mHeaders = {
+												"Content-Type": "text/plain;charset=utf-8"
+											};
+											oXhr.respond(e.error.code, mHeaders, JSON.stringify(e));
+										} else {
+											oXhr.respond(parseInt(e.message || e.number));
+											Log
+												.debug("MockServer: response sent with: " + parseInt(e.message || e.number));
+										}
+									}
+									return true;
+								}
+							});
+
+							// support partial update of an entity of a specific type
+							aRequests.push({
+								method: "MERGE",
+								path: new RegExp("(" + sEntitySetName + ")\\(([^/\\?#]+)\\)/?(.*)?"),
+								response: function(oXhr, sEntitySetName, sKeys, sNavName) {
+									Log.debug("MockServer: incoming merge update request for url: " + oXhr.url);
+									//trigger the before callback funtion
+									that.fireEvent(MockServer.HTTPMETHOD.MERGE + sEntitySetName + ":before", {
+										oXhr: oXhr,
+										sKeys: sKeys,
+										sNavName: sNavName
+									});
+									that.fireEvent(MockServer.HTTPMETHOD.MERGE + ":before", {
+										oXhr: oXhr,
+										sKeys: sKeys,
+										sNavName: sNavName
+									});
+									var iResult = 405; // default: method not allowed
+									var sRespondData = null;
+									var sRespondContentType = null;
+									try {
+										var sTargetEntityName = fnResolveTargetEntityName(oEntitySet,
+											decodeURIComponent(sKeys), sNavName);
+										if (sTargetEntityName) {
+											var oEntity = initNewEntity(oXhr, sTargetEntityName, sKeys, sNavName);
+											if (oEntity) {
+												sRespondContentType = {
+													"Content-Type": "application/json;charset=utf-8"
+												};
+												//trigger the after callback funtion
+												that.fireEvent(MockServer.HTTPMETHOD.MERGE + sEntitySetName + ":after", {
+													oXhr: oXhr,
+													oEntity: oEntity
+												});
+												that.fireEvent(MockServer.HTTPMETHOD.MERGE + ":after", {
+													oXhr: oXhr,
+													oEntity: oEntity
+												});
+												var oExistingEntry = fnGetEntitySetEntry(sEntitySetName, sKeys);
+												if (oExistingEntry) {
+													jQuery.extend(that._oMockdata[sEntitySetName][oExistingEntry.index], oEntity);
+												}
+												iResult = 204;
+											}
+										}
+
+										oXhr.respond(iResult, sRespondContentType, sRespondData);
+										Log
+											.debug("MockServer: response sent with: " + iResult + ", " + sRespondData);
+									} catch (e) {
+										if (e.error) {
+											var mHeaders = {
+												"Content-Type": "text/plain;charset=utf-8"
+											};
+											oXhr.respond(e.error.code, mHeaders, JSON.stringify(e));
+										} else {
+											oXhr.respond(parseInt(e.message || e.number));
+											Log.debug("MockServer: response sent with: " + parseInt(e.message || e.number));
+										}
+									}
+									return true;
+								}
+							});
+
+							// support partial update of an entity of a specific type
+							aRequests.push({
+								method: "PATCH",
+								path: new RegExp("(" + sEntitySetName + ")\\(([^/\\?#]+)\\)/?(.*)?"),
+								response: function(oXhr, sEntitySetName, sKeys, sNavName) {
+									Log.debug("MockServer: incoming patch update request for url: " + oXhr.url);
+									//trigger the before callback funtion
+									that.fireEvent(MockServer.HTTPMETHOD.PATCH + sEntitySetName + ":before", {
+										oXhr: oXhr,
+										sKeys: sKeys,
+										sNavName: sNavName
+									});
+									that.fireEvent(MockServer.HTTPMETHOD.PATCH + ":before", {
+										oXhr: oXhr,
+										sKeys: sKeys,
+										sNavName: sNavName
+									});
+									var iResult = 405; // default: method not allowed
+									var sRespondData = null;
+									var sRespondContentType = null;
+									try {
+										var sTargetEntityName = fnResolveTargetEntityName(oEntitySet,
+											decodeURIComponent(sKeys), sNavName);
+										if (sTargetEntityName) {
+											var oEntity = initNewEntity(oXhr, sTargetEntityName, sKeys, sNavName);
+											if (oEntity) {
+												sRespondContentType = {
+													"Content-Type": "application/json;charset=utf-8"
+												};
+												//trigger the after callback funtion
+												that.fireEvent(MockServer.HTTPMETHOD.PATCH + sEntitySetName + ":after", {
+													oXhr: oXhr,
+													oEntity: oEntity
+												});
+												that.fireEvent(MockServer.HTTPMETHOD.PATCH + ":after", {
+													oXhr: oXhr,
+													oEntity: oEntity
+												});
+												var oExistingEntry = fnGetEntitySetEntry(sEntitySetName, sKeys);
+												if (oExistingEntry) {
+													jQuery.extend(that._oMockdata[sEntitySetName][oExistingEntry.index], oEntity);
+												}
+												iResult = 204;
+											}
+										}
+
+										oXhr.respond(iResult, sRespondContentType, sRespondData);
+										Log
+											.debug("MockServer: response sent with: " + iResult + ", " + sRespondData);
+
+									} catch (e) {
+										if (e.error) {
+											var mHeaders = {
+												"Content-Type": "text/plain;charset=utf-8"
+											};
+											oXhr.respond(e.error.code, mHeaders, JSON.stringify(e));
+										} else {
+											oXhr.respond(parseInt(e.message || e.number));
+											Log
+												.debug("MockServer: response sent with: " + parseInt(e.message || e.number));
+										}
+									}
+									return true;
+								}
+							});
+
+							// support deletion of an entity of a specific type
+							aRequests.push({
+								method: "DELETE",
+								path: new RegExp("(" + sEntitySetName + ")\\(([^/\\?#]+)\\)/?(.*)?"),
+								response: function(oXhr, sEntitySetName, sKeys, sUrlParams) {
+									Log.debug("MockServer: incoming delete request for url: " + oXhr.url);
+									//trigger the before callback funtion
+									that.fireEvent(MockServer.HTTPMETHOD.DELETE + sEntitySetName + ":before", {
+										oXhr: oXhr
+									});
+									that.fireEvent(MockServer.HTTPMETHOD.DELETE + ":before", {
+										oXhr: oXhr
+									});
+									var iResult = 204;
+									try {
+										var oEntry = fnGetEntitySetEntry(sEntitySetName, sKeys);
+										if (oEntry) {
+											that._oMockdata[sEntitySetName].splice(oEntry.index, 1);
+										} else {
+											iResult = 400;
+										}
+
+										//trigger the after callback funtion
+										that.fireEvent(MockServer.HTTPMETHOD.DELETE + sEntitySetName + ":after", {
+											oXhr: oXhr
+										});
+										that.fireEvent(MockServer.HTTPMETHOD.DELETE + ":after", {
+											oXhr: oXhr
+										});
+										oXhr.respond(iResult, null, null);
+										Log.debug("MockServer: response sent with: " + iResult);
+									} catch (e) {
+										if (e.error) {
+											var mHeaders = {
+												"Content-Type": "text/plain;charset=utf-8"
+											};
+
+											oXhr.respond(e.error.code, mHeaders, JSON.stringify(e));
+										} else {
+											oXhr.respond(parseInt(e.message || e.number));
+											Log.debug("MockServer: response sent with: " + parseInt(e.message || e.number));
+										}
+									}
+									return true;
+								}
+							});
+						});
+
+				// apply the request handlers
+				this.setRequests(aRequests);
+
+			};
+
+			/**
+			 * Organize query options according to thier execution order
+			 *
+			 * @private
+			 */
+			MockServer.prototype._orderQueryOptions = function(aUrlParams) {
+				var iFilterIndex, iInlinecountIndex, iSkipIndex, iTopIndex, iOrderbyIndex, iSelectindex, iExpandIndex, iFormatIndex, iSearchIndex, iSearchFocusIndex, aOrderedUrlParams = [];
+				var that = this;
+
+				jQuery.each(aUrlParams, function(iIndex, sQuery) {
+					var iQueryIndex = aUrlParams.indexOf(sQuery);
+					switch (sQuery.split('=')[0]) {
+						case "$top":
+							iTopIndex = iQueryIndex;
+							break;
+						case "$skip":
+							iSkipIndex = iQueryIndex;
+							break;
+						case "$orderby":
+							iOrderbyIndex = iQueryIndex;
+							break;
+						case "$expand":
+							iExpandIndex = iQueryIndex;
+							break;
+						case "$filter":
+							iFilterIndex = iQueryIndex;
+							break;
+						case "$select":
+							iSelectindex = iQueryIndex;
+							break;
+						case "$inlinecount":
+							iInlinecountIndex = iQueryIndex;
+							break;
+						case "$format":
+							iFormatIndex = iQueryIndex;
+							break;
+						case "search-focus":
+							iSearchFocusIndex = iQueryIndex;
+							break;
+						case "search":
+							iSearchIndex = iQueryIndex;
+							break;
+						default:
+							if (sQuery.split('=')[0].indexOf('$') === 0) {
+								that._logAndThrowMockServerCustomError(400, that._oErrorMessages.IS_NOT_A_VALID_SYSTEM_QUERY_OPTION, sQuery.split('=')[0]);
+							}
+					}
+				});
+				if (iExpandIndex >= 0) {
+					aOrderedUrlParams.push(aUrlParams[iExpandIndex]);
+				}
+				if (iFilterIndex >= 0) {
+					aOrderedUrlParams.push(aUrlParams[iFilterIndex]);
+				}
+				if (iSearchFocusIndex >= 0) {
+					aOrderedUrlParams.push(aUrlParams[iSearchFocusIndex]);
+				}
+				if (iSearchIndex >= 0) {
+					aOrderedUrlParams.push(aUrlParams[iSearchIndex]);
+				}
+				if (iInlinecountIndex >= 0) {
+					aOrderedUrlParams.push(aUrlParams[iInlinecountIndex]);
+				}
+				if (iOrderbyIndex >= 0) {
+					aOrderedUrlParams.push(aUrlParams[iOrderbyIndex]);
+				}
+				if (iSkipIndex >= 0) {
+					aOrderedUrlParams.push(aUrlParams[iSkipIndex]);
+				}
+				if (iTopIndex >= 0) {
+					aOrderedUrlParams.push(aUrlParams[iTopIndex]);
+				}
+				if (iSelectindex >= 0) {
+					aOrderedUrlParams.push(aUrlParams[iSelectindex]);
+				}
+				if (iFormatIndex >= 0) {
+					aOrderedUrlParams.push(aUrlParams[iFormatIndex]);
+				}
+				return aOrderedUrlParams;
+			};
+
+			/**
+			 * Removes all request handlers.
+			 *
+			 * @private
+			 */
+			MockServer.prototype._removeAllRequestHandlers = function() {
+				var aRequests = this.getRequests();
+				var iLength = aRequests.length;
+				for (var i = 0; i < iLength; i++) {
+					MockServer._removeResponse(aRequests[i].response);
+				}
+			};
+
+			/**
+			 * Removes all filters.
+			 *
+			 * @private
+			 */
+			MockServer.prototype._removeAllFilters = function() {
+				for (var i = 0; i < this._aFilters.length; i++) {
+					MockServer._removeFilter(this._aFilters[i]);
+				}
+				this._aFilters = null;
+			};
+
+			/**
+			 * Adds a request handler to the server, based on the given configuration.
+			 *
+			 * @param {string}
+			 *          sMethod HTTP verb to use for this method (e.g. GET, POST, PUT, DELETE...)
+			 * @param {string|RegExp}
+			 *          sPath the path of the URI (will be concatenated with the rootUri)
+			 * @param {function}
+			 *          fnResponse the response function to call when the request occurs
+			 *
+			 * @private
+			 */
+			MockServer.prototype._addRequestHandler = function(sMethod, sPath, fnResponse) {
+				sMethod = sMethod ? sMethod.toUpperCase() : sMethod;
+				if (typeof sMethod !== "string") {
+					throw new Error("Error in request configuration: value of 'method' has to be a string");
+				}
+				if (!(typeof sPath === "string" || sPath instanceof RegExp)) {
+					throw new Error("Error in request configuration: value of 'path' has to be a string or a regular expression");
+				}
+				if (typeof fnResponse !== "function") {
+					throw new Error("Error in request configuration: value of 'response' has to be a function");
+				}
+
+				var sUri = this._getRootUri();
+
+				// create the URI regexp (will be escaped)
+				sUri = sUri && new RegExp(this._escapeStringForRegExp(sUri));
+
+				// create the path regexp (will have the special regexp encoding)
+				if (sPath && !(sPath instanceof RegExp)) {
+					sPath = new RegExp(this._createRegExpPattern(sPath));
+				}
+
+				// create the regexp for the request handler (concat root uri and path)
+				var oRegExp = this._createRegExp(sUri ? sUri.source + sPath.source : sPath.source);
+
+				this._addFilter(this._createFilter(sMethod, oRegExp));
+				this._oServer.respondWith(sMethod, oRegExp, fnResponse);
+
+				// some debug logging to see what is registered and how the regex look like
+				Log.debug("MockServer: adding " + sMethod + " request handler for pattern " + oRegExp);
+
+			};
+
+			/**
+			 * Creates a regular expression based on a given pattern.
+			 *
+			 * @param {string} sPattern the pattern to use for the regular expression.
+			 * @return {RegExp} the created regular expression.
+			 *
+			 * @private
+			 */
+			MockServer.prototype._createRegExp = function(sPattern) {
+				return new RegExp("^" + sPattern + "$");
+			};
+
+			/**
+			 * Creates a regular expression pattern. All <code>:param</code> are replaced
+			 * by regular expression groups.
+			 *
+			 * @return {string} the created regular expression pattern.
+			 *
+			 * @private
+			 */
+			MockServer.prototype._createRegExpPattern = function(sPattern) {
+				return sPattern.replace(/:([\w\d]+)/g, "([^\/]+)");
+			};
+
+			/**
+			 * Converts a string into a regular expression. Escapes all regexp critical
+			 * characters.
+			 *
+			 * @return {string} the created regular expression pattern.
+			 *
+			 * @private
+			 */
+			MockServer.prototype._escapeStringForRegExp = function(sString) {
+				return sString.replace(/[\\\/\[\]\{\}\(\)\-\*\+\?\.\^\$\|]/g, "\\$&");
+			};
+			//
+
+			/**
+			 * Creates a trim string
+			 *
+			 * @return {string} the trimmed string.
+			 *
+			 * @private
+			 */
+			MockServer.prototype._trim = function(sString) {
+				return sString && sString.replace(/^\s+|\s+$/g, "");
+			};
+
+			/**
+			 * Checks is the string is a valid number
+			 *
+			 * @return {boolean} true if the string can be converted to a valid number
+			 *
+			 * @private
+			 */
+			MockServer.prototype._isValidNumber = function(sString) {
+				if (/^([-+]?)0*(\d+)(\.\d+|)([eE][-+]?\d+[d]?|[mldf])?$/i.test(sString)) {
+					var anyNumber = parseFloat(sString);
+					return !isNaN(anyNumber) && isFinite(anyNumber);
+				}
+				return false;
+			};
+
+			/**
+			 * Converts a JSON format date string into a datetime format string.
+			 *
+			 * @return {string} the date.
+			 *
+			 * @private
+			 */
+			MockServer.prototype._getDateTime = function(sString) {
+				if (!sString) {
+					return;
+				}
+				return "datetime'" + new Date(Number(sString.replace("/Date(", '').replace(")/", ''))).toJSON().substring(0, 19) + "'";
+
+			};
+
+			/**
+			 * Converts a datetime format date string into a JSON date format string.
+			 *
+			 * @return {string} the date.
+			 *
+			 * @private
+			 */
+			MockServer.prototype._getJsonDate = function(sString) {
+				if (!sString) {
+					return;
+				}
+				var fnNoOffset = function(s) {
+					var day = jQuery.map(s.slice(0, -5).split(/\D/), function(itm) {
+						return parseInt(itm) || 0;
+					});
+					day[1] -= 1;
+					day = new Date(Date.UTC.apply(Date, day));
+					var offsetString = s.slice(-5);
+					var offset = parseInt(offsetString) / 100;
+					if (offsetString.slice(0, 1) === "+") {
+						offset *= -1;
+					}
+					day.setHours(day.getHours() + offset);
+					return day.getTime();
+				};
+
+				if (sString.indexOf("datetimeoffset") > -1) {
+					return "/Date(" + fnNoOffset(sString.substring("datetimeoffset'".length, sString.length - 1)) + ")/";
+				} else {
+					return "/Date(" + fnNoOffset(sString.substring("datetime'".length, sString.length - 1)) + ")/";
+				}
+			};
+
+			/**
+			 * Adds a filter function. The filter determines whether to fake a response or not. When the filter function
+			 * returns true, the request will be faked.
+			 *
+			 * @param {function} fnFilter the filter function to add
+			 * @private
+			 */
+			MockServer.prototype._addFilter = function(fnFilter) {
+				this._aFilters.push(fnFilter);
+				MockServer._addFilter(fnFilter);
+			};
+
+			/**
+			 * Creates and returns a filter filter function.
+			 *
+			 * @param {string} sRequestMethod HTTP verb to use for this method (e.g. GET, POST, PUT, DELETE...)
+			 * @param {RegExp} oRegExp the regular expression to use for this filter
+			 *
+			 * @private
+			 */
+			MockServer.prototype._createFilter = function(sRequestMethod, oRegExp) {
+				return function(sMethod, sUri, bAsync, sUsername, sPassword) {
+					return sRequestMethod === sMethod && oRegExp.test(sUri);
+				};
+			};
+
+			/**
+			 * Logs and throws an error
+			 *
+			 * @param {int} iErrorStatus HTTP status code
+			 * @param {string} sErrorMessage the error message
+			 * @param {string} sParam dynamic parameter of the error message
+			 *
+			 * @private
+			 */
+			MockServer.prototype._logAndThrowMockServerCustomError = function(iErrorStatus, sErrorMessage, sParam) {
+				if (sErrorMessage.indexOf('##') > -1 && sParam) {
+					sErrorMessage = sErrorMessage.replace("##", "'" + sParam + "'");
+				}
+				Log.error("MockServer: " + sErrorMessage);
+				throw {
+					error: {
+						code: iErrorStatus,
+						message: {
+							lang: "en",
+							value: sErrorMessage
+						}
+					}
+				};
+			};
+
+			/**
+			 * Cleans up the resources associated with this object and all its aggregated children.
+			 *
+			 * After an object has been destroyed, it can no longer be used!
+			 *
+			 * Applications should call this method if they don't need the object any longer.
+			 *
+			 * @see sap.ui.base.ManagedObject#destroy
+			 * @param {boolean}
+			 *            [bSuppressInvalidate] if true, this ManagedObject is not marked as changed
+			 * @public
+			 */
+			MockServer.prototype.destroy = function(bSuppressInvalidate) {
+				ManagedObject.prototype.destroy.apply(this, arguments);
+				this.stop();
+				var aServers = MockServer._aServers;
+				var iIndex = aServers.indexOf(this);
+				aServers.splice(iIndex, 1);
+			};
+
+			// =======
+			// STATICS
+			// =======
+
+			MockServer._aFilters = [];
+			MockServer._oServer = null;
+			MockServer._aServers = [];
+
+			/**
+			 * Returns the instance of the sinon fake server.
+			 *
+			 * @return {object} the server instance
+			 * @private
+			 */
+			MockServer._getInstance = function() {
+				// We can not create many fake servers, see bug https://github.com/cjohansen/Sinon.JS/issues/211
+				// This is why we reuse the server and patch it manually
+				if (!this._oServer) {
+					this._oServer = window.sinon.fakeServer.create();
+					this._oServer.autoRespond = true;
+				}
+				return this._oServer;
+			};
+
+			/**
+			 * Global configuration of all mock servers.
+			 *
+			 * @param {object} mConfig the configuration object.
+			 * @param {boolean} [mConfig.autoRespond=true] If set true, all mock servers will respond automatically. If set false you have to call {@link sap.ui.core.util.MockServer.respond} method for response.
+			 * @param {int} [mConfig.autoRespondAfter=0] the time in ms after all mock servers should send their response.
+			 * @param {boolean} [mConfig.fakeHTTPMethods=false] If set to true, all mock server will find <code>_method</code> parameter in the POST body and use this to override the actual method.
+			 * @public
+			 */
+			MockServer.config = function(mConfig) {
+				var oServer = this._getInstance();
+
+				oServer.autoRespond = mConfig.autoRespond === false ? false : true;
+				oServer.autoRespondAfter = mConfig.autoRespondAfter || 0;
+				oServer.fakeHTTPMethods = mConfig.fakeHTTPMethods || false;
+			};
+
+			/**
+			 * Respond to a request, when the servers are configured not to automatically respond.
+			 * @public
+			 */
+			MockServer.respond = function() {
+				this._getInstance().respond();
+			};
+
+			/**
+			 * Starts all registered servers.
+			 * @public
+			 */
+			MockServer.startAll = function() {
+				for (var i = 0; i < this._aServers.length; i++) {
+					this._aServers[i].start();
+				}
+			};
+
+			/**
+			 * Stops all registered servers.
+			 * @public
+			 */
+			MockServer.stopAll = function() {
+				for (var i = 0; i < this._aServers.length; i++) {
+					this._aServers[i].stop();
+				}
+				this._getInstance().restore();
+				this._oServer = null;
+			};
+
+			/**
+			 * Stops and calls destroy on all registered servers. Use this method for cleaning up.
+			 * @public
+			 */
+			MockServer.destroyAll = function() {
+				this.stopAll();
+				while (this._aServers.length > 0) {
+					/* When destroying a server instance the instance is removed from static MockServer._aServers.
+					 * With that, the remaining instances might be moved by 1 index position to the left in MockServer._aServers.
+					 * Therefore, we destroy everytime the first instance in MockServer._aServers until no instance is left.
+					 */
+					this._aServers[0].destroy();
+				}
+			};
+
+			/**
+			 * Enum for the method.
+			 * @public
+			 * @enum {string}
+			 */
+			MockServer.HTTPMETHOD = {
+				/**
+				 * @public
+				 */
+				GET: "GET",
+				/**
+				 * @public
+				 */
+				POST: "POST",
+				/**
+				 * @public
+				 */
+				DELETE: "DELETE",
+				/**
+				 * @public
+				 */
+				PUT: "PUT",
+				/**
+				 * @public
+				 */
+				MERGE: "MERGE",
+				/**
+				 * @public
+				 */
+				PATCH: "PATCH"
+			};
+
+			/**
+			 * Adds a filter function. The filter determines whether to fake a response or not. When the filter function
+			 * returns true, the request will be faked.
+			 *
+			 * @param {function} fnFilter the filter function to add
+			 * @private
+			 */
+			MockServer._addFilter = function(fnFilter) {
+				this._aFilters.push(fnFilter);
+			};
+
+			/**
+			 * Removes a filter function.
+			 *
+			 * @param {function} fnFilter the filter function to remove
+			 * @private
+			 */
+			MockServer._removeFilter = function(fnFilter) {
+				this._aFilters.splice(this._aFilters.indexOf(fnFilter), 1);
+			};
+
+			/**
+			 * Removes a response from the real sinon fake server object
+			 *
+			 * @param {function} fnResponse the response function to remove
+			 * @return {boolean} whether the response was removed or not
+			 * @private
+			 */
+			MockServer._removeResponse = function(fnResponse) {
+				var aResponses = this._oServer.responses;
+				var iLength = aResponses.length;
+				for (var i = 0; i < iLength; i++) {
+					if (aResponses[i].response === fnResponse) {
+						aResponses.splice(i, 1);
+						return true;
+					}
+				}
+				return false;
+			};
+
+			function syncAjax(options) {
+				var oResult;
+				Object.assign(options, {
+					async: false,
+					success : function(data, textStatus, xhr) {
+						oResult = { success : true, data : data, status : textStatus, statusCode : xhr && xhr.status };
+					},
+					error : function(xhr, textStatus, error) {
+						oResult = { success : false, data : undefined, status : textStatus, error : error, statusCode : xhr.status, errorResponse :  xhr.responseText};
+					}
+				});
+				jQuery.ajax(options);
+				return oResult;
+			}
+
+			/**
+			 * Convenience helper for synchronous ajax calls.
+			 *
+			 * @private
+			 * @ui5-restricted sap.ui.core.util
+			 * @function
+			 */
+			MockServer._syncAjax = syncAjax;
+
+			// ================================
+			// SINON CONFIGURATON AND EXTENSION
+			// ================================
+
+			window.sinon.FakeXMLHttpRequest.useFilters = true;
+
+			window.sinon.FakeXMLHttpRequest.addFilter(function(sMethod, sUri, bAsync, sUsername, sPassword) {
+				var aFilters = MockServer._aFilters;
+				for (var i = 0; i < aFilters.length; i++) {
+					var fnFilter = aFilters[i];
+					if (fnFilter(sMethod, sUri, bAsync, sUsername, sPassword)) {
+						return false;
+					}
+				}
+				return true;
+			});
+
+			var getMimeType = function(sFileName) {
+				if (/.*\.json$/i.test(sFileName)) {
+					return "JSON";
+				}
+				if (/.*\.xml$/i.test(sFileName)) {
+					return "XML";
+				}
+				if (/.*metadata$/i.test(sFileName)) {
+					// This is needed in case the metadata comes from a
+					// local file otherwise it's interpreted as octetstream
+					return "XML";
+				}
+				return null;
+			};
+
+			/**
+			 * @param {int} iStatus
+			 * @param {object} mHeaders
+			 * @param {string} sFileUrl
+			 * @public
+			 */
+			window.sinon.FakeXMLHttpRequest.prototype.respondFile = function(iStatus, mHeaders, sFileUrl) {
+				var oResponse = syncAjax({
+					url: sFileUrl,
+					dataType: "text"
+				});
+				if (!oResponse.success) {
+					throw new Error("Could not load file from: " + sFileUrl);
+				}
+
+				var oData = oResponse.data;
+				var sMimeType = getMimeType(sFileUrl);
+
+				if (this["respond" + sMimeType]) {
+					this["respond" + sMimeType](iStatus, mHeaders, oData);
+				} else {
+					this.respond(iStatus, mHeaders, oData);
+				}
+			};
+
+			/**
+			 * @param {int} iStatus
+			 * @param {object} mHeaders
+			 * @param {object} oJSONData
+			 * @public
+			 */
+			window.sinon.FakeXMLHttpRequest.prototype.respondJSON = function(iStatus, mHeaders, oJSONData) {
+				mHeaders = mHeaders || {};
+				mHeaders["Content-Type"] = mHeaders["Content-Type"] || "application/json";
+				this.respond(iStatus, mHeaders, typeof oJSONData === "string" ? oJSONData : JSON.stringify(oJSONData));
+			};
+
+			/**
+			 * @param {int} iStatus
+			 * @param {object} mHeaders
+			 * @param {string} sXmlData
+			 * @public
+			 */
+			window.sinon.FakeXMLHttpRequest.prototype.respondXML = function(iStatus, mHeaders, sXmlData) {
+				mHeaders = mHeaders || {};
+				mHeaders["Content-Type"] = mHeaders["Content-Type"] || "application/xml";
+				this.respond(iStatus, mHeaders, sXmlData);
+			};
+
+			return MockServer;
+		});

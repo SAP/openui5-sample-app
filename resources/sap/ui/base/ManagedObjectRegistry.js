@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/base/ManagedObject","sap/base/Log","sap/base/assert"],function(e,t,n){"use strict";function r(r,i){if(typeof r!=="function"||!(r.prototype instanceof e)){throw new TypeError("ManagedObjectRegistry mixin can only be applied to subclasses of sap.ui.base.ManagedObject")}i=i||{};var o=i.onDuplicate||function(e,n,i){var o=r.getMetadata().getStereotype();t.error('adding object "'+o+"\" with duplicate id '"+e+"'");throw new Error('Error: adding object "'+o+"\" with duplicate id '"+e+"'")};var a=i.onDeregister||null;var f=Object.create(null);var s=0;r.prototype.register=function e(){var t=this.getId(),n=f[t];if(n&&n!==this){o(t,n,this);s--}f[t]=this;s++};r.prototype.deregister=function e(){var t=this.getId();if(f[t]){if(a){a(t)}delete f[t];s--}};r["registry"]=Object.freeze({get size(){return s},all:function(){var e=Object.create(null);return Object.assign(e,f)},get:function(e){n(e==null||typeof e==="string","id must be a string when defined");return e==null?undefined:f[e]},forEach:function(e,t){if(typeof e!=="function"){throw new TypeError(e+" is not a function")}if(t!=null){e=e.bind(t)}for(var n in f){e(f[n],n)}},filter:function(e,t){if(typeof e!=="function"){throw new TypeError(e+" is not a function")}if(t!=null){e=e.bind(t)}var n=[],r;for(r in f){if(e(f[r],r)){n.push(f[r])}}return n}})}return{apply:r}});
+//# sourceMappingURL=ManagedObjectRegistry.js.map

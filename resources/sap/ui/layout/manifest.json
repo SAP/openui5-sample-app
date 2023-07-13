@@ -1,0 +1,158 @@
+{
+  "_version": "1.21.0",
+  "sap.app": {
+    "id": "sap.ui.layout",
+    "type": "library",
+    "embeds": [],
+    "applicationVersion": {
+      "version": "1.115.1"
+    },
+    "title": "SAPUI5 library with layout controls.",
+    "description": "SAPUI5 library with layout controls.",
+    "ach": "CA-UI5-CTR",
+    "resources": "resources.json",
+    "offline": true
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "supportedThemes": [
+      "base",
+      "sap_hcb"
+    ]
+  },
+  "sap.ui5": {
+    "dependencies": {
+      "minUI5Version": "1.115",
+      "libs": {
+        "sap.ui.core": {
+          "minVersion": "1.115.1"
+        }
+      }
+    },
+    "library": {
+      "i18n": {
+        "bundleUrl": "messagebundle.properties",
+        "supportedLocales": [
+          "",
+          "ar",
+          "bg",
+          "ca",
+          "cs",
+          "cy",
+          "da",
+          "de",
+          "el",
+          "en",
+          "en-GB",
+          "en-US-sappsd",
+          "en-US-saprigi",
+          "en-US-saptrc",
+          "es",
+          "es-MX",
+          "et",
+          "fi",
+          "fr",
+          "fr-CA",
+          "hi",
+          "hr",
+          "hu",
+          "id",
+          "it",
+          "iw",
+          "ja",
+          "kk",
+          "ko",
+          "lt",
+          "lv",
+          "ms",
+          "nl",
+          "no",
+          "pl",
+          "pt",
+          "pt-PT",
+          "ro",
+          "ru",
+          "sh",
+          "sk",
+          "sl",
+          "sv",
+          "th",
+          "tr",
+          "uk",
+          "vi",
+          "zh-CN",
+          "zh-TW"
+        ]
+      },
+      "content": {
+        "controls": [
+          "sap.ui.layout.AlignedFlowLayout",
+          "sap.ui.layout.DynamicSideContent",
+          "sap.ui.layout.FixFlex",
+          "sap.ui.layout.Grid",
+          "sap.ui.layout.HorizontalLayout",
+          "sap.ui.layout.ResponsiveFlowLayout",
+          "sap.ui.layout.ResponsiveSplitter",
+          "sap.ui.layout.ResponsiveSplitterPage",
+          "sap.ui.layout.Splitter",
+          "sap.ui.layout.VerticalLayout",
+          "sap.ui.layout.BlockLayoutCell",
+          "sap.ui.layout.BlockLayoutRow",
+          "sap.ui.layout.BlockLayout",
+          "sap.ui.layout.form.Form",
+          "sap.ui.layout.form.FormLayout",
+          "sap.ui.layout.form.GridLayout",
+          "sap.ui.layout.form.ColumnLayout",
+          "sap.ui.layout.form.ResponsiveGridLayout",
+          "sap.ui.layout.form.ResponsiveLayout",
+          "sap.ui.layout.form.SimpleForm",
+          "sap.ui.layout.cssgrid.CSSGrid"
+        ],
+        "elements": [
+          "sap.ui.layout.BlockLayoutCellData",
+          "sap.ui.layout.GridData",
+          "sap.ui.layout.ResponsiveFlowLayoutData",
+          "sap.ui.layout.SplitterLayoutData",
+          "sap.ui.layout.form.FormContainer",
+          "sap.ui.layout.form.FormElement",
+          "sap.ui.layout.form.GridContainerData",
+          "sap.ui.layout.PaneContainer",
+          "sap.ui.layout.SplitPane",
+          "sap.ui.layout.form.GridElementData",
+          "sap.ui.layout.form.ColumnElementData",
+          "sap.ui.layout.form.ColumnContainerData",
+          "sap.ui.layout.cssgrid.GridItemLayoutData"
+        ],
+        "types": [
+          "sap.ui.layout.BackgroundDesign",
+          "sap.ui.layout.BlockBackgroundType",
+          "sap.ui.layout.BlockLayoutCellColorSet",
+          "sap.ui.layout.BlockLayoutCellColorShade",
+          "sap.ui.layout.BlockRowColorSets",
+          "sap.ui.layout.BoxesPerRowConfig",
+          "sap.ui.layout.GridIndent",
+          "sap.ui.layout.GridPosition",
+          "sap.ui.layout.GridSpan",
+          "sap.ui.layout.SideContentFallDown",
+          "sap.ui.layout.SideContentPosition",
+          "sap.ui.layout.SideContentVisibility",
+          "sap.ui.layout.form.ColumnsXL",
+          "sap.ui.layout.form.ColumnsL",
+          "sap.ui.layout.form.ColumnsM",
+          "sap.ui.layout.form.ColumnCells",
+          "sap.ui.layout.form.EmptyCells",
+          "sap.ui.layout.form.GridElementCells",
+          "sap.ui.layout.form.SimpleFormLayout",
+          "sap.ui.layout.cssgrid.CSSGridAutoFlow",
+          "sap.ui.layout.cssgrid.CSSGridTrack",
+          "sap.ui.layout.cssgrid.CSSGridLine",
+          "sap.ui.layout.cssgrid.CSSGridGapShortHand"
+        ],
+        "interfaces": [
+          "sap.ui.layout.cssgrid.IGridConfigurable",
+          "sap.ui.layout.cssgrid.IGridItemLayoutData"
+        ]
+      }
+    }
+  }
+}

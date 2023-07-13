@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/base/Log","sap/ui/dom/containsOrEquals","sap/ui/thirdparty/jquery","sap/base/util/uid"],function(e,r,jQuery,i){"use strict";var t={};function o(i){var o=e.isLoggable(e.Level.DEBUG),n=t[i.type],s=n.originalTriggerHook,a=window.performance.now(),d,f,u;if(!i.isPropagationStopped()&&!i.isSimulated){for(f in n.domRefs){u=n.domRefs[f];if(u.excludedDomRefs.indexOf(i.target)===-1&&r(u.domRef,i.target)){i.preventDefault();i.stopImmediatePropagation();if(o){d=window.performance.now();e.debug("Perf: jQuery trigger suppression event handler "+i.type+" took "+(d-a)+" milliseconds.")}return false}}}if(s){return s.call(this,i)}}function n(e){if(!jQuery.event.special[e]){jQuery.event.special[e]={}}var r=jQuery.event.special[e],i=r.trigger;r.trigger=o;return i}function s(e,r,o){var s=t[e];var a=i();if(!s){s=t[e]={domRefs:{},originalTriggerHook:n(e)}}s.domRefs[a]={domRef:r,excludedDomRefs:[].concat(o)};return{id:a,type:e}}function a(r){if(!r){e.error("Release trigger events must not be called without passing a valid handler!");return}var i=t[r.type];if(!i){return}else if(!i.domRefs[r.id]||!i.domRefs[r.id].domRef){e.warning("Release trigger event for event type "+r.type+"on Control "+r.id+": DomRef does not exists");return}delete i.domRefs[r.id]}return{suppress:s,release:a}});
+//# sourceMappingURL=EventTriggerHook.js.map

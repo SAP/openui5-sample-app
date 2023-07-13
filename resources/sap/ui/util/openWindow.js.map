@@ -1,0 +1,1 @@
+{"version":3,"file":"openWindow.js","names":["sap","ui","define","fnOpenWindow","openWindow","sUrl","sWindowName","sWindowFeatures","window","open"],"sources":["openWindow-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,GAAI,WACjB,aAgBA,IAAIC,EAAe,SAASC,EAAWC,EAAMC,GAC5C,IAAIC,EAAkB,sBAEtB,OAAOC,OAAOC,KAAKJ,EAAMC,EAAaC,EACvC,EAEA,OAAOJ,CACR"}

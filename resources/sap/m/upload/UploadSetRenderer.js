@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/m/ListItemBaseRenderer"],function(e){"use strict";var r={apiVersion:2};r.render=function(e,r){e.openStart("div",r);e.class("sapMUC");e.openEnd();this.renderDragDropOverlay(e,r);this.renderList(e,r);e.close("div")};r.renderDragDropOverlay=function(e,r){e.openStart("div",r.getId()+"-drag-drop-area");e.class("sapMUCDragDropOverlay");e.class("sapMUCDragDropOverlayHide");e.openEnd();e.openStart("div");e.class("sapMUCDragDropIndicator");e.openEnd();e.close("div");e.close("div")};r.renderList=function(e,r){var a=r.getList().getRenderer().renderNoData;r.getList().getRenderer().renderNoData=this.renderNoData;e.renderControl(r.getList());r.getList().getRenderer().renderNoData=a};r.renderNoData=function(r,a){var t=a.getParent();t.fnOriginalRenderDummyArea=t.getList().getRenderer().renderDummyArea;t.getList().getRenderer().renderDummyArea=t.getRenderer().renderDummyArea;r.openStart("li",t.getList().getId("nodata"));r.attr("tabindex",0);r.class("sapMLIB").class("sapMUCNoDataPage");e.addFocusableClasses.call(e,r);r.openEnd();r.renderControl(t._getIllustratedMessage());r.close("li")};r.renderDummyArea=function(e,r,a,t){var n=r.getParent();n.getList().getRenderer().renderDummyArea=n.fnOriginalRenderDummyArea};return r});
+//# sourceMappingURL=UploadSetRenderer.js.map

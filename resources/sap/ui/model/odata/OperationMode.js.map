@@ -1,0 +1,1 @@
+{"version":3,"file":"OperationMode.js","names":["sap","ui","define","OperationMode","Default","Server","Client","Auto"],"sources":["OperationMode-dbg.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,WACb,aAUA,IAAIC,EAAgB,CAOnBC,QAAS,UAQTC,OAAQ,SAORC,OAAQ,SA6CRC,KAAM,QAGP,OAAOJ,CAER,EAAkB"}

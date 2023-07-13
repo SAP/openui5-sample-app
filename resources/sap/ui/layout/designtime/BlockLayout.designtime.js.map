@@ -1,0 +1,1 @@
+{"version":3,"file":"BlockLayout.designtime.js","names":["sap","ui","define","palette","group","icons","svg","aggregations","content","domRef","actions","move"],"sources":["BlockLayout-dbg.designtime.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,GACb,WACC,aAEA,MAAO,CACNC,QAAS,CACRC,MAAO,SACPC,MAAO,CACNC,IAAK,kDAGPC,aAAc,CACbC,QAAS,CACRC,OAAQ,cACRC,QAAS,CACRC,KAAM,kBAMX"}
