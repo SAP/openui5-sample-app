@@ -1,0 +1,1 @@
+{"version":3,"file":"HBox.js","names":["sap","ui","define","FlexBox","library","HBoxRenderer","HBox","extend","metadata","designtime","renderer"],"sources":["HBox-dbg.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,CAAC,YAAa,YAAa,kBACxC,SAASC,EAASC,EAASC,GAC3B,aAwBA,IAAIC,EAAOH,EAAQI,OAAO,aAAiD,CAC1EC,SAAW,CAEVJ,QAAU,QACVK,WAAY,oCAGbC,SAAUL,IAKX,OAAOC,CAER"}

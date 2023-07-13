@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define([],function(){"use strict";var r={};function n(r,n,t,e){return{setIndicatorConfig:function(){},getDragControl:function(){return n},getDropControl:function(){return t},getDropPosition:function(){return e}}}function t(r){var n=r.getParent(),t=r.getDragDropConfig?r.getDragDropConfig():[],e=n&&n.getDragDropConfig?n.getDragDropConfig():[];return t.concat(e)}function e(r){var n=t(r);return n.filter(function(n){return n.isDraggable(r)})}function i(r,n,e){var i=t(r);n=n||[];return i.filter(function(r){return!r.isA("sap.ui.core.dnd.IDragInfo")}).concat(n).filter(function(t){if(!t.isDroppable(r,e)){return false}var i=t.getGroupName();if(!i){return true}return n.some(function(r){return r.getGroupName()==i})})}r._filterDragInfos=function(r,n){return r.filter(function(r){return r.fireDragStart(n)})};r._filterDropInfos=function(r,n){return r.filter(function(r){return r.fireDragEnter(n)})};r._fireDrop=function(r,n){r.forEach(function(r){r.fireDrop(n)})};r.fireDnD=function(r,t,o){var f=e(r);if(!f.length){return}for(var u=0;u<t.length;u++){o.dragSession=n(o,r,t[u].item,t[u].dropPosition);f=o.isMarked("NonDraggable")?[]:this._filterDragInfos(f,o);if(!f.length){continue}var a=i(t[u].grid,f,o);a=this._filterDropInfos(a,o);if(a.length>0){this._fireDrop(a,o);break}}};return r},true);
+//# sourceMappingURL=GridKeyboardDragAndDrop.js.map

@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define([],function(){"use strict";return{apiVersion:2,render:function(t,e){var o=e._oAcc,r=o.getRootAttributes(),l=e.getTitle(),i=e.getProfile(),n=l&&!e.getShowMenuButton();t.openStart("div",e);t.class("sapFShellBar");if(e.getShowNotifications()){t.class("sapFShellBarNotifications")}if(e.getShowCopilot()){t.class("sapFShellBarCopilot")}t.accessibilityState({role:r.role,label:r.label});t.openEnd();if(n){t.openStart("div",e.getId()+"-titleHidden").class("sapFShellBarTitleHidden").attr("role","heading").attr("aria-level","1").openEnd();t.text(l).close("div")}if(e._aLeftControls&&e._aLeftControls.length){t.openStart("div").class("sapFShellBarOLHB").openEnd();e._aLeftControls.forEach(t.renderControl,t);t.close("div")}if(e._oCopilot){t.renderControl(e._oCopilot)}if(e._aRightControls&&e._aRightControls.length){t.openStart("div").class("sapFShellBarORHB").openEnd();e._aRightControls.forEach(t.renderControl,t);t.close("div")}if(i){t.renderControl(i)}if(e._oProductSwitcher){t.renderControl(e._oProductSwitcher)}t.close("div")},shouldAddIBarContext:function(){return false}}},true);
+//# sourceMappingURL=ShellBarRenderer.js.map

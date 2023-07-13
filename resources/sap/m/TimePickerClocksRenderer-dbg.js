@@ -1,0 +1,115 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+
+sap.ui.define([], function() {
+	"use strict";
+
+	/**
+	 * TimePickerClocksRenderer renderer.
+	 * @namespace
+	 */
+	var TimePickerClocksRenderer = {
+		apiVersion: 2
+	};
+
+	/**
+	 * Renders the HTML for the given {@link sap.m.TimePickerClocks} control, using the provided {@link sap.ui.core.RenderManager}.
+	 *
+	 * @param {sap.ui.core.RenderManager} oRM The RenderManager that can be used for writing to the render output buffer
+	 * @param {sap.m.TimePickerClocks} oControl An object representation of the control that should be rendered
+	 */
+	TimePickerClocksRenderer.render = function(oRm, oControl) {
+		oRm.openStart("div", oControl); // outer wrapper
+		oRm.class("sapMTPClocksContainer");
+//		oRm.attr("role", "application");
+//		oRm.attr("aria-roledescription", oControl._getAriaRoleDescription());
+		oRm.openEnd();
+
+		this.renderButtons(oRm, oControl);
+		this.renderClocks(oRm, oControl);
+
+		oRm.close("div"); // outer wrapper
+	};
+
+	/**
+	 * Renders the buttons for the given {@link sap.m.TimePickerClocks} control, using the provided {@link sap.ui.core.RenderManager}.
+	 *
+	 * @param {sap.ui.core.RenderManager} oRM The RenderManager that can be used for writing to the render output buffer
+	 * @param {sap.m.TimePickerClocks} oControl An object representation of the control that should be rendered
+	 */
+	TimePickerClocksRenderer.renderButtons = function(oRm, oControl) {
+		var aButtons = oControl.getAggregation("_buttons"),
+			oSegButton = oControl.getAggregation("_buttonAmPm"),
+			aSeparators = oControl._getTimeSeparators(oControl._getDisplayFormatPattern()),
+			sSeparator,
+			iIndex;
+
+		if (aButtons) {
+
+			if (oSegButton) {
+				aButtons.push(oSegButton);
+			}
+			oRm.openStart("div"); // buttons wrapper
+			oRm.class("sapMTPCButtons");
+			oRm.attr("dir", "ltr");
+			oRm.openEnd();
+
+			// render buttons and separators
+			for (iIndex = 0; iIndex < aSeparators.length; iIndex++) {
+				if (iIndex > 0 || aSeparators[iIndex] !== "") {
+					sSeparator = aSeparators[iIndex];
+					if (sSeparator === undefined) {
+						sSeparator = "";
+					}
+					oRm.openStart("span");
+					oRm.attr("aria-hidden", "true");
+					oRm.openEnd();
+					oRm.text(sSeparator);
+					oRm.close("span");
+				}
+				aButtons[iIndex] && oRm.renderControl(aButtons[iIndex]);
+			}
+
+			oRm.renderControl(oControl._getCurrentTimeButton());
+
+			oRm.close("div"); // buttons wrapper
+
+		}
+	};
+
+	/**
+	 * Renders the clocks for the given {@link sap.m.TimePickerClocks} control, using the provided {@link sap.ui.core.RenderManager}.
+	 *
+	 * @param {sap.ui.core.RenderManager} oRM The RenderManager that can be used for writing to the render output buffer
+	 * @param {sap.m.TimePickerClocks} oControl An object representation of the control that should be rendered
+	 */
+	TimePickerClocksRenderer.renderClocks = function(oRm, oControl) {
+		var aClocks = oControl.getAggregation("_clocks"),
+			iIndex;
+
+		if (aClocks) {
+
+			oRm.openStart("div"); // clocks wrapper
+			oRm.class("sapMTPCClocks");
+			oRm.attr("role", "img");
+			oRm.attr("aria-label", oControl._getAriaLabel());
+			oRm.openEnd();
+
+			// render clocks
+			for (iIndex = 0; iIndex < aClocks.length; iIndex++) {
+				if (iIndex === oControl._getActiveClock()) {
+					aClocks[iIndex].addStyleClass("sapMTPCActive");
+				}
+				oRm.renderControl(aClocks[iIndex]);
+			}
+
+			oRm.close("div"); // clocks wrapper
+
+		}
+	};
+
+	return TimePickerClocksRenderer;
+}, /* bExport= */ true);

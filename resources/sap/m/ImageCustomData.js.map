@@ -1,0 +1,1 @@
+{"version":3,"file":"ImageCustomData.js","names":["sap","ui","define","CustomData","ImageCustomData","extend","metadata","properties","paramName","type","group"],"sources":["ImageCustomData-dbg.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,CACb,0BACE,SAAUC,GACZ,aAqBA,IAAIC,EAAkBD,EAAWE,OAAO,wBAAyB,CAChEC,SAAU,CACTC,WAAY,CAKXC,UAAW,CAAEC,KAAM,SAAUC,MAAO,YAKvC,OAAON,CACR"}

@@ -1,0 +1,175 @@
+{
+  "_version": "1.21.0",
+  "sap.app": {
+    "id": "sap.f",
+    "type": "library",
+    "embeds": [],
+    "applicationVersion": {
+      "version": "1.115.1"
+    },
+    "title": "SAPUI5 library with Fiori controls.",
+    "description": "SAPUI5 library with Fiori controls.",
+    "ach": "CA-UI5-CTR",
+    "resources": "resources.json",
+    "offline": true
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "supportedThemes": [
+      "base",
+      "sap_hcb"
+    ]
+  },
+  "sap.ui5": {
+    "dependencies": {
+      "minUI5Version": "1.115",
+      "libs": {
+        "sap.ui.core": {
+          "minVersion": "1.115.1"
+        },
+        "sap.ui.layout": {
+          "minVersion": "1.115.1"
+        },
+        "sap.m": {
+          "minVersion": "1.115.1"
+        }
+      }
+    },
+    "library": {
+      "i18n": {
+        "bundleUrl": "messagebundle.properties",
+        "supportedLocales": [
+          "",
+          "ar",
+          "bg",
+          "ca",
+          "cs",
+          "cy",
+          "da",
+          "de",
+          "el",
+          "en",
+          "en-GB",
+          "en-US-sappsd",
+          "en-US-saprigi",
+          "en-US-saptrc",
+          "es",
+          "es-MX",
+          "et",
+          "fi",
+          "fr",
+          "fr-CA",
+          "hi",
+          "hr",
+          "hu",
+          "id",
+          "it",
+          "iw",
+          "ja",
+          "kk",
+          "ko",
+          "lt",
+          "lv",
+          "ms",
+          "nl",
+          "no",
+          "pl",
+          "pt",
+          "pt-PT",
+          "ro",
+          "ru",
+          "sh",
+          "sk",
+          "sl",
+          "sv",
+          "th",
+          "tr",
+          "uk",
+          "vi",
+          "zh-CN",
+          "zh-TW"
+        ]
+      },
+      "content": {
+        "controls": [
+          "sap.f.Avatar",
+          "sap.f.AvatarGroup",
+          "sap.f.AvatarGroupItem",
+          "sap.f.cards.Header",
+          "sap.f.cards.NumericHeader",
+          "sap.f.cards.NumericIndicators",
+          "sap.f.cards.NumericSideIndicator",
+          "sap.f.CalendarInCard",
+          "sap.f.Card",
+          "sap.f.GridContainer",
+          "sap.f.DynamicPage",
+          "sap.f.DynamicPageHeader",
+          "sap.f.DynamicPageTitle",
+          "sap.f.IllustratedMessage",
+          "sap.f.FlexibleColumnLayout",
+          "sap.f.semantic.SemanticPage",
+          "sap.f.GridList",
+          "sap.f.GridListItem",
+          "sap.f.PlanningCalendarInCardLegend",
+          "sap.f.ProductSwitch",
+          "sap.f.ProductSwitchItem",
+          "sap.f.ShellBar",
+          "sap.f.SidePanel",
+          "sap.f.Illustration"
+        ],
+        "elements": [
+          "sap.f.DynamicPageAccessibleLandmarkInfo",
+          "sap.f.GridContainerItemLayoutData",
+          "sap.f.FlexibleColumnLayoutAccessibleLandmarkInfo",
+          "sap.f.semantic.AddAction",
+          "sap.f.semantic.CloseAction",
+          "sap.f.semantic.CopyAction",
+          "sap.f.semantic.DeleteAction",
+          "sap.f.semantic.DiscussInJamAction",
+          "sap.f.semantic.EditAction",
+          "sap.f.semantic.ExitFullScreenAction",
+          "sap.f.semantic.FavoriteAction",
+          "sap.f.semantic.FlagAction",
+          "sap.f.semantic.FooterMainAction",
+          "sap.f.semantic.FullScreenAction",
+          "sap.f.semantic.MainAction",
+          "sap.f.semantic.MessagesIndicator",
+          "sap.f.semantic.NegativeAction",
+          "sap.f.semantic.PositiveAction",
+          "sap.f.semantic.PrintAction",
+          "sap.f.semantic.SemanticButton",
+          "sap.f.semantic.SemanticControl",
+          "sap.f.semantic.SemanticToggleButton",
+          "sap.f.semantic.SendEmailAction",
+          "sap.f.semantic.SendMessageAction",
+          "sap.f.semantic.ShareInJamAction",
+          "sap.f.semantic.TitleMainAction",
+          "sap.f.SearchManager",
+          "sap.f.SidePanelItem"
+        ],
+        "types": [
+          "sap.f.AvatarImageFitType",
+          "sap.f.AvatarShape",
+          "sap.f.AvatarSize",
+          "sap.f.AvatarType",
+          "sap.f.AvatarColor",
+          "sap.f.AvatarGroupType",
+          "sap.f.cards.HeaderPosition",
+          "sap.f.cards.NumericHeaderSideIndicatorsAlignment",
+          "sap.f.DynamicPageTitleArea",
+          "sap.f.DynamicPageTitleShrinkRatio",
+          "sap.f.IllustratedMessageSize",
+          "sap.f.IllustratedMessageType",
+          "sap.f.LayoutType"
+        ],
+        "interfaces": [
+          "sap.f.cards.IHeader",
+          "sap.f.ICard",
+          "sap.f.IShellBar",
+          "sap.f.IDynamicPageStickyContent",
+          "sap.f.dnd.IGridDroppable"
+        ]
+      }
+    }
+  }
+}

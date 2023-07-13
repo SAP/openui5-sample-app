@@ -1,0 +1,7 @@
+/*!
+* OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+*/
+sap.ui.define(["sap/ui/core/IconPool"],function(e){"use strict";var t={};t.MESSAGES={TYPE_NOT_SUPPORTED:"Value 'sap.ui.core.MessageType.None' for property 'type' is not supported. "+"Defaulting to 'sap.ui.core.MessageType.Information'"};t.CLASSES={ROOT:"sapMMsgStrip",ICON:"sapMMsgStripIcon",MESSAGE:"sapMMsgStripMessage",CLOSE_BUTTON:"sapMMsgStripCloseButton",CLOSING_TRANSITION:"sapMMsgStripClosing"};t.ATTRIBUTES={CLOSABLE:"data-sap-ui-ms-closable"};t.RESOURCE_BUNDLE=sap.ui.getCore().getLibraryResourceBundle("sap.m");t.getIconURI=function(){var t=this.getType(),s=this.getCustomIcon(),n;var o={Error:"error",Warning:"alert",Success:"sys-enter-2",Information:"information"};n=e.getIconURI(o[t]);return s||n};t.getAriaTypeText=function(){var e="MESSAGE_STRIP_"+this.getType().toUpperCase(),s=t.RESOURCE_BUNDLE.getText(e);if(this.getShowCloseButton()){s+=" "+t.RESOURCE_BUNDLE.getText("MESSAGE_STRIP_CLOSABLE")}return s};t.isMSCloseButtonPressed=function(e){return e.className.indexOf(t.CLASSES.CLOSE_BUTTON)!==-1||e.parentNode.className.indexOf(t.CLASSES.CLOSE_BUTTON)!==-1};t.closeTransitionWithCSS=function(e){this.$().addClass(t.CLASSES.CLOSING_TRANSITION).one("webkitTransitionEnd transitionend",e)};t.getAccessibilityState=function(){return{role:"note"}};return t});
+//# sourceMappingURL=MessageStripUtilities.js.map

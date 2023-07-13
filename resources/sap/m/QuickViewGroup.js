@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["./library","sap/ui/core/Element"],function(e,t){"use strict";var r=t.extend("sap.m.QuickViewGroup",{metadata:{library:"sap.m",properties:{visible:{type:"boolean",group:"Appearance",defaultValue:true},heading:{type:"string",group:"Misc",defaultValue:""}},defaultAggregation:"elements",aggregations:{elements:{type:"sap.m.QuickViewGroupElement",multiple:true,singularName:"element",bindable:"bindable"}}}});["setModel","bindAggregation","setAggregation","insertAggregation","addAggregation","removeAggregation","removeAllAggregation","destroyAggregation"].forEach(function(e){r.prototype[e]=function(){var r=t.prototype[e].apply(this,arguments);var i=this.getParent();if(i){i._updatePage()}if(["removeAggregation","removeAllAggregation"].indexOf(e)!==-1){return r}return this}});r.prototype.setProperty=function(){t.prototype.setProperty.apply(this,arguments);var e=this.getParent();if(e){e._updatePage()}return this};r.prototype.getQuickViewBase=function(){var e=this.getParent();if(e&&e.getQuickViewBase){return e.getQuickViewBase()}return null};return r});
+//# sourceMappingURL=QuickViewGroup.js.map

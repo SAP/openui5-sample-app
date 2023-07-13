@@ -1,0 +1,1 @@
+{"version":3,"file":"VBoxRenderer.js","names":["sap","ui","define","FlexBoxRenderer","VBoxRenderer","apiVersion","render","oRm","oControl","apply","this"],"sources":["VBoxRenderer-dbg.js"],"mappings":";;;;;AAMAA,IAAIC,GAAGC,OAAO,CAAC,qBACd,SAASC,GACT,aAMA,IAAIC,EAAe,CAClBC,WAAY,GASbD,EAAaE,OAAS,SAASC,EAAKC,GACnCL,EAAgBG,OAAOG,MAAMC,KAAM,CAACH,EAAKC,GAC1C,EAEA,OAAOJ,CAER,EAAkB"}

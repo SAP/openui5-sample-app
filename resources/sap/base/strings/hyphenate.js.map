@@ -1,0 +1,1 @@
+{"version":3,"file":"hyphenate.js","names":["sap","ui","define","rHyphen","fnHyphenate","sString","replace","sMatch","sChar","toLowerCase"],"sources":["hyphenate-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,GAAI,WACjB,aAEA,IAAIC,EAAU,WAkBd,IAAIC,EAAc,SAAUC,GAC3B,OAAOA,EAAQC,QAASH,EAAS,SAASI,EAAQC,GACjD,MAAO,IAAMA,EAAMC,aACpB,EACD,EACA,OAAOL,CAER"}

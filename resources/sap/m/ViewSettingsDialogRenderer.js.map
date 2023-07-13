@@ -1,0 +1,1 @@
+{"version":3,"file":"ViewSettingsDialogRenderer.js","names":["sap","ui","define","ViewSettingsDialogRenderer","apiVersion","render","oRm","oControl"],"sources":["ViewSettingsDialogRenderer-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,GACb,WACA,aAOA,IAAIC,EAA6B,CAChCC,WAAY,GASbD,EAA2BE,OAAS,SAAUC,EAAKC,GACnD,EAEA,OAAOJ,CAER,EAAkB"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"extend.js","names":["sap","ui","define","_merge","fnExtend","args","push","apply","arguments"],"sources":["extend-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,CAAC,YAAa,SAASC,GACpC,aAmDA,IAAIC,EAAW,WACd,IAAIC,EAAO,CAAC,MAAO,MACnBA,EAAKC,KAAKC,MAAMF,EAAMG,WACtB,OAAOL,EAAOI,MAAM,KAAMF,EAC3B,EAEA,OAAOD,CACR"}

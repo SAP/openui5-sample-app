@@ -1,0 +1,1 @@
+{"version":3,"file":"capitalize.js","names":["sap","ui","define","fnCapitalize","sString","charAt","toUpperCase","substring"],"sources":["capitalize-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,GAAI,WACjB,aAkBA,IAAIC,EAAe,SAAUC,GAC5B,OAAOA,EAAQC,OAAO,GAAGC,cAAgBF,EAAQG,UAAU,EAC5D,EACA,OAAOJ,CAER"}

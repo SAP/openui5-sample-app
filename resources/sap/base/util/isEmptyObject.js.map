@@ -1,0 +1,1 @@
+{"version":3,"file":"isEmptyObject.js","names":["sap","ui","define","fnIsEmptyObject","isEmptyObject","obj","sName"],"sources":["isEmptyObject-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,GAAI,WACjB,aAsBA,IAAIC,EAAkB,SAASC,EAAcC,GAE5C,IAAK,IAAIC,KAASD,EAAK,CACtB,OAAO,KACR,CACA,OAAO,IACR,EAEA,OAAOF,CACR"}

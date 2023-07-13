@@ -1,0 +1,7 @@
+/*!
+* OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+*/
+sap.ui.define(["./library","sap/m/GenericTile","sap/m/ToDoCardRenderer","sap/m/GenericTileRenderer"],function(e,t,i,o){"use strict";var s=e.FrameType,r=e.GenericTileMode,n=e.LoadState;var a=t.extend("sap.m.ActionTile",{metadata:{library:"sap.m"},renderer:{apiVersion:2,render:function(e,t){if(!t.getHeaderImage()||t.getState()===n.Loading){i.render(e,t)}else{o.render(e,t)}}}});a.prototype.init=function(){this.addStyleClass("sapMAT");this.setMode(r.ActionMode);this.setFrameType(s.TwoByOne);t.prototype.init.apply(this,arguments)};a.prototype.onBeforeRendering=function(){if(this.getHeaderImage()){this.addStyleClass("sapMATSituationCard")}if(this.getEnableNavigationButton()){this.removeStyleClass("sapMATHideActionButton")}else{this.addStyleClass("sapMATHideActionButton")}t.prototype.onBeforeRendering.apply(this,arguments)};a.prototype.onAfterRendering=function(){if(this.getHeaderImage()&&this.getDomRef()){this._removeStyleClasses()}t.prototype.onAfterRendering.apply(this,arguments)};a.prototype._removeStyleClasses=function(){this.getDomRef().classList.remove("sapMGT");this.getDomRef().classList.remove("TwoByOne");this.getDomRef().classList.remove("sapMGTActionMode")};a.prototype._getSizeDescription=function(){return this._oRb.getText("ACTION_TILE_SIZE")};return a});
+//# sourceMappingURL=ActionTile.js.map

@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["./library","sap/ui/core/Control"],function(e,t){"use strict";var a=t.extend("sap.m.P13nPanel",{metadata:{abstract:true,library:"sap.m",interfaces:["sap.m.p13n.IContent"],properties:{title:{type:"string",group:"Appearance",defaultValue:null},titleLarge:{type:"string",group:"Appearance",defaultValue:null},type:{type:"string",group:"Misc",defaultValue:null},verticalScrolling:{type:"boolean",group:"Misc",defaultValue:true},validationExecutor:{type:"object",group:"Misc",defaultValue:null},validationListener:{type:"object",group:"Misc",defaultValue:null},changeNotifier:{type:"object",group:"Misc",defaultValue:null}},defaultAggregation:"items",aggregations:{items:{type:"sap.m.P13nItem",multiple:true,singularName:"item",bindable:"bindable"}},events:{beforeNavigationTo:{}}},renderer:{apiVersion:2,render:function(e,t){e.openStart("span",t);e.class("sapMP13nPanel");e.openEnd();e.close("span")}}});a.prototype.getOkPayload=function(){return{}};a.prototype.getResetPayload=function(){return{}};a.prototype.beforeNavigationTo=function(){this.fireBeforeNavigationTo()};a.prototype.onBeforeNavigationFrom=function(){return true};a.prototype.onAfterNavigationFrom=function(){};return a});
+//# sourceMappingURL=P13nPanel.js.map

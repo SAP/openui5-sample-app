@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/base/Log"],function(e){"use strict";function t(e){var t=e.indexOf("#");if(t>=0){e=e.slice(0,t)}var n=e.indexOf("?");if(n>=0){return e.slice(n+1)}return""}function n(e){return decodeURIComponent(e.replace(/\+/g," "))}function r(e,t){function r(t,n){if(t in e){e[t].push(n)}else{e[t]=[n]}}t.split("&").forEach(function(e){var t=e.indexOf("=");if(t>=0){r(n(e.slice(0,t)),n(e.slice(t+1)))}else if(e.length){r(n(e),"")}})}var i=function(n){var i=Object.create(null);if(n!=null){if(typeof n!=="string"){throw new TypeError("query parameter must be a string")}r(i,t(n))}this.has=function(e){return e in i};this._get=function(e,t){return e in i?i[e][0]:null};this.getAll=function(e){return e in i?i[e].slice():[]};this.keys=function(){return Object.keys(i).values()};var u=false;Object.defineProperty(this,"mParams",{get:function(){if(!u){e.warning("[Deprecated] UriParameters.mParams must not be accessed.");u=true}return Object.assign({},i)},configurable:false})};i.prototype.get=function(t,n){if(n){e.warning("[Deprecated] UriParameters.get(..., true) must not be used, use getAll() instead.");return this.getAll(t)}return this._get(t)};i.fromURL=function(e){return new i(e)};i.fromQuery=function(e){if(typeof e==="string"){if(e[0]!=="?"){e="?"+e}e=e.replace(/#/g,"%23")}return new i(e)};return i});
+//# sourceMappingURL=UriParameters.js.map

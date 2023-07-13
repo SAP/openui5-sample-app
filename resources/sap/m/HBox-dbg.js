@@ -1,0 +1,48 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+
+// Provides control sap.m.HBox.
+sap.ui.define(['./FlexBox', './library', './HBoxRenderer'],
+	function(FlexBox, library, HBoxRenderer) {
+	"use strict";
+
+
+
+	/**
+	 * Constructor for a new HBox.
+	 *
+	 * @param {string} [sId] id for the new control, generated automatically if no id is given
+	 * @param {object} [mSettings] initial settings for the new control
+	 *
+	 * @class
+	 * The HBox control builds the container for a horizontal flexible box layout. HBox is a convenience control, as it is just a specialized FlexBox control.<br>
+	 * <br>
+	 * <b>Note:</b> Be sure to check the <code>renderType</code> setting to avoid issues due to browser inconsistencies.
+	 *
+	 * @extends sap.m.FlexBox
+	 *
+	 * @author SAP SE
+	 * @version 1.115.1
+	 *
+	 * @constructor
+	 * @public
+	 * @alias sap.m.HBox
+	 */
+	var HBox = FlexBox.extend("sap.m.HBox", /** @lends sap.m.HBox.prototype */ {
+		metadata : {
+
+			library : "sap.m",
+			designtime: "sap/m/designtime/HBox.designtime"
+		},
+
+		renderer: HBoxRenderer
+	});
+
+
+
+	return HBox;
+
+});

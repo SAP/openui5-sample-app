@@ -1,0 +1,1 @@
+{"version":3,"file":"ExitFullScreenAction.js","names":["sap","ui","define","SemanticButton","ExitFullScreenAction","extend","metadata","library"],"sources":["ExitFullScreenAction-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,CAAC,oBAAqB,SAASC,GAC5C,aAqBA,IAAIC,EAAuBD,EAAeE,OAAO,sCAAmG,CACnJC,SAAU,CACTC,QAAS,WAIX,OAAOH,CACR"}

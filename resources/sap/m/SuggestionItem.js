@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["./library","sap/ui/core/Item","sap/ui/core/IconPool"],function(e,t,s){"use strict";var i=t.extend("sap.m.SuggestionItem",{metadata:{library:"sap.m",properties:{icon:{type:"string",group:"Appearance",defaultValue:""},enabled:{type:"boolean",group:"Misc",defaultValue:true,visibility:"hidden"},description:{type:"string",group:"Data",defaultValue:""}}}});s.insertFontFaceStyle();function a(e,t,s){var i;if(t){i=t.toUpperCase().indexOf(s.toUpperCase());if(i>-1){e.text(t.slice(0,i));e.openStart("b").openEnd();e.text(t.slice(i,i+s.length));e.close("b");t=t.substring(i+s.length)}e.text(t)}}i.prototype.render=function(e,t,s,i){var n=t.getText(),o=t.getIcon(),r="",p=t.getDescription(),c=t.getParent(),l=c&&c.getSuggestionItems&&c.getSuggestionItems()||[],g=l.indexOf(t),s=s||"";e.openStart("li",t).class("sapMSuLI").class("sapMSelectListItem").class("sapMSelectListItemBase").class("sapMSelectListItemBaseHoverable");e.accessibilityState({role:"option",posinset:g+1,setsize:l.length,selected:i});if(i){e.class("sapMSelectListItemBaseSelected");if(c){c.$("I").attr("aria-activedescendant",t.getId())}}e.openEnd();if(o){e.icon(o,"sapMSuggestionItemIcon")}if(n){a(e,n,s);r=" "}if(p){e.text(r);e.openStart("i").openEnd();a(e,p,s);e.close("i")}e.close("li")};i.prototype.getSuggestionText=function(){return this.getText()};return i});
+//# sourceMappingURL=SuggestionItem.js.map

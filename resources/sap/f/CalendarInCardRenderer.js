@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/core/Renderer","sap/ui/unified/CalendarRenderer"],function(e,t){"use strict";var r=e.extend(t);r.apiVersion=2;r.render=function(e,t){var r=t.getId(),a=t.getTooltip_AsString(),n=t.getAggregation("month"),i=t.getWidth(),o=sap.ui.getCore().getLibraryResourceBundle("sap.f"),s={labelledby:{value:"",append:false}};e.openStart("div",t);e.class("sapUiCal");if(n.length>1){e.class("sapUiCalMulti")}e.accessibilityState(t,s);if(a){e.attr("title",a)}if(i){e.class("sapUiCalWidth");e.style("width",i)}if(t._getSecondaryCalendarType()){e.class("sapUiCalSecType")}e.openEnd();var l=t.getAggregation("header");e.renderControl(l);e.openStart("div",r+"-content");e.class("sapUiCalContent");e.openEnd();switch(t.getProperty("_currentPicker")){case"month":e.renderControl(n[0]);break;case"monthPicker":e.renderControl(t._getMonthPicker());break;case"yearPicker":e.renderControl(t._getYearPicker());break;case"yearRangePicker":e.renderControl(t._getYearRangePicker());break}e.close("div");if(!t._bSkipCancelButtonRendering){e.openStart("button",r+"-cancel");e.class("sapUiCalCancel");e.attr("tabindex","-1");e.openEnd();e.text(o.getText("CALENDAR_CANCEL"));e.close("button")}this.renderCalContentAndArrowsOverlay(e,t,r);e.close("div")};return r},true);
+//# sourceMappingURL=CalendarInCardRenderer.js.map

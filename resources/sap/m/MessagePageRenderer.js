@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/core/library"],function(e){"use strict";var n=e.TextDirection;var t={apiVersion:2};t.render=function(e,n){this.startOpeningDiv(e,n);this.renderHeader(e,n);this.startInnerDivs(e);this.renderContent(e,n);this.endInnerDivs(e);this.endOpeningDiv(e)};t.startOpeningDiv=function(e,t){e.openStart("div",t);e.attr("aria-roledescription",t._sAriaRoleDescription);e.class("sapMMessagePage");if(t.getTextDirection()!==n.Inherit){e.attr("dir",t.getTextDirection().toLowerCase())}e.openEnd()};t.renderHeader=function(e,n){if(n.getShowHeader()){e.renderControl(n.getAggregation("_internalHeader"))}};t.startInnerDivs=function(e){e.openStart("div");e.class("sapMMessagePageInner");e.openEnd();e.openStart("div");e.class("sapMMessagePageContentWrapper");e.openEnd()};t.renderContent=function(e,n){if(n.getIcon()){e.renderControl(n._getIconControl())}e.renderControl(n._getText().addStyleClass("sapMMessagePageMainText"));e.renderControl(n._getDescription().addStyleClass("sapMMessagePageDescription"));this.renderButtons(e,n)};t.renderButtons=function(e,n){var t=n.getButtons();if(t.length>0){e.openStart("div");e.class("sapMMessagePageButtonsWrapper");e.openEnd();for(var r=0;r<t.length;r++){e.renderControl(t[r])}e.close("div")}};t.endInnerDivs=function(e){e.close("div");e.close("div")};t.endOpeningDiv=function(e){e.close("div")};return t},true);
+//# sourceMappingURL=MessagePageRenderer.js.map

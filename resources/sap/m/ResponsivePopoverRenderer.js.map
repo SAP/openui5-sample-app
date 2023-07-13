@@ -1,0 +1,1 @@
+{"version":3,"file":"ResponsivePopoverRenderer.js","names":["sap","ui","define","ResponsivePopoverRenderer","apiVersion","render","oRm","oControl"],"sources":["ResponsivePopoverRenderer-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,GACb,WACA,aAOA,IAAIC,EAA4B,CAC/BC,WAAY,GASbD,EAA0BE,OAAS,SAAUC,EAAKC,GAClD,EAEA,OAAOJ,CAER,EAAkB"}

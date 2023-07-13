@@ -1,0 +1,1 @@
+{"version":3,"file":"CustomTile.designtime.js","names":["sap","ui","define","palette","group","icons","svg","aggregations","content","domRef"],"sources":["CustomTile-dbg.designtime.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,GACb,WACA,aAEA,MAAO,CACNC,QAAS,CACRC,MAAO,OACPC,MAAO,CACNC,IAAK,yCAGPC,aAAe,CACdC,QAAU,CACTC,OAAS,gBAKb"}

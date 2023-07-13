@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["./SplitContainer","./library","sap/ui/Device","./SplitAppRenderer","sap/ui/util/Mobile","sap/ui/thirdparty/jquery"],function(e,t,i,n,o,jQuery){"use strict";var r=e.extend("sap.m.SplitApp",{metadata:{library:"sap.m",properties:{homeIcon:{type:"any",group:"Misc",defaultValue:null}},events:{orientationChange:{deprecated:true,parameters:{landscape:{type:"boolean"}}}},designtime:"sap/m/designtime/SplitApp.designtime"},renderer:n});r.prototype.init=function(){if(e.prototype.init){e.prototype.init.apply(this,arguments)}this.addStyleClass("sapMSplitApp");o.init({viewport:!this._debugZoomAndScroll,statusBar:"default",hideBrowser:true,preventScroll:!this._debugZoomAndScroll,rootId:this.getId()})};r.prototype.onBeforeRendering=function(){if(e.prototype.onBeforeRendering){e.prototype.onBeforeRendering.apply(this,arguments)}o.init({homeIcon:this.getHomeIcon()})};r.prototype.onAfterRendering=function(){if(e.prototype.onAfterRendering){e.prototype.onAfterRendering.apply(this,arguments)}var t=this.getDomRef().parentNode;while(t&&t!==document.documentElement){var i=jQuery(t);if(i.attr("data-sap-ui-root-content")){break}if(!t.style.height){t.style.height="100%"}t=t.parentNode}};r.prototype._onOrientationChange=function(){this.fireOrientationChange({landscape:i.orientation.landscape})};return r});
+//# sourceMappingURL=SplitApp.js.map

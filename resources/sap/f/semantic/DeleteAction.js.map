@@ -1,0 +1,1 @@
+{"version":3,"file":"DeleteAction.js","names":["sap","ui","define","SemanticButton","DeleteAction","extend","metadata","library"],"sources":["DeleteAction-dbg.js"],"mappings":";;;;;AAMAA,IAAIC,GAAGC,OAAO,CAAC,iCAAkC,SAASC,GACzD,aAqBA,IAAIC,EAAeD,EAAeE,OAAO,8BAAmF,CAC3HC,SAAU,CACTC,QAAS,WAIX,OAAOH,CACR"}

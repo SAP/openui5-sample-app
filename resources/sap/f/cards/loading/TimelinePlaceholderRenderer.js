@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/core/Renderer","./PlaceholderBaseRenderer"],function(e,a){"use strict";var i=e.extend(a);i.apiVersion=2;i.CSS_CLASS_PLACEHOLDER="sapFCardContentTimelinePlaceholder";i.renderRow=function(e,a){e.openStart("div").class("sapFCardTimelinePlaceholderRow").class("sapFCardTimelinePlaceholderRow"+a).class("sapFCardLoadingShimmer").openEnd().close("div")};i.renderContent=function(e,a){var i=e.getMinItems(),r=e.getItem();for(var n=0;n<i;n++){a.openStart("div").class("sapFCardTimelinePlaceholderItem").style("height",e.getItemHeight()).openEnd();if(r){a.openStart("div").class("sapFCardTimelineNavGroup").openEnd();a.openStart("div").class("sapFCardTimelinePlaceholderImg").class("sapFCardLoadingShimmer").openEnd().close("div");if(n!==i-1){a.openStart("div").class("sapFCardTimelinePlaceholderLine").class("sapFCardLoadingShimmer").openEnd().close("div")}a.close("div")}a.openStart("div").class("sapFCardTimelinePlaceholderRows").openEnd();if(r){this.renderRow(a,100);this.renderRow(a,40);this.renderRow(a,60)}a.close("div");a.close("div")}};i.addOuterAttributes=function(e,r){a.addOuterAttributes.apply(this,arguments);r.class(i.CSS_CLASS_PLACEHOLDER)};return i},true);
+//# sourceMappingURL=TimelinePlaceholderRenderer.js.map

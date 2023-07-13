@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define([],function(){"use strict";return{EMPTY_CELL:false,create:function(t,r){var o=window.getComputedStyle(t);var n={columns:o.gridTemplateColumns.split(/\s+/),rows:o.gridTemplateRows.split(/\s+/),rowGap:parseFloat(o.rowGap),columnGap:parseFloat(o.columnGap),paddingTop:parseFloat(o.paddingTop),paddingLeft:parseFloat(o.paddingLeft)};var a=Array.from(new Array(n.rows.length),function(){return new Array(n.columns.length).fill(this.EMPTY_CELL)}.bind(this));r.forEach(function(r){var o=this._getPosition(t,r,n);this._addToMatrix(a,o,r)}.bind(this));return a},_getPosition:function(t,r,o){var n=t.getBoundingClientRect(),a=r.getBoundingClientRect(),e=this._getGridRow(n,a,o),i=this._getGridCol(n,a,o);return{xFrom:e.start,xTo:e.end,yFrom:i.start,yTo:i.end}},_getGridRow:function(t,r,o){var n=-1,a=0,e=0,i,d=r.top-t.top-o.paddingTop,s=d+r.height;for(i=0;i<o.rows.length;i++){e+=parseFloat(o.rows[i]);if(n===-1&&d<e){n=i}e+=o.rowGap;if(Math.round(s)<=Math.round(e)){a=i+1;break}}return{start:n,end:a}},_getGridCol:function(t,r,o){var n=-1,a=0,e=0,i,d=r.left-t.left-o.paddingLeft,s=d+r.width;for(i=0;i<o.columns.length;i++){e+=parseFloat(o.columns[i]);if(n===-1&&d<e){n=i}e+=o.columnGap;if(Math.round(s)<=Math.round(e)){a=i+1;break}}return{start:n,end:a}},_addToMatrix:function(t,r,o){var n,a;for(n=r.xFrom;n<r.xTo;n++){for(a=r.yFrom;a<r.yTo;a++){t[n][a]=o}}}}});
+//# sourceMappingURL=GridNavigationMatrix.js.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"CloseAction.js","names":["sap","ui","define","SemanticButton","CloseAction","extend","metadata","library"],"sources":["CloseAction-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,CAAC,oBAAqB,SAASC,GAC5C,aAqBA,IAAIC,EAAcD,EAAeE,OAAO,6BAAiF,CACxHC,SAAU,CACTC,QAAS,WAIX,OAAOH,CACR"}

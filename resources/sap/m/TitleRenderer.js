@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/core/Renderer","sap/ui/core/library","sap/m/HyphenationSupport"],function(e,t,i){"use strict";var a=t.TextDirection;var r=t.TitleLevel;var l={apiVersion:2};l.render=function(t,l){var n=l._getTitle(),s=l.getContent(),o=(n&&!s?n.getLevel():l.getLevel())||r.Auto,p=o==r.Auto,g=p?"div":o.toLowerCase(),c=!s?i.getTextForRender(l,"main"):"",T=l.getTextDirection(),d=e.getTextAlign(l.getTextAlign(),T),u;t.openStart(g,l);t.class("sapMTitle");t.class("sapMTitleStyle"+l.getTitleStyle());t.class(l.getWrapping()?"sapMTitleWrap":"sapMTitleNoWrap");t.class("sapUiSelectable");var v=l.getWidth();if(!v){t.class("sapMTitleMaxWidth")}else{t.style("width",v)}if(d){t.style("text-align",d)}u=n&&!s?n.getTooltip_AsString():l.getTooltip_AsString();if(u){t.attr("title",u)}if(p){t.attr("role","heading");t.attr("aria-level",l._getAriaLevel())}if(!s){i.writeHyphenationClass(t,l)}t.openEnd();t.openStart("span",l.getId()+"-inner");t.attr("dir",T!==a.Inherit?T.toLowerCase():"auto");t.openEnd();if(s){t.renderControl(s)}else{t.text(c)}t.close("span");t.close(g)};return l},true);
+//# sourceMappingURL=TitleRenderer.js.map

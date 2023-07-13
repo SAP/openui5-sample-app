@@ -1,0 +1,1 @@
+{"version":3,"file":"camelize.js","names":["sap","ui","define","rCamelCase","fnCamelize","sString","replace","sMatch","sChar","toUpperCase"],"sources":["camelize-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,GAAI,WACjB,aAEA,IAAIC,EAAa,SAkBjB,IAAIC,EAAa,SAAUC,GAC1B,OAAOA,EAAQC,QAASH,EAAY,SAAUI,EAAQC,GACrD,OAAOA,EAAMC,aACd,EACD,EACA,OAAOL,CAER"}

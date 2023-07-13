@@ -1,0 +1,1 @@
+{"version":3,"file":"FavoriteAction.js","names":["sap","ui","define","SemanticToggleButton","FavoriteAction","extend","metadata","library"],"sources":["FavoriteAction-dbg.js"],"mappings":";;;;;AAMAA,IAAIC,GAAGC,OAAO,CAAC,0BAA2B,SAASC,GAClD,aAqBA,IAAIC,EAAiBD,EAAqBE,OAAO,gCAAuF,CACvIC,SAAU,CACTC,QAAS,WAIX,OAAOH,CACR"}

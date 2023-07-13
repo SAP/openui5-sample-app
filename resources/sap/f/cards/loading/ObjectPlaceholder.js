@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/f/cards/loading/PlaceholderBase","./ObjectPlaceholderRenderer","sap/ui/core/ResizeHandler","sap/ui/dom/units/Rem"],function(e,i,t,s){"use strict";var r=400;var n=s.toPx(3.25);var o=e.extend("sap.f.cards.loading.ObjectPlaceholder",{metadata:{library:"sap.f",properties:{groups:{type:"object"},configuration:{type:"object"}},aggregations:{_rootLayout:{multiple:false,visibility:"hidden"}}},renderer:i});o.prototype.init=function(){this._iColsCnt=1;this._iRowsCnt=0};o.prototype.exit=function(){this._deregisterResizeHandler()};o.prototype.onBeforeRendering=function(){this._deregisterResizeHandler()};o.prototype.onAfterRendering=function(){this._sResizeListenerId=t.register(this.getDomRef(),this._handleResize.bind(this));this._handleResize()};o.prototype._handleResize=function(){var e=this.$().height();var i=Math.floor(e/n);var t=this.$().width()>r?2:1;if(this._iRowsCnt!==i||this._iColsCnt!==t){this._iRowsCnt=i;this._iColsCnt=t;this.invalidate()}};o.prototype._deregisterResizeHandler=function(){if(this._sResizeListenerId){t.deregister(this._sResizeListenerId);this._sResizeListenerId=""}};return o});
+//# sourceMappingURL=ObjectPlaceholder.js.map
