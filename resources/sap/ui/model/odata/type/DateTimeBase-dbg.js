@@ -92,7 +92,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 * @public
 	 * @since 1.27.0
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 */
 	var DateTimeBase = ODataType.extend("sap.ui.model.odata.type.DateTimeBase", {
 			constructor : function (oFormatOptions, oConstraints) {
@@ -167,7 +167,11 @@ sap.ui.define([
 		}
 		switch (this.getPrimitiveType(sTargetType)) {
 			case "any":
+				return oValue;
 			case "object":
+				if (isDateOnly(this)) {
+					return this.getDateValue(oValue);
+				}
 				return oValue;
 			case "string":
 				if (!(oValue instanceof Date)) {
@@ -245,6 +249,9 @@ sap.ui.define([
 		}
 		switch (this.getPrimitiveType(sSourceType)) {
 			case "object":
+				if (isDateOnly(this)) {
+					return this._getModelValue(vValue);
+				}
 				return vValue;
 			case "string":
 				oResult = this.getFormat().parse(vValue);

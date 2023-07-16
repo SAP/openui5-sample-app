@@ -26,7 +26,7 @@ sap.ui.define(['./FlexBox', './library', "./VBoxRenderer"],
 	 * @extends sap.m.FlexBox
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public

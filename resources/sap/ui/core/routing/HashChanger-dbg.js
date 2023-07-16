@@ -223,6 +223,7 @@ sap.ui.define([
 						}
 						return true;
 					}
+					return false;
 				});
 				if (!bFound) {
 					// the subhash must be added

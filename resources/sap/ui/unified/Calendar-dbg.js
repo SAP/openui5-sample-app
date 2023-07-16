@@ -76,7 +76,7 @@ sap.ui.define([
 	 * Basic Calendar.
 	 * This calendar is used for DatePickers
 	 * @extends sap.ui.core.Control
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public
@@ -2094,7 +2094,7 @@ sap.ui.define([
 			oFocusedDate = this._getFocusedDate(),
 			oFocusMonthDelegate = {
 				onAfterRendering: function() {
-					this._oItemNavigation.focusItem(this._oItemNavigation.getFocusedIndex());
+					this._oItemNavigation.focusItem(this._oItemNavigation.getFocusedIndex(), undefined, true);
 					this.removeDelegate(oFocusMonthDelegate);
 				}
 			},

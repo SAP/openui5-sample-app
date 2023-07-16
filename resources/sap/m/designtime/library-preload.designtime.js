@@ -136,7 +136,7 @@ sap.ui.predefine("sap/m/designtime/FlexBox.designtime", [],function(){"use stric
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/HBox.designtime", [],function(){"use strict";return{name:{singular:"HBOX_NAME",plural:"HBOX_NAME_PLURAL"},palette:{group:"LAYOUT",icons:{svg:"sap/m/designtime/HBox.icon.svg"}},templates:{create:"sap/m/designtime/HBox.create.fragment.xml"}}});
+sap.ui.predefine("sap/m/designtime/HBox.designtime", [],function(){"use strict";return{actions:{remove:{changeType:"hideControl"},reveal:{changeType:"unhideControl"}},aggregations:{items:{domRef:":sap-domref",actions:{move:"moveControls"}}},name:{singular:"HBOX_NAME",plural:"HBOX_NAME_PLURAL"},palette:{group:"LAYOUT",icons:{svg:"sap/m/designtime/HBox.icon.svg"}},templates:{create:"sap/m/designtime/HBox.create.fragment.xml"}}});
 /*!
  * OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
@@ -148,7 +148,7 @@ sap.ui.predefine("sap/m/designtime/IconTabBar.designtime", ["sap/ui/model/json/J
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/IconTabFilter.designtime", [],function(){"use strict";return{palette:{group:"CONTAINER",icons:{svg:"sap/m/designtime/IconTabFilter.icon.svg"}},actions:{rename:function(e){return{changeType:"rename",domRef:function(e){return e.$().find(".sapMITBText")[0]}}}},aggregations:{content:{domRef:function(e){var n=e.getParent(),t=n&&n.getParent(),o=e.getContent()||[];if(n.oSelectedItem===e&&o.length>0&&t){return t.getDomRef("content")}},actions:{move:"moveControls"}}}}});
+sap.ui.predefine("sap/m/designtime/IconTabFilter.designtime", [],function(){"use strict";return{palette:{group:"CONTAINER",icons:{svg:"sap/m/designtime/IconTabFilter.icon.svg"}},actions:{rename:function(n){return{changeType:"rename",domRef:function(n){return n.$().find(".sapMITBText")[0]}}}},aggregations:{content:{actions:{move:"moveControls"}}}}});
 /*!
  * OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
@@ -256,7 +256,7 @@ sap.ui.predefine("sap/m/designtime/ObjectAttribute.designtime", [],function(){"u
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/ObjectHeader.designtime", [],function(){"use strict";return{palette:{group:"INPUT",icons:{svg:"sap/m/designtime/ObjectHeader.icon.svg"}},templates:{create:"sap/m/designtime/ObjectHeader.create.fragment.xml"}}});
+sap.ui.predefine("sap/m/designtime/ObjectHeader.designtime", [],function(){"use strict";return{palette:{group:"INPUT",icons:{svg:"sap/m/designtime/ObjectHeader.icon.svg"}},aggregations:{headerContainer:{propagateMetadata:function(e,t){if(e.isA("sap.m.IconTabBar")){return{domRef:function(){return t.getDomRef().querySelector(".sapMITH")},aggregations:{items:{domRef:function(){return t.getDomRef().querySelector(".sapMITH")},actions:{move:"moveControls"}}}}}return null},propagateRelevantContainer:true}},templates:{create:"sap/m/designtime/ObjectHeader.create.fragment.xml"}}});
 /*!
  * OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
@@ -400,7 +400,7 @@ sap.ui.predefine("sap/m/designtime/SegmentedButton.designtime", [],function(){"u
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/Select.designtime", [],function(){"use strict";return{palette:{group:"INPUT",icons:{svg:"sap/m/designtime/Select.icon.svg"}},aggregations:{items:{domRef:":sap-domref"},picker:{ignore:true}},templates:{create:"sap/m/designtime/Select.create.fragment.xml"}}});
+sap.ui.predefine("sap/m/designtime/Select.designtime", [],function(){"use strict";return{palette:{group:"INPUT",icons:{svg:"sap/m/designtime/Select.icon.svg"}},aggregations:{items:{domRef:":sap-domref",ignore:true},picker:{ignore:true}},templates:{create:"sap/m/designtime/Select.create.fragment.xml"}}});
 /*!
  * OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
@@ -490,7 +490,7 @@ sap.ui.predefine("sap/m/designtime/Toolbar.designtime", [],function(){"use stric
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/VBox.designtime", [],function(){"use strict";return{name:{singular:"VBOX_NAME",plural:"VBOX_NAME_PLURAL"},palette:{group:"LAYOUT",icons:{svg:"sap/m/designtime/VBox.icon.svg"}},templates:{create:"sap/m/designtime/VBox.create.fragment.xml"}}});
+sap.ui.predefine("sap/m/designtime/VBox.designtime", [],function(){"use strict";return{actions:{remove:{changeType:"hideControl"},reveal:{changeType:"unhideControl"}},aggregations:{items:{domRef:":sap-domref",actions:{move:"moveControls"}}},name:{singular:"VBOX_NAME",plural:"VBOX_NAME_PLURAL"},palette:{group:"LAYOUT",icons:{svg:"sap/m/designtime/VBox.icon.svg"}},templates:{create:"sap/m/designtime/VBox.create.fragment.xml"}}});
 /*!
  * OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.

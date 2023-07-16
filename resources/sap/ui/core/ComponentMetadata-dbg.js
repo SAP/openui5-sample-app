@@ -31,7 +31,7 @@ sap.ui.define([
 	 * @public
 	 * @class
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @since 1.9.2
 	 * @alias sap.ui.core.ComponentMetadata
 	 * @extends sap.ui.base.ManagedObjectMetadata
@@ -145,7 +145,7 @@ sap.ui.define([
 		// This could happen when the manifest is accessed (via #getManifestObject) while sap.ui.component is loading it.
 		// Then the async request wouldn't be cancelled and the manifest already loaded (sync) should not be be overridden.
 		if (this._oManifest) {
-			Log.warning("Can't apply manifest to ComponentMetadata as it has already been created.", this.getName(), "sap.ui.core.ComponentMetadata");
+			Log.info("Can't apply manifest to ComponentMetadata as it has already been created.", this.getName(), "sap.ui.core.ComponentMetadata");
 			return;
 		}
 

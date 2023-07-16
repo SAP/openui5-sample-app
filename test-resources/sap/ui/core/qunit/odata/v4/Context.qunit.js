@@ -5,12 +5,11 @@
  */
 sap.ui.define([
 	"sap/base/Log",
-	"sap/base/util/isEmptyObject",
 	"sap/ui/base/SyncPromise",
 	"sap/ui/model/Context",
 	"sap/ui/model/odata/v4/Context",
 	"sap/ui/model/odata/v4/lib/_Helper"
-], function (Log, isEmptyObject, SyncPromise, BaseContext, Context, _Helper) {
+], function (Log, SyncPromise, BaseContext, Context, _Helper) {
 	"use strict";
 
 	var sClassName = "sap.ui.model.odata.v4.Context";
@@ -240,7 +239,10 @@ sap.ui.define([
 			Context.create({}, {}, "/Employees('42')", 5).toString(),
 			"/Employees('42')[5]");
 
-		oContext = Context.create({}, {getHeaderContext : true}, "/Employees($uid=123)", -1,
+		oContext = Context.create({}, {
+				getHeaderContext : true,
+				onKeepAliveChanged : function () {}
+			}, "/Employees($uid=123)", -1,
 			new SyncPromise(function (resolve) {
 				fnResolve = resolve;
 			}));
@@ -938,14 +940,10 @@ sap.ui.define([
 
 		oBindingMock.expects("checkSuspended").withExactArgs();
 		oBindingMock.expects("fetchIfChildCanUseCache")
-			.withExactArgs(oContext, "bar", sinon.match(function (oPromise) {
-				return oPromise.isFulfilled() && isEmptyObject(oPromise.getResult());
-			}))
+			.withExactArgs(oContext, "bar", undefined, true)
 			.resolves("/resolved/bar"); // no need to return a SyncPromise
 		oBindingMock.expects("fetchIfChildCanUseCache")
-			.withExactArgs(oContext, "baz", sinon.match(function (oPromise) {
-				return oPromise.isFulfilled() && isEmptyObject(oPromise.getResult());
-			}))
+			.withExactArgs(oContext, "baz", undefined, true)
 			.resolves("/resolved/baz"); // no need to return a SyncPromise
 		oContextMock.expects("fetchPrimitiveValue")
 			.withExactArgs("/resolved/bar", "~bExternalFormat~")
@@ -971,9 +969,7 @@ sap.ui.define([
 
 		this.mock(oBinding).expects("checkSuspended").withExactArgs();
 		this.mock(oBinding).expects("fetchIfChildCanUseCache")
-			.withExactArgs(oContext, "bar", sinon.match(function (oPromise) {
-				return oPromise.isFulfilled() && isEmptyObject(oPromise.getResult());
-			}))
+			.withExactArgs(oContext, "bar", undefined, true)
 			.resolves(undefined); // no need to return a SyncPromise
 		this.mock(oContext).expects("fetchValue").never();
 		this.oLogMock.expects("error")
@@ -1117,6 +1113,7 @@ sap.ui.define([
 				delete : function () {},
 				getHeaderContext : function () {},
 				lockGroup : function () {},
+				onKeepAliveChanged : function () {},
 				mParameters : {}
 			},
 			oContext = Context.create("~oModel~", oBinding, "/Foo/Bar('42')", 42,
@@ -3866,7 +3863,8 @@ sap.ui.define([
 		var done = assert.async(),
 			oBinding = {
 				checkKeepAlive : function () {},
-				fetchIfChildCanUseCache : function () {}
+				fetchIfChildCanUseCache : function () {},
+				onKeepAliveChanged : function () {}
 			},
 			oBindingMock = this.mock(oBinding),
 			oError = new Error(),
@@ -3891,6 +3889,10 @@ sap.ui.define([
 		this.mock(_Helper).expects("getPredicateIndex").exactly(4).withExactArgs("/path");
 		oBindingMock.expects("checkKeepAlive")
 			.withExactArgs(sinon.match.same(oContext), "bTrueOrFalse");
+		oBindingMock.expects("onKeepAliveChanged").withExactArgs(sinon.match.same(oContext))
+			.callsFake(function () {
+				assert.strictEqual(oContext.bKeepAlive, "bTrueOrFalse");
+			});
 
 		// code under test
 		oContext.setKeepAlive("bTrueOrFalse");
@@ -3899,6 +3901,7 @@ sap.ui.define([
 
 		oContext.fnOnBeforeDestroy = "foo";
 		oBindingMock.expects("checkKeepAlive").withExactArgs(sinon.match.same(oContext), false);
+		oBindingMock.expects("onKeepAliveChanged").withExactArgs(sinon.match.same(oContext));
 
 		// code under test
 		oContext.setKeepAlive(false, "fnOnBeforeDestroy", true);
@@ -3911,16 +3914,18 @@ sap.ui.define([
 			.withExactArgs("/meta/path/@com.sap.vocabularies.Common.v1.Messages/$Path")
 			.resolves("path/to/messages");
 		oBindingMock.expects("fetchIfChildCanUseCache")
-			.withExactArgs(sinon.match.same(oContext), "path/to/messages", {})
+			.withExactArgs(sinon.match.same(oContext), "path/to/messages", undefined, true)
 			.resolves("/reduced/path");
 		this.mock(oContext).expects("fetchValue").withExactArgs("/reduced/path")
 			.rejects(oError);
+		oBindingMock.expects("onKeepAliveChanged").withExactArgs(sinon.match.same(oContext));
 
 		// code under test
 		oContext.setKeepAlive(true, "fnOnBeforeDestroy", true);
 		assert.strictEqual(oContext.isKeepAlive(), true);
 		assert.strictEqual(oContext.fnOnBeforeDestroy, "fnOnBeforeDestroy");
 		oBindingMock.expects("checkKeepAlive").withExactArgs(sinon.match.same(oContext), false);
+		oBindingMock.expects("onKeepAliveChanged").withExactArgs(sinon.match.same(oContext));
 
 		oContext.oDeletePromise = "~deletePromise~";
 
@@ -4009,7 +4014,8 @@ sap.ui.define([
 	QUnit.test("setKeepAlive: missing messages annotation", function (assert) {
 		var done = assert.async(),
 			oBinding = {
-				checkKeepAlive : function () {}
+				checkKeepAlive : function () {},
+				onKeepAliveChanged : function () {}
 			},
 			oMetaModel = {
 				fetchObject : function () {}
@@ -4035,6 +4041,7 @@ sap.ui.define([
 		this.mock(oMetaModel).expects("fetchObject")
 			.withExactArgs("/meta/path/@com.sap.vocabularies.Common.v1.Messages/$Path")
 			.resolves(undefined);
+		this.mock(oBinding).expects("onKeepAliveChanged").withExactArgs(sinon.match.same(oContext));
 
 		// code under test
 		oContext.setKeepAlive(true, "fnOnBeforeDestroy", true);
@@ -4045,7 +4052,8 @@ sap.ui.define([
 		var done = assert.async(),
 			oBinding = {
 				checkKeepAlive : function () {},
-				fetchIfChildCanUseCache : function () {}
+				fetchIfChildCanUseCache : function () {},
+				onKeepAliveChanged : function () {}
 			},
 			oError = new Error(),
 			oMetaModel = {
@@ -4072,8 +4080,9 @@ sap.ui.define([
 			.withExactArgs("/meta/path/@com.sap.vocabularies.Common.v1.Messages/$Path")
 			.resolves("path/to/messages");
 		this.mock(oBinding).expects("fetchIfChildCanUseCache")
-			.withExactArgs(sinon.match.same(oContext), "path/to/messages", {})
+			.withExactArgs(sinon.match.same(oContext), "path/to/messages", undefined, true)
 			.rejects(oError);
+		this.mock(oBinding).expects("onKeepAliveChanged").withExactArgs(sinon.match.same(oContext));
 
 		// code under test
 		oContext.setKeepAlive(true, "fnOnBeforeDestroy", true);
@@ -4160,12 +4169,27 @@ sap.ui.define([
 			// code under test
 			oContext.setSelected(false);
 		}, new Error("Unsupported context: " + oContext));
+
+		oContext = Context.create({/*oModel*/}, {
+			getHeaderContext : true,
+			onKeepAliveChanged : function () {}
+		}, "/some/path", 42);
+
+		this.mock(oContext.oBinding).expects("onKeepAliveChanged")
+			.withExactArgs(sinon.match.same(oContext))
+			.callsFake(function () {
+				assert.strictEqual(oContext.bSelected, "~bSelected~");
+			});
+
+		// code under test
+		oContext.setSelected("~bSelected~");
 	});
 
 	//*********************************************************************************************
 	QUnit.test("isEffectivelyKeptAlive: explicitly", function (assert) {
 		var oBinding = {
 				checkKeepAlive : function () {},
+				onKeepAliveChanged : function () {},
 				mParameters : {}
 			},
 			oContext = Context.create({/*oModel*/}, oBinding, "/TEAMS('1')");
@@ -4183,6 +4207,7 @@ sap.ui.define([
 				getHeaderContext : function () {
 					return oHeaderContext; // eslint-disable-line no-use-before-define
 				},
+				onKeepAliveChanged : function () {},
 				mParameters : {}
 			},
 			oHeaderContext = Context.create({/*oModel*/}, oBinding, "/TEAMS");
@@ -4199,6 +4224,7 @@ sap.ui.define([
 		var oBinding = {
 				getHeaderContext : function () {},
 				isRelative : function () { throw new Error("must be mocked"); },
+				onKeepAliveChanged : function () {},
 				mParameters : {}
 			},
 			oBindingMock = this.mock(oBinding),
@@ -4241,6 +4267,7 @@ sap.ui.define([
 		var oBinding = {
 				checkKeepAlive : function () {},
 				getHeaderContext : function () {},
+				onKeepAliveChanged : function () {},
 				isRelative : function () { return true; },
 				mParameters : {$$ownRequest : true}
 			},
@@ -4258,6 +4285,7 @@ sap.ui.define([
 	QUnit.test("isEffectivelyKeptAlive: data aggregation", function (assert) {
 		var oBinding = {
 				getHeaderContext : function () {},
+				onKeepAliveChanged : function () {},
 				isRelative : function () { return false; },
 				mParameters : {}
 			},

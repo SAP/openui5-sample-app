@@ -68,7 +68,7 @@ sap.ui.define([
 	};
 
 	SemanticFooter.prototype.getCustomActions = function() {
-		return this._aCustomContent;
+		return this._aCustomContent.slice();
 	};
 
 	SemanticFooter.prototype.indexOfCustomAction = function(oCustomControl) {

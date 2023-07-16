@@ -93,7 +93,7 @@ sap.ui.define([
 	 * @implements sap.m.IconTab
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public
@@ -688,7 +688,6 @@ sap.ui.define([
 		if (iIndexInSet !== undefined && iSetSize !== undefined) {
 			oRM.attr("aria-posinset", iIndexInSet + 1);
 			oRM.attr("aria-setsize", iSetSize);
-			oRM.attr("aria-level", this._getNestedLevel());
 		}
 
 		var sTooltip = this.getTooltip_AsString();

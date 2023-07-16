@@ -23,8 +23,9 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/ui/Device",
 	"sap/m/library",
-	"sap/base/util/UriParameters"
-], function(JSONModel, VBox, Control, Column, Text, Filter, Table, OverflowToolbar, SearchField, ToolbarSpacer, OverflowToolbarButton, OverflowToolbarLayoutData, DragDropInfo, ShortcutHintsMixin, KeyCodes, Log, Device, library, UriParameters) {
+	"sap/base/util/UriParameters",
+	"sap/ui/core/InvisibleText"
+], function(JSONModel, VBox, Control, Column, Text, Filter, Table, OverflowToolbar, SearchField, ToolbarSpacer, OverflowToolbarButton, OverflowToolbarLayoutData, DragDropInfo, ShortcutHintsMixin, KeyCodes, Log, Device, library, UriParameters, InvisibleText) {
 	"use strict";
 
 	/**
@@ -52,7 +53,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @public
 	 * @abstract
@@ -193,6 +194,11 @@ sap.ui.define([
 		// list is necessary to set the template + model on
 		this._oListControl = this._createInnerListControl();
 
+		this._oInvText = new InvisibleText({
+			text: this.getTitle() //use the Panel title als invisibleText title for the table
+		});
+		this._oListControl.addAriaLabelledBy(this._oInvText);
+
 		// Determines whether the rearranged item should be focused
 		this._bFocusOnRearrange = true;
 
@@ -216,7 +222,8 @@ sap.ui.define([
 	BasePanel.prototype._setInnerLayout = function() {
 		this.setAggregation("_content", new VBox({
 			items: [
-				this._oListControl
+				this._oListControl,
+				this._oInvText
 			]
 		}));
 	};

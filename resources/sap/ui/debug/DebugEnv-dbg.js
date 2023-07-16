@@ -16,7 +16,7 @@ sap.ui.define('sap/ui/debug/DebugEnv', ['sap/ui/base/Interface', './ControlTree'
 	 * @class Central Class for the Debug Environment
 	 *
 	 * @author Martin Schaus, Frank Weigel
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @private
 	 * @alias sap.ui.debug.DebugEnv
 	 */

@@ -23,7 +23,7 @@ sap.ui.define(['./Item', './library'],
 	 * @extends sap.ui.core.Item
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.SeparatorItem

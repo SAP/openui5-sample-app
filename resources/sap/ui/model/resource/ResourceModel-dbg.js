@@ -227,7 +227,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.model.Model
 	 * @public
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 */
 	var ResourceModel = Model.extend("sap.ui.model.resource.ResourceModel", /** @lends sap.ui.model.resource.ResourceModel.prototype */ {
 

@@ -157,7 +157,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public
@@ -297,6 +297,8 @@ function(
 
 				/**
 				 * Specifies whether the suggestions highlighting is enabled.
+				 * <b>Note:</b> Due to performance constraints, the functionality will be disabled above 200 items.
+				 *
 				 * @since 1.46
 				 */
 				enableSuggestionsHighlighting: {type: "boolean", group: "Behavior", defaultValue: true},
@@ -1173,6 +1175,8 @@ function(
 			decorative: false,
 			press: function () {
 				if (that.getValue() !== "") {
+					that.setValue("");
+
 					that.fireChange({
 						value: ""
 					});
@@ -1180,8 +1184,6 @@ function(
 					that.fireLiveChange({
 						value: ""
 					});
-
-					that.setValue("");
 
 					that._bClearButtonPressed = true;
 
@@ -2177,19 +2179,20 @@ function(
 	 */
 	Input.prototype._handleTypeAhead = function (oInput) {
 		var sValue = this.getValue();
+		var oDomRef = oInput.getFocusDomRef();
 		var mTypeAheadInfo = {
 			value: "",
 			selectedItem: null
 		};
 		var oListDelegate;
 		var oList = oInput._getSuggestionsPopover() && oInput._getSuggestionsPopover().getItemsContainer();
+		this._setTypedInValue(oDomRef.value.substring(0, oDomRef.selectionStart));
 
 		// check if typeahead is already performed
 		if ((oInput && oInput.getValue().toLowerCase()) === (this._getProposedItemText() && this._getProposedItemText().toLowerCase())) {
 			return;
 		}
 
-		this._setTypedInValue(sValue);
 		oInput._setProposedItemText(null);
 
 		if (!this._bDoTypeAhead || sValue === "" ||
@@ -2259,14 +2262,15 @@ function(
 	 * @override
 	 */
 	Input.prototype.onsapright = function () {
-		var sValue = this.getValue();
+		var sValue = this.getValue(),
+			oDomRef = this.getFocusDomRef();
 
 		if (!this.getAutocomplete()) {
 			return;
 		}
 
 		if (this._getTypedInValue() !== sValue) {
-			this._setTypedInValue(sValue);
+			this._setTypedInValue(oDomRef.value.substring(0, oDomRef.selectionStart));
 
 			this.fireLiveChange({
 				value: sValue,
@@ -3065,6 +3069,8 @@ function(
 					var iInputWidth = this.getDomRef().getBoundingClientRect().width;
 					var sPopoverMaxWidth = getComputedStyle(this.getDomRef()).getPropertyValue("--sPopoverMaxWidth");
 
+					this._bAfterOpenFinisihed = true;
+
 					if (this.getMaxSuggestionWidth()) {
 						return;
 					}
@@ -3077,7 +3083,6 @@ function(
 
 					oSuggPopover.getPopover().getDomRef().style.setProperty("min-width", iInputWidth + "px");
 
-					this._bAfterOpenFinisihed = true;
 				}
 			}, this);
 		}

@@ -13,9 +13,10 @@ sap.ui.define([
 	'sap/ui/core/library',
 	'sap/ui/base/DataType',
 	'./ObjectStatusRenderer',
-	'sap/m/ImageHelper'
+	'sap/m/ImageHelper',
+	'sap/ui/core/LabelEnablement'
 ],
-	function(library, Control, ValueStateSupport, IndicationColorSupport, coreLibrary, DataType, ObjectStatusRenderer, ImageHelper) {
+	function(library, Control, ValueStateSupport, IndicationColorSupport, coreLibrary, DataType, ObjectStatusRenderer, ImageHelper, LabelEnablement) {
 	"use strict";
 
 
@@ -44,7 +45,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public
@@ -130,7 +131,12 @@ sap.ui.define([
 				 *
 				 * <b>Note:</b> The additional description will take effect only if <code>active</code> property is set to <code>true</code>.
 				 */
-				ariaDescribedBy : {type : "sap.ui.core.Control", multiple : true, singularName : "ariaDescribedBy"}
+				ariaDescribedBy : {type : "sap.ui.core.Control", multiple : true, singularName : "ariaDescribedBy"},
+
+				/**
+				 * Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).
+				 */
+				 ariaLabelledBy: {type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy"}
 			},
 			events : {
 
@@ -308,6 +314,43 @@ sap.ui.define([
 			: sDescription;
 
 		return { description: sDescription };
+	};
+
+	/**
+	 * Checks whether or not the control is labelled either via labels or its <code>ariaLabelledBy</code> association.
+	 * @returns {boolean}
+	 * @private
+	 */
+	 ObjectStatus.prototype._hasExternalLabelling = function() {
+		return this.getAriaLabelledBy().length > 0 || LabelEnablement.getReferencingLabels(this).length > 0;
+	};
+
+	/**
+	 * Generates a string containing all internal elements' IDs, which provide information to the screen reader user.
+	 * @returns {string}
+	 * @private
+	 */
+	 ObjectStatus.prototype._generateSelfLabellingIds = function() {
+		var sId = this.getId(),
+			sResult = "";
+
+		if (this.getTitle()) {
+			sResult += sId + "-title ";
+		}
+
+		if (this.getText()) {
+			sResult += sId + "-text ";
+		}
+
+		if (this.getIcon()) {
+			sResult += sId + "-statusIcon ";
+		}
+
+		if (this.getState() !== ValueState.None) {
+			sResult += sId + "-state ";
+		}
+
+		return sResult.trim();
 	};
 
 	ObjectStatus.prototype._isClickable = function(oEvent) {

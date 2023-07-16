@@ -8,9 +8,8 @@ sap.ui.define([
 	"sap/ui/base/SyncPromise",
 	"sap/ui/model/Context",
 	"sap/ui/model/_Helper",
-	"sap/ui/model/odata/v2/Context",
-	"sap/ui/test/TestUtils"
-], function (Log, SyncPromise, BaseContext, _Helper, Context, TestUtils) {
+	"sap/ui/model/odata/v2/Context"
+], function (Log, SyncPromise, BaseContext, _Helper, Context) {
 	/*global QUnit, sinon*/
 	"use strict";
 
@@ -20,10 +19,6 @@ sap.ui.define([
 			this.oLogMock = this.mock(Log);
 			this.oLogMock.expects("error").never();
 			this.oLogMock.expects("warning").never();
-		},
-
-		afterEach : function (assert) {
-			return TestUtils.awaitRendering();
 		}
 	});
 

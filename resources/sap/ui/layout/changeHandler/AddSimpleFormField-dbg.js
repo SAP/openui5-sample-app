@@ -91,7 +91,7 @@ sap.ui.define([
 	 *
 	 * @author SAP SE
 	 *
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @experimental Since 1.49.0 This class is experimental and provides only limited functionality. Also the API might be
 	 *               changed in future.
@@ -119,7 +119,11 @@ sap.ui.define([
 					aContent = aAggregationContent;
 					iNewIndex = getIndex(aContent, mPropertyBag);
 					aContentClone = insertLabelAndField(aContent, iNewIndex, mInnerControls);
-					return oModifier.removeAllAggregation(oSimpleForm, "content");
+					// Remove each control from the "content" aggregation without leaving them orphan (would reset bindings)
+					return aContent.reduce(function(oPreviousPromise, oContent) {
+						return oPreviousPromise
+						.then(oModifier.insertAggregation.bind(oModifier, oSimpleForm, "dependents", oContent, 0, mPropertyBag.view));
+					}, Promise.resolve());
 				})
 				.then(function() {
 					return recreateContentAggregation(oSimpleForm, aContentClone, oModifier, mPropertyBag);

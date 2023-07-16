@@ -3,7 +3,15 @@
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['sap/ui/events/KeyCodes', 'sap/ui/thirdparty/jquery'], function(KeyCodes, jQuery) {
+sap.ui.define([
+	'sap/base/i18n/Localization',
+	'sap/ui/events/KeyCodes',
+	'sap/ui/thirdparty/jquery'
+], function(
+	Localization,
+	KeyCodes,
+	jQuery
+) {
 	"use strict";
 
 	/**
@@ -573,7 +581,7 @@ sap.ui.define(['sap/ui/events/KeyCodes', 'sap/ui/thirdparty/jquery'], function(K
 			sName: "sapdecrease",
 			aTypes: ["keydown"],
 			fnCheck: function(oEvent) {
-				var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+				var bRtl = Localization.getRTL();
 				if (oEvent.key) {
 					if (bRtl) {
 						return (oEvent.key === "ArrowRight" || oEvent.key === "ArrowDown") && !hasModifierKeys(oEvent);
@@ -606,7 +614,7 @@ sap.ui.define(['sap/ui/events/KeyCodes', 'sap/ui/thirdparty/jquery'], function(K
 			sName: "sapdecreasemodifiers",
 			aTypes: ["keydown"],
 			fnCheck: function(oEvent) {
-				var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+				var bRtl = Localization.getRTL();
 				if (oEvent.key) {
 					if (bRtl) {
 						return (oEvent.key === "ArrowRight" || oEvent.key === "ArrowDown") && hasModifierKeys(oEvent);
@@ -627,7 +635,7 @@ sap.ui.define(['sap/ui/events/KeyCodes', 'sap/ui/thirdparty/jquery'], function(K
 			sName: "sapincrease",
 			aTypes: ["keydown"],
 			fnCheck: function(oEvent) {
-				var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+				var bRtl = Localization.getRTL();
 				var iNextKey;
 				if (oEvent.key) {
 					if (bRtl) {
@@ -661,7 +669,7 @@ sap.ui.define(['sap/ui/events/KeyCodes', 'sap/ui/thirdparty/jquery'], function(K
 			sName: "sapincreasemodifiers",
 			aTypes: ["keydown"],
 			fnCheck: function(oEvent) {
-				var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+				var bRtl = Localization.getRTL();
 				if (oEvent.key) {
 					if (bRtl) {
 						return (oEvent.key === "ArrowLeft" || oEvent.key === "ArrowUp") && hasModifierKeys(oEvent);
@@ -683,7 +691,7 @@ sap.ui.define(['sap/ui/events/KeyCodes', 'sap/ui/thirdparty/jquery'], function(K
 			sName: "sapprevious",
 			aTypes: ["keydown"],
 			fnCheck: function(oEvent) {
-				var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+				var bRtl = Localization.getRTL();
 				if (oEvent.key) {
 					if (bRtl) {
 						return (oEvent.key === "ArrowRight" || oEvent.key === "ArrowUp") && !hasModifierKeys(oEvent);
@@ -704,7 +712,7 @@ sap.ui.define(['sap/ui/events/KeyCodes', 'sap/ui/thirdparty/jquery'], function(K
 			sName: "sappreviousmodifiers",
 			aTypes: ["keydown"],
 			fnCheck: function(oEvent) {
-				var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+				var bRtl = Localization.getRTL();
 				if (oEvent.key) {
 					if (bRtl) {
 						return (oEvent.key === "ArrowRight" || oEvent.key === "ArrowUp") && hasModifierKeys(oEvent);
@@ -725,7 +733,7 @@ sap.ui.define(['sap/ui/events/KeyCodes', 'sap/ui/thirdparty/jquery'], function(K
 			sName: "sapnext",
 			aTypes: ["keydown"],
 			fnCheck: function(oEvent) {
-				var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+				var bRtl = Localization.getRTL();
 				if (oEvent.key) {
 					if (bRtl) {
 						return (oEvent.key === "ArrowLeft" || oEvent.key === "ArrowDown") && !hasModifierKeys(oEvent);
@@ -746,7 +754,7 @@ sap.ui.define(['sap/ui/events/KeyCodes', 'sap/ui/thirdparty/jquery'], function(K
 			sName: "sapnextmodifiers",
 			aTypes: ["keydown"],
 			fnCheck: function(oEvent) {
-				var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+				var bRtl = Localization.getRTL();
 				if (oEvent.key) {
 					if (bRtl) {
 						return (oEvent.key === "ArrowLeft" || oEvent.key === "ArrowDown") && hasModifierKeys(oEvent);

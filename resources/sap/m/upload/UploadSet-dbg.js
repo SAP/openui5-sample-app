@@ -48,7 +48,7 @@ sap.ui.define([
 	 * and requests, unified behavior of instant and deferred uploads, as well as improved progress indication.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -1401,7 +1401,9 @@ sap.ui.define([
 		oEdit.focus();
 
 		if (!sNewFileName || sNewFileName.length === 0) {
-			oItem._setContainsError(true);
+			oEdit.setValueStateText(this._oRb.getText("UPLOAD_SET_TYPE_FILE_NAME"));
+			oEdit.setProperty("valueState", "Error", true);
+			oEdit.setShowValueStateMessage(true);
 			return;
 		}
 
@@ -1413,8 +1415,7 @@ sap.ui.define([
 			this._oEditedItem = null;
 			return;
 		}
-
-		if (!this.getSameFilenameAllowed() && UploadSetItem._checkDoubleFileName(oEdit.getValue() + "." + oFile.extension, this._getAllItems())) {
+		if (!this.getSameFilenameAllowed() && UploadSetItem._checkDoubleFileName(sNewFileName + "." + oFile.extension, this._getAllItems())) {
 			oEdit.setValueStateText(this._oRb.getText("UPLOAD_SET_FILE_NAME_EXISTS"));
 			oEdit.setProperty("valueState", "Error", true);
 			oEdit.setShowValueStateMessage(true);

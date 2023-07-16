@@ -72,7 +72,7 @@ sap.ui.define([
 		 * The message toast has the same behavior on all devices. However, you can adjust the width of the control, for example, for use on a desktop device.
 		 *
 		 * @author SAP SE
-		 * @version 1.115.1
+		 * @version 1.116.0
 		 *
 		 * @namespace
 		 * @public
@@ -359,15 +359,6 @@ sap.ui.define([
 				oFocusableElement.focus();
 				clearTimeout(this._iCloseTimeoutId);
 			}
-
-			if (!oPopup && bAlt && bCtrl && oEvent.code === "KeyM") {
-				this.show(this._sMessage, this._mOptions, oEvent);
-				oPopup = this._aPopups[0];
-				oFocusableElement = document.querySelector(".sapMMessageToastHiddenFocusable");
-				oFocusableElement && oFocusableElement.focus();
-				oPopup.getContent().classList.add("sapMFocus");
-				clearTimeout(this._iCloseTimeoutId);
-			}
 		};
 
 		// Close the message when in permanent display mode
@@ -422,8 +413,6 @@ sap.ui.define([
 				sPointerEvents = "mousedown." + CSSCLASS + " touchstart." + CSSCLASS,
 				iMouseLeaveTimeoutId;
 
-			MessageToast._mOptions = mOptions;
-			MessageToast._sMessage = sMessage;
 			MessageToast._mSettings.opener = oOpener;
 
 			// Find the uppper-most parent to attach the keyboard shortcut as we need to be

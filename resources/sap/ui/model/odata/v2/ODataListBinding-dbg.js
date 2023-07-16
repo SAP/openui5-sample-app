@@ -1935,8 +1935,14 @@ sap.ui.define([
 	 *   batch request
 	 * @param {boolean} [mParameters.inactive]
 	 *   Whether the created context is inactive. An inactive context will only be sent to the
-	 *   server after the first property update. From then on it behaves like any other created
-	 *   context.
+	 *   server when it has become active after a property update. From then on it behaves like any
+	 *   other created context.<br>
+	 *   When a property update happens on an inactive context, the
+	 *   {@link sap.ui.model.odata.v2.ODataListBinding#event:createActivate 'createActivate'} event
+	 *   is fired, and the context becomes active, unless the event handler prevents this. While
+	 *   inactive, the context does not count as a
+	 *   {@link sap.ui.model.odata.v2.ODataModel#hasPendingChanges pending change} and does not
+	 *   contribute to the {@link #getCount count}.
 	 * @param {function} [mParameters.success]
 	 *   The success callback function
 	 * @returns {sap.ui.model.odata.v2.Context}
@@ -2225,15 +2231,20 @@ sap.ui.define([
 	 *   Set of entity types that are affected by side-effects requests
 	 * @param {string} [sGroupId]
 	 *   The ID of a request group
+	 * @returns {boolean}
+	 *   Whether the list binding is affected by the side effect
 	 *
 	 * @private
 	 */
 	ODataListBinding.prototype._refreshForSideEffects = function (oAffectedEntityTypes, sGroupId) {
-		if (!this._isExpandedListUsable() && oAffectedEntityTypes.has(this.oEntityType)) {
+		var bIsAffected = !this._hasTransientParentContext() && oAffectedEntityTypes.has(this.oEntityType);
+
+		if (bIsAffected && !this._isExpandedListUsable()) {
 			this.sRefreshGroupId = sGroupId;
 			this._refresh();
 			this.sRefreshGroupId = undefined;
 		}
+		return bIsAffected;
 	};
 
 	/**

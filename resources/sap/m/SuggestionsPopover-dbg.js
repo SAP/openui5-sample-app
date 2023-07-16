@@ -52,7 +52,7 @@ sap.ui.define([
 	 * @alias sap.m.SuggestionsPopover
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 */
 	var SuggestionsPopover = EventProvider.extend("sap.m.SuggestionsPopover", /** @lends sap.m.SuggestionsPopover.prototype */ {
 

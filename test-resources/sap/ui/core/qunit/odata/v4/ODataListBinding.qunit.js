@@ -2375,6 +2375,7 @@ sap.ui.define([
 		if (oFixture.aggregation) {
 			oBinding.mParameters.$$aggregation = oAggregation;
 		}
+		oBinding.mCanUseCachePromiseByChildPath = "~mCanUseCachePromiseByChildPath~";
 		oBinding.sChangeReason = "sChangeReason";
 		oBinding.bHasPathReductionToParent = oFixture.backLink;
 
@@ -2410,6 +2411,8 @@ sap.ui.define([
 
 		assert.ok(oFetchCacheCall.calledAfter(oResetKeepAliveCall));
 		assert.strictEqual(oBinding.sChangeReason, sExpectedChangeReason);
+		assert.deepEqual(oBinding.mCanUseCachePromiseByChildPath,
+			i === 0 ? {} : "~mCanUseCachePromiseByChildPath~");
 		if (oFixture.newContext) {
 			assert.deepEqual(oBinding.mPreviousContextsByPath, {
 				"/foo/Suppliers" : oOldHeaderContext
@@ -3806,6 +3809,44 @@ sap.ui.define([
 		assert.deepEqual(oBinding.mPreviousContextsByPath,
 			{p2 : oContext2, p3 : oContext3, p6 : "~oContext6~"});
 		assert.strictEqual(oContext2.iIndex, undefined);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("destroyPreviousContexts: cache & hidden context", function (assert) {
+		var oBinding = this.bindList("/EMPLOYEES"),
+			oContext1 = {
+				iIndex : undefined,
+				destroy : function () {},
+				isEffectivelyKeptAlive : function () {},
+				isTransient : function () {}
+			},
+			oContext2 = {
+				iIndex : 0,
+				destroy : function () {},
+				isEffectivelyKeptAlive : function () {},
+				isTransient : function () {}
+			};
+
+		oBinding.mPreviousContextsByPath = {
+			p1 : oContext1,
+			p2 : oContext2,
+			p3 : "~oContext3~"
+		};
+		this.mock(oContext1).expects("isEffectivelyKeptAlive").withExactArgs().returns(false);
+		this.mock(oContext1).expects("isTransient").withExactArgs().returns(false);
+		this.mock(oContext1).expects("destroy").withExactArgs();
+		this.mock(oContext2).expects("isEffectivelyKeptAlive").withExactArgs().returns(false);
+		this.mock(oContext2).expects("isTransient").withExactArgs().returns(false);
+		this.mock(oContext2).expects("destroy").withExactArgs();
+		this.mock(oBinding.oHeaderContext).expects("getPath").withExactArgs().returns("/EMPLOYEES");
+		this.mock(_Helper).expects("getRelativePath")
+			.withExactArgs("p1", "/EMPLOYEES").returns("relative/path");
+		this.mock(oBinding.oCache).expects("removeKeptElement").withExactArgs("relative/path");
+
+		// code under test
+		oBinding.destroyPreviousContexts(["p1", "p2"]);
+
+		assert.deepEqual(oBinding.mPreviousContextsByPath, {p3 : "~oContext3~"});
 	});
 
 	//*********************************************************************************************
@@ -6359,7 +6400,7 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [false, true].forEach(function (bChanged) {
-	QUnit.test("doFetchQueryOptions: meta path changed = " + bChanged, function (assert) {
+	QUnit.test("doFetchOrGetQueryOptions: meta path changed = " + bChanged, function (assert) {
 		var oBinding = this.bindList("TEAM_2_EMPLOYEES"),
 			oContext = {
 				getPath : function () {}
@@ -6389,14 +6430,14 @@ sap.ui.define([
 			.returns(mMergedQueryOptions);
 
 		// code under test
-		oQueryOptionsPromise = oBinding.doFetchQueryOptions(oContext);
+		oQueryOptionsPromise = oBinding.doFetchOrGetQueryOptions(oContext);
 
 		assert.strictEqual(oBinding.oQueryOptionsPromise, oQueryOptionsPromise);
 		assert.strictEqual(oQueryOptionsPromise.getResult(), mMergedQueryOptions);
 		assert.strictEqual(oQueryOptionsPromise.$metaPath, "/TEAMS");
 
 		// code under test (promise exists, meta path unchanged)
-		assert.strictEqual(oBinding.doFetchQueryOptions(oContext), oQueryOptionsPromise);
+		assert.strictEqual(oBinding.doFetchOrGetQueryOptions(oContext), oQueryOptionsPromise);
 
 		assert.strictEqual(oBinding.oQueryOptionsPromise, oQueryOptionsPromise);
 		assert.strictEqual(oQueryOptionsPromise.$metaPath, "/TEAMS");
@@ -6641,7 +6682,7 @@ sap.ui.define([
 			this.mock(oBinding).expects("getQueryOptionsForPath")
 				.withExactArgs("", sinon.match.same(oContext))
 				.returns(oFixture.mInheritedQueryOptions);
-			this.mock(Object).expects("assign")
+			this.mock(_Helper).expects("merge")
 				.withExactArgs({}, sinon.match.same(oFixture.mInheritedQueryOptions),
 					oFixture.mExpectedQueryOptions)
 				.returns(mQueryOptions);
@@ -10447,6 +10488,80 @@ sap.ui.define([
 			// code under test
 			oBinding.checkDeepCreate();
 		}, new Error("Invalid path 'SO_2_SOITEM/SOITEM_2_SCHDL' in deep create"));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("onKeepAliveChanged: remove from cache", function () {
+		var oBinding = this.bindList("/SalesOrderList"),
+			oContext = {
+				isDeleted : function () {},
+				isEffectivelyKeptAlive : function () {},
+				getPath : function () {}
+			};
+
+		oBinding.mPreviousContextsByPath = {
+			"/SalesOrderList('1')" : "~" // would actually be the context
+		};
+		this.mock(oContext).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oContext).expects("getPath").twice()
+			.withExactArgs().returns("/SalesOrderList('1')");
+		this.mock(oContext).expects("isEffectivelyKeptAlive").withExactArgs().returns(false);
+		this.mock(oBinding).expects("destroyPreviousContextsLater")
+			.withExactArgs(["/SalesOrderList('1')"]);
+
+		// code under test
+		oBinding.onKeepAliveChanged(oContext);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("onKeepAliveChanged: deleted", function () {
+		var oBinding = this.bindList("/SalesOrderList"),
+			oContext = {
+				isDeleted : function () {}
+			};
+
+		this.mock(oContext).expects("isDeleted").withExactArgs().returns(true);
+		this.mock(oBinding).expects("destroyPreviousContextsLater").never();
+
+		// code under test
+		oBinding.onKeepAliveChanged(oContext);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("onKeepAliveChanged: in the binding's collection", function () {
+		var oBinding = this.bindList("/SalesOrderList"),
+			oContext = {
+				isDeleted : function () {},
+				getPath : function () {}
+			};
+
+		this.mock(oContext).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oContext).expects("getPath").withExactArgs().returns("/SalesOrderList('1')");
+		this.mock(oBinding).expects("destroyPreviousContextsLater").never();
+
+		// code under test
+		oBinding.onKeepAliveChanged(oContext);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("onKeepAliveChanged: effectively kept alive", function () {
+		var oBinding = this.bindList("/SalesOrderList"),
+			oContext = {
+				isDeleted : function () {},
+				isEffectivelyKeptAlive : function () {},
+				getPath : function () {}
+			};
+
+		oBinding.mPreviousContextsByPath = {
+			"/SalesOrderList('1')" : oContext
+		};
+		this.mock(oContext).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oContext).expects("getPath").withExactArgs().returns("/SalesOrderList('1')");
+		this.mock(oContext).expects("isEffectivelyKeptAlive").withExactArgs().returns(true);
+		this.mock(oBinding).expects("destroyPreviousContextsLater").never();
+
+		// code under test
+		oBinding.onKeepAliveChanged(oContext);
 	});
 });
 

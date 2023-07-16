@@ -486,7 +486,7 @@ sap.ui.define([
 	_Requestor.prototype.checkForOpenRequests = function () {
 		var that = this;
 
-		if (Object.keys(this.mRunningChangeRequests).length // running change requests
+		if (!_Helper.isEmptyObject(this.mRunningChangeRequests) // running change requests
 			|| Object.keys(this.mBatchQueue).some(function (sGroupId) { // pending requests
 				return that.mBatchQueue[sGroupId].some(function (vRequest) {
 					return Array.isArray(vRequest) ? vRequest.length : true;
@@ -1203,6 +1203,7 @@ sap.ui.define([
 			return oRequest.$queryOptions && aResultingRequests.some(function (oCandidate) {
 				if (oCandidate.$queryOptions && oRequest.url === oCandidate.url
 						&& oRequest.$owner === oCandidate.$owner) {
+					oCandidate.$queryOptions = _Helper.clone(oCandidate.$queryOptions);
 					_Helper.aggregateExpandSelect(oCandidate.$queryOptions, oRequest.$queryOptions);
 					oRequest.$resolve(oCandidate.$promise);
 					if (oCandidate.$mergeRequests && oRequest.$mergeRequests) {
@@ -1305,7 +1306,7 @@ sap.ui.define([
 						"HTTP request was not processed because the previous request failed");
 					oError.cause = oCause;
 					oError.$reported = true; // do not create a message for this error
-					vRequest.$reject(oError);
+					reject(oError, vRequest); // Note: vRequest may well be a change set
 				} else if (vResponse.status >= 400) {
 					vResponse.getResponseHeader = getResponseHeader;
 					// Note: vRequest is an array in case a change set fails, hence url and
@@ -2224,8 +2225,6 @@ sap.ui.define([
 	 * @param {function} oModelInterface.fetchMetadata
 	 *   A function that returns a SyncPromise which resolves with the metadata instance for a
 	 *   given meta path
-	 * @param {function} oModelInterface.fireMessageChange
-	 *   A function that fires the 'messageChange' event for the given messages
 	 * @param {function} oModelInterface.fireDataReceived
 	 *   A function that fires the 'dataReceived' event at the model with an optional parameter
 	 *   <code>oError</code>
@@ -2257,6 +2256,10 @@ sap.ui.define([
 	 *   A function to report OData state messages
 	 * @param {function} oModelInterface.reportTransitionMessages
 	 *   A function to report OData transition messages
+	 * @param {function(sap.ui.core.message.Message[],sap.ui.core.message.Message[]):void} oModelInterface.updateMessages
+	 *   A function to report messages to the MessageManager, expecting two arrays of
+	 *   {sap.ui.core.message.Message} as parameters. The first array should be the old messages and
+	 *   the second array the new messages.
 	 * @param {object} [mHeaders={}]
 	 *   Map of default headers; may be overridden with request-specific headers; certain
 	 *   OData V4 headers are predefined, but may be overridden by the default or

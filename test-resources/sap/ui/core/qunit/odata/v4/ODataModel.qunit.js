@@ -9,6 +9,7 @@ sap.ui.define([
 	"sap/ui/core/Configuration",
 	"sap/ui/core/cache/CacheManager",
 	"sap/ui/core/message/Message",
+	"sap/ui/core/message/MessageManager",
 	"sap/ui/model/Binding",
 	"sap/ui/model/BindingMode",
 	"sap/ui/model/Context",
@@ -24,9 +25,9 @@ sap.ui.define([
 	"sap/ui/model/odata/v4/lib/_Requestor",
 	"sap/ui/core/library",
 	"sap/ui/test/TestUtils"
-], function (Log, SyncPromise, Configuration, CacheManager, Message, Binding, BindingMode,
-		BaseContext, Model, OperationMode, Context, ODataMetaModel, ODataModel, SubmitMode, _Helper,
-		_MetadataRequestor, _Parser, _Requestor, library, TestUtils) {
+], function (Log, SyncPromise, Configuration, CacheManager, Message, MessageManager, Binding,
+		BindingMode, BaseContext, Model, OperationMode, Context, ODataMetaModel, ODataModel,
+		SubmitMode, _Helper, _MetadataRequestor, _Parser, _Requestor, library, TestUtils) {
 	"use strict";
 
 	var sClassName = "sap.ui.model.odata.v4.ODataModel",
@@ -438,7 +439,6 @@ sap.ui.define([
 			oExpectedBind7,
 			oExpectedBind8,
 			oExpectedBind9,
-			oExpectedBind10,
 			oExpectedCreate = this.mock(_Requestor).expects("create"),
 			oModel,
 			oModelInterface,
@@ -454,7 +454,6 @@ sap.ui.define([
 			.withExactArgs(sServiceUrl, {
 					fetchEntityContainer : "~fnFetchEntityContainer~",
 					fetchMetadata : "~fnFetchMetadata~",
-					fireMessageChange : "~fnFireMessageChange~",
 					fireDataReceived : "~fnFireDataReceived~",
 					fireDataRequested : "~fnFireDataRequested~",
 					fireSessionTimeout : sinon.match.func,
@@ -465,7 +464,8 @@ sap.ui.define([
 					isIgnoreETag : sinon.match.func,
 					onCreateGroup : sinon.match.func,
 					reportStateMessages : "~fnReportStateMessages~",
-					reportTransitionMessages : "~fnReportTransitionMessages~"
+					reportTransitionMessages : "~fnReportTransitionMessages~",
+					updateMessages : sinon.match.func
 				},
 				{"Accept-Language" : "ab-CD"},
 				bStatistics
@@ -477,23 +477,21 @@ sap.ui.define([
 			.returns("~fnFetchEntityContainer~");
 		oExpectedBind1 = this.mock(ODataMetaModel.prototype.fetchObject).expects("bind")
 			.returns("~fnFetchMetadata~");
-		oExpectedBind2 = this.mock(ODataModel.prototype.fireMessageChange).expects("bind")
-			.returns("~fnFireMessageChange~");
-		oExpectedBind3 = this.mock(ODataModel.prototype.fireDataReceived).expects("bind")
+		oExpectedBind2 = this.mock(ODataModel.prototype.fireDataReceived).expects("bind")
 			.returns("~fnFireDataReceived~");
-		oExpectedBind4 = this.mock(ODataModel.prototype.fireDataRequested).expects("bind")
+		oExpectedBind3 = this.mock(ODataModel.prototype.fireDataRequested).expects("bind")
 			.returns("~fnFireDataRequested~");
-		oExpectedBind5 = this.mock(ODataModel.prototype.getGroupProperty).expects("bind")
+		oExpectedBind4 = this.mock(ODataModel.prototype.getGroupProperty).expects("bind")
 			.returns("~fnGetGroupProperty~");
-		oExpectedBind6 = this.mock(ODataModel.prototype.getMessagesByPath).expects("bind")
+		oExpectedBind5 = this.mock(ODataModel.prototype.getMessagesByPath).expects("bind")
 			.returns("~fnGetMessagesByPath~");
-		oExpectedBind7 = this.mock(ODataModel.prototype.getOptimisticBatchEnabler).expects("bind")
+		oExpectedBind6 = this.mock(ODataModel.prototype.getOptimisticBatchEnabler).expects("bind")
 			.returns("~fnGetOptimisticBatchEnabler~");
-		oExpectedBind8 = this.mock(ODataModel.prototype.getReporter).expects("bind")
+		oExpectedBind7 = this.mock(ODataModel.prototype.getReporter).expects("bind")
 			.returns("~fnGetReporter~");
-		oExpectedBind9 = this.mock(ODataModel.prototype.reportTransitionMessages).expects("bind")
+		oExpectedBind8 = this.mock(ODataModel.prototype.reportTransitionMessages).expects("bind")
 			.returns("~fnReportTransitionMessages~");
-		oExpectedBind10 = this.mock(ODataModel.prototype.reportStateMessages).expects("bind")
+		oExpectedBind9 = this.mock(ODataModel.prototype.reportStateMessages).expects("bind")
 			.returns("~fnReportStateMessages~");
 
 		// code under test
@@ -511,7 +509,6 @@ sap.ui.define([
 		assert.strictEqual(oExpectedBind7.firstCall.args[0], oModel);
 		assert.strictEqual(oExpectedBind8.firstCall.args[0], oModel);
 		assert.strictEqual(oExpectedBind9.firstCall.args[0], oModel);
-		assert.strictEqual(oExpectedBind10.firstCall.args[0], oModel);
 		oModelInterface = oExpectedCreate.firstCall.args[1];
 		assert.strictEqual(oModelInterface, oModel.oInterface);
 
@@ -534,6 +531,12 @@ sap.ui.define([
 
 		// code under test
 		oModel.setIgnoreETag("~bIgnoreETag~");
+
+		this.mock(MessageManager).expects("updateMessages")
+			.withExactArgs("~oldMessages~", "~newMessages~");
+
+		// code under test
+		oModelInterface.updateMessages("~oldMessages~", "~newMessages~");
 
 		assert.strictEqual(oModelInterface.isIgnoreETag(), "~bIgnoreETag~");
 	});
@@ -1757,8 +1760,8 @@ sap.ui.define([
 				return oMessage === aMessages[1] && oMessage.transition === true;
 			}), sResourcePath)
 			.returns("~UI5msg1~");
-		oModelMock.expects("fireMessageChange")
-			.withExactArgs(sinon.match({newMessages : ["~UI5msg0~", "~UI5msg1~"]}));
+		this.mock(MessageManager).expects("updateMessages")
+			.withExactArgs(undefined, sinon.match(["~UI5msg0~", "~UI5msg1~"]));
 
 		// code under test
 		oModel.reportTransitionMessages(aMessages, sResourcePath);
@@ -1774,6 +1777,7 @@ sap.ui.define([
 	QUnit.test("reportStateMessages", function () {
 		var aBarMessages = ["~rawMessage0~", "~rawMessage1~"],
 			aBazMessages = ["~rawMessage2~"],
+			oMessageManagerMock = this.mock(MessageManager),
 			oModel = this.createModel(),
 			oModelMock = this.mock(oModel);
 
@@ -1783,15 +1787,14 @@ sap.ui.define([
 			.withExactArgs(aBarMessages[1], "Team('42')", "foo/bar").returns("~UI5msg1~");
 		oModelMock.expects("createUI5Message")
 			.withExactArgs(aBazMessages[0], "Team('42')", "foo/baz").returns("~UI5msg2~");
-		oModelMock.expects("fireMessageChange")
-			.withExactArgs(sinon.match(
-				{newMessages : ["~UI5msg0~", "~UI5msg1~", "~UI5msg2~"], oldMessages : []}));
+		oMessageManagerMock.expects("updateMessages")
+			.withExactArgs([], ["~UI5msg0~", "~UI5msg1~", "~UI5msg2~"]);
 
 		// code under test
 		oModel.reportStateMessages("Team('42')",
 			{"foo/bar" : aBarMessages, "foo/baz" : aBazMessages});
 
-		oModelMock.expects("fireMessageChange").never();
+		oMessageManagerMock.expects("updateMessages").never();
 
 		// code under test
 		oModel.reportStateMessages("Team('42')", {});
@@ -1808,17 +1811,14 @@ sap.ui.define([
 				"/FOO('3')/NavSingle/Name" : [{}, {}],
 				"/FOO('3')/NavSingleBar/Name" : [{}]
 			},
-			oModel = this.createModel(),
-			oModelMock = this.mock(oModel);
+			oMessageManagerMock = this.mock(MessageManager),
+			oModel = this.createModel();
 
 		oModel.mMessages = mMessages;
 
-		oModelMock.expects("fireMessageChange")
-			.withExactArgs(sinon.match.object)
-			.callsFake(function (mArguments) {
-				var aNewMessages = mArguments.newMessages,
-					aOldMessages = mArguments.oldMessages;
-
+		oMessageManagerMock.expects("updateMessages")
+			.withExactArgs(sinon.match.array, sinon.match.array)
+			.callsFake(function (aOldMessages, aNewMessages) {
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('1')"][0]) >= 0);
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('1')"][1]) >= 0);
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('1')/bar"][0]) < 0);
@@ -1832,12 +1832,9 @@ sap.ui.define([
 		// code under test
 		oModel.reportStateMessages("FOO('1')", {});
 
-		oModelMock.expects("fireMessageChange")
-			.withExactArgs(sinon.match.object)
-			.callsFake(function (mArguments) {
-				var aNewMessages = mArguments.newMessages,
-					aOldMessages = mArguments.oldMessages;
-
+		oMessageManagerMock.expects("updateMessages")
+			.withExactArgs(sinon.match.array, sinon.match.array)
+			.callsFake(function (aOldMessages, aNewMessages) {
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('3')/NavSingle"][0]) >= 0);
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('3')/NavSingle/Name"][0]) >= 0);
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('3')/NavSingle/Name"][1]) >= 0);
@@ -1861,18 +1858,14 @@ sap.ui.define([
 				"/FOO('3')/NavSingle/Name" : [{}, {}],
 				"/FOO('3')/NavSingleBar/Name" : [{}]
 			},
-			oModel = this.createModel(),
-			oModelMock = this.mock(oModel);
+			oModel = this.createModel();
 
 		oModel.mMessages = mMessages;
 		oHelperMock.expects("buildPath").withExactArgs("/FOO", "('1')").returns("/FOO('1')");
 		oHelperMock.expects("buildPath").withExactArgs("/FOO", "('2')").returns("/FOO('2')");
-		oModelMock.expects("fireMessageChange")
-			.withExactArgs(sinon.match.object)
-			.callsFake(function (mArguments) {
-				var aNewMessages = mArguments.newMessages,
-					aOldMessages = mArguments.oldMessages;
-
+		this.mock(MessageManager).expects("updateMessages")
+			.withExactArgs(sinon.match.array, sinon.match.array)
+			.callsFake(function (aOldMessages, aNewMessages) {
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('1')"][0]) >= 0);
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('1')"][1]) >= 0);
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('1')/bar"][0]) >= 0);
@@ -1899,16 +1892,12 @@ sap.ui.define([
 				"/FOO('3')/NavSingle/Name" : [{}, {}],
 				"/FOO('3')/NavSingleBar/Name" : [{}]
 			},
-			oModel = this.createModel(),
-			oModelMock = this.mock(oModel);
+			oModel = this.createModel();
 
 		oModel.mMessages = mMessages;
-		oModelMock.expects("fireMessageChange")
-			.withExactArgs(sinon.match.object)
-			.callsFake(function (mArguments) {
-				var aNewMessages = mArguments.newMessages,
-					aOldMessages = mArguments.oldMessages;
-
+		this.mock(MessageManager).expects("updateMessages")
+			.withExactArgs(sinon.match.array, sinon.match.array)
+			.callsFake(function (aOldMessages, aNewMessages) {
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('1')"][0]) >= 0);
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('1')"][1]) >= 0);
 				assert.ok(aOldMessages.indexOf(mMessages["/FOO('1')/bar"][0]) >= 0);

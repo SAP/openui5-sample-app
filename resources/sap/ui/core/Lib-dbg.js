@@ -7,6 +7,7 @@
 //Provides class sap.ui.core.Lib
 sap.ui.define([
 	'sap/base/assert',
+	'sap/base/config',
 	'sap/base/i18n/ResourceBundle',
 	'sap/base/Log',
 	'sap/base/util/deepExtend',
@@ -25,6 +26,7 @@ sap.ui.define([
 	'sap/ui/core/_UrlResolver'
 ], function (
 	assert,
+	BaseConfig,
 	ResourceBundle,
 	Log,
 	deepExtend,
@@ -220,6 +222,43 @@ sap.ui.define([
 		}
 	}
 
+	/**
+	 * Returns the list of libraries for which the library.css was preloaded.
+	 *
+	 * This configuration setting specifies a list of UI libraries using the same syntax as the "libs" property,
+	 * for which the SAPUI5 core does not include the library.css stylesheet in the head of the page.
+	 * If the list starts with an exclamation mark (!), no stylesheet is loaded at all for the specified libs.
+	 * In this case, it is assumed that the application takes care of loading CSS.
+	 *
+	 * If the first library's name is an asterisk (*), it will be expanded to the list of already
+	 * configured libraries.
+	 *
+	 * @returns {string[]} the list of libraries for which the library.css was preloaded
+	 * @private
+	 */
+	function getPreloadLibCss() {
+		var aPreloadLibCSS = BaseConfig.get({name: "sapUiPreloadLibCss", type: BaseConfig.Type.StringArray, external: true});
+		if ( aPreloadLibCSS.length > 0 ) {
+			// remove leading '!' (legacy) as it does not make any difference
+			if ( aPreloadLibCSS[0].startsWith("!") ) {
+				aPreloadLibCSS[0] = aPreloadLibCSS[0].slice(1);
+			}
+			// "*"  means "add all bootstrap libraries"
+			if ( aPreloadLibCSS[0] === "*" ) {
+				aPreloadLibCSS.shift(); // remove * (inplace)
+
+				// The modules list also contains all configured libs
+				// we prepend them now to the preloaded libs css list
+				Object.keys(mLibraries).forEach(function(sLib) {
+					if (!aPreloadLibCSS.includes(sLib)) {
+						aPreloadLibCSS.unshift(sLib);
+					}
+				});
+			}
+		}
+		return aPreloadLibCSS;
+	}
+
 	/*
 	 * Create an instance that represents a library with the given name.
 	 *
@@ -290,6 +329,10 @@ sap.ui.define([
 				writable: true
 			});
 			Object.defineProperty(this, "_settingsEnhanced", {
+				value: false,
+				writable: true
+			});
+			Object.defineProperty(this, "_manifestFailed", {
 				value: false,
 				writable: true
 			});
@@ -724,20 +767,31 @@ sap.ui.define([
 		 * Only when the library's manifest is preloaded with the library's preload bundle, the manifest will be
 		 * returned from this function. This function never triggers a separate request to load the library's manifest.
 		 *
+		 * @param {boolean} [bSync=false] whether to use sync request to load the library manifest when it doesn't exist
+		 *  in preload cache
 		 * @returns {object|undefined} The manifest of the library
 		 */
-		getManifest: function() {
+		getManifest: function(bSync) {
 			if (!this.oManifest) {
 				var manifestModule = this.name.replace(/\./g, '/') + '/manifest.json';
 
-				if ( sap.ui.loader._.getModuleState(manifestModule) ) {
-					this.oManifest = LoaderExtensions.loadResource(manifestModule, {
-						dataType: 'json',
-						async: false, // always sync as we are sure to load from preload cache
-						failOnError: false
-					});
+				if (sap.ui.loader._.getModuleState(manifestModule) || (bSync && !this._manifestFailed)) {
+					try {
+						this.oManifest = LoaderExtensions.loadResource(manifestModule, {
+							dataType: 'json',
+							async: false,
+							failOnError: !this.isSettingsEnhanced()
+						});
 
-					deepFreeze(this.oManifest);
+						if (this._oManifest) {
+							deepFreeze(this.oManifest);
+						} else {
+							this._manifestFailed = true;
+						}
+					} catch (e) {
+						this._manifestFailed = true;
+					}
+
 				}
 			}
 
@@ -834,12 +888,14 @@ sap.ui.define([
 		 * @private
 		 */
 		_includeTheme: function(sVariant, sQuery) {
-			var sName = this.name;
+			var sName = this.name,
+				bLibCssPreloaded = getPreloadLibCss().indexOf(sName) !== -1;
 
 			aAllLibrariesRequiringCss.push({
 				name: sName,
 				version: this.version,
-				variant: sVariant
+				variant: sVariant,
+				preloadedCss: bLibCssPreloaded
 			});
 
 			_getThemeManager().then(function(ThemeManager) {
@@ -930,11 +986,11 @@ sap.ui.define([
 		 * @param {string} [bSync=false] Whether to load the resource bundle synchronously
 		 * @returns {module:sap/base/i18n/ResourceBundle|Promise<module:sap/base/i18n/ResourceBundle>} The resource
 		 * bundle in synchronous case, otherwise a promise that resolves with the resource bundle
-		 * @prviate
+		 * @private
 		 */
 		_loadResourceBundle: function(sLocale, bSync) {
 			var that = this,
-				oManifest = this.getManifest(),
+				oManifest = this.getManifest(bSync),
 				// A library ResourceBundle can be requested before its owning library is preloaded.
 				// In this case we do not have the library's manifest yet and the default bundle (messagebundle.properties) is requested.
 				// We still cache this default bundle for as long as the library remains "not-preloaded".
@@ -1198,9 +1254,8 @@ sap.ui.define([
 	 * files must be kept in sync.
 	 *
 	 * @param {object} mSettings Info object for the library
-	 * @param {string} [mSettings.name] Name of the library; when given it must match the name by which the library has
-	 *  been loaded
-	 * @param {string} mSettings.version Version of the library
+	 * @param {string} mSettings.name Name of the library; It must match the name by which the library has been loaded
+	 * @param {string} [mSettings.version] Version of the library
 	 * @param {string[]} [mSettings.dependencies=[]] List of libraries that this library depends on; names are in dot
 	 *  notation (e.g. "sap.ui.core")
 	 * @param {string[]} [mSettings.types=[]] List of names of types that this library provides; names are in dot
@@ -1213,10 +1268,9 @@ sap.ui.define([
 	 *  names are in dot notation (e.g. "sap.ui.core.Item")
 	 * @param {boolean} [mSettings.noLibraryCSS=false] Indicates whether the library doesn't provide / use theming.
 	 *  When set to true, no library.css will be loaded for this library
-	 * @param {object} [oLibInfo.extensions] Potential extensions of the library metadata; structure not defined by the
+	 * @param {object} [mSettings.extensions] Potential extensions of the library metadata; structure not defined by the
 	 *  UI5 core framework.
-	 * @returns {object|undefined} As of version 1.101; returns the library namespace, based on the given library name.
-	 *  Returns 'undefined' if no library name is provided.
+	 * @returns {object} As of version 1.101; returns the library namespace, based on the given library name.
 	 * @public
 	 */
 	Library.init = function(mSettings) {
@@ -1272,12 +1326,12 @@ sap.ui.define([
 		if (!oLib.noLibraryCSS) {
 			var oLibThemingInfo = {
 				name: oLib.name,
-				version: oLib.version
+				version: oLib.version,
+				preloadedCss: getPreloadLibCss().indexOf(oLib.name) !== -1
 			};
-			// Don't reset ThemeManager in case CSS for current library is already preloaded
-			var bResetThemeManager = Configuration.getValue('preloadLibCss').indexOf(oLib.name) === -1;
 			aAllLibrariesRequiringCss.push(oLibThemingInfo);
-			_getThemeManager(bResetThemeManager).then(function(ThemeManager) {
+			// Don't reset ThemeManager in case CSS for current library is already preloaded
+			_getThemeManager(/* bClear = */ !oLibThemingInfo.preloadedCss).then(function(ThemeManager) {
 				ThemeManager._includeLibraryThemeAndEnsureThemeRoot(oLibThemingInfo);
 			});
 		}
@@ -1507,6 +1561,24 @@ sap.ui.define([
 	};
 
 	/**
+	 * Retrieves a resource bundle for the given library and locale.
+	 *
+	 * If only one argument is given, it is assumed to be the library name. The locale
+	 * then falls back to the current {@link sap.ui.core.Configuration#getLanguage session locale}.
+	 *
+	 * @param {string} sLibrary Name of the library to retrieve the bundle for
+	 * @param {string} [sLocale] Locale to retrieve the resource bundle for
+	 * @returns {module:sap/base/i18n/ResourceBundle|undefined} The best matching resource bundle for the given
+	 *  parameters or <code>undefined</code>
+	 * @public
+	 */
+	Library.getResourceBundleFor = function(sLibrary, sLocale) {
+		var oLibrary = Library._get(sLibrary, true);
+
+		return oLibrary.getResourceBundle(sLocale);
+	};
+
+	/**
 	 * Registers the given Element class to the library to which it belongs.
 	 *
 	 * @param {sap.ui.core.ElementMetadata} oElementMetadata the metadata of the Element class
@@ -1644,6 +1716,21 @@ sap.ui.define([
 			}
 		}
 		return mParams;
+	};
+
+	/**
+	 * Get VersionedLibCss config option
+	 *
+	 * @returns {boolean} Wether VersionedLibCss is enabled or not
+	 * @private
+	 * @ui-restricted sap.ui.core
+	 */
+	Library.getVersionedLibCss = function() {
+		return BaseConfig.get({
+			name: "sapUiVersionedLibCss",
+			type: BaseConfig.Type.Boolean,
+			external: true
+		});
 	};
 
 	return Library;

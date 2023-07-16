@@ -30,7 +30,7 @@ sap.ui.define([
 	* @class
 	* Defines the visual properties and placement for each supported semantic type.
 	*
-	* @version 1.115.1
+	* @version 1.116.0
 	* @private
 	* @since 1.46.0
 	* @alias sap.f.semantic.SemanticConfiguration
@@ -426,7 +426,7 @@ sap.ui.define([
 			getSettings: function() {
 				return {
 					icon: IconPool.getIconURI("discussion-2"),
-					text: oBundle.getText("SEMANTIC_CONTROL_DISCUSS_IN_JAM"),
+					text: oBundle.getText("SEMANTIC_CONTROL_DISCUSS_IN_WORK_ZONE"),
 					type: ButtonType.Transparent
 				};
 			}
@@ -439,7 +439,7 @@ sap.ui.define([
 			getSettings: function() {
 				return {
 					icon: IconPool.getIconURI("share-2"),
-					text: oBundle.getText("SEMANTIC_CONTROL_SHARE_IN_JAM"),
+					text: oBundle.getText("SEMANTIC_CONTROL_SHARE_ON_WORK_ZONE"),
 					type: ButtonType.Transparent
 				};
 			}

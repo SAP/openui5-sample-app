@@ -43,7 +43,7 @@ sap.ui.define([
 	 * <code>sap.m.Toolbar</code> with <code>sap.m.Buttons</code>.
 	 *
 	 * @extends sap.ui.unified.Calendar
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @private

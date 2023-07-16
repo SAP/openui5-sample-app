@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.115.1
+		 * @version 1.116.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -1333,7 +1333,7 @@ sap.ui.define([
 		this.oBinding.checkSuspended();
 
 		return Promise.all(aPaths.map(function (sPath) {
-			return that.oBinding.fetchIfChildCanUseCache(that, sPath, SyncPromise.resolve({}))
+			return that.oBinding.fetchIfChildCanUseCache(that, sPath, undefined, true)
 				.then(function (sReducedPath) {
 					if (sReducedPath) {
 						return that.fetchPrimitiveValue(sReducedPath, bExternalFormat);
@@ -1836,7 +1836,7 @@ sap.ui.define([
 				if (!sMessagesPath) {
 					throw new Error("Missing @com.sap.vocabularies.Common.v1.Messages");
 				}
-				return that.oBinding.fetchIfChildCanUseCache(that, sMessagesPath, {});
+				return that.oBinding.fetchIfChildCanUseCache(that, sMessagesPath, undefined, true);
 			}).then(function (sReducedPath) {
 				return that.fetchValue(sReducedPath);
 			}).catch(this.oModel.getReporter());
@@ -1844,6 +1844,7 @@ sap.ui.define([
 
 		this.bKeepAlive = bKeepAlive;
 		this.fnOnBeforeDestroy = bKeepAlive ? fnOnBeforeDestroy : undefined;
+		this.oBinding.onKeepAliveChanged(this);
 	};
 
 	/**
@@ -1961,6 +1962,9 @@ sap.ui.define([
 			throw new Error("Must not select a deleted entity: " + this);
 		}
 		this.bSelected = bSelected;
+		if (this.oBinding) {
+			this.oBinding.onKeepAliveChanged(this); // selected contexts are effectively kept alive
+		}
 	};
 
 	/**

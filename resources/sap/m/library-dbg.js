@@ -70,13 +70,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = sap.ui.getCore().initLibrary({
 		name : "sap.m",
-		version: "1.115.1",
+		version: "1.116.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -376,6 +376,8 @@ sap.ui.define([
 			"sap.m.UploadCollectionToolbarPlaceholder",
 			"sap.m.upload.UploadSet",
 			"sap.m.upload.UploadSetToolbarPlaceholder",
+			"sap.m.upload.UploadSetTable",
+			"sap.m.upload.UploadSetTableItem",
 			"sap.m.VariantManagement",
 			"sap.m.VBox",
 			"sap.m.ViewSettingsDialog",
@@ -446,7 +448,9 @@ sap.ui.define([
 			"sap.m.ToolbarLayoutData",
 			"sap.m.UploadCollectionItem",
 			"sap.m.UploadCollectionParameter",
+			"sap.m.upload.FilePreviewDialog",
 			"sap.m.upload.Uploader",
+			"sap.m.upload.UploaderTableItem",
 			"sap.m.upload.UploadSetItem",
 			"sap.m.VariantItem",
 			"sap.m.ViewSettingsCustomItem",
@@ -606,6 +610,9 @@ sap.ui.define([
 				"sap.m.VBox": {
 					"hideControl": "default",
 					"unhideControl": "default",
+					"moveControls": "default"
+				},
+				"sap.m.ObjectHeader": {
 					"moveControls": "default"
 				}
 			},

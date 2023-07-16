@@ -21,12 +21,12 @@
 			'sap/ui/thirdparty/jquery',
 			'sap/ui/core/theming/ThemeManager',
 			'sap/ui/core/theming/ThemeHelper',
-			'sap/ui/core/Configuration',
+			'sap/ui/core/Theming',
+			'sap/base/config',
 			'sap/base/Log',
 			'sap/base/util/syncFetch',
-			'sap/base/util/UriParameters',
 			'sap/ui/core/Core' // provides sap.ui.getCore()
-		], function(jQuery, ThemeManager, ThemeHelper, Configuration, Log, syncFetch, UriParameters) {
+		], function(jQuery, ThemeManager, ThemeHelper, Theming, BaseConfig, Log, syncFetch) {
 
 			var LESS_FILENAME = "library.source";
 			var CSS_FILENAME = "library";
@@ -42,7 +42,7 @@
 			 *        feature - DO NOT USE IN PRODUCTIVE SCENARIOS!!
 			 *
 			 * @author Peter Muessig
-			 * @version 1.115.1
+			 * @version 1.116.0
 			 * @private
 			 * @alias sap.ui.core.plugin.LessSupport
 			 */
@@ -62,15 +62,13 @@
 				Log.warning("  NOT FOR PRODUCTIVE USAGE! LessSupport is an experimental feature which might change in future!");
 
 				// get the URI parameters
-				var oUriParams = UriParameters.fromQuery(window.location.search);
-				var sNoLess = oUriParams.get("sap-ui-xx-noless");
-				if (sNoLess) {
-					sNoLess = sNoLess.toLowerCase();
-				}
+				var bNoLess = BaseConfig.get({name: "sapUiXxNoless", type: BaseConfig.Type.Boolean, defaultValue: true, external: true});
+
+				this.oCore = oCore;
 
 				// LessSupport is disabled for the testrunner
 				try {
-					if (sNoLess !== "false" && (window.top.JsUnit || (window.sap.ui.test && window.sap.ui.test.qunit))) {
+					if (!bNoLess && (window.top.JsUnit || (window.sap.ui.test && window.sap.ui.test.qunit))) {
 						Log.info("  LessSupport has been deactivated for JSUnit Testrunner or QUnit.");
 						return;
 					}
@@ -80,7 +78,7 @@
 				}
 
 				// check the URI parameters to disable LessSupport
-				if (sNoLess && sNoLess !== "false") {
+				if (bNoLess) {
 					Log.info("  LessSupport has been deactivated by URL parameter.");
 					return;
 				} else {
@@ -107,9 +105,9 @@
 
 				// overwrite the includeLibraryTheme/applyTheme function to inject LESS
 				fnOrigIncludeLibraryTheme = ThemeManager.includeLibraryTheme;
-				fnOrigApplyTheme = ThemeManager.applyTheme;
+				fnOrigApplyTheme = oCore.applyTheme;
 				ThemeManager.includeLibraryTheme = this.includeLibraryTheme.bind(this);
-				ThemeManager.applyTheme = this.applyTheme.bind(this);
+				oCore.applyTheme = this.applyTheme.bind(this);
 
 				// update the themes (only when LESS files are newer than the CSS files)
 				var that = this, bUseLess = false;
@@ -149,7 +147,7 @@
 					if (ok) {
 						ThemeManager.themeLoaded = true;
 						setTimeout(function () {
-							ThemeManager.fireThemeChanged({theme: Configuration.getTheme()});
+							ThemeManager.fireThemeChanged({theme: Theming.getTheme()});
 						}, 0);
 					} else {
 						that.iCheckThemeAppliedTimeout = setTimeout(checkThemeApplied, 100);
@@ -179,7 +177,7 @@
 					});
 					// remove the hooks from the Core
 					ThemeManager.includeLibraryTheme = fnOrigIncludeLibraryTheme;
-					ThemeManager.applyTheme = fnOrigApplyTheme;
+					this.oCore.applyTheme = fnOrigApplyTheme;
 				}
 			};
 
@@ -223,7 +221,7 @@
 				if ((pos = sLibName.indexOf("-[")) > 0) { // assumes that "-[" does not occur as part of a library name
 					sLibName = sLibName.substr(0, pos);
 				}
-				var sBaseUrl = ThemeManager._getThemePath(sLibName, Configuration.getTheme());
+				var sBaseUrl = ThemeManager._getThemePath(sLibName, Theming.getTheme());
 
 				// check if the less file of the current theme is more up-to-date than the css file
 				// or if the last modified of the less file is 0 (no last modified) we assume that it is newer

@@ -38,7 +38,7 @@ sap.ui.define([
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public
@@ -60,6 +60,12 @@ sap.ui.define([
 				 * @experimental Since 1.89 this feature is experimental and the API may change.
 				 */
 				dataTimestamp: { type: "string", defaultValue: ""},
+
+				/**
+				 * Defines the status text visibility.
+				 * @experimental Since 1.116 this feature is experimental and the API may change.
+				 */
+				statusVisible: { type: "boolean", defaultValue: true },
 
 				/**
 				 * Set to true to show that the data timestamp is currently updating.

@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.115.1
+		 * @version 1.116.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -103,7 +103,7 @@ sap.ui.define([
 		this.mQueryOptions = this.oModel.buildQueryOptions(_Helper.clone(mParameters),
 			/*bSystemQueryOptionsAllowed*/sPath.endsWith("$count"));
 		this.vValue = undefined;
-		// BEWARE: #doFetchQueryOptions uses #isRoot which relies on this.oContext!
+		// BEWARE: #doFetchOrGetQueryOptions uses #isRoot which relies on this.oContext!
 		this.fetchCache(oContext);
 		oModel.bindingCreated(this);
 	}
@@ -265,12 +265,9 @@ sap.ui.define([
 			that = this;
 
 		this.oCheckUpdateCallToken = oCallToken;
-		if (this.bHasDeclaredType === undefined) {
-			this.bHasDeclaredType = !!vType;
-		}
-		if (sResolvedPath && !this.bHasDeclaredType && this.sInternalType !== "any"
-				&& !bIsMeta) {
-			vType = oMetaModel.fetchUI5Type(sResolvedPath);
+		if (!vType && sResolvedPath && this.sInternalType !== "any" && !bIsMeta
+				&& !sResolvedPath.includes(sVirtualPath)) {
+			vType = oMetaModel.fetchUI5Type(this.sReducedPath || sResolvedPath);
 		}
 		if (vValue === undefined) {
 			// if called via #onChange, we need to fetch implicit values
@@ -289,9 +286,7 @@ sap.ui.define([
 							return vResult;
 						});
 				}
-				if (!that.sReducedPath || !that.isResolved()) {
-					// binding is unresolved or context was reset by another call to
-					// checkUpdateInternal
+				if (!that.isResolved()) {
 					return undefined;
 				}
 				if (sResolvedPath.includes(sVirtualPath)) {
@@ -332,7 +327,7 @@ sap.ui.define([
 			});
 			if (bForceUpdate && vValue.isFulfilled()) {
 				if (vType && vType.isFulfilled && vType.isFulfilled()) {
-					this.setType(vType.getResult(), this.sInternalType);
+					this.oType = vType.getResult();
 				}
 				this.vValue = vValue.getResult();
 			}
@@ -346,7 +341,7 @@ sap.ui.define([
 
 			if (oCallToken === that.oCheckUpdateCallToken) { // latest call to checkUpdateInternal
 				that.oCheckUpdateCallToken = undefined;
-				that.setType(oType, that.sInternalType);
+				that.oType = oType;
 				if (oCallToken.forceUpdate || that.vValue !== vValue) {
 					that.bInitial = false;
 					that.vValue = vValue;
@@ -406,10 +401,10 @@ sap.ui.define([
 
 	/**
 	 * @override
-	 * @see sap.ui.model.odata.v4.ODataBinding#doFetchQueryOptions
+	 * @see sap.ui.model.odata.v4.ODataBinding#doFetchOrGetQueryOptions
 	 */
-	ODataPropertyBinding.prototype.doFetchQueryOptions = function () {
-		return this.isRoot() ? SyncPromise.resolve(this.mQueryOptions) : SyncPromise.resolve({});
+	ODataPropertyBinding.prototype.doFetchOrGetQueryOptions = function () {
+		return this.isRoot() ? this.mQueryOptions : undefined;
 	};
 
 	/**
@@ -679,6 +674,15 @@ sap.ui.define([
 			if (this.bRelative) {
 				this.checkSuspended(true);
 				this.deregisterChangeListener();
+				if (oContext) {
+					if (this.oType && !this.bHasDeclaredType
+						// Note: this.oType => this.sReducedPath
+						&& _Helper.getMetaPath(this.oModel.resolve(this.sPath, oContext))
+							!== _Helper.getMetaPath(this.sReducedPath)) {
+						this.oType = undefined;
+					}
+					this.sReducedPath = undefined;
+				}
 			}
 			this.oContext = oContext;
 			this.sResumeChangeReason = undefined;
@@ -709,6 +713,7 @@ sap.ui.define([
 	ODataPropertyBinding.prototype.setType = function (oType, _sInternalType) {
 		var oOldType = this.oType;
 
+		this.bHasDeclaredType = !!oType;
 		if (oType && oType.getName() === "sap.ui.model.odata.type.DateTimeOffset") {
 			oType.setV4();
 		}

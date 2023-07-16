@@ -8,9 +8,8 @@ sap.ui.define([
 	"sap/ui/model/ChangeReason",
 	"sap/ui/model/TreeAutoExpandMode",
 	"sap/ui/model/TreeBinding",
-	"sap/ui/model/TreeBindingAdapter",
-	"sap/ui/test/TestUtils"
-], function (Log, ChangeReason, TreeAutoExpandMode, TreeBinding, TreeBindingAdapter, TestUtils) {
+	"sap/ui/model/TreeBindingAdapter"
+], function (Log, ChangeReason, TreeAutoExpandMode, TreeBinding, TreeBindingAdapter) {
 	/*global QUnit,sinon*/
 	"use strict";
 
@@ -20,10 +19,6 @@ sap.ui.define([
 			this.oLogMock = this.mock(Log);
 			this.oLogMock.expects("error").never();
 			this.oLogMock.expects("warning").never();
-		},
-
-		afterEach : function (assert) {
-			return TestUtils.awaitRendering();
 		}
 	});
 

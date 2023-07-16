@@ -46,12 +46,15 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.model.Type
 	 * @public
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 */
 	var SimpleType = Type.extend("sap.ui.model.SimpleType", /** @lends sap.ui.model.SimpleType.prototype */ {
 
 		constructor : function (oFormatOptions, oConstraints) {
 			Type.apply(this, arguments);
+			// The formatter to convert between the value in internal and model representation, cf. #getModelFormat
+			//   setFormatOptions may be overwritten by subclasses and set an own oInputFormat => must be set before
+			this.oInputFormat = undefined;
 			this.setFormatOptions(oFormatOptions || {});
 			this.setConstraints(oConstraints || {});
 			this.sName = "SimpleType";

@@ -34,7 +34,7 @@ sap.ui.define([
 	 * @class Item that represents one file to be uploaded using the {@link sap.m.upload.UploadSet} control.
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -665,32 +665,10 @@ sap.ui.define([
 			this._oFileNameEdit.addStyleClass("sapMUCEditBox");
 			this._oFileNameEdit.setFieldWidth("75%");
 			this._oFileNameEdit.setDescription(oSplit.extension);
-			this._updateFileNameEdit();
 			this.addDependent(this._oFileNameEdit);
 		}
 
 		return this._oFileNameEdit;
-	};
-
-	UploadSetItem.prototype._updateFileNameEdit = function () {
-		var oEdit = this._getFileNameEdit();
-
-		// TODO Needed?
-		// if (!this._bInEditMode) {
-		// 	var oSplit = UploadSetItem._splitFileName(this.getFileName());
-		// 	oEdit.setValue(oSplit.name);
-		// }
-
-		if (this._bContainsError) {
-			oEdit.setValueState(ValueState.Error);
-			oEdit.setValueStateText("");
-			oEdit.setShowValueStateMessage(true);
-			if (oEdit.getValue().length === 0) {
-				oEdit.setValueStateText(this._oRb.getText("UPLOAD_SET_TYPE_FILE_NAME"));
-			} else {
-				oEdit.setValueStateText(this._oRb.getText("UPLOAD_SET_FILE_NAME_EXISTS"));
-			}
-		}
 	};
 
 	/**
@@ -757,10 +735,6 @@ sap.ui.define([
 
 	UploadSetItem.prototype._setContainsError = function (bContainsError) {
 		this._bContainsError = bContainsError;
-		if (!this._bContainsError) {
-			return;
-		}
-		this._updateFileNameEdit();
 	};
 
 	UploadSetItem._splitFileName = function (sFileName, bWithDot) {

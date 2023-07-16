@@ -43,7 +43,7 @@ sap.ui.define([
 	 * @class
 	 * This is the base class for all template controls. Template controls are declared based on templates.
 	 * @extends sap.ui.core.Control
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @public
 	 * @since 1.15

@@ -18,7 +18,7 @@ sap.ui.define([
 	 * Handles dragging of a control over a given grid container.
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @extends sap.ui.base.Object
 	 *

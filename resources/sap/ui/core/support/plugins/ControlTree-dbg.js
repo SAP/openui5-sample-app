@@ -60,7 +60,7 @@ sap.ui.define([
 		 * @class This class represents the ControlTree plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.115.1
+		 * @version 1.116.0
 		 * @private
 		 * @alias sap.ui.core.support.plugins.ControlTree
 		 */
@@ -1636,7 +1636,7 @@ sap.ui.define([
 				if (oContext.getModel().isA("sap.ui.model.odata.v4.ODataModel")) { // ODataModel v4 throws an exception on getObject()
 					mContextInfos.unverifiedPath = true;
 				} else {
-					if (!oContext.getObject() == null) {
+					if (oContext.getObject() == null) {
 						mContextInfos.invalidPath = true;
 					}
 				}

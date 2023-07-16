@@ -30,7 +30,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @public
 	 * @since 1.8.0
 	 * @alias sap.ui.core.EventBus

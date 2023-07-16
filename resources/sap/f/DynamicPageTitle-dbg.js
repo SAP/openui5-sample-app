@@ -89,7 +89,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public
@@ -950,9 +950,13 @@ sap.ui.define([
 			bHasVisibleBreadcrumbs = this.getBreadcrumbs() && this.getBreadcrumbs().getVisible(),
 			bHasVisibleSnappedTitleOnMobile = Device.system.phone && this.getSnappedTitleOnMobile() && !this._bExpandedState,
 			bShouldShowTopArea = (bHasVisibleBreadcrumbs || bNavigationActionsShouldBeInTopArea) && !bHasVisibleSnappedTitleOnMobile,
-			bShouldChangeNavigationActionsPlacement = this.getNavigationActions().length > 0 && (bNavigationActionsShouldBeInTopArea ^ bNavigationActionsAreInTopArea);
+			bShouldChangeNavigationActionsPlacement = this.getNavigationActions().length > 0 && (bNavigationActionsShouldBeInTopArea ^ bNavigationActionsAreInTopArea),
+			$topArea = this.$topArea;
 
 		this._toggleTopAreaVisibility(bShouldShowTopArea);
+
+		$topArea && $topArea.toggleClass("sapFDynamicPageTitleTopBreadCrumbsOnly",
+			bHasVisibleBreadcrumbs && !bNavigationActionsShouldBeInTopArea);
 
 		if (bShouldChangeNavigationActionsPlacement) {
 			this._toggleNavigationActionsPlacement(bNavigationActionsShouldBeInTopArea);

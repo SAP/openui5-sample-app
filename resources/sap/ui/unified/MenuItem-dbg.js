@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 	 * @extends sap.ui.unified.MenuItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -63,7 +63,7 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 
 		rm.openStart("li", oItem);
 
-		if (oItem.getVisible() && bIsEnabled) {
+		if (oItem.getVisible()) {
 			rm.attr("tabindex", "0");
 		}
 
@@ -80,10 +80,6 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 			rm.class("sapUiMnuItmSepBefore");
 		}
 
-		if (!bIsEnabled) {
-			rm.attr("disabled", "disabled");
-		}
-
 		if (oItem.getTooltip_AsString()) {
 			rm.attr("title", oItem.getTooltip_AsString());
 		}
@@ -92,7 +88,7 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 		if (oInfo.bAccessible) {
 			rm.accessibilityState(oItem, {
 				role: "menuitem",
-				disabled: null, // Prevent aria-disabled as a disabled attribute is enough
+				disabled: !bIsEnabled,
 				posinset: oInfo.iItemNo,
 				setsize: oInfo.iTotalItems,
 				labelledby: { value: this.getId() + "-txt", append: true }
@@ -158,7 +154,7 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 	};
 
 	MenuItem.prototype.focus = function(oMenu){
-		if (this.getEnabled() && this.getVisible()) {
+		if (this.getVisible()) {
 			this.$().trigger("focus");
 		} else {
 			oMenu.focus();

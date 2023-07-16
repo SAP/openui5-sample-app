@@ -22,7 +22,7 @@ sap.ui.define(["./library", "sap/ui/core/Item", "sap/ui/base/ManagedObject", "sa
 		 * @extends sap.ui.core.Item
 		 *
 		 * @author SAP SE
-		 * @version 1.115.1
+		 * @version 1.116.0
 		 *
 		 * @constructor
 		 * @private

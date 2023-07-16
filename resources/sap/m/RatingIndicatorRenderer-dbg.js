@@ -22,6 +22,9 @@ sap.ui.define(
 			},
 			sIconSizeMeasure = "px";
 
+		// shortcut for library resource bundle
+		var oResourceBundle = Core.getLibraryResourceBundle("sap.m");
+
 		/**
 		 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
 		 *
@@ -73,6 +76,10 @@ sap.ui.define(
 			oRm.class("sapMRI");
 			oRm.class("sapUiRatingIndicator" + oControl._getIconSizeLabel(this._fIconSize));
 
+			if (oControl._isRequired()) {
+				oRm.attr("aria-description", oResourceBundle.getText("ELEMENT_REQUIRED"));
+			}
+
 			this.writeTooltip(oRm, oControl);
 			this.writeAccessibility(oRm, oControl);
 
@@ -113,13 +120,13 @@ sap.ui.define(
 		};
 
 		RatingIndicatorRenderer.writeAccessibility = function(oRm, oControl) {
-			var oResourceBundle = Core.getLibraryResourceBundle("sap.m");
 			oRm.accessibilityState(oControl, {
 				role: "slider",
 				orientation: "horizontal",
 				valuemin: 0,
 				disabled: !oControl.getEnabled() || oControl.getDisplayOnly(),
-				roledescription: oResourceBundle.getText("RATING_INDICATOR_ARIA_ROLEDESCRIPTION")
+				roledescription: oResourceBundle.getText("RATING_INDICATOR_ARIA_ROLEDESCRIPTION"),
+				required: null
 			});
 		};
 

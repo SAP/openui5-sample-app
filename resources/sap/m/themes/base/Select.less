@@ -77,6 +77,10 @@
 				}
 			}
 		}
+		.sapMSelectListItem {
+			display: flex;
+			align-items: center;
+		}
 	}
 }
 
@@ -245,10 +249,24 @@
 	text-align: start;
 	-webkit-user-select: none;
 	-moz-user-select: none;
-	line-height: 2.375rem;
 	color: @sapUiFieldTextColor;
 	font-style: normal;
 	font-size: @sapMFontMediumSize;
+	vertical-align: middle;
+	&::after {
+		content: "";
+		height: 100%;
+		display: inline-block;
+		vertical-align: middle;
+		width: 0;
+	}
+	.sapMSelectListItemText {
+		vertical-align: middle;
+	}
+
+	.sapMSelectListItemIcon {
+		vertical-align: middle;
+	}
 }
 
 .sapMSltAutoAdjustedWidth > .sapMSltLabel {
@@ -340,6 +358,10 @@
 
 .sapUiSizeCondensed .sapUiTableCell .sapMSlt:not(.sapMSltState) {
 	border-color: transparent;
+}
+
+.sapMSelectListTableLayout {
+	border-collapse: collapse;
 }
 
 /* ---------------------------------------- */
@@ -490,7 +512,6 @@ div.sapMSltPicker .sapMDialogScrollCont {
 	padding-left: 0.5rem;
 }
 
-.sapUiSizeCompact .sapMSlt > .sapMSltLabel,
 .sapUiSizeCompact .sapMSlt > .sapMSltArrow {
 	line-height: 1.5rem;
 }
@@ -587,4 +608,12 @@ div.sapMSltPicker .sapMDialogScrollCont {
     width: 100%;
     height: 100%;
     border: none;
+}
+
+// when the Busy Indicator is inside Select it should be with different positions - BCP 1870362962
+.sapMSlt .sapUiLocalBusyIndicator:focus:after {
+	left: 1px;
+	top: 1px;
+	right: 1px;
+	bottom: 1px;
 }

@@ -81,6 +81,35 @@ sap.ui.define(["sap/ui/Device"], function(Device) {
 						"testlibs/themeParameters": "test-resources/sap/ui/core/qunit/testdata/libraries/themeParameters"
 					}
 				}
+			},
+			"Theming": {
+				title: "sap.ui.core.Theming",
+				ui5: {
+					theme: undefined,
+					themeRoots: {
+						"sap_initialThemeRoot": "/somewhere/outside"
+					}
+				},
+				qunit: {
+					reorder: false
+				}
+			},
+			"ThemingWoThemeManager": {
+				title: "sap.ui.core.Theming w/o sap.ui.core.theming.ThemeManager",
+				ui5: {
+					theme: undefined,
+					themeRoots: {
+						"sap_initialThemeRoot": "/somewhere/outside"
+					}
+				},
+				testConfig: {
+					themeManagerNotActive: true
+				},
+				qunit: {
+					reorder: false
+				},
+				beforeBootstrap: "testdata/core/Theming.beforeBootstrap.qunit",
+				module: "testdata/core/Theming.qunit"
 			}
 		}
 	};

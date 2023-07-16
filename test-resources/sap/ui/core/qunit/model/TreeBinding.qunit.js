@@ -5,9 +5,8 @@
  */
 sap.ui.define([
 	"sap/base/Log",
-	"sap/ui/model/TreeBinding",
-	"sap/ui/test/TestUtils"
-], function (Log, TreeBinding, TestUtils) {
+	"sap/ui/model/TreeBinding"
+], function (Log, TreeBinding) {
 	"use strict";
 	/*global QUnit */
 
@@ -17,10 +16,6 @@ sap.ui.define([
 			this.oLogMock = this.mock(Log);
 			this.oLogMock.expects("error").never();
 			this.oLogMock.expects("warning").never();
-		},
-
-		afterEach : function (assert) {
-			return TestUtils.awaitRendering();
 		}
 	});
 

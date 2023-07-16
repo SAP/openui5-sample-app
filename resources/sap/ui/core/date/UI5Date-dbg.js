@@ -60,7 +60,7 @@ sap.ui.define([
 	 * @hideconstructor
 	 * @public
 	 * @since 1.111.0
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 */
 	function UI5Date(vDateParts, sTimezoneID) {
 		var oDateInstance = UI5Date._createDateInstance(vDateParts);
@@ -197,7 +197,7 @@ sap.ui.define([
 	/**
 	 * Clones this UI5Date instance.
 	 *
-	 * @returns {Date|module:sap/ui/core/date/UI5Date}
+	 * @returns {Date|module:sap/ui/core/date/UI5Date} The cloned date instance
 	 *
 	 * @private
 	 */

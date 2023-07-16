@@ -26,7 +26,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/ui/core/Core", "sap/base/str
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -375,15 +375,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/ui/core/Core", "sap/base/str
 				return aSelectedContexts;
 			},
 			selectableColumns: function(oTable) {
-				return oTable.getColumns(true).filter(function(oColumn) {
-					return oColumn.getVisible() && (oColumn.isPopin() || (!oColumn.isPopin() && !oColumn.isHidden()));
-				}).sort(function(oCol1, oCol2) {
-					var iCol1Index = oCol1.getIndex(), iCol2Index = oCol2.getIndex(), iIndexDiff = iCol1Index - iCol2Index;
-					if (iIndexDiff == 0) { return 0; }
-					if (iCol1Index < 0) { return 1; }
-					if (iCol2Index < 0) { return -1; }
-					return iIndexDiff;
-				});
+				return oTable.getRenderedColumns();
 			}
 		},
 		"sap.ui.table.Table": {

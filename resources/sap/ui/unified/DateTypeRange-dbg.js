@@ -25,7 +25,7 @@ sap.ui.define(['./DateRange', './library'],
 	 * @class
 	 * Date range with calendar day type information. Used to visualize special days in the Calendar.
 	 * @extends sap.ui.unified.DateRange
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public

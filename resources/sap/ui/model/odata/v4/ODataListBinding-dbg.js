@@ -57,7 +57,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.115.1
+		 * @version 1.116.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -338,7 +338,7 @@ sap.ui.define([
 			sApply = _AggregationHelper.buildApply(mParameters.$$aggregation).$apply;
 		}
 		this.mQueryOptions = this.oModel.buildQueryOptions(mParameters, true);
-		this.oQueryOptionsPromise = undefined; // @see #doFetchQueryOptions
+		this.oQueryOptionsPromise = undefined; // @see #doFetchOrGetQueryOptions
 		this.mParameters = mParameters; // store mParameters at binding after validation
 		if (sApply) {
 			this.mQueryOptions.$apply = sApply;
@@ -1193,7 +1193,8 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataListBinding.prototype.destroyPreviousContexts = function (aPathsToDelete) {
-		var mPreviousContextsByPath = this.mPreviousContextsByPath;
+		var mPreviousContextsByPath = this.mPreviousContextsByPath,
+			that = this;
 
 		if (mPreviousContextsByPath) { // binding may have been destroyed already
 			(aPathsToDelete || Object.keys(mPreviousContextsByPath)).forEach(function (sPath) {
@@ -1206,6 +1207,11 @@ sap.ui.define([
 					} else {
 						if (!oContext.isTransient()) {
 							oContext.destroy();
+							if (oContext.iIndex === undefined && that.oCache) {
+								// was kept alive (or deleted)
+								that.oCache.removeKeptElement(
+									_Helper.getRelativePath(sPath, that.oHeaderContext.getPath()));
+							}
 						}
 						delete mPreviousContextsByPath[sPath];
 					}
@@ -1282,9 +1288,9 @@ sap.ui.define([
 
 	/**
 	 * @override
-	 * @see sap.ui.model.odata.v4.ODataBinding#doFetchQueryOptions
+	 * @see sap.ui.model.odata.v4.ODataBinding#doFetchOrGetQueryOptions
 	 */
-	ODataListBinding.prototype.doFetchQueryOptions = function (oContext) {
+	ODataListBinding.prototype.doFetchOrGetQueryOptions = function (oContext) {
 		// Note: an absolute binding needs no parent context :-)
 		var sMetaPath = oContext && _Helper.getMetaPath(oContext.getPath()),
 			that = this;
@@ -2805,7 +2811,7 @@ sap.ui.define([
 	ODataListBinding.prototype.inheritQueryOptions = function (mQueryOptions, oContext) {
 		var mInheritedQueryOptions;
 
-		if (!Object.keys(this.mParameters).length) {
+		if (_Helper.isEmptyObject(this.mParameters)) {
 			// mix-in inherited static query options
 			mInheritedQueryOptions = this.getQueryOptionsForPath("", oContext);
 			if (mQueryOptions.$orderby && mInheritedQueryOptions.$orderby) {
@@ -2815,7 +2821,7 @@ sap.ui.define([
 				mQueryOptions.$filter = "(" + mQueryOptions.$filter + ") and ("
 					+ mInheritedQueryOptions.$filter + ")";
 			}
-			mQueryOptions = Object.assign({}, mInheritedQueryOptions, mQueryOptions);
+			mQueryOptions = _Helper.merge({}, mInheritedQueryOptions, mQueryOptions);
 			_Helper.aggregateExpandSelect(mQueryOptions, mInheritedQueryOptions);
 		}
 
@@ -2880,7 +2886,7 @@ sap.ui.define([
 		// When suspended it matches if it already has contexts. Then its getKeepAliveContext fails.
 		return this.mParameters.$$getKeepAliveContext && this.getResolvedPath() === sPath
 			&& (!this.isRootBindingSuspended() || this.aContexts.length
-				|| Object.keys(this.mPreviousContextsByPath).length);
+				|| !_Helper.isEmptyObject(this.mPreviousContextsByPath));
 	};
 
 	/**
@@ -2992,6 +2998,21 @@ sap.ui.define([
 					return that.oHeaderContext.checkUpdateInternal();
 				}).catch(this.oModel.getReporter());
 			}
+		}
+	};
+
+	/**
+	 * Notification from a context that its effective keep-alive status changed.
+	 *
+	 * @param {sap.ui.model.odata.v4.Context} oContext - The context
+	 *
+	 * @private
+	 */
+	ODataListBinding.prototype.onKeepAliveChanged = function (oContext) {
+		if (!oContext.isDeleted() // data of a deleted context must remain for the exclusion filter
+				&& oContext.getPath() in this.mPreviousContextsByPath
+				&& !oContext.isEffectivelyKeptAlive()) {
+			this.destroyPreviousContextsLater([oContext.getPath()]);
 		}
 	};
 
@@ -4009,6 +4030,7 @@ sap.ui.define([
 					if (this.mParameters.$$aggregation) {
 						_AggregationHelper.setPath(this.mParameters.$$aggregation, sResolvedPath);
 					} else if (this.bHasPathReductionToParent && this.oModel.bAutoExpandSelect) {
+						this.mCanUseCachePromiseByChildPath = {};
 						this.sChangeReason = "AddVirtualContext"; // JIRA: CPOUI5ODATAV4-848
 					}
 					if (oContext.getBinding && oContext.getBinding().isRootBindingSuspended()) {

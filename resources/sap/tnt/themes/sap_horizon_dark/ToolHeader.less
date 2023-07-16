@@ -13,7 +13,7 @@
 @_sap_tnt_ToolHeader_Padding: 0 0.75rem;
 @_sap_tnt_ToolHeader_ArrowMarginBottom: 0.25rem;
 @_sap_tnt_ToolHeader_IconTabHeader_Height: auto;
-@_sap_tnt_ToolHeader_Shadow: 0 0 0.125rem 0 fade(@sapContent_ShadowColor,16), 0 0.5rem 1rem 0 fade(@sapContent_ShadowColor, 32);
+@_sap_tnt_ToolHeader_Shadow: 0 0 0.125rem 0 fade(@sapUiContentShadowColor,16), 0 0.5rem 1rem 0 fade(@sapUiContentShadowColor, 32);
 
 // ==========================================================================
 // sap.m.Toolbar overriding
@@ -37,6 +37,24 @@
 		background: none;
 		width: 0.75rem;
 	}
+}
+
+// Styling for the cases when we have Header and SubHeader
+.sapTntToolPageHeaderWithSubHeaderWrapper .sapTntToolPageHeader:first-of-type .sapTntToolHeader {
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
+	box-shadow: none;
+}
+
+.sapTntToolPageHeaderWithSubHeaderWrapper .sapTntToolPageHeader:nth-of-type(2) .sapTntToolHeader {
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+	box-shadow: none;
+}
+
+.sapTntToolPageHeaderWrapper.sapTntToolPageHeaderWithSubHeaderWrapper {
+	box-shadow: @_sap_tnt_ToolHeader_BoxShadow;
+	border-radius: @_sap_tnt_ToolHeader_BorderRadius;
 }
 
 // ==========================================================================
@@ -141,7 +159,7 @@
 
 .sapTntToolHeader {
 	.sapMTitle {
-		text-shadow: none;		
+		text-shadow: none;
 		font-family: @sapFontBlackFamily;
 		font-size: 1.125rem;
 		line-height: 1.625rem;
@@ -232,7 +250,7 @@
 		box-shadow: none;
 		line-height: 1.25rem;
 	}
-	
+
 	.sapMSFS:active::after,
 	.sapMSFR:active::after {
 		background: @sapActiveColor;

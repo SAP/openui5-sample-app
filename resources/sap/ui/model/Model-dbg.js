@@ -51,7 +51,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.message.MessageProcessor
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.Model
@@ -951,9 +951,10 @@ sap.ui.define([
 			for (var sKey in this.mMessages) {
 				aMessages = aMessages.concat(this.mMessages[sKey]);
 			}
-			this.fireMessageChange({
-				oldMessages: aMessages
-			});
+			var MessageManager = sap.ui.require("sap/ui/core/message/MessageManager");
+			if (MessageManager) {
+				MessageManager.updateMessages(aMessages, []);
+			}
 		}
 	};
 

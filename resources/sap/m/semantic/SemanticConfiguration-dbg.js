@@ -36,7 +36,7 @@ sap.ui.define([
 	 * Constructor for an sap.m.semantic.SemanticConfiguration.
 	 *
 	 * @class Defines the visual properties and positioning for each supported semantic type
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @private
 	 * @since 1.30.0
 	 * @alias sap.m.semantic.SemanticConfiguration
@@ -407,7 +407,7 @@ sap.ui.define([
 			getSettings: function() {
 				return {
 					icon: IconPool.getIconURI("discussion-2"),
-					text: oBundle.getText("SEMANTIC_CONTROL_DISCUSS_IN_JAM")
+					text: oBundle.getText("SEMANTIC_CONTROL_DISCUSS_IN_WORK_ZONE")
 				};
 			},
 			order: 1,
@@ -419,7 +419,7 @@ sap.ui.define([
 			getSettings: function() {
 				return {
 					icon: IconPool.getIconURI("share-2"),
-					text: oBundle.getText("SEMANTIC_CONTROL_SHARE_IN_JAM")
+					text: oBundle.getText("SEMANTIC_CONTROL_SHARE_ON_WORK_ZONE")
 				};
 			},
 			order: 2,

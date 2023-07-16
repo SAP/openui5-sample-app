@@ -315,6 +315,7 @@ sap.ui.define([
 			oEnhanceCacheWithGrandTotalExpectation,
 			oFirstLevelCache = {
 				addKeptElement : "~addKeptElement~",
+				removeKeptElement : "~removeKeptElement~",
 				requestSideEffects : "~requestSideEffects~"
 			},
 			oGetDownloadUrlExpectation,
@@ -393,6 +394,8 @@ sap.ui.define([
 		assert.strictEqual(oCache.aElements.$created, 0);
 		assert.strictEqual(oCache.oFirstLevel, oFirstLevelCache);
 		assert.strictEqual(oCache.addKeptElement, oFirstLevelCache.addKeptElement, "@borrows ...");
+		assert.strictEqual(oCache.removeKeptElement, oFirstLevelCache.removeKeptElement,
+			"@borrows ...");
 		assert.strictEqual(oCache.requestSideEffects, oFirstLevelCache.requestSideEffects,
 			"@borrows ...");
 		if (bCountLeaves) {

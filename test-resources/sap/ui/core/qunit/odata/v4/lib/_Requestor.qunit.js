@@ -1363,7 +1363,11 @@ sap.ui.define([
 			}), "Products", true)
 			.throws(oError);
 
-		return Promise.all([oGetProductsPromise, oRequestor.processBatch("groupId")]);
+		return Promise.all([
+			oGetProductsPromise,
+			// code under test
+			oRequestor.processBatch("groupId")
+		]);
 	});
 
 	//*********************************************************************************************
@@ -2089,7 +2093,11 @@ sap.ui.define([
 				.withExactArgs(aExpectedRequests, "groupId")
 				.resolves([createResponse(oFixture.mProductsResponse)]);
 
-			return Promise.all([oGetProductsPromise, oRequestor.processBatch("groupId")]);
+			return Promise.all([
+				oGetProductsPromise,
+				// code under test
+				oRequestor.processBatch("groupId")
+			]);
 		});
 	});
 
@@ -2113,7 +2121,11 @@ sap.ui.define([
 		this.mock(oRequestor).expects("sendBatch") // arguments don't matter
 			.resolves([createResponse(oResponse)]);
 
-		return Promise.all([oGetProductsPromise, oRequestor.processBatch("groupId")]);
+		return Promise.all([
+			oGetProductsPromise,
+			// code under test
+			oRequestor.processBatch("groupId")
+		]);
 	});
 
 	//*********************************************************************************************
@@ -2127,7 +2139,11 @@ sap.ui.define([
 		this.mock(oRequestor).expects("reportHeaderMessages")
 			.withExactArgs("Products(42)", sinon.match.same(mHeaders["SAP-Messages"]));
 
-		return Promise.all([oRequestPromise, oRequestor.processBatch("groupId")]);
+		return Promise.all([
+			oRequestPromise,
+			// code under test
+			oRequestor.processBatch("groupId")
+		]);
 	});
 
 	//*********************************************************************************************
@@ -2141,8 +2157,11 @@ sap.ui.define([
 		this.mock(oRequestor).expects("reportHeaderMessages")
 			.withExactArgs("Products(42)", sinon.match.same(mHeaders["SAP-Messages"]));
 
-		return Promise.all([oRequestPromise, oRequestor.processBatch("groupId")])
-			.then(function (aResults) {
+		return Promise.all([
+			oRequestPromise,
+			// code under test
+			oRequestor.processBatch("groupId")
+		]).then(function (aResults) {
 				assert.deepEqual(aResults[0], {"@odata.etag" : "ETag"});
 			});
 	});
@@ -2158,8 +2177,11 @@ sap.ui.define([
 		this.mock(oRequestor).expects("reportHeaderMessages")
 			.withExactArgs("Products(42)", sinon.match.same(mHeaders["SAP-Messages"]));
 
-		return Promise.all([oRequestPromise, oRequestor.processBatch("groupId")])
-			.then(function (aResults) {
+		return Promise.all([
+			oRequestPromise,
+			// code under test
+			oRequestor.processBatch("groupId")
+		]).then(function (aResults) {
 				assert.deepEqual(aResults[0], {});
 			});
 	});
@@ -2269,7 +2291,7 @@ sap.ui.define([
 
 		aPromises.push(oRequestor.request("GET", "fail", this.createGroupLock())
 			.then(unexpected, function (oResultError) {
-				assertError(oResultError, oError.error.message);
+				assertError(oResultError);
 			}));
 
 		aPromises.push(oRequestor.request("GET", "ok", this.createGroupLock())
@@ -2283,6 +2305,70 @@ sap.ui.define([
 
 		this.mock(oRequestor).expects("sendBatch").resolves(aBatchResult); // arguments don't matter
 
+		// code under test
+		aPromises.push(oRequestor.processBatch("groupId").then(function (oResult) {
+			assert.deepEqual(oResult, undefined);
+		}));
+
+		return Promise.all(aPromises);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("processBatch(...): failure followed by another change set", function (assert) {
+		var oError = {error : {message : "404 Not found"}},
+			aBatchResult = [{
+				getResponseHeader : function () {
+					return "application/json";
+				},
+				headers : {"Content-Type" : "application/json"},
+				responseText : JSON.stringify(oError),
+				status : 404,
+				statusText : "Not found"
+			}],
+			aPromises = [],
+			oRequestor = _Requestor.create("/", oModelInterface);
+
+		function unexpected() {
+			assert.ok(false);
+		}
+
+		function assertError(oResultError) {
+			assert.ok(oResultError instanceof Error);
+			assert.deepEqual(oResultError.error, oError.error);
+			assert.strictEqual(oResultError.message, oError.error.message);
+			assert.strictEqual(oResultError.status, 404);
+			assert.strictEqual(oResultError.statusText, "Not found");
+		}
+
+		aPromises.push(oRequestor.request("PATCH", "fail", this.createGroupLock())
+			.then(unexpected, function (oResultError) {
+				assertError(oResultError);
+			}));
+
+		oRequestor.addChangeSet("groupId");
+
+		// Note: "If-Match" : {} prevents merging of PATCH requests
+		aPromises.push(oRequestor.request("PATCH", "n/a", this.createGroupLock(), {"If-Match" : {}})
+			.then(unexpected, function (oResultError) {
+				assert.ok(oResultError instanceof Error);
+				assert.strictEqual(oResultError.message,
+					"HTTP request was not processed because the previous request failed");
+				assert.strictEqual(oResultError.$reported, true);
+				assertError(oResultError.cause);
+			}));
+
+		aPromises.push(oRequestor.request("PATCH", "n/a", this.createGroupLock(), {"If-Match" : {}})
+			.then(unexpected, function (oResultError) {
+				assert.ok(oResultError instanceof Error);
+				assert.strictEqual(oResultError.message,
+					"HTTP request was not processed because the previous request failed");
+				assert.strictEqual(oResultError.$reported, true);
+				assertError(oResultError.cause);
+			}));
+
+		this.mock(oRequestor).expects("sendBatch").resolves(aBatchResult); // arguments don't matter
+
+		// code under test
 		aPromises.push(oRequestor.processBatch("groupId").then(function (oResult) {
 			assert.deepEqual(oResult, undefined);
 		}));
@@ -4744,7 +4830,10 @@ sap.ui.define([
 
 	//*********************************************************************************************
 	QUnit.test("mergeGetRequests", function (assert) {
-		var oHelperMock = this.mock(_Helper),
+		var oClone1 = {},
+			oClone6 = {},
+			oClone9 = {$expand : {np2 : null}},
+			oHelperMock = this.mock(_Helper),
 			aMergedRequests,
 			oRequestor = _Requestor.create(sServiceUrl, oModelInterface),
 			oRequestorMock = this.mock(oRequestor),
@@ -4794,32 +4883,42 @@ sap.ui.define([
 				url : "EntitySet1('44')?foo=bar",
 				$queryOptions : {$select : [], $expand : {np1 : null}},
 				$resolve : function () {}
-			}];
+			}],
+			aRequestQueryOptions = aRequests.map(function (oRequest) {
+				// Note: the original query options may well contain "live" references
+				// => "copy on write" is needed!
+				return oRequest.$queryOptions;
+			}),
+			aRequestQueryOptionsJSON = aRequestQueryOptions.map(function (mQueryOptions) {
+				return JSON.stringify(mQueryOptions);
+			});
 
 		aRequests.iChangeSet = 1;
+		oHelperMock.expects("clone").withExactArgs(sinon.match.same(aRequests[1].$queryOptions))
+			.returns(oClone1);
 		oHelperMock.expects("aggregateExpandSelect")
-			.withExactArgs(sinon.match.same(aRequests[1].$queryOptions),
-				sinon.match.same(aRequests[3].$queryOptions))
+			.withExactArgs(sinon.match.same(oClone1), sinon.match.same(aRequests[3].$queryOptions))
 			.callThrough(); // -> {$select : ["p1", "p3"]}
 		this.mock(aRequests[3]).expects("$resolve")
 			.withExactArgs(sinon.match.same(aRequests[1].$promise));
+		oHelperMock.expects("clone").withExactArgs(sinon.match.same(aRequests[6].$queryOptions))
+			.returns(oClone6);
 		oHelperMock.expects("aggregateExpandSelect")
-			.withExactArgs(sinon.match.same(aRequests[6].$queryOptions),
-				sinon.match.same(aRequests[7].$queryOptions))
+			.withExactArgs(sinon.match.same(oClone6), sinon.match.same(aRequests[7].$queryOptions))
 			.callThrough(); // -> {$select : ["p6", "p7"]}
 		this.mock(aRequests[7]).expects("$mergeRequests").withExactArgs().returns("~aPaths~");
 		this.mock(aRequests[6]).expects("$mergeRequests").withExactArgs("~aPaths~");
 		this.mock(aRequests[7]).expects("$resolve")
 			.withExactArgs(sinon.match.same(aRequests[6].$promise));
+		oHelperMock.expects("clone").withExactArgs(sinon.match.same(aRequests[9].$queryOptions))
+			.returns(oClone9);
 		oHelperMock.expects("aggregateExpandSelect")
-			.withExactArgs(sinon.match.same(aRequests[9].$queryOptions),
-				sinon.match.same(aRequests[10].$queryOptions))
+			.withExactArgs(sinon.match.same(oClone9), sinon.match.same(aRequests[10].$queryOptions))
 			.callThrough(); // -> {$select : [], $expand : {np2 : null, np1 : null}}
 		this.mock(aRequests[10]).expects("$resolve")
 			.withExactArgs(sinon.match.same(aRequests[9].$promise));
 		oRequestorMock.expects("addQueryString")
-			.withExactArgs(aRequests[1].url, aRequests[1].$metaPath,
-				sinon.match.same(aRequests[1].$queryOptions))
+			.withExactArgs(aRequests[1].url, aRequests[1].$metaPath, sinon.match.same(oClone1))
 			.returns("EntitySet1('42')?$select=p1,p3");
 		oRequestorMock.expects("addQueryString")
 			.withExactArgs(aRequests[5].url, aRequests[5].$metaPath,
@@ -4827,8 +4926,7 @@ sap.ui.define([
 					.and(sinon.match({$select : ["p5"], $expand : {np5 : null}})))
 			.returns("EntitySet3('42')?$select=p5&expand=np5");
 		oRequestorMock.expects("addQueryString")
-			.withExactArgs(aRequests[6].url, aRequests[6].$metaPath,
-				sinon.match.same(aRequests[6].$queryOptions))
+			.withExactArgs(aRequests[6].url, aRequests[6].$metaPath, sinon.match.same(oClone6))
 			.returns("EntitySet2('42')?$select=p6,p7");
 		oRequestorMock.expects("addQueryString")
 			.withExactArgs(aRequests[8].url, aRequests[8].$metaPath,
@@ -4836,7 +4934,7 @@ sap.ui.define([
 			.returns("EntitySet1('42')?$select=p8");
 		oRequestorMock.expects("addQueryString")
 			.withExactArgs(aRequests[9].url, aRequests[9].$metaPath,
-				sinon.match.same(aRequests[9].$queryOptions)
+				sinon.match.same(oClone9)
 					.and(sinon.match({$select : ["np1"], $expand : {np1 : null, np2 : null}})))
 			.returns("EntitySet1('44')?$select=np1&$expand=np1,np2");
 
@@ -4858,6 +4956,10 @@ sap.ui.define([
 		assert.strictEqual(aMergedRequests[5].url, "EntitySet2('42')?$select=p6,p7");
 		assert.strictEqual(aMergedRequests[6].url, "EntitySet1('42')?$select=p8");
 		assert.strictEqual(aMergedRequests[7].url, "EntitySet1('44')?$select=np1&$expand=np1,np2");
+		aRequestQueryOptions.forEach(function (mQueryOptions, i) {
+			assert.strictEqual(JSON.stringify(mQueryOptions), aRequestQueryOptionsJSON[i],
+				"unchanged #" + i);
+		});
 	});
 
 	//*********************************************************************************************

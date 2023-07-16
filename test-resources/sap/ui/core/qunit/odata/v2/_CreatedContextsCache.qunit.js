@@ -5,9 +5,8 @@
  */
 sap.ui.define([
 	"sap/base/Log",
-	"sap/ui/model/odata/v2/_CreatedContextsCache",
-	"sap/ui/test/TestUtils"
-], function (Log, _CreatedContextsCache, TestUtils) {
+	"sap/ui/model/odata/v2/_CreatedContextsCache"
+], function (Log, _CreatedContextsCache) {
 	/*global QUnit, sinon*/
 	"use strict";
 
@@ -17,10 +16,6 @@ sap.ui.define([
 			this.oLogMock = this.mock(Log);
 			this.oLogMock.expects("error").never();
 			this.oLogMock.expects("warning").never();
-		},
-
-		afterEach : function (assert) {
-			return TestUtils.awaitRendering();
 		}
 	});
 

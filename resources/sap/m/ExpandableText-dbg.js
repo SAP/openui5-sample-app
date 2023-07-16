@@ -105,7 +105,7 @@ function(library,
 	 * @implements sap.ui.core.IFormContent, sap.m.IHyphenation
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public

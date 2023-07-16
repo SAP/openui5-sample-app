@@ -6,7 +6,7 @@
   <copyright>OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.115.1</version>
+  <version>1.116.0</version>
 
   <documentation>The SAPUI5 Core Runtime.
 
@@ -268,7 +268,7 @@
             <copyright>2009-2014 Stuart Knightley, David Duponchel, Franz Buchinger, António Afonso</copyright>
             <pattern>sap/ui/thirdparty/jszip.js</pattern>
         </lib>
-        <lib name="caja" displayName="Google-Caja JS HTML Sanitizer" npmName="n/a" version="Build 4884" hash="b83416d152b043dbf83f88b0e8b16f1a" homepage="http://code.google.com/p/google-caja/wiki/JsHtmlSanitizer" id="73554900106100001928">
+        <lib name="caja" displayName="Google-Caja JS HTML Sanitizer" npmName="n/a" version="Build 4884" hash="f28a26545017d954f897adf511bf9044" homepage="http://code.google.com/p/google-caja/wiki/JsHtmlSanitizer" id="73554900106100001928">
             <license url="http://www.apache.org/licenses/LICENSE-2.0" type="Apache-2.0" />
             <copyright>Google Inc.</copyright>
             <pattern>sap/ui/thirdparty/caja-html-sanitizer.js</pattern>

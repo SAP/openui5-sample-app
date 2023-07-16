@@ -10,10 +10,9 @@ sap.ui.define([
 	"./_Helper",
 	"./_Requestor",
 	"sap/base/Log",
-	"sap/base/util/isEmptyObject",
 	"sap/ui/base/SyncPromise",
 	"sap/ui/model/odata/ODataUtils"
-], function (_GroupLock, _Helper, _Requestor, Log, isEmptyObject, SyncPromise, ODataUtils) {
+], function (_GroupLock, _Helper, _Requestor, Log, SyncPromise, ODataUtils) {
 	"use strict";
 	/*eslint max-nested-callbacks: 0 */
 
@@ -87,7 +86,7 @@ sap.ui.define([
 	 * @param {string} sResourcePath
 	 *   A resource path relative to the service URL
 	 * @param {object} [mQueryOptions]
-	 *   A map of key-value pairs representing the query string
+	 *   A map of key-value pairs representing the query string (requires "copy on write"!)
 	 * @param {boolean} [bSortExpandSelect]
 	 *   Whether the paths in $expand and $select shall be sorted in the cache's query string;
 	 *   note that this flag can safely be ignored for all "new" features (after 1.47) which
@@ -190,7 +189,7 @@ sap.ui.define([
 				_Helper.removeByPath(that.mChangeRequests, sEntityPath, oRequestPromise);
 
 				if (aMessages.length) {
-					oModelInterface.fireMessageChange({newMessages : aMessages});
+					oModelInterface.updateMessages(undefined, aMessages);
 				}
 
 				delete oEntity["@$ui5.context.isDeleted"];
@@ -241,7 +240,7 @@ sap.ui.define([
 			aMessages = oModelInterface.getMessagesByPath(
 				_Helper.buildPath("/", that.sResourcePath, sEntityPath), true);
 
-			oModelInterface.fireMessageChange({oldMessages : aMessages});
+			oModelInterface.updateMessages(aMessages);
 
 			oEntity["@$ui5.context.isDeleted"] = true;
 			if (Array.isArray(vCacheData)) {
@@ -674,7 +673,7 @@ sap.ui.define([
 		// clone data to avoid modifications outside the cache
 		// remove any property starting with "@$ui5."
 		oEntityData = _Helper.publicClone(oEntityData, true) || {};
-		oPostBody = _Helper.merge({}, oEntityData);
+		oPostBody = _Helper.clone(oEntityData);
 		// keep post body separate to allow local property changes in the cache
 		_Helper.setPrivateAnnotation(oEntityData, "postBody", oPostBody);
 		_Helper.setPrivateAnnotation(oEntityData, "transientPredicate", sTransientPredicate);
@@ -1019,7 +1018,7 @@ sap.ui.define([
 			}
 		}
 
-		if (!this.mLateQueryOptions) {
+		if (!(this.mLateQueryOptions || this.mQueryOptions && this.mQueryOptions.$select)) {
 			return false; // no autoExpandSelect
 		}
 
@@ -1032,10 +1031,15 @@ sap.ui.define([
 		aUpdateProperties = [sRequestedPropertyPath];
 
 		sFullResourceMetaPath = _Helper.buildPath(this.sMetaPath, sResourceMetaPath);
+		mQueryOptions = this.mLateQueryOptions
+			|| { // ensure that $select precedes $expand in the resulting query
+				$select : this.mQueryOptions.$select,
+				$expand : this.mQueryOptions.$expand
+			};
 		// sRequestedPropertyPath is also a metapath because the binding does not accept a path with
 		// a collection-valued navigation property for a late property
 		mQueryOptions = _Helper.intersectQueryOptions(
-			_Helper.getQueryOptionsForPath(this.mLateQueryOptions, sResourcePath),
+			_Helper.getQueryOptionsForPath(mQueryOptions, sResourcePath),
 			[sRequestedPropertyPath], this.oRequestor.getModelInterface().fetchMetadata,
 			sFullResourceMetaPath);
 		if (!mQueryOptions) {
@@ -1308,7 +1312,7 @@ sap.ui.define([
 	/**
 	 * Returns this cache's query options.
 	 *
-	 * @returns {object} The query options
+	 * @returns {object|undefined} The query options, if any
 	 *
 	 * @public
 	 * @see #setQueryOptions
@@ -1354,7 +1358,7 @@ sap.ui.define([
 	 * @see #registerChangeListener
 	 */
 	_Cache.prototype.hasChangeListeners = function () {
-		return !isEmptyObject(this.mChangeListeners);
+		return !_Helper.isEmptyObject(this.mChangeListeners);
 	};
 
 	/**
@@ -1559,8 +1563,8 @@ sap.ui.define([
 				mInCollectionQueryOptions = {},
 				sInCollectionUrl,
 				sKeyFilter,
-				mQueryOptions
-					= Object.assign({}, _Helper.getQueryOptionsForPath(that.mQueryOptions, sPath)),
+				mQueryOptions = _Helper.clone(
+					_Helper.getQueryOptionsForPath(that.mQueryOptions, sPath)),
 				sReadUrl,
 				sReadUrlPrefix = _Helper.buildPath(that.sResourcePath, sPath),
 				aRequests = [],
@@ -3283,7 +3287,7 @@ sap.ui.define([
 		 */
 		function calculateKeptElementsQuery() {
 			var aKeyFilters,
-				mQueryOptions = _Helper.merge({}, that.mQueryOptions);
+				mQueryOptions = _Helper.clone(that.mQueryOptions);
 
 			if (that.mLateQueryOptions) {
 				_Helper.aggregateExpandSelect(mQueryOptions, that.mLateQueryOptions);
@@ -3359,6 +3363,20 @@ sap.ui.define([
 					}
 				});
 			});
+	};
+
+	/**
+	 * Removes the element with the given predicate from $byPredicate of the cache's element list.
+	 *
+	 * @param {string} sPredicate - The predicate
+	 * @throws {Error}
+	 *   If the cache is shared
+	 *
+	 * @public
+	 */
+	_CollectionCache.prototype.removeKeptElement = function (sPredicate) {
+		this.checkSharedRequest();
+		delete this.aElements.$byPredicate[sPredicate];
 	};
 
 	/**
@@ -4002,6 +4020,11 @@ sap.ui.define([
 			]).then(function (aResult) {
 				that.buildOriginalResourcePath(aResult[0], aResult[1], fnGetOriginalResourcePath);
 				that.visitResponse(aResult[0], aResult[1]);
+				if (that.mQueryOptions && that.mQueryOptions.$select) {
+					// add "@$ui5.noData" annotations, e.g. for missing Edm.Stream properties
+					_Helper.updateSelected({}, "", aResult[0], aResult[0],
+						that.mQueryOptions.$select);
+				}
 				that.bPosting = false;
 				if (oRequestLock) {
 					oRequestLock.unlock();
@@ -4052,7 +4075,7 @@ sap.ui.define([
 		if (oData) {
 			sHttpMethod = oData["X-HTTP-Method"] || sHttpMethod;
 			delete oData["X-HTTP-Method"];
-			if (this.oRequestor.isActionBodyOptional() && !Object.keys(oData).length) {
+			if (this.oRequestor.isActionBodyOptional() && _Helper.isEmptyObject(oData)) {
 				oData = undefined;
 			}
 		}

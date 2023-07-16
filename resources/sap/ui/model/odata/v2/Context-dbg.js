@@ -64,7 +64,7 @@ sap.ui.define([
 	 * @hideconstructor
 	 * @public
 	 * @since 1.93.0
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 */
 	var Context = BaseContext.extend("sap.ui.model.odata.v2.Context", {
 			constructor : function (oModel, sPath, sDeepPath, oCreatePromise, bInactive,
@@ -217,7 +217,8 @@ sap.ui.define([
 	 *   see {@link #setRefreshAfterChange}. If given, this overrules the model-wide
 	 *   <code>refreshAfterChange</code> flag for this operation only.
 	 * @returns {Promise<undefined>} A promise resolving with <code>undefined</code> in case of
-	 *   successful deletion or rejecting with an error in case the deletion failed
+	 *   successful deletion or rejecting with an error in case the deletion failed. If the <code>DELETE</code> request
+	 *   has been aborted, the error has an <code>aborted</code> flag set to <code>true</code>.
 	 * @throws {Error}
 	 *   If the given parameter map contains any other parameter than those documented above in case
 	 *   of a persistent context

@@ -58,7 +58,7 @@ function(
 	 * @extends sap.m.ListItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public
@@ -373,6 +373,7 @@ function(
 	};
 
 	FeedListItem.prototype.onAfterRendering = function() {
+		var oFormattedText = this.getAggregation("_text");
 		if (document.getElementById(this.getAggregation("_actionButton"))) {
 			document.getElementById(this.getAggregation("_actionButton").getId()).setAttribute("aria-haspopup", "menu");
 		}
@@ -380,6 +381,8 @@ function(
 			this._clearEmptyTagsInCollapsedText();
 		}
 		this.$("realtext").find('a[target="_blank"]').on("click", openLink);
+
+		oFormattedText && oFormattedText._sanitizeCSSPosition(this.getDomRef()); // perform CSS position sanitize
 	};
 
 	FeedListItem.prototype.exit = function() {
@@ -402,6 +405,9 @@ function(
 
 	// open links href using safe API
 	function openLink (oEvent) {
+		if (oEvent.originalEvent.defaultPrevented) {
+			return;
+		}
 		oEvent.preventDefault();
 		openWindow(oEvent.currentTarget.href, oEvent.currentTarget.target);
 	}
@@ -606,24 +612,35 @@ function(
 		var $threeDots = this.$("threeDots");
 		var sMoreLabel = FeedListItem._sTextShowMore;
 		var sLessLabel = FeedListItem._sTextShowLess;
+		var oFormattedText = this.getAggregation("_text");
+
 		if (this.getMoreLabel()) {
 			sMoreLabel = this.getMoreLabel();
 		}
 		if (this.getLessLabel()) {
 			sLessLabel = this.getLessLabel();
 		}
+
+		// detach click events
+		$text.find('a[target="_blank"]').off("click");
+
 		if (this._bTextExpanded) {
 			$text.html(this._sShortText.replace(/&#xa;/g, "<br>"));
+			oFormattedText._sanitizeCSSPosition($text[0]); // perform CSS position sanitize
 			$threeDots.text(" ... ");
 			this._oLinkExpandCollapse.setText(sMoreLabel);
 			this._bTextExpanded = false;
 			this._clearEmptyTagsInCollapsedText();
 		} else {
 			$text.html(this._sFullText.replace(/&#xa;/g, "<br>"));
+			oFormattedText._sanitizeCSSPosition($text[0]); // perform CSS position sanitize
 			$threeDots.text("  ");
 			this._oLinkExpandCollapse.setText(sLessLabel);
 			this._bTextExpanded = true;
 		}
+
+		// attach again click events since the text is changed without rerendering
+		$text.find('a[target="_blank"]').on("click", openLink);
 	};
 
 	/**

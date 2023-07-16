@@ -62,7 +62,7 @@ sap.ui.define(['./library',
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.115.1
+		 * @version 1.116.0
 		 *
 		 * @public
 		 * @alias sap.m.BusyDialog
@@ -277,8 +277,6 @@ sap.ui.define(['./library',
 				}
 			} else if (!this._oDialog.getShowHeader()) {
 				this._oDialog.addAriaLabelledBy(InvisibleText.getStaticId("sap.m", "BUSYDIALOG_TITLE"));
-			} else {
-				this._oDialog.removeAriaLabelledBy(InvisibleText.getStaticId("sap.m", "BUSYDIALOG_TITLE"));
 			}
 
 			//if the code is not ready yet (new sap.m.BusyDialog().open()) wait 50ms and then try ot open it.
@@ -323,6 +321,10 @@ sap.ui.define(['./library',
 		BusyDialog.prototype._fnCloseHandler = function () {
 			//fire the close event with 'cancelPressed' = true/false depending on how the busyDialog is closed
 			this.fireClose({cancelPressed: this._isClosedFromUserInteraction || false});
+
+			if (this._oDialog) {
+				this._oDialog.removeAllAriaLabelledBy();
+			}
 		};
 
 		/**

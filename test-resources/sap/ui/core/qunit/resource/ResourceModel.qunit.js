@@ -15,10 +15,7 @@ sap.ui.define([
 	"use strict";
 
 	var sClassname = "sap.ui.model.resource.ResourceModel",
-		sDefaultLanguage = Configuration.getLanguage(),
-		oContent = document.createElement("div"); //add divs for control tests
-	oContent.id = "target1";
-	document.body.appendChild(oContent);
+		sDefaultLanguage = Configuration.getLanguage();
 
 	var oModel, oLabel, oLabel2,
 		sCustomMessagesProperties
@@ -44,17 +41,11 @@ sap.ui.define([
 	//model created
 	QUnit.test("Model instantiated successful", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{TEST_TEXT}"});
-		oLabel.placeAt("target1");
+		oLabel.placeAt("qunit-fixture");
 
 		assert.ok(oModel, "model must exist after creation");
 		assert.ok(oModel instanceof ResourceModel, "model must be instanceof sap.ui.model.resource.ResourceModel");
 		oLabel.destroy();
-	});
-
-	//getProperty()
-	QUnit.test("test model getProperty", function(assert) {
-		var value = oModel.getProperty("TEST_TEXT");
-		assert.equal(value, "A text en");
 	});
 
 	//setProperty must not exist!
@@ -63,9 +54,9 @@ sap.ui.define([
 	});
 
 	//getProperty()/binding
-	QUnit.test("test model getProperty", function(assert) {
+	QUnit.test("test model getProperty and via binding", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{TEST_TEXT}"});
-		oLabel.placeAt("target1");
+		oLabel.placeAt("qunit-fixture");
 		var value = oModel.getProperty("TEST_TEXT");
 		assert.equal(value, "A text en");
 		assert.equal(oLabel.getText(), "A text en");
@@ -90,17 +81,11 @@ sap.ui.define([
 	//model created
 	QUnit.test("Model instantiated successful", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{i18n>TEST_TEXT}"});
-		oLabel.placeAt("target1");
+		oLabel.placeAt("qunit-fixture");
 
 		assert.ok(oModel, "model must exist after creation");
 		assert.ok(oModel instanceof ResourceModel, "model must be instanceof sap.ui.model.resource.ResourceModel");
 		oLabel.destroy();
-	});
-
-	//getProperty()
-	QUnit.test("test model getProperty", function(assert) {
-		var value = oModel.getProperty("TEST_TEXT");
-		assert.equal(value, "A text en");
 	});
 
 	//setProperty must not exist!
@@ -109,9 +94,9 @@ sap.ui.define([
 	});
 
 	//getProperty()/binding
-	QUnit.test("test model getProperty", function(assert) {
+	QUnit.test("test model getProperty and via binding", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{i18n>TEST_TEXT}"});
-		oLabel.placeAt("target1");
+		oLabel.placeAt("qunit-fixture");
 		var value = oModel.getProperty("TEST_TEXT");
 		assert.equal(value, "A text en");
 		assert.equal(oLabel.getText(), "A text en");
@@ -135,7 +120,7 @@ sap.ui.define([
 	//model created
 	QUnit.test("Model instantiated successful", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{i18n>TEST_TEXT}"});
-		oLabel.placeAt("target1");
+		oLabel.placeAt("qunit-fixture");
 
 		assert.ok(oModel, "model must exist after creation");
 		assert.ok(oModel instanceof ResourceModel, "model must be instanceof sap.ui.model.resource.ResourceModel");
@@ -146,19 +131,14 @@ sap.ui.define([
 
 		oLabel.destroy();
 	});
-	//getProperty()
-	QUnit.test("test model getProperty", function(assert) {
-		var value = oModel.getProperty("TEST_TEXT");
-		assert.equal(value, "A text en");
-	});
 	//setProperty must not exist!
 	QUnit.test("set Property must have no effect", function(assert) {
 		assert.ok(!oModel.setProperty, "set Property method should not be defined");
 	});
 	//getProperty()/binding
-	QUnit.test("test model getProperty", function(assert) {
+	QUnit.test("test model getProperty and via binding", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{i18n>TEST_TEXT}"});
-		oLabel.placeAt("target1");
+		oLabel.placeAt("qunit-fixture");
 		var value = oModel.getProperty("TEST_TEXT");
 		assert.equal(value, "A text en");
 		assert.equal(oLabel.getText(), "A text en");
@@ -167,7 +147,7 @@ sap.ui.define([
 	//CompositeBinding
 	QUnit.test("test composite bindings", function(assert) {
 		oLabel2 = new TestButton("myLabel2", {text: {parts: [{path: "i18n>TEST_TEXT"}, {path: "i18n>TEST_TEXT"}]}});
-		oLabel2.placeAt("target1");
+		oLabel2.placeAt("qunit-fixture");
 
 		assert.ok(oLabel2, "Label with composite binding must be created");
 		assert.equal(oLabel2.getText(), "A text en A text en", "Text msut be: 'A text en A text en'");
@@ -182,7 +162,7 @@ sap.ui.define([
 		assert.equal(info.key, "TEST_TEXT");
 	});
 
-	QUnit.test("Model instantiated successful", function(assert) {
+	QUnit.test("Model instantiated successfully, named model", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{i18n>TEST_TEXT}"});
 		oLabel.setModel(oModel, "i18n");
 		var oClone = oLabel.clone();
@@ -193,7 +173,7 @@ sap.ui.define([
 		oModel.destroy();
 	});
 
-	QUnit.test("Model instantiated successful", function(assert) {
+	QUnit.test("Model instantiated successfully, cloned before named model is set", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{i18n>TEST_TEXT}"});
 		var oClone = oLabel.clone();
 		oClone.setModel(oModel, "i18n");
@@ -959,9 +939,9 @@ sap.ui.define([
 		beforeEach: function() {
 			Configuration.setLanguage("en");
 			oLabel = new TestButton("myLabel", {text: "{async>TEST_TEXT}"});
-			oLabel.placeAt("target1");
+			oLabel.placeAt("qunit-fixture");
 			oLabel2 = new TestButton("myLabel2", {text: "{async>TEST_TEXT}"});
-			oLabel2.placeAt("target1");
+			oLabel2.placeAt("qunit-fixture");
 			oModel = new ResourceModel({bundleName: "testdata.messages", async: true});
 			Core.setModel(oModel, "async");
 		},
@@ -1085,7 +1065,7 @@ sap.ui.define([
 		var oBtn = new TestButton({
 			text: "{async5>TEST_TEXT}"
 		});
-		oBtn.placeAt("target1");
+		oBtn.placeAt("qunit-fixture");
 
 		var oAsyncModel = new ResourceModel({
 			bundleName: "testdata.messages",
@@ -1116,7 +1096,7 @@ sap.ui.define([
 		var oBtn = new TestButton({
 			text: "{sync5>TEST_TEXT}"
 		});
-		oBtn.placeAt("target1");
+		oBtn.placeAt("qunit-fixture");
 
 		var oSyncModel = new ResourceModel({
 			bundleName: "testdata.messages",

@@ -13,7 +13,7 @@ sap.ui.define(["sap/base/Log"], function(Log) {
 	 *
 	 * @alias sap.m.changeHandler.MoveTableColumns
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @experimental Since 1.48
 	 */
 	var MoveTableColumns = {};

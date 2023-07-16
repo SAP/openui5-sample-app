@@ -86,7 +86,7 @@ function(
 	 * @implements sap.ui.core.IShrinkable, sap.ui.core.IFormContent, sap.ui.core.ITitleContent, sap.ui.core.IAccessKeySupport
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public
@@ -303,6 +303,34 @@ function(
 
 	Link.prototype.onAccKeysHighlightEnd = function () {
 		setRefLabelsHighlightAccKeysRef.call(this, false);
+	};
+
+	Link.prototype.onAfterRendering = function() {
+		if (Device.system.phone || Device.system.tablet) {
+			var oAnchorElement = this.getDomRef();
+			// TODO: Adjust sap.m.internal.ObjectMarkerCustomLink rendering part of the sap.m.ObjectMarker implementation
+			if (!oAnchorElement) {
+				return;
+			}
+			oAnchorElement.removeEventListener("click", this._onClick);
+			if (oAnchorElement.getAttribute("href") == "#") {
+				oAnchorElement.addEventListener("click", this._onClick);
+			}
+		}
+	};
+
+	Link.prototype.exit = function() {
+		if (Device.system.phone || Device.system.tablet) {
+			var oAnchorElement = this.getDomRef();
+			if (!oAnchorElement) {
+				return;
+			}
+			oAnchorElement.removeEventListener("click", this._onClick);
+		}
+	};
+
+	Link.prototype._onClick = function(oEvent) {
+		oEvent.preventDefault();
 	};
 
 	/**

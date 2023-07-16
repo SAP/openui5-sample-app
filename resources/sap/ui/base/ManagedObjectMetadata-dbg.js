@@ -11,10 +11,12 @@ sap.ui.define([
 	'./Object',
 	'sap/base/Log',
 	'sap/base/assert',
+	'sap/base/config',
 	'sap/base/strings/capitalize',
 	'sap/base/strings/escapeRegExp',
 	'sap/base/util/merge',
 	'sap/base/util/isPlainObject',
+	'sap/ui/core/Configuration',
 	'sap/ui/core/Lib'
 ],
 function(
@@ -23,10 +25,12 @@ function(
 	BaseObject,
 	Log,
 	assert,
+	BaseConfig,
 	capitalize,
 	escapeRegExp,
 	merge,
 	isPlainObject,
+	Configuration,
 	Library
 ) {
 	"use strict";
@@ -79,7 +83,7 @@ function(
 	 *
 	 *
 	 * @author Frank Weigel
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @since 0.8.6
 	 * @alias sap.ui.base.ManagedObjectMetadata
 	 * @extends sap.ui.base.Metadata
@@ -91,6 +95,8 @@ function(
 		Metadata.apply(this, arguments);
 
 	};
+
+	var Element; // lazy dependency to sap/ui/core/Element
 
 	// chain the prototypes
 	ManagedObjectMetadata.prototype = Object.create(Metadata.prototype);
@@ -436,7 +442,8 @@ function(
 		} else if (oForwardTo.idSuffix) { // target given by ID
 			this._getTarget = (function(sIdSuffix) {
 				return function() {
-					return sap.ui.getCore().byId(this.getId() + sIdSuffix); // "this" context is the ManagedObject instance
+					Element = Element || sap.ui.require("sap/ui/core/Element");
+					return Element && Element.registry.get(this.getId() + sIdSuffix); // "this" context is the ManagedObject instance
 				};
 			})(oForwardTo.idSuffix);
 
@@ -1796,7 +1803,7 @@ function(
 	function preloadDesigntimeLibrary(oMetadata) {
 		//preload the designtime data for the library
 		var sLibrary = oMetadata.getLibraryName(),
-			sPreload = sap.ui.getCore().getConfiguration().getPreload(),
+			sPreload = Configuration.getPreload(),
 			oLibrary = Library.all()[sLibrary];
 		if (oLibrary && oLibrary.designtime) {
 			var oPromise;
@@ -1992,8 +1999,7 @@ function(
 	function uid(sId) {
 		assert(!/[0-9]+$/.exec(sId), "AutoId Prefixes must not end with numbers");
 
-		//read prefix from configuration only once
-		sId = (sUIDPrefix || (sUIDPrefix = sap.ui.getCore().getConfiguration().getUIDPrefix())) + sId;
+		sId = ManagedObjectMetadata.getUIDPrefix() + sId;
 
 		// read counter (or initialize it)
 		var iCount = mUIDCounts[sId] || 0;
@@ -2018,6 +2024,24 @@ function(
 	 * @function
 	 */
 	ManagedObjectMetadata.uid = uid;
+
+	/**
+	 * Get the prefix used for the generated IDs from configuration
+	 *
+	 * @return {string} The prefix for the generated IDs
+	 * @private
+	 */
+	ManagedObjectMetadata.getUIDPrefix = function() {
+		if (sUIDPrefix === undefined) {
+			sUIDPrefix = BaseConfig.get({
+				name: "sapUiUidPrefix",
+				type: BaseConfig.Type.String,
+				defaultValue: "__",
+				freeze: true
+			});
+		}
+		return sUIDPrefix;
+	};
 
 	/**
 	 * Calculates a new ID for an instance of this class.
@@ -2073,8 +2097,7 @@ function(
 	 * @public
 	 */
 	ManagedObjectMetadata.isGeneratedId = function(sId) {
-		sUIDPrefix = sUIDPrefix || sap.ui.getCore().getConfiguration().getUIDPrefix();
-		rGeneratedUID = rGeneratedUID || new RegExp( "(^|-{1,3})" + escapeRegExp(sUIDPrefix) );
+		rGeneratedUID = rGeneratedUID || new RegExp( "(^|-{1,3})" + escapeRegExp(ManagedObjectMetadata.getUIDPrefix()) );
 
 		return rGeneratedUID.test(sId);
 	};

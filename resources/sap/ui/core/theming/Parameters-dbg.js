@@ -14,6 +14,7 @@ sap.ui.define([
 	'sap/ui/core/Core',
 	'sap/ui/core/Configuration',
 	'sap/ui/core/Lib',
+	'sap/ui/core/Theming',
 	'sap/ui/thirdparty/URI',
 	'../Element',
 	'sap/base/util/UriParameters',
@@ -23,7 +24,7 @@ sap.ui.define([
 	'sap/ui/core/theming/ThemeManager',
 	'./ThemeHelper'
 ],
-	function(Core, Configuration, Library, URI, Element, UriParameters, Log, extend, syncFetch, ThemeManager, ThemeHelper) {
+	function(Core, Configuration, Library, Theming, URI, Element, UriParameters, Log, extend, syncFetch, ThemeManager, ThemeHelper) {
 	"use strict";
 
 	var syncCallBehavior = Configuration.getSyncCallBehavior();
@@ -625,7 +626,7 @@ sap.ui.define([
 			}
 
 			if (!sTheme) {
-				sTheme = Configuration.getTheme();
+				sTheme = Theming.getTheme();
 			}
 			// Parameters.get() without arguments returns
 			// copy of complete default parameter set
@@ -755,7 +756,7 @@ sap.ui.define([
 				"default": {},
 				"scopes": {}
 			};
-			sTheme = Configuration.getTheme();
+			sTheme = Theming.getTheme();
 			forEachStyleSheet(function(sId) {
 				var sLibname = sId.substr(13); // length of sap-ui-theme-
 				if (mLibraryParameters[sLibname]) {
@@ -789,8 +790,8 @@ sap.ui.define([
 		Parameters._reset = function() {
 			// hidden parameter {boolean} bOnlyWhenNecessary
 			var bOnlyWhenNecessary = arguments[0] === true;
-			if ( !bOnlyWhenNecessary || Configuration.getTheme() !== sTheme ) {
-				sTheme = Configuration.getTheme();
+			if ( !bOnlyWhenNecessary || Theming.getTheme() !== sTheme ) {
+				sTheme = Theming.getTheme();
 				aParametersToLoad = [];
 				mParameters = null;
 				ThemeHelper.reset();

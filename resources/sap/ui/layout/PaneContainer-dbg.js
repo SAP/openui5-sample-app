@@ -24,7 +24,7 @@ sap.ui.define(['./library', 'sap/ui/core/Element', './AssociativeSplitter', 'sap
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public

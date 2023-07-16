@@ -12,6 +12,7 @@ sap.ui.define([
 	'sap/ui/base/Interface',
 	'sap/ui/base/Object',
 	'sap/ui/base/ManagedObject',
+	'./AnimationMode',
 	'./Component',
 	'./Configuration',
 	'./Element',
@@ -19,19 +20,23 @@ sap.ui.define([
 	'./Lib',
 	'./Rendering',
 	'./RenderManager',
+	'./ControlBehavior',
 	'./UIArea',
 	'./message/MessageManager',
 	'./StaticArea',
+	"sap/ui/core/Theming",
 	"sap/base/Log",
 	"sap/ui/performance/Measurement",
 	"sap/ui/security/FrameOptions",
 	"sap/base/assert",
+	"sap/base/util/Deferred",
 	"sap/base/util/ObjectPath",
 	'sap/ui/performance/trace/initTraces',
 	'sap/base/util/isEmptyObject',
 	'sap/base/util/each',
 	'sap/ui/VersionInfo',
 	'sap/base/config',
+	'sap/base/Event',
 	'sap/ui/events/jquery/EventSimulation'
 ],
 	function(
@@ -41,6 +46,7 @@ sap.ui.define([
 		Interface,
 		BaseObject,
 		ManagedObject,
+		AnimationMode,
 		Component,
 		Configuration,
 		Element,
@@ -48,19 +54,23 @@ sap.ui.define([
 		Library,
 		Rendering,
 		RenderManager,
+		ControlBehavior,
 		UIArea,
 		MessageManager,
 		StaticArea,
+		Theming,
 		Log,
 		Measurement,
 		FrameOptions,
 		assert,
+		Deferred,
 		ObjectPath,
 		initTraces,
 		isEmptyObject,
 		each,
-		VersionInfo
-		/* ,BaseConfig */
+		VersionInfo,
+		BaseConfig,
+		BaseEvent
 		/* ,EventSimulation */
 	) {
 
@@ -76,11 +86,6 @@ sap.ui.define([
 	 */
 	var FocusHandler;
 
-	/**
-	 * ThemeManager module reference, lazily retrieved via private "_getThemeManager" API.
-	 */
-	var ThemeManager;
-
 	// Initialize SAP Passport or FESR
 	initTraces();
 
@@ -89,6 +94,43 @@ sap.ui.define([
 	 * @private
 	 */
 	var _oEventProvider;
+
+	/**
+	 * Returns the waiting behavior for the initial theme loading.
+	 * Possible values are:
+	 * <ul>
+	 * <li>undefined (default):
+	 *     By default neither the initialization of the SAPUI5 Core nor the first rendering
+	 *     wait for the configured theme to be loaded.
+	 * </li>
+	 * <li>"rendering":
+	 *      The first (initial) rendering of the application will be delayed until the theme
+	 *      has been loaded and applied (until Core.isThemeApplied()).
+	 *      Helps to avoid FOUC (flash of unstyled content).
+	 * </li>
+	 * <li>"init":
+	 *      Same as "rendering", but additionally delays the init event of theSAPUI5 Core until
+	 *      the configured theme has been loaded. Application code that waits for this event can
+	 *      then rely on the theming information to be present,
+	 *      e.g. for calling sap.ui.core.theming.Parameters.get
+	 * </li>
+	 * </ul>
+	 *
+	 * @returns {string} the configured waiting behavior for the initial theme loading
+	 */
+	function getWaitForTheme() {
+		var sWaitForTheme = BaseConfig.get({name: "sapUiXxWaitForTheme", type: BaseConfig.Type.String, external: true}).toLowerCase();
+
+		if (sWaitForTheme === "true" ) {
+			sWaitForTheme = "rendering";
+		}
+		if ( sWaitForTheme !== "rendering" && sWaitForTheme !== "init" ) {
+			// invalid value or false from legacy boolean setting
+			sWaitForTheme = undefined;
+		}
+
+		return sWaitForTheme;
+	}
 
 	/*
 	 * Internal class that can help to synchronize a set of asynchronous tasks.
@@ -174,7 +216,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 * @final
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @alias sap.ui.core.Core
 	 * @public
 	 * @hideconstructor
@@ -218,6 +260,12 @@ sap.ui.define([
 			 * @private
 			 */
 			this.bInitialized = false;
+
+			/**
+			 * Whether the core is ready
+			 * @private
+			 */
+			this.bReady = false;
 
 			/**
 			 * Available plugins in the order of registration.
@@ -266,11 +314,10 @@ sap.ui.define([
 			this.oRootComponent = null;
 
 			/**
-			 * Ordered collection of initEvent listeners
-			 * Moved here (before boot()) so that the libraries can be registered for lazy load!!
+			 * Ready Promise
 			 * @private
 			 */
-			this.aInitListeners = [];
+			this.pReady = new Deferred();
 
 			/**
 			 * Whether the legacy library has to be loaded.
@@ -313,7 +360,7 @@ sap.ui.define([
 			}
 
 			// enable LessSupport if specified in configuration
-			if (Configuration.getValue("xx-lesssupport") && aModules.indexOf("sap.ui.core.plugin.LessSupport") == -1) {
+			if (BaseConfig.get({name: "sapUiXxLesssupport", type: BaseConfig.Type.Boolean}) && aModules.indexOf("sap.ui.core.plugin.LessSupport") == -1) {
 				Log.info("Including LessSupport into declared modules");
 				aModules.push("sap.ui.core.plugin.LessSupport");
 			}
@@ -326,8 +373,8 @@ sap.ui.define([
 			var bAsync = sPreloadMode === "async" || sap.ui.loader.config().async;
 
 			// adding the following classList is done here for compatibility reasons
-			document.documentElement.classList.add("sapUiTheme-" + Configuration.getTheme());
-			Log.info("Declared theme " + Configuration.getTheme(), null, METHOD);
+			document.documentElement.classList.add("sapUiTheme-" + Theming.getTheme());
+			Log.info("Declared theme " + Theming.getTheme(), null, METHOD);
 
 			Log.info("Declared modules: " + aModules, METHOD);
 
@@ -388,7 +435,7 @@ sap.ui.define([
 
 			// load the version info file in case of a custom theme to determine
 			// the distribution version which should be provided in library.css requests.
-			if (Configuration.getValue("versionedLibCss")) {
+			if (Library.getVersionedLibCss()) {
 				var iVersionInfoTask = oSyncPoint2.startTask("load version info");
 
 				var fnCallback = function(oVersionInfo) {
@@ -580,6 +627,8 @@ sap.ui.define([
 				// @private, @ui5-restricted sap.ui.core
 				//  - Init
 				"boot",
+				//  - Ready Promise
+				"ready",
 				//  - UIArea & Rendering
 				"addPrerenderingTask",
 				//  - Messaging
@@ -711,14 +760,22 @@ sap.ui.define([
 	 * @private
 	 */
 	Core.prototype._setupAnimation = function() {
-		var html = document.documentElement;
-		var sAnimationMode = Configuration.getAnimationMode();
-		html.dataset.sapUiAnimationMode = sAnimationMode;
-		var bAnimation = (sAnimationMode !== Configuration.AnimationMode.minimal && sAnimationMode !== Configuration.AnimationMode.none);
-		html.dataset.sapUiAnimation = bAnimation ? "on" : "off";
-		if (typeof jQuery !== "undefined") {
-			jQuery.fx.off = !bAnimation;
+		function adaptAnimationMode() {
+			var html = document.documentElement;
+			var sAnimationMode = ControlBehavior.getAnimationMode();
+			html.dataset.sapUiAnimationMode = sAnimationMode;
+			var bAnimation = (sAnimationMode !== AnimationMode.minimal && sAnimationMode !== AnimationMode.none);
+			html.dataset.sapUiAnimation = bAnimation ? "on" : "off";
+			if (typeof jQuery !== "undefined") {
+				jQuery.fx.off = !bAnimation;
+			}
 		}
+		ControlBehavior.attachChange(function(oEvent) {
+			if (oEvent.animationMode) {
+				adaptAnimationMode();
+			}
+		});
+		adaptAnimationMode();
 	};
 
 	/**
@@ -834,18 +891,10 @@ sap.ui.define([
 		assert(typeof sThemeName === "string", "sThemeName must be a string");
 		assert(typeof sThemeBaseUrl === "string" || typeof sThemeBaseUrl === "undefined", "sThemeBaseUrl must be a string or undefined");
 
-		sThemeName = Configuration.normalizeTheme(sThemeName, sThemeBaseUrl);
-
-		// Configuration needs to be updated synchronously but only
-		// applyTheme in case theme changed
-		// Check is duplicated in applyTheme in ThemeManager
-		// be aware to keep both in sync
-		if ((sThemeName && Configuration.getTheme() != sThemeName)) {
-			Configuration.setTheme(sThemeName);
-			this._getThemeManager().then(function(ThemeManager) {
-				ThemeManager.applyTheme(sThemeName, sThemeBaseUrl, /* bForce = */ true);
-			});
+		if (sThemeBaseUrl) {
+			Theming.setThemeRoot(sThemeName, sThemeBaseUrl);
 		}
+		Theming.setTheme(sThemeName);
 	};
 
 	/**
@@ -897,9 +946,12 @@ sap.ui.define([
 	 * @public
 	 */
 	Core.prototype.setThemeRoot = function(sThemeName, aLibraryNames, sThemeBaseUrl, bForceUpdate) {
-		this._getThemeManager().then(function(ThemeManager) {
-			ThemeManager.setThemeRoot(sThemeName, aLibraryNames, sThemeBaseUrl, bForceUpdate);
-		});
+		if (typeof aLibraryNames === "string") {
+			bForceUpdate = sThemeBaseUrl;
+			sThemeBaseUrl  = aLibraryNames;
+			aLibraryNames = undefined;
+		}
+		Theming.setThemeRoot(sThemeName, sThemeBaseUrl, aLibraryNames, bForceUpdate);
 		return this;
 	};
 
@@ -925,7 +977,7 @@ sap.ui.define([
 
 		this._setBodyAccessibilityRole();
 
-		var sWaitForTheme = Configuration.getValue('xx-waitForTheme');
+		var sWaitForTheme = getWaitForTheme();
 
 		// If there is no waitForTheme or ThemeManager is already available and theme is loaded render directly sync
 		if (this.isThemeApplied() || !sWaitForTheme) {
@@ -933,27 +985,18 @@ sap.ui.define([
 		} else {
 			Rendering.suspend();
 
-			var whenThemeAppliedThen = function(fnCallback) {
-				this._getThemeManager().then(function(ThemeManager) {
-					if ( ThemeManager.themeLoaded ) {
-						fnCallback();
-					} else {
-						ThemeManager.attachEventOnce("ThemeChanged", fnCallback);
-					}
-				});
-			}.bind(this);
 
 			if (sWaitForTheme === "rendering") {
 				Rendering.notifyInteractionStep();
 				this._executeInitialization();
 				Rendering.getLogger().debug("delay initial rendering until theme has been loaded");
-				whenThemeAppliedThen(function() {
+				Theming.attachAppliedOnce(function() {
 					Rendering.resume("after theme has been loaded");
 				});
 			} else if (sWaitForTheme === "init") {
 				Rendering.getLogger().debug("delay init event and initial rendering until theme has been loaded");
 				Rendering.notifyInteractionStep();
-				whenThemeAppliedThen(function() {
+				Theming.attachAppliedOnce(function() {
 					this._executeInitialization();
 					Rendering.resume("after theme has been loaded");
 				}.bind(this));
@@ -1065,33 +1108,13 @@ sap.ui.define([
 		}
 	};
 
-	Core.prototype._executeInitListeners = function() {
-		var METHOD = "sap.ui.core.Core.init()";
-
-		// make sure that we have no concurrent modifications on the init listeners
-		var aCallbacks = this.aInitListeners;
-		// reset the init listener so that we are aware the listeners are already
-		// executed and the initialization phase is over / follow up registration
-		// would then immediately call the init event handler
-		this.aInitListeners = undefined;
-
-		// execute registered init event handlers
-		if (aCallbacks && aCallbacks.length > 0) {
-			// execute the callbacks
-			Log.info("Fire Loaded Event",null,METHOD);
-			aCallbacks.forEach(function(fn) {
-				fn();
-			});
-		}
-	};
-
 	Core.prototype._executeInitialization = function() {
+		// chain ready to be the firstone that is executed
 		var METHOD = "sap.ui.core.Core.init()"; // Because it's only used from init
 		if (this.bInitialized) {
 			return;
 		}
 		this.bInitialized = true;
-
 		Log.info("Initialized",null,METHOD);
 
 		// start the plugins
@@ -1101,7 +1124,8 @@ sap.ui.define([
 
 		this._executeOnInit();
 		this._setupRootComponent(); // @legacy-relevant: private API for 2 deprecated concepts "rootComponent" & "sap.ui.app.Application"
-		this._executeInitListeners();
+		this.pReady.resolve();
+		this.bReady = true;
 	};
 
 	/**
@@ -1125,38 +1149,15 @@ sap.ui.define([
 	 * @return {boolean} whether the styles of the current theme are already applied
 	 * @public
 	 */
-	Core.prototype.isThemeApplied = function () {
-		ThemeManager = ThemeManager || sap.ui.require("sap/ui/core/theming/ThemeManager");
-		return ThemeManager ? ThemeManager.themeLoaded : false;
-	};
+	Core.prototype.isThemeApplied = Theming.isApplied;
 
-	Core.prototype._getThemeManager = function (bClear) {
-		ThemeManager = ThemeManager || sap.ui.require("sap/ui/core/theming/ThemeManager");
-
-		if (!this.pThemeManager) {
-			if (!ThemeManager) {
-				this.pThemeManager = new Promise(function (resolve, reject) {
-					sap.ui.require(["sap/ui/core/theming/ThemeManager"], function (ThemeManager) {
-						resolve(ThemeManager);
-					}, reject);
-				});
-			} else {
-				this.pThemeManager = Promise.resolve(ThemeManager);
-			}
-			this.pThemeManager = this.pThemeManager.then(function(ThemeManager) {
-				ThemeManager.attachEvent("ThemeChanged", function(oEvent) {
-					this.fireThemeChanged(oEvent.getParameters());
-				}.bind(this));
-				return ThemeManager;
-			}.bind(this));
-		}
-		// This is only used within initLibrary to reset flag themeLoaded synchronously in case
-		// a theme for a new library will be loaded
-		if (ThemeManager && bClear) {
-			ThemeManager.reset();
-		}
-		return this.pThemeManager;
-	};
+	/**
+	 * Attach to 'applied' event of theming in order to keep existing core event 'ThemeChanged' stable
+	 */
+	Theming.attachApplied(function(oEvent) {
+		// notify the listeners via a control event
+		_oEventProvider && _oEventProvider.fireEvent(Core.M_EVENTS.ThemeChanged, BaseEvent.getParameters(oEvent));
+	});
 
 	/**
 	 * Registers a given function that is executed after the framework has been initialized.
@@ -1172,8 +1173,8 @@ sap.ui.define([
 	 */
 	Core.prototype.attachInitEvent = function (fnFunction) {
 		assert(typeof fnFunction === "function", "fnFunction must be a function");
-		if (this.aInitListeners) {
-			this.aInitListeners.push(fnFunction);
+		if (!this.bReady) {
+			this.pReady.promise.then(fnFunction);
 		}
 	};
 
@@ -1192,11 +1193,7 @@ sap.ui.define([
 	 */
 	Core.prototype.attachInit = function (fnFunction) {
 		assert(typeof fnFunction === "function", "fnFunction must be a function");
-		if (this.aInitListeners) {
-			this.aInitListeners.push(fnFunction);
-		} else {
-			fnFunction();
-		}
+		this.ready(fnFunction);
 	};
 
 	/**
@@ -1816,11 +1813,7 @@ sap.ui.define([
 	 *  for example changing the cozy/compact CSS class at a single control
 	 * @public
 	 */
-	Core.prototype.notifyContentDensityChanged = function() {
-		this._getThemeManager().then(function (ThemeManager) {
-			ThemeManager.notifyContentDensityChanged();
-		});
-	};
+	Core.prototype.notifyContentDensityChanged = Theming.notifyContentDensityChanged;
 
 	/**
 	 * Fired after a theme has been applied.
@@ -1859,8 +1852,6 @@ sap.ui.define([
 	 */
 	Core.prototype.attachThemeChanged = function(fnFunction, oListener) {
 		// preparation for letting the "themeChanged" event be forwarded from the ThemeManager to the Core
-		this._getThemeManager();
-
 		_oEventProvider.attachEvent(Core.M_EVENTS.ThemeChanged, fnFunction, oListener);
 	};
 
@@ -1878,19 +1869,6 @@ sap.ui.define([
 	 */
 	Core.prototype.detachThemeChanged = function(fnFunction, oListener) {
 		_oEventProvider.detachEvent(Core.M_EVENTS.ThemeChanged, fnFunction, oListener);
-	};
-
-	/**
-	 * Fires event <code>ThemeChanged</code> to attached listeners.
-	 *
-	 * @param {object} [oParameters] Parameters to pass along with the event
-	 * @param {string} [oParameters.theme] Theme name (default is <code>sap.ui.getCore().getConfiguration().getTheme()</code>)
-	 */
-	Core.prototype.fireThemeChanged = function(oParameters) {
-		var sEventId = Core.M_EVENTS.ThemeChanged;
-
-		// notify the listeners via a control event
-		_oEventProvider.fireEvent(sEventId, oParameters);
 	};
 
 	/**
@@ -2021,10 +1999,6 @@ sap.ui.define([
 		if ( mChanges.rtl != undefined ) {
 			// update the dir attribute of the document
 			document.documentElement.setAttribute("dir", mChanges.rtl ? "rtl" : "ltr");
-			// modify style sheet URLs
-			this._getThemeManager().then(function (ThemeManager) {
-				ThemeManager._updateThemeUrls(Configuration.getTheme());
-			});
 
 			// invalidate all UIAreas
 			UIArea.registry.forEach(function(oUIArea) {
@@ -3007,6 +2981,24 @@ sap.ui.define([
 	 */
 	Core.prototype.addPrerenderingTask = function (fnPrerenderingTask, bFirst) {
 		Rendering.addPrerenderingTask(fnPrerenderingTask, bFirst);
+	};
+
+	/** returns a Promise that resolves if the Core is initialized
+	 *
+	 * @param {function():void} [fnReady] If the Core is ready the function will be called immediately, otherwise when the ready Promise resolves.
+	 * @returns {Promise<undefined>} The ready promise
+	 * @private
+	 * @ui5-restricted sap.ui.core
+	 */
+	Core.prototype.ready = function(fnReady) {
+		if (fnReady) {
+			if (this.bReady) {
+				fnReady();
+			} else {
+				this.pReady.promise.then(fnReady);
+			}
+		}
+		return this.pReady.promise;
 	};
 
 	Core.prototype.destroy = function() {

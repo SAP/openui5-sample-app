@@ -26,13 +26,11 @@ sap.ui.define([
 	"sap/ui/model/odata/v2/ODataContextBinding",
 	"sap/ui/model/odata/v2/ODataListBinding",
 	"sap/ui/model/odata/v2/ODataModel",
-	"sap/ui/model/odata/v2/ODataTreeBinding",
-	"sap/ui/test/TestUtils"
+	"sap/ui/model/odata/v2/ODataTreeBinding"
 ], function (Log, SyncPromise, Configuration, UI5Date, Message, _Helper, BaseContext,
 		FilterProcessor, Model, _ODataMetaModelUtils, CountMode, MessageScope, ODataMessageParser,
 		ODataMetaModel, ODataPropertyBinding, ODataUtils, _CreatedContextsCache, Context,
-		ODataAnnotations, ODataContextBinding, ODataListBinding, ODataModel, ODataTreeBinding,
-		TestUtils
+		ODataAnnotations, ODataContextBinding, ODataListBinding, ODataModel, ODataTreeBinding
 ) {
 	/*global QUnit,sinon*/
 	/*eslint camelcase: 0, max-nested-callbacks: 0, no-warning-comments: 0*/
@@ -60,10 +58,6 @@ sap.ui.define([
 			this.oLogMock = this.mock(Log);
 			this.oLogMock.expects("error").never();
 			this.oLogMock.expects("warning").never();
-		},
-
-		afterEach : function (assert) {
-			return TestUtils.awaitRendering();
 		}
 	});
 
@@ -218,6 +212,8 @@ sap.ui.define([
 		var oModel = new ODataModel(mParameters);
 
 		assert.strictEqual(oModel.bIgnoreAnnotationsFromMetadata, oFixture.member);
+
+		return oPromise;
 	});
 });
 
@@ -4965,8 +4961,8 @@ sap.ui.define([
 	{entitySetPath : "~FooSetPath"},
 	{entitySet : "~FooSet", returnType : "Collection(~FooType)"},
 	{entitySetPath : "~FooSetPath", returnType : "Collection(~FooType)"}
-].forEach(function (oFunctionMetadata) {
-	QUnit.test("callFunction: with expand; retuns a collection", function (assert) {
+].forEach(function (oFunctionMetadata, i) {
+	QUnit.test("callFunction: with expand; returns a collection, #" + i, function (assert) {
 		var callFunctionResult,
 			oMetadata = {
 				_getFunctionImportMetadata : function () {}
@@ -5446,8 +5442,8 @@ sap.ui.define([
 	{bPersist : true, bExpected : true},
 	{bPersist : undefined, bExpected : false},
 	{bPersist : false, bExpected : false}
-].forEach(function (oFixture) {
-	QUnit.test("_parseResponse, message parser does not exist", function (assert) {
+].forEach(function (oFixture, i) {
+	QUnit.test("_parseResponse, message parser does not exist, #" + i, function (assert) {
 		var oModel = {
 				bIsMessageScopeSupported : "~bIsMessageScopeSupported",
 				bPersistTechnicalMessages : oFixture.bPersist,
@@ -7963,8 +7959,8 @@ sap.ui.define([
 			.withExactArgs("sap.ui.model.odata.v2.ODataListBinding")
 			.returns(true);
 		this.mock(aBindings[1]).expects("_refreshForSideEffects")
-			.withExactArgs(sinon.match.set.deepEquals(new Set(["~type0", "~type1", undefined])),
-				"~groupId");
+			.withExactArgs(sinon.match.set.deepEquals(new Set(["~type0", "~type1", undefined])), "~groupId")
+			.returns(false);
 
 		// code under test
 		oResult = ODataModel.prototype.requestSideEffects.call(oModel, "~oContext", mParameters);
@@ -7979,13 +7975,72 @@ sap.ui.define([
 
 		return oResult.then(function (oResult) {
 				assert.ok(bSuccess);
-				assert.strictEqual(oResult, undefined);
+				assert.deepEqual(oResult, []);
 			}, function (oError) {
 				assert.ok(!bSuccess);
 				assert.strictEqual(oError, "~oError");
 			});
 	});
 });
+
+	//*********************************************************************************************
+	QUnit.test("requestSideEffects: resolves with affected bindings", function (assert) {
+		var oResult, fnSuccess,
+			aBindings = [
+				{isA : function () {}},
+				{_refreshForSideEffects : function () {}, isA : function () {}}
+			],
+			oModel = {
+				oMetadata : {_getEntityTypeByPath : function () {}},
+				_read : function () {},
+				getBindings : function () {},
+				resolve : function () {}
+			},
+			oMetadataMock = this.mock(oModel.oMetadata),
+			oModelMock = this.mock(oModel),
+			mParameters = {
+				groupId : "~groupId",
+				urlParameters : {
+					$expand : "To0,To0/To1,To2",
+					$select : "~select"
+				}
+			};
+
+		oModelMock.expects("_read")
+			.withExactArgs("", {
+				context : "~oContext",
+				error : sinon.match.func,
+				groupId : "~groupId",
+				success : sinon.match.func.and(sinon.match(function (fnSuccess0) {
+					fnSuccess = fnSuccess0;
+
+					return true;
+				})),
+				updateAggregatedMessages : true,
+				urlParameters : sinon.match.same(mParameters.urlParameters)
+			}, /*bSideEffect*/true);
+		oModelMock.expects("resolve").withExactArgs("To0", "~oContext").returns("~resolved0");
+		oMetadataMock.expects("_getEntityTypeByPath").withExactArgs("~resolved0").returns("~type0");
+		oModelMock.expects("resolve").withExactArgs("To0/To1", "~oContext").returns("~resolved1");
+		oMetadataMock.expects("_getEntityTypeByPath").withExactArgs("~resolved1").returns("~type1");
+		oModelMock.expects("resolve").withExactArgs("To2", "~oContext").returns("~resolved2");
+		oMetadataMock.expects("_getEntityTypeByPath").withExactArgs("~resolved2").returns(undefined);
+		oModelMock.expects("getBindings").withExactArgs().returns(aBindings);
+		this.mock(aBindings[0]).expects("isA").withExactArgs("sap.ui.model.odata.v2.ODataListBinding").returns(false);
+		this.mock(aBindings[1]).expects("isA").withExactArgs("sap.ui.model.odata.v2.ODataListBinding").returns(true);
+		this.mock(aBindings[1]).expects("_refreshForSideEffects")
+			.withExactArgs(sinon.match.set.deepEquals(new Set(["~type0", "~type1", undefined])), "~groupId")
+			.returns(true);
+
+		// code under test
+		oResult = ODataModel.prototype.requestSideEffects.call(oModel, "~oContext", mParameters);
+
+		assert.ok(oResult instanceof Promise);
+
+		fnSuccess("~oData", "~oResponse");
+
+		return oResult.then(function (oResult) {assert.deepEqual(oResult, [aBindings[1]]);});
+	});
 
 	//*********************************************************************************************
 [{

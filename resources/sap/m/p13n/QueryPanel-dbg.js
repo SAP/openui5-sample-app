@@ -4,8 +4,9 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"sap/ui/layout/Grid", "./BasePanel", "sap/ui/core/ListItem", "sap/m/CustomListItem", "sap/m/ComboBox", "sap/m/List", "sap/m/HBox", "sap/m/library", "sap/m/Button", "sap/base/util/merge", 'sap/ui/core/library'
-], function (Grid, BasePanel, Item, CustomListItem, ComboBox, List, HBox, mLibrary, Button, merge, coreLibrary) {
+	"sap/ui/layout/Grid", "./BasePanel", "sap/ui/core/ListItem", "sap/m/CustomListItem", "sap/m/ComboBox", "sap/m/List", "sap/m/HBox", "sap/m/library", "sap/m/Button", "sap/base/util/merge", "sap/ui/core/library", "sap/ui/core/InvisibleMessage"
+
+], function (Grid, BasePanel, Item, CustomListItem, ComboBox, List, HBox, mLibrary, Button, merge, coreLibrary, InvisibleMessage) {
 	"use strict";
 
 
@@ -23,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.BasePanel
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @private
 	 * @ui5-restricted sap.m, sap.ui.mdc
@@ -261,6 +262,16 @@ sap.ui.define([
 		return "";
 	};
 
+	QueryPanel.prototype._getRemoveButtonAnnouncementText = function () {
+		return "";
+	};
+
+	QueryPanel.prototype._announce = function (sMessage) {
+		var InvisibleMessageMode = coreLibrary.InvisibleMessageMode;
+		var oInvisibleMessage = InvisibleMessage.getInstance();
+		oInvisibleMessage.announce(sMessage, InvisibleMessageMode.Assertive);
+	};
+
 	QueryPanel.prototype._createKeySelect = function (sKey) {
 		var that = this;
 		var oKeySelect = new ComboBox({
@@ -351,6 +362,9 @@ sap.ui.define([
 						if (bNewRowRequired) {
 							this._addQueryRow();
 						}
+
+						this._announce(this._getRemoveButtonAnnouncementText());
+
 						//In case an item has been removed, focus the Select control of the new 'none' row
 						//Needs timeout because the new queryRow and control might not be rendered
 						setTimeout(function() {
@@ -360,6 +374,7 @@ sap.ui.define([
 						}.bind(this), 0);
 
 						this._getP13nModel().checkUpdate(true);
+
 					}.bind(this)
 				})
 			]

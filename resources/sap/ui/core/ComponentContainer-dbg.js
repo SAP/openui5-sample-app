@@ -61,7 +61,7 @@ sap.ui.define([
 	 * See also {@link module:sap/ui/core/ComponentSupport}.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.ComponentContainer

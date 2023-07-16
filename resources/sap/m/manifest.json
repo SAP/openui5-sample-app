@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.115.1"
+      "version": "1.116.0"
     },
     "title": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
     "description": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
@@ -29,17 +29,17 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.115",
+      "minUI5Version": "1.116",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.115.1"
+          "minVersion": "1.116.0"
         },
         "sap.ui.layout": {
-          "minVersion": "1.115.1",
+          "minVersion": "1.116.0",
           "lazy": true
         },
         "sap.ui.unified": {
-          "minVersion": "1.115.1",
+          "minVersion": "1.116.0",
           "lazy": true
         }
       }
@@ -275,6 +275,8 @@
           "sap.m.UploadCollectionToolbarPlaceholder",
           "sap.m.upload.UploadSet",
           "sap.m.upload.UploadSetToolbarPlaceholder",
+          "sap.m.upload.UploadSetTable",
+          "sap.m.upload.UploadSetTableItem",
           "sap.m.VariantManagement",
           "sap.m.VBox",
           "sap.m.ViewSettingsDialog",
@@ -345,7 +347,9 @@
           "sap.m.ToolbarLayoutData",
           "sap.m.UploadCollectionItem",
           "sap.m.UploadCollectionParameter",
+          "sap.m.upload.FilePreviewDialog",
           "sap.m.upload.Uploader",
+          "sap.m.upload.UploaderTableItem",
           "sap.m.upload.UploadSetItem",
           "sap.m.VariantItem",
           "sap.m.ViewSettingsCustomItem",

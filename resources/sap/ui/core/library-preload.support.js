@@ -924,8 +924,8 @@ sap.ui.predefine("sap/ui/core/rules/Config.support", [
 
 			Object.keys(mComponents).forEach(function(sComponentId) {
 				var oManifest = mComponents[sComponentId].getManifest(),
-					mDataSources = oManifest['sap.app'].dataSources,
-					mModels = oManifest['sap.ui5'].models || {};
+					mDataSources = oManifest['sap.app'] && oManifest['sap.app'].dataSources || {},
+					mModels = oManifest['sap.ui5'] && oManifest['sap.ui5'].models || {};
 
 				Object.keys(mModels).forEach(function(sModel) {
 					var mDataSource,
@@ -1353,7 +1353,9 @@ sap.ui.predefine("sap/ui/core/rules/Model.support", [
 				var oBinding = mBindingInfos[sName].binding,
 					sDetails;
 
-				if (!oBinding || oBinding.getModel().bAutoExpandSelect) {
+				if (!oBinding
+						|| oBinding.isA("sap.ui.model.CompositeBinding")
+						|| oBinding.getModel().bAutoExpandSelect) {
 					return;
 				}
 

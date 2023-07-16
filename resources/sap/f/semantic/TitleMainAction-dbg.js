@@ -19,7 +19,7 @@ sap.ui.define(["./MainAction"], function(MainAction) {
 	* @extends sap.f.semantic.MainAction
 	*
 	* @author SAP SE
-	* @version 1.115.1
+	* @version 1.116.0
 	*
 	* @constructor
 	* @public

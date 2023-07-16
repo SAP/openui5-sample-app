@@ -232,7 +232,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -3423,6 +3423,7 @@ sap.ui.define([
 						return true;
 					}
 					aResults.push(oResult.result);
+					return false;
 				});
 
 				if (bErrorFound) {
@@ -3849,7 +3850,7 @@ sap.ui.define([
 		}, this.getId());
 
 		// deactivate all child components
-		Component.registry.filter(function(oComponent) {
+		Component.registry.forEach(function(oComponent) {
 			var sOwnerId = Component.getOwnerIdFor(oComponent);
 			if (sOwnerId === this.getId()) {
 				oComponent.deactivate();
@@ -3951,9 +3952,7 @@ sap.ui.define([
 			bIsKeepAliveSupported = Component.registry
 				.filter(function (oComponent) {
 					var sOwnerId = Component.getOwnerIdFor(oComponent);
-					if (sOwnerId === this.getId()) {
-						return true;
-					}
+					return sOwnerId === this.getId();
 				}, this).every(function (oComponent) {
 					return oComponent.isKeepAliveSupported();
 				}, this);

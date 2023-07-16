@@ -52,7 +52,7 @@ sap.ui.define([
 	 * @extends sap.ui.unified.MenuItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -172,13 +172,13 @@ sap.ui.define([
 	MenuTextFieldItem.prototype.hover = function(bHovered, oMenu){
 		this.$().toggleClass("sapUiMnuItmHov", bHovered);
 
-		if (bHovered && oMenu.checkEnabled(this)) {
+		if (bHovered) {
 			oMenu.closeSubmenu(false, true);
 		}
 	};
 
 	MenuTextFieldItem.prototype.focus = function(oMenu){
-		if (this.getEnabled() && this.getVisible()) {
+		if (this.getVisible()) {
 			this.$("tf").get(0).focus();
 		} else {
 			oMenu.focus();
@@ -240,7 +240,7 @@ sap.ui.define([
 
 	MenuTextFieldItem.prototype.onclick = function(oEvent){
 		this.getParent().closeSubmenu(false, true);
-		if (!Device.system.desktop && this.getParent().checkEnabled(this)) {
+		if (!Device.system.desktop) {
 			this.focus();
 		}
 		oEvent.stopPropagation();
@@ -270,6 +270,7 @@ sap.ui.define([
 	 * @name sap.ui.unified.MenuTextFieldItem#getSubmenu
 	 * @deprecated As of version 1.21, the aggregation <code>submenu</code> (inherited from parent class) is not supported for this type of menu item.
 	 * @function
+	 * @ui5-not-supported
 	 */
 
 	/**
@@ -279,6 +280,7 @@ sap.ui.define([
 	 * @public
 	 * @name sap.ui.unified.MenuTextFieldItem#destroySubmenu
 	 * @deprecated As of version 1.21, the aggregation <code>submenu</code> (inherited from parent class) is not supported for this type of menu item.
+	 * @ui5-not-supported
 	 * @function
 	 */
 
@@ -289,6 +291,7 @@ sap.ui.define([
 	 * @return {this} <code>this</code> to allow method chaining
 	 * @public
 	 * @deprecated As of version 1.21, the aggregation <code>submenu</code> (inherited from parent class) is not supported for this type of menu item.
+	 * @ui5-not-supported
 	 */
 	MenuTextFieldItem.prototype.setSubmenu = function(oMenu){
 		Log.warning("The aggregation 'submenu' is not supported for this type of menu item.", "", "sap.ui.unified.MenuTextFieldItem");

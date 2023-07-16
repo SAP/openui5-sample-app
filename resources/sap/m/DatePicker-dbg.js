@@ -184,7 +184,7 @@ sap.ui.define([
 	 * the close event), or select Cancel.
 	 *
 	 * @extends sap.m.DateTimeField
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @constructor
 	 * @public
@@ -584,6 +584,28 @@ sap.ui.define([
 
 	// ALT-UP and ALT-DOWN should behave the same
 	DatePicker.prototype.onsaphide = DatePicker.prototype.onsapshow;
+
+	/**
+	 * Handle when escape is pressed. Escaping unsaved input will restore
+	 * the last valid value. If the value cannot be parsed into a date,
+	 * the input will be cleared.
+	 *
+	 * @param {jQuery.Event} oEvent The event object.
+	 * @private
+	 */
+	DatePicker.prototype.onsapescape = function(oEvent) {
+		var sLastValue = this.getLastValue(),
+			oDate = this._parseValue( this._getInputValue(), true),
+			sValueFormatInputDate = this._formatValue(oDate, true);
+
+		if (sValueFormatInputDate !== sLastValue) {
+			oEvent.setMarked();
+			oEvent.preventDefault();
+
+			this.updateDomValue(sLastValue);
+			this.onValueRevertedByEscape(sLastValue, sValueFormatInputDate);
+		}
+	};
 
 	DatePicker.prototype.onsappageup = function(oEvent){
 		var sConstructorName = this._getCalendarConstructor().getMetadata().getName();

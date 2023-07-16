@@ -33,7 +33,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 *
 	 * @public
 	 * @alias sap.m.p13n.SelectionController
@@ -409,18 +409,17 @@ sap.ui.define([
     };
 
     SelectionController.prototype._createAddRemoveChange = function(oControl, sOperation, oContent){
-		var oChangeContent = oContent;
 
-		if (sOperation === this.getChangeOperations()["add"]) {
-			oChangeContent.value = true;
-			oChangeContent.targetAggregation = this.getTargetAggregation();
-		}
+        var oChangeContent = oContent;
+
+        oChangeContent.value = (sOperation == this.getChangeOperations()["add"]);
+        oChangeContent.targetAggregation = this.getTargetAggregation();
 
         var oAddRemoveChange = {
             selectorElement: oControl,
             changeSpecificData: {
                 changeType: sOperation,
-                content:  oChangeContent
+                content: oChangeContent
             }
         };
         return oAddRemoveChange;

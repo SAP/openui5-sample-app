@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.115.1
+		 * @version 1.116.0
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
@@ -144,7 +144,7 @@ sap.ui.define([
 				bAction : undefined,
 				mChangeListeners : {}, // map from path to an array of change listeners
 				mParameters : {},
-				sResourcePath : undefined
+				mRefreshParameters : {}
 			};
 			if (!this.bRelative) {
 				this.oParameterContext = Context.create(this.oModel, this,
@@ -596,7 +596,7 @@ sap.ui.define([
 					&& !oOperationMetadata.$ReturnType.$Type.startsWith("Edm.")) {
 				sMetaPath += "/$Type";
 			}
-		} else if (Object.keys(mParameters).length) {
+		} else if (!_Helper.isEmptyObject(mParameters)) {
 			throw new Error("Unsupported parameters for navigation property");
 		}
 
@@ -750,9 +750,9 @@ sap.ui.define([
 
 	/**
 	 * @override
-	 * @see sap.ui.model.odata.v4.ODataBinding#doFetchQueryOptions
+	 * @see sap.ui.model.odata.v4.ODataBinding#doFetchOrGetQueryOptions
 	 */
-	ODataContextBinding.prototype.doFetchQueryOptions = function (oContext) {
+	ODataContextBinding.prototype.doFetchOrGetQueryOptions = function (oContext) {
 		return this.fetchResolvedQueryOptions(oContext);
 	};
 
@@ -1478,6 +1478,7 @@ sap.ui.define([
 
 		this.mCacheQueryOptions = this.computeOperationQueryOptions();
 		if (this.mLateQueryOptions) {
+			this.mCacheQueryOptions = _Helper.clone(this.mCacheQueryOptions);
 			_Helper.aggregateExpandSelect(this.mCacheQueryOptions, this.mLateQueryOptions);
 		}
 		this.oCache = _Cache.createSingle(oModel.oRequestor, oContext.getPath().slice(1),
@@ -1528,9 +1529,11 @@ sap.ui.define([
 
 		if (aPaths.indexOf("") < 0) {
 			try {
-				aPromises.push(
-					this.oCache.requestSideEffects(this.lockGroup(sGroupId), aPaths,
-						oContext && oContext.getPath().slice(1)));
+				if (!this.oOperation || this.oReturnValueContext) {
+					aPromises.push(
+						this.oCache.requestSideEffects(this.lockGroup(sGroupId), aPaths,
+							oContext && oContext.getPath().slice(1)));
+				}
 
 				this.visitSideEffects(sGroupId, aPaths, oContext, aPromises);
 
@@ -1602,6 +1605,7 @@ sap.ui.define([
 		if (bParentHasChanges || sResumeChangeReason) {
 			this.mAggregatedQueryOptions = {};
 			this.bAggregatedQueryOptionsInitial = true;
+			this.mCanUseCachePromiseByChildPath = {};
 			this.removeCachesAndMessages("");
 			this.fetchCache(this.oContext);
 		}

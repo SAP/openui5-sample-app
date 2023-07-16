@@ -97,7 +97,7 @@ sap.ui.define([
 	* @extends sap.ui.core.Control
 	*
 	* @author SAP SE
-	* @version 1.115.1
+	* @version 1.116.0
 	*
 	* @constructor
 	* @public
@@ -724,6 +724,15 @@ sap.ui.define([
 		return Control.prototype.removeStyleClass.call(this, sClass, bSuppressRerendering);
 	};
 
+	SemanticPage.prototype.clone = function(){
+		var oClone = Control.prototype.clone.apply(this, arguments),
+			oContent = this.getAggregation('_dynamicPage').getContent();
+
+		oClone.setContent(oContent.clone());
+
+		return oClone;
+	};
+
 	/*
 	 * =================================================
 	 * AGGREGATION METHODS
@@ -1178,6 +1187,20 @@ sap.ui.define([
 				return (oAction._getControl && oAction._getControl() === aVisibleActions[0])
 						|| oAction === aVisibleActions[0];
 			})[0];
+
+			// Clean action sheet CSS class
+			var oActionCtrl = oActionToBeMoved._getControl && oActionToBeMoved._getControl();
+			if (oActionCtrl) {
+				var AC_CLASS_PREFIX = "sapMActionSheet";
+				oActionCtrl.aCustomStyleClasses
+					.filter(function (sStyleClass) {
+						return sStyleClass.indexOf(AC_CLASS_PREFIX) > -1;
+					})
+					.forEach(function (sACStyleClass) {
+						oActionCtrl.removeStyleClass(sACStyleClass);
+					});
+			}
+
 
 			this._addShareMenuSingleAction(oActionToBeMoved);
 		}

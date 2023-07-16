@@ -43,12 +43,20 @@ sap.ui.define(['./Binding', './Filter', './FilterType', './Sorter', 'sap/base/ut
 		constructor : function(oModel, sPath, oContext, aSorters, aFilters, mParameters){
 			Binding.call(this, oModel, sPath, oContext, mParameters);
 
+			// the binding's sorters
 			this.aSorters = makeArray(aSorters, Sorter);
+			// the binding's control filters
 			this.aFilters = [];
+			// the binding's application filters
 			this.aApplicationFilters = makeArray(aFilters, Filter);
+			// the filter combined from control and application filters
 			this.oCombinedFilter = null;
+			// whether the binding uses extended change detection, cf. #getContexts
 			this.bUseExtendedChangeDetection = false;
+			// whether changes within an entity cause a delete and insert, cf. #enableExtendedChangeDetection
 			this.bDetectUpdates = true;
+			// the configuration for extended change detection, cf. #enableExtendedChangeDetection
+			this.oExtendedChangeDetectionConfig = undefined;
 		},
 
 		metadata : {
@@ -562,7 +570,7 @@ sap.ui.define(['./Binding', './Filter', './FilterType', './Sorter', 'sap/base/ut
 	 * binding in its constructor or in its {@link #filter} method; add filters which you want to
 	 * keep with the "and" conjunction to the resulting filter before calling {@link #filter}.
 	 *
-	 * The implementation of this method is optional for model specific implementations of
+	 * The implementation of this method is optional for model-specific implementations of
 	 * <code>sap.ui.model.ListBinding</code>. Check for existence of this function before calling
 	 * it.
 	 *
@@ -580,6 +588,39 @@ sap.ui.define(['./Binding', './Filter', './FilterType', './Sorter', 'sap/base/ut
 	 *
 	 * @protected
 	 * @since 1.77.0
+	 */
+
+	/**
+	 * Returns the string key for the given model context, which is a unique representation of the context's data. This
+	 * key is used in extended change detection to compute the difference between current and previous contexts
+	 * retrieved via {@link sap.ui.model.ListBinding#getContexts}.
+	 *
+	 * The implementation of this method is optional for model-specific implementations of
+	 * <code>sap.ui.model.ListBinding</code>.
+	 *
+	 * @abstract
+	 * @function
+	 * @name sap.ui.model.ListBinding.prototype.getEntryKey
+	 * @param {sap.ui.model.Context} oContext
+	 *   The context for which the key is to be computed
+	 * @returns {string}
+	 *   The key for the given context
+	 *
+	 * @protected
+	 */
+
+	/**
+	 * Update the list and apply sorting and filtering. Called after creation of the list binding
+	 * on enabling extended change detection, see {@link sap.ui.model.ListBinding#enableExtendedChangeDetection}.
+	 *
+	 * The implementation of this method is optional for model-specific implementations of
+	 * <code>sap.ui.model.ListBinding</code>.
+	 *
+	 * @abstract
+	 * @function
+	 * @name sap.ui.model.ListBinding.prototype.update
+	 *
+	 * @protected
 	 */
 
 	return ListBinding;

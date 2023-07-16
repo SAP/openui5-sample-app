@@ -12,15 +12,16 @@
 
 // Provides class sap.ui.core.delegate.ItemNavigation
 sap.ui.define([
+	'sap/base/i18n/Localization',
 	'sap/ui/base/EventProvider',
 	"sap/base/assert",
 	"sap/base/Log",
 	"sap/ui/events/KeyCodes",
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Configuration",
+	"sap/ui/core/Element",
 	"sap/ui/dom/jquery/Selectors" // jQuery custom selectors ":sapFocusable"
 ],
-	function(EventProvider, assert, Log, KeyCodes, jQuery, Configuration) {
+	function(Localization, EventProvider, assert, Log, KeyCodes, jQuery, Element) {
 	"use strict";
 	/* eslint-disable no-lonely-if */
 
@@ -81,7 +82,7 @@ sap.ui.define([
 	 * @param {Element[]} aItemDomRefs Array of DOM references representing the items for the navigation
 	 * @param {boolean} [bNotInTabChain=false] Whether the selected element should be in the tab chain or not
 	 *
-	 * @version 1.115.1
+	 * @version 1.116.0
 	 * @alias sap.ui.core.delegate.ItemNavigation
 	 * @public
 	 */
@@ -465,9 +466,6 @@ sap.ui.define([
 	 */
 	ItemNavigation.prototype.setTableMode = function(bTableMode, bTableList) {
 		this.bTableMode = bTableMode;
-		if (this.oConfiguration === undefined) {
-			this.oConfiguration = Configuration;
-		}
 		this.bTableList = bTableMode ? bTableList : false;
 		return this;
 	};
@@ -558,11 +556,11 @@ sap.ui.define([
 				var iOldIndex = iIndex;
 				if (oEvent && oEvent.keyCode == KeyCodes.ARROW_RIGHT) {
 					if (iCol < this.iColumns - 1) {
-						iIndex += this.oConfiguration.getRTL() ? -1 : 1;
+						iIndex += Localization.getRTL() ? -1 : 1;
 					}
 				} else if (oEvent && oEvent.keyCode == KeyCodes.ARROW_LEFT) {
 					if (iCol > 1) {
-						iIndex -= this.oConfiguration.getRTL() ? -1 : 1;
+						iIndex -= Localization.getRTL() ? -1 : 1;
 					}
 				} else {
 					if (iCol > 1) {
@@ -791,7 +789,7 @@ sap.ui.define([
 	 * @private
 	 */
 	ItemNavigation.prototype.onsapfocusleave = function(oEvent) {
-		if (!oEvent.relatedControlId || !this.oDomRef || !this.oDomRef.contains(sap.ui.getCore().byId(oEvent.relatedControlId).getFocusDomRef())) {
+		if (!oEvent.relatedControlId || !this.oDomRef || !this.oDomRef.contains(Element.registry.get(oEvent.relatedControlId).getFocusDomRef())) {
 
 			// entirely leaving the control handled by this ItemNavigation instance
 			var iIndex;
@@ -819,7 +817,7 @@ sap.ui.define([
 					}
 				}
 
-				if (!oEvent.relatedControlId || oParentDomRef.contains(sap.ui.getCore().byId(oEvent.relatedControlId).getFocusDomRef())) {
+				if (!oEvent.relatedControlId || oParentDomRef.contains(Element.registry.get(oEvent.relatedControlId).getFocusDomRef())) {
 					jQuery(this.aItemDomRefs[this.iFocusedIndex]).attr("tabindex", -1);
 				}
 			}
