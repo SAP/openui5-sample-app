@@ -1,5 +1,3 @@
-/* global QUnit */
-
 sap.ui.define([
 	"sap/ui/Device",
 	"sap/ui/test/opaQunit",

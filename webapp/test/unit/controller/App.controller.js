@@ -36,7 +36,7 @@ sap.ui.define([
 		assert.deepEqual(this.oAppController.aSearchFilters, [], "Search filters have been instantiated empty");
 		assert.deepEqual(this.oAppController.aTabFilters, [], "Tab filters have been instantiated empty");
 
-		var oModel = this.oAppController.getView().getModel("view").getData();
+		let oModel = this.oAppController.getView().getModel("view").getData();
 		assert.deepEqual(oModel, {isMobile: Device.browser.mobile, filterText: undefined});
 	});
 
@@ -76,7 +76,7 @@ sap.ui.define([
 
 	QUnit.test("Should toggle the completed items in the model", function(assert) {
 		// Arrange
-		var oModelData = {
+		let oModelData = {
 			todos: [{
 				"title": "Start this app",
 				"completed": false
@@ -99,7 +99,7 @@ sap.ui.define([
 
 	QUnit.test("Should clear the completed items", function(assert) {
 		// Arrange
-		var oModelData = {
+		let oModelData = {
 			todos: [{
 				"title": "Start this app1",
 				"completed": false
@@ -127,7 +127,7 @@ sap.ui.define([
 
 	QUnit.test("Should update items left count when no todos are loaded, yet", function(assert) {
 		// Arrange
-		var oModelData = {};
+		let oModelData = {};
 		this.oJSONModelStub.setData(oModelData);
 
 		// initial assumption
@@ -178,7 +178,7 @@ sap.ui.define([
 
 		QUnit.test("Empty search", function (assert) {
 			// Setup
-			var oEvent = { getSource: function () {
+			let oEvent = { getSource: function () {
 				return { getValue: function () { return ""; } };
 			}};
 
@@ -208,8 +208,8 @@ sap.ui.define([
 
 		QUnit.test("Do a search", function (assert) {
 			// Setup
-			var sSearchQuery = "ToDo item";
-			var oEvent = { getSource: function () {
+			let sSearchQuery = "ToDo item";
+			let oEvent = { getSource: function () {
 				return { getValue: function () {
 					return sSearchQuery;
 				}};
@@ -276,8 +276,8 @@ sap.ui.define([
 
 		QUnit.test("Toggle filters", function (assert) {
 			// Setup
-			var sKey = "";
-			var oEvent = { getParameter: function () {
+			let sKey = "";
+			let oEvent = { getParameter: function () {
 				return { getKey: function () { return sKey; } };
 			}};
 

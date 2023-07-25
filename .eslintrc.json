@@ -1,12 +1,18 @@
 {
+	"root": true,
+	"extends": ["eslint:recommended"],
 	"env": {
-		"browser": true
+		"browser": true,
+		"es6": true,
+		"jquery": true,
+		"qunit": true
 	},
 	"globals": {
 		"sap": true,
-		"jQuery": true
+		"sinon": true
 	},
 	"rules": {
+		"no-var": "error",
 		"block-scoped-var": 1,
 		"brace-style": [2, "1tbs", { "allowSingleLine": true }],
 		"consistent-this": 2,

@@ -10,12 +10,12 @@ sap.ui.require([
 ], function (Device, Opa5, AggregationLengthEquals, PropertyStrictEquals, Ancestor, Properties, EnterText, Press) {
 	"use strict";
 
-	var sViewName = "sap.ui.demo.todo.view.App";
-	var sAddToItemInputId = "addTodoItemInput";
-	var sSearchTodoItemsInputId = "searchTodoItemsInput";
-	var sItemListId = "todoList";
-	var sToolbarId = Device.browser.mobile ? "toolbar-footer" : "toolbar";
-	var sClearCompletedId = Device.browser.mobile ? "clearCompleted-footer" : "clearCompleted";
+	let sViewName = "sap.ui.demo.todo.view.App";
+	let sAddToItemInputId = "addTodoItemInput";
+	let sSearchTodoItemsInputId = "searchTodoItemsInput";
+	let sItemListId = "todoList";
+	let sToolbarId = Device.browser.mobile ? "toolbar-footer" : "toolbar";
+	let sClearCompletedId = Device.browser.mobile ? "clearCompleted-footer" : "clearCompleted";
 
 	Opa5.createPageObjects({
 		onTheAppPage: {
@@ -44,8 +44,8 @@ sap.ui.require([
 						viewName: sViewName,
 						// selectionChange
 						actions: [function(oList) {
-							var iLength = oList.getItems().length;
-							var oListItem = oList.getItems()[iLength - 1].getContent()[0].getItems()[0];
+							let iLength = oList.getItems().length;
+							let oListItem = oList.getItems()[iLength - 1].getContent()[0].getItems()[0];
 							this._triggerCheckboxSelection(oListItem, bSelected);
 						}.bind(this)],
 						errorMessage: "Last checkbox cannot be pressed"
@@ -58,7 +58,7 @@ sap.ui.require([
 						actions: [function(oList) {
 
 							oList.getItems().forEach(function(oListItem) {
-								var oCheckbox = oListItem.getContent()[0].getItems()[0];
+								let oCheckbox = oListItem.getContent()[0].getItems()[0];
 								this._triggerCheckboxSelection(oCheckbox, bSelected)
 
 							}.bind(this));
@@ -69,7 +69,7 @@ sap.ui.require([
 				_triggerCheckboxSelection: function(oListItem, bSelected) {
 					//determine existing selection state and ensure that it becomes <code>bSelected</code>
 					if (oListItem.getSelected() && !bSelected || !oListItem.getSelected() && bSelected) {
-						var oPress = new Press();
+						let oPress = new Press();
 						//search within the CustomListItem for the checkbox id ending with 'selectMulti-CB'
 						oPress.controlAdapters["sap.m.CustomListItem"] = "selectMulti-CB";
 						oPress.executeOn(oListItem);
@@ -105,7 +105,7 @@ sap.ui.require([
 								controlType: "sap.m.ToggleButton",
 								visible: false,
 								success: function (aToggleButtons) {
-									var oToggleButton = aToggleButtons.find(function(oButton) {
+									let oToggleButton = aToggleButtons.find(function(oButton) {
 										return oButton.getId().startsWith(oToolbar.getId()) && oButton.getParent() === oToolbar;
 									});
 									if (oToggleButton) {
@@ -132,8 +132,8 @@ sap.ui.require([
 							name: "items",
 							length: iItemCount
 						}), function(oControl) {
-							var iLength = oControl.getItems().length;
-							var oInput = oControl.getItems()[iLength - 1].getContent()[0].getItems()[1].getItems()[0];
+							let iLength = oControl.getItems().length;
+							let oInput = oControl.getItems()[iLength - 1].getContent()[0].getItems()[1].getItems()[0];
 							return new PropertyStrictEquals({
 								name: "text",
 								value: sLastAddedText
@@ -150,8 +150,8 @@ sap.ui.require([
 						id: sItemListId,
 						viewName: sViewName,
 						matchers: [function(oControl) {
-							var iLength = oControl.getItems().length;
-							var oCheckbox = oControl.getItems()[iLength - 1].getContent()[0].getItems()[0];
+							let iLength = oControl.getItems().length;
+							let oCheckbox = oControl.getItems()[iLength - 1].getContent()[0].getItems()[0];
 							return bSelected && oCheckbox.getSelected() || !bSelected && !oCheckbox.getSelected();
 						}],
 						success: function() {
@@ -168,7 +168,7 @@ sap.ui.require([
 							name: "items",
 							length: 1
 						}), function(oControl) {
-							var oInput = oControl.getItems()[0].getContent()[0].getItems()[1].getItems()[0];
+							let oInput = oControl.getItems()[0].getContent()[0].getItems()[1].getItems()[0];
 							return new PropertyStrictEquals({
 								name: "text",
 								value: sLastItemText
