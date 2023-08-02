@@ -1,7 +1,11 @@
-specVersion: '2.0'
+specVersion: '3.1'
 metadata:
   name: openui5-sample-app
-type: application
+type: component
+resources:
+  configuration:
+    paths:
+      src: webapp
 framework:
   name: OpenUI5
   version: "1.116.0"
