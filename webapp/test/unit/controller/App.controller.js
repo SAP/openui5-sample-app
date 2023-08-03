@@ -4,8 +4,9 @@ sap.ui.define([
 	"sap/ui/demo/todo/controller/App.controller",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/model/resource/ResourceModel",
-	"sap/ui/Device"
-], function(ManagedObject, Controller, AppController, JSONModel, ResourceModel, Device) {
+	"sap/ui/Device",
+	"sinon"
+], function(ManagedObject, Controller, AppController, JSONModel, ResourceModel, Device, sinon) {
 	"use strict";
 
 	QUnit.module("Test init state", {
@@ -27,6 +28,10 @@ sap.ui.define([
 			this.oViewStub.destroy();
 		}
 	});
+
+	QUnit.test("Check custom sinon", function(assert) {
+		assert.ok(sinon.promise, "New api is there")
+	})
 
 	QUnit.test("Check controller's initial state", function (assert) {
 		// Act

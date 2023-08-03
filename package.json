@@ -27,6 +27,10 @@
 		"karma-coverage": "^2.2.1",
 		"karma-ui5": "^3.0.3",
 		"local-web-server": "^5.3.0",
-		"rimraf": "^5.0.1"
+		"rimraf": "^5.0.1",
+		"ui5-tooling-modules": "^3.0.0"
+	},
+	"dependencies": {
+		"sinon": "^15.2.0"
 	}
 }

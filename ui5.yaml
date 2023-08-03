@@ -12,5 +12,13 @@ framework:
     - name: themelib_sap_horizon
 server:
   customMiddleware:
-    - name: "@ui5/middleware-code-coverage"
+    - name: ui5-tooling-modules-middleware
       afterMiddleware: compression
+      configuration:
+        verbose: true
+    - name: "@ui5/middleware-code-coverage"
+      afterMiddleware: ui5-tooling-modules-middleware
+builder:
+  customTasks:
+    - name: ui5-tooling-modules-task
+      afterTask: replaceVersion
