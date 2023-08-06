@@ -1,7 +1,7 @@
 module.exports = function(config) {
 	"use strict";
 
-	var chromeFlags = [
+	const chromeFlags = [
 		"--window-size=1280,1024"
 	];
 

@@ -3,25 +3,24 @@ sap.ui.require([
 	"sap/ui/test/Opa5",
 	"sap/ui/test/matchers/AggregationLengthEquals",
 	"sap/ui/test/matchers/PropertyStrictEquals",
-	"sap/ui/test/matchers/Ancestor",
 	"sap/ui/test/matchers/Properties",
 	"sap/ui/test/actions/EnterText",
 	"sap/ui/test/actions/Press"
-], function (Device, Opa5, AggregationLengthEquals, PropertyStrictEquals, Ancestor, Properties, EnterText, Press) {
+], (Device, Opa5, AggregationLengthEquals, PropertyStrictEquals, Properties, EnterText, Press) => {
 	"use strict";
 
-	var sViewName = "sap.ui.demo.todo.view.App";
-	var sAddToItemInputId = "addTodoItemInput";
-	var sSearchTodoItemsInputId = "searchTodoItemsInput";
-	var sItemListId = "todoList";
-	var sToolbarId = Device.browser.mobile ? "toolbar-footer" : "toolbar";
-	var sClearCompletedId = Device.browser.mobile ? "clearCompleted-footer" : "clearCompleted";
+	const sViewName = "sap.ui.demo.todo.view.App";
+	const sAddToItemInputId = "addTodoItemInput";
+	const sSearchTodoItemsInputId = "searchTodoItemsInput";
+	const sItemListId = "todoList";
+	const sToolbarId = Device.browser.mobile ? "toolbar-footer" : "toolbar";
+	const sClearCompletedId = Device.browser.mobile ? "clearCompleted-footer" : "clearCompleted";
 
 	Opa5.createPageObjects({
 		onTheAppPage: {
 
 			actions: {
-				iEnterTextForNewItemAndPressEnter: function(text) {
+				iEnterTextForNewItemAndPressEnter(text) {
 					return this.waitFor({
 						id: sAddToItemInputId,
 						viewName: sViewName,
@@ -29,7 +28,7 @@ sap.ui.require([
 						errorMessage: "The text cannot be entered"
 					});
 				},
-				iEnterTextForSearchAndPressEnter: function(text) {
+				iEnterTextForSearchAndPressEnter(text) {
 					this._waitForToolbar();
 					return this.waitFor({
 						id: sSearchTodoItemsInputId,
@@ -38,44 +37,44 @@ sap.ui.require([
 						errorMessage: "The text cannot be entered"
 					});
 				},
-				iSelectTheLastItem: function(bSelected) {
+				iSelectTheLastItem(bSelected) {
 					return this.waitFor({
 						id: sItemListId,
 						viewName: sViewName,
 						// selectionChange
-						actions: [function(oList) {
-							var iLength = oList.getItems().length;
-							var oListItem = oList.getItems()[iLength - 1].getContent()[0].getItems()[0];
+						actions: [(oList) => {
+							const iLength = oList.getItems().length;
+							const oListItem = oList.getItems()[iLength - 1].getContent()[0].getItems()[0];
 							this._triggerCheckboxSelection(oListItem, bSelected);
-						}.bind(this)],
+						}],
 						errorMessage: "Last checkbox cannot be pressed"
 					});
 				},
-				iSelectAllItems: function(bSelected) {
+				iSelectAllItems(bSelected) {
 					return this.waitFor({
 						id: sItemListId,
 						viewName: sViewName,
-						actions: [function(oList) {
+						actions: [(oList) => {
 
-							oList.getItems().forEach(function(oListItem) {
-								var oCheckbox = oListItem.getContent()[0].getItems()[0];
+							oList.getItems().forEach((oListItem) => {
+								const oCheckbox = oListItem.getContent()[0].getItems()[0];
 								this._triggerCheckboxSelection(oCheckbox, bSelected)
 
-							}.bind(this));
-						}.bind(this)],
+							});
+						}],
 						errorMessage: "checkbox cannot be pressed"
 					});
 				},
-				_triggerCheckboxSelection: function(oListItem, bSelected) {
+				_triggerCheckboxSelection(oListItem, bSelected) {
 					//determine existing selection state and ensure that it becomes <code>bSelected</code>
 					if (oListItem.getSelected() && !bSelected || !oListItem.getSelected() && bSelected) {
-						var oPress = new Press();
+						const oPress = new Press();
 						//search within the CustomListItem for the checkbox id ending with 'selectMulti-CB'
 						oPress.controlAdapters["sap.m.CustomListItem"] = "selectMulti-CB";
 						oPress.executeOn(oListItem);
 					}
 				},
-				iClearTheCompletedItems: function() {
+				iClearTheCompletedItems() {
 					this._waitForToolbar();
 					return this.waitFor({
 						id: sClearCompletedId,
@@ -84,7 +83,7 @@ sap.ui.require([
 						errorMessage: "checkbox cannot be pressed"
 					});
 				},
-				iFilterForItems: function(filterKey) {
+				iFilterForItems(filterKey) {
 					this._waitForToolbar();
 					return this.waitFor({
 						viewName: sViewName,
@@ -96,18 +95,16 @@ sap.ui.require([
 						errorMessage: "SegmentedButton can not be pressed"
 					});
 				},
-				_waitForToolbar: function() {
+				_waitForToolbar() {
 					this.waitFor({
 						id: sToolbarId,
 						viewName: sViewName,
-						success: function (oToolbar) {
+						success: (oToolbar) => {
 							return this.waitFor({
 								controlType: "sap.m.ToggleButton",
 								visible: false,
-								success: function (aToggleButtons) {
-									var oToggleButton = aToggleButtons.find(function(oButton) {
-										return oButton.getId().startsWith(oToolbar.getId()) && oButton.getParent() === oToolbar;
-									});
+								success: (aToggleButtons) => {
+									const oToggleButton = aToggleButtons.find((oButton) => oButton.getId().startsWith(oToolbar.getId()) && oButton.getParent() === oToolbar)
 									if (oToggleButton) {
 										this.waitFor({
 											id: oToggleButton.getId(),
@@ -124,63 +121,63 @@ sap.ui.require([
 			},
 
 			assertions: {
-				iShouldSeeTheItemBeingAdded: function(iItemCount, sLastAddedText) {
+				iShouldSeeTheItemBeingAdded(iItemCount, sLastAddedText) {
 					return this.waitFor({
 						id: sItemListId,
 						viewName: sViewName,
 						matchers: [new AggregationLengthEquals({
 							name: "items",
 							length: iItemCount
-						}), function(oControl) {
-							var iLength = oControl.getItems().length;
-							var oInput = oControl.getItems()[iLength - 1].getContent()[0].getItems()[1].getItems()[0];
+						}), (oControl) => {
+							const iLength = oControl.getItems().length;
+							const oInput = oControl.getItems()[iLength - 1].getContent()[0].getItems()[1].getItems()[0];
 							return new PropertyStrictEquals({
 								name: "text",
 								value: sLastAddedText
 							}).isMatching(oInput);
 						}],
-						success: function() {
+						success() {
 							Opa5.assert.ok(true, "The table has " + iItemCount + " item(s), with '" + sLastAddedText + "' as last item");
 						},
 						errorMessage: "List does not have expected entry '" + sLastAddedText + "'."
 					});
 				},
-				iShouldSeeTheLastItemBeingCompleted: function(bSelected) {
+				iShouldSeeTheLastItemBeingCompleted(bSelected) {
 					return this.waitFor({
 						id: sItemListId,
 						viewName: sViewName,
-						matchers: [function(oControl) {
-							var iLength = oControl.getItems().length;
-							var oCheckbox = oControl.getItems()[iLength - 1].getContent()[0].getItems()[0];
+						matchers: [(oControl) => {
+							const iLength = oControl.getItems().length;
+							const oCheckbox = oControl.getItems()[iLength - 1].getContent()[0].getItems()[0];
 							return bSelected && oCheckbox.getSelected() || !bSelected && !oCheckbox.getSelected();
 						}],
-						success: function() {
+						success() {
 							Opa5.assert.ok(true, "The last item is marked as completed");
 						},
 						errorMessage: "The last item is not disabled."
 					});
 				},
-				iShouldSeeAllButOneItemBeingRemoved: function(sLastItemText) {
+				iShouldSeeAllButOneItemBeingRemoved(sLastItemText) {
 					return this.waitFor({
 						id: sItemListId,
 						viewName: sViewName,
 						matchers: [new AggregationLengthEquals({
 							name: "items",
 							length: 1
-						}), function(oControl) {
-							var oInput = oControl.getItems()[0].getContent()[0].getItems()[1].getItems()[0];
+						}), (oControl) => {
+							const oInput = oControl.getItems()[0].getContent()[0].getItems()[1].getItems()[0];
 							return new PropertyStrictEquals({
 								name: "text",
 								value: sLastItemText
 							}).isMatching(oInput);
 						}],
-						success: function() {
+						success() {
 							Opa5.assert.ok(true, "The table has 1 item, with '" + sLastItemText + "' as Last item");
 						},
 						errorMessage: "List does not have expected entry '" + sLastItemText + "'."
 					});
 				},
-				iShouldSeeItemCount: function(iItemCount) {
+				iShouldSeeItemCount(iItemCount) {
 					return this.waitFor({
 						id: sItemListId,
 						viewName: sViewName,
@@ -188,7 +185,7 @@ sap.ui.require([
 							name: "items",
 							length: iItemCount
 						})],
-						success: function() {
+						success() {
 							Opa5.assert.ok(true, "The table has " + iItemCount + " item(s)");
 						},
 						errorMessage: "List does not have expected number of items '" + iItemCount + "'."

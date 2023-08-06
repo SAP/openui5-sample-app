@@ -1,3 +1,5 @@
+/* global QUnit, sinon*/
+
 sap.ui.define([
 	"sap/ui/base/ManagedObject",
 	"sap/ui/core/mvc/Controller",
@@ -5,101 +7,106 @@ sap.ui.define([
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/model/resource/ResourceModel",
 	"sap/ui/Device"
-], function(ManagedObject, Controller, AppController, JSONModel, ResourceModel, Device) {
+], (ManagedObject, Controller, AppController, JSONModel, ResourceModel, Device) => {
 	"use strict";
+
+	let oAppController;
+	let oViewStub;
+	let oJSONModelStub;
+	let oListStub;
 
 	QUnit.module("Test init state", {
 
-		beforeEach: function() {
-			this.oAppController = new AppController();
-			this.oViewStub = new ManagedObject({});
-			sinon.stub(Controller.prototype, "getView").returns(this.oViewStub);
+		beforeEach() {
+			oAppController = new AppController();
+			oViewStub = new ManagedObject({});
+			sinon.stub(Controller.prototype, "getView").returns(oViewStub);
 
-			this.oJSONModelStub = new JSONModel({
+			oJSONModelStub = new JSONModel({
 				todos: []
 			});
-			this.oViewStub.setModel(this.oJSONModelStub);
+			oViewStub.setModel(oJSONModelStub);
 		},
 
-		afterEach: function() {
+		afterEach() {
 			Controller.prototype.getView.restore();
 
-			this.oViewStub.destroy();
+			oViewStub.destroy();
 		}
 	});
 
-	QUnit.test("Check controller's initial state", function (assert) {
+	QUnit.test("Check controller's initial state", (assert) => {
 		// Act
-		this.oAppController.onInit();
+		oAppController.onInit();
 
 		// Assert
-		assert.deepEqual(this.oAppController.aSearchFilters, [], "Search filters have been instantiated empty");
-		assert.deepEqual(this.oAppController.aTabFilters, [], "Tab filters have been instantiated empty");
+		assert.deepEqual(oAppController.aSearchFilters, [], "Search filters have been instantiated empty");
+		assert.deepEqual(oAppController.aTabFilters, [], "Tab filters have been instantiated empty");
 
-		var oModel = this.oAppController.getView().getModel("view").getData();
+		const oModel = oAppController.getView().getModel("view").getData();
 		assert.deepEqual(oModel, {isMobile: Device.browser.mobile, filterText: undefined});
 	});
 
 	QUnit.module("Test model modification", {
 
-		beforeEach: function() {
-			this.oAppController = new AppController();
-			this.oViewStub = new ManagedObject({});
-			sinon.stub(Controller.prototype, "getView").returns(this.oViewStub);
+		beforeEach() {
+			oAppController = new AppController();
+			oViewStub = new ManagedObject({});
+			sinon.stub(Controller.prototype, "getView").returns(oViewStub);
 
-			this.oJSONModelStub = new JSONModel({
+			oJSONModelStub = new JSONModel({
 				todos: []
 			});
-			this.oViewStub.setModel(this.oJSONModelStub);
+			oViewStub.setModel(oJSONModelStub);
 		},
 
-		afterEach: function() {
+		afterEach() {
 			Controller.prototype.getView.restore();
 
-			this.oViewStub.destroy();
+			oViewStub.destroy();
 		}
 	});
 
-	QUnit.test("Should add a todo element to the model", function(assert) {
+	QUnit.test("Should add a todo element to the model", (assert) => {
 		// Arrange
 		// initial assumption: to-do list is empty
-		assert.strictEqual(this.oJSONModelStub.getObject("/todos").length, 0, "There must be no todos defined.");
+		assert.strictEqual(oJSONModelStub.getObject("/todos").length, 0, "There must be no todos defined.");
 
 		// Act
-		this.oJSONModelStub.setProperty("/todos", [{title: "Completed item", completed: true}]);
-		this.oJSONModelStub.setProperty("/newTodo", "new todo item");
-		this.oAppController.addTodo();
+		oJSONModelStub.setProperty("/todos", [{title: "Completed item", completed: true}]);
+		oJSONModelStub.setProperty("/newTodo", "new todo item");
+		oAppController.addTodo();
 
 		// Assumption
-		assert.strictEqual(this.oJSONModelStub.getObject("/todos").length, 2, "There are couple items in ToDo list.");
+		assert.strictEqual(oJSONModelStub.getObject("/todos").length, 2, "There are couple items in ToDo list.");
 	});
 
-	QUnit.test("Should toggle the completed items in the model", function(assert) {
+	QUnit.test("Should toggle the completed items in the model", (assert) => {
 		// Arrange
-		var oModelData = {
+		const oModelData = {
 			todos: [{
 				"title": "Start this app",
 				"completed": false
 			}],
 			itemsLeftCount: 1
 		};
-		this.oJSONModelStub.setData(oModelData);
+		oJSONModelStub.setData(oModelData);
 
 		// initial assumption
-		assert.strictEqual(this.oJSONModelStub.getObject("/todos").length, 1, "There is one item.");
-		assert.strictEqual(this.oJSONModelStub.getProperty("/itemsLeftCount"), 1, "There is one item left.");
+		assert.strictEqual(oJSONModelStub.getObject("/todos").length, 1, "There is one item.");
+		assert.strictEqual(oJSONModelStub.getProperty("/itemsLeftCount"), 1, "There is one item left.");
 
 		// Act
-		this.oJSONModelStub.setProperty("/todos/0/completed", true);
-		this.oAppController.updateItemsLeftCount();
+		oJSONModelStub.setProperty("/todos/0/completed", true);
+		oAppController.updateItemsLeftCount();
 
 		// Assumption
-		assert.strictEqual(this.oJSONModelStub.getProperty("/itemsLeftCount"), 0, "There is no item left.");
+		assert.strictEqual(oJSONModelStub.getProperty("/itemsLeftCount"), 0, "There is no item left.");
 	});
 
-	QUnit.test("Should clear the completed items", function(assert) {
+	QUnit.test("Should clear the completed items", (assert) => {
 		// Arrange
-		var oModelData = {
+		const oModelData = {
 			todos: [{
 				"title": "Start this app1",
 				"completed": false
@@ -109,95 +116,95 @@ sap.ui.define([
 			}],
 			itemsLeftCount: 1
 		};
-		this.oJSONModelStub.setData(oModelData);
+		oJSONModelStub.setData(oModelData);
 
 
 		// initial assumption
-		assert.strictEqual(this.oJSONModelStub.getObject("/todos").length, 2, "There are two items.");
-		assert.strictEqual(this.oJSONModelStub.getProperty("/itemsLeftCount"), 1, "There is no item left.");
+		assert.strictEqual(oJSONModelStub.getObject("/todos").length, 2, "There are two items.");
+		assert.strictEqual(oJSONModelStub.getProperty("/itemsLeftCount"), 1, "There is no item left.");
 
 		// Act
-		this.oAppController.clearCompleted();
-		this.oAppController.updateItemsLeftCount();
+		oAppController.clearCompleted();
+		oAppController.updateItemsLeftCount();
 
 		// Assumption
-		assert.strictEqual(this.oJSONModelStub.getObject("/todos").length, 1, "There is one item left.");
-		assert.strictEqual(this.oJSONModelStub.getProperty("/itemsLeftCount"), 1, "There is one item left.");
+		assert.strictEqual(oJSONModelStub.getObject("/todos").length, 1, "There is one item left.");
+		assert.strictEqual(oJSONModelStub.getProperty("/itemsLeftCount"), 1, "There is one item left.");
 	});
 
-	QUnit.test("Should update items left count when no todos are loaded, yet", function(assert) {
+	QUnit.test("Should update items left count when no todos are loaded, yet", (assert) => {
 		// Arrange
-		var oModelData = {};
-		this.oJSONModelStub.setData(oModelData);
+		const oModelData = {};
+		oJSONModelStub.setData(oModelData);
 
 		// initial assumption
-		assert.strictEqual(this.oJSONModelStub.getObject("/todos"), undefined, "There are no items.");
-		assert.strictEqual(this.oJSONModelStub.getProperty("/itemsLeftCount"), undefined, "Items left is not set");
+		assert.strictEqual(oJSONModelStub.getObject("/todos"), undefined, "There are no items.");
+		assert.strictEqual(oJSONModelStub.getProperty("/itemsLeftCount"), undefined, "Items left is not set");
 
 		// Act
-		this.oAppController.updateItemsLeftCount();
+		oAppController.updateItemsLeftCount();
 
 		// Assumption
-		assert.strictEqual(this.oJSONModelStub.getProperty("/itemsLeftCount"), 0, "There is no item left.");
+		assert.strictEqual(oJSONModelStub.getProperty("/itemsLeftCount"), 0, "There is no item left.");
 	});
 
 		QUnit.module("Test search", {
-			beforeEach: function () {
-				this.oAppController = new AppController();
-				this.oViewStub = new ManagedObject({});
-				this.oListStub = new ManagedObject({});
+			beforeEach() {
+				oAppController = new AppController();
+				oViewStub = new ManagedObject({});
+				oListStub = new ManagedObject({});
 				sinon
 					.stub(Controller.prototype, "getView")
-					.returns(this.oViewStub);
+					.returns(oViewStub);
 				sinon
 					.stub(Controller.prototype, "byId")
-					.returns(this.oListStub);
+					.returns(oListStub);
 				sinon
-					.stub(this.oListStub, "getBinding")
-					.returns({ filter: function () {} });
+					.stub(oListStub, "getBinding")
+					.returns({ filter(){} });
 
-				this.oJSONModelStub = new JSONModel({
+				oJSONModelStub = new JSONModel({
 					todos: [],
 				});
-				this.oViewStub.setModel(this.oJSONModelStub);
-				this.oViewStub.setModel(new JSONModel({}), "view");
-				this.oViewStub.setModel(
+				oViewStub.setModel(oJSONModelStub);
+				oViewStub.setModel(new JSONModel({}), "view");
+				oViewStub.setModel(
 					new ResourceModel({ bundleName: "sap.ui.demo.todo.i18n.i18n" }),
 					"i18n"
 				);
 			},
 
-			afterEach: function () {
+			afterEach() {
 				Controller.prototype.getView.restore();
 				Controller.prototype.byId.restore();
 
-				this.oViewStub.destroy();
-				this.oListStub.destroy();
+				oViewStub.destroy();
+				oListStub.destroy();
 			},
 		});
 
-		QUnit.test("Empty search", function (assert) {
+		QUnit.test("Empty search", (assert) => {
 			// Setup
-			var oEvent = { getSource: function () {
-				return { getValue: function () { return ""; } };
+			const oEvent = { getSource() {
+				return { getValue() { return ""; } };
 			}};
 
 			// Act
-			this.oAppController.onSearch(oEvent);
+			oAppController.onSearch(oEvent);
 
 			// Assert
 			assert.strictEqual(
-				this.oAppController.sSearchQuery,
+				oAppController.sSearchQuery,
 				"",
 				"The search term is an empty string"
 			);
 			assert.deepEqual(
-				this.oAppController.aSearchFilters,
+				oAppController.aSearchFilters,
 				[],
 				"Search filters are empty"
 			);
 			assert.strictEqual(
-				this.oAppController
+				oAppController
 					.getView()
 					.getModel()
 					.getProperty("/itemsRemovable"),
@@ -206,31 +213,31 @@ sap.ui.define([
 			);
 		});
 
-		QUnit.test("Do a search", function (assert) {
+		QUnit.test("Do a search", (assert) => {
 			// Setup
-			var sSearchQuery = "ToDo item";
-			var oEvent = { getSource: function () {
-				return { getValue: function () {
+			const sSearchQuery = "ToDo item";
+			const oEvent = { getSource() {
+				return { getValue() {
 					return sSearchQuery;
 				}};
 			}};
 
 			// Act
-			this.oAppController.onSearch(oEvent);
+			oAppController.onSearch(oEvent);
 
 			// Assert
 			assert.strictEqual(
-				this.oAppController.sSearchQuery,
+				oAppController.sSearchQuery,
 				sSearchQuery,
 				"The search term is an empty string"
 			);
 			assert.strictEqual(
-				this.oAppController.aSearchFilters.length,
+				oAppController.aSearchFilters.length,
 				1,
 				"A search filter is constructed"
 			);
 			assert.strictEqual(
-				this.oAppController
+				oAppController
 					.getView()
 					.getModel()
 					.getProperty("/itemsRemovable"),
@@ -240,120 +247,120 @@ sap.ui.define([
 		});
 
 		QUnit.module("Test filtering", {
-			beforeEach: function () {
-				this.oAppController = new AppController();
-				this.oViewStub = new ManagedObject({});
-				this.oListStub = new ManagedObject({});
+			beforeEach() {
+				oAppController = new AppController();
+				oViewStub = new ManagedObject({});
+				oListStub = new ManagedObject({});
 				sinon
 					.stub(Controller.prototype, "getView")
-					.returns(this.oViewStub);
+					.returns(oViewStub);
 				sinon
 					.stub(Controller.prototype, "byId")
-					.returns(this.oListStub);
+					.returns(oListStub);
 				sinon
-					.stub(this.oListStub, "getBinding")
-					.returns({ filter: function () {} });
+					.stub(oListStub, "getBinding")
+					.returns({ filter() {} });
 
-				this.oJSONModelStub = new JSONModel({
+				oJSONModelStub = new JSONModel({
 					todos: [],
 				});
-				this.oViewStub.setModel(this.oJSONModelStub);
-				this.oViewStub.setModel(new JSONModel({}), "view");
-				this.oViewStub.setModel(
+				oViewStub.setModel(oJSONModelStub);
+				oViewStub.setModel(new JSONModel({}), "view");
+				oViewStub.setModel(
 					new ResourceModel({ bundleName: "sap.ui.demo.todo.i18n.i18n" }),
 					"i18n"
 				);
 			},
 
-			afterEach: function () {
+			afterEach() {
 				Controller.prototype.getView.restore();
 				Controller.prototype.byId.restore();
 
-				this.oViewStub.destroy();
-				this.oListStub.destroy();
+				oViewStub.destroy();
+				oListStub.destroy();
 			},
 		});
 
-		QUnit.test("Toggle filters", function (assert) {
+		QUnit.test("Toggle filters", (assert) => {
 			// Setup
-			var sKey = "";
-			var oEvent = { getParameter: function () {
-				return { getKey: function () { return sKey; } };
+			let sKey = "";
+			const oEvent = { getParameter() {
+				return { getKey() { return sKey; } };
 			}};
 
 			// Act
-			this.oAppController.aSearchFilters = [];
-			this.oAppController.onFilter(oEvent);
+			oAppController.aSearchFilters = [];
+			oAppController.onFilter(oEvent);
 
 			// Assert
 			assert.strictEqual(
-				this.oAppController.sFilterKey,
+				oAppController.sFilterKey,
 				sKey,
 				"Correct filter key is applied"
 			);
 			assert.strictEqual(
-				this.oAppController.aTabFilters.length,
+				oAppController.aTabFilters.length,
 				0,
 				"Empty key == no filter"
 			);
 
 			// Act
 			sKey = "active"; // alters oEvent
-			this.oAppController.onFilter(oEvent);
+			oAppController.onFilter(oEvent);
 			// Assert
 			assert.strictEqual(
-				this.oAppController.sFilterKey,
+				oAppController.sFilterKey,
 				sKey,
 				"Correct filter key is applied"
 			);
 			assert.strictEqual(
-				this.oAppController.aTabFilters.length,
+				oAppController.aTabFilters.length,
 				1,
 				"A filter is constructed"
 			);
 
 			// Act
 			sKey = "completed"; // alters oEvent
-			this.oAppController.onFilter(oEvent);
+			oAppController.onFilter(oEvent);
 			// Assert
 			assert.strictEqual(
-				this.oAppController.sFilterKey,
+				oAppController.sFilterKey,
 				sKey,
 				"Correct filter key is applied"
 			);
 			assert.strictEqual(
-				this.oAppController.aTabFilters.length,
+				oAppController.aTabFilters.length,
 				1,
 				"A filter is constructed"
 			);
 
 			// Act
 			sKey = "completed"; // alters oEvent
-			this.oAppController.sSearchQuery = "test";
-			this.oAppController.onFilter(oEvent);
+			oAppController.sSearchQuery = "test";
+			oAppController.onFilter(oEvent);
 			// Assert
 			assert.strictEqual(
-				this.oAppController.sFilterKey,
+				oAppController.sFilterKey,
 				sKey,
 				"Correct filter key is applied"
 			);
 			assert.strictEqual(
-				this.oAppController.aTabFilters.length,
+				oAppController.aTabFilters.length,
 				1,
 				"A filter is constructed"
 			);
 
 			// Act
 			sKey = "all"; // alters oEvent
-			this.oAppController.onFilter(oEvent);
+			oAppController.onFilter(oEvent);
 			// Assert
 			assert.strictEqual(
-				this.oAppController.sFilterKey,
+				oAppController.sFilterKey,
 				sKey,
 				"Correct filter key is applied"
 			);
 			assert.strictEqual(
-				this.oAppController.aTabFilters.length,
+				oAppController.aTabFilters.length,
 				0,
 				"Cleans up filters"
 			);

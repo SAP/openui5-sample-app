@@ -3,12 +3,12 @@
 sap.ui.define([
 	"sap/ui/test/opaQunit",
 	"sap/ui/demo/todo/test/integration/pages/App"
-], function (opaTest) {
+], (opaTest) => {
 	"use strict";
 
 	QUnit.module("Todo List");
 
-	opaTest("should add an item", function (Given, When, Then) {
+	opaTest("should add an item", (Given, When, Then) => {
 
 		// Arrangements
 		Given.iStartMyApp();
@@ -23,7 +23,7 @@ sap.ui.define([
 		Then.iTeardownMyApp();
 	});
 
-	opaTest("should remove a completed item", function (Given, When, Then) {
+	opaTest("should remove a completed item", (Given, When, Then) => {
 
 		// Arrangements
 		Given.iStartMyApp();
@@ -41,7 +41,7 @@ sap.ui.define([
 		Then.iTeardownMyApp();
 	});
 
-	opaTest("should select an item", function (Given, When, Then) {
+	opaTest("should select an item", (Given, When, Then) => {
 
 		// Arrangements
 		Given.iStartMyApp();
@@ -57,7 +57,7 @@ sap.ui.define([
 		Then.iTeardownMyApp();
 	});
 
-	opaTest("should unselect an item", function (Given, When, Then) {
+	opaTest("should unselect an item", (Given, When, Then) => {
 
 		// Arrangements
 		Given.iStartMyApp();

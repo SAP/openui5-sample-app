@@ -1,13 +1,14 @@
 {
 	"env": {
-		"browser": true
+		"browser": true,
+		"es2022": "true"
 	},
+	"extends": "eslint:recommended",
 	"globals": {
 		"sap": true,
 		"jQuery": true
 	},
 	"rules": {
-		"block-scoped-var": 1,
 		"brace-style": [2, "1tbs", { "allowSingleLine": true }],
 		"consistent-this": 2,
 		"no-div-regex": 2,
@@ -15,7 +16,6 @@
 		"no-self-compare": 2,
 		"no-mixed-spaces-and-tabs": [2, true],
 		"no-nested-ternary": 2,
-		"no-unused-vars": [2, {"vars":"all", "args":"none"}],
 		"radix": 2,
 		"keyword-spacing": 2,
 		"space-unary-ops": 2,
@@ -49,6 +49,9 @@
 		"comma-spacing": 0,
 		"no-multi-spaces": 0,
 		"no-shadow": 0,
-		"no-irregular-whitespace": 0
+		"no-irregular-whitespace": 0,
+		"no-var": 2,
+		"no-const-assign": 2,
+		"prefer-const": 2
 	}
 }
