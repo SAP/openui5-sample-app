@@ -4,7 +4,7 @@ sap.ui.define([
 	"sap/ui/Device",
 	"sap/ui/test/opaQunit",
 	"sap/ui/demo/todo/test/integration/pages/App"
-], function (Device, opaTest) {
+], (Device, opaTest) => {
 	"use strict";
 
 	QUnit.module("Search");
@@ -14,7 +14,7 @@ sap.ui.define([
 		return;
 	}
 
-	opaTest("should show correct item count after search (1)", function (Given, When, Then) {
+	opaTest("should show correct item count after search (1)", (Given, When, Then) => {
 
 		// Arrangements
 		Given.iStartMyApp();
@@ -29,7 +29,7 @@ sap.ui.define([
 		Then.iTeardownMyApp();
 	});
 
-	opaTest("should show correct item count after search (0)", function (Given, When, Then) {
+	opaTest("should show correct item count after search (0)", (Given, When, Then) => {
 
 		// Arrangements
 		Given.iStartMyApp();
@@ -44,7 +44,7 @@ sap.ui.define([
 		Then.iTeardownMyApp();
 	});
 
-	opaTest("should show correct item count after search and clearing the search", function (Given, When, Then) {
+	opaTest("should show correct item count after search and clearing the search", (Given, When, Then) => {
 
 		// Arrangements
 		Given.iStartMyApp();
@@ -60,7 +60,7 @@ sap.ui.define([
 		Then.iTeardownMyApp();
 	});
 
-	opaTest("should show correct item count after search and active items filter", function (Given, When, Then) {
+	opaTest("should show correct item count after search and active items filter", (Given, When, Then) => {
 
 		// Arrangements
 		Given.iStartMyApp();
@@ -76,7 +76,7 @@ sap.ui.define([
 		Then.iTeardownMyApp();
 	});
 
-	opaTest("should show correct item count after search and completed items filter", function (Given, When, Then) {
+	opaTest("should show correct item count after search and completed items filter", (Given, When, Then) => {
 
 		// Arrangements
 		Given.iStartMyApp();
@@ -92,7 +92,7 @@ sap.ui.define([
 		Then.iTeardownMyApp();
 	});
 
-	opaTest("should show correct item count after search and all items filter", function (Given, When, Then) {
+	opaTest("should show correct item count after search and all items filter", (Given, When, Then) => {
 
 		// Arrangements
 		Given.iStartMyApp();

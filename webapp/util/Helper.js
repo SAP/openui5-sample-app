@@ -1,7 +1,7 @@
-sap.ui.define(["require"], function(require) {
+sap.ui.define(["require"], (require) => {
 	"use strict";
 	return {
-		resolvePath: function(sPath) {
+		resolvePath(sPath) {
 			// Relative to application root
 			return require.toUrl("../") + sPath;
 		}
