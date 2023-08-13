@@ -6,6 +6,8 @@
 
 // Provides control sap.m.ListBase.
 sap.ui.define([
+	"sap/base/i18n/Localization",
+	"sap/ui/core/ControlBehavior",
 	"sap/ui/events/KeyCodes",
 	"sap/ui/Device",
 	"sap/ui/core/Core",
@@ -15,6 +17,7 @@ sap.ui.define([
 	"sap/ui/core/LabelEnablement",
 	"sap/ui/core/delegate/ItemNavigation",
 	"./library",
+	"sap/ui/core/library",
 	"./InstanceManager",
 	"./GrowingEnablement",
 	"./GroupHeaderListItem",
@@ -25,10 +28,13 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/ui/core/InvisibleMessage",
 	"sap/m/table/Util",
+	"sap/ui/core/Lib",
 	"sap/ui/dom/jquery/Selectors", // jQuery custom selectors ":sapTabbable"
 	"sap/ui/dom/jquery/Aria" // jQuery Plugin "addAriaLabelledBy", "removeAriaLabelledBy"
 ],
 function(
+	Localization,
+	ControlBehavior,
 	KeyCodes,
 	Device,
 	Core,
@@ -38,6 +44,7 @@ function(
 	LabelEnablement,
 	ItemNavigation,
 	library,
+	coreLibrary,
 	InstanceManager,
 	GrowingEnablement,
 	GroupHeaderListItem,
@@ -47,7 +54,8 @@ function(
 	jQuery,
 	Log,
 	InvisibleMessage,
-	Util
+	Util,
+	Library
 ) {
 	"use strict";
 
@@ -79,6 +87,9 @@ function(
 	// shortcut for sap.m.MultiSelectMode
 	var MultiSelectMode = library.MultiSelectMode;
 
+	// shortcut for sap.ui.core.TitleLevel
+	var TitleLevel = coreLibrary.TitleLevel;
+
 	/**
 	 * Constructor for a new ListBase.
 	 *
@@ -97,7 +108,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -118,9 +129,26 @@ function(
 
 				/**
 				 * Defines the header text that appears in the control.
-				 * <b>Note:</b> If <code>headerToolbar</code> aggregation is set, then this property is ignored.
+				 * <b>Note:</b>
+				 * If the <code>headerToolbar</code> aggregation is set, then this property is ignored.
+				 * If this is the case, use, for example, a <code>sap.m.Title</code> control in the toolbar to define a header.
 				 */
 				headerText : {type : "string", group : "Misc", defaultValue : null},
+
+				/**
+				 * Defines the semantic header level of the header text (see {@link #getHeaderText headerText} property}).
+				 * This information is, for example, used by assistive technologies, such as screenreaders, to create a hierarchical site
+				 * map for faster navigation.
+				 * Depending on this setting, either the ARIA equivalent of an HTML h1-h6 element is used or, when using the
+				 * <code>Auto</code> level, no explicit level information is used.
+				 *
+				 * <b>Note:</b>
+				 * If the <code>headerToolbar</code> aggregation is set, then this property is ignored.
+				 * If this is the case, use, for example, a <code>sap.m.Title</code> control in the toolbar to define a header.
+				 *
+				 * @since 1.117.0
+				 */
+				headerLevel : {type : "sap.ui.core.TitleLevel", group : "Misc", defaultValue : TitleLevel.Auto},
 
 				/**
 				 * Defines the header style of the control. Possible values are <code>Standard</code> and <code>Plain</code>.
@@ -258,17 +286,20 @@ function(
 
 				/**
 				 * Defines the multi-selection mode for the control.
-				 * If this property is set to the <code>Default</code> value, the <code>sap.m.Table</code> control renders
-				 * the Select All checkbox in the column header, otherwise the Deselect All icon is rendered.
-				 * The Select All checkbox allows the user to select all the items in the control, and
-				 * the Deselect All icon deselects the items.
-				 * If the property is set to <code>ClearAll</code>, then selecting items via the <code>selectAll</code> method is not possible. See {@link #selectAll selectAll} for more details.
+				 *
+				 * If the property is set to <code>ClearAll</code>, then selecting items via the
+				 * keyboard shortcut <i>CTRL + A</i> and via the <code>selectAll</code> method is not possible.
+				 * See {@link #selectAll selectAll} for more details.
+				 * A selection of multiple items is still possible using the range selection feature.
+				 * For more information about the range selection, see {@link topic:8a0d4efa29d44ef39219c18d832012da Keyboard Handling for Item Selection}.
+				 *
+				 * <b>Only relevant for <code>sap.m.Table</code>:</b>
+				 * If <code>ClearAll</code> is set, the table renders a Deselect All icon in the column header,
+				 * otherwise a Select All checkbox is shown. The Select All checkbox allows the user to select all the
+				 * items in the control, and the Deselect All icon deselects the items.
 				 *
 				 * <b>Note:</b> This property must be used with the <code>MultiSelect</code> mode.
-				 * If this property is set to <code>ClearAll</code>, then a selection of multiple items is still possible
-				 * via the range selection feature except <i>CTRL + A</i>.
-				 * Additionally, the <i>CTRL + SHIFT + A</i> key combination can be used for deselecting all the items.
-				 * For details on the range selection, please see {@link topic:8a0d4efa29d44ef39219c18d832012da Keyboard Handling for Item Selection}.
+				 *
 				 * @since 1.93
 				 */
 				multiSelectMode : {type: "sap.m.MultiSelectMode", group: "Behavior", defaultValue: MultiSelectMode.Default}
@@ -605,6 +636,7 @@ function(
 
 	// this gets called only with oData Model when first load or filter/sort
 	ListBase.prototype.refreshItems = function(sReason) {
+		this._bRefreshItems = true;
 		if (this._oGrowingDelegate) {
 			// inform growing delegate to handle
 			this._oGrowingDelegate.refreshItems(sReason);
@@ -850,7 +882,7 @@ function(
 
 		// return no data text from resource bundle when there is no custom
 		var sNoDataText = this.getProperty("noDataText");
-		sNoDataText = sNoDataText || Core.getLibraryResourceBundle("sap.m").getText("LIST_NO_DATA");
+		sNoDataText = sNoDataText || Library.getResourceBundleFor("sap.m").getText("LIST_NO_DATA");
 		return sNoDataText;
 	};
 
@@ -1350,7 +1382,6 @@ function(
 
 	// fire updateFinished event delayed to make sure rendering phase is done
 	ListBase.prototype._fireUpdateFinished = function(oInfo) {
-		this._hideBusyIndicator();
 		setTimeout(function() {
 			this._bItemNavigationInvalidated = true;
 			this.fireUpdateFinished({
@@ -1539,7 +1570,7 @@ function(
 			// announce the selection state changes
 			// but only announce if the document.activeElement is the listItem control, else selection control should announce the selection change
 			if (this.getAriaRole() === "list" && document.activeElement === oListItem.getDomRef()) {
-				var oResourceBundle = Core.getLibraryResourceBundle("sap.m");
+				var oResourceBundle = Library.getResourceBundleFor("sap.m");
 				InvisibleMessage.getInstance().announce(bSelected ? oResourceBundle.getText("LIST_ITEM_SELECTED") : oResourceBundle.getText("LIST_ITEM_NOT_SELECTED"), "Assertive");
 			}
 		}
@@ -1601,6 +1632,7 @@ function(
 			oEvent.ctrlKey ||
 			oEvent.altKey ||
 			oEvent.metaKey ||
+			oEvent.code == "Tab" ||
 			this.getMode() !== ListMode.MultiSelect ||
 			!oItem.isSelectable() ||
 			oEvent.which === KeyCodes.F6) {
@@ -1867,7 +1899,7 @@ function(
 	// Swipe from the end to the begin - right to left in LTR and left to right in RTL languages.
 	ListBase.prototype.onswipeleft = function(oEvent) {
 
-		var bRtl = Core.getConfiguration().getRTL();
+		var bRtl = Localization.getRTL();
 		var exceptDirection = bRtl ? SwipeDirection.EndToBegin : SwipeDirection.BeginToEnd;
 		var swipeDirection = this.getSwipeDirection();
 
@@ -1887,7 +1919,7 @@ function(
 
 	// Swipe from the begin to the end - left to right in LTR and right to left in RTL languages.
 	ListBase.prototype.onswiperight = function(oEvent) {
-		var bRtl = Core.getConfiguration().getRTL();
+		var bRtl = Localization.getRTL();
 		var exceptDirection = bRtl ? SwipeDirection.BeginToEnd : SwipeDirection.EndToBegin;
 		var swipeDirection = this.getSwipeDirection();
 
@@ -1975,7 +2007,7 @@ function(
 	};
 
 	ListBase.prototype.getAccessibilityType = function() {
-		return Core.getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_LIST");
+		return Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_LIST");
 	};
 
 	ListBase.prototype.getAccessibilityStates = function() {
@@ -1986,7 +2018,7 @@ function(
 		var sStates = "",
 			mMode = ListMode,
 			sMode = this.getMode(),
-			oBundle = Core.getLibraryResourceBundle("sap.m");
+			oBundle = Library.getResourceBundleFor("sap.m");
 
 		if (LabelEnablement.isRequired(this)) {
 			sStates += oBundle.getText("LIST_REQUIRED") + " ";
@@ -2054,7 +2086,7 @@ function(
 		this._handleStickyItemFocus(oItem.getDomRef());
 
 		if (oItem !== oFocusedControl ||
-			!Core.getConfiguration().getAccessibility()) {
+			!ControlBehavior.isAccessibilityEnabled()) {
 			return;
 		}
 
@@ -2066,7 +2098,7 @@ function(
 		} else {
 			// prepare the announcement for the screen reader
 			var oAccInfo = oItem.getAccessibilityInfo(),
-				oBundle = Core.getLibraryResourceBundle("sap.m"),
+				oBundle = Library.getResourceBundleFor("sap.m"),
 				sDescription = oItem.isGroupHeader() ? "" : oAccInfo.type + " . ";
 
 			if (this.isA("sap.m.Table")) {
@@ -2078,6 +2110,12 @@ function(
 			this.updateInvisibleText(sDescription, oItemDomRef);
 			return sDescription;
 		}
+	};
+
+	ListBase.prototype.onItemFocusOut = function(oItem) {
+		var oInvisibleText = ListBase.getInvisibleText(),
+			$ItemDomRef = jQuery(oItem.getDomRef());
+		$ItemDomRef.removeAriaLabelledBy(oInvisibleText.getId());
 	};
 
 	ListBase.prototype.updateInvisibleText = function(sText, oItemDomRef, bPrepend) {

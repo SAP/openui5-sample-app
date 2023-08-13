@@ -33,10 +33,6 @@ sap.ui.define([
 				}
 			});
 
-		if (!oQuickViewCard.getShowVerticalScrollBar()) {
-			oRM.class("sapMQuickViewCardNoScroll");
-		}
-
 		oRM.openEnd();
 		oRM.renderControl(oQuickViewCard.getNavContainer());
 		oRM.close("div");

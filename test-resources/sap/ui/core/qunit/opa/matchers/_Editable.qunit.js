@@ -3,15 +3,19 @@ sap.ui.define([
 	'sap/ui/test/matchers/_Editable',
 	'sap/m/Input',
 	'sap/m/Text',
+	'sap/ui/layout/library',
 	'sap/ui/layout/form/SimpleForm'
-], function (_Editable, Input, Text, SimpleForm) {
+], function (_Editable, Input, Text, layoutLibrary, SimpleForm) {
 	"use strict";
+
+	var SimpleFormLayout = layoutLibrary.form.SimpleFormLayout;
 
 	QUnit.module("_Editable matcher", {
 		beforeEach: function () {
 			this.oInput = new Input("myInput");
 			this.oText = new Text("myText");
 			this.oForm = new SimpleForm("myForm", {
+				layout: SimpleFormLayout.ColumnLayout,
 				content: [this.oInput, this.oText]
 			});
 			this.oForm.placeAt("qunit-fixture");

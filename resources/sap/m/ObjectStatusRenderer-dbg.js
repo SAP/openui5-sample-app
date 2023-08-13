@@ -35,6 +35,8 @@ sap.ui.define(['sap/ui/core/library', './library', 'sap/ui/core/Core'],
 	 * @param {sap.m.ObjectStatus} oObjStatus An object representation of the control that should be rendered
 	 */
 	ObjectStatusRenderer.render = function(oRm, oObjStatus){
+		var sStatusTextId;
+
 		oRm.openStart("div", oObjStatus);
 
 		if (oObjStatus._isEmpty() && oObjStatus.getEmptyIndicatorMode() === EmptyIndicatorMode.Off) {
@@ -83,6 +85,18 @@ sap.ui.define(['sap/ui/core/library', './library', 'sap/ui/core/Core'],
 					value: oObjStatus._generateSelfLabellingIds(),
 					append: true
 				};
+			}
+
+			if (sStateText) {
+				sStatusTextId = oObjStatus._fnInvisibleStateLabelFactory().getId();
+				if (oAccAttributes["describedby"]) {
+					oAccAttributes["describedby"].value += " " + sStatusTextId;
+				} else {
+					oAccAttributes["describedby"] = {
+						value: sStatusTextId,
+						append: true
+					};
+				}
 			}
 
 			oRm.accessibilityState(oObjStatus, oAccAttributes);
@@ -148,15 +162,6 @@ sap.ui.define(['sap/ui/core/library', './library', 'sap/ui/core/Core'],
 			if (oObjStatus._isActive()) {
 				oRm.close("span");
 			}
-
-			if (sStateText) {
-				oRm.openStart("span", oObjStatus.getId() + "-state");
-				oRm.class("sapUiPseudoInvisibleText");
-				oRm.openEnd();
-				oRm.text(sStateText);
-				oRm.close("span");
-			}
-
 		}
 
 		oRm.close("div");

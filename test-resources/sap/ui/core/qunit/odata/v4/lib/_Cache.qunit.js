@@ -55,6 +55,8 @@ sap.ui.define([
 		return "API";
 	}
 
+	function mustBeMocked() { throw new Error("Must be mocked"); }
+
 	//*********************************************************************************************
 	QUnit.module("sap.ui.model.odata.v4.lib._Cache", {
 		beforeEach : function () {
@@ -263,7 +265,7 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(_GroupLock.$cached), "path/to/entity", null, null, true)
 			.returns(SyncPromise.resolve(oEntityPromise));
 		oEntityPromise.then(function () {
-			that.mock(_Cache).expects("makeUpdateData")
+			that.mock(_Helper).expects("makeUpdateData")
 				.withExactArgs(["Address", "City"], "Walldorf", "~bUpdating~")
 				.returns(oUpdateData);
 			that.mock(_Helper).expects("updateAll")
@@ -428,9 +430,9 @@ sap.ui.define([
 				.withExactArgs(undefined, oFixture.iStatus < 0
 					? [oMessage1, oMessage2] : [oMessage1]);
 			aCacheData.$count = 2; // ensure that count is updated
-			oCountExpectation = oHelperMock.expects("updateExisting").exactly(iOnFailure)
+			oCountExpectation = oHelperMock.expects("addToCount").exactly(iOnFailure)
 				.withExactArgs(sinon.match.same(oCache.mChangeListeners), sPath,
-					sinon.match.same(aCacheData), {$count : 3});
+					sinon.match.same(aCacheData), 1);
 			aCacheData.$created = 1;
 			oCache.iActiveElements = 1;
 			oSpliceExpectation = that.mock(aCacheData).expects("splice").exactly(iOnFailure)
@@ -569,7 +571,7 @@ sap.ui.define([
 			this.oModelInterfaceMock.expects("updateMessages")
 				.withExactArgs("~aMessages~");
 		}
-		this.mock(_Cache).expects("makeUpdateData").withExactArgs(["EMPLOYEE_2_TEAM"], null)
+		this.mock(_Helper).expects("makeUpdateData").withExactArgs(["EMPLOYEE_2_TEAM"], null)
 			.returns(oUpdateData);
 		this.mock(_Helper).expects("updateExisting")
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "EQUIPMENT_2_EMPLOYEE",
@@ -606,7 +608,7 @@ sap.ui.define([
 
 		oCache.fetchValue = function () {};
 		aCacheData.$count = 2; // ensure that count is not updated
-		this.mock(_Helper).expects("updateExisting").never();
+		this.mock(_Helper).expects("setCount").never();
 		this.mock(oCache).expects("fetchValue")
 			.withExactArgs(sinon.match.same(_GroupLock.$cached), "")
 			.returns(SyncPromise.resolve(aCacheData));
@@ -831,10 +833,9 @@ sap.ui.define([
 	//*********************************************************************************************
 [false, true].forEach(function (bCreated) {
 	["", "EMPLOYEE_2_EQUIPMENTS"].forEach(function (sPath) {
-		[false, true].forEach(function (bCount) {
-			[false, true].forEach(function (bDeleted) {
-				var sTitle = "_Cache#removeElement, bCreated = " + bCreated + ", bCount = " + bCount
-					+ ", bDeleted=" + bDeleted + ", sPath = " + sPath;
+		[false, true].forEach(function (bDeleted) {
+			var sTitle = "_Cache#removeElement, bCreated = " + bCreated + ", bDeleted=" + bDeleted
+					+ ", sPath = " + sPath;
 
 			QUnit.test(sTitle, function (assert) {
 				var sByPredicate,
@@ -859,7 +860,6 @@ sap.ui.define([
 					oCache.iLimit = iLimit;
 				}
 				aCacheData.$byPredicate = {"('1')" : oElement};
-				aCacheData.$count = bCount ? 3 : undefined;
 				aCacheData.$created = bCreated ? 2 : 0;
 				oCache.iActiveElements = bCreated && !sPath ? 1 : 0;
 				if (bCreated) {
@@ -873,10 +873,9 @@ sap.ui.define([
 				this.mock(_Cache).expects("getElementIndex")
 					.withExactArgs(sinon.match.same(aCacheData), "('1')", 2)
 					.returns(1);
-				this.mock(_Helper).expects("updateExisting").exactly(bCount ? 1 : 0)
+				this.mock(_Helper).expects("addToCount")
 					.withExactArgs(sinon.match.same(oCache.mChangeListeners), sPath,
-						sinon.match.same(aCacheData), {$count : 2})
-					.callThrough();
+						sinon.match.same(aCacheData), -1);
 				this.mock(oCache).expects("adjustIndexes")
 					.withExactArgs(sPath, sinon.match.same(aCacheData), 1, -1);
 
@@ -886,7 +885,6 @@ sap.ui.define([
 				assert.strictEqual(aCacheData.$created, bCreated ? 1 : 0);
 				assert.strictEqual(oCache.iActiveElements, 0);
 				assert.strictEqual(iIndex, 1);
-				assert.strictEqual(aCacheData.$count, bCount ? 2 : undefined);
 				assert.deepEqual(aCacheData, [{
 					"@odata.etag" : "before"
 				}, {
@@ -900,7 +898,6 @@ sap.ui.define([
 				} else {
 					assert.notOk("iLimit" in oCache);
 				}
-			});
 			});
 		});
 	});
@@ -935,7 +932,7 @@ sap.ui.define([
 		oCache.iLimit = 42;
 		this.mock(_Cache).expects("getElementIndex").exactly(bJustDropped ? 1 : 0)
 			.withExactArgs(sinon.match.same(aCacheData), "('1')", 2).returns(-1);
-		this.mock(_Helper).expects("updateExisting").never(); // from addToCount()
+		this.mock(_Helper).expects("addToCount").never();
 		this.mock(oCache).expects("adjustIndexes").never();
 
 		// code under test
@@ -980,10 +977,9 @@ sap.ui.define([
 		oCache.iLimit = 42;
 		this.mock(_Cache).expects("getElementIndex")
 			.withExactArgs(sinon.match.same(aCacheData), "('1')", 2).returns(1);
-		this.mock(_Helper).expects("updateExisting") // from addToCount()
+		this.mock(_Helper).expects("addToCount")
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "",
-				sinon.match.same(aCacheData), {$count : 41})
-			.callThrough();
+				sinon.match.same(aCacheData), -1);
 		this.mock(oCache).expects("adjustIndexes")
 			.withExactArgs("", sinon.match.same(aCacheData), 1, -1);
 
@@ -991,7 +987,6 @@ sap.ui.define([
 		iIndex = oCache.removeElement(aCacheData, 2, "('1')", "");
 
 		assert.strictEqual(iIndex, 1);
-		assert.strictEqual(aCacheData.$count, 41);
 		assert.strictEqual(aCacheData.$created, 22);
 		assert.strictEqual(oCache.iActiveElements, 18);
 		assert.strictEqual(oCache.iLimit, 42);
@@ -1128,14 +1123,10 @@ sap.ui.define([
 		var oCache = new _Cache(this.oRequestor, "TEAMS"),
 			oDeletePromise = {/* no $isKeepAlive */},
 			oPatchPromise1 = {
-				$isKeepAlive : function () {
-					throw "I should be mocked before being called!";
-				}
+				$isKeepAlive : mustBeMocked
 			},
 			oPatchPromise2 = {
-				$isKeepAlive : function () {
-					throw "I should be mocked before being called!";
-				}
+				$isKeepAlive : mustBeMocked
 			};
 
 		oCache.mChangeRequests = {
@@ -1408,8 +1399,6 @@ sap.ui.define([
 		assert.strictEqual(drillDown("('a')"), oData[0], "('a')");
 		assert.strictEqual(drillDown("0/foo"), oData[0].foo, "0/foo");
 		assert.strictEqual(drillDown("0/foo/bar"), oData[0].foo.bar, "0/foo/bar");
-		assert.strictEqual(drillDown("0/foo/null/invalid"), undefined,
-			"0/foo/null/invalid");
 		assert.strictEqual(drillDown("0/foo/list/$count"), oData[0].foo.list.$count,
 			"0/foo/list/$count");
 		assert.strictEqual(drillDown("('a')/foo/list('1')"), oData[0].foo.list[3],
@@ -1848,48 +1837,53 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
-	QUnit.test("_Cache#drillDown: transient entity, missing simple properties", function (assert) {
-		var oCache = new _Cache(this.oRequestor, "Products"),
-			oData = [{
-				"@$ui5.context.isTransient" : true
-			}],
-			oHelperMock = this.mock(_Helper);
-
+[false, true].forEach(function (bSingle) {
+	const oData = bSingle
+		? {SOITEM_2_PRODUCT : null}
+		: [{"@$ui5.context.isTransient" : true}];
+	if (!bSingle) {
 		oData.$byPredicate = {"($uid=id-1-23)" : oData[0]};
+	}
+	const sData = JSON.stringify(oData);
+	const sWhat = bSingle ? "null entity" : "transient entity";
+	const iCount = bSingle ? 1 : 2;
 
-		oHelperMock.expects("getMetaPath").twice()
-			.withExactArgs("($uid=id-1-23)/Name").returns("Name");
-		this.oModelInterfaceMock.expects("fetchMetadata").twice()
-			.withExactArgs("/Products/Name")
+	//*********************************************************************************************
+	QUnit.test(`_Cache#drillDown: ${sWhat}, missing single properties`, function (assert) {
+		const oCache = new _Cache(this.oRequestor, bSingle ? "SalesOrderItem('1')" : "Products");
+		const sPrefix = bSingle ? "SOITEM_2_PRODUCT" : "($uid=id-1-23)";
+		const oHelperMock = this.mock(_Helper);
+		oHelperMock.expects("getMetaPath").exactly(iCount)
+			.withExactArgs(sPrefix + "/Name").returns("meta/path/Name");
+		this.oModelInterfaceMock.expects("fetchMetadata").exactly(iCount)
+			.withExactArgs(oCache.sMetaPath + "/meta/path/Name")
 			.returns(SyncPromise.resolve(Promise.resolve({
 				$Type : "Edm.String"
 			})));
-		oHelperMock.expects("getMetaPath").twice()
-			.withExactArgs("($uid=id-1-23)/Currency")
-			.returns("Currency");
-		this.oModelInterfaceMock.expects("fetchMetadata").twice()
-			.withExactArgs("/Products/Currency")
+		oHelperMock.expects("getMetaPath").exactly(iCount)
+			.withExactArgs(sPrefix + "/Currency").returns("meta/path/Currency");
+		this.oModelInterfaceMock.expects("fetchMetadata").exactly(iCount)
+			.withExactArgs(oCache.sMetaPath + "/meta/path/Currency")
 			.returns(SyncPromise.resolve(Promise.resolve({
 				$DefaultValue : "EUR",
 				$Type : "Edm.String"
 			})));
-		oHelperMock.expects("getMetaPath").twice()
-			.withExactArgs("($uid=id-1-23)/Price")
-			.returns("Price");
-		this.oModelInterfaceMock.expects("fetchMetadata").twice()
-			.withExactArgs("/Products/Price")
+		oHelperMock.expects("getMetaPath").exactly(iCount)
+			.withExactArgs(sPrefix + "/Price").returns("meta/path/Price");
+		this.oModelInterfaceMock.expects("fetchMetadata").exactly(iCount)
+			.withExactArgs(oCache.sMetaPath + "/meta/path/Price")
 			.returns(SyncPromise.resolve(Promise.resolve({
 				$DefaultValue : "0.0",
 				$Type : "Edm.Double"
 			})));
-		oHelperMock.expects("parseLiteral").twice()
-			.withExactArgs("0.0", "Edm.Double", "($uid=id-1-23)/Price")
+		oHelperMock.expects("parseLiteral").exactly(iCount)
+			.withExactArgs("0.0", "Edm.Double", sPrefix + "/Price")
 			.returns(0);
-		oHelperMock.expects("getMetaPath").twice()
-			.withExactArgs("($uid=id-1-23)/ProductID")
-			.returns("ProductID");
-		this.oModelInterfaceMock.expects("fetchMetadata").twice()
-			.withExactArgs("/Products/ProductID")
+		oHelperMock.expects("getMetaPath").exactly(iCount)
+			.withExactArgs(sPrefix + "/ProductID")
+			.returns("meta/path/ProductID");
+		this.oModelInterfaceMock.expects("fetchMetadata").exactly(iCount)
+			.withExactArgs(oCache.sMetaPath + "/meta/path/ProductID")
 			.returns(SyncPromise.resolve(Promise.resolve({
 				$DefaultValue : "",
 				$Type : "Edm.String"
@@ -1897,55 +1891,62 @@ sap.ui.define([
 
 		// code under test
 		return Promise.all([
-			oCache.drillDown(oData, "($uid=id-1-23)/Name").then(function (sValue) {
+			oCache.drillDown(oData, sPrefix + "/Name").then(function (sValue) {
 				assert.strictEqual(sValue, null);
 			}),
-			oCache.drillDown(oData, "($uid=id-1-23)/Currency").then(function (sValue) {
+			oCache.drillDown(oData, sPrefix + "/Currency").then(function (sValue) {
 				assert.strictEqual(sValue, "EUR");
 			}),
-			oCache.drillDown(oData, "($uid=id-1-23)/Price").then(function (sValue) {
+			oCache.drillDown(oData, sPrefix + "/Price").then(function (sValue) {
 				assert.strictEqual(sValue, 0);
 			}),
-			oCache.drillDown(oData, "($uid=id-1-23)/ProductID").then(function (sValue) {
+			oCache.drillDown(oData, sPrefix + "/ProductID").then(function (sValue) {
 				assert.strictEqual(sValue, "");
 			})
 		]).then(function () {
-			assert.deepEqual(oData[0], {"@$ui5.context.isTransient" : true}, "cache unchanged");
+			assert.strictEqual(JSON.stringify(oData), sData, "cache unchanged");
 		});
 	});
 
 	//*********************************************************************************************
-	QUnit.test("_Cache#drillDown: transient entity, missing complex properties", function (assert) {
-		var oCache = new _Cache(this.oRequestor, "BusinessPartners"),
-			oData = [{
-				"@$ui5.context.isTransient" : true
-			}];
-
-		oData.$byPredicate = {"($uid=id-1-23)" : oData[0]};
-
-		this.oModelInterfaceMock.expects("fetchMetadata").exactly(3 * 2/*steps*/)
-			.withExactArgs("/BusinessPartners/Address")
+	QUnit.test(`_Cache#drillDown: ${sWhat}, missing complex properties`, function (assert) {
+		const oCache = new _Cache(this.oRequestor,
+			bSingle ? "SalesOrders('1')" : "BusinessPartners");
+		const sPrefix = bSingle ? "SOITEM_2_PRODUCT" : "($uid=id-1-23)";
+		const oHelperMock = this.mock(_Helper);
+		oHelperMock.expects("getMetaPath").exactly(3 * iCount/*steps*/)
+			.withExactArgs(sPrefix + "/Address").returns("meta/path/Address");
+		this.oModelInterfaceMock.expects("fetchMetadata").exactly(3 * iCount/*steps*/)
+			.withExactArgs(oCache.sMetaPath + "/meta/path/Address")
 			.returns(SyncPromise.resolve(Promise.resolve({
 				$Type : "name.space.Address"
 			})));
+		oHelperMock.expects("getMetaPath").withExactArgs(sPrefix + "/Address/City")
+			.returns("meta/path/Address/City");
 		this.oModelInterfaceMock.expects("fetchMetadata")
-			.withExactArgs("/BusinessPartners/Address/City")
+			.withExactArgs(oCache.sMetaPath + "/meta/path/Address/City")
 			.returns(SyncPromise.resolve({
 				$Type : "Edm.String"
 			}));
+		oHelperMock.expects("getMetaPath").withExactArgs(sPrefix + "/Address/unknown")
+			.returns("meta/path/Address/unknown");
 		this.oModelInterfaceMock.expects("fetchMetadata")
-			.withExactArgs("/BusinessPartners/Address/unknown")
+			.withExactArgs(oCache.sMetaPath + "/meta/path/Address/unknown")
 			.returns(SyncPromise.resolve(undefined));
 		this.oLogMock.expects("error")
-			.withExactArgs("Failed to drill-down into ($uid=id-1-23)/Address/unknown,"
-				+ " invalid segment: unknown", "/~/BusinessPartners", sClassName);
+			.withExactArgs("Failed to drill-down into " + sPrefix + "/Address/unknown,"
+				+ " invalid segment: unknown", "/~/" + oCache.sResourcePath, sClassName);
+		oHelperMock.expects("getMetaPath").withExactArgs(sPrefix + "/Address/GeoLocation")
+			.returns("meta/path/Address/GeoLocation");
 		this.oModelInterfaceMock.expects("fetchMetadata")
-			.withExactArgs("/BusinessPartners/Address/GeoLocation")
+			.withExactArgs(oCache.sMetaPath + "/meta/path/Address/GeoLocation")
 			.returns(SyncPromise.resolve({
 				$Type : "name.space.GeoLocation"
 			}));
+		oHelperMock.expects("getMetaPath").withExactArgs(sPrefix + "/Address/GeoLocation/Longitude")
+			.returns("meta/path/Address/GeoLocation/Longitude");
 		this.oModelInterfaceMock.expects("fetchMetadata")
-			.withExactArgs("/BusinessPartners/Address/GeoLocation/Longitude")
+			.withExactArgs(oCache.sMetaPath + "/meta/path/Address/GeoLocation/Longitude")
 			.returns(SyncPromise.resolve({
 				$DefaultValue : "0.0",
 				$Type : "Edm.Decimal"
@@ -1953,20 +1954,21 @@ sap.ui.define([
 
 		// code under test
 		return Promise.all([
-			oCache.drillDown(oData, "($uid=id-1-23)/Address/City").then(function (sValue) {
+			oCache.drillDown(oData, sPrefix + "/Address/City").then(function (sValue) {
 				assert.strictEqual(sValue, null);
 			}),
-			oCache.drillDown(oData, "($uid=id-1-23)/Address/unknown").then(function (sValue) {
+			oCache.drillDown(oData, sPrefix + "/Address/unknown").then(function (sValue) {
 				assert.strictEqual(sValue, undefined);
 			}),
-			oCache.drillDown(oData, "($uid=id-1-23)/Address/GeoLocation/Longitude")
+			oCache.drillDown(oData, sPrefix + "/Address/GeoLocation/Longitude")
 				.then(function (sValue) {
 					assert.strictEqual(sValue, "0.0");
 				})
 		]).then(function () {
-			assert.deepEqual(oData[0], {"@$ui5.context.isTransient" : true}, "cache unchanged");
+			assert.strictEqual(JSON.stringify(oData), sData, "cache unchanged");
 		});
 	});
+});
 
 	//*********************************************************************************************
 	QUnit.test("_Cache#drillDown: transient entity, navigation property", function (assert) {
@@ -1988,8 +1990,8 @@ sap.ui.define([
 			})));
 
 		// code under test
-		return oCache.drillDown(oData, "($uid=id-1-23)/SO_2_BP/Name").then(function (sValue) {
-			assert.strictEqual(sValue, undefined);
+		return oCache.drillDown(oData, "($uid=id-1-23)/SO_2_BP").then(function (oValue) {
+			assert.strictEqual(oValue, null);
 		}).then(function () {
 			assert.deepEqual(oData[0], {"@$ui5.context.isTransient" : true}, "cache unchanged");
 		});
@@ -2250,7 +2252,6 @@ sap.ui.define([
 				fnPatchSent = this.spy(),
 				oRequestCall,
 				oRequestLock = {unlock : function () {}},
-				oStaticCacheMock = this.mock(_Cache),
 				mTypeForMetaPath = {},
 				oUnlockCall,
 				oUpdateData = {},
@@ -2278,10 +2279,10 @@ sap.ui.define([
 				.withExactArgs("/BusinessPartnerList", sinon.match.same(mQueryOptions), true)
 				.returns("?foo=bar");
 			this.mock(oGroupLock).expects("getGroupId").withExactArgs().returns("group");
-			oStaticCacheMock.expects("makeUpdateData")
+			oHelperMock.expects("makeUpdateData")
 				.withExactArgs(["Address", "City"], "Walldorf")
 				.returns(oUpdateData);
-			oStaticCacheMock.expects("makeUpdateData")
+			oHelperMock.expects("makeUpdateData")
 				.withExactArgs(["Address", "City"], oFixture.$cached ? undefined : "Heidelberg")
 				.returns(oOldData);
 			oHelperMock.expects("updateAll")
@@ -2422,7 +2423,6 @@ sap.ui.define([
 					oPatchResult = {},
 					oPatchPromise = Promise.resolve(oPatchResult),
 					oPostBody = {},
-					oStaticCacheMock = this.mock(_Cache),
 					oUnitUpdateData = {},
 					oUpdateData = {};
 
@@ -2435,9 +2435,9 @@ sap.ui.define([
 					.withExactArgs(sinon.match.same(_GroupLock.$cached), "path/to/entity")
 					.returns(SyncPromise.resolve(oEntity));
 				this.mock(oGroupLock).expects("getGroupId").withExactArgs().returns("group");
-				this.mock(_Helper).expects("deleteUpdating")
+				oHelperMock.expects("deleteUpdating")
 					.withExactArgs("ProductInfo/Amount", sinon.match.same(oEntity));
-				oStaticCacheMock.expects("makeUpdateData")
+				oHelperMock.expects("makeUpdateData")
 					.withExactArgs(["ProductInfo", "Amount"], "123")
 					.returns(oUpdateData);
 				oHelperMock.expects("updateAll")
@@ -2447,7 +2447,7 @@ sap.ui.define([
 					oHelperMock.expects("updateAll").withExactArgs({}, "path/to/entity",
 						sinon.match.same(oPostBody), sinon.match.same(oUpdateData));
 				}
-				oStaticCacheMock.expects("makeUpdateData")
+				oHelperMock.expects("makeUpdateData")
 					.withExactArgs(["ProductInfo", "Amount"], "123")
 					.returns("n/a"); // not used in this test
 				oCacheMock.expects("getValue")
@@ -2460,10 +2460,10 @@ sap.ui.define([
 						oCache.toString(),
 						sClassName);
 				} else {
-					oStaticCacheMock.expects("makeUpdateData")
+					oHelperMock.expects("makeUpdateData")
 						.withExactArgs(["ProductInfo", "Pricing", "Currency"], sUnitOrCurrencyValue)
 						.returns(oUnitUpdateData);
-					this.mock(_Helper).expects("merge")
+					oHelperMock.expects("merge")
 						.withExactArgs(sinon.match.same(bTransient ? oPostBody : oUpdateData),
 							sinon.match.same(oUnitUpdateData));
 				}
@@ -2566,7 +2566,6 @@ sap.ui.define([
 				oRequestCall2,
 				oRequestLock0 = {unlock : function () {}},
 				oRequestLock1 = {unlock : function () {}},
-				oStaticCacheMock = this.mock(_Cache),
 				sUnitOrCurrencyPath,
 				oUnlockCall,
 				that = this;
@@ -2577,10 +2576,10 @@ sap.ui.define([
 					.returns(SyncPromise.resolve(oEntity));
 				oHelperMock.expects("buildPath").withExactArgs(sEntityPath, "Address/" + sProperty)
 					.returns(sEntityPath + "/Address/" + sProperty);
-				oStaticCacheMock.expects("makeUpdateData")
+				oHelperMock.expects("makeUpdateData")
 					.withExactArgs(["Address", sProperty], sNewValue)
 					.returns("~oUpdateData~" + iIndex);
-				oStaticCacheMock.expects("makeUpdateData")
+				oHelperMock.expects("makeUpdateData")
 					.withExactArgs(["Address", sProperty], sOldValue)
 					.returns("~oOldData~" + iIndex);
 				that.mock(oGroupLock).expects("getGroupId").withExactArgs().returns("group");
@@ -2763,7 +2762,6 @@ sap.ui.define([
 			oPatchPromise0 = bError ? Promise.reject(oError) : Promise.resolve({}),
 			oPatchPromise1 = Promise.resolve(oPatchPromise0),
 			fnPatchSent = function () {},
-			oStaticCacheMock = this.mock(_Cache),
 			oRequestCall,
 			oRequestLock = {unlock : function () {}},
 			mTypeForMetaPath = {},
@@ -2777,10 +2775,10 @@ sap.ui.define([
 			.returns(SyncPromise.resolve(oEntity));
 		oCacheMock.expects("fetchTypes").withExactArgs()
 			.returns(SyncPromise.resolve(mTypeForMetaPath));
-		oStaticCacheMock.expects("makeUpdateData")
+		oHelperMock.expects("makeUpdateData")
 			.withExactArgs(["Address", "City"], "Walldorf")
 			.returns("~oUpdateData~");
-		oStaticCacheMock.expects("makeUpdateData")
+		oHelperMock.expects("makeUpdateData")
 			.withExactArgs(["Address", "City"], "Heidelberg")
 			.returns("~oOldData~");
 		oHelperMock.expects("updateAll")
@@ -5399,9 +5397,9 @@ sap.ui.define([
 		this.mock(this.oRequestor).expects("request")
 			.withExactArgs("GET", "Employees?~", sinon.match.same(oGroupLockCopy))
 			.resolves({"@odata.count" : "42"});
-		this.mock(_Helper).expects("updateExisting")
+		this.mock(_Helper).expects("setCount")
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "",
-				sinon.match.same(oCache.aElements), {$count : oFixture.count});
+				sinon.match.same(oCache.aElements), oFixture.count);
 
 		// code under test
 		return oCache.requestCount(oGroupLock).then(function () {
@@ -5783,126 +5781,6 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("Cache#updateNestedCreates: no deep create", function (assert) {
-		var oCache = new _Cache(this.oRequestor, "SalesOrders('1')");
-
-		assert.strictEqual(
-			// code under test - not even a nested ODLB
-			oCache.updateNestedCreates("path/to/entity"),
-			false);
-
-		assert.strictEqual(
-			// code under test - no nested create in foo
-			oCache.updateNestedCreates("path/to/entity", {/*oCacheEnttiy*/}, {/*oCreatedEnttiy*/},
-				{foo : "~$select~"}),
-			false);
-	});
-
-	//*********************************************************************************************
-	QUnit.test("Cache#updateNestedCreates", function (assert) {
-		var oCache = new _Cache(this.oRequestor, "SalesOrders('1')"),
-			oCacheMock = this.mock(oCache),
-			oCacheEntity = {
-				nested1 : ["n/a"],
-				nested2 : ["n/a"],
-				nested3 : ["n/a"]
-			},
-			oCreatedEntity = {
-				nested1 : ["~created11~", "~created12~"],
-				nested2 : ["~created21~"]
-			},
-			oHelperMock = this.mock(_Helper),
-			mSelectForMetaPath = {
-				nested1 : "~$select1~",
-				"nested1/foo" : "~$select1foo~",
-				"nested1/bar" : "~$select1bar~",
-				nested2 : undefined,
-				"nested2/foo" : "~$select2foo~",
-				nested3 : "~$select3~"
-			};
-
-		oCacheMock.expects("updateNestedCreates")
-			.withExactArgs("path/to/entity", sinon.match.same(oCacheEntity),
-				sinon.match.same(oCreatedEntity), sinon.match.same(mSelectForMetaPath))
-			.callThrough(); // initial call
-		oCacheEntity.nested1.$postBodyCollection = "~postBodyCollection1~";
-		// nested1
-		oHelperMock.expects("updateExisting") // setCount
-			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "path/to/entity/nested1",
-				sinon.match(function (aEntities) { return aEntities === oCacheEntity.nested1; }),
-				{$count : 2})
-			.callsFake(function () {
-				assert.strictEqual(oCacheEntity.nested1.$count, undefined);
-				assert.ok("$count" in oCacheEntity.nested1);
-			});
-		// created11
-		oHelperMock.expects("getPrivateAnnotation")
-			.withExactArgs("~created11~", "predicate").returns("~predicate11~");
-		oHelperMock.expects("updateSelected")
-			.withExactArgs({}, "path/to/entity/nested1~predicate11~", {}, "~created11~",
-				"~$select1~", undefined, true)
-			.callsFake(function () {
-				arguments[2].origin = "~created11~";
-			});
-		oCacheMock.expects("updateNestedCreates")
-			.withExactArgs("path/to/entity/nested1~predicate11~", {origin : "~created11~"},
-				"~created11~", {foo : "~$select1foo~", bar : "~$select1bar~"});
-		// created12
-		oHelperMock.expects("getPrivateAnnotation")
-			.withExactArgs("~created12~", "predicate").returns("~predicate12~");
-		oHelperMock.expects("updateSelected")
-			.withExactArgs({}, "path/to/entity/nested1~predicate12~", {}, "~created12~",
-				"~$select1~", undefined, true)
-			.callsFake(function () {
-				arguments[2].origin = "~created12~";
-			});
-		oCacheMock.expects("updateNestedCreates")
-			.withExactArgs("path/to/entity/nested1~predicate12~", {origin : "~created12~"},
-				"~created12~", {foo : "~$select1foo~", bar : "~$select1bar~"});
-		// nested2
-		oHelperMock.expects("getQueryOptionsForPath")
-			.withExactArgs(sinon.match.same(oCache.mQueryOptions), "path/to/entity/nested2")
-			.returns({$select : "~$select2~"});
-		oHelperMock.expects("updateExisting") // setCount
-			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "path/to/entity/nested2",
-				sinon.match(function (aEntities) { return aEntities === oCacheEntity.nested2; }),
-				{$count : 1});
-		// created21
-		oHelperMock.expects("getPrivateAnnotation")
-			.withExactArgs("~created21~", "predicate").returns("~predicate21~");
-		oHelperMock.expects("updateSelected")
-			.withExactArgs({}, "path/to/entity/nested2~predicate21~", {}, "~created21~",
-				"~$select2~", undefined, true)
-			.callsFake(function () {
-				arguments[2].origin = "~created21~";
-			});
-		oCacheMock.expects("updateNestedCreates")
-			.withExactArgs("path/to/entity/nested2~predicate21~", {origin : "~created21~"},
-				"~created21~", {foo : "~$select2foo~"});
-
-		assert.strictEqual(
-			// code under test
-			oCache.updateNestedCreates("path/to/entity", oCacheEntity, oCreatedEntity,
-				mSelectForMetaPath),
-			true);
-
-		assert.deepEqual(oCacheEntity, {
-			nested1 : [{origin : "~created11~"}, {origin : "~created12~"}],
-			nested2 : [{origin : "~created21~"}]
-		});
-		assert.strictEqual(oCacheEntity.nested1.$created, 0);
-		assert.deepEqual(oCacheEntity.nested1.$byPredicate, {
-			"~predicate11~" : {origin : "~created11~"},
-			"~predicate12~" : {origin : "~created12~"}
-		});
-		assert.strictEqual(oCacheEntity.nested2.$created, 0);
-		assert.deepEqual(oCacheEntity.nested2.$byPredicate, {
-			"~predicate21~" : {origin : "~created21~"}
-		});
-		assert.notOk("$postBodyCollection" in oCacheEntity.nested1);
-	});
-
-	//*********************************************************************************************
 	[
 		{index : 1, length : 1, result : [{key : "b"}], types : true},
 		{index : 0, length : 2, result : [{key : "a"}, {key : "b"}], types : true},
@@ -5952,7 +5830,7 @@ sap.ui.define([
 					+ oFixture.length, sinon.match.same(oRequestGroupLock), undefined, undefined,
 					undefined)
 				.resolves(oMockResult);
-			this.spy(_Helper, "updateExisting");
+			this.spy(_Helper, "setCount");
 
 			oCache = this.createCache(sResourcePath, mQueryOptions);
 			oCacheMock = this.mock(oCache);
@@ -5981,9 +5859,9 @@ sap.ui.define([
 					});
 				}
 				if (oFixture.count) {
-					sinon.assert.calledOnceWithExactly(_Helper.updateExisting,
+					sinon.assert.calledOnceWithExactly(_Helper.setCount,
 						sinon.match.same(oCache.mChangeListeners), "",
-						sinon.match.same(oCache.aElements), {$count : oFixture.count});
+						sinon.match.same(oCache.aElements), oFixture.count);
 				}
 				assert.deepEqual(oResult, oExpectedResult);
 				assert.strictEqual(oResult.value.$count, oFixture.count);
@@ -7060,8 +6938,8 @@ sap.ui.define([
 		oCache.iActiveElements = aElements.$created = 2;
 		oCache.aElements = aElements;
 		oCache.iLimit = "~iLimit~";
-		this.mock(_Helper).expects("updateExisting")
-			.withExactArgs("~mChangeListeners~", "", sinon.match.same(aElements), {$count : 6})
+		this.mock(_Helper).expects("setCount")
+			.withExactArgs("~mChangeListeners~", "", sinon.match.same(aElements), 6)
 			.exactly(bWithCount ? 1 : 0);
 
 		assert.strictEqual(
@@ -7154,9 +7032,9 @@ sap.ui.define([
 			if (oFixture.iCount) {
 				oResult["@odata.count"] = "" + oFixture.iCount;
 			}
-			this.mock(_Helper).expects("updateExisting")
+			this.mock(_Helper).expects("setCount")
 				.withExactArgs("~mChangeListeners~", "",
-					sinon.match.same(oCache.aElements), {$count : oFixture.iExpectedCount});
+					sinon.match.same(oCache.aElements), oFixture.iExpectedCount);
 			// prepare aElements for "short read without server length"
 			oCache.handleResponse(oResult, oFixture.iStart, {});
 
@@ -7175,7 +7053,6 @@ sap.ui.define([
 	QUnit.test("CollectionCache#handleCount: server-driven paging at end", function (assert) {
 		var oCache = this.createCache("Employees"),
 			oElement5 = {},
-			oHelperMock = this.mock(_Helper),
 			i,
 			oReadPromise = {/* SyncPromise */}, // the promise for elements waiting to be read
 			oResult = {
@@ -7189,7 +7066,7 @@ sap.ui.define([
 		oCache.aElements.fill(oReadPromise, 5, 10);
 		oCache.aElements[5] = oElement5; // simulates #handleResponse
 		oCache.aElements.$count = undefined;
-		oHelperMock.expects("updateExisting").never();
+		this.mock(_Helper).expects("setCount").never();
 
 		assert.strictEqual(
 			// code under test
@@ -7210,7 +7087,6 @@ sap.ui.define([
 		var oCache = this.createCache("Employees"),
 			oElement10 = {},
 			oElement5 = {},
-			oHelperMock = this.mock(_Helper),
 			i,
 			oReadPromise = {/* SyncPromise */}, // the promise for elements waiting to be read
 			oResult = {
@@ -7225,7 +7101,7 @@ sap.ui.define([
 		oCache.aElements.fill(oReadPromise, 5, 10);
 		oCache.aElements[5] = oElement5; // simulates #handleResponse
 		oCache.aElements.$count = undefined;
-		oHelperMock.expects("updateExisting").never();
+		this.mock(_Helper).expects("setCount").never();
 
 		assert.strictEqual(
 			// code under test
@@ -8308,7 +8184,7 @@ sap.ui.define([
 				that.oRequestorMock.expects("request")
 					.withArgs("DELETE", "Employees('42')", sinon.match.same(oDeleteGroupLock))
 					.resolves();
-				that.spy(_Helper, "updateExisting");
+				that.spy(_Helper, "setCount");
 				return oCache._delete(oDeleteGroupLock, "Employees('42')", "3", null,
 						function () {})
 					.then(function () {
@@ -8317,9 +8193,9 @@ sap.ui.define([
 						that.mock(oReadGroupLock).expects("unlock").withExactArgs();
 						assert.strictEqual(
 							oCache.read(0, 4, 0, oReadGroupLock).getResult().value.$count, 25);
-						sinon.assert.calledOnceWithExactly(_Helper.updateExisting,
+						sinon.assert.calledOnceWithExactly(_Helper.setCount,
 							sinon.match.same(oCache.mChangeListeners), "",
-							sinon.match.same(oCache.aElements), {$count : 25});
+							sinon.match.same(oCache.aElements), 25);
 					});
 			});
 	});
@@ -8359,7 +8235,7 @@ sap.ui.define([
 			that.oRequestorMock.expects("request")
 				.withArgs("DELETE", "Employees('b')", sinon.match.same(oDeleteGroupLock))
 				.resolves();
-			that.spy(_Helper, "updateExisting");
+			that.spy(_Helper, "setCount");
 			return oCache._delete(oDeleteGroupLock, "Employees('b')", "0/list/1", null,
 					function () {})
 				.then(function () {
@@ -8368,9 +8244,9 @@ sap.ui.define([
 					that.mock(oFetchValueGroupLock).expects("unlock").withExactArgs();
 					assert.strictEqual(
 						oCache.fetchValue(oFetchValueGroupLock, "0/list").getResult().$count, 25);
-					sinon.assert.calledOnceWithExactly(_Helper.updateExisting,
+					sinon.assert.calledOnceWithExactly(_Helper.setCount,
 						sinon.match.same(oCache.mChangeListeners), "0/list",
-						sinon.match.same(aList), {$count : 25});
+						sinon.match.same(aList), 25);
 				});
 		});
 	});
@@ -8410,9 +8286,11 @@ sap.ui.define([
 [false, true].forEach(function (bDropTransientElement) {
 	[false, true].forEach(function (bMissingPredicate) {
 		[undefined, "~mQueryOptions~"].forEach(function (mLateQueryOptions) {
+			[false, true].forEach(function (bDeepCreate) {
 			var sTitle = "_Cache#create: bMissingPredicate: " + bMissingPredicate
 					+ ", bDropTransientElement: " + bDropTransientElement
-				+ ", mLateQueryOptions: " + mLateQueryOptions;
+				+ ", mLateQueryOptions: " + mLateQueryOptions
+				+ ", bDeepCreate: " + bDeepCreate;
 
 		if (bMissingPredicate && bDropTransientElement) {
 			return;
@@ -8421,18 +8299,13 @@ sap.ui.define([
 		QUnit.test(sTitle, function (assert) {
 			var oCache = new _Cache(this.oRequestor, "TEAMS", {/*mQueryOptions*/}),
 				oCacheMock = this.mock(oCache),
+				oCancelNestedExpectation,
 				aCollection = [],
 				oCountChangeListener = {onChange : function () {}},
 				oCreatePromise,
 				oGroupLock = {getGroupId : function () {}},
 				oHelperMock = this.mock(_Helper),
 				oInitialData = {
-					ID : "",
-					Name : "John Doe",
-					"@$ui5.foo" : "bar"
-				},
-				oEntityDataCleaned = {
-					"@$ui5._" : {select : "~$select~"},
 					ID : "",
 					Name : "John Doe"
 				},
@@ -8447,32 +8320,30 @@ sap.ui.define([
 				sPredicate = "('7')",
 				sTransientPredicate = "($uid=id-1-23)",
 				oTransientPromiseWrapper,
-				mTypeForMetaPath = {};
+				mTypeForMetaPath = {},
+				oUpdateNestedExpectation;
 
 			oCache.fetchValue = function () {};
 			oCache.mLateQueryOptions = mLateQueryOptions;
 			aCollection.$count = 0;
 			aCollection.$created = 0;
-			oHelperMock.expects("publicClone")
-				.withExactArgs(sinon.match.same(oInitialData), true)
-				.returns(oEntityDataCleaned);
-			oHelperMock.expects("clone").withExactArgs(sinon.match.same(oEntityDataCleaned))
+			oHelperMock.expects("clone").withExactArgs(sinon.match.same(oInitialData))
 				.returns(oPostBody);
 			oHelperMock.expects("setPrivateAnnotation")
-				.withExactArgs(sinon.match.same(oEntityDataCleaned), "postBody",
+				.withExactArgs(sinon.match.same(oInitialData), "postBody",
 					sinon.match.same(oPostBody))
 				.callThrough();
 			oHelperMock.expects("setPrivateAnnotation")
-				.withExactArgs(sinon.match.same(oEntityDataCleaned), "transientPredicate",
+				.withExactArgs(sinon.match.same(oInitialData), "transientPredicate",
 					sTransientPredicate)
 				.callThrough();
 			oCacheMock.expects("getValue").withExactArgs(sPathInCache).returns(aCollection);
 			this.mock(oGroupLock).expects("getGroupId").withExactArgs().returns("updateGroup");
 			oHelperMock.expects("setPrivateAnnotation")
-				.withExactArgs(sinon.match.same(oEntityDataCleaned), "transient", "updateGroup")
+				.withExactArgs(sinon.match.same(oInitialData), "transient", "updateGroup")
 				.callThrough();
 			oHelperMock.expects("setPrivateAnnotation")
-				.withExactArgs(sinon.match.same(oEntityDataCleaned), "transient",
+				.withExactArgs(sinon.match.same(oInitialData), "transient",
 					sinon.match.instanceOf(Promise))
 				.callThrough();
 			this.spy(_Helper, "addByPath");
@@ -8494,44 +8365,45 @@ sap.ui.define([
 				.returns(bMissingPredicate ? undefined : sPredicate);
 			if (!bMissingPredicate) {
 				oHelperMock.expects("setPrivateAnnotation")
-					.withExactArgs(sinon.match.same(oEntityDataCleaned), "predicate", sPredicate);
+					.withExactArgs(sinon.match.same(oInitialData), "predicate", sPredicate);
 				oHelperMock.expects("updateTransientPaths").exactly(bDropTransientElement ? 0 : 1)
 					.withExactArgs(sinon.match.same(oCache.mChangeListeners), sTransientPredicate,
 						sPredicate)
 					.callThrough();
 			}
 
-			oHelperMock.expects("getQueryOptionsForPath")
+			oHelperMock.expects("getQueryOptionsForPath").exactly(bDeepCreate ? 0 : 1)
 				.withExactArgs(sinon.match.same(mLateQueryOptions || oCache.mQueryOptions),
 					sPathInCache)
 				.returns({$select : aSelectForPath});
+			oCancelNestedExpectation = oHelperMock.expects("cancelNestedCreates")
+				.withExactArgs(sinon.match.same(oInitialData), "Deep create of " + sPostPath
+					+ " succeeded. Do not use this promise.");
+			oHelperMock.expects("getPrivateAnnotation")
+				.withExactArgs(sinon.match.same(oInitialData), "select")
+				.returns("~$select~");
+			oUpdateNestedExpectation = oHelperMock.expects("updateNestedCreates")
+				.withExactArgs(sinon.match.same(oCache.mChangeListeners),
+					sinon.match.same(oCache.mQueryOptions),
+					sPathInCache + (bMissingPredicate ? sTransientPredicate : sPredicate),
+					sinon.match.same(oInitialData), sinon.match.same(oPostResult),
+					"~$select~")
+				.returns(bDeepCreate);
 			oHelperMock.expects("updateSelected")
 				.withExactArgs(sinon.match.same(oCache.mChangeListeners),
 					sPathInCache + (bMissingPredicate ? sTransientPredicate : sPredicate),
-					sinon.match.same(oEntityDataCleaned), sinon.match.same(oPostResult),
-					["ID", "Name"], undefined, true)
+					sinon.match.same(oInitialData), sinon.match.same(oPostResult),
+					bDeepCreate ? undefined : aSelectForPath, undefined, true)
 				.callsFake(function () {
 					assert.strictEqual(arguments[3]["@$ui5.context.isTransient"], false);
 					arguments[2]["@$ui5.context.isTransient"] = false;
 					if (!bMissingPredicate) {
-						oEntityDataCleaned["@$ui5._"].predicate = sPredicate;
+						oInitialData["@$ui5._"].predicate = sPredicate;
 					}
-					oEntityDataCleaned.ID = oPostResult.ID;
+					oInitialData.ID = oPostResult.ID;
 				});
-			oHelperMock.expects("cancelNestedCreates")
-				.withExactArgs(sinon.match.same(oEntityDataCleaned), "Deep create of " + sPostPath
-					+ " succeeded. Do not use this promise.");
-			oHelperMock.expects("getPrivateAnnotation")
-				.withExactArgs(sinon.match.same(oEntityDataCleaned), "select")
-				.returns("~$select~");
-			oCacheMock.expects("updateNestedCreates")
-				.withExactArgs(sPathInCache
-						+ (bMissingPredicate ? sTransientPredicate : sPredicate),
-					sinon.match.same(oEntityDataCleaned), sinon.match.same(oPostResult),
-					"~$select~")
-				.returns("~bDeepCreate~");
 			oHelperMock.expects("setPrivateAnnotation")
-				.withExactArgs(sinon.match.same(oEntityDataCleaned), "deepCreate", "~bDeepCreate~")
+				.withExactArgs(sinon.match.same(oInitialData), "deepCreate", bDeepCreate)
 				.callThrough();
 			// count is already updated when creating the transient entity
 			oCache.registerChangeListener(sPathInCache + "/$count", oCountChangeListener);
@@ -8541,12 +8413,12 @@ sap.ui.define([
 				sTransientPredicate, oInitialData, null, false, function fnSubmitCallback() {});
 
 			// initial data is synchronously available
-			assert.strictEqual(aCollection[0], oEntityDataCleaned);
-			assert.strictEqual(aCollection.$byPredicate[sTransientPredicate], oEntityDataCleaned);
+			assert.strictEqual(aCollection[0], oInitialData);
+			assert.strictEqual(aCollection.$byPredicate[sTransientPredicate], oInitialData);
 			assert.strictEqual(aCollection.$count, 1);
 			assert.strictEqual(aCollection.$created, 1);
 
-			oTransientPromiseWrapper = SyncPromise.resolve(oEntityDataCleaned["@$ui5._"].transient);
+			oTransientPromiseWrapper = SyncPromise.resolve(oInitialData["@$ui5._"].transient);
 			assert.ok(oTransientPromiseWrapper.isPending()); // of course...
 
 			// request is added to mPostRequests
@@ -8556,7 +8428,7 @@ sap.ui.define([
 				"('0')/TEAM_2_EMPLOYEES/$count", sinon.match.same(oCountChangeListener));
 			sinon.assert.calledWithExactly(_Helper.addByPath.secondCall,
 				sinon.match.same(oCache.mPostRequests), sPathInCache,
-				sinon.match.same(oEntityDataCleaned));
+				sinon.match.same(oInitialData));
 
 			oCache.registerChangeListener(sPathInCache + sTransientPredicate + "/Name", {
 				onChange : function () {
@@ -8577,7 +8449,7 @@ sap.ui.define([
 					oExpectedPrivateAnnotation.predicate = sPredicate;
 				}
 				oExpectedPrivateAnnotation.transientPredicate = sTransientPredicate;
-				oExpectedPrivateAnnotation.deepCreate = "~bDeepCreate~";
+				oExpectedPrivateAnnotation.deepCreate = bDeepCreate;
 				assert.deepEqual(oEntityData, {
 					"@$ui5._" : oExpectedPrivateAnnotation,
 					"@$ui5.context.isTransient" : false,
@@ -8592,17 +8464,19 @@ sap.ui.define([
 					assert.notOk(sTransientPredicate in aCollection.$byPredicate);
 				} else {
 					assert.strictEqual(aCollection.$byPredicate[sTransientPredicate],
-						oEntityDataCleaned, "still need access via transient predicate");
+						oInitialData, "still need access via transient predicate");
 					if (!bMissingPredicate) {
 						assert.strictEqual(aCollection.$byPredicate[sPredicate],
-							oEntityDataCleaned);
+							oInitialData);
 					}
 				}
 				sinon.assert.calledOnceWithExactly(_Helper.removeByPath,
 					sinon.match.same(oCache.mPostRequests), sPathInCache,
-					sinon.match.same(oEntityDataCleaned));
+					sinon.match.same(oInitialData));
+				assert.ok(oCancelNestedExpectation.calledBefore(oUpdateNestedExpectation));
 			});
 		});
+			});
 		});
 	});
 });
@@ -8708,7 +8582,7 @@ sap.ui.define([
 			aCollection = oFixture.first ? [] : [{}],
 			iCount = aCollection.length,
 			oCreatePromise,
-			oEntityDataCleaned = {},
+			oInitialData = {},
 			oGroupLock = {
 				getGroupId : function () {},
 				unlock : function () {}
@@ -8721,22 +8595,19 @@ sap.ui.define([
 		aCollection.$created = iCount;
 		aCollection.$postBodyCollection = oFixture.first ? function () {} : aPostBodyCollection;
 		this.mock(oGroupLock).expects("getGroupId").withExactArgs().returns("updateGroup");
-		oHelperMock.expects("publicClone")
-			.withExactArgs(sinon.match.same("~oInitialData~"), true)
-			.returns(oEntityDataCleaned);
-		oHelperMock.expects("clone").withExactArgs(sinon.match.same(oEntityDataCleaned))
+		oHelperMock.expects("clone").withExactArgs(sinon.match.same(oInitialData))
 			.returns("~oPostBody~");
 		oHelperMock.expects("setPrivateAnnotation")
-			.withExactArgs(sinon.match.same(oEntityDataCleaned), "postBody",
+			.withExactArgs(sinon.match.same(oInitialData), "postBody",
 				sinon.match.same("~oPostBody~"));
 		oHelperMock.expects("setPrivateAnnotation")
-			.withExactArgs(sinon.match.same(oEntityDataCleaned), "transientPredicate",
+			.withExactArgs(sinon.match.same(oInitialData), "transientPredicate",
 				"($uid='1')");
 		oCacheMock.expects("getValue").withExactArgs("($uid='0')/TEAM_2_EMPLOYEES")
 			.returns(aCollection);
-		oHelperMock.expects("updateExisting") // addToCount
+		oHelperMock.expects("addToCount")
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "($uid='0')/TEAM_2_EMPLOYEES",
-				sinon.match.same(aCollection), {$count : iCount + 1});
+				sinon.match.same(aCollection), 1);
 		if (oFixture.first) {
 			this.mock(aCollection).expects("$postBodyCollection").withExactArgs()
 				.callsFake(function () {
@@ -8744,23 +8615,23 @@ sap.ui.define([
 				});
 		}
 		oHelperMock.expects("setPrivateAnnotation")
-			.withExactArgs(sinon.match.same(oEntityDataCleaned), "transient", "updateGroup");
+			.withExactArgs(sinon.match.same(oInitialData), "transient", "updateGroup");
 		this.mock(oGroupLock).expects("unlock").withExactArgs();
 		oHelperMock.expects("addPromise")
-			.withExactArgs(sinon.match.same(oEntityDataCleaned))
+			.withExactArgs(sinon.match.same(oInitialData))
 			.returns("~oDeepCreatePromise~");
 
 		// code under test
 		oCreatePromise = oCache.create(oGroupLock, SyncPromise.resolve("EMPLOYEES"),
-			"($uid='0')/TEAM_2_EMPLOYEES", "($uid='1')", "~oInitialData~", oFixture.atEnd, null,
+			"($uid='0')/TEAM_2_EMPLOYEES", "($uid='1')", oInitialData, oFixture.atEnd, null,
 			function fnSubmitCallback() {});
 
 		assert.strictEqual(oCreatePromise, "~oDeepCreatePromise~");
 		assert.strictEqual(aCollection.length, iCount + 1);
 		assert.strictEqual(aCollection.$created, iCount + 1);
-		assert.strictEqual(aCollection[oFixture.atEnd ? 1 : 0], oEntityDataCleaned);
-		assert.strictEqual(oEntityDataCleaned["@$ui5.context.isTransient"], true);
-		assert.strictEqual(aCollection.$byPredicate["($uid='1')"], oEntityDataCleaned);
+		assert.strictEqual(aCollection[oFixture.atEnd ? 1 : 0], oInitialData);
+		assert.strictEqual(oInitialData["@$ui5.context.isTransient"], true);
+		assert.strictEqual(aCollection.$byPredicate["($uid='1')"], oInitialData);
 		assert.strictEqual(aPostBodyCollection.length, iCount + 1);
 		assert.deepEqual(aPostBodyCollection[oFixture.atEnd ? 1 : 0], "~oPostBody~");
 	});
@@ -8989,7 +8860,6 @@ sap.ui.define([
 		assert.strictEqual(oCache.hasPendingChangesForPath("foo"), false,
 			"pending changes for non-root");
 
-		assert.notStrictEqual(oCache.aElements[0], oEntityData, "'create' copies initial data");
 		assert.deepEqual(oCache.aElements[0], {
 			name : "John Doe",
 			"@$ui5._" : {
@@ -9019,9 +8889,10 @@ sap.ui.define([
 		oHelperMock.expects("cancelNestedCreates")
 			.withExactArgs(sinon.match.same(oCache.aElements[0]),
 				"Deep create of Employees?foo=bar succeeded. Do not use this promise.");
-		oCacheMock.expects("updateNestedCreates")
-			.withExactArgs(sTransientPredicate, sinon.match.same(oCache.aElements[0]),
-				sinon.match.same(oPostResult), undefined);
+		oHelperMock.expects("updateNestedCreates")
+			.withExactArgs(sinon.match.same(oCache.mChangeListeners),
+				sinon.match.same(oCache.mQueryOptions), sTransientPredicate,
+				sinon.match.same(oCache.aElements[0]), sinon.match.same(oPostResult), undefined);
 		// The lock must be unlocked although no request is created
 		this.mock(oUpdateGroupLock0).expects("unlock").withExactArgs();
 		this.mock(oUpdateGroupLock0).expects("getGroupId").withExactArgs().returns("updateGroup");
@@ -9381,7 +9252,7 @@ sap.ui.define([
 
 		// code under test
 		oPromise = oCache.create(oCreateGroupLock, SyncPromise.resolve("Employees"), "",
-			sTransientPredicate, undefined, bAtEndOfCreated, null, function fnSubmitCallback() {});
+			sTransientPredicate, {}, bAtEndOfCreated, null, function fnSubmitCallback() {});
 
 		if (bInactive) {
 			assert.deepEqual(oCache.aElements[bAtEndOfCreated ? 1 : 0], {
@@ -9433,8 +9304,9 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), sTransientPredicate,
 				sinon.match.same(oCache.aElements[bAtEndOfCreated ? 1 : 0]),
 				sinon.match.same(oResponseData), undefined, undefined, true);
-		this.mock(oCache).expects("updateNestedCreates")
-			.withExactArgs(sTransientPredicate,
+		oHelperMock.expects("updateNestedCreates")
+			.withExactArgs(sinon.match.same(oCache.mChangeListeners),
+				sinon.match.same(oCache.mQueryOptions), sTransientPredicate,
 				sinon.match.same(oCache.aElements[bAtEndOfCreated ? 1 : 0]),
 				sinon.match.same(oResponseData), undefined);
 		this.mock(oUpdateGroupLock).expects("unlock").withExactArgs();
@@ -9471,7 +9343,6 @@ sap.ui.define([
 		var oCache = _Cache.create(this.oRequestor, "Employees"),
 			oCanceledError = new Error(),
 			oCreateGroupLock = {getGroupId : function () {}},
-			oEntityDataCleaned = {foo : "bar"},
 			oHelperMock = this.mock(_Helper),
 			oInitialData = {foo : "bar"},
 			sTransientPredicate = "($uid=id-1-23)";
@@ -9480,21 +9351,19 @@ sap.ui.define([
 
 		this.mock(oCreateGroupLock).expects("getGroupId")
 			.withExactArgs().returns("$inactive.updateGroup");
-		oHelperMock.expects("publicClone")
-			.withExactArgs(sinon.match.same(oInitialData), true).returns(oEntityDataCleaned);
 		oHelperMock.expects("setPrivateAnnotation")
-			.withExactArgs(sinon.match.same(oEntityDataCleaned), "postBody",
-				sinon.match(oEntityDataCleaned));
+			.withExactArgs(sinon.match.same(oInitialData), "postBody",
+				sinon.match(oInitialData));
 		oHelperMock.expects("setPrivateAnnotation")
-			.withExactArgs(sinon.match.same(oEntityDataCleaned), "transientPredicate",
+			.withExactArgs(sinon.match.same(oInitialData), "transientPredicate",
 				sTransientPredicate);
 		oHelperMock.expects("publicClone")
-			.withExactArgs(sinon.match.same(oEntityDataCleaned), true).returns("~oInitialData~");
+			.withExactArgs(sinon.match.same(oInitialData), true).returns("~oInitialData~");
 		oHelperMock.expects("setPrivateAnnotation")
 			.withExactArgs({"@$ui5.context.isTransient" : true, foo : "bar"}, "initialData",
 				"~oInitialData~");
 		oHelperMock.expects("setPrivateAnnotation")
-			.withExactArgs(sinon.match.same(oEntityDataCleaned), "transient",
+			.withExactArgs(sinon.match.same(oInitialData), "transient",
 				"$inactive.updateGroup");
 
 		// rejecting the promise to make the test easier / skip irrelevant parts
@@ -9537,7 +9406,7 @@ sap.ui.define([
 
 		// code under test
 		return oCache.create(oGroupLock, SyncPromise.resolve("Employees"), "", sTransientPredicate,
-			undefined).then(function () {
+			{}).then(function () {
 				assert.ok(false, "Unexpected success");
 			}, function (oError) {
 				assert.strictEqual(oError, oCanceledError);
@@ -9559,8 +9428,7 @@ sap.ui.define([
 			oCallbacksMock = this.mock(oCallbacks),
 			oCanceledError = new Error(),
 			aCollection = [],
-			oEntityData = bHasEntityData ? {} : undefined,
-			oEntityDataCleaned = bHasEntityData ? {} : undefined,
+			oEntityData = {},
 			oGroupLock = {getGroupId : function () {}},
 			oHelperMock = this.mock(_Helper),
 			oPostBody = {},
@@ -9571,29 +9439,16 @@ sap.ui.define([
 			oTransientPromiseWrapper,
 			that = this;
 
-		function entityDataCleaned(oParam) {
-			if (oEntityDataCleaned) {
-				return oParam === oEntityDataCleaned;
-			}
-			oEntityDataCleaned = oParam;
-			return _Helper.isEmptyObject(oParam);
-		}
-
 		oCallbacksMock.expects("errorCallback").never();
 		oCallbacksMock.expects("submitCallback").never();
 		oCanceledError.canceled = true;
-		this.mock(_Helper).expects("publicClone")
-			.withExactArgs(sinon.match.same(oEntityData), true)
-			.returns(oEntityData ? oEntityDataCleaned : undefined);
-		oHelperMock.expects("clone").withExactArgs(sinon.match(entityDataCleaned))
+		oHelperMock.expects("clone").withExactArgs(sinon.match.same(oEntityData))
 			.returns(oPostBody);
 		oHelperMock.expects("setPrivateAnnotation")
-			.withExactArgs(sinon.match(entityDataCleaned), "postBody",
-				sinon.match.same(oPostBody))
+			.withExactArgs(sinon.match.same(oEntityData), "postBody", sinon.match.same(oPostBody))
 			.callThrough();
 		oHelperMock.expects("setPrivateAnnotation")
-			.withExactArgs(sinon.match(entityDataCleaned), "transientPredicate",
-				sTransientPredicate)
+			.withExactArgs(sinon.match.same(oEntityData), "transientPredicate", sTransientPredicate)
 			.callThrough();
 		this.mock(oCache).expects("getValue").withExactArgs("").returns(aCollection);
 		this.mock(oCache).expects("adjustIndexes")
@@ -9602,11 +9457,11 @@ sap.ui.define([
 			.withExactArgs("/Employees", sinon.match.same(mQueryOptions), true)
 			.returns("?sap-client=111");
 		oHelperMock.expects("setPrivateAnnotation").twice()
-			.withExactArgs(sinon.match(entityDataCleaned), "transient", "updateGroup")
+			.withExactArgs(sinon.match.same(oEntityData), "transient", "updateGroup")
 			.callThrough();
 		oHelperMock.expects("addByPath").twice()
 			.withExactArgs(sinon.match.same(oCache.mPostRequests), "",
-				sinon.match(entityDataCleaned));
+				sinon.match.same(oEntityData));
 		this.mock(oGroupLock).expects("getGroupId").withExactArgs().returns("updateGroup");
 		this.oRequestorMock.expects("request")
 			.withExactArgs("POST", "Employees?sap-client=111", sinon.match.same(oGroupLock),
@@ -9622,7 +9477,7 @@ sap.ui.define([
 								= oCallbacksMock.expects("submitCallback").withExactArgs();
 
 						oHelperMock.expects("setPrivateAnnotation")
-							.withExactArgs(sinon.match.same(oEntityDataCleaned), "transient",
+							.withExactArgs(sinon.match.same(oEntityData), "transient",
 								sinon.match.instanceOf(Promise))
 							.callThrough();
 
@@ -9631,8 +9486,8 @@ sap.ui.define([
 
 						assert.ok(oAddPendingRequestExpectation.called);
 						assert.ok(oSubmitCallbackExpectation.called);
-						oTransientPromiseWrapper = SyncPromise.resolve(
-							oEntityDataCleaned["@$ui5._"].transient);
+						oTransientPromiseWrapper
+							= SyncPromise.resolve(oEntityData["@$ui5._"].transient);
 						assert.ok(oTransientPromiseWrapper.isPending()); // of course...
 					}).then(function () {
 						var oRemovePendingRequestExpectation
@@ -9787,7 +9642,6 @@ sap.ui.define([
 			sinon.match.same(oGroupLock), null, sinon.match.object, sinon.match.func,
 			sinon.match.func, undefined, "Employees" + sTransientPredicate);
 		this.spy(oRequestor, "removePost");
-		this.spy(_Helper, "updateExisting");
 		this.mock(oGroupLock).expects("cancel").withExactArgs();
 
 		// code under test
@@ -11479,11 +11333,11 @@ sap.ui.define([
 			},
 			oError = new Error(),
 			oGroupLock = {},
+			oHelperMock = this.mock(_Helper),
 			oOldData = {Foo : "Bar"},
 			oPatchPromise1 = Promise.reject(oError),
 			oPatchPromise2 = Promise.reject(oError),
 			oPromise = Promise.resolve(oEntity),
-			oStaticCacheMock = this.mock(_Cache),
 			that = this;
 
 		function unexpected() {
@@ -11507,13 +11361,13 @@ sap.ui.define([
 
 			assert.strictEqual(oCache.hasPendingChangesForPath(""), false);
 			that.mock(oGroupLock0).expects("getGroupId").withExactArgs().returns("updateGroup");
-			oStaticCacheMock.expects("makeUpdateData")
+			oHelperMock.expects("makeUpdateData")
 				.withExactArgs(["Note"], "foo")
 				.returns({Note : "foo"});
-			oStaticCacheMock.expects("makeUpdateData")
+			oHelperMock.expects("makeUpdateData")
 				.withExactArgs(["Note"], "Some Note")
 				.returns({Note : "Some Note"});
-			that.mock(_Helper).expects("updateNonExisting")
+			oHelperMock.expects("updateNonExisting")
 				.withExactArgs({Note : "Some Note"}, sinon.match.same(oOldData))
 				.returns("~merged~");
 			that.oRequestorMock.expects("request")
@@ -11527,10 +11381,10 @@ sap.ui.define([
 					return oPatchPromise1;
 				});
 			that.mock(oGroupLock1).expects("getGroupId").withExactArgs().returns("updateGroup");
-			oStaticCacheMock.expects("makeUpdateData")
+			oHelperMock.expects("makeUpdateData")
 				.withExactArgs(["Foo"], "baz")
 				.returns({Foo : "baz"});
-			oStaticCacheMock.expects("makeUpdateData")
+			oHelperMock.expects("makeUpdateData")
 				.withExactArgs(["Foo"], "Bar")
 				.returns(oOldData);
 			that.oRequestorMock.expects("request")
@@ -12280,7 +12134,6 @@ sap.ui.define([
 			},
 			mTypeForMetaPath = {};
 
-		this.spy(_Helper, "updateExisting");
 		oCacheMock.expects("calculateKeyPredicate")
 			.withExactArgs(sinon.match.same(oResult), sinon.match.same(mTypeForMetaPath),
 				"/TEAMS/Foo");
@@ -12324,33 +12177,19 @@ sap.ui.define([
 		// code under test
 		oCache.visitResponse(oResult, mTypeForMetaPath);
 
-		assert.strictEqual(_Helper.updateExisting.callCount, 6);
-		sinon.assert.calledWithExactly(_Helper.updateExisting.getCall(0),
-			{}, "", oResult.list, {$count : 3});
 		assert.strictEqual(oResult.list.$count, 3);
 		assert.strictEqual(oResult.list.$created, 0);
-		sinon.assert.calledWithExactly(_Helper.updateExisting.getCall(1),
-			{}, "", oResult.list[2].nestedList, {$count : 1});
 		assert.strictEqual(oResult.list[2].nestedList.$count, 1);
 		assert.strictEqual(oResult.list[2].nestedList.$created, 0);
-		sinon.assert.calledWithExactly(_Helper.updateExisting.getCall(2),
-			{}, "", oResult.property.nestedList, {$count : 1});
 		assert.strictEqual(oResult.property.nestedList.$count, 1);
 		assert.strictEqual(oResult.property.nestedList.$created, 0);
-		sinon.assert.calledWithExactly(_Helper.updateExisting.getCall(3),
-			 {}, "", oResult.list2, {$count : 12});
 		assert.strictEqual(oResult.list2.$count, 12);
 		assert.strictEqual(oResult.list2.$created, 0);
-		// Note: _Helper.updateExisting not called due to @odata.nextLink
 		assert.ok("$count" in oResult.list3);
 		assert.strictEqual(oResult.list3.$count, undefined);
 		assert.strictEqual(oResult.list3.$created, 0);
-		sinon.assert.calledWithExactly(_Helper.updateExisting.getCall(4),
-			 {}, "", oResult.collectionValuedProperty, {$count : 2});
 		assert.strictEqual(oResult.collectionValuedProperty.$count, 2);
 		assert.strictEqual(oResult.collectionValuedProperty.$created, 0);
-		sinon.assert.calledWithExactly(_Helper.updateExisting.getCall(5),
-			 {}, "", oResult.collectionWithNullValue, {$count : 1});
 		assert.strictEqual(oResult.collectionWithNullValue.$count, 1);
 		assert.strictEqual(oResult.collectionWithNullValue.$created, 0);
 	});
@@ -12360,7 +12199,6 @@ sap.ui.define([
 			function (assert) {
 		var oCache = new _Cache(this.oRequestor, "TEAMS"),
 			oCacheMock = this.mock(oCache),
-			oHelperMock = this.mock(_Helper),
 			sPredicate0 = "(13)",
 			sPredicate1 = "(42)",
 			aResult = [{
@@ -12387,34 +12225,6 @@ sap.ui.define([
 			}],
 			mTypeForMetaPath = {};
 
-		oHelperMock.expects("updateExisting")
-			.withExactArgs({/*mChangeListeners*/}, "", sinon.match.same(aResult[0].list0),
-				{$count : 1})
-			.callThrough();
-		oHelperMock.expects("updateExisting")
-			.withExactArgs({/*mChangeListeners*/}, "", sinon.match.same(aResult[1].list),
-				{$count : 3})
-			.callThrough();
-		oHelperMock.expects("updateExisting")
-			.withExactArgs({/*mChangeListeners*/}, "",
-				sinon.match.same(aResult[1].list[2].nestedList), {$count : 1})
-			.callThrough();
-		oHelperMock.expects("updateExisting")
-			.withExactArgs({/*mChangeListeners*/}, "",
-				sinon.match.same(aResult[1].property.nestedList), {$count : 1})
-			.callThrough();
-		oHelperMock.expects("updateExisting")
-			.withExactArgs({/*mChangeListeners*/}, "", sinon.match.same(aResult[1].list2),
-				{$count : 12})
-			.callThrough();
-		oHelperMock.expects("updateExisting")
-			.withExactArgs({/*mChangeListeners*/}, "",
-				sinon.match.same(aResult[1].collectionValuedProperty), {$count : 2})
-			.callThrough();
-		oHelperMock.expects("updateExisting")
-			.withExactArgs({/*mChangeListeners*/}, "",
-				sinon.match.same(aResult[1].collectionWithNullValue), {$count : 1})
-			.callThrough();
 		oCacheMock.expects("calculateKeyPredicate")
 			.withExactArgs(sinon.match.same(aResult[0]), sinon.match.same(mTypeForMetaPath),
 				"/FOO")
@@ -12717,24 +12527,6 @@ sap.ui.define([
 	//  data for this row, removeElement gets -1 and fails. replaceElement could simply ignore it.
 	//  Use aReadRequests and adjustIndexes instead?
 	// A: requestSideEffects now waits for pending DELETE and POST requests :-)
-
-	//*********************************************************************************************
-	QUnit.test("makeUpdateData", function (assert) {
-		assert.deepEqual(_Cache.makeUpdateData(["Age"], 42), {Age : 42});
-		assert.deepEqual(_Cache.makeUpdateData(["Address", "City"], "Walldorf"),
-			{Address : {City : "Walldorf"}});
-		assert.deepEqual(_Cache.makeUpdateData(["Age"], 42, /*bUpdating*/true), {
-				Age : 42,
-				"Age@$ui5.updating" : true
-			});
-		assert.deepEqual(_Cache.makeUpdateData(["Address", "City"], "Walldorf", /*bUpdating*/true),
-			{
-				Address : {
-					City : "Walldorf",
-					"City@$ui5.updating" : true
-				}
-			});
-	});
 
 	//*********************************************************************************************
 [false, true].forEach(function (bExists) {

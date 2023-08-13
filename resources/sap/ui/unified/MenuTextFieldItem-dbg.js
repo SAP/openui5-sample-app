@@ -52,7 +52,7 @@ sap.ui.define([
 	 * @extends sap.ui.unified.MenuItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -94,6 +94,9 @@ sap.ui.define([
 			itemId = oItem.getId();
 
 		rm.openStart("li", oItem);
+		if (oItem.getVisible()) {
+			rm.attr("tabindex", "0");
+		}
 		rm.class("sapUiMnuItm").class("sapUiMnuTfItm");
 
 		if (oInfo.iItemNo == 1) {
@@ -108,15 +111,12 @@ sap.ui.define([
 			rm.class("sapUiMnuItmSepBefore");
 		}
 
-		if (!bIsEnabled) {
-			rm.attr("disabled", "disabled");
-		}
-
 		// ARIA
 		if (oInfo.bAccessible) {
 			rm.attr("role", "menuitem");
 			rm.attr("aria-posinset", oInfo.iItemNo);
 			rm.attr("aria-setsize", oInfo.iTotalItems);
+			rm.attr("aria-disabled", !bIsEnabled);
 		}
 
 		rm.openEnd();
@@ -149,9 +149,8 @@ sap.ui.define([
 		if (oInfo.bAccessible) {
 			rm.accessibilityState(oItem, {
 				disabled: null, // Prevent aria-disabled as a disabled attribute is enough
-				multiline: false,
-				autocomplete: "none",
-				describedby: itemId + "-lbl " + oItem._fnInvisibleDescriptionFactory(oInfo).getId()
+				describedby: oItem._fnInvisibleDescriptionFactory(oInfo).getId(),
+				labelledby: itemId + "-lbl"
 			});
 		}
 		rm.voidEnd().close("div").close("div");
@@ -178,10 +177,10 @@ sap.ui.define([
 	};
 
 	MenuTextFieldItem.prototype.focus = function(oMenu){
-		if (this.getVisible()) {
+		if (this.getVisible() && this.getEnabled()) {
 			this.$("tf").get(0).focus();
 		} else {
-			oMenu.focus();
+			this.$().trigger("focus");
 		}
 	};
 

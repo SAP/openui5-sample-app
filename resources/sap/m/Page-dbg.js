@@ -8,6 +8,7 @@
 sap.ui.define([
 	"./library",
 	"sap/ui/core/Control",
+	"sap/ui/core/Lib",
 	"sap/ui/core/delegate/ScrollEnablement",
 	"sap/m/Title",
 	"sap/m/Button",
@@ -25,6 +26,7 @@ sap.ui.define([
 function(
 	library,
 	Control,
+	Library,
 	ScrollEnablement,
 	Title,
 	Button,
@@ -93,7 +95,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 * @mixes sap.ui.core.ContextMenuSupport
 		 * @author SAP SE
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 *
 		 * @public
 		 * @alias sap.m.Page
@@ -406,7 +408,7 @@ function(
 				return;
 			}
 
-			var sBackText = this.getNavButtonTooltip() || sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("PAGE_NAVBUTTON_TEXT"); // any other types than "Back" do not make sense anymore in Blue Crystal
+			var sBackText = this.getNavButtonTooltip() || Library.getResourceBundleFor("sap.m").getText("PAGE_NAVBUTTON_TEXT"); // any other types than "Back" do not make sense anymore in Blue Crystal
 
 			if (!this._navBtn) {
 				this._navBtn = new Button(this.getId() + "-navButton", {
@@ -576,8 +578,8 @@ function(
 		};
 
 		/**
-		 * Returns the sap.ui.core.ScrollEnablement delegate which is used with this control.
-		 * @returns {sap.ui.core.ScrollEnablement} The scroll enablement delegate
+		 * Returns the sap.ui.core.delegate.ScrollEnablement delegate which is used with this control.
+		 * @returns {sap.ui.core.delegate.ScrollEnablement} The scroll enablement delegate
 		 * @private
 		 */
 		Page.prototype.getScrollDelegate = function () {
@@ -733,7 +735,7 @@ function(
 		Page.prototype._getHeaderToolbarAriaLabelledBy = function (sId) {
 			if (!this._oHeaderToolbarInvisibleText) {
 				this._oHeaderToolbarInvisibleText = new InvisibleText(sId + "-InvisibleText", {
-					text: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ARIA_LABEL_TOOLBAR_HEADER_ACTIONS")
+					text: Library.getResourceBundleFor("sap.m").getText("ARIA_LABEL_TOOLBAR_HEADER_ACTIONS")
 				}).toStatic();
 			}
 
@@ -753,7 +755,7 @@ function(
 		Page.prototype._getFooterToolbarAriaLabelledBy = function (sId) {
 			if (!this._oFooterToolbarInvisibleText) {
 				this._oFooterToolbarInvisibleText = new InvisibleText(sId + "-InvisibleText", {
-					text: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ARIA_LABEL_TOOLBAR_FOOTER_ACTIONS")
+					text: Library.getResourceBundleFor("sap.m").getText("ARIA_LABEL_TOOLBAR_FOOTER_ACTIONS")
 				}).toStatic();
 			}
 

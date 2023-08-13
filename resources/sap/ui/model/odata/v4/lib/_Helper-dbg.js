@@ -110,6 +110,22 @@ sap.ui.define([
 		},
 
 		/**
+		 * Adds the given delta to the collection's $count if there is one. Notifies the listeners.
+		 *
+		 * @param {object} mChangeListeners A map of change listeners by path
+		 * @param {string} sPath The path of the collection in the cache
+		 * @param {array} aCollection The collection
+		 * @param {number} iDelta The delta
+		 *
+		 * @public
+		 */
+		addToCount : function (mChangeListeners, sPath, aCollection, iDelta) {
+			if (aCollection.$count !== undefined) {
+				_Helper.setCount(mChangeListeners, sPath, aCollection, aCollection.$count + iDelta);
+			}
+		},
+
+		/**
 		 * Adds the given paths to $select of the given query options.
 		 *
 		 * @param {object} mQueryOptions The query options
@@ -836,6 +852,9 @@ sap.ui.define([
 				aSegments = sPath.split("/");
 				sPath = aSegments.pop();
 				oObject = _Helper.drillDown(oObject, aSegments);
+				if (!oObject) {
+					return;
+				}
 			}
 			delete oObject[sPath];
 		},
@@ -2105,6 +2124,40 @@ sap.ui.define([
 				.replace(rEscapedCloseBracket, ")");
 		},
 
+		/**
+		 * Makes an object that has the given value exactly at the given property path allowing to
+		 * use the result in _Helper.updateExisting().
+		 *
+		 * Examples:
+		 * <ul>
+		 *   <li> ["Age"], 42 -> {Age: 42}
+		 *   <li> ["Address", "City"], "Walldorf" -> {Address: {City: "Walldorf"}}
+		 * </ul>
+		 *
+		 * @param {string[]} aPropertyPath
+		 *   The property path split into an array of segments
+		 * @param {any} vValue
+		 *   The property value
+		 * @param {boolean} [bUpdating]
+		 *   Whether the given property will not be overwritten by a creation POST(+GET) response
+		 * @returns {object}
+		 *   The resulting object
+		 *
+		 * @public
+		 */
+		makeUpdateData : function (aPropertyPath, vValue, bUpdating) {
+			return aPropertyPath.reduceRight(function (vValue0, sSegment) {
+				var oResult = {};
+
+				oResult[sSegment] = vValue0;
+				if (bUpdating) {
+					oResult[sSegment + "@$ui5.updating"] = true;
+					bUpdating = false;
+				}
+				return oResult;
+			}, vValue);
+		},
+
 		// Trampoline property to allow for mocking function module in unit tests.
 		// @see sap.base.util.merge
 		merge : merge,
@@ -2416,6 +2469,29 @@ sap.ui.define([
 		},
 
 		/**
+		 * Sets the collection's $count: a number representing the sum of the element count on
+		 * server-side and the number of transient elements created on the client. It may be
+		 * <code>undefined</code>, but not <code>Infinity</code>. Notifies the listeners. Requires
+		 * that <code>$count</code> exists as an own property of the collection.
+		 *
+		 * @param {object} mChangeListeners A map of change listeners by path
+		 * @param {string} sPath The path of the collection in the cache
+		 * @param {object[]} aCollection The collection
+		 * @param {string|number} vCount The count
+		 *
+		 * @public
+		 */
+		setCount : function (mChangeListeners, sPath, aCollection, vCount) {
+			// Note: @odata.count is of type Edm.Int64, represented as a string in OData responses;
+			// $count should be a number and the loss of precision is acceptable
+			if (typeof vCount === "string") {
+				vCount = parseInt(vCount);
+			}
+			// Note: this relies on $count being present as an own property of aCollection
+			_Helper.updateExisting(mChangeListeners, sPath, aCollection, {$count : vCount});
+		},
+
+		/**
 		 * Adds the given language as "sap-language" URL parameter to the given URL, unless such a
 		 * parameter is already present, and returns the resulting (or unchanged) URL.
 		 *
@@ -2638,6 +2714,87 @@ sap.ui.define([
 				oOldObject[sNewAdvertisedAction] = vNewProperty;
 				_Helper.fireChanges(mChangeListeners, sPropertyPath, vNewProperty, false);
 			});
+		},
+
+		/**
+		 * Determines whether the response is a deep create response. Copies nested collections from
+		 * the response into the target object and adjusts their additional properties ($count,
+		 * $created, $byPredicate). Single nested entities are not copied here, assuming that they
+		 * are updated together with the top-level entity (because with a deep create all properties
+		 * incl. single-valued navigation properties are accepted).
+		 *
+		 * Note that this completely recreates nested collections destroying the previous transient
+		 * elements. This is because the response may differ significantly from the request
+		 * regarding order and count.
+		 *
+		 * @param {object} mChangeListeners - A map of change listeners by path
+		 * @param {object} mQueryOptions - The query options
+		 * @param {string} sPath
+		 *   The path of the target entity relative to mChangeListeners and mQueryOptions
+		 * @param {object} oTargetEntity - The target entity
+		 * @param {object} oCreatedEntity - The created entity from the response
+		 * @param {object} mSelectForMetaPath
+		 *   A map of $select properties per meta path of the nested collections
+		 * @returns {boolean} Whether there actually was a deep create
+		 *
+		 * @private
+		 */
+		updateNestedCreates : function (mChangeListeners, mQueryOptions, sPath, oTargetEntity,
+				oCreatedEntity, mSelectForMetaPath) {
+			let bDeepCreate = false;
+
+			// single-valued
+			const mQueryOptionsForEntity = _Helper.getQueryOptionsForPath(mQueryOptions, sPath);
+			Object.keys(mQueryOptionsForEntity.$expand || {}).forEach(function (sExpandPath) {
+				const oNestedTargetEntity = _Helper.drillDown(oTargetEntity, sExpandPath);
+				// sent and single-valued
+				if (oNestedTargetEntity && !Array.isArray(oNestedTargetEntity)) {
+					bDeepCreate = true; // they are updated with the top-level entity
+				}
+			});
+
+			// collection-valued
+			Object.keys(mSelectForMetaPath || {}).filter(function (sMetaPath) {
+				return !sMetaPath.includes("/"); // only look at the direct descendants
+			}).forEach(function (sSegment) {
+				const aNestedCreatedEntities = oCreatedEntity[sSegment];
+				if (!aNestedCreatedEntities) { // create not called in this nested collection
+					// #addTransientEntity added this in preparation of a deep create
+					delete oTargetEntity[sSegment];
+					return;
+				}
+
+				// copy the collection into the target entity and set the additional properties
+				oTargetEntity[sSegment] = aNestedCreatedEntities;
+				aNestedCreatedEntities.$count = undefined; // -> setCount must fire a change event
+				aNestedCreatedEntities.$created = 0;
+				aNestedCreatedEntities.$byPredicate = {};
+				const sCollectionPath = sPath + "/" + sSegment;
+				_Helper.setCount(mChangeListeners, sCollectionPath, aNestedCreatedEntities,
+					aNestedCreatedEntities.length);
+				// build the next level
+				const mSelectForChildMetaPath = {};
+				const sPrefix = sSegment + "/";
+				Object.keys(mSelectForMetaPath).forEach(function (sMetaPath) {
+					if (sMetaPath.startsWith(sPrefix)) {
+						mSelectForChildMetaPath[sMetaPath.slice(sPrefix.length)]
+							= mSelectForMetaPath[sMetaPath];
+					}
+				});
+				aNestedCreatedEntities.forEach(function (oCreatedChildEntity) {
+					const sPredicate
+						= _Helper.getPrivateAnnotation(oCreatedChildEntity, "predicate");
+					aNestedCreatedEntities.$byPredicate[sPredicate] = oCreatedChildEntity;
+					// recurse for $count, $byPredicate of nested collections
+					_Helper.updateNestedCreates(mChangeListeners, mQueryOptions,
+						sCollectionPath + sPredicate, oCreatedChildEntity, oCreatedChildEntity,
+						mSelectForChildMetaPath);
+				});
+
+				bDeepCreate = true;
+			});
+
+			return bDeepCreate;
 		},
 
 		/**

@@ -20,6 +20,7 @@ sap.ui.define([
 	"sap/base/assert",
 	"sap/ui/core/Configuration",
 	"sap/ui/core/date/UI5Date",
+	"sap/ui/core/Core",
 	// jQuery Plugin "cursorPos"
 	"sap/ui/dom/jquery/cursorPos"
 ],
@@ -37,7 +38,8 @@ sap.ui.define([
 		Log,
 		assert,
 		Configuration,
-		UI5Date
+		UI5Date,
+		Core
 	) {
 	"use strict";
 
@@ -163,8 +165,8 @@ sap.ui.define([
 	 * compact mode and provides a touch-friendly size in cozy mode.
 	 *
 	 * @extends sap.m.DatePicker
-	 * @version 1.116.0
-	 * @version 1.116.0
+	 * @version 1.117.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -342,6 +344,8 @@ sap.ui.define([
 	 * @public
 	 */
 	DateRangeSelection.prototype.setValue = function(sValue) {
+		var aDates;
+
 		sValue = this.validateProperty("value", sValue);
 
 		if (sValue !== this.getValue()) {
@@ -350,9 +354,9 @@ sap.ui.define([
 			return this;
 		}
 
-		var aDates = this._parseAndValidateValue(sValue);
-		this.setProperty("dateValue", _normalizeDateValue(aDates[0]), this._bPreferUserInteraction);
-		this.setProperty("secondDateValue", _normalizeDateValue(aDates[1]), this._bPreferUserInteraction);
+		aDates = this._parseAndValidateValue(sValue);
+		this.setProperty("dateValue", this._normalizeDateValue(aDates[0]), this._bPreferUserInteraction);
+		this.setProperty("secondDateValue", this._normalizeDateValue(aDates[1]), this._bPreferUserInteraction);
 
 		this._formatValueAndUpdateOutput(aDates);
 		this.setProperty("value", sValue, this._bPreferUserInteraction);
@@ -404,9 +408,16 @@ sap.ui.define([
 	 * @returns {Date|module:sap/ui/core/date/UI5Date} A date instance
 	 * @private
 	 */
-	function _normalizeDateValue(vBindingDate) {
-		return (typeof vBindingDate === 'number') ? UI5Date.getInstance(vBindingDate) : vBindingDate;
-	}
+	DateRangeSelection.prototype._normalizeDateValue = function(vBindingDate) {
+		switch (typeof vBindingDate) {
+			case "number":
+				return UI5Date.getInstance(vBindingDate);
+			case "string":
+				return _getFormatter.call(this).parse(vBindingDate);
+			default:
+				return vBindingDate;
+		}
+	};
 
 	/**
 	 * Converts the parameter to a timestamp integer, if it is a UI5Date or JavaScript Date.
@@ -414,9 +425,9 @@ sap.ui.define([
 	 * @returns {int} A timestamp integer
 	 * @private
 	 */
-	function _denormalizeDateValue(vBindingDate) {
+	DateRangeSelection.prototype._denormalizeDateValue = function(vBindingDate) {
 		return (vBindingDate && vBindingDate.getTime) ? vBindingDate.getTime() : vBindingDate;
-	}
+	};
 
 	/**
 	 * Getter for property <code>valueFormat</code>.
@@ -784,8 +795,9 @@ sap.ui.define([
 
 		var sValue = "",
 			sDelimiter = _getDelimiter.call(this),
-			oFormat,
+			oFormat = _getFormatter.call(this),
 			oBinding,
+			oBindingType,
 			oDate1, oDate2;
 
 		oDate1 = oDateValue;
@@ -796,12 +808,13 @@ sap.ui.define([
 
 			if (oBinding && oBinding.getType() && oBinding.getType().isA("sap.ui.model.type.DateInterval")) {
 				if (oBinding.getType().oFormatOptions && oBinding.getType().oFormatOptions.source && oBinding.getType().oFormatOptions.source.pattern === "timestamp") {
-					sValue = oBinding.getType().formatValue([_denormalizeDateValue(oDateValue), _denormalizeDateValue(oSecondDateValue)], "string");
+					sValue = oBinding.getType().formatValue([this._denormalizeDateValue(oDateValue), this._denormalizeDateValue(oSecondDateValue)], "string");
 				} else {
 					/** DateRangeSelection control uses local dates for its properties, so make sure they are converted
 					 * to UTC dates if the binding type formatter expects them in UTC
 					 **/
-					if (oBinding.getType().oFormatOptions && oBinding.getType().oFormatOptions.UTC) {
+					oBindingType = oBinding.getType();
+					if (oBindingType.oFormatOptions && oBinding.getType().oFormatOptions.UTC) {
 						oDate1 = UI5Date.getInstance(Date.UTC(oDateValue.getFullYear(), oDateValue.getMonth(), oDateValue.getDate(),
 							oDateValue.getHours(), oDateValue.getMinutes(), oDateValue.getSeconds()));
 						if (oSecondDateValue) {
@@ -809,11 +822,16 @@ sap.ui.define([
 								oSecondDateValue.getHours(), oSecondDateValue.getMinutes(), oSecondDateValue.getSeconds()));
 						}
 					}
+
+					if (oBindingType.oInputFormat && typeof oDate1 === "object") {
+						oDate1 = oFormat.format(oDate1);
+					}
+					if (oBindingType.oInputFormat && typeof oDate2 === "object") {
+						oDate2 = oFormat.format(oDate2);
+					}
 					sValue = oBinding.getType().formatValue([oDate1, oDate2], "string");
 				}
 			} else {
-				oFormat = _getFormatter.call(this);
-
 				if (sDelimiter && sDelimiter !== "" && oDate2) {
 					sValue = oFormat.format(oDate1) + " " + sDelimiter + " " + oFormat.format(oDate2);
 				} else {
@@ -843,11 +861,14 @@ sap.ui.define([
 		this._bValid = true;
 		if (sValue != "") {
 			aDates = this._parseValue(sValue);
+			// normalize dates in order to always have UI5Date objects
+			aDates[0] = this._normalizeDateValue(aDates[0]);
+			aDates[1] = this._normalizeDateValue(aDates[1]);
 			// the selected range includes all of the hours from the second date
 			aDates[1] && aDates[1].setHours(23, 59, 59, 999);
-			aDates = _dateRangeValidityCheck.call(this, aDates[0], aDates[1]);//aDates can be undefined if don't fit to the min/max range
+			aDates = _dateRangeValidityCheck.call(this, aDates[0], aDates[1]); // aDates can be undefined if don't fit to the min/max range
 			if (aDates[0]) {
-				sValue = this._formatValue( aDates[0], aDates[1] ); // to have the right output format if entered different
+				sValue = this._formatValue(aDates[0], aDates[1]); // to have the right output format if entered different
 			} else {
 				this._bValid = false;
 			}
@@ -861,8 +882,8 @@ sap.ui.define([
 			this.setLastValue(sValue);
 			this.setProperty("value", sValue, true);
 			if (this._bValid) {
-				this.setProperty("dateValue", _normalizeDateValue(aDates[0]), true);
-				this.setProperty("secondDateValue", _normalizeDateValue(aDates[1]), true);
+				this.setProperty("dateValue", this._normalizeDateValue(aDates[0]), true);
+				this.setProperty("secondDateValue", this._normalizeDateValue(aDates[1]), true);
 			}
 
 			if (this._oPopup && this._oPopup.isOpen()) {
@@ -1065,14 +1086,16 @@ sap.ui.define([
 		var oRenderer = this.getRenderer();
 		var oInfo = DatePicker.prototype.getAccessibilityInfo.apply(this, arguments);
 		var sValue = this.getValue() || "";
+		var sRequired = this.getRequired() ? Core.getLibraryResourceBundle("sap.m").getText("ELEMENT_REQUIRED") : '';
+
 		if (this._bValid) {
 			var oDate = this.getDateValue();
 			if (oDate) {
 				sValue = this._formatValue(oDate, this.getSecondDateValue());
 			}
 		}
-		oInfo.type = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_DATERANGEINPUT");
-		oInfo.description = [sValue, oRenderer.getLabelledByAnnouncement(this), oRenderer.getDescribedByAnnouncement(this)].join(" ").trim();
+		oInfo.type = Core.getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_DATERANGEINPUT");
+		oInfo.description = [sValue || this._getPlaceholder(), oRenderer.getLabelledByAnnouncement(this), oRenderer.getDescribedByAnnouncement(this), sRequired].join(" ").trim();
 		return oInfo;
 	};
 

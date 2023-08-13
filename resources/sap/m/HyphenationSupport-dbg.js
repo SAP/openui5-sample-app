@@ -6,13 +6,13 @@
 
 // Provides Mixin sap.m.HyphenationSupport
 sap.ui.define([
-		"sap/ui/core/Core",
+		"sap/base/config",
 		"./library",
 		"sap/ui/core/hyphenation/Hyphenation",
 		"sap/base/Log"
 	],
 	function (
-		Core,
+		BaseConfig,
 		library,
 		Hyphenation,
 		Log
@@ -21,6 +21,15 @@ sap.ui.define([
 
 		// shortcut for sap.m.WrappingType
 		var WrappingType = library.WrappingType;
+
+		// get xx-hyphenation config
+		function getHyphenation() {
+			return BaseConfig.get({
+				name: "sapUiXxHyphenation",
+				type: BaseConfig.Type.String,
+				external: true
+			});
+		}
 
 		/**
 		 * Checks if the given control implements IHyphenation.
@@ -105,7 +114,7 @@ sap.ui.define([
 		 * @private
 		 */
 		function shouldUseThirdParty() {
-			var sHyphenationConfig = Core.getConfiguration().getHyphenation(),
+			var sHyphenationConfig = getHyphenation(),
 				oHyphenationInstance = Hyphenation.getInstance();
 
 			if (sHyphenationConfig === "native" || sHyphenationConfig === "disable") {
@@ -129,7 +138,7 @@ sap.ui.define([
 		 * @private
 		 */
 		function shouldControlHyphenate(oControl) {
-			var sHyphenationConfig = Core.getConfiguration().getHyphenation();
+			var sHyphenationConfig = getHyphenation();
 			if (sHyphenationConfig === 'disable') {
 				return false;
 			}

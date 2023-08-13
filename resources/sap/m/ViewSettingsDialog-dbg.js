@@ -144,7 +144,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -615,7 +615,7 @@ function(
 	};
 
 	ViewSettingsDialog.prototype._createListItemPropertyValue = function(sType, sPropertyName, oVSItem) {
-		var vVal = oVSItem.getMetadata().getAllProperties()[sPropertyName].get(oVSItem),
+		var vVal = ManagedObject.escapeSettingsValue(oVSItem.getMetadata().getAllProperties()[sPropertyName].get(oVSItem)),
 			fn = this.mToList[sType].itemPropertyMap[sPropertyName].fn;
 		return fn ? fn(vVal) : vVal;
 	};

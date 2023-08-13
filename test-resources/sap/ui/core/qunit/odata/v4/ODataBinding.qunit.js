@@ -18,6 +18,8 @@ sap.ui.define([
 
 	var sClassName = "sap.ui.model.odata.v4.ODataBinding";
 
+	function mustBeMocked() { throw new Error("Must be mocked"); }
+
 	/**
 	 * Returns a function which must not be called. Use as a replacment for
 	 * {@link sap.ui.model.odata.v4.ODataModel#getReporter} in cases where that reporter must not be
@@ -520,7 +522,7 @@ sap.ui.define([
 			bIgnoreTransient = false,
 			oTemplate = {
 				mParameters : {},
-				isRoot : function () { throw new Error("must be mocked"); }
+				isRoot : mustBeMocked
 			},
 			oWithCachePromise = {unwrap : function () {}};
 
@@ -749,6 +751,32 @@ sap.ui.define([
 		});
 	});
 });
+
+	//*********************************************************************************************
+	QUnit.test("fetchOrGetQueryOptionsForOwnCache: promise rejected", function (assert) {
+		var oBinding = new ODataBinding({
+				doFetchOrGetQueryOptions : mustBeMocked,
+				oModel : {resolve : mustBeMocked},
+				sPath : "/absolute",
+				bRelative : false
+			}),
+			oContext = {},
+			oError = new Error();
+
+		this.mock(oBinding.oModel).expects("resolve")
+			.withExactArgs("/absolute", sinon.match.same(oContext))
+			.returns("/resolved/path");
+		this.mock(oBinding).expects("doFetchOrGetQueryOptions")
+			.withExactArgs(sinon.match.same(oContext))
+			.returns(SyncPromise.reject(oError));
+
+		// code under test
+		oBinding.fetchOrGetQueryOptionsForOwnCache(oContext).then(function () {
+			assert.ok(false, "unexpected success");
+		}, function (oError0) {
+			assert.strictEqual(oError0, oError);
+		});
+	});
 
 	//*********************************************************************************************
 	[
@@ -1081,6 +1109,7 @@ sap.ui.define([
 		return oBinding.oCachePromise.then(function () {
 			assert.strictEqual(oBinding.oCachePromise.getResult(), oNewCache);
 			assert.strictEqual(oBinding.sReducedPath, "/resolved/path");
+			assert.strictEqual(oBinding.oFetchCacheCallToken, undefined, "cleaned up");
 		});
 	});
 
@@ -1150,6 +1179,7 @@ sap.ui.define([
 			return oBinding.oCachePromise.then(function (oCache0) {
 				assert.strictEqual(oCache0, oCache);
 				assert.strictEqual(oBinding.sReducedPath, "/resolved/path");
+				assert.strictEqual(oBinding.oFetchCacheCallToken, undefined, "cleaned up");
 			});
 		});
 	});
@@ -1343,6 +1373,8 @@ sap.ui.define([
 
 		assert.strictEqual(oBinding.oCache, null);
 		assert.strictEqual(oBinding.sReducedPath, "~sReducedPath~", "unchanged");
+		assert.deepEqual(oBinding.oFetchCacheCallToken, {oOldCache : undefined},
+			"no old cache kept");
 	});
 
 	//*********************************************************************************************

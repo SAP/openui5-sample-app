@@ -32,7 +32,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 *
 		 * @constructor
 		 * @public
@@ -300,6 +300,7 @@ sap.ui.define([
 		 * @param {string} sId The ID of the row that will be processed
 		 * @param {Array} aCells Cells in the current row
 		 * @returns {this}
+		 * @deprecated since 1.50, together with BlockBackgroundType.Mixed
 		 */
 		BlockLayoutRow.prototype._processMixedCellStyles = function (sId, aCells) {
 			var oBlockLayout, bProcessAccentCells;

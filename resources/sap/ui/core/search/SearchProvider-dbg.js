@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/Element', "sap/base/Log", 'sap/ui/core/library'],
 	 *
 	 * Do not create instances of this class, but use a concrete subclass instead.
 	 * @extends sap.ui.core.Element
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.search.SearchProvider

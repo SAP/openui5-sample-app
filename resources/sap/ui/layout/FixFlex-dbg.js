@@ -53,7 +53,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -176,8 +176,8 @@ sap.ui.define([
 	};
 
 	/**
-	 * Returns the sap.ui.core.ScrollEnablement delegate which is used with this control.
-	 * @returns {sap.ui.core.ScrollEnablement}
+	 * Returns the sap.ui.core.delegate.ScrollEnablement delegate which is used with this control.
+	 * @returns {sap.ui.core.delegate.ScrollEnablement}
 	 * @private
 	 */
 	FixFlex.prototype.getScrollDelegate = function () {

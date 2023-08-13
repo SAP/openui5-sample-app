@@ -46,7 +46,7 @@ function(
 		 * @class
 		 * The FormattedText control allows the usage of a limited set of tags for inline display of formatted text in HTML format.
 		 * @extends sap.ui.core.Control
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 *
 		 * @constructor
 		 * @public
@@ -330,7 +330,7 @@ function(
 			}
 			oEvent.preventDefault();
 			var oLink = Core.byId(oEvent.currentTarget.id);
-			if (oLink && oLink.isA('sap.m.Link') && oLink.getAccessibleRole() === library.LinkAccessibleRole.Button) {
+			if (oLink && oLink.isA('sap.m.Link') && (oLink.getAccessibleRole() === library.LinkAccessibleRole.Button || !oLink.getHref())) {
 				return;
 			}
 			openWindow(oEvent.currentTarget.href, oEvent.currentTarget.target);

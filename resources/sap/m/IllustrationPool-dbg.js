@@ -7,9 +7,10 @@ sap.ui.define([
 	"sap/base/Log",
 	"./library",
 	'sap/ui/core/Core',
-	"sap/ui/thirdparty/jquery"
+	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/StaticArea"
 ],
-	function(Log, mLibrary, Core, jQuery) {
+	function(Log, mLibrary, Core, jQuery, StaticArea) {
 		"use strict";
 
 		/**
@@ -214,7 +215,7 @@ sap.ui.define([
 				oDOMPool.id = SAP_ILLUSTRATION_POOL_ID;
 				oDOMPool.setAttribute("aria-hidden", "true");
 
-				Core.getStaticAreaRef().appendChild(oDOMPool);
+				StaticArea.getDomRef().appendChild(oDOMPool);
 
 				// Load the patterns for the default illustration set after the DOM Pool is created
 				IllustrationPool.loadAsset(SAP_ILLUSTRATION_SET_NAME + SAP_ILLUSTRATION_PATTERNS_NAME);

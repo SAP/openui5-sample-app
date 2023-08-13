@@ -76,8 +76,7 @@ sap.ui.define([
 	 * or, throws an error for non BCP-47 compliant languages.
 	 *
 	 * @param {string} sLanguageTag A BCP-47 compliant language tag
-	 * @return {sap.base.i18n.LanguageTag} The resulting LanguageTag
-	 * @throws {TypeError} Throws a TypeError for unknown languages
+	 * @returns {module:sap/base/i18n/LanguageTag} The resulting LanguageTag
 	 * @private
 	 */
 	function createLanguageTag(sLanguageTag) {
@@ -121,7 +120,7 @@ sap.ui.define([
 
 		/**
 		 * Attaches the <code>fnFunction</code> event handler to the {@link #event:change change} event
-		 * of <code>sap.base.i18n.Formatting</code>.
+		 * of <code>module:sap/base/i18n/Formatting</code>.
 		 *
 		 * @param {function} fnFunction
 		 *   The function to be called when the event occurs
@@ -134,7 +133,7 @@ sap.ui.define([
 
 		/**
 		 * Detaches event handler <code>fnFunction</code> from the {@link #event:change change} event of
-		 * this <code>sap.base.i18n.Formatting</code>.
+		 * this <code>module:sap/base/i18n/Formatting</code>.
 		 *
 		 * @param {function} fnFunction Function to be called when the event occurs
 		 * @private
@@ -155,7 +154,7 @@ sap.ui.define([
 		 * is added to the LanguageTag, indicating to the framework that these user preferences
 		 * should be applied.
 		 *
-		 * @return {sap.base.i18n.LanguageTag} the format LanguageTag
+		 * @returns {module:sap/base/i18n/LanguageTag} the format LanguageTag
 		 * @public
 		 */
 		getLanguageTag : function() {
@@ -177,7 +176,7 @@ sap.ui.define([
 			return oWritableConfig.get({
 				name: "sapUiFormatLocale",
 				type: function(sFormatLocale) {return new LanguageTag(sFormatLocale);},
-				defaultValue: fallback(this),
+				defaultValue: fallback.bind(Formatting, this),
 				external: true
 			});
 		},
@@ -207,7 +206,7 @@ sap.ui.define([
 		 * @param {string|null} sLanguageTag the new BCP47 compliant language tag;
 		 *   case doesn't matter and underscores can be used instead of dashes to separate
 		 *   components (compatibility with Java Locale IDs)
-		 * @return {this} <code>this</code> to allow method chaining
+		 * @returns {this} <code>this</code> to allow method chaining
 		 * @public
 		 * @throws {Error} When <code>sLanguageTag</code> is given, but is not a valid BCP47 language
 		 *   tag or Java locale identifier
@@ -231,6 +230,7 @@ sap.ui.define([
 		},
 
 		_set : function(sKey, oValue) {
+			BaseConfig._.invalidate();
 			var oOldValue = mSettings[sKey];
 			if ( oValue != null ) {
 				mSettings[sKey] = oValue;
@@ -251,7 +251,7 @@ sap.ui.define([
 		/**
 		 * Retrieves the custom units.
 		 * These custom units are set by {@link #setCustomUnits} and {@link #addCustomUnits}
-		 * @return {object} custom units object
+		 * @returns {object} custom units object
 		 * @see #setCustomUnits
 		 * @see #addCustomUnits
 		 */
@@ -378,8 +378,8 @@ sap.ui.define([
 
 		/**
 		 * Returns the currently set date pattern or undefined if no pattern has been defined.
-		 * @param {string} sStyle The date style (short, medium, long or full)
-		 * @return {string} The resulting date pattern
+		 * @param {"short"|"medium"|"long"|"full"} sStyle The date style (short, medium, long or full)
+		 * @returns {string} The resulting date pattern
 		 * @public
 		 */
 		getDatePattern : function(sStyle) {
@@ -400,7 +400,7 @@ sap.ui.define([
 		 * specific parts of the UI. See the documentation of {@link module:sap/base/i18n/Localization.getLanguage Localization.getLanguage()}
 		 * for details and restrictions.
 		 *
-		 * @param {string} sStyle must be one of short, medium, long or full.
+		 * @param {"short"|"medium"|"long"|"full"} sStyle must be one of short, medium, long or full.
 		 * @param {string} sPattern the format pattern to be used in LDML syntax.
 		 * @returns {this} Returns <code>this</code> to allow method chaining
 		 * @public
@@ -413,8 +413,8 @@ sap.ui.define([
 
 		/**
 		 * Returns the currently set time pattern or undefined if no pattern has been defined.
-		 * @param {string} sStyle The time style (short, medium, long or full)
-		 * @return {string} The resulting time pattern
+		 * @param {"short"|"medium"|"long"|"full"} sStyle The time style (short, medium, long or full)
+		 * @returns {string} The resulting time pattern
 		 * @public
 		 */
 		getTimePattern : function(sStyle) {
@@ -436,7 +436,7 @@ sap.ui.define([
 		 * {@link module:sap/base/i18n/Localization.getLanguage Localization.getLanguage()}
 		 * for details and restrictions.
 		 *
-		 * @param {string} sStyle must be one of short, medium, long or full.
+		 * @param {"short"|"medium"|"long"|"full"} sStyle must be one of short, medium, long or full.
 		 * @param {string} sPattern the format pattern to be used in LDML syntax.
 		 * @returns {this} Returns <code>this</code> to allow method chaining
 		 * @public
@@ -451,7 +451,7 @@ sap.ui.define([
 		 * Returns the currently set number symbol of the given type or undefined if no symbol has been defined.
 		 *
 		 * @param {"group"|"decimal"|"plusSign"|"minusSign"} sType the type of symbol
-		 * @return {string} A non-numerical symbol used as part of a number for the given type,
+		 * @returns {string} A non-numerical symbol used as part of a number for the given type,
 		 *   e.g. for locale de_DE:
 		 *     <ul>
 		 *       <li>"group": "." (grouping separator)</li>
@@ -586,7 +586,7 @@ sap.ui.define([
 		/**
 		 * Returns the currently set legacy ABAP date format (its id) or undefined if none has been set.
 		 *
-		 * @return {"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"A"|"B"|"C"|undefined} ID of the ABAP date format,
+		 * @returns {"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"A"|"B"|"C"|undefined} ID of the ABAP date format,
 		 *   if not set or set to <code>""</code>, <code>undefined</code> will be returned
 		 * @public
 		 */
@@ -594,7 +594,6 @@ sap.ui.define([
 			var sLegacyDateFormat = oWritableConfig.get({
 				name: "sapUiLegacyDateFormat",
 				type: BaseConfig.Type.String,
-				defaultValue: undefined,
 				external: true
 			});
 			return sLegacyDateFormat ? sLegacyDateFormat.toUpperCase() : undefined;
@@ -638,7 +637,7 @@ sap.ui.define([
 		/**
 		 * Returns the currently set legacy ABAP time format (its id) or undefined if none has been set.
 		 *
-		 * @return {"0"|"1"|"2"|"3"|"4"|undefined} ID of the ABAP date format,
+		 * @returns {"0"|"1"|"2"|"3"|"4"|undefined} ID of the ABAP date format,
 		 *   if not set or set to <code>""</code>, <code>undefined</code> will be returned
 		 * @public
 		 */
@@ -646,7 +645,6 @@ sap.ui.define([
 			var sLegacyTimeFormat = oWritableConfig.get({
 				name: "sapUiLegacyTimeFormat",
 				type: BaseConfig.Type.String,
-				defaultValue: undefined,
 				external: true
 			});
 			return sLegacyTimeFormat ? sLegacyTimeFormat.toUpperCase() : undefined;
@@ -692,7 +690,7 @@ sap.ui.define([
 		/**
 		 * Returns the currently set legacy ABAP number format (its id) or undefined if none has been set.
 		 *
-		 * @return {" "|"X"|"Y"|undefined} ID of the ABAP number format,
+		 * @returns {" "|"X"|"Y"|undefined} ID of the ABAP number format,
 		 *   if not set or set to <code>""</code>, <code>undefined</code> will be returned
 		 * @public
 		 */
@@ -700,7 +698,6 @@ sap.ui.define([
 			var sLegacyNumberFormat = oWritableConfig.get({
 				name: "sapUiLegacyNumberFormat",
 				type: BaseConfig.Type.String,
-				defaultValue: undefined,
 				external: true
 			});
 			return sLegacyNumberFormat ? sLegacyNumberFormat.toUpperCase() : undefined;
@@ -765,7 +762,7 @@ sap.ui.define([
 		/**
 		 * Returns the currently set customizing data for Islamic calendar support
 		 *
-		 * @return {object[]} Returns an array contains the customizing data. Each element in the array has properties: dateFormat, islamicMonthStart, gregDate. For details, please see {@link #setLegacyDateCalendarCustomizing}
+		 * @returns {object[]} Returns an array contains the customizing data. Each element in the array has properties: dateFormat, islamicMonthStart, gregDate. For details, please see {@link #setLegacyDateCalendarCustomizing}
 		 * @public
 		 */
 		getLegacyDateCalendarCustomizing : function() {
@@ -818,7 +815,7 @@ sap.ui.define([
 		 * Returns a live object with the current settings
 		 * TODO this method is part of the facade to be accessible from LocaleData, but it shouldn't be
 		 *
-		 * @return {mSettings} The custom LocaleData settings object
+		 * @returns {mSettings} The custom LocaleData settings object
 		 * @private
 		 */
 		getCustomLocaleData : function() {
@@ -827,9 +824,9 @@ sap.ui.define([
 
 		/**
 		 * Returns the calendar week numbering algorithm used to determine the first day of the week
-		 * and the first calendar week of the year, see {@link sap.base.i18n.CalendarWeekNumbering}.
+		 * and the first calendar week of the year, see {@link module:sap/base/i18n/data/CalendarWeekNumbering}.
 		 *
-		 * @returns {sap.base.i18n.CalendarWeekNumbering} The calendar week numbering algorithm
+		 * @returns {module:sap/base/i18n/date/CalendarWeekNumbering} The calendar week numbering algorithm
 		 *
 		 * @public
 		 * @since 1.113.0
@@ -852,15 +849,15 @@ sap.ui.define([
 
 		/**
 		 * Sets the calendar week numbering algorithm which is used to determine the first day of the week
-		 * and the first calendar week of the year, see {@link sap.base.i18n.CalendarWeekNumbering}.
+		 * and the first calendar week of the year, see {@link module:sap/base/i18n/date/CalendarWeekNumbering}.
 		 *
-		 * @param {sap.base.i18n.CalendarWeekNumbering} sCalendarWeekNumbering
+		 * @param {module:sap/base/i18n/date/CalendarWeekNumbering} sCalendarWeekNumbering
 		 *   The calendar week numbering algorithm
 		 * @returns {this}
 		 *   <code>this</code> to allow method chaining
 		 * @throws {Error}
 		 *   If <code>sCalendarWeekNumbering</code> is not a valid calendar week numbering algorithm,
-		 *   defined in {@link sap.base.i18n.CalendarWeekNumbering}
+		 *   defined in {@link module:sap/base/i18n/date/CalendarWeekNumbering}
 		 *
 		 * @public
 		 * @since 1.113.0
@@ -891,7 +888,7 @@ sap.ui.define([
 		 * When it's explicitly set by calling <code>setCalendar</code>, the set calendar type is returned.
 		 * Otherwise, the calendar type is determined by checking the format settings and current locale.
 		 *
-		 * @return {sap.base.i18n.CalendarType} the current calendar type, e.g. <code>Gregorian</code>
+		 * @returns {module:sap/base/i18n/date/CalendarType} the current calendar type, e.g. <code>Gregorian</code>
 		 * @since 1.28.6
 		 */
 		getCalendarType: function() {
@@ -899,9 +896,10 @@ sap.ui.define([
 				sCalendarType = oWritableConfig.get({
 					name: "sapUiCalendarType",
 					type: BaseConfig.Type.String,
-					defaultValue: null,
 					external: true
 				});
+
+			sCalendarType = sCalendarType || null;
 
 			if (sCalendarType) {
 				for (sName in CalendarType) {
@@ -940,9 +938,9 @@ sap.ui.define([
 		 * Sets the new calendar type to be used from now on in locale dependent functionality (for example,
 		 * formatting, translation texts, etc.).
 		 *
-		 * @param {sap.base.i18n.CalendarType|null} sCalendarType the new calendar type. Set it with null to clear the calendar type
+		 * @param {module:sap/base/i18n/date/CalendarType|null} sCalendarType the new calendar type. Set it with null to clear the calendar type
 		 *   and the calendar type is calculated based on the format settings and current locale.
-		 * @return {this} <code>this</code> to allow method chaining
+		 * @returns {this} <code>this</code> to allow method chaining
 		 * @public
 		 * @since 1.28.6
 		 */

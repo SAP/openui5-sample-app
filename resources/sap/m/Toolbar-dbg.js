@@ -11,6 +11,7 @@ sap.ui.define([
 	'./ToolbarSpacer',
 	'./library',
 	'sap/ui/core/Control',
+	'sap/ui/core/Element',
 	'sap/ui/core/EnabledPropagator',
 	"sap/ui/events/KeyCodes",
 	'./ToolbarRenderer',
@@ -23,6 +24,7 @@ function(
 	ToolbarSpacer,
 	library,
 	Control,
+	Element,
 	EnabledPropagator,
 	KeyCodes,
 	ToolbarRenderer,
@@ -76,7 +78,7 @@ function(
 	 * @implements sap.ui.core.Toolbar,sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -226,7 +228,7 @@ function(
 	 * @return {string} width
 	 */
 	Toolbar.getOrigWidth = function(sId) {
-		var oControl = sap.ui.getCore().byId(sId);
+		var oControl = Element.registry.get(sId);
 		if (!oControl || !oControl.getWidth) {
 			return "";
 		}

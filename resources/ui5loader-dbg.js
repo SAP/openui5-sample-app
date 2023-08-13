@@ -25,7 +25,7 @@
 	 * @returns {string}
 	 */
 	function pathOnly(href) {
-		var p = href.search(/[?#]/);
+		const p = href.search(/[?#]/);
 		return p < 0 ? href : href.slice(0, p);
 	}
 
@@ -51,19 +51,8 @@
 
 	function noop() {}
 
-	var aEarlyLogs = [];
-
-	function earlyLog(level, message) {
-		aEarlyLogs.push({
-			level: level,
-			message: message
-		});
-	}
-
 	function forEach(obj, callback) {
-		Object.keys(obj).forEach(function(key) {
-			callback(key, obj[key]);
-		});
+		Object.keys(obj).forEach((key) => callback(key, obj[key]));
 	}
 
 	function executeInSeparateTask(fn) {
@@ -75,6 +64,15 @@
 	}
 
 	// ---- hooks & configuration -----------------------------------------------------------------
+
+	const aEarlyLogs = [];
+
+	function earlyLog(level, message) {
+		aEarlyLogs.push({
+			level,
+			message
+		});
+	}
 
 	/**
 	 * Log functionality.
@@ -89,7 +87,7 @@
 	 * @private
 	 */
 
-	var log = {
+	let log = {
 		debug: earlyLog.bind(this, 'debug'),
 		info: earlyLog.bind(this, 'info'),
 		warning: earlyLog.bind(this, 'warning'),
@@ -108,7 +106,7 @@
 	 * @type {function(any,string)}
 	 * @private
 	 */
-	var assert = noop; // Null Object pattern: dummy assert which is used as long as no assert is injected
+	let assert = noop; // Null Object pattern: dummy assert which is used as long as no assert is injected
 
 	/**
 	 * Callback for performance measurement.
@@ -117,7 +115,7 @@
 	 * @type {{start:function(string,any),end:function(string)}}
 	 * @private
 	 */
-	var measure;
+	let measure;
 
 	/**
 	 * Source code transformation hook.
@@ -125,7 +123,7 @@
 	 * To be used by code coverage, only supported in sync mode.
 	 * @private
 	 */
-	var translate;
+	let translate;
 
 	/**
 	 * Method used by sap.ui.require to simulate asynchronous behavior.
@@ -134,14 +132,14 @@
 	 * Can be changed to execute in a micro task to save idle time in case of
 	 * many nested sap.ui.require calls.
 	 */
-	var simulateAsyncCallback = executeInSeparateTask;
+	let simulateAsyncCallback = executeInSeparateTask;
 
 	/*
 	 * Activates strictest possible compliance with AMD spec
 	 * - no multiple executions of the same module
 	 * - at most one anonymous module definition per file, zero for adhoc definitions
 	 */
-	var strictModuleDefinitions = true;
+	const strictModuleDefinitions = true;
 
 	/**
 	 * Whether asynchronous loading can be used at all.
@@ -149,7 +147,7 @@
 	 * @type {boolean}
 	 * @private
 	 */
-	var bGlobalAsyncMode = false;
+	let bGlobalAsyncMode = false;
 
 
 	/**
@@ -158,7 +156,7 @@
 	 * @type {boolean}
 	 * @private
 	 */
-	var bExposeAsAMDLoader = false;
+	let bExposeAsAMDLoader = false;
 
 	/**
 	 * How the loader should react to calls of sync APIs or when global names are accessed:
@@ -168,7 +166,7 @@
 	 * @type {int}
 	 * @private
 	 */
-	var syncCallBehavior = 0;
+	let syncCallBehavior = 0;
 
 	/**
 	 * Default base URL for modules, used when no other configuration is provided.
@@ -178,7 +176,7 @@
 	 * @type {string}
 	 * @private
 	 */
-	var DEFAULT_BASE_URL = "./";
+	const DEFAULT_BASE_URL = "./";
 
 	/**
 	 * Temporarily saved reference to the original value of the global define variable.
@@ -186,7 +184,7 @@
 	 * @type {any}
 	 * @private
 	 */
-	var vOriginalDefine;
+	let vOriginalDefine;
 
 	/**
 	 * Temporarily saved reference to the original value of the global require variable.
@@ -194,7 +192,7 @@
 	 * @type {any}
 	 * @private
 	 */
-	var vOriginalRequire;
+	let vOriginalRequire;
 
 
 	/**
@@ -205,7 +203,7 @@
 	 * @type {Object<string,{url:string,absoluteUrl:string}>}
 	 * @private
 	 */
-	var mUrlPrefixes = Object.create(null);
+	const mUrlPrefixes = Object.create(null);
 	mUrlPrefixes[''] = {
 		url: DEFAULT_BASE_URL,
 		absoluteUrl: resolveURL(DEFAULT_BASE_URL)
@@ -221,7 +219,7 @@
 	 * @type {Object.<string,Object.<string,string>>}
 	 * @private
 	 */
-	var mMaps = Object.create(null),
+	const mMaps = Object.create(null);
 
 	/**
 	 * Information about third party modules, keyed by the module's resource name (including extension '.js').
@@ -245,7 +243,7 @@
 	 * @type {Object.<string,{amd:boolean,exports:(string|string[]),deps:string[]}>}
 	 * @private
 	 */
-		mShims = Object.create(null),
+	const mShims = Object.create(null);
 
 	/**
 	 * Dependency Cache information.
@@ -253,14 +251,14 @@
 	 * @type {Object.<string,string[]>}
 	 * @private
 	 */
-		mDepCache = Object.create(null),
+	const mDepCache = Object.create(null);
 
 	/**
 	 * Whether the loader should try to load debug sources.
 	 * @type {boolean}
 	 * @private
 	 */
-		bDebugSources = false,
+	let bDebugSources = false;
 
 	/**
 	 * Indicates partial or total debug mode.
@@ -270,7 +268,7 @@
 	 * @type {function(string):boolean|undefined}
 	 * @private
 	 */
-		fnIgnorePreload;
+	let fnIgnorePreload;
 
 
 	// ---- internal state ------------------------------------------------------------------------
@@ -281,7 +279,7 @@
 	 * @type {Object<string,Module>}
 	 * @private
 	 */
-	var mModules = Object.create(null),
+	const mModules = Object.create(null);
 
 	/**
 	 * Whether (sap.ui.)define calls must be executed synchronously in the current context.
@@ -295,35 +293,35 @@
 	 * synchronously.
 	 * Most prominent example: unit tests that include QUnitUtils as a script tag and use qutils
 	 * in one of their inline scripts.
-	 * @type {boolean}
+	 * @type {boolean|null}
 	 * @private
 	 */
-		bForceSyncDefines = null,
+	let bForceSyncDefines = null;
 
 	/**
 	 * Stack of modules that are currently being executed in case of synchronous processing.
 	 *
 	 * Allows to identify the executing module (e.g. when resolving dependencies or in case of
-	 * in case of bundles like sap-ui-core).
+	 * bundles like sap-ui-core).
 	 *
 	 * @type {Array.<{name:string,used:boolean}>}
 	 * @private
 	 */
-		_execStack = [ ],
+	const _execStack = [ ];
 
 	/**
 	 * A prefix that will be added to module loading log statements and which reflects the nesting of module executions.
 	 * @type {string}
 	 * @private
 	 */
-		sLogPrefix = "",
+	let sLogPrefix = "";
 
 	/**
 	 * Counter used to give anonymous modules a unique module ID.
 	 * @type {int}
 	 * @private
 	 */
-		iAnonymousModuleCount = 0;
+	let iAnonymousModuleCount = 0;
 
 	// ---- break preload execution into tasks ----------------------------------------------------
 
@@ -332,33 +330,33 @@
 	 *
 	 * A value of -1 switched the scheduling off, a value of zero postpones each execution
 	 */
-	var DEFAULT_MAX_TASK_DURATION = -1; // off
+	const DEFAULT_MAX_TASK_DURATION = -1; // off
 
 	/**
 	 * Maximum accumulated task execution time (threshold)
 	 * Can be configured via the private API property `maxTaskDuration`.
 	 */
-	var iMaxTaskDuration = DEFAULT_MAX_TASK_DURATION;
+	let iMaxTaskDuration = DEFAULT_MAX_TASK_DURATION;
 
 	/**
 	 * The earliest elapsed time at which a new browser task will be enforced.
 	 * Will be updated when a new task starts.
 	 */
-	var iMaxTaskTime = Date.now() + iMaxTaskDuration;
+	let iMaxTaskTime = Date.now() + iMaxTaskDuration;
 
 	/**
 	 * A promise that fulfills when the new browser task has been reached.
 	 * All postponed callback executions will be executed after this promise.
 	 * `null` as long as the elapsed time threshold is not reached.
 	 */
-	var pWaitForNextTask;
+	let pWaitForNextTask;
 
 	/**
 	 * Message channel which will be used to create a new browser task
 	 * without being subject to timer throttling.
 	 * Will be created lazily on first usage.
 	 */
-	var oNextTaskMessageChannel;
+	let oNextTaskMessageChannel;
 
 	/**
 	 * Update elapsed time threshold.
@@ -378,7 +376,7 @@
 	function updateMaxTaskDuration(v) {
 		v = Number(v);
 
-		var iBeginOfCurrentTask = iMaxTaskTime - iMaxTaskDuration;
+		const iBeginOfCurrentTask = iMaxTaskTime - iMaxTaskDuration;
 
 		// limit to range [-1 ... Infinity], any other value incl. NaN restores the default
 		iMaxTaskDuration = v >= -1 ? v : DEFAULT_MAX_TASK_DURATION;
@@ -489,8 +487,9 @@
 	}
 
 	function urnToIDAndType(sResourceName) {
-		var basenamePos = sResourceName.lastIndexOf('/'),
-			dotPos = sResourceName.lastIndexOf('.');
+		const basenamePos = sResourceName.lastIndexOf('/');
+		const dotPos = sResourceName.lastIndexOf('.');
+
 		if ( dotPos > basenamePos ) {
 			return {
 				id: sResourceName.slice(0, dotPos),
@@ -503,10 +502,10 @@
 		};
 	}
 
-	var rJSSubTypes = /(\.controller|\.fragment|\.view|\.designtime|\.support)?.js$/;
+	const rJSSubTypes = /(\.controller|\.fragment|\.view|\.designtime|\.support)?.js$/;
 
 	function urnToBaseIDAndSubType(sResourceName) {
-		var m = rJSSubTypes.exec(sResourceName);
+		const m = rJSSubTypes.exec(sResourceName);
 		if ( m ) {
 			return {
 				baseID: sResourceName.slice(0, m.index),
@@ -515,8 +514,8 @@
 		}
 	}
 
-	var rDotSegmentAnywhere = /(?:^|\/)\.+(?=\/|$)/;
-	var rDotSegment = /^\.*$/;
+	const rDotSegmentAnywhere = /(?:^|\/)\.+(?=\/|$)/;
+	const rDotSegment = /^\.*$/;
 
 	/**
 	 * Normalizes a resource name by resolving any relative name segments.
@@ -543,10 +542,7 @@
 	 */
 	function normalize(sResourceName, sBaseName) {
 
-		var p = sResourceName.search(rDotSegmentAnywhere),
-			aSegments,
-			sSegment,
-			i,j,l;
+		const p = sResourceName.search(rDotSegmentAnywhere);
 
 		// check whether the name needs to be resolved at all - if not, just return the sModuleName as it is.
 		if ( p < 0 ) {
@@ -562,12 +558,14 @@
 			sResourceName = sBaseName.slice(0, sBaseName.lastIndexOf('/') + 1) + sResourceName;
 		}
 
-		aSegments = sResourceName.split('/');
+		const aSegments = sResourceName.split('/');
 
 		// process path segments
-		for (i = 0, j = 0, l = aSegments.length; i < l; i++) {
+		let j = 0;
+		const l = aSegments.length;
+		for (let i = 0; i < l; i++) {
 
-			sSegment = aSegments[i];
+			const sSegment = aSegments[i];
 
 			if ( rDotSegment.test(sSegment) ) {
 				if (sSegment === '.' || sSegment === '') {
@@ -608,14 +606,14 @@
 			if ( sResourceNamePrefix ) {
 				if ( mUrlPrefixes[sResourceNamePrefix] ) {
 					delete mUrlPrefixes[sResourceNamePrefix];
-					log.info("registerResourcePath ('" + sResourceNamePrefix + "') (registration removed)");
+					log.info(`registerResourcePath ('${sResourceNamePrefix}') (registration removed)`);
 				}
 				return;
 			}
 
 			// otherwise restore the default
 			sUrlPrefix = DEFAULT_BASE_URL;
-			log.info("registerResourcePath ('" + sResourceNamePrefix + "') (default registration restored)");
+			log.info(`registerResourcePath ('${sResourceNamePrefix}') (default registration restored)`);
 
 		}
 
@@ -644,9 +642,8 @@
 	 */
 	function getResourcePath(sResourceName, sSuffix) {
 
-		var sNamePrefix = sResourceName,
-			p = sResourceName.length,
-			sPath;
+		let sNamePrefix = sResourceName;
+		let p = sResourceName.length;
 
 		// search for a registered name prefix, starting with the full name and successively removing one segment
 		while ( p > 0 && !mUrlPrefixes[sNamePrefix] ) {
@@ -657,7 +654,7 @@
 
 		assert((p > 0 || sNamePrefix === '') && mUrlPrefixes[sNamePrefix], "there always must be a mapping");
 
-		sPath = mUrlPrefixes[sNamePrefix].url + sResourceName.slice(p + 1); // also skips a leading slash!
+		let sPath = mUrlPrefixes[sNamePrefix].url + sResourceName.slice(p + 1); // also skips a leading slash!
 
 		//remove trailing slash
 		if ( sPath.slice(-1) === '/' ) {
@@ -691,31 +688,27 @@
 	 * @private
 	 */
 	function guessResourceName(sURL, bLoadedResourcesOnly) {
-		var sNamePrefix,
-			sUrlPrefix,
-			sResourceName;
-
 		// Make sure to have an absolute URL without query parameters or hash
 		// to check against absolute prefix URLs
 		sURL = pathOnly(resolveURL(sURL));
 
-		for (sNamePrefix in mUrlPrefixes) {
+		for (const sNamePrefix in mUrlPrefixes) {
 
 			// Note: configured URL prefixes are guaranteed to end with a '/'
 			// But to support the legacy scenario promoted by the application tools ( "registerModulePath('Application','Application')" )
 			// the prefix check here has to be done without the slash
-			sUrlPrefix = mUrlPrefixes[sNamePrefix].absoluteUrl.slice(0, -1);
+			const sUrlPrefix = mUrlPrefixes[sNamePrefix].absoluteUrl.slice(0, -1);
 
-			if ( sURL.lastIndexOf(sUrlPrefix, 0) === 0 ) {
+			if ( sURL.startsWith(sUrlPrefix) ) {
 
 				// calc resource name
-				sResourceName = sNamePrefix + sURL.slice(sUrlPrefix.length);
+				let sResourceName = sNamePrefix + sURL.slice(sUrlPrefix.length);
 				// remove a leading '/' (occurs if name prefix is empty and if match was a full segment match
 				if ( sResourceName.charAt(0) === '/' ) {
 					sResourceName = sResourceName.slice(1);
 				}
 
-				if ( !bLoadedResourcesOnly || mModules[sResourceName] && mModules[sResourceName].data != undefined ) {
+				if ( !bLoadedResourcesOnly || mModules[sResourceName]?.data != undefined ) {
 					return sResourceName;
 				}
 			}
@@ -728,7 +721,7 @@
 	 * @returns {Object<string,string>|undefined} Most specific map or <code>undefined</code>
 	 */
 	function findMapForContext(sContext) {
-		var p, mMap;
+		let p, mMap;
 		if ( sContext != null ) {
 			// maps are defined on module IDs, reduce URN to module ID
 			sContext = urnToIDAndType(sContext).id;
@@ -748,8 +741,7 @@
 
 	function getMappedName(sResourceName, sRequestingResourceName) {
 
-		var mMap = findMapForContext(sRequestingResourceName),
-			sPrefix, p;
+		const mMap = findMapForContext(sRequestingResourceName);
 
 		// resolve relative names
 		sResourceName = normalize(sResourceName, sRequestingResourceName);
@@ -757,8 +749,8 @@
 		// if there's a map, search for the most specific matching entry
 		if ( mMap != null ) {
 			// start with the full ID and successively remove one segment
-			sPrefix = urnToIDAndType(sResourceName).id;
-			p = sPrefix.length;
+			let sPrefix = urnToIDAndType(sResourceName).id;
+			let p = sPrefix.length;
 			while ( p > 0 && mMap[sPrefix] == null ) {
 				p = sPrefix.lastIndexOf('/');
 				// Note: an empty segment at p = 0 (leading slash) will be ignored
@@ -766,10 +758,11 @@
 			}
 
 			if ( p > 0 ) {
+				const sMappedResourceName = mMap[sPrefix] + sResourceName.slice(p);
 				if ( log.isLoggable() ) {
-					log.debug('module ID ' + sResourceName + " mapped to " + mMap[sPrefix] + sResourceName.slice(p));
+					log.debug(`module ID ${sResourceName} mapped to ${sMappedResourceName}`);
 				}
-				return mMap[sPrefix] + sResourceName.slice(p); // also skips a leading slash!
+				return sMappedResourceName; // also skips a leading slash!
 			}
 		}
 
@@ -777,7 +770,7 @@
 	}
 
 	function getGlobalObject(oObject, aNames, l, bCreate) {
-		for (var i = 0; oObject && i < l; i++) {
+		for (let i = 0; oObject && i < l; i++) {
 			if (!oObject[aNames[i]] && bCreate ) {
 				oObject[aNames[i]] = {};
 			}
@@ -787,7 +780,7 @@
 	}
 
 	function getGlobalProperty(sName) {
-		var aNames = sName ? sName.split(".") : [];
+		const aNames = sName ? sName.split(".") : [];
 
 		if ( syncCallBehavior && aNames.length > 1 ) {
 			log.error("[nosync] getGlobalProperty called to retrieve global name '" + sName + "'");
@@ -797,10 +790,10 @@
 	}
 
 	function setGlobalProperty(sName, vValue) {
-		var aNames = sName ? sName.split(".") : [],
-			oObject;
+		const aNames = sName ? sName.split(".") : [];
+
 		if ( aNames.length > 0 ) {
-			oObject = getGlobalObject(__global, aNames, aNames.length - 1, true);
+			const oObject = getGlobalObject(__global, aNames, aNames.length - 1, true);
 			oObject[aNames[aNames.length - 1]] = vValue;
 		}
 	}
@@ -818,7 +811,7 @@
 	/**
 	 * Module neither has been required nor preloaded nor declared, but someone asked for it.
 	 */
-	var INITIAL = 0,
+	const INITIAL = 0,
 
 	/**
 	 * Module has been preloaded, but not required or declared.
@@ -907,15 +900,12 @@
 		}
 
 		api() {
-			if ( this._api == null ) {
-				this._exports = {};
-				this._api = {
-					id: this.name.slice(0,-3),
-					exports: this._exports,
-					url: this.url,
-					config: noop
-				};
-			}
+			this._api ??= {
+				id: this.name.slice(0,-3),
+				exports: this._exports = {},
+				url: this.url,
+				config: noop
+			};
 			return this._api;
 		}
 
@@ -926,7 +916,7 @@
 		 */
 		ready(value) {
 			// should throw, but some tests and apps would fail
-			assert(!this.settled, "Module " + this.name + " is already settled");
+			assert(!this.settled, `Module ${this.name} is already settled`);
 			this.state = READY;
 			this.settled = true;
 			if ( arguments.length > 0 ) {
@@ -936,9 +926,7 @@
 			this.deferred().resolve(wrapExport(this.value()));
 			if ( this.aliases ) {
 				value = this.value();
-				this.aliases.forEach(function(alias) {
-					Module.get(alias).ready(value);
-				});
+				this.aliases.forEach((alias) => Module.get(alias).ready(value));
 			}
 		}
 
@@ -950,32 +938,28 @@
 
 		fail(err) {
 			// should throw, but some tests and apps would fail
-			assert(!this.settled, "Module " + this.name + " is already settled");
+			assert(!this.settled, `Module ${this.name} is already settled`);
 			this.settled = true;
 			if ( this.state !== FAILED ) {
 				this.state = FAILED;
 				this.error = err;
 				this.deferred().reject(err);
-				if ( this.aliases ) {
-					this.aliases.forEach(function(alias) {
-						Module.get(alias).fail(err);
-					});
-				}
+				this.aliases?.forEach((alias) => Module.get(alias).fail(err));
 			}
 		}
 
 		addPending(sDependency) {
-			(this.pending || (this.pending = [])).push(sDependency);
+			(this.pending ??= []).push(sDependency);
 		}
 
 		addAlias(sAliasName) {
-			(this.aliases || (this.aliases = [])).push(sAliasName);
+			(this.aliases ??= []).push(sAliasName);
 			// add this module as pending dependency to the original
 			Module.get(sAliasName).addPending(this.name);
 		}
 
 		preload(url, data, bundle) {
-			if ( this.state === INITIAL && !(fnIgnorePreload && fnIgnorePreload(this.name)) ) {
+			if ( this.state === INITIAL && !fnIgnorePreload?.(this.name) ) {
 				this.state = PRELOADED;
 				this.url = url;
 				this.data = data;
@@ -1033,7 +1017,7 @@
 				if ( !visited[mod] ) {
 					// log.debug("  ", mod);
 					visited[mod] = true;
-					const pending = mModules[mod] && mModules[mod].pending;
+					const pending = mModules[mod]?.pending;
 					return Array.isArray(pending) &&
 						(pending.indexOf(dependant) >= 0 || pending.some(visit));
 				}
@@ -1052,10 +1036,8 @@
 		 * @returns {Module} Module with that name, newly created if it didn't exist yet
 		 */
 		static get(sModuleName) {
-			if (!mModules[sModuleName]) {
-				mModules[sModuleName] = new Module(sModuleName);
-			}
-			return mModules[sModuleName];
+			const oModule = mModules[sModuleName] ??= new Module(sModuleName);
+			return oModule;
 		}
 
 	}
@@ -1067,12 +1049,12 @@
 		if ( _execStack.length > 0 ) {
 			return _execStack[_execStack.length - 1].name;
 		}
-		return document.currentScript && document.currentScript.getAttribute("data-sap-ui-module");
+		return document.currentScript?.getAttribute("data-sap-ui-module");
 	}
 
 	// --------------------------------------------------------------------------------------------
 
-	var _globalDefine,
+	let _globalDefine,
 		_globalDefineAMD;
 
 	function updateDefineAndInterceptAMDFlag(newDefine) {
@@ -1098,16 +1080,16 @@
 
 			Object.defineProperty(_globalDefine, "amd", {
 				get: function() {
-					var sCurrentModule = getExecutingModule();
-					if ( sCurrentModule && mShims[sCurrentModule] && mShims[sCurrentModule].amd ) {
-						log.debug("suppressing define.amd for " + sCurrentModule);
+					const sCurrentModule = getExecutingModule();
+					if ( sCurrentModule && mShims[sCurrentModule]?.amd ) {
+						log.debug(`suppressing define.amd for ${sCurrentModule}`);
 						return undefined;
 					}
 					return _globalDefineAMD;
 				},
 				set: function(newDefineAMD) {
 					_globalDefineAMD = newDefineAMD;
-					log.debug("define.amd became " + (newDefineAMD ? "active" : "unset"));
+					log.debug(`define.amd became ${newDefineAMD ? "active" : "unset"}`);
 				},
 				configurable: true // we have to allow a redefine for debug mode or restart from CDN etc.
 			});
@@ -1121,7 +1103,7 @@
 			},
 			set: function(newDefine) {
 				updateDefineAndInterceptAMDFlag(newDefine);
-				log.debug("define became " + (newDefine ? "active" : "unset"));
+				log.debug(`define became ${newDefine ? "active" : "unset"}`);
 			},
 			configurable: true // we have to allow a redefine for debug mode or restart from CDN etc.
 		});
@@ -1134,7 +1116,7 @@
 	// --------------------------------------------------------------------------------------------
 
 	function isModuleError(err) {
-		return err && err.name === "ModuleError";
+		return err?.name === "ModuleError";
 	}
 
 	/**
@@ -1155,11 +1137,11 @@
 	 * @returns {Error} New module error
 	 */
 	function makeModuleError(template, module, cause) {
-		var modules = "'" + module.name + "'";
+		let modules = `'${module.name}'`;
 
 		if (isModuleError(cause)) {
 			// update the chain of modules (increasing the indent)
-			modules = modules + "\n -> " + cause._modules.replace(/ -> /g, "  -> ");
+			modules += `\n -> ${cause._modules.replace(/ -> /g, "  -> ")}`;
 			// omit repeated occurrences of the same kind of error
 			if ( template === cause._template ) {
 				cause = cause.cause;
@@ -1167,14 +1149,14 @@
 		}
 
 		// create the message string from the template and the cause's message
-		var message =
+		const message =
 			template.replace(/\{id\}/, modules).replace(/\{url\}/, module.url)
 			+ (cause ? ": " + cause.message : "");
 
-		var error = new Error(message);
+		const error = new Error(message);
 		error.name = "ModuleError";
 		error.cause = cause;
-		if ( cause && cause.stack ) {
+		if ( cause?.stack ) {
 			error.stack = error.stack + "\nCaused by: " + cause.stack;
 		}
 		// the following properties are only for internal usage
@@ -1184,19 +1166,17 @@
 	}
 
 	function declareModule(sModuleName) {
-		var oModule;
-
 		// sModuleName must be a unified resource name of type .js
 		assert(/\.js$/.test(sModuleName), "must be a Javascript module");
 
-		oModule = Module.get(sModuleName);
+		const oModule = Module.get(sModuleName);
 
 		if ( oModule.state > INITIAL ) {
 			return oModule;
 		}
 
 		if ( log.isLoggable() ) {
-			log.debug(sLogPrefix + "declare module '" + sModuleName + "'");
+			log.debug(`${sLogPrefix}declare module '${sModuleName}'`);
 		}
 
 		// avoid cycles
@@ -1225,7 +1205,7 @@
 	 * @param {boolean} [nested] Whether this is a nested queue used during sync execution of a module
 	 */
 	function ModuleDefinitionQueue(nested) {
-		var aQueue = [],
+		let aQueue = [],
 			iRun = 0,
 			vTimer;
 
@@ -1236,7 +1216,7 @@
 					+ " to define queue #" + iRun);
 			}
 
-			var sModule = document.currentScript && document.currentScript.getAttribute('data-sap-ui-module');
+			const sModule = document.currentScript?.getAttribute('data-sap-ui-module');
 			aQueue.push({
 				name: name,
 				deps: deps,
@@ -1270,26 +1250,22 @@
 		 * @param {string} [sInitiator] A string describing the caller of <code>process</code>
 		 */
 		this.process = function(oRequestedModule, sInitiator) {
-			var bLoggable = log.isLoggable(),
-				iCurrentRun = iRun++,
-				aQueueCopy = aQueue,
-				sModuleName = null;
+			const bLoggable = log.isLoggable();
+			const aQueueCopy = aQueue;
+			const iCurrentRun = iRun++;
+			let sModuleName = null;
 
 			// clear the queue and timer early, we've already taken a copy of the queue
 			this.clear();
 
 
-			if ( oRequestedModule ) {
-
-				// if a module execution error was detected, stop processing the queue
-				if ( oRequestedModule.execError ) {
-					if ( bLoggable ) {
-						log.debug("module execution error detected, ignoring queued define calls (" + aQueueCopy.length + ")");
-					}
-					oRequestedModule.fail(oRequestedModule.execError);
-					return;
+			// if a module execution error was detected, stop processing the queue
+			if ( oRequestedModule?.execError ) {
+				if ( bLoggable ) {
+					log.debug(`module execution error detected, ignoring queued define calls (${aQueueCopy.length})`);
 				}
-
+				oRequestedModule.fail(oRequestedModule.execError);
+				return;
 			}
 
 			/*
@@ -1301,10 +1277,10 @@
 			 *  - when the name of a named module definition matches the name of requested module, the name is 'consumed'.
 			 *    Any later unnamed module definition will be reported as an error, too
 			 */
-			sModuleName = oRequestedModule && oRequestedModule.name;
+			sModuleName = oRequestedModule?.name;
 
 			// check whether there's a module definition for the requested module
-			aQueueCopy.forEach(function(oEntry) {
+			aQueueCopy.forEach((oEntry) => {
 				if ( oEntry.name == null ) {
 					if ( sModuleName != null ) {
 						oEntry.name = sModuleName;
@@ -1312,7 +1288,7 @@
 					} else {
 						// multiple modules have been queued, but only one module can inherit the name from the require call
 						if ( strictModuleDefinitions ) {
-							var oError = new Error(
+							const oError = new Error(
 								"Modules that use an anonymous define() call must be loaded with a require() call; " +
 								"they must not be executed via script tag or nested into other modules. ");
 							if ( oRequestedModule ) {
@@ -1322,7 +1298,7 @@
 							}
 						}
 						// give anonymous modules a unique pseudo ID
-						oEntry.name = '~anonymous~' + (++iAnonymousModuleCount) + '.js';
+						oEntry.name = `~anonymous~${++iAnonymousModuleCount}.js`;
 						log.error(
 							"Modules that use an anonymous define() call must be loaded with a require() call; " +
 							"they must not be executed via script tag or nested into other modules. " +
@@ -1345,7 +1321,7 @@
 				if ( bLoggable ) {
 					log.debug(
 						"No queued module definition matches the ID of the request. " +
-						"Now assuming that the first definition '" + aQueueCopy[0].name + "' is an alias of '" + sModuleName + "'");
+						`Now assuming that the first definition '${aQueueCopy[0].name}' is an alias of '${sModuleName}'`);
 				}
 				Module.get(aQueueCopy[0].name).addAlias(sModuleName);
 				sModuleName = null;
@@ -1355,10 +1331,10 @@
 				log.debug(sLogPrefix + "[" + sInitiator + "] "
 					+ "processing define queue #" + iCurrentRun
 					+ (oRequestedModule ? " for '" + oRequestedModule.name + "'" : "")
-					+ " with entries [" + aQueueCopy.map(function(entry) { return "'" + entry.name + "'"; }) + "]");
+					+ ` with entries [${aQueueCopy.map((entry) => `'${entry.name}'`)}]`);
 			}
 
-			aQueueCopy.forEach(function(oEntry) {
+			aQueueCopy.forEach((oEntry) => {
 				// start to resolve the dependencies
 				executeModuleDefinition(oEntry.name, oEntry.deps, oEntry.factory, oEntry._export, /* bAsync = */ true);
 			});
@@ -1373,12 +1349,12 @@
 			}
 
 			if ( bLoggable ) {
-				log.debug(sLogPrefix + "processing define queue #" + iCurrentRun + " done");
+				log.debug(sLogPrefix + `processing define queue #${iCurrentRun} done`);
 			}
 		};
 	}
 
-	var queue = new ModuleDefinitionQueue();
+	let queue = new ModuleDefinitionQueue();
 
 	/**
 	 * Loads the source for the given module with a sync XHR.
@@ -1386,7 +1362,7 @@
 	 * @throws {Error} When loading failed for some reason.
 	 */
 	function loadSyncXHR(oModule) {
-		var xhr = new XMLHttpRequest();
+		const xhr = new XMLHttpRequest();
 
 		function createXHRLoadError(error) {
 			error = new Error(xhr.statusText ? xhr.status + " - " + xhr.statusText : xhr.status);
@@ -1423,12 +1399,12 @@
 	 * @private
 	 */
 	window.addEventListener('error', function onUncaughtError(errorEvent) {
-		var sModuleName = document.currentScript && document.currentScript.getAttribute('data-sap-ui-module');
+		var sModuleName = document.currentScript?.getAttribute('data-sap-ui-module');
 		var oModule = sModuleName && Module.get(sModuleName);
 		if ( oModule && oModule.execError == null ) {
 			// if a currently executing module can be identified, attach the error to it and suppress reporting
 			if ( log.isLoggable() ) {
-				log.debug("unhandled exception occurred while executing " + sModuleName + ": " + errorEvent.message);
+				log.debug(`unhandled exception occurred while executing ${sModuleName}: ${errorEvent.message}`);
 			}
 			oModule.execError = errorEvent.error || {
 				name: 'Error',
@@ -1440,12 +1416,20 @@
 
 	function loadScript(oModule, sAlternativeURL) {
 
-		var oScript;
+		const oScript = document.createElement('SCRIPT');
+		// Accessing the 'src' property of the script in this strange way prevents Safari 12 (or WebKit) from
+		// wrongly optimizing access. SF12 seems to check at optimization time whether there's a setter for the
+		// property and optimize accordingly. When a setter is defined or changed at a later point in time (e.g.
+		// by the AppCacheBuster), then the optimization seems not to be updated and the new setter is ignored
+		// BCP 1970035485
+		oScript["s" + "rc"] = oModule.url;
+		//oScript.src = oModule.url;
+		oScript.setAttribute("data-sap-ui-module", oModule.name);
 
 		function onload(e) {
 			updateMaxTaskTime();
 			if ( log.isLoggable() ) {
-				log.debug("JavaScript resource loaded: " + oModule.name);
+				log.debug(`JavaScript resource loaded: ${oModule.name}`);
 			}
 			oScript.removeEventListener('load', onload);
 			oScript.removeEventListener('error', onerror);
@@ -1457,30 +1441,19 @@
 			oScript.removeEventListener('load', onload);
 			oScript.removeEventListener('error', onerror);
 			if (sAlternativeURL) {
-				log.warning("retry loading JavaScript resource: " + oModule.name);
-				if (oScript && oScript.parentNode) {
-					oScript.parentNode.removeChild(oScript);
-				}
+				log.warning(`retry loading JavaScript resource: ${oModule.name}`);
+				oScript?.parentNode?.removeChild(oScript);
 				oModule.url = sAlternativeURL;
 				loadScript(oModule, /* sAlternativeURL= */ null);
 				return;
 			}
 
-			log.error("failed to load JavaScript resource: " + oModule.name);
+			log.error(`failed to load JavaScript resource: ${oModule.name}`);
 			oModule.failWith("failed to load {id} from {url}", new Error("script load error"));
 		}
 
-		oScript = document.createElement('SCRIPT');
-		// Accessing the 'src' property of the script in this strange way prevents Safari 12 (or WebKit) from
-		// wrongly optimizing access. SF12 seems to check at optimization time whether there's a setter for the
-		// property and optimize accordingly. When a setter is defined or changed at a later point in time (e.g.
-		// by the AppCacheBuster), then the optimization seems not to be updated and the new setter is ignored
-		// BCP 1970035485
-		oScript["s" + "rc"] = oModule.url;
-		//oScript.src = oModule.url;
-		oScript.setAttribute("data-sap-ui-module", oModule.name);
 		if ( sAlternativeURL !== undefined ) {
-			if ( mShims[oModule.name] && mShims[oModule.name].amd ) {
+			if ( mShims[oModule.name]?.amd ) {
 				oScript.setAttribute("data-sap-ui-module-amd", "true");
 			}
 			oScript.addEventListener('load', onload);
@@ -1491,10 +1464,10 @@
 	}
 
 	function preloadDependencies(sModuleName) {
-		var knownDependencies = mDepCache[sModuleName];
+		const knownDependencies = mDepCache[sModuleName];
 		if ( Array.isArray(knownDependencies) ) {
-			log.debug("preload dependencies for " + sModuleName + ": " + knownDependencies);
-			knownDependencies.forEach(function(dep) {
+			log.debug(`preload dependencies for ${sModuleName}: ${knownDependencies}`);
+			knownDependencies.forEach((dep) => {
 				dep = getMappedName(dep, sModuleName);
 				if ( /\.js$/.test(dep) ) {
 					requireModule(null, dep, /* always async */ true);
@@ -1523,14 +1496,10 @@
 	 */
 	function requireModule(oRequestingModule, sModuleName, bAsync, bSkipShimDeps, bSkipBundle) {
 
-		var bLoggable = log.isLoggable(),
-			oSplitName = urnToBaseIDAndSubType(sModuleName),
-			oShim = mShims[sModuleName],
-			oModule, aExtensions, i, sMsg, bExecutedNow;
-
 		// only for robustness, should not be possible by design (all callers append '.js')
+		const oSplitName = urnToBaseIDAndSubType(sModuleName);
 		if ( !oSplitName ) {
-			throw new Error("can only require Javascript module, not " + sModuleName);
+			throw new Error(`can only require Javascript module, not ${sModuleName}`);
 		}
 
 		// Module names should not start with a "/"
@@ -1538,11 +1507,14 @@
 			log.error("Module names that start with a slash should not be used, as they are reserved for future use.");
 		}
 
-		oModule = Module.get(sModuleName);
+		const bLoggable = log.isLoggable();
+
+		const oModule = Module.get(sModuleName);
+		const oShim = mShims[sModuleName];
 
 		// when there's a shim with dependencies for the module
 		// resolve them first before requiring the module again with bSkipShimDeps = true
-		if ( oShim && oShim.deps && !bSkipShimDeps ) {
+		if ( oShim?.deps && !bSkipShimDeps ) {
 			if ( bLoggable ) {
 				log.debug("require dependencies of raw module " + sModuleName);
 			}
@@ -1559,8 +1531,7 @@
 		// require the bundle first before requiring the module again with bSkipBundle = true
 		if ( oModule.state === INITIAL && oModule.group && oModule.group !== sModuleName && !bSkipBundle ) {
 			if ( bLoggable ) {
-				log.debug(sLogPrefix + "require bundle '" + oModule.group + "'"
-						+ " containing '" + sModuleName + "'");
+				log.debug(`${sLogPrefix}require bundle '${oModule.group}' containing '${sModuleName}'`);
 			}
 			if ( bAsync ) {
 				return requireModule(null, oModule.group, bAsync).catch(noop).then(function() {
@@ -1585,6 +1556,8 @@
 
 		// check if module has been loaded already
 		if ( oModule.state !== INITIAL ) {
+
+			let bExecutedNow = false;
 
 			if ( oModule.state === EXECUTING && oModule.data != null && !bAsync && oModule.async ) {
 				oModule.state = PRELOADED;
@@ -1647,10 +1620,10 @@
 		oModule.async = bAsync;
 
 		// if debug is enabled, try to load debug module first
-		aExtensions = bDebugSources ? ["-dbg", ""] : [""];
+		const aExtensions = bDebugSources ? ["-dbg", ""] : [""];
 		if ( !bAsync ) {
 
-			for (i = 0; i < aExtensions.length && oModule.state !== LOADED; i++) {
+			for (let i = 0; i < aExtensions.length && oModule.state !== LOADED; i++) {
 				// create module URL for the current extension
 				oModule.url = getResourcePath(oSplitName.baseID, aExtensions[i] + oSplitName.subType);
 				if ( bLoggable ) {
@@ -1658,7 +1631,7 @@
 				}
 
 				if ( syncCallBehavior ) {
-					sMsg = "[nosync] loading module '" + oModule.url + "'";
+					const sMsg = "[nosync] loading module '" + oModule.url + "'";
 					if ( syncCallBehavior === 1 ) {
 						log.error(sMsg);
 					} else {
@@ -1692,7 +1665,7 @@
 
 			oModule.url = getResourcePath(oSplitName.baseID, aExtensions[0] + oSplitName.subType);
 			// in debug mode, fall back to the non-dbg source, otherwise try the same source again (for SSO re-connect)
-			var sAltUrl = bDebugSources ? getResourcePath(oSplitName.baseID, aExtensions[1] + oSplitName.subType) : oModule.url;
+			const sAltUrl = bDebugSources ? getResourcePath(oSplitName.baseID, aExtensions[1] + oSplitName.subType) : oModule.url;
 
 			if ( log.isLoggable() ) {
 				log.debug(sLogPrefix + "loading '" + sModuleName + "' from '" + oModule.url + "' (using <script>)");
@@ -1712,14 +1685,14 @@
 	// sModuleName must be a normalized resource name of type .js
 	function execModule(sModuleName, bAsync) {
 
-		var oModule = mModules[sModuleName],
-			bLoggable = log.isLoggable(),
-			sOldPrefix, sScript, oMatch, bOldForceSyncDefines, oOldQueue;
+		const oModule = mModules[sModuleName];
 
 		if ( oModule && oModule.state === LOADED && typeof oModule.data !== "undefined" ) {
 
-			bOldForceSyncDefines = bForceSyncDefines;
-			oOldQueue = queue;
+			const bLoggable = log.isLoggable();
+			const bOldForceSyncDefines = bForceSyncDefines;
+			const oOldQueue = queue;
+			let sOldPrefix, sScript;
 
 			try {
 
@@ -1757,7 +1730,7 @@
 					// Note: Chrome ignores debug files when the same URL has already been load via sourcemap of the bootstrap file (sap-ui-core)
 					// Note: sourcemap annotations URLs in eval'ed sources are resolved relative to the page, not relative to the source
 					if (sScript ) {
-						oMatch = /\/\/[#@] source(Mapping)?URL=(.*)$/.exec(sScript);
+						const oMatch = /\/\/[#@] source(Mapping)?URL=(.*)$/.exec(sScript);
 						if ( oMatch && oMatch[1] && /^[^/]+\.js\.map$/.test(oMatch[2]) ) {
 							// found a sourcemap annotation with a typical UI5 generated relative URL
 							sScript = sScript.slice(0, oMatch.index) + oMatch[0].slice(0, -oMatch[2].length) + resolveURL(oMatch[2], oModule.url);
@@ -1817,8 +1790,9 @@
 
 	function requireAll(oRequestingModule, aDependencies, fnCallback, fnErrCallback, bAsync) {
 
-		var sBaseName, aModules = [],
-			i, sDepModName, oError, oPromise;
+		const aModules = [];
+		let sBaseName,
+			oError;
 
 		try {
 			// calculate the base name for relative module names
@@ -1829,20 +1803,20 @@
 				oRequestingModule = null;
 			}
 			aDependencies = aDependencies.slice();
-			for (i = 0; i < aDependencies.length; i++) {
+			for (let i = 0; i < aDependencies.length; i++) {
 				aDependencies[i] = getMappedName(aDependencies[i] + '.js', sBaseName);
 			}
 			if ( oRequestingModule ) {
 				// remember outgoing dependencies to be able to detect cycles, but ignore pseudo-dependencies
-				aDependencies.forEach(function(dep) {
+				aDependencies.forEach((dep) => {
 					if ( !/^(require|exports|module)\.js$/.test(dep) ) {
 						oRequestingModule.addPending(dep);
 					}
 				});
 			}
 
-			for (i = 0; i < aDependencies.length; i++) {
-				sDepModName = aDependencies[i];
+			for (let i = 0; i < aDependencies.length; i++) {
+				const sDepModName = aDependencies[i];
 				if ( oRequestingModule ) {
 					switch ( sDepModName ) {
 					case 'require.js':
@@ -1870,7 +1844,7 @@
 		}
 
 		if ( bAsync ) {
-			oPromise = oError ? Promise.reject(oError) : Promise.all(aModules);
+			const oPromise = oError ? Promise.reject(oError) : Promise.all(aModules);
 			return oPromise.then(fnCallback, fnErrCallback);
 		} else {
 			if ( oError ) {
@@ -1882,16 +1856,16 @@
 	}
 
 	function executeModuleDefinition(sResourceName, aDependencies, vFactory, bExport, bAsync) {
-		var bLoggable = log.isLoggable();
+		const bLoggable = log.isLoggable();
 		sResourceName = normalize(sResourceName);
 
 		if ( bLoggable ) {
 			log.debug(sLogPrefix + "define('" + sResourceName + "', " + "['" + aDependencies.join("','") + "']" + ")");
 		}
 
-		var oModule = declareModule(sResourceName);
+		const oModule = declareModule(sResourceName);
 
-		var repeatedExecutionReported = false;
+		let repeatedExecutionReported = false;
 
 		function shouldSkipExecution() {
 			if ( oModule.settled ) {
@@ -1940,7 +1914,7 @@
 
 			if ( bExport && syncCallBehavior !== 2 ) {
 				// ensure parent namespace
-				var aPackages = sResourceName.split('/');
+				const aPackages = sResourceName.split('/');
 				if ( aPackages.length > 1 ) {
 					getGlobalObject(__global, aPackages, aPackages.length - 1, true);
 				}
@@ -1952,15 +1926,15 @@
 				//  then that value should be assigned as the exported value for the module."
 				try {
 					aModules = aModules.map(unwrapExport);
-					var exports = vFactory.apply(__global, aModules);
-					if ( oModule._api && oModule._api.exports !== undefined && oModule._api.exports !== oModule._exports ) {
+					let exports = vFactory.apply(__global, aModules);
+					if ( oModule._api?.exports !== undefined && oModule._api.exports !== oModule._exports ) {
 						exports = oModule._api.exports;
 					} else if ( exports === undefined && oModule._exports ) {
 						exports = oModule._exports;
 					}
 					oModule.content = exports;
 				} catch (error) {
-					var wrappedError = oModule.failWith("failed to execute module factory for '{id}'", error);
+					const wrappedError = oModule.failWith("failed to execute module factory for '{id}'", error);
 					if ( bAsync ) {
 						// Note: in async mode, the error is reported via the oModule's promise
 						return;
@@ -1974,13 +1948,13 @@
 			// HACK: global export
 			if ( bExport && syncCallBehavior !== 2 ) {
 				if ( oModule.content == null ) {
-					log.error("Module '" + sResourceName + "' returned no content, but should export to global?");
+					log.error(`Module '${sResourceName}' returned no content, but should export to global?`);
 				} else {
 					if ( bLoggable ) {
-						log.debug("exporting content of '" + sResourceName + "': as global object");
+						log.debug(`exporting content of '${sResourceName}': as global object`);
 					}
 					// convert module name to UI5 module name syntax (might fail!)
-					var sModuleName = urnToUI5(sResourceName);
+					const sModuleName = urnToUI5(sResourceName);
 					setGlobalProperty(sModuleName, oModule.content);
 				}
 			}
@@ -1991,7 +1965,7 @@
 
 		// Note: dependencies will be resolved and converted from RJS to URN inside requireAll
 		requireAll(oModule, aDependencies, bAsync && oModule.data ? scheduleExecution(onSuccess) : onSuccess, function(oErr) {
-			var oWrappedError = oModule.failWith("Failed to resolve dependencies of {id}", oErr);
+			const oWrappedError = oModule.failWith("Failed to resolve dependencies of {id}", oErr);
 			if ( !bAsync ) {
 				throw oWrappedError;
 			}
@@ -2001,8 +1975,7 @@
 	}
 
 	function ui5Define(sModuleName, aDependencies, vFactory, bExport) {
-		var sResourceName,
-			oCurrentExecInfo;
+		let sResourceName;
 
 		// optional id
 		if ( typeof sModuleName === 'string' ) {
@@ -2030,7 +2003,7 @@
 		if ( bForceSyncDefines === false || (bForceSyncDefines == null && bGlobalAsyncMode) ) {
 			queue.push(sResourceName, aDependencies, vFactory, bExport);
 			if ( sResourceName != null ) {
-				var oModule = Module.get(sResourceName);
+				const oModule = Module.get(sResourceName);
 				if ( oModule.state === INITIAL ) {
 					oModule.state = EXECUTING;
 					oModule.async = true;
@@ -2040,7 +2013,7 @@
 		}
 
 		// immediate, synchronous execution
-		oCurrentExecInfo = _execStack.length > 0 ? _execStack[_execStack.length - 1] : null;
+		const oCurrentExecInfo = _execStack.length > 0 ? _execStack[_execStack.length - 1] : null;
 		if ( !sResourceName ) {
 
 			if ( oCurrentExecInfo && !oCurrentExecInfo.used ) {
@@ -2048,7 +2021,7 @@
 				oCurrentExecInfo.used = true;
 			} else {
 				// give anonymous modules a unique pseudo ID
-				sResourceName = '~anonymous~' + (++iAnonymousModuleCount) + '.js';
+				sResourceName = `~anonymous~${++iAnonymousModuleCount}.js`;
 				if ( oCurrentExecInfo ) {
 					sResourceName = oCurrentExecInfo.name.slice(0, oCurrentExecInfo.name.lastIndexOf('/') + 1) + sResourceName;
 				}
@@ -2058,8 +2031,8 @@
 					"All other usages will fail in future releases or when standard AMD loaders are used " +
 					"or when ui5loader runs in async mode. Now using substitute name " + sResourceName);
 			}
-		} else if ( oCurrentExecInfo && !oCurrentExecInfo.used && sResourceName !== oCurrentExecInfo.name ) {
-			log.debug("module names don't match: requested: " + sModuleName + ", defined: ", oCurrentExecInfo.name);
+		} else if ( oCurrentExecInfo?.used && sResourceName !== oCurrentExecInfo.name ) {
+			log.debug(`module names don't match: requested: ${sModuleName}, defined: ${oCurrentExecInfo.name}`);
 			Module.get(oCurrentExecInfo.name).addAlias(sModuleName);
 		}
 		executeModuleDefinition(sResourceName, aDependencies, vFactory, bExport, /* bAsync = */ false);
@@ -2072,8 +2045,8 @@
 	 * mode (has to be configured explicitly).
 	 */
 	function amdDefine(sModuleName, aDependencies, vFactory) {
-		var oArgs = arguments;
-		var bExportIsSet = typeof oArgs[oArgs.length - 1] === "boolean";
+		let oArgs = arguments;
+		const bExportIsSet = typeof oArgs[oArgs.length - 1] === "boolean";
 
 		// bExport parameter is proprietary and should not be used for an AMD compliant define()
 		if (bExportIsSet) {
@@ -2094,17 +2067,15 @@
 	 * @returns {function} Require function.
 	 */
 	function createContextualRequire(sContextName, bAMDCompliance) {
-		var fnRequire = function(vDependencies, fnCallback, fnErrCallback) {
-			var sModuleName;
-
+		const fnRequire = function(vDependencies, fnCallback, fnErrCallback) {
 			assert(typeof vDependencies === 'string' || Array.isArray(vDependencies), "dependency param either must be a single string or an array of strings");
 			assert(fnCallback == null || typeof fnCallback === 'function', "callback must be a function or null/undefined");
 			assert(fnErrCallback == null || typeof fnErrCallback === 'function', "error callback must be a function or null/undefined");
 
 			// Probing for existing module
 			if ( typeof vDependencies === 'string' ) {
-				sModuleName = getMappedName(vDependencies + '.js', sContextName);
-				var oModule = Module.get(sModuleName);
+				const sModuleName = getMappedName(vDependencies + '.js', sContextName);
+				const oModule = Module.get(sModuleName);
 
 				// check the modules internal state
 				// everything from PRELOADED to LOADED (incl. FAILED) is considered erroneous
@@ -2149,7 +2120,7 @@
 			// return undefined;
 		};
 		fnRequire.toUrl = function(sName) {
-			var sMappedName = ensureTrailingSlash(getMappedName(sName, sContextName), sName);
+			const sMappedName = ensureTrailingSlash(getMappedName(sName, sContextName), sName);
 			return toUrl(sMappedName);
 		};
 		return fnRequire;
@@ -2165,7 +2136,7 @@
 
 	function toUrl(sName) {
 		if (sName.indexOf("/") === 0) {
-			throw new Error("The provided argument '" + sName + "' may not start with a slash");
+			throw new Error(`The provided argument '${sName}' may not start with a slash`);
 		}
 		return ensureTrailingSlash(getResourcePath(sName), sName);
 	}
@@ -2173,7 +2144,7 @@
 	/*
 	 * UI5 version of require (sap.ui.require)
 	 */
-	var ui5Require = createContextualRequire(null, false);
+	const ui5Require = createContextualRequire(null, false);
 
 	/*
 	 * AMD version of require (window.require)
@@ -2182,12 +2153,12 @@
 	 * - require("my/module"), returns undefined if the module was not loaded yet
 	 * - amdRequire("my/module"), throws an error if the module was not loaded yet
 	 */
-	var amdRequire = createContextualRequire(null, true);
+	const amdRequire = createContextualRequire(null, true);
 
 	function requireSync(sModuleName) {
 		sModuleName = getMappedName(sModuleName + '.js');
 		if ( log.isLoggable() ) {
-			log.warning("sync require of '" + sModuleName + "'");
+			log.warning(`sync require of '${sModuleName}'`);
 		}
 		return unwrapExport(requireModule(null, sModuleName, /* bAsync = */ false));
 	}
@@ -2203,7 +2174,7 @@
 	function preload(modules, group, url) {
 		group = group || null;
 		url = url || "<unknown>";
-		for ( var name in modules ) {
+		for ( let name in modules ) {
 			name = normalize(name);
 			Module.get(name).preload(url + "/" + name, modules[name], group);
 		}
@@ -2217,44 +2188,45 @@
 	 */
 	function dumpInternals(iThreshold) {
 
-		var states = [PRELOADED, INITIAL, LOADED, READY, FAILED, EXECUTING, LOADING];
-		var stateNames = {};
-		stateNames[PRELOADED] = 'PRELOADED';
-		stateNames[INITIAL] = 'INITIAL';
-		stateNames[LOADING] = 'LOADING';
-		stateNames[LOADED] = 'LOADED';
-		stateNames[EXECUTING] = 'EXECUTING';
-		stateNames[READY] = 'READY';
-		stateNames[FAILED] = 'FAILED';
+		const states = [PRELOADED, INITIAL, LOADED, READY, FAILED, EXECUTING, LOADING];
+		const stateNames = {
+			[PRELOADED]: 'PRELOADED',
+			[INITIAL]:'INITIAL',
+			[LOADING]: 'LOADING',
+			[LOADED]: 'LOADED',
+			[EXECUTING]: 'EXECUTING',
+			[READY]: 'READY',
+			[FAILED]: 'FAILED'
+		};
 
 		if ( iThreshold == null ) {
 			iThreshold = PRELOADED;
 		}
 
 		/*eslint-disable no-console */
-		var info = log.isLoggable('INFO') ? log.info.bind(log) : console.info.bind(console);
+		const info = log.isLoggable('INFO') ? log.info.bind(log) : console.info.bind(console);
 		/*eslint-enable no-console */
 
-		var aModuleNames = Object.keys(mModules).sort();
-		states.forEach(function(state) {
+		const aModuleNames = Object.keys(mModules).sort();
+		states.forEach((state) => {
 			if ( state  < iThreshold ) {
 				return;
 			}
-			var count = 0;
+			let count = 0;
 			info(stateNames[state] + ":");
-			aModuleNames.forEach(function(sModule, idx) {
-				var oModule = mModules[sModule];
+			aModuleNames.forEach((sModule, idx) => {
+				const oModule = mModules[sModule];
 				if ( oModule.state === state ) {
-					var addtlInfo;
+					let addtlInfo;
 					if ( oModule.state === LOADING ) {
-						var pending = oModule.pending && oModule.pending.reduce(function(acc, dep) {
-							var oDepModule = Module.get(dep);
+						const pending = oModule.pending?.reduce((acc, dep) => {
+							const oDepModule = Module.get(dep);
 							if ( oDepModule.state !== READY ) {
 								acc.push( dep + "(" + stateNames[oDepModule.state] + ")");
 							}
 							return acc;
 						}, []);
-						if ( pending && pending.length > 0 ) {
+						if ( pending?.length > 0 ) {
 							addtlInfo = "waiting for " + pending.join(", ");
 						}
 					} else if ( oModule.state === FAILED ) {
@@ -2277,7 +2249,7 @@
 	 * @private
 	 */
 	function getUrlPrefixes() {
-		var mUrlPrefixesCopy = Object.create(null);
+		const mUrlPrefixesCopy = Object.create(null);
 		forEach(mUrlPrefixes, function(sNamePrefix, oUrlInfo) {
 			mUrlPrefixesCopy[sNamePrefix] = oUrlInfo.url;
 		});
@@ -2295,8 +2267,7 @@
 	 * @private
 	 */
 	function unloadResources(sName, bPreloadGroup, bUnloadAll, bDeleteExports) {
-		var aModules = [],
-			sURN, oModule;
+		const aModules = [];
 
 		if ( bPreloadGroup == null ) {
 			bPreloadGroup = true;
@@ -2304,13 +2275,12 @@
 
 		if ( bPreloadGroup ) {
 			// collect modules that belong to the given group
-			for ( sURN in mModules ) {
-				oModule = mModules[sURN];
+			for ( const sURN in mModules ) {
+				const oModule = mModules[sURN];
 				if ( oModule && oModule.group === sName ) {
 					aModules.push(sURN);
 				}
 			}
-
 		} else {
 			// single module
 			if ( mModules[sName] ) {
@@ -2318,8 +2288,8 @@
 			}
 		}
 
-		aModules.forEach(function(sURN) {
-			var oModule = mModules[sURN];
+		aModules.forEach((sURN) => {
+			const oModule = mModules[sURN];
 			if ( oModule && bDeleteExports && sURN.match(/\.js$/) ) {
 				// @evo-todo move to compat layer?
 				setGlobalProperty(urnToUI5(sURN), undefined);
@@ -2328,7 +2298,6 @@
 			  delete mModules[sURN];
 			}
 		});
-
 	}
 
 	function getModuleContent(name, url) {
@@ -2337,7 +2306,7 @@
 		} else {
 			name = guessResourceName(url, true);
 		}
-		var oModule = name && mModules[name];
+		const oModule = name && mModules[name];
 		if ( oModule ) {
 			oModule.state = LOADED;
 			return oModule.data;
@@ -2357,7 +2326,7 @@
 	 * @private
 	 */
 	function getAllModules() {
-		var mSnapshot = Object.create(null);
+		const mSnapshot = Object.create(null);
 		forEach(mModules, function(sURN, oModule) {
 			mSnapshot[sURN] = {
 				state: oModule.state,
@@ -2369,24 +2338,24 @@
 
 	function loadJSResourceAsync(sResource, bIgnoreErrors) {
 		sResource = getMappedName(sResource);
-		var promise = requireModule(null, sResource, /* bAsync = */ true).then(unwrapExport);
+		const promise = requireModule(null, sResource, /* bAsync = */ true).then(unwrapExport);
 		return bIgnoreErrors ? promise.catch(noop) : promise;
 	}
 
 	// ---- config --------------------------------------------------------------------------------
 
-	var mUI5ConfigHandlers = {
-		baseUrl: function(url) {
+	const mUI5ConfigHandlers = {
+		baseUrl(url) {
 			registerResourcePath("", url);
 		},
 		paths: registerResourcePath, // has length 2
-		shim: function(module, shim) {
+		shim(module, shim) {
 			if ( Array.isArray(shim) ) {
 				shim = { deps : shim };
 			}
 			mShims[module + '.js'] = shim;
 		},
-		amd: function(bValue) {
+		amd(bValue) {
 			bValue = !!bValue;
 			if ( bExposeAsAMDLoader !== bValue ) {
 				bExposeAsAMDLoader = bValue;
@@ -2405,38 +2374,38 @@
 				}
 			}
 		},
-		async: function(async) {
+		async(async) {
 			if (bGlobalAsyncMode && !async) {
 				throw new Error("Changing the ui5loader config from async to sync is not supported. Only a change from sync to async is allowed.");
 			}
 			bGlobalAsyncMode = !!async;
 		},
-		bundles: function(bundle, modules) {
+		bundles(bundle, modules) {
 			bundle += '.js';
-			modules.forEach(function(module) {
-				Module.get(module + '.js').group = bundle;
-			});
+			modules.forEach(
+				(module) => { Module.get(module + '.js').group = bundle; }
+			);
 		},
-		bundlesUI5: function(bundle, resources) {
-			resources.forEach(function(module) {
-				Module.get(module).group = bundle;
-			});
+		bundlesUI5(bundle, resources) {
+			resources.forEach(
+				(module) => { Module.get(module).group = bundle; }
+			);
 		},
-		debugSources: function(debug) {
+		debugSources(debug) {
 			bDebugSources = !!debug;
 		},
-		depCache: function(module, deps) {
-			mDepCache[module + '.js'] = deps.map(function(dep) { return dep + '.js'; });
+		depCache(module, deps) {
+			mDepCache[module + '.js'] = deps.map((dep) => dep + '.js');
 		},
-		depCacheUI5: function(module, deps) {
+		depCacheUI5(module, deps) {
 			mDepCache[module] = deps;
 		},
-		ignoreBundledResources: function(filter) {
+		ignoreBundledResources(filter) {
 			if ( filter == null || typeof filter === 'function' ) {
 				fnIgnorePreload = filter;
 			}
 		},
-		map: function(context, map) {
+		map(context, map) {
 			// @evo-todo ignore empty context, empty prefix?
 			if ( map == null ) {
 				delete mMaps[context];
@@ -2444,18 +2413,18 @@
 				// SystemJS style config
 				mMaps['*'][context] = map;
 			} else {
-				mMaps[context] = mMaps[context] || Object.create(null);
+				mMaps[context] ||= Object.create(null);
 				forEach(map, function(alias, name) {
 					mMaps[context][alias] = name;
 				});
 			}
 		},
-		reportSyncCalls: function(report) {
+		reportSyncCalls(report) {
 			if ( report === 0 || report === 1 || report === 2 ) {
 				syncCallBehavior = report;
 			}
 		},
-		noConflict: function(bValue) {
+		noConflict(bValue) {
 			log.warning("Config option 'noConflict' has been deprecated, use option 'amd' instead, if still needed.");
 			mUI5ConfigHandlers.amd(!bValue);
 		}
@@ -2465,9 +2434,9 @@
 	 * Config handlers used when amd mode is enabled.
 	 * References only methods defined in the AMD spec.
 	 */
-	var mAMDConfigHandlers = {
+	const mAMDConfigHandlers = {
 		baseUrl: mUI5ConfigHandlers.baseUrl,
-		paths: function (module, url) {
+		paths(module, url) {
 			registerResourcePath(module, resolveURL(url, getResourcePath("") + "/"));
 		},
 		map: mUI5ConfigHandlers.map,
@@ -2483,7 +2452,7 @@
 	function handleConfigObject(oCfg, mHandlers) {
 
 		function processConfig(key, value) {
-			var handler = mHandlers[key];
+			const handler = mHandlers[key];
 			if ( typeof handler === 'function' ) {
 				if ( handler.length === 1) {
 					handler(value);
@@ -2491,7 +2460,7 @@
 					forEach(value, handler);
 				}
 			} else {
-				log.warning("configuration option " + key + " not supported (ignored)");
+				log.warning(`configuration option ${key} not supported (ignored)`);
 			}
 		}
 
@@ -2535,80 +2504,71 @@
 	ui5Require.load = function(context, url, id) {
 	};
 
-	var privateAPI = {
-		amdDefine: amdDefine,
-		amdRequire: amdRequire,
+	const privateAPI = {
+
+		// properties
+		get assert() {
+			return assert;
+		},
+		set assert(v) {
+			assert = v;
+		},
+		get logger() {
+			return log;
+		},
+		set logger(v) {
+			log = v;
+			aEarlyLogs.forEach(({level, message}) => log[level](message));
+		},
+		get measure() {
+			return measure;
+		},
+		set measure(v) {
+			measure = v;
+		},
+		get translate() {
+			return translate;
+		},
+		set translate(v) {
+			translate = v;
+		},
+		get callbackInMicroTask() {
+			return simulateAsyncCallback === executeInMicroTask;
+		},
+		set callbackInMicroTask(v) {
+			simulateAsyncCallback = v ? executeInMicroTask : executeInSeparateTask;
+		},
+		get maxTaskDuration() {
+			return iMaxTaskDuration;
+		},
+		set maxTaskDuration(v) {
+			updateMaxTaskDuration(v);
+		},
+
+		// methods
+		amdDefine,
+		amdRequire,
 		config: ui5Config,
-		declareModule: function(sResourceName) {
+		declareModule(sResourceName) {
 			/* void */ declareModule( normalize(sResourceName) );
 		},
-		defineModuleSync: defineModuleSync,
+		defineModuleSync,
 		dump: dumpInternals,
-		getAllModules: getAllModules,
-		getModuleContent: getModuleContent,
-		getModuleState: function(sResourceName) {
+		getAllModules,
+		getModuleContent,
+		getModuleState(sResourceName) {
 			return mModules[sResourceName] ? mModules[sResourceName].state : INITIAL;
 		},
-		getResourcePath: getResourcePath,
-		getSyncCallBehavior: getSyncCallBehavior,
-		getUrlPrefixes: getUrlPrefixes,
-		loadJSResourceAsync: loadJSResourceAsync,
-		resolveURL: resolveURL,
-		guessResourceName: guessResourceName,
-		toUrl: toUrl,
-		unloadResources: unloadResources
+		getResourcePath,
+		getSyncCallBehavior,
+		getUrlPrefixes,
+		loadJSResourceAsync,
+		resolveURL,
+		guessResourceName,
+		toUrl,
+		unloadResources
 	};
-	Object.defineProperties(privateAPI, {
-		logger: {
-			get: function() {
-				return log;
-			},
-			set: function(v) {
-				log = v;
-				aEarlyLogs.forEach(function(earlyLog) {
-					log[earlyLog.level](earlyLog.message);
-				});
-			}
-		},
-		measure: {
-			get: function() {
-				return measure;
-			},
-			set: function(v) {
-				measure = v;
-			}
-		},
-		assert: {
-			get: function() {
-				return assert;
-			},
-			set: function(v) {
-				assert = v;
-			}
-		},
-		translate: {
-			get: function() {
-				return translate;
-			},
-			set: function(v) {
-				translate = v;
-			}
-		},
-		callbackInMicroTask: {
-			get: function() {
-				return simulateAsyncCallback === executeInMicroTask;
-			},
-			set: function(v) {
-				simulateAsyncCallback = v ? executeInMicroTask : executeInSeparateTask;
-			}
-		},
-		maxTaskDuration: {
-			get: function() {
-				return iMaxTaskDuration;
-			},
-			set: updateMaxTaskDuration
-		}
-	});
+
 
 	// establish APIs in the sap.ui namespace
 
@@ -3142,7 +3102,7 @@
 	 * @param {string} [sModuleName] ID of the module in simplified resource name syntax.
 	 *        When omitted, the loader determines the ID from the request.
 	 * @param {string[]} [aDependencies] List of dependencies of the module
-	 * @param {function|any} vFactory The module export value or a function that calculates that value
+	 * @param {function(...any):any|any} vFactory The module export value or a function that calculates that value
 	 * @param {boolean} [bExport] Whether an export to global names is required - should be used by SAP-owned code only
 	 * @since 1.27.0
 	 * @public
@@ -3207,7 +3167,7 @@
 	 * Relative module names are not supported.
 	 *
 	 * @param {string|string[]} vDependencies Dependency (dependencies) to resolve
-	 * @param {function} [fnCallback] Callback function to execute after resolving an array of dependencies
+	 * @param {function(...any)} [fnCallback] Callback function to execute after resolving an array of dependencies
 	 * @param {function(Error)} [fnErrback] Callback function to execute if an error was detected while loading the
 	 *                      dependencies or executing the factory function. Note that due to browser restrictions
 	 *                      not all errors will be reported via this callback. In general, module loading is
@@ -3286,4 +3246,4 @@
 	 */
 	sap.ui.requireSync = requireSync;
 
-}(window));
+}(globalThis));

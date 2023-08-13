@@ -70,7 +70,7 @@ sap.ui.define([
 		 * @implements sap.ui.core.IContextMenu
 		 *
 		 * @author SAP SE
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 *
 		 * @constructor
 		 * @public
@@ -258,6 +258,19 @@ sap.ui.define([
 				this._getDialog() && this._getDialog().close();
 			} else {
 				this._getVisualParent() && this._getVisualParent().close();
+			}
+		};
+
+		/**
+		 * Returns whether the <code>Menu</code> is currently open.
+		 * @returns {boolean} true if menu is open
+		 * @public
+		 */
+		Menu.prototype.isOpen = function() {
+			if (Device.system.phone) {
+				return this._getDialog() && this._getDialog().isOpen();
+			} else {
+				return this._getVisualParent() && this._getVisualParent().isOpen();
 			}
 		};
 

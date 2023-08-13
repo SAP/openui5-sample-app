@@ -213,7 +213,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -3893,7 +3893,7 @@ sap.ui.define([
 	 * Abort internal requests such as created via two-way binding changes or created entries.
 	 *
 	 * @param {string} sGroupId ID of the group that should be searched for the request
-	 * @param {string} [mParameters]
+	 * @param {object} [mParameters]
 	 * Map which contains the following parameter properties:
 	 * @param {string} [mParameters.requestKey] Request key used to find the requests, which needs to aborted.
 	 * @param {string} [mParameters.path] Path used to find the requests, which needs to be aborted.

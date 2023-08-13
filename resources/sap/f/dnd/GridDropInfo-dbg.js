@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.dnd.DropInfo
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @public
 	 * @experimental Since 1.68 This class is experimental. The API may change.

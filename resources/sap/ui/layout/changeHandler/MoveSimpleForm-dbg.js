@@ -20,7 +20,7 @@ sap.ui.define([
 	 *
 	 * @alias sap.ui.layout.changeHandler.MoveSimpleForm
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @experimental Since 1.34.0
 	 */
 	var MoveSimpleForm = {};

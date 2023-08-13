@@ -4,14 +4,14 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/library", "sap/ui/core/InvisibleRenderer", "sap/ui/core/InvisibleText"],
-	function(coreLibrary, InvisibleRenderer, InvisibleText) {
+sap.ui.define(["sap/ui/core/library", "sap/ui/core/Lib", "sap/ui/core/InvisibleRenderer", "sap/ui/core/InvisibleText"],
+	function(coreLibrary, Library, InvisibleRenderer, InvisibleText) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TextDirection
 	var TextDirection = coreLibrary.TextDirection;
 
-	var oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+	var oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 	/**
 	 * Segmented renderer.

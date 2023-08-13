@@ -119,7 +119,7 @@ function(
 		 * @implements sap.ui.core.IFormContent
 		 *
 		 * @author SAP SE
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 *
 		 * @constructor
 		 * @public
@@ -508,7 +508,7 @@ function(
 					src: IconPool.getIconURI("add"),
 					id: this.getId() + "-incrementBtn",
 					noTabStop: true,
-					decorative: false,
+					decorative: !Device.support.touch || Device.system.desktop ? true : false,
 					press: this._handleButtonPress.bind(this, 1),
 					useIconTooltip: false,
 					alt: StepInput.STEP_INPUT_INCREASE_BTN_TOOLTIP
@@ -542,7 +542,7 @@ function(
 					src: IconPool.getIconURI("less"),
 					id: this.getId() + "-decrementBtn",
 					noTabStop: true,
-					decorative: false,
+					decorative: !Device.support.touch || Device.system.desktop ? true : false,
 					press: this._handleButtonPress.bind(this, -1),
 					useIconTooltip: false,
 					alt: StepInput.STEP_INPUT_DECREASE_BTN_TOOLTIP

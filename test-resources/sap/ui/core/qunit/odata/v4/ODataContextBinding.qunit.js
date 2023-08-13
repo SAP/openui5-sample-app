@@ -24,6 +24,8 @@ sap.ui.define([
 			"$$ownRequest", "$$patchWithoutSideEffects", "$$updateGroupId"],
 		sClassName = "sap.ui.model.odata.v4.ODataContextBinding";
 
+	function mustBeMocked() { throw new Error("Must be mocked"); }
+
 	//*********************************************************************************************
 	QUnit.module("sap.ui.model.odata.v4.ODataContextBinding", {
 		beforeEach : function () {
@@ -4489,7 +4491,7 @@ sap.ui.define([
 			oError = new Error("This call intentionally failed"),
 			oNewCache = {},
 			oOldCache = {
-				setActive : function () { throw new Error("must be mocked"); }
+				setActive : mustBeMocked
 			},
 			oReturnValueContext = Context.create(this.oModel, oBinding, "/SalesOrderList('77')"),
 			that = this;
@@ -4950,7 +4952,7 @@ sap.ui.define([
 
 		if (oFixture.name) {
 			oBinding.oOperation.bAction = true;
-			this.mock(_Cache).expects("makeUpdateData")
+			this.mock(_Helper).expects("makeUpdateData")
 				.withExactArgs(oFixture.update, "bar")
 				.returns(oUpdateValue);
 			this.mock(_Helper).expects("updateAll")
@@ -4974,7 +4976,7 @@ sap.ui.define([
 			oUpdateValue = {};
 
 		oBinding.oOperation.bAction = true;
-		this.mock(_Cache).expects("makeUpdateData").withExactArgs(["foo"], "bar")
+		this.mock(_Helper).expects("makeUpdateData").withExactArgs(["foo"], "bar")
 			.returns(oUpdateValue);
 		this.mock(_Helper).expects("updateAll")
 			.withExactArgs(sinon.match.same(oBinding.oOperation.mChangeListeners), "",

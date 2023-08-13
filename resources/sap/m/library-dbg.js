@@ -8,6 +8,7 @@
  * Initialization Code and shared classes of library sap.m.
  */
 sap.ui.define([
+	"sap/ui/core/Lib",
 	"sap/ui/Device",
 	"sap/ui/base/DataType",
 	"sap/ui/base/EventProvider",
@@ -36,6 +37,7 @@ sap.ui.define([
 	"./Support" // referenced here to enable the Support feature
 ],
 	function(
+	Library,
 	Device,
 	DataType,
 	EventProvider,
@@ -70,13 +72,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @since 1.4
 	 * @public
 	 */
-	var thisLib = sap.ui.getCore().initLibrary({
+	var thisLib = Library.init({
 		name : "sap.m",
-		version: "1.116.0",
+		version: "1.117.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -176,6 +178,7 @@ sap.ui.define([
 			"sap.m.ToolbarDesign",
 			"sap.m.ToolbarStyle",
 			"sap.m.UploadState",
+			"sap.m.UploadType",
 			"sap.m.ValueColor",
 			"sap.m.ValueCSSColor",
 			"sap.m.VerticalPlacementType",
@@ -2555,6 +2558,28 @@ sap.ui.define([
 	}, DataType.getType("string"));
 
 	/**
+	 * Defines the control that will receive the initial focus in the
+	 * <code>sap.m.SelectDialog</code> or <code>sap.m.TableSelectDialog</code>.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.117.0
+	 */
+	thisLib.SelectDialogInitialFocus = {
+		/**
+		 * Content list.
+		 * @public
+		 */
+		List: "List",
+
+		/**
+		 * SearchField control
+		 * @public
+		 */
+		SearchField: "SearchField"
+	};
+
+	/**
 	 * A subset of input types that fits to a simple API returning one string.
 	 *
 	 * Not available on purpose: button, checkbox, hidden, image, password, radio, range, reset, search, submit.
@@ -4711,6 +4736,25 @@ sap.ui.define([
 	};
 
 	/**
+	 * Type of the upload {@link sap.m.UploadSetItem}.
+	 *
+	 * @enum {string}
+	 * @public
+	 */
+	thisLib.UploadType = {
+		/**
+		 * The file has been uploaded from cloud.
+		 * @public
+		 */
+		Cloud: "Cloud",
+		/**
+		 * The file has been uploaded from your system.
+		 * @public
+		 */
+		Native: "Native"
+	};
+
+	/**
 	 * Available wrapping types for text controls that can be wrapped that enable you
 	 * to display the text as hyphenated.
 	 *
@@ -4905,20 +4949,24 @@ sap.ui.define([
 	thisLib.MultiSelectMode = {
 
 		/**
-		 * Renders the <code>selectAll</code> checkbox (default behavior).
+		 * The Select All functionality is available (default behavior).
+		 * For a <code>sap.m.Table</code>, a Select All checkbox is rendered.
 		 * @public
 		 */
 		Default: "Default",
 
 		/**
-		 * Renders the <code>clearAll</code> icon.
+		 * The Select All functionality is not available. Instead, it is only possible to remove the selection of all items.
+		 * For a <code>sap.m.Table</code>, a Deselect All icon is rendered.
 		 * @public
 		 */
 		ClearAll: "ClearAll",
 
 		/**
-		 * Renders the <code>selectAll</code> checkbox with warning popover.
-		 * Available only for sap.m.Table control
+		 * The Select All functionality is available.
+		 * For a <code>sap.m.Table</code>, a Select All checkbox
+		 * with a warning popover is rendered if not all items could be selected (for example, because of growing).
+		 *
 		 * @public
 		 * @since 1.109
 		 */

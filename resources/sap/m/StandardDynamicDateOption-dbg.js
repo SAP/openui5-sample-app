@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @extends sap.m.DynamicDateOption
 		 *
 		 * @author SAP SE
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 *
 		 * @private
 		 * @alias sap.m.StandardDynamicDateOption
@@ -711,7 +711,7 @@ sap.ui.define([
 				case "SPECIFICMONTHINYEAR":
 					var oDate = new UniversalDate();
 					oDate.setMonth(oValue.values[0]);
-					oDate.setYear(oValue.values[1]);
+					oDate.setFullYear(oValue.values[1]);
 					oDate = UniversalDateUtils.getMonthStartDate(oDate);
 					return UniversalDateUtils.getRange(0, "MONTH", oDate);
 				case "DATE":

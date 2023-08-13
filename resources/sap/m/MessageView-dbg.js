@@ -114,7 +114,7 @@ sap.ui.define([
 	 * The responsiveness of the <code>MessageView</code> is determined by the container in which it is embedded. For that reason the control could not be visualized if the
 	 * container’s sizes are not defined.
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @extends sap.ui.core.Control
 	 * @constructor
@@ -896,7 +896,7 @@ sap.ui.define([
 			if (iCount > 0) {
 				oButton = new Button(this.getId() + "-" + sListName, {
 					text: sListName == "all" ? this._oResourceBundle.getText(sBundleText) : iCount,
-					tooltip: this._oResourceBundle.getText(sBundleText),
+					tooltip: sListName === "all" ? "" : this._oResourceBundle.getText(sBundleText),
 					icon: ICONS[sListName],
 					press: pressClosure(sListName)
 				}).addStyleClass(CSS_CLASS + "Btn" + sListName.charAt(0).toUpperCase() + sListName.slice(1));

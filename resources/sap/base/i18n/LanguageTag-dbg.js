@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-//Provides the LanguageTag object sap.base.i18n.LanguageTag
+//Provides the LanguageTag object module:sap/base/i18n/LanguageTag
 sap.ui.define([
 ], function(
 ) {
@@ -35,7 +35,7 @@ sap.ui.define([
 	 * @param {string} sLanguageTag the language tag identifier, in format en-US or en_US.
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @private
 	 * @ui5-restricted sap.ui.core sap/base/i18n
 	 * @alias module:sap/base/i18n/LanguageTag

@@ -30,7 +30,7 @@ sap.ui.define([], function () {
 			bLoading = oHeader.isLoading(),
 			oError = oHeader.getAggregation("_error"),
 			oToolbar = oHeader.getToolbar(),
-			bIconVisible = oHeader.getIconVisible ? oHeader.getIconVisible() : true;
+			bIconVisible = oHeader.shouldShowIcon();
 
 		oRm.openStart("div", oHeader)
 			.class("sapFCardHeader");

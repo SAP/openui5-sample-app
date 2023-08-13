@@ -38,7 +38,7 @@ sap.ui.define([
 	 * @class The <code>P13nColumnsPanel</code> control is used to define column-specific settings for table personalization.
 	 * @extends sap.m.P13nPanel
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @constructor
 	 * @deprecated as of version 1.98. Use the {@link sap.m.p13n.SelectionPanel} instead.
 	 * @public
@@ -500,8 +500,7 @@ sap.ui.define([
 						minWidth: "12.5rem",
 						maxWidth: "23.077rem",
 						shrinkable: true,
-						moveToOverflow: false,
-						stayInOverflow: false
+						priority: OverflowToolbarPriority.NeverOverflow
 					})
 				}), new Button(this.getId() + "-showSelected", {
 					text: {
@@ -519,7 +518,6 @@ sap.ui.define([
 					type: ButtonType.Transparent,
 					press: jQuery.proxy(this._onSwitchButtonShowSelected, this),
 					layoutData: new OverflowToolbarLayoutData({
-						moveToOverflow: true,
 						priority: OverflowToolbarPriority.High
 					})
 				}), new OverflowToolbarButton({
@@ -532,7 +530,6 @@ sap.ui.define([
 					},
 					press: jQuery.proxy(this.onPressButtonMoveToTop, this),
 					layoutData: new OverflowToolbarLayoutData({
-						moveToOverflow: true,
 						priority: OverflowToolbarPriority.Low,
 						group: 2
 					})
@@ -546,7 +543,6 @@ sap.ui.define([
 					},
 					press: jQuery.proxy(this.onPressButtonMoveUp, this),
 					layoutData: new OverflowToolbarLayoutData({
-						moveToOverflow: true,
 						priority: OverflowToolbarPriority.High,
 						group: 1
 					})
@@ -560,7 +556,6 @@ sap.ui.define([
 					},
 					press: jQuery.proxy(this.onPressButtonMoveDown, this),
 					layoutData: new OverflowToolbarLayoutData({
-						moveToOverflow: true,
 						priority: OverflowToolbarPriority.High,
 						group: 1
 					})
@@ -574,7 +569,6 @@ sap.ui.define([
 					},
 					press: jQuery.proxy(this.onPressButtonMoveToBottom, this),
 					layoutData: new OverflowToolbarLayoutData({
-						moveToOverflow: true,
 						priority: OverflowToolbarPriority.Low,
 						group: 2
 					})

@@ -45,8 +45,6 @@ sap.ui.define([
 	// Binding info factory symbol
 	var BINDING_INFO_FACTORY_SYMBOL = Symbol("bindingInfoFactory");
 
-	var Object_hasOwn = Function.prototype.call.bind(Object.prototype.hasOwnProperty);
-
 	/**
 	 * Constructs and initializes a managed object with the given <code>sId</code> and settings.
 	 *
@@ -253,7 +251,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @public
 	 * @alias sap.ui.base.ManagedObject
 	 */
@@ -1589,7 +1587,7 @@ sap.ui.define([
 	 * @protected
 	 */
 	ManagedObject.prototype.isPropertyInitial = function(sPropertyName) {
-		return !Object_hasOwn(this.mProperties, sPropertyName) && !this.isBound(sPropertyName);
+		return !Object.hasOwn(this.mProperties, sPropertyName) && !this.isBound(sPropertyName);
 	};
 
 	/**

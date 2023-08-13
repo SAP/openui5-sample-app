@@ -1,11 +1,13 @@
 /* global QUnit, sinon, globalThis */
 sap.ui.define([
+	"sap/base/config",
 	"sap/base/Log",
 	"sap/base/i18n/LanguageTag",
 	"sap/base/i18n/Localization",
 	"sap/base/i18n/date/TimezoneUtils",
 	"sap/ui/base/config/URLConfigurationProvider"
 ], function(
+	BaseConfig,
 	Log,
 	LanguageTag,
 	Localization,
@@ -25,6 +27,7 @@ sap.ui.define([
 	QUnit.module("Localization getter", {
 		beforeEach: function() {
 			mConfigStubValues = {};
+			BaseConfig._.invalidate();
 			oSinonSandbox = sinon.createSandbox();
 			oSinonSandbox.stub(globalThis.navigator, "languages").value(["en"]);
 			oSinonSandbox.spy(Log, "warning");
@@ -41,6 +44,7 @@ sap.ui.define([
 	QUnit.test("getLanguageTag, getLanguage and getSAPLogonLanguage", function(assert) {
 		assert.expect(31);
 		function fnAssert(mTestOptions) {
+			BaseConfig._.invalidate();
 			var sSAPLogonLanguage = mTestOptions.SAPLogonLanguage || mTestOptions.language.toUpperCase();
 			var sLanguageTag = mTestOptions.languageTag || mTestOptions.language;
 			var sPreferredCalendarType = mTestOptions.preferredCalendarType || "Gregorian";
@@ -108,17 +112,20 @@ sap.ui.define([
 		oSinonSandbox.stub(TimezoneUtils, "getLocalTimezone").returns("defaultTimezone");
 		assert.strictEqual(Localization.getTimezone(), "defaultTimezone", "getTimezone should return 'defaultTimezone' in case no timezone is set via provider");
 
+		BaseConfig._.invalidate();
 		mConfigStubValues = {
 			"sapTimezone": "Europe/Berlin",
 			"sapUiTimezone": "Europe/Paris"
 		};
 		assert.strictEqual(Localization.getTimezone(), "Europe/Berlin", "getTimezone should return 'Europe/Berlin'");
 
+		BaseConfig._.invalidate();
 		mConfigStubValues = {
 			"sapUiTimezone": "Europe/Paris"
 		};
 		assert.strictEqual(Localization.getTimezone(), "Europe/Paris", "getTimezone should return 'Europe/Paris'");
 
+		BaseConfig._.invalidate();
 		mConfigStubValues = {
 			"sapUiTimezone": "notExistingTimezone"
 		};
@@ -133,12 +140,14 @@ sap.ui.define([
 		assert.expect(3);
 		assert.strictEqual(Localization.getRTL(), false, "getRTL should return 'false' derived from the locale since 'rtl' was not set via provider.");
 
+		BaseConfig._.invalidate();
 		mConfigStubValues = {
 			"sapRtl": false,
 			"sapUiRtl": true
 		};
 		assert.strictEqual(Localization.getRTL(), false, "getRTL should return 'false' derived from parameter 'sapRtl'.");
 
+		BaseConfig._.invalidate();
 		mConfigStubValues = {
 			"sapUiRtl": true
 		};
@@ -149,12 +158,15 @@ sap.ui.define([
 		assert.expect(3);
 		assert.deepEqual(Localization.getSupportedLanguages(), [], "getSupportedLanguages should return '[]'");
 
+		BaseConfig._.invalidate();
 		mConfigStubValues = {
 			"sapUiXxSupportedLanguages": ['*']
 		};
 		assert.deepEqual(Localization.getSupportedLanguages(), [], "getSupportedLanguages should return '[]'");
 
 		oSinonSandbox.stub(Localization, "getLanguagesDeliveredWithCore").returns(["languages", "delivered", "with", "core"]);
+
+		BaseConfig._.invalidate();
 		mConfigStubValues = {
 			"sapUiXxSupportedLanguages": ['default']
 		};
@@ -174,31 +186,42 @@ sap.ui.define([
 	});
 
 	QUnit.test("setLanguage", function(assert) {
-		assert.expect(16);
-		var sExpectedLanguage, bExpectedRtl = false, bOldRtl = Localization.getRTL();
+		assert.expect(29);
+		var sExpectedLanguageTag, sExpectedLanguage, sExpectedSAPLogonLanguage, bExpectedRtl = false, bOldRtl = Localization.getRTL();
 		function localizationChanged(oEvent) {
-			assert.strictEqual(Localization.getLanguageTag().toString(), sExpectedLanguage, "Should return expected LanguageTag '" + sExpectedLanguage + "'");
-			assert.strictEqual(Localization.getSAPLogonLanguage(), sExpectedLanguage.toUpperCase(), "Should return expected SAPLogonLanguage '" + sExpectedLanguage.toUpperCase() + "'");
+			assert.strictEqual(Localization.getLanguageTag().toString(), sExpectedLanguageTag, "Should return expected LanguageTag '" + sExpectedLanguageTag + "'");
+			assert.strictEqual(Localization.getLanguage(), sExpectedLanguage || sExpectedLanguageTag, "Should return expected LanguageTag '" + sExpectedLanguage || sExpectedLanguageTag + "'");
+			assert.strictEqual(Localization.getSAPLogonLanguage(), sExpectedSAPLogonLanguage || sExpectedLanguageTag.toUpperCase(), "Should return expected SAPLogonLanguage '" + sExpectedSAPLogonLanguage || sExpectedLanguageTag.toUpperCase() + "'");
 			assert.strictEqual(Localization.getRTL(), bExpectedRtl, "Should return expected rtl '" + bExpectedRtl + "'");
-			assert.strictEqual(oEvent.language, sExpectedLanguage, "Change event should contain the correct language'" + sExpectedLanguage + "'");
+			assert.strictEqual(oEvent.language, sExpectedLanguageTag, "Change event should contain the correct language'" + sExpectedLanguageTag + "'");
 			if (bExpectedRtl !== bOldRtl) {
-				assert.strictEqual(oEvent.rtl, bExpectedRtl, "Change event should contain the correct rtl '" + sExpectedLanguage + "'");
+				assert.strictEqual(oEvent.rtl, bExpectedRtl, "Change event should contain the correct rtl '" + sExpectedLanguageTag + "'");
 				bOldRtl = oEvent.rtl;
 			}
 		}
 		Localization.attachChange(localizationChanged);
-		sExpectedLanguage = "de";
+		sExpectedLanguageTag = "de";
+		Localization.setLanguage(sExpectedLanguageTag);
+
+		sExpectedSAPLogonLanguage = "DE";
+		sExpectedLanguageTag = "de-CH";
+		Localization.setLanguage(sExpectedLanguageTag);
+
+		sExpectedSAPLogonLanguage = "EN";
+		sExpectedLanguageTag = "en-US";
+		sExpectedLanguage = "en_US";
 		Localization.setLanguage(sExpectedLanguage);
 
-		sExpectedLanguage = "fa";
+		sExpectedLanguage = sExpectedSAPLogonLanguage = undefined;
+		sExpectedLanguageTag = "fa";
 		bExpectedRtl = true;
-		Localization.setLanguage(sExpectedLanguage);
+		Localization.setLanguage(sExpectedLanguageTag);
 		// Setting same language again shouldn't trigger a change event
-		Localization.setLanguage(sExpectedLanguage);
+		Localization.setLanguage(sExpectedLanguageTag);
 
-		sExpectedLanguage = "us";
+		sExpectedLanguageTag = "us";
 		bExpectedRtl = false;
-		Localization.setLanguage("en", sExpectedLanguage);
+		Localization.setLanguage("en", sExpectedLanguageTag);
 
 		assert.throws(function() {
 			Localization.setLanguage("invalidLanguage");

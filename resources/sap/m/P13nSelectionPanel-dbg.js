@@ -22,6 +22,9 @@ sap.ui.define([
 	// shortcut for sap.m.P13nPanelType
 	var P13nPanelType = library.P13nPanelType;
 
+	// shortcut for sap.ui.core.VerticalAlign
+	var OverflowToolbarPriority = library.OverflowToolbarPriority;
+
 	/**
 	 * Constructor for a new P13nSelectionPanel.
 	 *
@@ -30,7 +33,7 @@ sap.ui.define([
 	 * @class The P13nSelectionPanel control is used to define selection settings like the visibility or the order of items.
 	 * @extends sap.m.P13nPanel
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @constructor
 	 * @private
 	 * @since 1.46.0
@@ -429,8 +432,7 @@ sap.ui.define([
 						minWidth: "12.5rem",
 						maxWidth: "23.077rem",
 						shrinkable: true,
-						moveToOverflow: false,
-						stayInOverflow: false
+						priority: OverflowToolbarPriority.NeverOverflow
 					// priority: OverflowToolbarPriority.High
 					})
 				})

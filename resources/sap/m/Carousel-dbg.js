@@ -126,7 +126,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -679,7 +679,7 @@ sap.ui.define([
 			});
 		}
 
-		this._adjustHUDVisibility();
+		this._adjustArrowsVisibility();
 		this._updateItemsAttributes();
 		this._updatePageIndicator();
 
@@ -716,26 +716,42 @@ sap.ui.define([
 	};
 
 	/**
-	 * Sets HUD control's visibility after page has changed
+	 * Sets Arrows' visibility after page has changed
 	 *
 	 * @private
 	 */
-	Carousel.prototype._adjustHUDVisibility = function() {
+	Carousel.prototype._adjustArrowsVisibility = function() {
 		if (Device.system.desktop && !this._loops() && this.getPages().length > 1) {
 			//update HUD arrow visibility for left- and rightmost pages
 			var $HUDContainer = this.$('hud');
+			var $ArrowPrev = this.$("arrow-previous");
+			var $ArrowNext = this.$("arrow-next");
 			var iFirstDisplayedPageIndex = this._aAllActivePagesIndexes[0];
 			var iLastDisplayedPageIndex = this._aAllActivePagesIndexes[this._aAllActivePagesIndexes.length - 1];
 
 			//clear marker classes first
-			$HUDContainer.removeClass(Carousel._LEFTMOST_CLASS).removeClass(Carousel._RIGHTMOST_CLASS);
+			if (this.getArrowsPlacement() === CarouselArrowsPlacement.Content) {
+				$HUDContainer.removeClass(Carousel._LEFTMOST_CLASS).removeClass(Carousel._RIGHTMOST_CLASS);
+			} else {
+				$ArrowPrev.removeClass(Carousel._LEFTMOST_CLASS);
+				$ArrowNext.removeClass(Carousel._RIGHTMOST_CLASS);
+			}
 
 			if (iFirstDisplayedPageIndex === 0) {
-				$HUDContainer.addClass(Carousel._LEFTMOST_CLASS);
+				if (this.getArrowsPlacement() === CarouselArrowsPlacement.Content) {
+					$HUDContainer.addClass(Carousel._LEFTMOST_CLASS);
+				} else {
+					$ArrowPrev.addClass(Carousel._LEFTMOST_CLASS);
+				}
 			}
 
 			if (iLastDisplayedPageIndex === this.getPages().length - 1) {
-				$HUDContainer.addClass(Carousel._RIGHTMOST_CLASS);
+				if (this.getArrowsPlacement() === CarouselArrowsPlacement.Content) {
+					$HUDContainer.addClass(Carousel._RIGHTMOST_CLASS);
+				} else {
+					$ArrowNext.addClass(Carousel._RIGHTMOST_CLASS);
+
+				}
 			}
 		}
 	};
@@ -1517,7 +1533,7 @@ sap.ui.define([
 			this._setWidthOfPages(iNumberOfItemsToShow);
 		}
 
-		this._adjustHUDVisibility();
+		this._adjustArrowsVisibility();
 		this._updateItemsAttributes();
 		this._updatePageIndicator();
 

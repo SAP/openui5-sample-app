@@ -2042,14 +2042,15 @@ sap.ui.define([
 				a : "abc",
 				qux : "qux",
 				x : "xyz"
-			};
+			},
+			oHelperMock = this.mock(_Helper);
 
 		// code under test
 		_Helper.deleteProperty(oObject, "bar");
 
 		assert.deepEqual(oObject, {foo : "foo", baz : "baz"});
 
-		this.mock(_Helper).expects("drillDown")
+		oHelperMock.expects("drillDown")
 			.withExactArgs(sinon.match.same(oObject), ["foo", "bar", "baz"])
 			.returns(oDrilledDown);
 
@@ -2057,6 +2058,17 @@ sap.ui.define([
 		_Helper.deleteProperty(oObject, "foo/bar/baz/qux");
 
 		assert.deepEqual(oDrilledDown, {a : "abc", x : "xyz"});
+
+		[undefined, null].forEach(function (vValue) {
+			oHelperMock.expects("drillDown")
+				.withExactArgs(sinon.match.same(oObject), ["qux"])
+				.returns(vValue);
+
+			// code under test
+			_Helper.deleteProperty(oObject, "qux/foo");
+
+			assert.deepEqual(oObject, {foo : "foo", baz : "baz"}, "unchanged");
+		});
 	});
 
 	//*********************************************************************************************
@@ -5207,5 +5219,192 @@ sap.ui.define([
 					&& oParameter.message === "Error message";
 			}));
 		});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("setCount", function () {
+		var oHelperMock = this.mock(_Helper);
+
+		oHelperMock.expects("updateExisting")
+			.withExactArgs("~mChangeListeners~", "~sPath~", "~aCollection~", {$count : 42});
+
+		// code under test
+		_Helper.setCount("~mChangeListeners~", "~sPath~", "~aCollection~", 42);
+
+		oHelperMock.expects("updateExisting")
+			.withExactArgs("~mChangeListeners~", "~sPath~", "~aCollection~", {$count : 23});
+
+		// code under test
+		_Helper.setCount("~mChangeListeners~", "~sPath~", "~aCollection~", "23");
+	});
+
+	//*********************************************************************************************
+	QUnit.test("addToCount", function () {
+		var aCollection = [];
+
+		aCollection.$count = 42;
+
+		this.mock(_Helper).expects("setCount")
+			.withExactArgs("~mChangeListeners~", "~sPath~", aCollection, 41);
+
+		// code under test
+		_Helper.addToCount("~mChangeListeners~", "~sPath~", aCollection, -1);
+
+		delete aCollection.$count;
+
+		// code under test
+		_Helper.addToCount("~mChangeListeners~", "~sPath~", aCollection, 1);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("updateNestedCreates: no deep create", function (assert) {
+		this.mock(_Helper).expects("getQueryOptionsForPath").twice()
+			.withExactArgs("~mQueryOptions~", "path/to/entity")
+			.returns({}); // no $expand
+
+		assert.strictEqual(
+			// code under test - not even a nested ODLB
+			_Helper.updateNestedCreates("~mChangeListeners~", "~mQueryOptions~", "path/to/entity"),
+			false);
+
+		assert.strictEqual(
+			// code under test - no nested create in foo
+			_Helper.updateNestedCreates("~mChangeListeners~", "~mQueryOptions~", "path/to/entity",
+				{/*oCacheEntity*/}, {/*oCreatedEntity*/}, {foo : "~$select~"}),
+			false);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("updateNestedCreates: single", function (assert) {
+		const oHelperMock = this.mock(_Helper);
+		oHelperMock.expects("getQueryOptionsForPath").exactly(3)
+			.withExactArgs("~mQueryOptions~", "path/to/entity")
+			.returns({$expand : {foo : "~", nested : "~"}});
+		oHelperMock.expects("drillDown").exactly(3)
+			.withExactArgs("~target~", "foo").returns(undefined);
+
+		oHelperMock.expects("drillDown").withExactArgs("~target~", "nested").returns({});
+
+		assert.deepEqual(
+			_Helper.updateNestedCreates("~mChangeListeners~", "~mQueryOptions~", "path/to/entity",
+				"~target~", "~created~"),
+			true);
+
+		oHelperMock.expects("drillDown").withExactArgs("~target~", "nested").returns([]);
+
+		assert.deepEqual(
+			_Helper.updateNestedCreates("~mChangeListeners~", "~mQueryOptions~", "path/to/entity",
+				"~target~", "~created~"),
+			false);
+
+		oHelperMock.expects("drillDown").withExactArgs("~target~", "nested").returns(undefined);
+
+		assert.deepEqual(
+			_Helper.updateNestedCreates("~mChangeListeners~", "~mQueryOptions~", "path/to/entity",
+				"~target~", "~created~"),
+			false);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("updateNestedCreates: collections", function (assert) {
+		var oCacheEntity = {
+				nested1 : ["n/a"],
+				nested2 : ["n/a"],
+				nested3 : ["n/a"]
+			},
+			oCreatedEntity = {
+				nested1 : ["~created11~", "~created12~"],
+				nested2 : ["~created21~"]
+			},
+			oHelperMock = this.mock(_Helper),
+			mSelectForMetaPath = {
+				nested1 : "~$select1~",
+				"nested1/foo" : "~$select1foo~",
+				"nested1/bar" : "~$select1bar~",
+				nested2 : undefined,
+				"nested2/foo" : "~$select2foo~",
+				nested3 : "~$select3~"
+			};
+
+		oHelperMock.expects("updateNestedCreates")
+			.withExactArgs("~mChangeListeners~", "~mQueryOptions~", "path/to/entity",
+				sinon.match.same(oCacheEntity), sinon.match.same(oCreatedEntity),
+				sinon.match.same(mSelectForMetaPath))
+			.callThrough(); // initial call
+		oCacheEntity.nested1.$postBodyCollection = "~postBodyCollection1~";
+		// nested1
+		oHelperMock.expects("setCount")
+			.withExactArgs("~mChangeListeners~", "path/to/entity/nested1",
+				sinon.match(function (aEntities) { return aEntities === oCacheEntity.nested1; }),
+				2)
+			.callsFake(function () {
+				assert.strictEqual(oCacheEntity.nested1.$count, undefined);
+				assert.ok("$count" in oCacheEntity.nested1);
+			});
+		// created11
+		oHelperMock.expects("getPrivateAnnotation")
+			.withExactArgs("~created11~", "predicate").returns("~predicate11~");
+		oHelperMock.expects("updateNestedCreates")
+			.withExactArgs("~mChangeListeners~", "~mQueryOptions~",
+				"path/to/entity/nested1~predicate11~", "~created11~", "~created11~",
+				{foo : "~$select1foo~", bar : "~$select1bar~"});
+		// created12
+		oHelperMock.expects("getPrivateAnnotation")
+			.withExactArgs("~created12~", "predicate").returns("~predicate12~");
+		oHelperMock.expects("updateNestedCreates")
+			.withExactArgs("~mChangeListeners~", "~mQueryOptions~",
+				"path/to/entity/nested1~predicate12~", "~created12~", "~created12~",
+				{foo : "~$select1foo~", bar : "~$select1bar~"});
+		// nested2
+		oHelperMock.expects("setCount")
+			.withExactArgs("~mChangeListeners~", "path/to/entity/nested2",
+				sinon.match(function (aEntities) { return aEntities === oCacheEntity.nested2; }),
+				1);
+		// created21
+		oHelperMock.expects("getPrivateAnnotation")
+			.withExactArgs("~created21~", "predicate").returns("~predicate21~");
+		oHelperMock.expects("updateNestedCreates")
+			.withExactArgs("~mChangeListeners~", "~mQueryOptions~",
+				"path/to/entity/nested2~predicate21~", "~created21~", "~created21~",
+				{foo : "~$select2foo~"});
+
+		assert.strictEqual(
+			// code under test
+			_Helper.updateNestedCreates("~mChangeListeners~", "~mQueryOptions~", "path/to/entity",
+				oCacheEntity, oCreatedEntity, mSelectForMetaPath),
+			true);
+
+		assert.deepEqual(oCacheEntity, {
+			nested1 : ["~created11~", "~created12~"],
+			nested2 : ["~created21~"]
+		});
+		assert.strictEqual(oCacheEntity.nested1.$created, 0);
+		assert.deepEqual(oCacheEntity.nested1.$byPredicate, {
+			"~predicate11~" : "~created11~",
+			"~predicate12~" : "~created12~"
+		});
+		assert.strictEqual(oCacheEntity.nested2.$created, 0);
+		assert.deepEqual(oCacheEntity.nested2.$byPredicate, {
+			"~predicate21~" : "~created21~"
+		});
+		assert.notOk("$postBodyCollection" in oCacheEntity.nested1);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("makeUpdateData", function (assert) {
+		assert.deepEqual(_Helper.makeUpdateData(["Age"], 42), {Age : 42});
+		assert.deepEqual(_Helper.makeUpdateData(["Address", "City"], "Walldorf"),
+			{Address : {City : "Walldorf"}});
+		assert.deepEqual(_Helper.makeUpdateData(["Age"], 42, /*bUpdating*/true), {
+			Age : 42,
+			"Age@$ui5.updating" : true
+		});
+		assert.deepEqual(_Helper.makeUpdateData(["Address", "City"], "Walldorf", /*bUpdating*/true),
+			{
+				Address : {
+					City : "Walldorf",
+					"City@$ui5.updating" : true
+				}
+			});
 	});
 });

@@ -15,6 +15,7 @@ sap.ui.define([
 	'sap/ui/base/ObjectPool',
 	'./Control',
 	'./Element',
+	'./EventBus',
 	'./FocusHandler',
 	'./IntervalTrigger',
 	'./RenderManager',
@@ -23,16 +24,17 @@ sap.ui.define([
 	'./StaticArea',
 	"sap/base/assert",
 	"sap/base/Log",
+	"sap/base/i18n/Localization",
 	"sap/base/util/Version",
 	"sap/base/util/uid",
 	"sap/base/util/extend",
 	"sap/base/util/each",
 	"sap/base/util/deepExtend",
-	"sap/ui/thirdparty/jquery",
 	"sap/ui/events/F6Navigation",
 	"sap/ui/events/isMouseEventDelayed",
 	"sap/ui/base/EventProvider",
-	"sap/ui/core/Configuration",
+	"sap/ui/thirdparty/jquery",
+	"sap/ui/thirdparty/jqueryui/jquery-ui-position",
 	"sap/ui/dom/jquery/control", // jQuery Plugin "control"
 	"sap/ui/dom/jquery/Focusable", // jQuery Plugin "firstFocusableDomRef"
 	"sap/ui/dom/jquery/rect" // jQuery Plugin "rect"
@@ -44,6 +46,7 @@ sap.ui.define([
 	ObjectPool,
 	Control,
 	Element,
+	EventBus,
 	FocusHandler,
 	IntervalTrigger,
 	RenderManager,
@@ -52,16 +55,17 @@ sap.ui.define([
 	StaticArea,
 	assert,
 	Log,
+	Localization,
 	Version,
 	uid,
 	extend,
 	each,
 	deepExtend,
-	jQuery,
 	F6Navigation,
 	isMouseEventDelayed,
 	EventProvider,
-	Configuration
+	jQuery
+	//jquery-ui-position
 	//control
 	//Focusable
 	//rect
@@ -83,6 +87,8 @@ sap.ui.define([
 
 	var oResizeObserver;
 	var sResizeHandlerIdAttribute = "sapUiPopupResize";
+
+	var oEventBus = new EventBus();
 
 	if (window.ResizeObserver) {
 		oResizeObserver = new window.ResizeObserver(function(aEntries){
@@ -217,20 +223,6 @@ sap.ui.define([
 	 * <code>autoclose</code> or <code>modal</code> is enabled. E.g. the <code>RichTextEditor</code> with running
 	 * TinyMCE uses this method to be able to focus the popups of the TinyMCE if the <code>RichTextEditor</code> runs
 	 * within a <code>Popup</code>/<code>Dialog</code> etc.
-	 *
-	 * To provide an additional DOM element that can get the focus the following should be done:
-	 * <pre>
-	 *   // create an object with the corresponding DOM-ID
-	 *   var oObject = {
-	 *     id : "this_is_the_most_valuable_id_of_the_DOM_element"
-	 *   };
-	 *
-	 *   // add the event prefix for adding an element to the ID of the corresponding Popup
-	 *   var sEventId = "sap.ui.core.Popup.addFocusableContent-" + oPopup.getId();
-	 *
-	 *   // fire the event with the created event-ID and the object with the DOM-ID
-	 *   sap.ui.getCore().getEventBus().publish("sap.ui", sEventId, oObject);
-	 * </pre>
 	 *
 	 * <strong>Since 1.75</strong>, DOM elements which have the attribute
 	 * <code>data-sap-ui-integration-popup-content</code> are considered to be part of all opened popups. Those DOM
@@ -550,7 +542,7 @@ sap.ui.define([
 	var Layer = BaseObject.extend("sap.ui.core.Popup.Layer", {
 		constructor: function() {
 			var sDomString = this.getDomString();
-			this._$Ref = jQuery(sDomString).appendTo(sap.ui.getCore().getStaticAreaRef());
+			this._$Ref = jQuery(sDomString).appendTo(StaticArea.getDomRef());
 		}
 	});
 
@@ -625,7 +617,7 @@ sap.ui.define([
 			this._$Ref[0].style.display = "none";
 			this._$Ref[0].style.visibility = "hidden";
 
-			this._$Ref.appendTo(sap.ui.getCore().getStaticAreaRef());
+			this._$Ref.appendTo(StaticArea.getDomRef());
 		}
 	};
 
@@ -918,7 +910,7 @@ sap.ui.define([
 
 		this._iZIndex = this._iZIndex === this.getLastZIndex() ? this._iZIndex : this.getNextZIndex();
 
-		var oStaticArea = sap.ui.getCore().getStaticAreaRef();
+		var oStaticArea = StaticArea.getDomRef();
 		$Ref.css({
 			"position" : "absolute",
 			"visibility" : "hidden"
@@ -966,7 +958,7 @@ sap.ui.define([
 
 		if (this._shouldGetFocusAfterOpen()) {
 			if (this._sInitialFocusId) {
-				oControl = sap.ui.getCore().byId(this._sInitialFocusId);
+				oControl = Element.registry.get(this._sInitialFocusId);
 
 				if (oControl) {
 					oDomRefToFocus = oControl.getFocusDomRef();
@@ -1048,7 +1040,7 @@ sap.ui.define([
 	 */
 	Popup.prototype._duringOpen = function(bOpenAnimated) {
 		var $Ref = this._$(/* bForceReRender */false, /* bGetOnly */true),
-			oStaticArea = sap.ui.getCore().getStaticAreaRef(),
+			oStaticArea = StaticArea.getDomRef(),
 			oFirstFocusableInStaticArea = document.getElementById(oStaticArea.id + "-firstfe");
 
 		Popup._clearSelection();
@@ -1159,7 +1151,7 @@ sap.ui.define([
 					var oData = {
 						domRef: oDomRef
 					};
-					sap.ui.getCore().getEventBus().publish("sap.ui", sEventId, oData);
+					oEventBus.publish("sap.ui", sEventId, oData);
 
 					bContains = oData.contains;
 				}
@@ -1266,7 +1258,7 @@ sap.ui.define([
 								// Parent popup can check whether the current focused element is inside the parent popup. If it's still inside the
 								// parent popup, it keeps open, otherwise parent popup is also closed.
 								var sEventId = "sap.ui.core.Popup.onFocusEvent-" + sParentPopupId;
-								sap.ui.getCore().getEventBus().publish("sap.ui", sEventId, oEvent);
+								oEventBus.publish("sap.ui", sEventId, oEvent);
 							}
 						}
 					}.bind(this), iDuration);
@@ -1336,7 +1328,7 @@ sap.ui.define([
 			// Assumption: application did not move the content in the meantime!
 			if (this._bContentAddedToStatic ) {
 				//Fix for RTE in PopUp
-				sap.ui.getCore().getEventBus().publish("sap.ui","__beforePopupClose", { domNode : this._$().get(0) });
+				oEventBus.publish("sap.ui","__beforePopupClose", { domNode : this._$().get(0) });
 				var oStatic = StaticArea.getUIArea();
 				oStatic.removeContent(oStatic.indexOfContent(this.oContent), true);
 			} else if (this._bUIAreaPatched) { // if the getUIArea function is patched, delete it
@@ -1518,22 +1510,17 @@ sap.ui.define([
 	 */
 	Popup.getCurrentFocusInfo = function() {
 		var _oPreviousFocus = null;
-		var focusedControlId = sap.ui.getCore().getCurrentFocusedControlId();
-		if (focusedControlId) {
-			// an SAPUI5 control was focused before
-			var oFocusedControl = sap.ui.getCore().byId(focusedControlId);
+		var oActiveElement = Element.closestTo(document.activeElement);
+		if (oActiveElement) {
 			_oPreviousFocus = {
-				'sFocusId' : focusedControlId,
-				// add empty oFocusInfo to avoid the need for all recipients to check
-				'oFocusInfo' : oFocusedControl ? oFocusedControl.getFocusInfo() : {}
+				'sFocusId' : oActiveElement.getId(),
+				'oFocusInfo' : oActiveElement.getFocusInfo()
 			};
 		} else {
 			// not an SAPUI5 control... but if something has focus, save as much information about it as available
-			var oElement = document.activeElement;
-
 			_oPreviousFocus = {
-				'sFocusId' : oElement.id,
-				'oFocusedElement' : oElement,
+				'sFocusId' : document.activeElement.id,
+				'oFocusedElement' : document.activeElement,
 				// add empty oFocusInfo to avoid the need for all recipients to check
 				'oFocusInfo': {}
 			};
@@ -1568,7 +1555,7 @@ sap.ui.define([
 		};
 
 		if (oPreviousFocus) {
-			var oFocusedControl = sap.ui.getCore().byId(oPreviousFocus.sFocusId);
+			var oFocusedControl = Element.registry.get(oPreviousFocus.sFocusId);
 			if (oFocusedControl) {
 
 				// if an SAPUI5 control had been focused, just re-focus it
@@ -1761,7 +1748,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Popup.prototype._applyPosition = function(oPosition) {
-		var bRtl = Configuration.getRTL();
+		var bRtl = Localization.getRTL();
 		var $Ref = this._$();
 
 		if ($Ref.length) {
@@ -2521,7 +2508,7 @@ sap.ui.define([
 		var that = this;
 
 		each(that._mEvents, function(sEventId, fnListener) {
-			sap.ui.getCore().getEventBus().subscribe("sap.ui", sEventId, fnListener, that);
+			oEventBus.subscribe("sap.ui", sEventId, fnListener, that);
 		});
 
 		this._bEventBusEventsRegistered = true;
@@ -2536,7 +2523,7 @@ sap.ui.define([
 		var that = this;
 
 		each(that._mEvents, function(sEventId, fnListener) {
-			sap.ui.getCore().getEventBus().unsubscribe("sap.ui", sEventId, fnListener, that);
+			oEventBus.unsubscribe("sap.ui", sEventId, fnListener, that);
 		});
 
 		delete this._bEventBusEventsRegistered;
@@ -2632,7 +2619,7 @@ sap.ui.define([
 				if ($ContentRef.length > 0) {
 					RenderManager.preserveContent($ContentRef[0], /* bPreserveRoot */ true, /* bPreserveNodesWithId */ false);
 				}
-				sap.ui.getCore().createRenderManager().render(this.oContent, sap.ui.getCore().getStaticAreaRef());
+				new RenderManager().render(this.oContent, StaticArea.getDomRef());
 				$ContentRef = this.oContent.$();
 			}
 		} else if (this.oContent instanceof Element) {
@@ -2771,7 +2758,7 @@ sap.ui.define([
 			var aChildPopups = this.getChildPopups();
 			bExtended = aChildPopups.some(function(sChildID) {
 				var sEventId = sEventPrefix + sChildID;
-				sap.ui.getCore().getEventBus().publish("sap.ui", sEventId, oData);
+				oEventBus.publish("sap.ui", sEventId, oData);
 
 				return oData.extended;
 			});
@@ -2795,7 +2782,7 @@ sap.ui.define([
 
 		if ($BlockRef.length === 0) {
 			$BlockRef = jQuery('<div id="sap-ui-blocklayer-popup" tabindex="0" class="' + sClassName + '"></div>');
-			$BlockRef.appendTo(sap.ui.getCore().getStaticAreaRef());
+			$BlockRef.appendTo(StaticArea.getDomRef());
 		} else {
 			$BlockRef.removeClass().addClass(sClassName);
 		}
@@ -3180,7 +3167,7 @@ sap.ui.define([
 	 */
 	Popup.prototype.addChildToPopup = function(sParentPopupId, sChildPopupId) {
 		var sEventId = "sap.ui.core.Popup.addFocusableContent-" + sParentPopupId;
-		sap.ui.getCore().getEventBus().publish("sap.ui", sEventId, {
+		oEventBus.publish("sap.ui", sEventId, {
 			id : sChildPopupId
 		});
 	};
@@ -3197,7 +3184,7 @@ sap.ui.define([
 	 */
 	Popup.prototype.removeChildFromPopup = function(sParentPopupId, sChildPopupId) {
 		var sEventId = "sap.ui.core.Popup.removeFocusableContent-" + sParentPopupId;
-		sap.ui.getCore().getEventBus().publish("sap.ui", sEventId, {
+		oEventBus.publish("sap.ui", sEventId, {
 			id : sChildPopupId
 		});
 	};
@@ -3210,7 +3197,7 @@ sap.ui.define([
 	 */
 	Popup.prototype.closePopup = function(sPopupId) {
 		var sEventId = "sap.ui.core.Popup.closePopup-" + sPopupId;
-		sap.ui.getCore().getEventBus().publish("sap.ui", sEventId);
+		oEventBus.publish("sap.ui", sEventId);
 	};
 
 	/**
@@ -3224,7 +3211,7 @@ sap.ui.define([
 	 */
 	Popup.prototype.increaseZIndex = function(sPopupId, bIsParent) {
 		var sEventId = "sap.ui.core.Popup.increaseZIndex-" + sPopupId;
-		sap.ui.getCore().getEventBus().publish("sap.ui", sEventId, {
+		oEventBus.publish("sap.ui", sEventId, {
 			isFromParentPopup : bIsParent ? bIsParent : false
 		});
 	};
@@ -3242,7 +3229,7 @@ sap.ui.define([
 	 * @param {object}
 	 *            mParameters contain all necessary parameters
 	 * @param {object}
-	 *            mParameter.that is the control that calls this function.
+	 *            mParameters.that is the control that calls this function.
 	 *            Needed for debug logging info
 	 * @param {object}
 	 *            mParameters.event is the event that is being forwarded
@@ -3306,7 +3293,7 @@ sap.ui.define([
 				// if the element is a control the focus should be called
 				// via the control
 				// especially if the control has an individual focus DOM-ref
-				var oControl = sap.ui.getCore().byId(oFocusDomRef.id);
+				var oControl = Element.registry.get(oFocusDomRef.id);
 				if (oControl instanceof Control) {
 					Log.debug("Focus will be handled by " + oControl.getMetadata().getName(), "", sName);
 				} else {

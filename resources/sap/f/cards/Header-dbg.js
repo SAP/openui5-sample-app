@@ -46,7 +46,7 @@ sap.ui.define([
 	 * @implements sap.f.cards.IHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -236,6 +236,14 @@ sap.ui.define([
 		oAvatar.setInitials(this.getIconInitials());
 		oAvatar.setTooltip(this.getIconAlt());
 		oAvatar.setBackgroundColor(this.getIconBackgroundColor());
+	};
+
+	/**
+	 * @protected
+	 * @returns {boolean} If the icon should be shown.
+	 */
+	Header.prototype.shouldShowIcon = function () {
+		return this.getIconVisible();
 	};
 
 	/**

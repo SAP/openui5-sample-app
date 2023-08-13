@@ -6,6 +6,9 @@
 
 // Provides control sap.m.Dialog.
 sap.ui.define([
+	"sap/ui/core/ControlBehavior",
+	"sap/base/i18n/Localization",
+	"sap/ui/core/Lib",
 	"./Bar",
 	"./InstanceManager",
 	"./AssociativeOverflowToolbar",
@@ -37,6 +40,9 @@ sap.ui.define([
 	"sap/ui/dom/jquery/Focusable"
 ],
 function(
+	ControlBehavior,
+	Localization,
+	Library,
 	Bar,
 	InstanceManager,
 	AssociativeOverflowToolbar,
@@ -88,7 +94,7 @@ function(
 		// shortcut for sap.m.TitleAlignment
 		var TitleAlignment = library.TitleAlignment;
 
-		var sAnimationMode = Core.getConfiguration().getAnimationMode();
+		var sAnimationMode = ControlBehavior.getAnimationMode();
 		var bUseAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
 
 		// the time should be longer the longest transition in the CSS (200ms),
@@ -167,7 +173,7 @@ function(
 		*
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.116.0
+		* @version 1.117.0
 		*
 		* @constructor
 		* @public
@@ -491,7 +497,7 @@ function(
 			return this._headerTitle ? this._headerTitle.getId() : false;
 		});
 
-		Dialog._bPaddingByDefault = (Core.getConfiguration().getCompatibilityVersion("sapMDialogWithPadding").compareTo("1.16") < 0);
+		Dialog._bPaddingByDefault = (Configuration.getCompatibilityVersion("sapMDialogWithPadding").compareTo("1.16") < 0);
 
 		Dialog._initIcons = function () {
 			if (Dialog._mIcons) {
@@ -516,7 +522,7 @@ function(
 		Dialog._getHeaderToolbarAriaLabelledByText = function() {
 			if (!Dialog._oHeaderToolbarInvisibleText) {
 				Dialog._oHeaderToolbarInvisibleText = new InvisibleText("__headerActionsToolbar-invisibleText", {
-					text: Core.getLibraryResourceBundle("sap.m").getText("ARIA_LABEL_TOOLBAR_HEADER_ACTIONS")
+					text: Library.getResourceBundleFor("sap.m").getText("ARIA_LABEL_TOOLBAR_HEADER_ACTIONS")
 				}).toStatic();
 			}
 
@@ -534,7 +540,7 @@ function(
 		Dialog._getFooterToolbarAriaLabelledByText = function() {
 			if (!Dialog._oFooterToolbarInvisibleText) {
 				Dialog._oFooterToolbarInvisibleText = new InvisibleText("__footerActionsToolbar-invisibleText", {
-					text: Core.getLibraryResourceBundle("sap.m").getText("ARIA_LABEL_TOOLBAR_FOOTER_ACTIONS")
+					text: Library.getResourceBundleFor("sap.m").getText("ARIA_LABEL_TOOLBAR_FOOTER_ACTIONS")
 				}).toStatic();
 			}
 
@@ -548,7 +554,7 @@ function(
 			var that = this;
 			this._oManuallySetSize = null;
 			this._oManuallySetPosition = null;
-			this._bRTL = Core.getConfiguration().getRTL();
+			this._bRTL = Localization.getRTL();
 
 			// used to judge if enableScrolling needs to be disabled
 			this._scrollContentList = ["sap.m.NavContainer", "sap.m.Page", "sap.m.ScrollContainer", "sap.m.SplitContainer", "sap.m.MultiInput", "sap.m.SimpleFixFlex"];
@@ -628,7 +634,7 @@ function(
 
 			this._createToolbarButtons();
 
-			if (Core.getConfiguration().getAccessibility() && this.getState() != ValueState.None) {
+			if (ControlBehavior.isAccessibilityEnabled() && this.getState() != ValueState.None) {
 				if (!this._oValueState) {
 					this._oValueState = new InvisibleText();
 
@@ -1614,7 +1620,7 @@ function(
 		};
 
 		/**
-		 * Returns the <code>sap.ui.core.ScrollEnablement</code> delegate which is used with this control.
+		 * Returns the <code>sap.ui.core.delegate.ScrollEnablement</code> delegate which is used with this control.
 		 *
 		 * @private
 		 */
@@ -1816,7 +1822,7 @@ function(
 		 * @private
 		 */
 		Dialog.prototype.getValueStateString = function (sValueState) {
-			var rb = Core.getLibraryResourceBundle("sap.m");
+			var rb = Library.getResourceBundleFor("sap.m");
 
 			switch (sValueState) {
 				case (ValueState.Success):
@@ -1845,7 +1851,7 @@ function(
 		 * @private
 		 */
 		Dialog.prototype._getAriaDescribedByText = function () {
-			var oRb = Core.getLibraryResourceBundle("sap.m");
+			var oRb = Library.getResourceBundleFor("sap.m");
 			if (this.getResizable() && this.getDraggable()) {
 				return oRb.getText("DIALOG_HEADER_ARIA_DESCRIBEDBY_DRAGGABLE_RESIZABLE");
 			}

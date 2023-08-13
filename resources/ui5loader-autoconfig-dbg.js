@@ -3,6 +3,7 @@
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
+
 /*
  * IMPORTANT: This is a private module, its API must not be used and is subject to change.
  * Code other than the OpenUI5 libraries must not introduce dependencies to this module.
@@ -18,13 +19,24 @@
 	 *  - ui5loader-autoconfig.js
 	 */
 
-	/*global globalThis, document, jQuery, sap, window */
+	/*global define */
 	"use strict";
 
 	/** BaseConfiguration */
 	var ui5loader = globalThis.sap && globalThis.sap.ui && globalThis.sap.ui.loader;
-	/** sap/base/strings/_camelize */
-	function _camelize() {
+
+	if (ui5loader == null) {
+		throw new Error("ui5loader-autoconfig.js: ui5loader is needed, but could not be found");
+	}
+
+	const origDefine = globalThis.define;
+	globalThis.define = function define(moduleId, dependencies, callback) {
+		const imports = dependencies.map((dep) => sap.ui.require(dep));
+		const moduleExport = callback(...imports);
+		ui5loader._.defineModuleSync(`${moduleId}.js`, moduleExport);
+	};
+
+	define("sap/base/strings/_camelize", [], function () {
 		var rCamelCase = /[-\.]([a-z0-9])/ig;
 		var fnCamelize = function (sString) {
 			var sNormalizedString = sString.replace( rCamelCase, function( sMatch, sChar ) {
@@ -33,10 +45,11 @@
 			if (/^[a-z][A-Za-z0-9]*$/.test(sNormalizedString)) {
 				return sNormalizedString;
 			}
+			return undefined;
 		};
 
-		ui5loader._.defineModuleSync("sap/base/strings/_camelize.js", fnCamelize);
-	}
+		return fnCamelize;
+	});
 
 	/* helper for finding the bootstrap tag */
 	function getBootstrapTag() {
@@ -139,13 +152,16 @@
 		}
 	}
 
-	/** sap/base/config/GlobalConfigurationProvider */
-	function _GlobalConfigurationProvider() {
+	_createGlobalConfig();
+
+	define("sap/base/config/GlobalConfigurationProvider", [
+		"sap/base/strings/_camelize"
+	], function (camelize) {
 		var oConfig;
 		var rAlias = /^(sapUiXx|sapUi|sap)((?:[A-Z0-9][a-z]*)+)$/; //for getter
 		var mFrozenProperties = Object.create(null);
 		var bFrozen = false;
-		var camelize = sap.ui.require("sap/base/strings/_camelize");
+		var Configuration;
 
 		function createConfig() {
 			oConfig = Object.create(null);
@@ -173,6 +189,7 @@
 		function freeze() {
 			if (!bFrozen) {
 				createConfig();
+				Configuration._.invalidate();
 				bFrozen = true;
 			}
 		}
@@ -192,21 +209,35 @@
 			return vValue;
 		}
 
+		function set(sKey, vValue) {
+			if (mFrozenProperties[sKey]) {
+				ui5loader._.logger.error("Configuration option '" + sKey + "' was frozen and cannot be changed to " + vValue + "!");
+			} else {
+				oConfig[sKey] = vValue;
+			}
+		}
+
+		function setConfiguration(Config) {
+			Configuration = Config;
+		}
+
 		var GlobalConfigurationProvider = {
 			get: get,
-			freeze: freeze
+			set: set,
+			freeze: freeze,
+			setConfiguration: setConfiguration
 		};
 
 		createConfig();
 
-		ui5loader._.defineModuleSync("sap/base/config/GlobalConfigurationProvider.js", GlobalConfigurationProvider);
-	}
+		return GlobalConfigurationProvider;
+	});
 
-	/** sap/ui/core/config/BootstrapConfigurationProvider */
-	function _BootstrapConfigurationProvider() {
+	define("sap/ui/core/config/BootstrapConfigurationProvider", [
+		"sap/base/strings/_camelize"
+	], function(camelize) {
 		var oConfig = Object.create(null);
 		var rAlias = /^(sapUiXx|sapUi|sap)((?:[A-Z0-9][a-z]*)+)$/; //for getter
-		var camelize = sap.ui.require("sap/base/strings/_camelize");
 
 		var bootstrap = getBootstrapTag();
 		if (bootstrap.tag) {
@@ -241,13 +272,13 @@
 			get: get
 		};
 
-		ui5loader._.defineModuleSync("sap/ui/core/config/BootstrapConfigurationProvider.js", BootstrapConfigurationProvider);
-	}
+		return BootstrapConfigurationProvider;
+	});
 
-	/** sap/ui/base/config/URLConfigurationProvider */
-	function _URLConfigurationProvider() {
+	define("sap/ui/base/config/URLConfigurationProvider", [
+		"sap/base/strings/_camelize"
+	], function(camelize) {
 		var oConfig = Object.create(null);
-		var camelize = sap.ui.require("sap/base/strings/_camelize");
 
 		if (globalThis.location) {
 			oConfig = Object.create(null);
@@ -277,13 +308,13 @@
 			get: get
 		};
 
-		ui5loader._.defineModuleSync("sap/ui/base/config/URLConfigurationProvider.js", URLConfigurationProvider);
-	}
+		return URLConfigurationProvider;
+	});
 
-	/** sap/ui/base/config/MetaConfigurationProvider */
-	function _MetaConfigurationProvider() {
+	define("sap/ui/base/config/MetaConfigurationProvider", [
+		"sap/base/strings/_camelize"
+	], function (camelize) {
 		var oConfig = Object.create(null);
-		var camelize = sap.ui.require("sap/base/strings/_camelize");
 
 		if (globalThis.document) {
 			oConfig = Object.create(null);
@@ -313,12 +344,16 @@
 			get: get
 		};
 
-		ui5loader._.defineModuleSync("sap/ui/base/config/MetaConfigurationProvider.js", MetaConfigurationProvider);
-	}
+		return MetaConfigurationProvider;
+	});
 
-	/** sap/base/config/_Configuration */
-	function _Configuration() {
-		var aProvider = [sap.ui.require("sap/base/config/GlobalConfigurationProvider")];
+	define("sap/base/config/_Configuration", [
+		"sap/base/config/GlobalConfigurationProvider"
+	], function _Configuration(GlobalConfigurationProvider) {
+		var rValidKey = /^[a-z][A-Za-z0-9]*$/;
+		var rXXAlias = /^(sapUi(?!Xx))(.*)$/;
+		var mCache = Object.create(null);
+		var aProvider = [GlobalConfigurationProvider];
 		var mUrlParamOptions = {
 			name: "sapUiIgnoreUrlParams",
 			type: "boolean"
@@ -336,7 +371,7 @@
 
 		/**
 		 * @enum {string}
-		 * @alias sap.base.config.Type
+		 * @alias module:sap/base/config.Type
 		 * @private
 		 */
 		var TypeEnum = {
@@ -421,6 +456,7 @@
 		function registerProvider(oProvider) {
 			if (aProvider.indexOf(oProvider) === -1) {
 				aProvider.push(oProvider);
+				invalidate();
 				bGlobalIgnoreExternal = get(mUrlParamOptions);
 			}
 		}
@@ -545,8 +581,8 @@
 		 * @function
 		 * @param {object} mOptions The options object that contains the following properties
 		 * @param {string} mOptions.name Name of the configuration parameter. Must start with 'sapUi/sapUiXx' prefix followed by letters only. The name must be camel-case
-		 * @param {sap.base.config.Type|object<string, string>|function} mOptions.type Type of the configuration parameter. This argument can be a <code>sap.base.config.Type</code>, object or function.
-		 * @param {any} [mOptions.defaultValue=undefined] Default value of the configuration parameter corresponding to the given type.
+		 * @param {module:sap/base/config.Type|object<string, string>|function} mOptions.type Type of the configuration parameter. This argument can be a <code>module:sap/base/config.Type</code>, object or function.
+		 * @param {any} [mOptions.defaultValue=undefined] Default value of the configuration parameter corresponding to the given type or a function returning the default value.
 		 * @param {boolean} [mOptions.external=false] Whether external (e.g. url-) parameters should be included or not
 		 * @param {boolean} [mOptions.freeze=false] Freezes parameter and parameter can't be changed afterwards.
 		 * @returns {any} Value of the configuration parameter
@@ -555,58 +591,104 @@
 		 * @ui5-restricted sap.ui.core.Core, jquery.sap.global
 		 */
 		function get(mOptions) {
-			mOptions = Object.assign({}, mOptions);
-			var vValue;
-
-			var rValidKey = /^[a-z][A-Za-z0-9]*$/;
-			var rXXAlias = /^(sapUi(?!Xx))(.*)$/; //for getter
-			var bIgnoreExternal = bGlobalIgnoreExternal || !mOptions.external;
-			var sName = mOptions.name;
-			var vMatch = sName.match(rXXAlias);
-			var vDefaultValue = mOptions.hasOwnProperty("defaultValue") ? mOptions.defaultValue : mInternalDefaultValues[mOptions.type];
-
-			if (typeof mOptions.name !== "string" || !rValidKey.test(sName)) {
+			if (typeof mOptions.name !== "string" || !rValidKey.test(mOptions.name)) {
 				throw new TypeError(
-					"Invalid configuration key '" + sName + "'!"
+					"Invalid configuration key '" + mOptions.name + "'!"
 				);
 			}
-
+			var sCacheKey = mOptions.name;
 			if (mOptions.provider) {
-				vValue = mOptions.provider.get(sName, mOptions.freeze);
+				sCacheKey += "-" + mOptions.provider.getId();
 			}
-			if (vValue === undefined) {
-				for (var i = aProvider.length - 1; i >= 0; i--) {
-					if (!aProvider[i].external || !bIgnoreExternal) {
-						vValue = aProvider[i].get(sName, mOptions.freeze);
-						if (vValue !== undefined) {
-							break;
+			if (!(sCacheKey in mCache)) {
+				mOptions = Object.assign({}, mOptions);
+				var vValue;
+
+				var bIgnoreExternal = bGlobalIgnoreExternal || !mOptions.external;
+				var sName = mOptions.name;
+				var vMatch = sName.match(rXXAlias);
+				var vDefaultValue = mOptions.hasOwnProperty("defaultValue") ? mOptions.defaultValue : mInternalDefaultValues[mOptions.type];
+
+				if (mOptions.provider) {
+					vValue = mOptions.provider.get(sName, mOptions.freeze);
+				}
+				if (vValue === undefined) {
+					for (var i = aProvider.length - 1; i >= 0; i--) {
+						if (!aProvider[i].external || !bIgnoreExternal) {
+							vValue = aProvider[i].get(sName, mOptions.freeze);
+							if (vValue !== undefined) {
+								break;
+							}
 						}
 					}
 				}
+				if (vValue !== undefined) {
+					vValue = convertToType(vValue, mOptions.type, mOptions.name);
+				} else if (vMatch && vMatch[1] === "sapUi") {
+					mOptions.name = vMatch[1] + "Xx" + vMatch[2];
+					vValue = get(mOptions);
+				}
+				if (vValue === undefined) {
+					if (typeof vDefaultValue === 'function') {
+						vDefaultValue = vDefaultValue();
+					}
+					vValue = vDefaultValue;
+				}
+				mCache[sCacheKey] = vValue;
 			}
-			if (vValue !== undefined) {
-				vValue = convertToType(vValue, mOptions.type, mOptions.name);
-			} else if (vMatch && vMatch[1] === "sapUi") {
-				mOptions.name = vMatch[1] + "Xx" + vMatch[2];
-				return get(mOptions);
+			var vCachedValue = mCache[sCacheKey];
+			if (typeof mOptions.type !== 'function' && (mOptions.type === TypeEnum.StringArray || mOptions.type === TypeEnum.Object)) {
+				vCachedValue = deepClone(vCachedValue);
 			}
-			if (typeof mOptions.type !== 'function' && (Array.isArray(vValue) || typeof vValue === "object")) {
-				vValue = deepClone(vValue);
-			}
-			return vValue !== undefined ? vValue : vDefaultValue;
+			return vCachedValue;
+		}
+
+		function invalidate() {
+			mCache = Object.create(null);
+		}
+
+		/**
+		 * Returns a writable base configuration instance
+		 * @returns {module:sap/base/config/_Configuration} The writable base configuration
+		 */
+		function getWritableBootInstance() {
+			var oProvider = aProvider[0];
+
+			return {
+				set: function(sName, vValue) {
+					var rValidKey = /^[a-z][A-Za-z0-9]*$/;
+					if (rValidKey.test(sName)) {
+						oProvider.set(sName, vValue);
+						invalidate();
+					} else {
+						throw new TypeError(
+							"Invalid configuration key '" + sName + "'!"
+						);
+					}
+				},
+				get: get,
+				Type: TypeEnum
+			};
 		}
 
 		var Configuration = {
 			get: get,
+			getWritableBootInstance: getWritableBootInstance,
 			registerProvider: registerProvider,
 			Type: TypeEnum,
 			_: {
-				checkEnum: checkEnum
+				checkEnum: checkEnum,
+				invalidate: invalidate
 			}
 		};
 
-		ui5loader._.defineModuleSync("sap/base/config/_Configuration.js", Configuration);
-	}
+		//forward Configuration to Global provider to invalidate the cache when freezing
+		GlobalConfigurationProvider.setConfiguration(Configuration);
+
+		return Configuration;
+	});
+
+	globalThis.define = origDefine;
 
 	function _setupConfiguration() {
 		var BaseConfiguration = sap.ui.require('sap/base/config/_Configuration');
@@ -617,13 +699,6 @@
 	}
 
 	/** init configuration */
-	_camelize();
-	_createGlobalConfig();
-	_GlobalConfigurationProvider();
-	_BootstrapConfigurationProvider();
-	_MetaConfigurationProvider();
-	_URLConfigurationProvider();
-	_Configuration();
 	_setupConfiguration();
 
 	var BaseConfig = sap.ui.require("sap/base/config/_Configuration");
@@ -642,14 +717,11 @@
 			bNojQuery = /sap-ui-core-nojQuery\.js(?:[?#]|$)/.test(sUrl);
 			return true;
 		}
+		return false;
 	}
 
 	function ensureSlash(path) {
 		return path && path[path.length - 1] !== '/' ? path + '/' : path;
-	}
-
-	if (ui5loader == null) {
-		throw new Error("ui5loader-autoconfig.js: ui5loader is needed, but could not be found");
 	}
 
 	// Prefer script tags which have the sap-ui-bootstrap ID

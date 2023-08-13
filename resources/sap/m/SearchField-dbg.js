@@ -6,9 +6,9 @@
 
 // Provides control sap.m.SearchField.
 sap.ui.define([
+	'sap/ui/core/Theming',
 	'./library',
 	'sap/ui/core/Control',
-	'sap/ui/core/Core',
 	'sap/ui/core/EnabledPropagator',
 	'sap/ui/core/IconPool',
 	'./Suggest',
@@ -16,20 +16,22 @@ sap.ui.define([
 	'./SearchFieldRenderer',
 	"sap/ui/events/KeyCodes",
 	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Lib",
 	// jQuery Plugin "cursorPos"
 	"sap/ui/dom/jquery/cursorPos"
 ],
 	function(
+		Theming,
 		library,
 		Control,
-		Core,
 		EnabledPropagator,
 		IconPool,
 		Suggest,
 		Device,
 		SearchFieldRenderer,
 		KeyCodes,
-		jQuery
+		jQuery,
+		Library
 	) {
 	"use strict";
 
@@ -67,7 +69,7 @@ sap.ui.define([
 	* @extends sap.ui.core.Control
 	* @implements sap.ui.core.IFormContent
 	* @author SAP SE
-	* @version 1.116.0
+	* @version 1.117.0
 	*
 	* @constructor
 	* @public
@@ -366,18 +368,12 @@ sap.ui.define([
 				});
 			}
 		}
-
-		if (!Core.isThemeApplied()) {
-			Core.attachThemeChanged(this._handleThemeLoad, this);
-		}
 	};
 
-	SearchField.prototype._handleThemeLoad = function() {
+	SearchField.prototype.onThemeChanged = function() {
 		if (this._oSuggest) {
 			this._oSuggest.setPopoverMinWidth();
 		}
-
-		Core.detachThemeChanged(this._handleThemeLoad, this);
 	};
 
 	/**
@@ -900,7 +896,7 @@ sap.ui.define([
 	SearchField.prototype._applySuggestionAcc = function () {
 		var sAriaText = "",
 			iNumItems = this.getSuggestionItems().length,
-			oRb = Core.getLibraryResourceBundle("sap.m");
+			oRb = Library.getResourceBundleFor("sap.m");
 
 		// add items to list
 		if (iNumItems === 1) {

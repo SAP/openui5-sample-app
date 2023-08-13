@@ -48,7 +48,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.BasePanel
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @public
 	 * @since 1.96
@@ -202,7 +202,11 @@ sap.ui.define([
 		return this;
 	};
 
-
+	SelectionPanel.prototype.setFieldColumn = function(sFieldColumn) {
+		this.setProperty("fieldColumn", sFieldColumn);
+		this._displayColumns();
+		return this;
+	};
 
 	SelectionPanel.prototype.setShowHeader = function(bShowHeader) {
 		if (bShowHeader){

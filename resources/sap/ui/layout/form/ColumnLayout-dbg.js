@@ -60,7 +60,7 @@ sap.ui.define([
 	 * This control cannot be used stand-alone, it just renders a <code>Form</code> control,
 	 * so it must be assigned to a <code>Form</code> control using the <code>layout</code> aggregation.
 	 * @extends sap.ui.layout.form.FormLayout
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -678,6 +678,12 @@ sap.ui.define([
 		} else {
 			return new ColumnElementData({cellsLarge: -1, cellsSmall: 11});
 		}
+
+	};
+
+	ColumnLayout.prototype.renderControlsForSemanticElement = function() {
+
+		return true;
 
 	};
 

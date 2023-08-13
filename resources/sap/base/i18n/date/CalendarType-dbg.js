@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-// Provides type sap.base.i18n.date.CalendarType.
+// Provides type module:sap/base/i18n/date/CalendarType.
 sap.ui.define([], function() {
 	"use strict";
 

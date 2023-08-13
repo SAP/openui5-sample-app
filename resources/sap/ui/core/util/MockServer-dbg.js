@@ -11,12 +11,12 @@ sap.ui
 			'sap/base/Log',
 			'sap/base/util/isEmptyObject',
 			'sap/ui/base/ManagedObject',
-			'sap/ui/core/util/MockServerAnnotationsHandler',
 			'sap/ui/core/util/DraftEnabledMockServer',
+			'sap/ui/model/odata/ODataMetadata',
 			'sap/ui/thirdparty/jquery',
 			'sap/ui/thirdparty/sinon'
 		],
-		function(Log, isEmptyObject, ManagedObject, MockServerAnnotationsHandler, DraftEnabledMockServer, jQuery, sinon) {
+		function(Log, isEmptyObject, ManagedObject, DraftEnabledMockServer, ODataMetadata, jQuery, sinon) {
 			"use strict";
 
 			/**
@@ -33,7 +33,7 @@ sap.ui
 			 * @extends sap.ui.base.ManagedObject
 			 * @abstract
 			 * @author SAP SE
-			 * @version 1.116.0
+			 * @version 1.117.0
 			 * @public
 			 * @alias sap.ui.core.util.MockServer
 			 */
@@ -2000,9 +2000,8 @@ sap.ui
 				if (!oMetadata) {
 					return;
 				}
-				// create mockserver annotations handler only when metadata exists
 				if (this._sMetadata) {
-					var oAnnotations = MockServerAnnotationsHandler.parse(this._oMetadata, this._sMetadata);
+					var oAnnotations = ODataMetadata.getServiceAnnotations(this._sMetadata);
 					DraftEnabledMockServer.handleDraft(oAnnotations, this);
 				}
 				this._resetPseudoRandomNumberGenerator();

@@ -33,6 +33,7 @@ sap.ui.define([
 
 	/**
 	 *
+	 * @class
 	 * The <code>Engine</code> entity offers personalization capabilities by registering a control instance for modification, such as:
 	 *
 	 * <ul>
@@ -52,12 +53,11 @@ sap.ui.define([
 	 *
 	 * Can be used in combination with <code>sap.ui.fl.variants.VariantManagement</code> to persist a state in variants using <code>sap.ui.fl</code> capabilities.</li>
 	 *
-	 * @class
 	 * @see {@link topic:75c08fdebf784575947927e052712bab Personalization}
 	 * @alias sap.m.p13n.Engine
 	 * @extends sap.m.p13n.modules.AdaptationProvider
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @public
 	 * @since 1.104
 	 */
@@ -82,6 +82,20 @@ sap.ui.define([
 			this.stateHandlerRegistry = StateHandlerRegistry.getInstance();
 		}
 	});
+
+	/**
+	 * The <code>sap.m.p13n</code> namespace offers generic personalization capabilites.
+	 * Personalization currently supports, for example, defining the order of columns in a table and their visibility, sorting, and grouping. To enable this, the personalization engine can be used.
+	 * @namespace
+	 * @name sap.m.p13n
+	 * @public
+	 */
+
+	/**
+	 * @namespace
+	 * @name sap.m.p13n.MetadataHelper
+	 * @public
+	 */
 
 	/**
 	 *
@@ -199,7 +213,15 @@ sap.ui.define([
 	 * @returns {Promise<sap.m.p13n.Popup>} Promise resolving in the <code>sap.m.p13n.Popup</code> instance
 	 */
 	Engine.prototype.show = function (oControl, vPanelKeys, mSettings) {
-		return this.uimanager.show(oControl, vPanelKeys, mSettings);
+		return this.getModificationHandler(oControl).hasChanges({selector: oControl}).then((enableReset) => {
+			return enableReset;
+		})
+		.catch((oError) => {
+			return false;
+		})
+		.then(function(enableReset){
+			return this.uimanager.show(oControl, vPanelKeys, {...mSettings, enableReset});
+		}.bind(this));
 	};
 
 	/**
@@ -686,6 +708,7 @@ sap.ui.define([
 
 		var oControl = Engine.getControlInstance(vControl);
 		var oRegistryEntry = this._getRegistryEntry(vControl);
+		mEnhanceConfig.currentState = Engine.getInstance().getController(oControl, mEnhanceConfig.changeType)?.getCurrentState();
 
 		return xConfigAPI.enhanceConfig(oControl, mEnhanceConfig)
 			.then(function (oConfig) {
@@ -1178,9 +1201,13 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.core.Control} vControl The registered control instance.
 	 * @param {string} sKey The registered key to get the corresponding controller.
+	 * @param {boolean} bModified Determines whether changes have been triggered while the dialog has been opened
 	 */
-	Engine.prototype.setActiveP13n = function (vControl, sKey) {
-		this._getRegistryEntry(vControl).activeP13n = sKey;
+	Engine.prototype.setActiveP13n = function (vControl, sKey, bModified) {
+		this._getRegistryEntry(vControl).activeP13n = sKey ? {
+			usedControllers: sKey,
+			modified: bModified
+		} : null;
 	};
 
 	/**

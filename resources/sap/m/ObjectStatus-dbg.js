@@ -14,9 +14,10 @@ sap.ui.define([
 	'sap/ui/base/DataType',
 	'./ObjectStatusRenderer',
 	'sap/m/ImageHelper',
-	'sap/ui/core/LabelEnablement'
+	'sap/ui/core/LabelEnablement',
+	'sap/ui/core/InvisibleText'
 ],
-	function(library, Control, ValueStateSupport, IndicationColorSupport, coreLibrary, DataType, ObjectStatusRenderer, ImageHelper, LabelEnablement) {
+	function(library, Control, ValueStateSupport, IndicationColorSupport, coreLibrary, DataType, ObjectStatusRenderer, ImageHelper, LabelEnablement, InvisibleText) {
 	"use strict";
 
 
@@ -45,7 +46,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -178,6 +179,10 @@ sap.ui.define([
 		if (this._oImageControl) {
 			this._oImageControl.destroy();
 			this._oImageControl = null;
+		}
+		if (this._oInvisibleStateText) {
+			this._oInvisibleStateText.destroy();
+			this._oInvisibleStateText = null;
 		}
 	};
 
@@ -358,6 +363,17 @@ sap.ui.define([
 
 		//event should only be fired if the click is on the text, link or icon
 		return this._isActive() && (sSourceId === this.getId() + "-link" || sSourceId === this.getId() + "-text" || sSourceId === this.getId() + "-statusIcon" || sSourceId === this.getId() + "-icon");
+	};
+
+	ObjectStatus.prototype._fnInvisibleStateLabelFactory = function() {
+		if (!this._oInvisibleStateText) {
+			this._oInvisibleStateText = new InvisibleText({
+				id: this.getId() + "-state-text",
+				text: this._getStateText(this.getState())
+			}).toStatic();
+		}
+
+		return this._oInvisibleStateText;
 	};
 
 	return ObjectStatus;

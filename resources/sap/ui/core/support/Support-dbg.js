@@ -33,7 +33,7 @@ sap.ui.define([
 	 * @class This class provides the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 	 *
 	 * @extends sap.ui.base.EventProvider
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @private
 	 * @alias sap.ui.core.support.Support
 	 */
@@ -946,11 +946,14 @@ sap.ui.define([
 			Log.info("sap.ui.core.support.Support.info initialized.");
 		}
 
-		if ( bAsync ) {
-			sap.ui.require(aModulesWhereToInjectSupportInfo, injectSupportInfo);
-		} else {
+		/**
+		 * @deprecated
+		 */
+		if (!bAsync) {
 			injectSupportInfo.apply(null, aModulesWhereToInjectSupportInfo.map(sap.ui.requireSync) ); // legacy-relevant: Sync path
+			return;
 		}
+		sap.ui.require(aModulesWhereToInjectSupportInfo, injectSupportInfo);
 	};
 
 	return Support;

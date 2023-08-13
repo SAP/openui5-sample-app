@@ -8,19 +8,17 @@
 sap.ui.define([
 	'sap/ui/core/Control',
 	'sap/ui/base/ManagedObjectObserver',
-	'sap/ui/core/ResizeHandler',
 	'sap/ui/layout/library',
 	'./Form',
 	'./FormContainer',
 	'./FormElement',
 	'./FormLayout',
 	'./SimpleFormRenderer',
-	"sap/base/Log",
-	"sap/ui/thirdparty/jquery"
+	'sap/base/Log',
+	'sap/ui/thirdparty/jquery'
 ], function(
 	Control,
 	ManagedObjectObserver,
-	ResizeHandler,
 	library,
 	Form,
 	FormContainer,
@@ -45,6 +43,8 @@ sap.ui.define([
 	var GridContainerData;
 	var GridElementData;
 	var ColumnLayout;
+	var ResizeHandler;
+
 
 	/**
 	 * Constructor for a new sap.ui.layout.form.SimpleForm.
@@ -67,7 +67,7 @@ sap.ui.define([
 	 * <b>Note:</b> If a more complex form is needed, use the <code>{@link sap.ui.layout.form.Form Form}</code> control instead.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -96,6 +96,7 @@ sap.ui.define([
 				 * irrespective of whether a <code>width</code> is reached or the available parents width is reached.
 				 *
 				 * <b>Note:</b> This property is only used if a <code>ResponsiveLayout</code> is used as a layout.
+				 * @deprecated As of version 1.93, use another <code>Layout</code>
 				 */
 				minWidth : {type : "int", group : "Appearance", defaultValue : -1},
 
@@ -125,6 +126,7 @@ sap.ui.define([
 				 * Specifies the min-width in pixels of the label in all form rows.
 				 *
 				 * <b>Note:</b> This property is only used if a <code>ResponsiveLayout</code> is used as a layout.
+				 * @deprecated As of version 1.93, use another <code>Layout</code>
 				 */
 				labelMinWidth : {type : "int", group : "Misc", defaultValue : 192},
 
@@ -136,9 +138,11 @@ sap.ui.define([
 				 *
 				 * <b>Note</b> If possible, set the <code>layout</code> before adding content to prevent calculations for the default layout.
 				 *
-				 * <b>Note</b> The <code>ResponsiveLayout</code> has been deprecated and must no longer be used. For compatibility reasons the default could not be changed.
+				 * <b>Note</b> The <code>ResponsiveLayout</code> has been deprecated and must no longer be used.
+				 *
+				 * <b>Note</b> As of version 1.117, the <code>ResponsiveGridLayout</code> is used as default.
 				 */
-				layout : {type : "sap.ui.layout.form.SimpleFormLayout", group : "Misc", defaultValue : SimpleFormLayout.ResponsiveLayout},
+				layout : {type : "sap.ui.layout.form.SimpleFormLayout", group : "Misc", defaultValue : SimpleFormLayout.ResponsiveGridLayout},
 
 				/**
 				 * Default span for labels in extra large size.
@@ -478,7 +482,7 @@ sap.ui.define([
 				(!this._bColumnLayoutRequested && sLayout === SimpleFormLayout.ColumnLayout)) {
 			// if Layout is still loaded do it after it is loaded
 			var bLayout = true;
-			if (!oForm.getLayout()) {
+			if (!oForm.getLayout()) { // default layout used -> as we don't know if layout will be set it must latest be created on rendering
 				bLayout = _setFormLayout.call(this);
 			}
 
@@ -496,8 +500,10 @@ sap.ui.define([
 			this.$().css("visibility", "hidden"); //avoid that a wrong layouting is visible
 			this._applyLinebreaks();
 
-			//attach the resize handler
-			this._sResizeListenerId = ResizeHandler.register(this.getDomRef(),  jQuery.proxy(this._resize, this));
+			//attach the resize handler (only if layout an ResizeHandler already loaded)
+			if (!this._bResponsiveLayoutRequested && ResizeHandler) {
+				this._sResizeListenerId = ResizeHandler.register(this.getDomRef(),  jQuery.proxy(this._resize, this));
+			}
 			this._bChangedByMe = false;
 		}
 
@@ -1109,13 +1115,14 @@ sap.ui.define([
 	SimpleForm.prototype.setLayout = function(sLayout) {
 
 		var sOldLayout = this.getLayout();
+		var bDefault = this.isPropertyInitial("layout"); // if default is used and layout not defined setLayout is not called
 		if (sLayout != sOldLayout) {
 			_removeOldLayoutData.call(this);
 		}
 
 		this.setProperty("layout", sLayout);
 
-		if (sLayout != sOldLayout) {
+		if (sLayout != sOldLayout || bDefault) { // Layout changed or default set explicit -> we know what layout is used and can create the Control
 			var bSet = _setFormLayout.call(this);
 
 			if (bSet) {
@@ -1177,12 +1184,14 @@ sap.ui.define([
 
 			switch (this.getLayout()) {
 			case SimpleFormLayout.ResponsiveLayout:
-				if ((!ResponsiveLayout || !ResponsiveFlowLayoutData) && !this._bResponsiveLayoutRequested) {
+				if ((!ResponsiveLayout || !ResponsiveFlowLayoutData || !ResizeHandler) && !this._bResponsiveLayoutRequested) {
 					ResponsiveLayout = sap.ui.require("sap/ui/layout/form/ResponsiveLayout");
 					ResponsiveFlowLayoutData = sap.ui.require("sap/ui/layout/ResponsiveFlowLayoutData");
-					if (!ResponsiveLayout || !ResponsiveFlowLayoutData) {
+					ResizeHandler = sap.ui.require("sap/ui/core/ResizeHandler");
+					if (!ResponsiveLayout || !ResponsiveFlowLayoutData || !ResizeHandler) {
 						sap.ui.require(["sap/ui/layout/form/ResponsiveLayout",
-						                "sap/ui/layout/ResponsiveFlowLayoutData"],
+						                "sap/ui/layout/ResponsiveFlowLayoutData",
+										"sap/ui/core/ResizeHandler"],
 						                _ResponsiveLayoutLoaded.bind(this));
 						this._bResponsiveLayoutRequested = true;
 					}
@@ -1246,14 +1255,18 @@ sap.ui.define([
 
 	}
 
-	function _ResponsiveLayoutLoaded(fnResponsiveLayout, fnResponsiveFlowLayoutData) {
+	function _ResponsiveLayoutLoaded(fnResponsiveLayout, fnResponsiveFlowLayoutData, fnResizeHandler) {
 
 		ResponsiveLayout = fnResponsiveLayout;
 		ResponsiveFlowLayoutData = fnResponsiveFlowLayoutData;
+		ResizeHandler = fnResizeHandler;
 		this._bResponsiveLayoutRequested = false;
 
 		if (this.getLayout() == SimpleFormLayout.ResponsiveLayout) { // as layout might changed
 			_updateLayoutAfterLoaded.call(this);
+			if (this.getDomRef() && !this._sResizeListenerId) { // register resize handler after layout and ResizeHandler is loaded
+				this._sResizeListenerId = ResizeHandler.register(this.getDomRef(),  jQuery.proxy(this._resize, this));
+			}
 		}
 
 	}

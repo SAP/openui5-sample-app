@@ -57,7 +57,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -376,8 +376,8 @@ sap.ui.define([
 	 * detailed reason as parameters.
 	 *
 	 * @param {sap.ui.base.Event} oEvent
-	 * @param {object} oEvent.getParameters()
-	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters().reason
+	 * @param {object} oEvent.getParameters
+	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters.reason
 	 *   The reason for the 'change' event is
 	 *   <ul>
 	 *     <li> {@link sap.ui.model.ChangeReason.Add Add} when a new context is created,
@@ -388,7 +388,7 @@ sap.ui.define([
 	 *   </ul>
 	 *   Additionally each {@link #event:refresh 'refresh'} event is followed by a 'change' event
 	 *   repeating the change reason when the requested data is available.
-	 * @param {string} oEvent.getParameters().detailedReason
+	 * @param {string} oEvent.getParameters.detailedReason
 	 *   During automatic determination of $expand and $select, a "virtual" context is first added
 	 *   with detailed reason "AddVirtualContext" and then removed with detailed reason
 	 *   "RemoveVirtualContext" (since 1.69.0); <code>undefined</code> is used in all other cases
@@ -408,7 +408,7 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource() This binding
-	 * @param {sap.ui.model.odata.v4.Context} oEvent.getParameters().context The affected context
+	 * @param {sap.ui.model.odata.v4.Context} oEvent.getParameters.context The affected context
 	 *
 	 * @event sap.ui.model.odata.v4.ODataListBinding#createActivate
 	 * @public
@@ -423,10 +423,10 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource() This binding
-	 * @param {object} oEvent.getParameters() Object containing all event parameters
-	 * @param {sap.ui.model.odata.v4.Context} oEvent.getParameters().context
+	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {sap.ui.model.odata.v4.Context} oEvent.getParameters.context
 	 *   The context for the created entity
-	 * @param {boolean} oEvent.getParameters().success
+	 * @param {boolean} oEvent.getParameters.success
 	 *   Whether the POST was successfully processed; in case of an error, the error is already
 	 *   reported to the {@link sap.ui.core.message.MessageManager}
 	 *
@@ -442,8 +442,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource() This binding
-	 * @param {object} oEvent.getParameters() Object containing all event parameters
-	 * @param {sap.ui.model.odata.v4.Context} oEvent.getParameters().context
+	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {sap.ui.model.odata.v4.Context} oEvent.getParameters.context
 	 *   The context for the created entity
 	 *
 	 * @event sap.ui.model.odata.v4.ODataListBinding#createSent
@@ -474,10 +474,10 @@ sap.ui.define([
 	 * @param {sap.ui.base.Event} oEvent
 	 * @param {function} oEvent.cancelBubble
 	 *   A callback function to prevent that the event is bubbled up to the model
-	 * @param {object} oEvent.getParameters()
-	 * @param {object} [oEvent.getParameters().data]
+	 * @param {object} oEvent.getParameters
+	 * @param {object} [oEvent.getParameters.data]
 	 *   An empty data object if a back-end request succeeds
-	 * @param {Error} [oEvent.getParameters().error] The error object if a back-end request failed.
+	 * @param {Error} [oEvent.getParameters.error] The error object if a back-end request failed.
 	 *   If there are multiple failed back-end requests, the error of the first one is provided.
 	 *
 	 * @event sap.ui.model.odata.v4.ODataListBinding#dataReceived
@@ -513,8 +513,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource() This binding
-	 * @param {object} oEvent.getParameters() Object containing all event parameters
-	 * @param {boolean} oEvent.getParameters().success
+	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {boolean} oEvent.getParameters.success
 	 *   Whether all PATCHes are successfully processed
 	 *
 	 * @event sap.ui.model.odata.v4.ODataListBinding#patchCompleted
@@ -544,8 +544,8 @@ sap.ui.define([
 	 * binding. Registered event handlers are called with the change reason as parameter.
 	 *
 	 * @param {sap.ui.base.Event} oEvent
-	 * @param {object} oEvent.getParameters()
-	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters().reason
+	 * @param {object} oEvent.getParameters
+	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters.reason
 	 *   The reason for the 'refresh' event could be
 	 *   <ul>
 	 *     <li> {@link sap.ui.model.ChangeReason.Context Context} when the binding's
@@ -731,7 +731,7 @@ sap.ui.define([
 	 * method then adds a transient entity to the parent's navigation property, which is sent with
 	 * the payload of the parent entity. Such a nested context cannot be inactive.
 	 *
-	 * <b>Beware:</b> After a succesful creation of the main entity the context returned for a
+	 * <b>Note:</b> After a succesful creation of the main entity the context returned for a
 	 * nested entity is no longer valid. Do not use the
 	 * {@link sap.ui.model.odata.v4.Context#created created} promise of such a context! New contexts
 	 * are created for the nested collection because it is not possible to reliably assign the
@@ -739,6 +739,13 @@ sap.ui.define([
 	 * the <code>created</code> promises of all nested contexts are always rejected with an instance
 	 * of <code>Error</code>, even if the deep create succeeds. This error always has the property
 	 * <code>canceled</code> with the value <code>true</code>.
+	 *
+	 * Since 1.117.0 deep create also supports single-valued navigation properties; no API call is
+	 * required in this case. Simply bind properties of the related entity relative to a transient
+	 * context. An update to the property adds it to the POST request of the parent entity, and by
+	 * this the create becomes deep.
+	 *
+	 * <b>Note</b>: Deep create for single-valued navigation properties is <b>experimental</b>.
 	 *
 	 * Deep create requires the <code>autoExpandSelect</code> parameter at the
 	 * {@link sap.ui.model.odata.v4.ODataModel#constructor model}. The refresh after a deep create
@@ -750,11 +757,25 @@ sap.ui.define([
 	 * the case if the complete collection has been read or if the system query option
 	 * <code>$count</code> is <code>true</code> and the binding has processed at least one request.
 	 *
+	 * Creating a new child beneath an existing and visible parent node (which must either be a leaf
+	 * or expanded, but not collapsed) is supported (@experimental as of version 1.117.0) in case of
+	 * a recursive hierarchy (see {@link #setAggregation}). The parent node must be identified via a
+	 * {@link sap.ui.model.odata.v4.Context} instance given as
+	 * <code>oInitialData["@$ui5.node.parent"]</code>. <code>oAggregation.expandTo</code> (see
+	 * {@link #setAggregation}) must be one, <code>bSkipRefresh</code> must be set, but both
+	 * <code>bAtEnd</code> and <code>bInactive</code> must not be set. No other creation must be
+	 * pending, and no other modification (including collapse of some ancestor node) must happen
+	 * while this creation is pending!
+	 *
 	 * @param {object} [oInitialData={}]
 	 *   The initial data for the created entity
 	 * @param {boolean} [bSkipRefresh]
-	 *   Whether an automatic refresh of the created entity will be skipped; ignored within a deep
-	 *   create (when the binding's parent context is transient)
+	 *   Whether an automatic refresh of the created entity will be skipped.
+	 *   <br>
+	 *   <b>Note:</b> Do not use this parameter for a deep create. It leads to multiple single row
+	 *   requests if the POST response did not supply all properties of the nested list. If it is
+	 *   not set, the model checks whether all required properties and child entities are available
+	 *   on the client and requests only data that is missing.
 	 * @param {boolean} [bAtEnd]
 	 *   Whether the entity is inserted at the end of the list. Supported since 1.66.0.
 	 *   Since 1.99.0 the first insertion determines the overall position of created contexts
@@ -798,17 +819,22 @@ sap.ui.define([
 	 *     <li> an automatic refresh of the created entity cannot be performed and
 	 *       <code>bSkipRefresh</code> is missing. This could be caused by a side-effects refresh
 	 *       happening in parallel to creation (error thrown since 1.114.0; previously failed
-	 *       without an adequate error message).
+	 *       without an adequate error message),
+	 *     <li> the restrictions for creating in a recursive hierarchy (see above) are not met.
 	 *   </ul>
 	 * @public
 	 * @since 1.43.0
 	 */
 	ODataListBinding.prototype.create = function (oInitialData, bSkipRefresh, bAtEnd, bInactive) {
-		var oContext,
+		var oAggregation = this.mParameters.$$aggregation,
+			iChildIndex,
+			oContext,
 			oCreatePathPromise = this.fetchResourcePath(),
 			oCreatePromise,
+			oEntityData,
 			sGroupId = this.getUpdateGroupId(),
 			oGroupLock,
+			oParentContext,
 			sResolvedPath = this.getResolvedPath(),
 			sTransientPredicate = "($uid=" + _Helper.uid() + ")",
 			sTransientPath = sResolvedPath + sTransientPredicate,
@@ -819,7 +845,7 @@ sap.ui.define([
 			throw new Error("Binding is unresolved: " + this);
 		}
 		this.checkSuspended();
-		if (this.mParameters.$$aggregation) {
+		if (_Helper.isDataAggregation(this.mParameters)) {
 			throw new Error("Cannot create in " + this + " when using data aggregation");
 		}
 		if (this.isTransient()) {
@@ -842,12 +868,38 @@ sap.ui.define([
 				throw new Error("Missing $$ownRequest at " + this);
 			}
 			sGroupId = "$inactive." + sGroupId;
-		} else {
+		} else if (!oAggregation) {
 			this.iActiveContexts += 1;
 		}
 
 		if (this.bFirstCreateAtEnd === undefined) {
 			this.bFirstCreateAtEnd = bAtEnd;
+		}
+
+		// clone data to avoid modifications outside the cache
+		// remove any property starting with "@$ui5."
+		oEntityData = _Helper.publicClone(oInitialData, true) || {};
+		if (oAggregation) {
+			if (oAggregation.expandTo > 1) {
+				throw new Error("Unsupported $$aggregation.expandTo: " + oAggregation.expandTo);
+			}
+			if (!bSkipRefresh) {
+				throw new Error("Missing bSkipRefresh");
+			}
+			if (arguments.length > 2) {
+				throw new Error("Only the parameters oInitialData and bSkipRefresh are supported");
+			}
+			oParentContext = oInitialData["@$ui5.node.parent"];
+			iChildIndex = this.aContexts.indexOf(oParentContext) + 1;
+			if (iChildIndex <= 0) {
+				throw new Error("Invalid parent context: " + oParentContext);
+			}
+			if (oParentContext.isExpanded() === false) {
+				throw new Error("Unsupported collapsed parent: " + oParentContext);
+			}
+			oEntityData["@$ui5.node.parent"] = oParentContext.getCanonicalPath().slice(1);
+		} else {
+			this.iCreatedContexts += 1;
 		}
 
 		// only for createInCache
@@ -867,7 +919,7 @@ sap.ui.define([
 			});
 		});
 		oCreatePromise = this.createInCache(oGroupLock, oCreatePathPromise, sResolvedPath,
-			sTransientPredicate, oInitialData, this.bFirstCreateAtEnd !== bAtEnd,
+			sTransientPredicate, oEntityData, this.bFirstCreateAtEnd !== bAtEnd,
 			function (oError) { // error callback
 				that.oModel.reportError("POST on '" + oCreatePathPromise
 					+ "' failed; will be repeated automatically", sClassName, oError);
@@ -904,8 +956,8 @@ sap.ui.define([
 			throw oError;
 		});
 
-		this.iCreatedContexts += 1;
-		oContext = Context.create(this.oModel, this, sTransientPath, -this.iCreatedContexts,
+		oContext = Context.create(this.oModel, this, sTransientPath,
+			oParentContext ? iChildIndex : -this.iCreatedContexts,
 			oCreatePromise, bInactive);
 		if (this.isTransient()) {
 			oContext.created().catch(this.oModel.getReporter());
@@ -918,7 +970,15 @@ sap.ui.define([
 			} // else: context already destroyed
 		});
 
-		if (this.bFirstCreateAtEnd !== bAtEnd) {
+		if (oParentContext) {
+			this.aContexts.splice(iChildIndex, 0, oContext);
+			for (i = this.aContexts.length - 1; i > iChildIndex; i -= 1) {
+				if (this.aContexts[i]) {
+					this.aContexts[i].iIndex += 1;
+				}
+			}
+			this.iMaxLength += 1;
+		} else if (this.bFirstCreateAtEnd !== bAtEnd) {
 			this.aContexts.splice(this.iCreatedContexts - 1, 0, oContext);
 			for (i = this.iCreatedContexts - 1; i >= 0; i -= 1) {
 				this.aContexts[i].iIndex = i - this.iCreatedContexts;
@@ -2451,14 +2511,20 @@ sap.ui.define([
 	 * Additionally, you must be aware of server-driven paging and be ready to send a follow-up
 	 * request if the response contains <code>@odata.nextlink</code>.
 	 *
+	 * The URL cannot be determined synchronously in all cases; use {@link #requestDownloadUrl} to
+	 * allow for asynchronous determination then.
+	 *
 	 * @returns {string}
 	 *   The download URL
 	 * @throws {Error}
-	 *   If the binding is unresolved or if the URL determination is not finished yet
+	 *   If the binding is unresolved or if the URL cannot be determined synchronously (either due
+	 *   to a pending metadata request or because the <code>autoExpandSelect</code> parameter at the
+	 *   {@link sap.ui.model.odata.v4.ODataModel#constructor model} is used and the binding has been
+	 *   newly created and is thus still automatically generating its $select and $expand system
+	 *   query options from the binding hierarchy)
 	 *
 	 * @function
 	 * @public
-	 * @see #requestDownloadUrl
 	 * @since 1.74.0
 	 */
 	ODataListBinding.prototype.getDownloadUrl = _Helper.createGetMethod("fetchDownloadUrl", true);
@@ -3201,8 +3267,8 @@ sap.ui.define([
 	 * @param {string} sGroupId
 	 *   The effective group ID
 	 * @returns {sap.ui.base.SyncPromise}
-	 *   A promise resolving without a defined result, or rejecting with an error if the refresh
-	 *   fails.
+	 *   A promise which is resolved without a defined result, or rejected with an error if the
+	 *   refresh fails.
 	 *
 	 * @private
 	 */
@@ -3591,10 +3657,9 @@ sap.ui.define([
 			});
 		}
 
-		if (this.mParameters.$$aggregation && !this.mParameters.$$aggregation.hierarchyQualifier) {
+		if (_Helper.isDataAggregation(this.mParameters)) {
 			if (bSingle) {
-				throw new Error(
-					"Must not request side effects for a context of a binding with $$aggregation");
+				throw new Error("Must not request side effects when using data aggregation");
 			}
 
 			if (_AggregationHelper.isAffected(this.mParameters.$$aggregation,
@@ -3834,7 +3899,8 @@ sap.ui.define([
 	 *   Since 1.105.0, either a recursive hierarchy or pure data aggregation is supported, but no
 	 *   mix; <code>hierarchyQualifier</code> is the leading property that decides between those two
 	 *   use cases - this is an <b>experimental API</b> and is only supported if the model uses the
-	 *   <code>autoExpandSelect</code> parameter!
+	 *   <code>autoExpandSelect</code> parameter! Since 1.117.0, it is available for read-only
+	 *   hierarchies.
 	 * @param {object} [oAggregation.aggregate]
 	 *   A map from aggregatable property names or aliases to objects containing the following
 	 *   details:
@@ -3864,9 +3930,10 @@ sap.ui.define([
 	 *   </ul>
 	 * @param {number} [oAggregation.expandTo=1]
 	 *   The number (as a positive integer) of different levels initially available without calling
-	 *   {@link sap.ui.model.odata.v4.Context#expand} (@experimental as of version 1.105.0),
-	 *   supported only if a <code>hierarchyQualifier</code> is given. Root nodes are on the first
-	 *   level. By default, only root nodes are available; they are not yet expanded.
+	 *   {@link sap.ui.model.odata.v4.Context#expand} (@experimental as of version 1.105.0;
+	 *   available for read-only hierarchies since 1.117.0), supported only if a
+	 *   <code>hierarchyQualifier</code> is given. Root nodes are on the first level. By default,
+	 *   only root nodes are available; they are not yet expanded.
 	 * @param {boolean} [oAggregation.grandTotalAtBottomOnly]
 	 *   Tells whether the grand totals for aggregatable properties are displayed at the bottom only
 	 *   (since 1.86.0); <code>true</code> for bottom only, <code>false</code> for top and bottom,
@@ -3892,10 +3959,10 @@ sap.ui.define([
 	 * @param {string} [oAggregation.hierarchyQualifier]
 	 *   The qualifier for the pair of "Org.OData.Aggregation.V1.RecursiveHierarchy" and
 	 *   "com.sap.vocabularies.Hierarchy.v1.RecursiveHierarchy" annotations at this binding's
-	 *   entity type (@experimental as of version 1.105.0). If present, a recursive hierarchy
-	 *   without data aggregation is defined, and the only other supported properties are
-	 *   <code>expandTo</code> and <code>search</code>. A recursive hierarchy cannot be combined
-	 *   with:
+	 *   entity type (@experimental as of version 1.105.0; available for read-only hierarchies since
+	 *   1.117.0). If present, a recursive hierarchy without data aggregation is defined, and the
+	 *   only other supported properties are <code>expandTo</code> and <code>search</code>. A
+	 *   recursive hierarchy cannot be combined with:
 	 *   <ul>
 	 *     <li> "$search",
 	 *     <li> the <code>vGroup</code> parameter of {@link sap.ui.model.Sorter} (since 1.107.0),

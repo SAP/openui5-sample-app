@@ -31,7 +31,8 @@ sap.ui.define([
 	'./Button',
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/Configuration",
-	"sap/ui/core/date/UI5Date"
+	"sap/ui/core/date/UI5Date",
+	"sap/ui/core/Core"
 ],
 function(
 	InputBase,
@@ -59,7 +60,8 @@ function(
 	Button,
 	jQuery,
 	Configuration,
-	UI5Date
+	UI5Date,
+	Core
 ) {
 		"use strict";
 
@@ -174,7 +176,7 @@ function(
 		 * @extends sap.m.DateTimeField
 		 *
 		 * @author SAP SE
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 *
 		 * @constructor
 		 * @public
@@ -444,7 +446,7 @@ function(
 				id: this.getId() + "-icon",
 				src: this.getIconSrc(),
 				noTabStop: true,
-				decorative: false,
+				decorative: !Device.support.touch || Device.system.desktop ? true : false,
 				useIconTooltip: false,
 				alt: this._oResourceBundle.getText("OPEN_PICKER_TEXT")
 			});
@@ -2302,6 +2304,8 @@ function(
 			var oRenderer = this.getRenderer();
 			var oInfo = DateTimeField.prototype.getAccessibilityInfo.apply(this, arguments);
 			var sValue = this.getValue() || "";
+			var sRequired = this.getRequired() ? Core.getLibraryResourceBundle("sap.m").getText("ELEMENT_REQUIRED") : '';
+
 			if (this._bValid) {
 				var oDate = this.getDateValue();
 				if (oDate) {
@@ -2309,13 +2313,11 @@ function(
 				}
 			}
 
-			jQuery.extend(true, oInfo, {
-				role: oRenderer.getAriaRole(this),
-				type: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_TIMEINPUT"),
-				description: [sValue, oRenderer.getLabelledByAnnouncement(this), oRenderer.getDescribedByAnnouncement(this)].join(" ").trim(),
-				autocomplete: "none",
-				haspopup: true
-			});
+			oInfo.role = oRenderer.getAriaRole(this);
+			oInfo.type = Core.getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_TIMEINPUT");
+			oInfo.description = [sValue || this._getPlaceholder(), oRenderer.getDescribedByAnnouncement(this), sRequired].join(" ").trim();
+			oInfo.autocomplete = "none";
+			oInfo.haspopup = true;
 
 			return oInfo;
 		};

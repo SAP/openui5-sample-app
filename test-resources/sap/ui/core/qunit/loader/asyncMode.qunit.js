@@ -5,7 +5,7 @@
 	var privateLoaderAPI = sap.ui.loader._;
 
 	QUnit.config.autostart = false;
-	QUnit.config.seed = Math.random();
+
 	if ( QUnit.urlParams["rtf"] || QUnit.urlParams["repeat-to-failure"]) {
 		QUnit.done(function(results) {
 			if (results.failed === 0) {
@@ -174,7 +174,7 @@
 		], function(module, subpkgMod) {
 			assert.equal(typeof module.module, 'object', "special dependency module should be an object");
 			assert.equal(module.module.id, 'fixture/require-module-exports/module', "special dependency module should have an 'id' property with the module ID");
-			assert.ok(Object.prototype.hasOwnProperty.call(module.module, 'exports'), "special dependency module should have an 'exports' property");
+			assert.ok(Object.hasOwn(module.module, 'exports'), "special dependency module should have an 'exports' property");
 			assert.ok(isEmpty(module.module.exports), "exports initially should be an empty object");
 			done();
 		});

@@ -86,7 +86,7 @@ function(
 	 * @implements sap.ui.core.IShrinkable, sap.ui.core.IFormContent, sap.ui.core.ITitleContent, sap.ui.core.IAccessKeySupport
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -485,16 +485,21 @@ function(
 			sSubtleInfo = this.getSubtle() ? oResourceBundle.getText("LINK_SUBTLE") : "",
 			sText = this.getText(),
 			sDescription = sText,
-			sAccessibleRole = this.getAccessibleRole();
+			sAccessibleRole = this.getAccessibleRole(),
+			sType;
 
 		if (sText) {
+			sType = sAccessibleRole === LinkAccessibleRole.Default
+				? oResourceBundle.getText("ACC_CTR_TYPE_LINK")
+				: oResourceBundle.getText("ACC_CTR_TYPE_BUTTON");
+
 			sEmphasizedInfo && (sDescription += " " + sEmphasizedInfo);
 			sSubtleInfo && (sDescription += " " + sSubtleInfo);
 		}
 
 		return {
 			role: sAccessibleRole === LinkAccessibleRole.Default ? "link" : sAccessibleRole,
-			type: sText ? oResourceBundle.getText("ACC_CTR_TYPE_LINK") : undefined,
+			type: sType,
 			description: sDescription,
 			focusable: this.getEnabled(),
 			enabled: this.getEnabled()

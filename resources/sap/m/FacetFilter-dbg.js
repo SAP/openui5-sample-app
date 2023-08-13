@@ -174,7 +174,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IShrinkable
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -1649,7 +1649,6 @@ sap.ui.define([
 				beginButton : new Button({
 					text : this._bundle.getText("FACETFILTER_ACCEPT"),
 					type: ButtonType.Emphasized,
-					tooltip:this._bundle.getText("FACETFILTER_ACCEPT"),
 					press : function() {
 
 						that._closeDialog();
@@ -2080,7 +2079,6 @@ sap.ui.define([
 		if (!oFooter) {
 			oButton = new Button({
 				text: this._bundle.getText("FACETFILTER_ACCEPT"),
-				tooltip: this._bundle.getText("FACETFILTER_ACCEPT"),
 				press: function() {
 					this._closePopover();
 				}.bind(this)

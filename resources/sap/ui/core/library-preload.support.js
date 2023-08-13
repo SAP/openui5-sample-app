@@ -1280,7 +1280,7 @@ sap.ui.predefine("sap/ui/core/rules/Misc.support", [
 			});
 
 			for (sComponentName in oRegisteredComponents) {
-				if (Object.hasOwnProperty.call(oRegisteredComponents, sComponentName)) {
+				if (Object.hasOwn(oRegisteredComponents, sComponentName)) {
 					var aComponents = Component.registry.filter(filterComponents(sComponentName));
 					aComponents.forEach(createIssue(oRegisteredComponents[sComponentName]));
 				}

@@ -76,12 +76,14 @@ sap.ui.define([
 	 *   {@link sap.ui.model.odata.v4.lib._Helper.buildQuery}; used only to request the CSRF token
 	 * @param {object} oModelInterface
 	 *   An interface allowing to call back to the owning model (see {@link .create})
+	 * @param {boolean} [bWithCredentials]
+	 *   Whether the XHR should be called with <code>withCredentials</code>
 	 *
 	 * @alias sap.ui.model.odata.v4.lib._Requestor
 	 * @constructor
 	 * @private
 	 */
-	function _Requestor(sServiceUrl, mHeaders, mQueryParams, oModelInterface) {
+	function _Requestor(sServiceUrl, mHeaders, mQueryParams, oModelInterface, bWithCredentials) {
 		this.mBatchQueue = {};
 		this.bBatchSent = false;
 		this.mHeaders = mHeaders || {};
@@ -94,6 +96,7 @@ sap.ui.define([
 		this.iSerialNumber = 0;
 		this.sServiceUrl = sServiceUrl;
 		this.vStatistics = mQueryParams && mQueryParams["sap-statistics"];
+		this.bWithCredentials = bWithCredentials;
 		this.processSecurityTokenHandlers(); // sets this.oSecurityTokenPromise
 	}
 
@@ -1546,8 +1549,9 @@ sap.ui.define([
 	 * @param {string} [sOldSecurityToken]
 	 *   Security token that caused a 403. A new token is only fetched if the old one is still
 	 *   current.
-	 * @returns {Promise}
-	 *   A promise that will be resolved (with no result) once the CSRF token has been refreshed.
+	 * @returns {Promise<void>}
+	 *   A promise which is resolved without a defined result once the CSRF token has been
+	 *   refreshed.
 	 *
 	 * @public
 	 */
@@ -1961,18 +1965,23 @@ sap.ui.define([
 
 		return new Promise(function (fnResolve, fnReject) {
 			function send(bIsFreshToken) {
+				const oAjaxSettings = {
+						contentType : mHeaders && mHeaders["Content-Type"],
+						data : sPayload,
+						headers : Object.assign({},
+							that.mPredefinedRequestHeaders,
+							that.mHeaders,
+							_Helper.resolveIfMatchHeader(mHeaders,
+								that.oModelInterface.isIgnoreETag())),
+						method : sMethod
+					};
 				var sOldCsrfToken = that.mHeaders["X-CSRF-Token"];
 
-				return jQuery.ajax(sRequestUrl, {
-					contentType : mHeaders && mHeaders["Content-Type"],
-					data : sPayload,
-					headers : Object.assign({},
-						that.mPredefinedRequestHeaders,
-						that.mHeaders,
-						_Helper.resolveIfMatchHeader(mHeaders,
-							that.oModelInterface.isIgnoreETag())),
-					method : sMethod
-				}).then(function (/*{object|string}*/vResponse, _sTextStatus, jqXHR) {
+				if (that.bWithCredentials) {
+					oAjaxSettings.xhrFields = {withCredentials : true};
+				}
+				return jQuery.ajax(sRequestUrl, oAjaxSettings)
+				.then(function (/*{object|string}*/vResponse, _sTextStatus, jqXHR) {
 					var sETag = jqXHR.getResponseHeader("ETag"),
 						sCsrfToken = jqXHR.getResponseHeader("X-CSRF-Token");
 
@@ -2279,12 +2288,15 @@ sap.ui.define([
 	 *   token
 	 * @param {string} [sODataVersion="4.0"]
 	 *   The version of the OData service. Supported values are "2.0" and "4.0".
+	 * @param {boolean} [bWithCredentials]
+	 *   Whether the XHR should be called with <code>withCredentials</code>
 	 * @returns {object}
 	 *   A new <code>_Requestor</code> instance
 	 */
 	_Requestor.create = function (sServiceUrl, oModelInterface, mHeaders, mQueryParams,
-			sODataVersion) {
-		var oRequestor = new _Requestor(sServiceUrl, mHeaders, mQueryParams, oModelInterface);
+			sODataVersion, bWithCredentials) {
+		var oRequestor = new _Requestor(sServiceUrl, mHeaders, mQueryParams, oModelInterface,
+			bWithCredentials);
 
 		if (sODataVersion === "2.0") {
 			asV2Requestor(oRequestor);

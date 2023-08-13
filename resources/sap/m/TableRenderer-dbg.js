@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/Renderer", "sap/ui/core/Core", "sap/ui/core/InvisibleText", "./library", "./ListBaseRenderer", "./ColumnListItemRenderer"],
-	function(Renderer, Core, InvisibleText, library, ListBaseRenderer, ColumnListItemRenderer) {
+sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/Renderer", "sap/ui/core/InvisibleText", "./library", "./ListBaseRenderer", "./ColumnListItemRenderer", "sap/ui/core/Lib"],
+	function(Localization, Renderer, InvisibleText, library, ListBaseRenderer, ColumnListItemRenderer, Library) {
 	"use strict";
 
 
@@ -23,7 +23,7 @@ sap.ui.define(["sap/ui/core/Renderer", "sap/ui/core/Core", "sap/ui/core/Invisibl
 	TableRenderer.apiVersion = 2;
 
 	// store the flex alignment for the column header based on the RTL mode
-	var bRtl = Core.getConfiguration().getRTL();
+	var bRtl = Localization.getRTL();
 	TableRenderer.columnAlign = {
 		left: bRtl ? "flex-end" : "flex-start",
 		center: "center",
@@ -253,7 +253,7 @@ sap.ui.define(["sap/ui/core/Renderer", "sap/ui/core/Core", "sap/ui/core/Invisibl
 	 */
 	TableRenderer.renderContainerAttributes = function(rm, oControl) {
 		rm.attr("role", "application").attr("data-sap-ui-pasteregion", "true");
-		rm.attr("aria-roledescription", Core.getLibraryResourceBundle("sap.m").getText("TABLE_CONTAINER_ROLE_DESCRIPTION"));
+		rm.attr("aria-roledescription", Library.getResourceBundleFor("sap.m").getText("TABLE_CONTAINER_ROLE_DESCRIPTION"));
 		rm.class("sapMListTblCnt");
 
 		// write accessibility state for the table container
@@ -355,7 +355,7 @@ sap.ui.define(["sap/ui/core/Renderer", "sap/ui/core/Core", "sap/ui/core/Invisibl
 				// If _noColumnsMessage is set, there is for sure an IllustratedMessage used for no data visualization
 				rm.renderControl(oControl.getAggregation("_noColumnsMessage"));
 			} else {
-				rm.text(Core.getLibraryResourceBundle("sap.m").getText("TABLE_NO_COLUMNS"));
+				rm.text(Library.getResourceBundleFor("sap.m").getText("TABLE_NO_COLUMNS"));
 			}
 		} else {
 			this.renderNoDataArea(rm, oControl);

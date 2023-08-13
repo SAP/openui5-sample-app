@@ -41,10 +41,14 @@ sap.ui.define([
 	 *
 	 * This model is not prepared to be inherited from.
 	 *
+	 * The model does not support {@link sap.ui.model.json.JSONModel#bindList binding lists} in case the bound data
+	 * contains circular structures and the bound control uses
+	 * {@link topic:7cdff73f308b4b10bdf7d83b7aba72e7 extended change detection}.
+	 *
 	 * @extends sap.ui.model.ClientModel
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @public
 	 * @alias sap.ui.model.json.JSONModel
 	 */
@@ -71,6 +75,7 @@ sap.ui.define([
 	 *
 	 * @param {object} oData the data to set on the model
 	 * @param {boolean} [bMerge=false] whether to merge the data instead of replacing it
+	 * @throws {Error} If the provided data contains a cycle and <code>bMerge</code> is set
 	 *
 	 * @public
 	 */

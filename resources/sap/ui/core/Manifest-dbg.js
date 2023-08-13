@@ -72,7 +72,7 @@ sap.ui.define([
 				sPathSegment = aPaths[i];
 
 				// Prevent access to native properties
-				oObject = oObject.hasOwnProperty(sPathSegment) ? oObject[sPathSegment] : undefined;
+				oObject = Object.hasOwn(oObject, sPathSegment) ? oObject[sPathSegment] : undefined;
 
 				// Only continue with lookup if the value is an object.
 				// Accessing properties of other types is not allowed!
@@ -107,7 +107,7 @@ sap.ui.define([
 		if (oObject && typeof oObject === 'object' && !Object.isFrozen(oObject)) {
 			Object.freeze(oObject);
 			for (var sKey in oObject) {
-				if (oObject.hasOwnProperty(sKey)) {
+				if (Object.hasOwn(oObject, sKey)) {
 					deepFreeze(oObject[sKey]);
 				}
 			}
@@ -145,7 +145,7 @@ sap.ui.define([
 	 * @class The Manifest class.
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @alias sap.ui.core.Manifest
 	 * @since 1.33.0
 	 */
@@ -796,7 +796,7 @@ sap.ui.define([
 			}
 		}
 		if (!oManifestUrl.hasQuery("sap-client")) {
-			var sValue = BaseConfig.get({name: "sapClient", type:BaseConfig.Type.String});
+			var sValue = BaseConfig.get({name: "sapClient", type:BaseConfig.Type.String, external: true});
 			if (sValue) {
 				oManifestUrl.addQuery("sap-client", sValue);
 			}
@@ -861,7 +861,7 @@ sap.ui.define([
 	 */
 	Manifest.processObject = function (oObject, fnCallback) {
 		for (var sKey in oObject) {
-			if (!oObject.hasOwnProperty(sKey)) {
+			if (!Object.hasOwn(oObject, sKey)) {
 				continue;
 			}
 			var vValue = oObject[sKey];

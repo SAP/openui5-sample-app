@@ -40,7 +40,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 *
 		 * @public
 		 * @since 1.92
@@ -521,7 +521,7 @@ sap.ui.define([
 
 			oDate.setDate(1);
 			oDate.setMonth(iMonth);
-			oDate.setYear(iYear);
+			oDate.setFullYear(iYear);
 			oControl.addSelectedDate(new DateRange({
 				startDate: oDate
 			}));

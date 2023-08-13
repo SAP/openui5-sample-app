@@ -120,7 +120,7 @@ sap.ui.define([
 		* @extends sap.ui.core.Control
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.116.0
+		* @version 1.117.0
 		*
 		* @public
 		* @alias sap.m.Popover
@@ -494,7 +494,7 @@ sap.ui.define([
 				},
 				onAfterRendering: function () {
 					if (this._sFocusControlId && !containsOrEquals(this.getDomRef(), document.activeElement)) {
-						sap.ui.getCore().byId(this._sFocusControlId).focus();
+						Element.registry.get(this._sFocusControlId).focus();
 					}
 				}
 			};
@@ -1131,7 +1131,7 @@ sap.ui.define([
 
 			// Set focus to the first visible focusable element
 			var sFocusId = this._getInitialFocusId(),
-			oControl = sap.ui.getCore().byId(sFocusId),
+			oControl = Element.registry.get(sFocusId),
 			oDomById = (sFocusId ? window.document.getElementById(sFocusId) : null);
 			if (oControl && oControl.getFocusDomRef()){
 				oControl.getFocusDomRef().focus();
@@ -1902,7 +1902,7 @@ sap.ui.define([
 				iMaxContentWidth = this._getMaxContentWidth(oPosParams),
 				iMaxContentHeight = this._getMaxContentHeight(oPosParams);
 
-			//make sure iMaxContentHeight is NEVER less than 0
+				//make sure iMaxContentHeight is NEVER less than 0
 			iMaxContentHeight = Math.max(iMaxContentHeight, 0);
 
 			oCSS["max-width"] = iMaxContentWidth + "px";
@@ -2329,7 +2329,7 @@ sap.ui.define([
 			if (this.isOpen()) {
 				//restore the focus after rendering when popover is already open
 				var sFocusId = this._getInitialFocusId(),
-				oControl = sap.ui.getCore().byId(sFocusId),
+				oControl = Element.registry.get(sFocusId),
 				oDomById = (sFocusId ? window.document.getElementById(sFocusId) : null);
 				if (oControl && oControl.getFocusDomRef()){
 					oControl.getFocusDomRef().focus();
@@ -2547,17 +2547,13 @@ sap.ui.define([
 
 			this._createInternalHeader();
 
-			//this is used in the getAggregation method
+			// this is used in the getAggregation method
 			this._endButton = oButton;
 
+			this._internalHeader.removeContentRight(oOldEndButton);
+
 			if (oButton) {
-				if (oOldEndButton) {
-					this._internalHeader.removeAggregation("contentRight", oOldEndButton, true);
-				}
-				this._internalHeader.insertAggregation("contentRight", oButton, 1, true);
-				this._internalHeader.invalidate();
-			} else {
-				this._internalHeader.removeContentRight(oOldEndButton);
+				this._internalHeader.addContentRight(oButton);
 			}
 
 			return this;
@@ -2565,7 +2561,7 @@ sap.ui.define([
 
 		Popover.prototype.setLeftButton = function (vButton) {
 			if (!(vButton instanceof Button)) {
-				vButton = sap.ui.getCore().byId(vButton);
+				vButton = Element.registry.get(vButton);
 			}
 
 			//setting leftButton also sets the beginButton
@@ -2575,7 +2571,7 @@ sap.ui.define([
 
 		Popover.prototype.setRightButton = function (vButton) {
 			if (!(vButton instanceof Button)) {
-				vButton = sap.ui.getCore().byId(vButton);
+				vButton = Element.registry.get(vButton);
 			}
 
 			//setting rightButton also sets the endButton
@@ -2620,8 +2616,8 @@ sap.ui.define([
 		};
 
 		/**
-		 * Returns the sap.ui.core.ScrollEnablement delegate which is used with this control.
-		 * @returns {sap.ui.core.ScrollEnablement} The scroll delegate
+		 * Returns the sap.ui.core.delegate.ScrollEnablement delegate which is used with this control.
+		 * @returns {sap.ui.core.delegate.ScrollEnablement} The scroll delegate
 		 * @private
 		 */
 		Popover.prototype.getScrollDelegate = function () {

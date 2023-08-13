@@ -242,7 +242,7 @@ sap.ui.define([
 		 * is opened. The dialog is closed via a date time period value selection or by pressing the "Cancel" button.
 		 *
 		 * @author SAP SE
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 *
 		 * @constructor
 		 * @public
@@ -428,8 +428,14 @@ sap.ui.define([
 					 * @since 1.111.0
 					 */
 
-					calendarWeekNumbering : { type : "sap.ui.core.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null}
+					calendarWeekNumbering : { type : "sap.ui.core.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
 
+					/**
+					 * Specifies whether clear icon is shown.
+					 * Pressing the icon will clear input's value and fire the liveChange event.
+					 * @since 1.117
+					 */
+					showClearIcon: { type: "boolean", defaultValue: false }
 				},
 				aggregations: {
 					/**
@@ -490,6 +496,7 @@ sap.ui.define([
 		var aNextOptions = ["NEXTMINUTES", "NEXTHOURS", "NEXTDAYS", "NEXTWEEKS", "NEXTMONTHS", "NEXTQUARTERS", "NEXTYEARS"];
 
 		DynamicDateRange.prototype.init = function() {
+			var bValueHelpDecorative = !Device.support.touch || Device.system.desktop ? true : false;
 			this._oInput = new DynamicDateRangeInput(this.getId() + "-input", {
 				showValueHelp: true,
 				valueHelpIconSrc: IconPool.getIconURI("sap-icon://check-availability"),
@@ -506,7 +513,7 @@ sap.ui.define([
 				}
 			};
 
-			this._oInput._getValueHelpIcon().setDecorative(false);
+			this._oInput._getValueHelpIcon().setDecorative(bValueHelpDecorative);
 
 			this._oInput.addDelegate(this._onBeforeInputRenderingDelegate, this);
 
@@ -567,6 +574,31 @@ sap.ui.define([
 		 DynamicDateRange.prototype.setFormatter = function(oFormatter) {
 			this.setProperty("formatter", oFormatter);
 
+			return this;
+		};
+
+		/**
+		 * Sets the tooltip for the <code>DynamicDateRange</code>.
+		 * @param {sap.ui.core.TooltipBase|string} vTooltip The tooltip that should be shown.
+		 * @returns {this} Reference to <code>this</code> for method chaining
+		 * @public
+		 * @override
+		 */
+		DynamicDateRange.prototype.setTooltip = function(vTooltip) {
+			this._oInput.setTooltip(vTooltip);
+			return Control.prototype.setTooltip.apply(this, arguments);
+		};
+
+		/**
+		 * Sets the showClearIcon for the <code>DynamicDateRange</code>.
+		 * @param {boolean} bShowClearIcon Whether to show clear icon.
+		 * @returns {this} Reference to <code>this</code> for method chaining
+		 * @public
+		 * @override
+		 */
+		DynamicDateRange.prototype.setShowClearIcon = function(bShowClearIcon) {
+			this.setProperty("showClearIcon", bShowClearIcon);
+			this._oInput.setShowClearIcon(bShowClearIcon);
 			return this;
 		};
 
@@ -1785,6 +1817,10 @@ sap.ui.define([
 		DynamicDateRangeInputRenderer.apiVersion = 2;
 
 		DynamicDateRangeInputRenderer.writeInnerAttributes = function(oRm, oControl) {
+			if (oControl.getShowSuggestion() || oControl.getShowValueStateMessage()) {
+				oRm.attr("autocomplete", "off");
+			}
+
 			var oDynamicDateRange = oControl._getControlOrigin ? oControl._getControlOrigin() : null,
 				mAccAttributes = this.getAccessibilityState(oControl);
 
@@ -1824,8 +1860,9 @@ sap.ui.define([
 
 			mAccessibilityState.roledescription = oResourceBundle.getText("ACC_CTR_TYPE_DYNAMIC_DATE_RANGE");
 			mAccessibilityState.role = this.getAriaRole();
-			mAccessibilityState.haspopup = coreLibrary.aria.HasPopup.ListBox.toLowerCase();
-			mAccessibilityState.autocomplete = "list";
+			if (oControl.getEditable() && oControl.getEnabled()) {
+				mAccessibilityState.haspopup = coreLibrary.aria.HasPopup.ListBox.toLowerCase();
+			}
 			mAccessibilityState.controls = oDynamicDateRange._oPopup && oDynamicDateRange._oPopup.getDomRef() ?
 				oDynamicDateRange._oPopup.getDomRef().id : undefined;
 

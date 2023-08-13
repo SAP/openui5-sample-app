@@ -60,7 +60,7 @@ sap.ui.define([
 	 * @hideconstructor
 	 * @public
 	 * @since 1.111.0
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 */
 	function UI5Date(vDateParts, sTimezoneID) {
 		var oDateInstance = UI5Date._createDateInstance(vDateParts);
@@ -479,7 +479,9 @@ sap.ui.define([
 	 * Sets the year for this date instance plus 1900 considering the configured time zone, see
 	 * <code>Date.prototype.setYear</code>.
 	 *
-	 * @param {int} iYear The year which is to be set for this date plus 1900
+	 * @param {int} iYear The year which is to be set for this date. If iYear is a number between 0
+	 *   and 99 (inclusive), then the year for this date is set to 1900 + iYear. Otherwise, the year
+	 *   for this date is set to iYear.
 	 * @returns {int}
 	 *   The milliseconds of the new timestamp based on the UNIX epoch, or <code>NaN</code> if the
 	 *   timestamp could not be updated
@@ -489,7 +491,11 @@ sap.ui.define([
 	 * @public
 	 */
 	UI5Date.prototype.setYear = function (iYear) {
-		return this._setParts(["year"], [(parseInt(iYear) + 1900)]);
+		var iValue = parseInt(iYear);
+
+		iValue =  (iValue < 0 || iValue > 99) ?  iValue : iValue + 1900;
+
+		return this._setParts(["year"], [iValue]);
 	};
 
 	/**

@@ -35,6 +35,7 @@ sap.ui.define([
 	"sap/ui/unified/calendar/CalendarUtils",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/date/CalendarWeekNumbering",
+	"sap/ui/core/Core",
 	"sap/ui/dom/jquery/cursorPos"
 ],
 	function(
@@ -65,7 +66,8 @@ sap.ui.define([
 		Configuration,
 		CalendarUtils,
 		UI5Date,
-		CalendarWeekNumbering
+		CalendarWeekNumbering,
+		Core
 	) {
 	"use strict";
 
@@ -184,7 +186,7 @@ sap.ui.define([
 	 * the close event), or select Cancel.
 	 *
 	 * @extends sap.m.DateTimeField
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -406,7 +408,7 @@ sap.ui.define([
 			id: this.getId() + "-icon",
 			src: this.getIconSrc(),
 			noTabStop: true,
-			decorative: false,
+			decorative: !Device.support.touch || Device.system.desktop ? true : false,
 			useIconTooltip: false,
 			alt: oResourceBundle.getText("OPEN_PICKER_TEXT")
 		});
@@ -1222,7 +1224,7 @@ sap.ui.define([
 				showCloseButton: false,
 				showArrow: false,
 				showHeader: false,
-				placement: library.PlacementType.VerticalPreferedBottom,
+				placement: library.PlacementType.VerticalPreferredBottom,
 				contentWidth: this.$().closest(".sapUiSizeCompact").length > 0 ? "18rem" : "21rem",
 				beginButton: new Button({
 					type: library.ButtonType.Emphasized,
@@ -1447,6 +1449,8 @@ sap.ui.define([
 		var oRenderer = this.getRenderer();
 		var oInfo = InputBase.prototype.getAccessibilityInfo.apply(this, arguments);
 		var sValue = this.getValue() || "";
+		var sRequired = this.getRequired() ? Core.getLibraryResourceBundle("sap.m").getText("ELEMENT_REQUIRED") : '';
+
 		if (this._bValid) {
 			var oDate = this.getDateValue();
 			if (oDate) {
@@ -1454,7 +1458,7 @@ sap.ui.define([
 			}
 		}
 		oInfo.type = oResourceBundle.getText("ACC_CTR_TYPE_DATEINPUT");
-		oInfo.description = [sValue, oRenderer.getLabelledByAnnouncement(this), oRenderer.getDescribedByAnnouncement(this)].join(" ").trim();
+		oInfo.description = [sValue || this._getPlaceholder(), oRenderer.getLabelledByAnnouncement(this), oRenderer.getDescribedByAnnouncement(this), sRequired].join(" ").trim();
 		return oInfo;
 	};
 

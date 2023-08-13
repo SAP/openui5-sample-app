@@ -16,7 +16,7 @@ sap.ui.define([
 	 * The base Configuration.
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @private
 	 * @alias module:sap/base/config
 	 * @namespace
@@ -26,7 +26,7 @@ sap.ui.define([
 
 	/**
 	 * Returns a writable base configuration instance
-	 * @returns {sap.base.config} The writable base configuration
+	 * @returns {module:sap/base/config} The writable base configuration
 	 */
 	_Configuration.getWritableInstance = function() {
 		var oProvider = new MemoryConfigurationProvider();
@@ -36,6 +36,7 @@ sap.ui.define([
 				var rValidKey = /^[a-z][A-Za-z0-9]*$/;
 				if (rValidKey.test(sName)) {
 					oProvider.set(sName, vValue);
+					_Configuration._.invalidate();
 				} else {
 					throw new TypeError(
 						"Invalid configuration key '" + sName + "'!"

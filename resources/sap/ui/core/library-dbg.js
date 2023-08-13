@@ -25,13 +25,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.116.0",
+		 version: "1.117.0",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 types: [
 
@@ -1539,7 +1539,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0
@@ -1940,7 +1940,6 @@ sap.ui.define([
 	 * @name sap.ui.core.ISemanticFormContent
 	 * @interface
 	 * @public
-	 * @experimental As of version 1.86
 	 */
 
 	/**
@@ -1956,7 +1955,6 @@ sap.ui.define([
 	 * @returns {string|Promise<string>} Formatted value or a <code>Promise</code> returning the formatted value if resolved
 	 * @since 1.86.0
 	 * @public
-	 * @experimental As of version 1.86
 	 * @function
 	 * @name sap.ui.core.ISemanticFormContent.getFormFormattedValue?
 	 */
@@ -1974,9 +1972,37 @@ sap.ui.define([
 	 * @returns {string} Name of the value-holding property
 	 * @since 1.86.0
 	 * @public
-	 * @experimental As of version 1.86
 	 * @function
 	 * @name sap.ui.core.ISemanticFormContent.getFormValueProperty?
+	 */
+
+	/**
+	 * Returns the names of the properties of a control that might update the rendering in a <code>SemanticFormElement</code>.
+	 *
+	 * In the <code>SemanticFormElement</code> element, the assigned fields are rendered in edit mode. In display mode, depending on <code>getFormRenderAsControl</code>,
+	 * either a text is rendered, which concatenates the values of all assigned fields, or the control is rendered.
+	 * So if a property of the control changes that might lead to a different rendering (some controls have a special rendering in display mode), the
+	 * <code>SemanticFormElement</code> needs to check the rendering.
+	 *
+	 * This is an optional method. If not defined, no check for updates (only for property defined in <code>getFormValueProperty</code>) is done once the control has been assigned.
+	 *
+	 * @returns {string[]} Name of the properties
+	 * @since 1.117.0
+	 * @public
+	 * @function
+	 * @name sap.ui.core.ISemanticFormContent.getFormObservingProperties?
+	 */
+
+	/**
+	 * If set to <code>true</code>, the <code>SemanticFormElement</code> also renders the control in display mode, if the used <code>FormLayout</code> supports this.
+	 *
+	 * This is an optional method. If not defined, just the text is rendered.
+	 *
+	 * @returns {string} Name of the value-holding property
+	 * @since 1.117.0
+	 * @public
+	 * @function
+	 * @name sap.ui.core.ISemanticFormContent.getFormRenderAsControl?
 	 */
 
 	/**

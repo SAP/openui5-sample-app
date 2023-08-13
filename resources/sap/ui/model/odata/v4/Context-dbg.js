@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -133,16 +133,18 @@ sap.ui.define([
 	 * @private
 	 */
 	Context.prototype.checkUpdate = function () {
-		this.oModel.getDependentBindings(this).forEach(function (oDependentBinding) {
-			oDependentBinding.checkUpdate();
-		});
+		if (this.oModel) { // might have already been destroyed
+			this.oModel.getDependentBindings(this).forEach(function (oDependentBinding) {
+				oDependentBinding.checkUpdate();
+			});
+		}
 	};
 
 	/**
 	 * Updates all dependent bindings of this context.
 	 *
 	 * @returns {sap.ui.base.SyncPromise}
-	 *   A promise resolving without a defined result when the update is finished
+	 *   A promise which is resolved without a defined result when the update is finished
 	 * @private
 	 */
 	Context.prototype.checkUpdateInternal = function () {
@@ -196,10 +198,11 @@ sap.ui.define([
 	 * details.
 	 *
 	 * @returns {Promise<void>|undefined}
-	 *   A promise that is resolved without data when the entity represented by this context has
-	 *   been created in the back end. It is rejected with an <code>Error</code> instance where
-	 *   <code>oError.canceled === true</code> if the transient entity is deleted before it is
-	 *   created in the back end, for example via {@link sap.ui.model.odata.v4.Context#delete},
+	 *   A promise which is resolved without a defined result when the entity represented by this
+	 *   context has been created in the back end. It is rejected with an <code>Error</code>
+	 *   instance where <code>oError.canceled === true</code> if the transient entity is deleted
+	 *   before it is created in the back end, for example via
+	 *   {@link sap.ui.model.odata.v4.Context#delete},
 	 *   {@link sap.ui.model.odata.v4.ODataListBinding#resetChanges} or
 	 *   {@link sap.ui.model.odata.v4.ODataModel#resetChanges}, and for all nested contexts within a
 	 *   deep create. It is rejected with an <code>Error</code> instance without
@@ -251,9 +254,9 @@ sap.ui.define([
 	 *   Whether not to request the new count from the server; useful in case of
 	 *   {@link #replaceWith} where it is known that the count remains unchanged (since 1.97.0).
 	 *   Since 1.98.0, this is implied if a <code>null</code> group ID is used.
-	 * @returns {Promise}
-	 *   A promise which is resolved without a result in case of success, or rejected with an
-	 *   instance of <code>Error</code> in case of failure, for example if:
+	 * @returns {Promise<void>}
+	 *   A promise which is resolved without a defined result in case of success, or rejected with
+	 *   an instance of <code>Error</code> in case of failure, for example if:
 	 *   <ul>
 	 *     <li> the given context does not point to an entity,
 	 *     <li> the deletion on the server fails,
@@ -1260,7 +1263,7 @@ sap.ui.define([
 	 * Note: For a transient context (see {@link #isTransient}) a wrong path is returned unless all
 	 * key properties are available within the initial data.
 	 *
-	 * @returns {Promise}
+	 * @returns {Promise<string>}
 	 *   A promise which is resolved with the canonical path (e.g. "/SalesOrderList('0500000000')")
 	 *   in case of success, or rejected with an instance of <code>Error</code> in case of failure,
 	 *   e.g. if the given context does not point to an entity
@@ -1287,7 +1290,7 @@ sap.ui.define([
 	 *
 	 * @param {string} [sPath=""]
 	 *   A path relative to this context
-	 * @returns {Promise}
+	 * @returns {Promise<any>}
 	 *   A promise on the requested value
 	 * @throws {Error}
 	 *   If the context's root binding is suspended, or if the context is a header context and the
@@ -1316,7 +1319,7 @@ sap.ui.define([
 	 * @param {boolean} [bExternalFormat]
 	 *   If <code>true</code>, the values are returned in external format using UI5 types for the
 	 *   given property paths that format corresponding to the properties' EDM types and constraints
-	 * @returns {Promise}
+	 * @returns {Promise<any>}
 	 *   A promise on the requested value or values; it is rejected if a value is not primitive or
 	 *   if the context is a header context and a path is not "$count"
 	 * @throws {Error}
@@ -1355,9 +1358,9 @@ sap.ui.define([
 	 *   The group ID to be used
 	 * @param {boolean} [bAllowRemoval]
 	 *   Allows to remove the context
-	 * @returns {Promise}
-	 *   A promise which resolves without a defined result when the refresh is finished and rejects
-	 *   with an instance of <code>Error</code> if the refresh failed
+	 * @returns {Promise<void>}
+	 *   A promise which is resolved without a defined result when the refresh is finished, or
+	 *   rejected with an error if the refresh failed
 	 * @throws {Error}
 	 *   See {@link #refresh} for details
 	 *
@@ -1465,11 +1468,11 @@ sap.ui.define([
 	 *   specified, make sure that {@link #requestSideEffects} is called after the corresponding
 	 *   updates have been successfully processed by the server and that there are no pending
 	 *   changes for the affected properties.
-	 * @returns {Promise<undefined>}
-	 *   Promise resolved with <code>undefined</code>, or rejected with an error if loading of side
-	 *   effects fails. Use it to set fields affected by side effects to read-only before
-	 *   {@link #requestSideEffects} and make them editable again when the promise resolves; in the
-	 *   error handler, you can repeat the loading of side effects.
+	 * @returns {Promise<void>}
+	 *   A promise which is resolved without a defined result, or rejected with an error if
+	 *   loading of side effects fails. Use it to set fields affected by side effects to read-only
+	 *   before {@link #requestSideEffects} and make them editable again when the promise resolves;
+	 *   in the error handler, you can repeat the loading of side effects.
 	 *   <br>
 	 *   The promise is rejected if the call wants to refresh a whole list binding (via header
 	 *   context or an absolute path), but the deletion of a row context (see {@link #delete}) is
@@ -1618,8 +1621,8 @@ sap.ui.define([
 	 * @param {string} sGroupId
 	 *   The effective group ID
 	 * @returns {sap.ui.base.SyncPromise|undefined}
-	 *   A promise resolving without a defined result, or rejecting with an error if loading of side
-	 *   effects fails, or <code>undefined</code> if there is nothing to do
+	 *   A promise which is resolved without a defined result, or rejected with an error if loading
+	 *   of side effects fails, or <code>undefined</code> if there is nothing to do
 	 *
 	 * @private
 	 */
@@ -1690,7 +1693,7 @@ sap.ui.define([
 	 * context which is currently {@link #delete deleted} on the client, but not yet on the server,
 	 * this method cancels the deletion and restores the context.
 	 *
-	 * @returns {Promise}
+	 * @returns {Promise<void>}
 	 *   A promise which is resolved without a defined result as soon as all changes in the context
 	 *   and its current dependent bindings are canceled
 	 * @throws {Error} If
@@ -1888,10 +1891,10 @@ sap.ui.define([
 	 *   Each time the PATCH request is sent to the server, a 'patchSent' event is fired on the
 	 *   binding sending the request. When the response for this request is received, a
 	 *   'patchCompleted' with a boolean parameter 'success' is fired.
-	 * @returns {Promise}
-	 *   A promise which is resolved without a result in case of success, or rejected with an
-	 *   instance of <code>Error</code> in case of failure, for example if the annotation belongs to
-	 *   the read-only namespace "@$ui5.*". With <code>bRetry</code> it is only rejected with an
+	 * @returns {Promise<void>}
+	 *   A promise which is resolved without a defined result in case of success, or rejected with
+	 *   an instance of <code>Error</code> in case of failure, for example if the annotation belongs
+	 *   to the read-only namespace "@$ui5.*". With <code>bRetry</code> it is only rejected with an
 	 *   <code>Error</code> instance where <code>oError.canceled === true</code> when the entity has
 	 *   been deleted while the request was pending or the property has been reset via the methods
 	 *   <ul>

@@ -10,7 +10,6 @@ sap.ui.define([
 	"sap/ui/events/KeyCodes",
 	"sap/ui/model/BindingMode",
 	"sap/ui/Device",
-	"sap/ui/core/Core",
 	"sap/ui/core/library",
 	"sap/ui/core/Control",
 	"sap/ui/core/IconPool",
@@ -24,6 +23,7 @@ sap.ui.define([
 	"./ListItemBaseRenderer",
 	"sap/base/strings/capitalize",
 	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Lib",
 	// jQuery custom selectors ":sapTabbable", ":sapFocusable"
 	"sap/ui/dom/jquery/Selectors"
 ],
@@ -32,7 +32,6 @@ function(
 	KeyCodes,
 	BindingMode,
 	Device,
-	Core,
 	coreLibrary,
 	Control,
 	IconPool,
@@ -45,7 +44,8 @@ function(
 	RadioButton,
 	ListItemBaseRenderer,
 	capitalize,
-	jQuery
+	jQuery,
+	Library
 ) {
 	"use strict";
 
@@ -78,7 +78,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -193,7 +193,7 @@ function(
 	});
 
 	ListItemBase.getAccessibilityText = function(oControl, bDetectEmpty, bHeaderAnnouncement) {
-		var oBundle = Core.getLibraryResourceBundle("sap.m");
+		var oBundle = Library.getResourceBundleFor("sap.m");
 
 		if (!oControl || !oControl.getVisible || !oControl.getVisible()) {
 			return bDetectEmpty ? oBundle.getText("CONTROL_EMPTY") : "";
@@ -456,7 +456,7 @@ function(
 	};
 
 	ListItemBase.prototype.getAccessibilityInfo = function() {
-		var oBundle = Core.getLibraryResourceBundle("sap.m");
+		var oBundle = Library.getResourceBundleFor("sap.m");
 		return {
 			type: this.getAccessibilityType(oBundle),
 			description: this.getAccessibilityDescription(oBundle),
@@ -527,7 +527,7 @@ function(
 			id: this.getId() + "-imgDel",
 			icon: this.DeleteIconURI,
 			type: ButtonType.Transparent,
-			tooltip: Core.getLibraryResourceBundle("sap.m").getText("LIST_ITEM_DELETE")
+			tooltip: Library.getResourceBundleFor("sap.m").getText("LIST_ITEM_DELETE")
 		}).addStyleClass("sapMLIBIconDel sapMLIBSelectD").setParent(this, null, true).attachPress(function(oEvent) {
 			this.informList("Delete");
 		}, this);
@@ -564,7 +564,7 @@ function(
 			id: this.getId() + "-imgDet",
 			icon: this.DetailIconURI,
 			type: ButtonType.Transparent,
-			tooltip: Core.getLibraryResourceBundle("sap.m").getText("LIST_ITEM_EDIT")
+			tooltip: Library.getResourceBundleFor("sap.m").getText("LIST_ITEM_EDIT")
 		}).addStyleClass("sapMLIBType sapMLIBIconDet").setParent(this, null, true).attachPress(function() {
 			this.fireDetailTap();
 			this.fireDetailPress();
@@ -1328,6 +1328,15 @@ function(
 
 		// inform the list async that this item should be focusable
 		setTimeout(oList["setItemFocusable"].bind(oList, this), 0);
+	};
+
+	ListItemBase.prototype.onfocusout = function(oEvent) {
+		if (oEvent.isMarked() || oEvent.srcControl !== this) {
+			return;
+		}
+
+		this.informList("FocusOut", oEvent.srcControl);
+		oEvent.setMarked();
 	};
 
 	// inform the list for the vertical navigation

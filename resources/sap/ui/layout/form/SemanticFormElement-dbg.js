@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @extends sap.ui.layout.form.FormElement
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -83,7 +83,8 @@ sap.ui.define([
 
 		this._oObserver.observe(this, {
 			properties: ["_editable", "delimiter"],
-			aggregations: ["fieldLabels"]
+			aggregations: ["fieldLabels"],
+			parent: true
 		});
 
 	};
@@ -101,7 +102,7 @@ sap.ui.define([
 
 		var aDelimiters = this.getAggregation("delimiters", []);
 		if (aDelimiters.indexOf(oElement) < 0) {
-			if (this.getProperty("_editable")) {
+			if (!_renderAsText.call(this)) {
 				// assign label texts in in edit mode
 				var iIndex = this.indexOfField(oElement);
 				if (iIndex >= 0) {
@@ -180,7 +181,15 @@ sap.ui.define([
 			_updateLayoutData.call(this); // as Layout might be set after Fields, so LayoutData can only be determined now
 		}
 
-		if (this.getProperty("_editable")) {
+		if (!_renderAsText.call(this)) {
+			if (this.getAggregation("_displayField")) {
+				// switch to control mode missing, this could happen if something unexpected chaged on field what leads to update of getFormRenderAsControl
+				// (happens if the change is not observed because of missing property in getFormObservingProperties or some internal change)
+				// -> update now, even if it is somehow late and could lead to re-rendering
+				this.destroyAggregation("_displayField");
+				_updateControlsForEdit.call(this);
+			}
+
 			var aFields = this.getFields();
 			var aDelemiters = this.getAggregation("_delimiters", []);
 			for (var i = 0; i < aFields.length; i++) {
@@ -193,6 +202,15 @@ sap.ui.define([
 				}
 			}
 		} else {
+			if (!this.getAggregation("_displayField")) {
+				// switch to display mode missing, this could happen if something unexpected chaged on field what leads to update of getFormRenderAsControl
+				// (happens if the change is not observed because of missing property in getFormObservingProperties or some internal change)
+				// -> update now, even if it is somehow late and could lead to re-rendering
+				this.destroyAggregation("_delimiters");
+				this._bLayoutDataCreated = false;
+				_updateControlsForDisplay.call(this);
+			}
+
 			var oDisplay = this.getAggregation("_displayField");
 			if (oDisplay) {
 				aFieldsForRendering.push(oDisplay);
@@ -213,7 +231,9 @@ sap.ui.define([
 
 		if (oChanges.object === this) {
 			// it's the FormElement
-			if (oChanges.name === "fields") {
+			if (oChanges.type === "parent") {
+				_parentChanged.call(this, oChanges.mutation, oChanges.parent);
+			} else if (oChanges.name === "fields") {
 				_fieldChanged.call(this, oChanges.child, oChanges.mutation);
 			} else if (oChanges.name === "_editable") {
 				_editableChanged.call(this, oChanges.current);
@@ -223,8 +243,12 @@ sap.ui.define([
 				_fieldLabelsChanged.call(this, oChanges.mutation, oChanges.child);
 			}
 		} else {
-			// it's some content control
-			if (oChanges.object.isA("sap.ui.core.Label")) {
+			// it's some content control or parent
+			if (oChanges.type === "parent") {
+				_parentChanged.call(this, oChanges.mutation, oChanges.parent);
+			} else if (oChanges.name === "layout") {
+				_layoutChanged.call(this, oChanges.child, oChanges.mutation);
+			} else if (oChanges.object.isA("sap.ui.core.Label")) {
 				_fieldLabelChanged.call(this, oChanges);
 			} else {
 				_controlChanged.call(this, oChanges);
@@ -240,9 +264,12 @@ sap.ui.define([
 		if (bEditable) {
 			this.destroyAggregation("_displayField");
 			_updateControlsForEdit.call(this);
-		} else {
+		} else if (_renderAsText.call(this)) {
 			this.destroyAggregation("_delimiters");
+			this._bLayoutDataCreated = false;
 			_updateControlsForDisplay.call(this);
+		} else { // switched to display mode but render controls -> update delemitters with spacing
+			_updateControlsForEdit.call(this);
 		}
 
 	}
@@ -254,8 +281,13 @@ sap.ui.define([
 				throw new Error(oField + " is not valid Form content. " + this); // only support allowed Fields
 			}
 			var aProperties = ["visible"];
+			if (oField.getFormObservingProperties) {
+				aProperties = aProperties.concat(oField.getFormObservingProperties());
+			}
 			if (oField.getFormValueProperty) {
+				if (aProperties.indexOf(oField.getFormValueProperty()) === -1) {
 					aProperties.push(oField.getFormValueProperty());
+				}
 			} else if (oField.getMetadata().getProperty("value")) {
 				aProperties.push("value");
 			} else if (oField.getMetadata().getProperty("text")) {
@@ -273,7 +305,7 @@ sap.ui.define([
 			}
 		}
 
-		if (this.getProperty("_editable")) {
+		if (!_renderAsText.call(this)) {
 			_updateControlsForEdit.call(this);
 		} else {
 			_updateControlsForDisplay.call(this, true);
@@ -285,7 +317,7 @@ sap.ui.define([
 
 	function _delimiterChanged(sDelimiter) {
 
-		if (this.getProperty("_editable")) {
+		if (!_renderAsText.call(this)) {
 			_updateControlsForEdit.call(this);
 		} else {
 			_updateDisplayText.call(this, false);
@@ -315,13 +347,14 @@ sap.ui.define([
 	function _controlChanged(oChanges) {
 
 		var sProperyName = oChanges.object.getFormValueProperty ? oChanges.object.getFormValueProperty() : null;
+		var aObservingProperties = oChanges.object.getFormObservingProperties ? oChanges.object.getFormObservingProperties() : [];
 		if (oChanges.name === sProperyName || oChanges.name === "value" || oChanges.name === "text") {
 			// update display control
-			if (!this.getProperty("_editable")) {
+			if (_renderAsText.call(this)) {
 				_updateDisplayText.call(this, false);
 			}
-		} else if (oChanges.name === "visible") {
-			if (this.getProperty("_editable")) {
+		} else if (oChanges.name === "visible" || aObservingProperties.indexOf(oChanges.name) >= 0) {
+			if (!_renderAsText.call(this)) {
 				_updateControlsForEdit.call(this);
 			} else {
 				_updateControlsForDisplay.call(this, true);
@@ -342,26 +375,31 @@ sap.ui.define([
 	function _updateControlsForEdit() {
 
 		var aFields = this.getFields();
-		var aDelemiters = this.getAggregation("_delimiters", []);
+		var aDelimiters = this.getAggregation("_delimiters", []);
 		var sDelimiter = this.getDelimiter();
 		var sId = this.getId() + "-delimiter-";
 		var i = 0;
 
+		if (!this._getEditable()) {
+			sDelimiter = " " + sDelimiter + " "; // use Space to align spacing with concatenated texts
+		}
+
 		for (i = 0; i < aFields.length; i++) {
 			if (i < aFields.length - 1) {
-				if (aDelemiters.length > i) {
-					library.form.FormHelper.updateDelimiter(aDelemiters[i], sDelimiter);
+				if (aDelimiters.length > i) {
+					library.form.FormHelper.updateDelimiter(aDelimiters[i], sDelimiter);
 				} else {
 					var oDelimiter = library.form.FormHelper.createDelimiter(sDelimiter, sId + i);
+					oDelimiter.addStyleClass("sapUiFormDelimiter");
 					this.addAggregation("_delimiters", oDelimiter);
 				}
 			}
 		}
 
 		// remove unused delimiters
-		if (aDelemiters.length > 0 && aDelemiters.length > aFields.length - 1) {
-			for (i = aFields.length - 1; i < aDelemiters.length; i++) {
-				aDelemiters[i].destroy();
+		if (aDelimiters.length > 0 && aDelimiters.length > aFields.length - 1) {
+			for (i = aFields.length - 1; i < aDelimiters.length; i++) {
+				aDelimiters[i].destroy();
 			}
 		}
 
@@ -499,7 +537,7 @@ sap.ui.define([
 			return;
 		}
 
-		if (this.getProperty("_editable")) {
+		if (this._getEditable()) {
 			// delimiters
 			for (i = 0; i < aDelemiters.length; i++) {
 				var oDelimiter = aDelemiters[i];
@@ -545,6 +583,65 @@ sap.ui.define([
 
 			this._bLayoutDataCreated = true; // to not check it on every getFieldsForRendering call
 		}
+
+	}
+
+	function _renderAsText() {
+
+		if (this._getEditable()) {
+			return false;
+		} else {
+			var aFields = this.getFields();
+			var bRenderAsControl = true;
+
+			for (var i = 0; i < aFields.length; i++) {
+				if (!aFields[i].getFormRenderAsControl || !aFields[i].getFormRenderAsControl()) {
+					bRenderAsControl = false;
+					break;
+				}
+			}
+
+			var oFormContainer = this.getParent();
+			var oForm = oFormContainer && oFormContainer.getParent();
+			var oLayout = oForm && oForm.getLayout();
+			var bRenderControls = oLayout ? oLayout.renderControlsForSemanticElement() : true; // if no layout assigned right now render as controls per default
+			return !(bRenderAsControl && bRenderControls);
+		}
+
+	}
+
+	function _parentChanged(sMutation, oParent) {
+
+		var oLayout;
+		if (sMutation === "set") {
+			var oForm;
+			if (oParent.isA("sap.ui.layout.form.FormContainer")) {
+				this._oObserver.observe(oParent, {
+					parent: true
+				});
+				oForm = oParent.getParent();
+			} else if (oParent.isA("sap.ui.layout.form.Form")) {
+				this._oObserver.observe(oParent, {
+					aggregations: ["layout"]
+				});
+				oForm = oParent;
+			}
+			oLayout = oForm && oForm.getLayout();
+		} else if (oParent.isA("sap.ui.layout.form.FormContainer") || oParent.isA("sap.ui.layout.form.Form")) {
+			this._oObserver.unobserve(oParent);
+		}
+
+		if (oLayout) { // as long as we have no layout no update needed
+			_layoutChanged.call(this, oLayout);
+		}
+
+	}
+
+	function _layoutChanged(oLayout, sMutation) {
+
+		// as layout change could lead to change of rendering mode (layout might not support to render controls) mode needs to be checked
+		_editableChanged.call(this, this._getEditable());
+		_updateLayoutData.call(this);
 
 	}
 

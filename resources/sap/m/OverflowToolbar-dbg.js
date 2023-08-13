@@ -6,8 +6,8 @@
 
 // Provides control sap.m.OverflowToolbar.
 sap.ui.define([
+	"sap/ui/core/Theming",
 	"sap/ui/core/library",
-	"sap/ui/core/Core",
 	"./library",
 	"sap/ui/core/Control",
 	"sap/ui/core/Element",
@@ -22,10 +22,11 @@ sap.ui.define([
 	"sap/ui/Device",
 	"./OverflowToolbarRenderer",
 	"sap/base/Log",
+	"sap/ui/core/Lib",
 	"sap/ui/dom/jquery/Focusable" // jQuery Plugin "lastFocusableDomRef"
 ], function(
+	Theming,
 	coreLibrary,
-	oCore,
 	library,
 	Control,
 	Element,
@@ -39,7 +40,8 @@ sap.ui.define([
 	IconPool,
 	Device,
 	OverflowToolbarRenderer,
-	Log
+	Log,
+	Library
 ) {
 	"use strict";
 
@@ -129,7 +131,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.Toolbar,sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @public
@@ -228,8 +230,8 @@ sap.ui.define([
 
 		this.addStyleClass("sapMOTB");
 
-		this._sAriaRoleDescription = oCore
-			.getLibraryResourceBundle("sap.m")
+		this._sAriaRoleDescription = Library
+			.getResourceBundleFor("sap.m")
 			.getText(OverflowToolbar.ARIA_ROLE_DESCRIPTION);
 
 		this._fnMediaChangeRef = this._fnMediaChange.bind(this);
@@ -356,12 +358,6 @@ sap.ui.define([
 	OverflowToolbar.prototype._doLayout = function () {
 		var iWidth;
 
-		// If the theme is not applied, control widths should not be measured and cached
-		if (!oCore.isThemeApplied()) {
-			Log.debug("OverflowToolbar: theme not applied yet, skipping calculations", this);
-			return;
-		}
-
 		this._recalculateOverflowButtonSize();
 
 		iWidth = this.$().is(":visible") ? this.$().width() : 0;
@@ -427,7 +423,7 @@ sap.ui.define([
 			$LastFocusableChildControl = this.$().lastFocusableDomRef();
 
 		if (this.sFocusedChildControlId) {
-			oFocusedChildControl = oCore.byId(this.sFocusedChildControlId);
+			oFocusedChildControl = Element.registry.get(this.sFocusedChildControlId);
 		}
 
 		if (oFocusedChildControl && oFocusedChildControl.getDomRef()){
@@ -452,7 +448,8 @@ sap.ui.define([
 	 */
 	OverflowToolbar.prototype._preserveChildControlFocusInfo = function () {
 		// Preserve focus info
-		var sActiveElementId = oCore.getCurrentFocusedControlId();
+		var oElement = Element.closestTo(document.activeElement);
+		var sActiveElementId = oElement ? oElement.getId() : null;
 
 		if (this._getControlsIds().indexOf(sActiveElementId) !== -1) {
 			this._bControlWasFocused = true;
@@ -1023,7 +1020,7 @@ sap.ui.define([
 				id: this.getId() + sIdPrefix,
 				icon: IconPool.getIconURI("overflow"),
 				press: this._overflowButtonPressed.bind(this),
-				tooltip: oCore.getLibraryResourceBundle("sap.m").getText(OverflowToolbar.TOGGLE_BUTTON_TOOLTIP),
+				tooltip: Library.getResourceBundleFor("sap.m").getText(OverflowToolbar.TOGGLE_BUTTON_TOOLTIP),
 				type: ButtonType.Transparent
 		});
 	};
@@ -1604,20 +1601,32 @@ sap.ui.define([
 		oLayoutData = vControl.getLayoutData && vControl.getLayoutData();
 		if (oLayoutData && oLayoutData instanceof OverflowToolbarLayoutData) {
 
+			/**
+			 * @deprecated since 1.32
+			 */
 			if (oLayoutData.getMoveToOverflow() === false) {
 				return OverflowToolbarPriority.NeverOverflow;
 			}
 
+			/**
+			 * @deprecated since 1.32
+			 */
 			if (oLayoutData.getStayInOverflow() === true) {
 				return OverflowToolbarPriority.AlwaysOverflow;
 			}
 
 			sPriority = oLayoutData.getPriority();
 
+			/**
+			 * @deprecated since 1.48
+			 */
 			if (sPriority === OverflowToolbarPriority.Never) {
 				return OverflowToolbarPriority.NeverOverflow;
 			}
 
+			/**
+			 * @deprecated since 1.48
+			 */
 			if (sPriority === OverflowToolbarPriority.Always) {
 				return OverflowToolbarPriority.AlwaysOverflow;
 			}

@@ -22,7 +22,7 @@ sap.ui.define(['./library', 'sap/ui/core/Item', 'sap/ui/core/IconPool'],
 	 * @extends sap.ui.core.Item
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @since 1.34
 	 *
 	 * @constructor
@@ -126,7 +126,9 @@ sap.ui.define(['./library', 'sap/ui/core/Item', 'sap/ui/core/IconPool'],
 
 		if (sDescription) {
 			oRM.text(sSeparator);
-			oRM.openStart("i").openEnd();
+			oRM.openStart("i")
+				.class("sapMSFSItemDescr")
+				.openEnd();
 			renderItemText(oRM, sDescription, sSearch);
 			oRM.close("i");
 		}

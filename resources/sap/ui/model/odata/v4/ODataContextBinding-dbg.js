@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.116.0
+		 * @version 1.117.0
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
@@ -328,8 +328,8 @@ sap.ui.define([
 	 * Registered event handlers are called with the change reason as parameter.
 	 *
 	 * @param {sap.ui.base.Event} oEvent
-	 * @param {object} oEvent.getParameters()
-	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters().reason
+	 * @param {object} oEvent.getParameters
+	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters.reason
 	 *   The reason for the 'change' event could be
 	 *   <ul>
 	 *     <li> {@link sap.ui.model.ChangeReason.Change Change} when the binding is initialized,
@@ -373,10 +373,10 @@ sap.ui.define([
 	 * @param {sap.ui.base.Event} oEvent
 	 * @param {function} oEvent.cancelBubble
 	 *   A callback function to prevent that the event is bubbled up to the model
-	 * @param {object} oEvent.getParameters()
-	 * @param {object} [oEvent.getParameters().data]
+	 * @param {object} oEvent.getParameters
+	 * @param {object} [oEvent.getParameters.data]
 	 *   An empty data object if a back-end request succeeds
-	 * @param {Error} [oEvent.getParameters().error] The error object if a back-end request failed.
+	 * @param {Error} [oEvent.getParameters.error] The error object if a back-end request failed.
 	 *   If there are multiple failed back-end requests, the error of the first one is provided.
 	 *
 	 * @event sap.ui.model.odata.v4.ODataContextBinding#dataReceived
@@ -414,8 +414,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataContextBinding} oEvent.getSource() This binding
-	 * @param {object} oEvent.getParameters() Object containing all event parameters
-	 * @param {boolean} oEvent.getParameters().success
+	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {boolean} oEvent.getParameters.success
 	 *   Whether all PATCHes are successfully processed
 	 *
 	 * @event sap.ui.model.odata.v4.ODataContextBinding#patchCompleted
@@ -764,7 +764,7 @@ sap.ui.define([
 	ODataContextBinding.prototype.doSetProperty = function (sPath, vValue, oGroupLock) {
 		if (this.oOperation && (sPath === "$Parameter" || sPath.startsWith("$Parameter/"))) {
 			_Helper.updateAll(this.oOperation.mChangeListeners, "", this.oOperation.mParameters,
-				_Cache.makeUpdateData(sPath.split("/").slice(1), vValue));
+				_Helper.makeUpdateData(sPath.split("/").slice(1), vValue));
 			this.oOperation.bAction = undefined; // "not yet executed"
 			if (oGroupLock) {
 				oGroupLock.unlock();
@@ -837,7 +837,7 @@ sap.ui.define([
 	 *   currently if it is {@link sap.ui.model.odata.v4.Context#isKeepAlive kept alive}. If the
 	 *   parent context has requested messages when it was kept alive, they will be inherited if the
 	 *   $$inheritExpandSelect binding parameter is set to <code>true</code>. Since 1.97.0.
-	 * @returns {Promise}
+	 * @returns {Promise<sap.ui.model.odata.v4.Context|undefined>}
 	 *   A promise that is resolved without data or with a return value context when the operation
 	 *   call succeeded, or rejected with an <code>Error</code> instance <code>oError</code> in case
 	 *   of failure, for instance if the operation metadata is not found, if overloading is not
@@ -1459,8 +1459,8 @@ sap.ui.define([
 	 * @param {boolean} [bKeepCacheOnError]
 	 *   If <code>true</code>, the binding data remains unchanged if the refresh fails
 	 * @returns {sap.ui.base.SyncPromise}
-	 *   A promise resolving without a defined result when the refresh is finished if the context is
-	 *   this binding's return value context; <code>null</code> otherwise
+	 *   A promise which is resolved without a defined result when the refresh is finished and if
+	 *   the context is this binding's return value context; <code>null</code> otherwise
 	 *
 	 * @private
 	 */

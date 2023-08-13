@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-// Provides type sap.ui.core.AnimationMode.
+// Provides type module:sap/ui/core/AnimationMode.
 sap.ui.define([], function() {
 	"use strict";
 

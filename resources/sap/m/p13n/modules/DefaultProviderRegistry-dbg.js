@@ -26,7 +26,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @private
 	 * @since 1.104
@@ -80,18 +80,6 @@ sap.ui.define([
 		if (oDefaultProvider.getFor().indexOf(sElementId) === -1) {
 			oDefaultProvider.addFor(vElement);
 		}
-
-		var oProvider = this._mDefaultProviders[sPersistenceMode];
-
-		var fnAttachVariantModel = function(){
-			var oModel = oElement.getModel(ControlVariantApplyAPI.getVariantModelName());
-			if (oModel) {
-				oProvider.setModel(oModel, ControlVariantApplyAPI.getVariantModelName());
-				oElement.detachEvent("modelContextChange", fnAttachVariantModel);
-			}
-		};
-
-		oElement.attachEvent("modelContextChange", fnAttachVariantModel);
 
 		return oDefaultProvider;
 	};

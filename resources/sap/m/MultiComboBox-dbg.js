@@ -145,7 +145,7 @@ function(
 	 * </ul>
 	 *
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 *
 	 * @constructor
 	 * @extends sap.m.ComboBoxBase
@@ -2099,8 +2099,8 @@ function(
 		var bIsPickerDialog = this.isPickerDialog(),
 		oInput = bIsPickerDialog ? this.getPickerTextField() : this,
 		sUpdateValue = this._sOldInput || this._sOldValue || "",
-		bOkButtonPressed = bIsPickerDialog && oEvent.relatedTarget && oEvent.relatedTarget.id.indexOf("-popup-closeButton") > -1;
-
+		bOkButtonPressed = bIsPickerDialog && oEvent && oEvent.relatedTarget &&
+			oEvent.relatedTarget.id.includes("-popup-closeButton");
 		if (!bOkButtonPressed) {
 			oInput.updateDomValue(sUpdateValue);
 		}

@@ -83,7 +83,7 @@ function(
 	 *
 	 *
 	 * @author Frank Weigel
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @since 0.8.6
 	 * @alias sap.ui.base.ManagedObjectMetadata
 	 * @extends sap.ui.base.Metadata
@@ -101,8 +101,6 @@ function(
 	// chain the prototypes
 	ManagedObjectMetadata.prototype = Object.create(Metadata.prototype);
 	ManagedObjectMetadata.prototype.constructor = ManagedObjectMetadata;
-
-	var Object_hasOwn = Function.prototype.call.bind(Object.prototype.hasOwnProperty);
 
 	var rPlural = /(children|ies|ves|oes|ses|ches|shes|xes|s)$/i;
 	var mSingular = {'children' : -3, 'ies' : 'y', 'ves' : 'f', 'oes' : -2, 'ses' : -2, 'ches' : -2, 'shes' : -2, 'xes' : -2, 's' : -1 };
@@ -125,7 +123,7 @@ function(
 		var result = null;
 
 		for (var n in info) {
-			if ( Object_hasOwn(info, n) && typeof obj[n] === 'undefined' ) {
+			if ( Object.hasOwn(info, n) && typeof obj[n] === 'undefined' ) {
 				result = result || {};
 				result[n] = info[n];
 			}
@@ -844,7 +842,7 @@ function(
 
 			if ( mInfoMap ) {
 				for (sName in mInfoMap) {
-					if ( Object_hasOwn(mInfoMap, sName) ) {
+					if ( Object.hasOwn(mInfoMap, sName) ) {
 						mResult[sName] = new FNClass(that, sName, mInfoMap[sName]);
 					}
 				}
@@ -1754,7 +1752,7 @@ function(
 			sName;
 
 		for ( sName in mSettings ) {
-			if ( Object_hasOwn(mValidKeys, sName) ) {
+			if ( Object.hasOwn(mValidKeys, sName) ) {
 				mResult[sName] = mSettings[sName];
 			}
 		}

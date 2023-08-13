@@ -17,16 +17,17 @@ sap.ui.define(['./Object', "sap/base/assert"],
 	 * Implements {@link sap.ui.base.Poolable} and therefore an event object in the event handler will be reset by {@link sap.ui.base.ObjectPool} after the event handler is done.
 	 *
 	 * @param {string} sId The ID of the event
-	 * @param {sap.ui.base.EventProvider} oSource Source of the event
+	 * @param {SourceType} oSource Source of the event
 	 * @param {ParamsType} oParameters Parameters for this event
 	 *
 	 * @extends sap.ui.base.Object
 	 * @implements sap.ui.base.Poolable
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @alias sap.ui.base.Event
 	 * @public
 	 * @template {Object<string,any>} [ParamsType=object]
+	 * @template {sap.ui.base.EventProvider} [SourceType=sap.ui.base.EventProvider]
 	 */
 	var Event = BaseObject.extend("sap.ui.base.Event", /** @lends sap.ui.base.Event.prototype */ {
 		constructor : function(sId, oSource, oParameters) {
@@ -49,7 +50,7 @@ sap.ui.define(['./Object', "sap/base/assert"],
 	 * When no <code>oParameters</code> are given, an empty object is used instead.
 	 *
 	 * @param {string} sId ID of the event
-	 * @param {sap.ui.base.EventProvider} oSource Source of the event
+	 * @param {SourceType} oSource Source of the event
 	 * @param {ParamsType} [oParameters] The event parameters
 	 *
 	 * @protected
@@ -96,8 +97,9 @@ sap.ui.define(['./Object', "sap/base/assert"],
 	/**
 	 * Returns the event provider on which the event was fired.
 	 *
-	 * @returns {sap.ui.base.EventProvider} The source of the event
+	 * @returns {T} The source of the event
 	 * @public
+	 * @template {SourceType} [T]
 	 */
 	Event.prototype.getSource = function() {
 

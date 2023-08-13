@@ -20,7 +20,11 @@ sap.ui.define([
 
 	QUnit.config.reorder = false;
 
-	QUnit.module("Base Configuration");
+	QUnit.module("Base Configuration", {
+		beforeEach: function() {
+			BaseConfiguration._.invalidate();
+		}
+	});
 
 	QUnit.test("Check getter cascade", function(assert) {
 		assert.expect(10);
@@ -30,6 +34,7 @@ sap.ui.define([
 			type: BaseConfiguration.Type.String,
 			external: true
 		}), "url", "BaseConfiguration.get for param 'sapuiParamA' returns correct value 'url'");
+		BaseConfiguration._.invalidate();
 		assert.strictEqual(BaseConfiguration.get({
 			name: "sapUiParamA",
 			type: BaseConfiguration.Type.String
@@ -141,6 +146,7 @@ sap.ui.define([
 			type: BaseConfiguration.Type.Object,
 			external: true
 		}), {objectAsStringKey: "objectAsStringValue"}, "BaseConfiguration.get for param 'sapUiParamObjectAsString' returns correct value '{objectAsStringKey: \"objectAsStringValue\"}'");
+		BaseConfiguration._.invalidate();
 		assert.strictEqual(BaseConfiguration.get({
 			name: "sapUiParamString",
 			type: BaseConfiguration.Type.String,
@@ -175,39 +181,48 @@ sap.ui.define([
 			name: "sapUiParamDoesNotExist",
 			type: BaseConfiguration.Type.Boolean
 		}), false, "BaseConfiguration.get for param 'sapUiParamDoesNotExist' returns correct value 'false'");
+		BaseConfiguration._.invalidate();
 		assert.strictEqual(BaseConfiguration.get({
 			name: "sapUiParamDoesNotExist",
 			type: BaseConfiguration.Type.Code
 		}), undefined, "BaseConfiguration.get for param 'sapUiParamDoesNotExist' returns correct value 'undefined'");
+		BaseConfiguration._.invalidate();
 		assert.strictEqual(BaseConfiguration.get({
 			name: "sapUiParamDoesNotExist",
 			type: BaseConfiguration.Type.Integer
 		}), 0, "BaseConfiguration.get for param 'sapUiParamDoesNotExist' returns correct value '0'");
+		BaseConfiguration._.invalidate();
 		assert.strictEqual(BaseConfiguration.get({
 			name: "sapUiParamDoesNotExist",
 			type: BaseConfiguration.Type.String
 		}), "", "BaseConfiguration.get for param 'sapUiParamDoesNotExist' returns correct value '\"\"'");
+		BaseConfiguration._.invalidate();
 		assert.deepEqual(BaseConfiguration.get({
 			name: "sapUiParamDoesNotExist",
 			type: BaseConfiguration.Type.StringArray
 		}), [], "BaseConfiguration.get for param 'sapUiParamDoesNotExist' returns correct value '[]'");
+		BaseConfiguration._.invalidate();
 		assert.deepEqual(BaseConfiguration.get({
 			name: "sapUiParamDoesNotExist",
 			type: BaseConfiguration.Type.FunctionArray
 		}), [], "BaseConfiguration.get for param 'sapUiParamDoesNotExist' returns correct value '[]'");
+		BaseConfiguration._.invalidate();
 		assert.strictEqual(BaseConfiguration.get({
 			name: "sapUiParamDoesNotExist",
 			type: BaseConfiguration.Type.Function
 		}), undefined, "BaseConfiguration.get for param 'sapUiParamDoesNotExist' returns correct value 'undefined'");
+		BaseConfiguration._.invalidate();
 		assert.deepEqual(BaseConfiguration.get({
 			name: "sapUiParamDoesNotExist",
 			type: BaseConfiguration.Type.Object
 		}), {}, "BaseConfiguration.get for param 'sapUiParamDoesNotExist' returns correct value '{}'");
+		BaseConfiguration._.invalidate();
 		assert.deepEqual(BaseConfiguration.get({
 			name: "sapUiParamDoesNotExist",
 			type: BaseConfiguration.Type.Object,
 			defaultValue: true
 		}), true, "BaseConfiguration.get for param 'sapUiParamDoesNotExist' returns provided default value 'true'");
+		BaseConfiguration._.invalidate();
 		assert.deepEqual(BaseConfiguration.get({
 			name: "sapUiParamDoesNotExist",
 			type: BaseConfiguration.Type.Object,
@@ -294,6 +309,7 @@ sap.ui.define([
 
 		globalThis["sap-ui-config"]["paramD"] = "hubelDubel";
 		globalThis["sap-ui-config"]["paramE"] = "hubelDubel";
+		BaseConfiguration._.invalidate();
 
 		var oLogSpy = sinon.spy(sap.ui.loader._.logger, "error");
 
@@ -310,6 +326,7 @@ sap.ui.define([
 		}), "xx-global", "BaseConfiguration.get for param 'paramE' still returns correct value 'xx-global'");
 
 		GlobalConfigurationProvider.freeze();
+		BaseConfiguration._.invalidate();
 		assert.strictEqual(oLogSpy.callCount, 1, "There should be 1 log message.");
 		assert.ok(oLogSpy.calledWith("Configuration option 'sapUiParamD' was frozen and cannot be changed to hubelDubel!"), "Correct error message logged.");
 

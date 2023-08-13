@@ -216,7 +216,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 * @final
 	 * @author SAP SE
-	 * @version 1.116.0
+	 * @version 1.117.0
 	 * @alias sap.ui.core.Core
 	 * @public
 	 * @hideconstructor
@@ -1147,6 +1147,7 @@ sap.ui.define([
 	 * If the styles are not yet applied a theme changed event will follow when the styles will be applied.
 	 *
 	 * @return {boolean} whether the styles of the current theme are already applied
+	 * @function
 	 * @public
 	 */
 	Core.prototype.isThemeApplied = Theming.isApplied;
@@ -1812,6 +1813,7 @@ sap.ui.define([
 	 *  it might not be necessary to trigger the realigment of all controls placed in the DOM,
 	 *  for example changing the cozy/compact CSS class at a single control
 	 * @public
+	 * @function
 	 */
 	Core.prototype.notifyContentDensityChanged = Theming.notifyContentDensityChanged;
 

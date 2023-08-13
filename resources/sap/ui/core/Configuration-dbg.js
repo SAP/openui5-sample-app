@@ -48,12 +48,10 @@ sap.ui.define([
 	"use strict";
 
 	var M_SETTINGS;
-	var VERSION = "1.116.0";
+	var VERSION = "1.117.0";
 	var mCompatVersion;
 
 	// Helper Functions
-	var Object_hasOwn = Function.prototype.call.bind(Object.prototype.hasOwnProperty);
-
 	function _calcCompatVersions() {
 		var PARAM_CVERS = "sapUiCompatversion";
 
@@ -1319,16 +1317,6 @@ sap.ui.define([
 		},
 
 		/**
-		 * Gets if the hyphenation has to be forced to use only browser-native or only third-party.
-		 *
-		 * @returns {string} empty string, "native" or "thirdparty"
-		 * @private
-		 */
-		getHyphenation : function() {
-			return Configuration.getValue("xx-hyphenation");
-		},
-
-		/**
 		 * Returns the list of active terminologies defined via the Configuration.
 		 *
 		 * @returns {string[]|undefined} if no active terminologies are set, the default value <code>undefined</code> is returned.
@@ -1480,7 +1468,7 @@ sap.ui.define([
 		 */
 		getValue: function(sName) {
 			var vValue;
-			if (typeof sName !== "string" || !Object_hasOwn(M_SETTINGS, sName)) {
+			if (typeof sName !== "string" || !Object.hasOwn(M_SETTINGS, sName)) {
 				throw new TypeError(
 					"Parameter 'sName' must be the name of a valid configuration option (one of "
 					+ Object.keys(M_SETTINGS).map(function(key) {
