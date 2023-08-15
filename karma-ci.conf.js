@@ -1,6 +1,6 @@
+/* eslint-env node */
+"use strict";
 module.exports = function(config) {
-	"use strict";
-
 	require("./karma.conf")(config);
 	config.set({
 
