@@ -5,8 +5,7 @@
 	},
 	"extends": "eslint:recommended",
 	"globals": {
-		"sap": true,
-		"jQuery": true
+		"sap": "readonly"
 	},
 	"rules": {
 		"brace-style": [2, "1tbs", { "allowSingleLine": true }],
