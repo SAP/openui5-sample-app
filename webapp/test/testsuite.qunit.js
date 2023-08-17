@@ -7,6 +7,7 @@ window.suite = () => {
 
 	oSuite.addTestPage(sContextPath + "unit/unitTests.qunit.html");
 	oSuite.addTestPage(sContextPath + "integration/opaTests.qunit.html");
+	oSuite.addTestPage(sContextPath + "gherkin/gherkinTests.qunit.html");
 
 	return oSuite;
 };
