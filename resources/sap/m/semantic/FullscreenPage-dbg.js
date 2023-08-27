@@ -39,7 +39,7 @@ sap.ui.define(["sap/m/semantic/ShareMenuPage", "sap/m/semantic/SemanticConfigura
 	 * @extends sap.m.semantic.ShareMenuPage
 	 *
 	 * @author SAP SE
-	 * @version 1.117.0
+	 * @version 1.117.1
 	 *
 	 * @constructor
 	 * @public

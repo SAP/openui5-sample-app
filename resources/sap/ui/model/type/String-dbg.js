@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.SimpleType
 	 *
 	 * @author SAP SE
-	 * @version 1.117.0
+	 * @version 1.117.1
 	 *
 	 * @alias sap.ui.model.type.String
 	 * @param {object} [oFormatOptions]

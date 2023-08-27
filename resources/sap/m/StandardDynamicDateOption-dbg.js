@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @extends sap.m.DynamicDateOption
 		 *
 		 * @author SAP SE
-		 * @version 1.117.0
+		 * @version 1.117.1
 		 *
 		 * @private
 		 * @alias sap.m.StandardDynamicDateOption

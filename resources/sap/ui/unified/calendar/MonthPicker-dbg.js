@@ -55,7 +55,7 @@ sap.ui.define([
 	 * renders a MonthPicker with ItemNavigation
 	 * This is used inside the calendar. Not for stand alone usage
 	 * @extends sap.ui.core.Control
-	 * @version 1.117.0
+	 * @version 1.117.1
 	 *
 	 * @constructor
 	 * @public

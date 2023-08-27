@@ -13,7 +13,7 @@ sap.ui.define([
 	 * Change handler for hiding of a control.
 	 * @alias sap.ui.fl.changeHandler.HideControl
 	 * @author SAP SE
-	 * @version 1.117.0
+	 * @version 1.117.1
 	 * @experimental Since 1.27.0
 	 */
 	var UnhideForm = { };

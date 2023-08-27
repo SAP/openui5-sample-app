@@ -23,7 +23,7 @@ sap.ui.define(['../base/Object', './EventBus', "sap/base/assert"],
 		 *
 		 * @extends sap.ui.base.Object
 		 * @author SAP SE
-		 * @version 1.117.0
+		 * @version 1.117.1
 		 * @public
 		 * @since 1.11.0
 		 * @alias sap.ui.core.IntervalTrigger

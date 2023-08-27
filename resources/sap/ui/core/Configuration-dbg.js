@@ -48,7 +48,7 @@ sap.ui.define([
 	"use strict";
 
 	var M_SETTINGS;
-	var VERSION = "1.117.0";
+	var VERSION = "1.117.1";
 	var mCompatVersion;
 
 	// Helper Functions
