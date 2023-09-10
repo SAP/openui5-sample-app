@@ -20,7 +20,7 @@ sap.ui.define(['./ListItemBase', './library', './FacetFilterItemRenderer'],
 	 * @class
 	 * Represents a value for the {@link sap.m.FacetFilterList} control.
 	 * @extends sap.m.ListItemBase
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -54,8 +54,9 @@ sap.ui.define(['./ListItemBase', './library', './FacetFilterItemRenderer'],
 		renderer: FacetFilterItemRenderer
 	});
 
-	/*
+	/**
 	 * Sets count for the FacetFilterList.
+	 * @deprecated as of version 1.18, replaced by <code>setCounter/code>
 	 * @param {int} iCount The counter to be set to
 	 * @returns {this} this for chaining
 	 */
@@ -74,6 +75,9 @@ sap.ui.define(['./ListItemBase', './library', './FacetFilterItemRenderer'],
 	 */
 	FacetFilterItem.prototype.setCounter = function(iCount) {
 
+		/**
+		 * @deprecated As of version 1.18
+		 */
 		this.setProperty("count", iCount);
 		this.setProperty("counter", iCount);
 		return this;

@@ -17,8 +17,6 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/ElementMetadata', '../Plugin', "sap
 			constructor : function(oSupportStub) {
 				Plugin.apply(this, ["sapUiSupportBreakpoint", "", oSupportStub]);
 
-				this._oStub = oSupportStub;
-
 				this._methodType = {
 					clazz: 1, proto: 2
 				};

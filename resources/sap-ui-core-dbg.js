@@ -3410,6 +3410,7 @@
 		"sap/base/strings/_camelize"
 	], function (camelize) {
 		var oConfig;
+		var oWriteableConfig = Object.create(null);
 		var rAlias = /^(sapUiXx|sapUi|sap)((?:[A-Z0-9][a-z]*)+)$/; //for getter
 		var mFrozenProperties = Object.create(null);
 		var bFrozen = false;
@@ -3425,9 +3426,9 @@
 					var vFrozenValue = mFrozenProperties[sNormalizedKey];
 					if (!sNormalizedKey) {
 						ui5loader._.logger.error("Invalid configuration option '" + sKey + "' in global['sap-ui-config']!");
-					} else if (oConfig[sNormalizedKey]) {
+					} else if (Object.hasOwn(oConfig, sNormalizedKey)) {
 						ui5loader._.logger.error("Configuration option '" + sKey + "' was already set by '" + mOriginalGlobalParams[sNormalizedKey] + "' and will be ignored!");
-					} else if (vFrozenValue !== undefined && oGlobalConfig[sKey] !== vFrozenValue) {
+					} else if (Object.hasOwn(mFrozenProperties, sNormalizedKey) && oGlobalConfig[sKey] !== vFrozenValue) {
 						oConfig[sNormalizedKey] = vFrozenValue;
 						ui5loader._.logger.error("Configuration option '" + sNormalizedKey + "' was frozen and cannot be changed to " + oGlobalConfig[sKey] + "!");
 					} else {
@@ -3447,12 +3448,15 @@
 		}
 
 		function get(sKey, bFreeze) {
-			var vValue = oConfig[sKey];
-			if (vValue === undefined) {
+			if (Object.hasOwn(mFrozenProperties,sKey)) {
+				return mFrozenProperties[sKey];
+			}
+			var vValue = oWriteableConfig[sKey] || oConfig[sKey];
+			if (!Object.hasOwn(oConfig, sKey) && !Object.hasOwn(oWriteableConfig, sKey)) {
 				var vMatch = sKey.match(rAlias);
 				var sLowerCaseAlias = vMatch ? vMatch[1] + vMatch[2][0] + vMatch[2].slice(1).toLowerCase() : undefined;
 				if (sLowerCaseAlias) {
-					vValue = oConfig[sLowerCaseAlias];
+					vValue = oWriteableConfig[sLowerCaseAlias] || oConfig[sLowerCaseAlias];
 				}
 			}
 			if (bFreeze) {
@@ -3462,10 +3466,10 @@
 		}
 
 		function set(sKey, vValue) {
-			if (mFrozenProperties[sKey]) {
+			if (Object.hasOwn(mFrozenProperties, sKey) || bFrozen) {
 				ui5loader._.logger.error("Configuration option '" + sKey + "' was frozen and cannot be changed to " + vValue + "!");
 			} else {
-				oConfig[sKey] = vValue;
+				oWriteableConfig[sKey] = vValue;
 			}
 		}
 
@@ -3499,7 +3503,7 @@
 					var sNormalizedKey = camelize(sKey);
 					if (!sNormalizedKey) {
 						ui5loader._.logger.error("Invalid configuration option '" + sKey + "' in bootstrap!");
-					} else if (oConfig[sNormalizedKey]) {
+					} else if (Object.hasOwn(oConfig, sNormalizedKey)) {
 						ui5loader._.logger.error("Configuration option '" + sKey + "' already exists and will be ignored!");
 					} else {
 						oConfig[sNormalizedKey] = dataset[sKey];
@@ -3541,7 +3545,7 @@
 				var sNormalizedKey = camelize(key);
 				if (!sNormalizedKey) {
 					ui5loader._.logger.error("Invalid configuration option '" + key + "' in url!");
-				} else if (oConfig[sNormalizedKey]) {
+				} else if (Object.hasOwn(oConfig, sNormalizedKey)) {
 					ui5loader._.logger.error("Configuration option '" + key + "' was already set by '" + mOriginalUrlParams[sNormalizedKey] + "' and will be ignored!");
 				} else {
 					oConfig[sNormalizedKey] = value;
@@ -3575,7 +3579,7 @@
 			allMetaTags.forEach(function(tag) {
 				var sNormalizedKey = camelize(tag.name);
 				if (sNormalizedKey) {
-					if (oConfig[sNormalizedKey]) {
+					if (Object.hasOwn(oConfig, sNormalizedKey)) {
 						ui5loader._.logger.error("Configuration option '" + tag.name + "' was already set by '" + mOriginalTagNames[sNormalizedKey] + "' and will be ignored!");
 					} else {
 						oConfig[sNormalizedKey] = tag.content;

@@ -31,7 +31,7 @@ function (library, SinglePlanningCalendarView, LocaleData, CalendarDate, Calenda
 	 * @extends sap.m.SinglePlanningCalendarView
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public

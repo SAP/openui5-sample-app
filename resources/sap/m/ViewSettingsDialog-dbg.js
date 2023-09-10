@@ -31,6 +31,8 @@ sap.ui.define([
 	'sap/ui/core/InvisibleText',
 	'./ViewSettingsDialogRenderer',
 	"sap/m/GroupHeaderListItem",
+	"sap/ui/base/Object",
+	"sap/ui/core/StaticArea",
 	"sap/base/Log",
 	"sap/ui/thirdparty/jquery",
 	// jQuery Plugin "firstFocusableDomRef"
@@ -62,6 +64,8 @@ function(
 	InvisibleText,
 	ViewSettingsDialogRenderer,
 	GroupHeaderListItem,
+	BaseObject,
+	StaticArea,
 	Log,
 	jQuery
 ) {
@@ -144,7 +148,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -419,7 +423,7 @@ function(
 		// sap.ui.core.Popup removes its content on close()/destroy() automatically from the static UIArea,
 		// but only if it added it there itself. As we did that, we have to remove it also on our own
 		if ( this._bAppendedToUIArea && this._dialog ) {
-			var oStatic = Core.getStaticAreaRef();
+			var oStatic = StaticArea.getDomRef();
 			oStatic = Core.getUIArea(oStatic);
 			oStatic.removeContent(this._dialog, true);
 		}
@@ -1415,11 +1419,11 @@ function(
 		var aSelectedFilterItems = [], aFilterItems = this.getFilterItems(), aSubFilterItems, bMultiSelect = true, i = 0, j;
 
 		for (; i < aFilterItems.length; i++) {
-			if (aFilterItems[i] instanceof sap.m.ViewSettingsCustomItem) {
+			if (BaseObject.isA(aFilterItems[i], "sap.m.ViewSettingsCustomItem")) {
 				if (aFilterItems[i].getSelected()) {
 					aSelectedFilterItems.push(aFilterItems[i]);
 				}
-			} else if (aFilterItems[i] instanceof sap.m.ViewSettingsFilterItem) {
+			} else if (BaseObject.isA(aFilterItems[i], "sap.m.ViewSettingsFilterItem")) {
 				aSubFilterItems = aFilterItems[i].getItems();
 				bMultiSelect = aFilterItems[i].getMultiSelect();
 				for (j = 0; j < aSubFilterItems.length; j++) {
@@ -1462,13 +1466,13 @@ function(
 		} else { // standard & custom filters
 			for (; i < aFilterItems.length; i++) {
 				bSelectedFilters = false;
-				if (aFilterItems[i] instanceof sap.m.ViewSettingsCustomItem) {
+				if (BaseObject.isA(aFilterItems[i], "sap.m.ViewSettingsCustomItem")) {
 					// custom filter: add "filter name,"
 					if (aFilterItems[i].getSelected()) {
 						bSelectedFilters = true;
 						sFilterString += aFilterItems[i].getText() + ", ";
 					}
-				} else if (aFilterItems[i] instanceof sap.m.ViewSettingsFilterItem) {
+				} else if (BaseObject.isA(aFilterItems[i], "sap.m.ViewSettingsFilterItem")) {
 					// standard filter: add "filter name (sub filter 1 name, sub
 					// filter 2 name, ...), "
 					aSubFilterItems = aFilterItems[i].getItems();
@@ -1554,7 +1558,7 @@ function(
 
 		for (i = 0; i < aSelectedFilterItems.length; i++) {
 			oFilterItem = aSelectedFilterItems[i];
-			if (oFilterItem instanceof sap.m.ViewSettingsCustomItem) {
+			if (BaseObject.isA(oFilterItem, "sap.m.ViewSettingsCustomItem")) {
 				sKey = oFilterItem.getKey();
 				oSelectedFilterKeys[sKey] = oFilterItem.getSelected();
 			} else {
@@ -1608,13 +1612,13 @@ function(
 			oFilterItem = null;
 			if (oSelectedFilterKeys.hasOwnProperty(sKey)) {
 				for (i = 0; i < aFilterItems.length; i++) {
-					if (aFilterItems[i] instanceof sap.m.ViewSettingsCustomItem) {
+					if (BaseObject.isA(aFilterItems[i], "sap.m.ViewSettingsCustomItem")) {
 						// just compare the key of this control
 						if (aFilterItems[i].getKey() === sKey) {
 							oFilterItem = aFilterItems[i];
 							aFilterItems[i].setProperty('selected', oSelectedFilterKeys[sKey], true);
 						}
-					} else if (aFilterItems[i] instanceof sap.m.ViewSettingsFilterItem) {
+					} else if (BaseObject.isA(aFilterItems[i], "sap.m.ViewSettingsFilterItem")) {
 						// find the sub filter item with the specified key
 						aSubFilterItems = aFilterItems[i].getItems();
 						bMultiSelect = aFilterItems[i].getMultiSelect();
@@ -1693,9 +1697,9 @@ function(
 						break;
 					}
 				}
-				if (oParentItem instanceof sap.m.ViewSettingsCustomItem) {
+				if (BaseObject.isA(oParentItem, "sap.m.ViewSettingsCustomItem")) {
 					oParentItem.setProperty('selected', oSelectedFilterKeys[sParentKey], true);
-				} else if (oParentItem instanceof sap.m.ViewSettingsFilterItem) {
+				} else if (BaseObject.isA(oParentItem, "sap.m.ViewSettingsFilterItem")) {
 					oSelectedSubFilterKeys = oSelectedFilterKeys[sParentKey];
 					aSubFilterItems = oParentItem.getItems();
 					bMultiSelect = oParentItem.getMultiSelect();
@@ -2158,7 +2162,7 @@ function(
 	 * @private
 	 */
 	ViewSettingsDialog.prototype._initFilterDetailItems = function(oItem) {
-		if (!(oItem instanceof sap.m.ViewSettingsFilterItem)) {
+		if (!(BaseObject.isA(oItem, "sap.m.ViewSettingsFilterItem"))) {
 			return;
 		}
 
@@ -2979,11 +2983,11 @@ function(
 				// display filter title
 				this._setFilterDetailTitle(oItem);
 				// fill detail page
-				if (oItem instanceof sap.m.ViewSettingsCustomItem
+				if (BaseObject.isA(oItem, "sap.m.ViewSettingsCustomItem")
 					&& oItem.getCustomControl()) {
 					this._clearPresetFilter();
 					this._getPage2().addContent(oItem.getCustomControl());
-				} else if (oItem instanceof sap.m.ViewSettingsFilterItem
+				} else if (BaseObject.isA(oItem, "sap.m.ViewSettingsFilterItem")
 					&& oItem.getItems()) {
 					this._initFilterDetailItems(oItem);
 				}
@@ -3015,6 +3019,7 @@ function(
 				aCustomTabs.forEach(function (oCustomTab) {
 					if (oCustomTab.getId() === vWhich) {
 						oCustomTab.getContent().forEach(function (oContent) {
+							oContent.addStyleClass("sapMVSDCustomTabContent");
 							this._getPage1().addContent(oContent);
 						}, this);
 					}
@@ -3264,10 +3269,10 @@ function(
 			oItem = aListItems[i].data("item");
 			iFilterCount = 0;
 			if (oItem) {
-				if (oItem instanceof sap.m.ViewSettingsCustomItem) {
+				if (BaseObject.isA(oItem, "sap.m.ViewSettingsCustomItem")) {
 					// for custom filter oItems the oItem is directly selected
 					iFilterCount = oItem.getFilterCount();
-				} else if (oItem instanceof sap.m.ViewSettingsFilterItem) {
+				} else if (BaseObject.isA(oItem, "sap.m.ViewSettingsFilterItem")) {
 					// for filter oItems the oItem counter has to be calculated from
 					// the sub oItems
 					iFilterCount = 0;
@@ -3289,7 +3294,7 @@ function(
 
 		// reset all items to selected = false
 		for (; i < items.length; i++) {
-			if (items[i] instanceof sap.m.ViewSettingsFilterItem) {
+			if (BaseObject.isA(items[i], "sap.m.ViewSettingsFilterItem")) {
 				subItems = items[i].getItems();
 				for (j = 0; j < subItems.length; j++) {
 					subItems[j].setProperty('selected', false, true);
@@ -3426,7 +3431,7 @@ function(
 	 * @private
 	 */
 	function validateViewSettingsItem(oItem) {
-		return oItem && oItem instanceof sap.m.ViewSettingsItem;
+		return oItem && BaseObject.isA(oItem, "sap.m.ViewSettingsItem");
 	}
 
 	/* =========================================================== */

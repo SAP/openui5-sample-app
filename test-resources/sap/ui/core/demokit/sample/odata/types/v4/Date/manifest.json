@@ -2,7 +2,7 @@
 	"_version": "1.49.0",
 	"sap.app": {
 		"applicationVersion": {
-			"version": "1.117.1"
+			"version": "1.118.0"
 		},
 		"description": "Example how to use OData V4 Edm.Date in SAPUI5 applications",
 		"dataSources": {

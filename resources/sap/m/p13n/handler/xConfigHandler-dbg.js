@@ -5,8 +5,9 @@
  */
 
 sap.ui.define([
-    'sap/m/p13n/Engine'
-], function(Engine) {
+    'sap/m/p13n/Engine',
+    'sap/m/p13n/modules/xConfigAPI'
+], function(Engine, xConfigAPI) {
 	"use strict";
 
 	/**
@@ -126,7 +127,8 @@ sap.ui.define([
                                 value: oChange.getContent(),
                                 operation: sOperation,
                                 changeType: oChange.getChangeType(),
-                                propertyBag: mPropertyBag
+                                propertyBag: mPropertyBag,
+                                markAsModified: true
                             };
 
                             if (mMetaConfig.aggregationBased) {
@@ -137,10 +139,9 @@ sap.ui.define([
 
                             return Engine.getInstance().enhanceXConfig(oControl, oConfig);
                         })
-                        .then(function() {
+                        .then(function(){
                             fConfigModified(oControl, oChange);
                         });
-
                     });
 
                 },

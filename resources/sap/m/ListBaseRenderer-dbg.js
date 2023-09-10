@@ -11,9 +11,6 @@ sap.ui.define(["sap/m/library", "sap/ui/core/library", "sap/ui/Device", "sap/ui/
 	// shortcut for sap.m.ListGrowingDirection
 	var ListGrowingDirection = library.ListGrowingDirection;
 
-	// shortcut for sap.m.ListKeyboardMode
-	var ListKeyboardMode = library.ListKeyboardMode;
-
 	// shortcut for sap.m.ToolbarDesign
 	var ToolbarDesign = library.ToolbarDesign;
 
@@ -129,7 +126,6 @@ sap.ui.define(["sap/m/library", "sap/ui/core/library", "sap/ui/Device", "sap/ui/
 		var aItems = oControl.getItems(),
 			bShowNoData = oControl.getShowNoData(),
 			bRenderItems = oControl.shouldRenderItems() && aItems.length,
-			iTabIndex = oControl.getKeyboardMode() == ListKeyboardMode.Edit ? -1 : 0,
 			bUpwardGrowing = oControl.getGrowingDirection() == ListGrowingDirection.Upwards && oControl.getGrowing();
 
 		// render top growing
@@ -138,7 +134,7 @@ sap.ui.define(["sap/m/library", "sap/ui/core/library", "sap/ui/Device", "sap/ui/
 		}
 
 		// dummy keyboard handling area
-		this.renderDummyArea(rm, oControl, "before", -1);
+		this.renderDummyArea(rm, oControl, "before", "-1");
 
 		// run hook method to start building list
 		this.renderListStartAttributes(rm, oControl);
@@ -150,7 +146,7 @@ sap.ui.define(["sap/m/library", "sap/ui/core/library", "sap/ui/Device", "sap/ui/
 		}
 
 		if (bRenderItems || bShowNoData) {
-			rm.attr("tabindex", iTabIndex);
+			rm.attr("tabindex", "0");
 		}
 
 		// separators
@@ -193,7 +189,7 @@ sap.ui.define(["sap/m/library", "sap/ui/core/library", "sap/ui/Device", "sap/ui/
 		this.renderListEndAttributes(rm, oControl);
 
 		// dummy keyboard handling area
-		this.renderDummyArea(rm, oControl, "after", iTabIndex);
+		this.renderDummyArea(rm, oControl, "after", "0");
 
 		// render bottom growing
 		if (!bUpwardGrowing) {
@@ -297,7 +293,7 @@ sap.ui.define(["sap/m/library", "sap/ui/core/library", "sap/ui/Device", "sap/ui/
 		var sRole = oControl.getAriaRole();
 		return {
 			role : sRole,
-			multiselectable : (sRole === "listbox" && oControl._bSelectionMode) ? oControl.getMode() == "MultiSelect" : undefined,
+			multiselectable : (sRole != "list" && oControl._bSelectionMode) ? oControl.getMode() == "MultiSelect" : undefined,
 			labelledby : {
 				value : this.getAriaLabelledBy(oControl),
 				append : true
@@ -327,7 +323,7 @@ sap.ui.define(["sap/m/library", "sap/ui/core/library", "sap/ui/Device", "sap/ui/
 	 */
 	ListBaseRenderer.renderNoData = function(rm, oControl) {
 		rm.openStart("li", oControl.getId("nodata"));
-		rm.attr("tabindex", oControl.getKeyboardMode() == ListKeyboardMode.Navigation ? -1 : 0);
+		rm.attr("tabindex", "-1");
 		var sAriaRole = this.getNoDataAriaRole(oControl);
 		if (sAriaRole) {
 			rm.attr("role", sAriaRole);

@@ -103,7 +103,8 @@ sap.ui.define([
 	 *   The entity's edit URL to be used for the DELETE request; w/o a lock, this is mostly
 	 *   ignored.
 	 * @param {string} sPath
-	 *   The entity's path within the cache (as used by change listeners)
+	 *   The entity's path within the cache; if the entity is in a collection, the last segment is
+	 *   its index therein
 	 * @param {object} [oETagEntity]
 	 *   An entity with the ETag of the binding for which the deletion was requested. This is
 	 *   provided if the deletion is delegated from a context binding with empty path to a list
@@ -121,26 +122,26 @@ sap.ui.define([
 	 */
 	_Cache.prototype._delete = function (oGroupLock, sEditUrl, sPath, oETagEntity, fnCallback) {
 		var aSegments = sPath.split("/"),
-			vDeleteProperty = aSegments.pop(),
+			// either a :1 nav.prop, the index as string, or a key-predicate (kept-alive and hidden)
+			sDeleteProperty = aSegments.pop(),
 			sParentPath = aSegments.join("/"),
 			that = this;
 
 		this.checkSharedRequest();
 
 		return this.fetchValue(_GroupLock.$cached, sParentPath).then(function (vCacheData) {
-			var vCachePath = _Cache.from$skip(vDeleteProperty, vCacheData),
-				oDeleted,
-				oEntity = vDeleteProperty
-					? vCacheData[vCachePath] || vCacheData.$byPredicate[vCachePath]
+			var oDeleted,
+				oEntity = sDeleteProperty
+					? vCacheData[sDeleteProperty] || vCacheData.$byPredicate[sDeleteProperty]
 					: vCacheData, // deleting at root level
 				oError,
 				sGroupId,
 				aMessages,
 				mHeaders,
-				iIndex = typeof vCachePath === "number" ? vCachePath : undefined,
+				iIndex = rNumber.test(sDeleteProperty) ? Number(sDeleteProperty) : undefined,
 				sKeyPredicate = _Helper.getPrivateAnnotation(oEntity, "predicate"),
 				sEntityPath = _Helper.buildPath(sParentPath,
-					Array.isArray(vCacheData) ? sKeyPredicate : vDeleteProperty),
+					Array.isArray(vCacheData) ? sKeyPredicate : sDeleteProperty),
 				oModelInterface = that.oRequestor.getModelInterface(),
 				oRequestPromise,
 				sTransientGroup = _Helper.getPrivateAnnotation(oEntity, "transient"),
@@ -150,8 +151,6 @@ sap.ui.define([
 			 * Cleans up after a cancel or failed request.
 			 */
 			function cleanUp() {
-				var iDeletedIndex;
-
 				_Helper.removeByPath(that.mChangeRequests, sEntityPath, oRequestPromise);
 
 				if (aMessages.length) {
@@ -161,19 +160,12 @@ sap.ui.define([
 				delete oEntity["@$ui5.context.isDeleted"];
 				if (Array.isArray(vCacheData)) {
 					iIndex = oDeleted.index;
+					const iDeletedIndex = vCacheData.$deleted.indexOf(oDeleted);
 					if (iIndex !== undefined) {
-						_Helper.addToCount(that.mChangeListeners, sParentPath, vCacheData, 1);
+						that.restoreElement(vCacheData, iIndex, oEntity, sParentPath,
+							iDeletedIndex);
 					}
-					iDeletedIndex = vCacheData.$deleted.indexOf(oDeleted);
-					that.adjustIndexes(sParentPath, vCacheData, iIndex, 1, iDeletedIndex);
-					vCacheData.splice(iIndex, 0, oEntity);
 					vCacheData.$deleted.splice(iDeletedIndex, 1);
-					if (sTransientPredicate) {
-						vCacheData.$created += 1;
-						if (!sParentPath) {
-							that.iActiveElements += 1;
-						}
-					}
 				}
 				if (that.iActiveUsages) {
 					fnCallback(iIndex, 1);
@@ -222,7 +214,6 @@ sap.ui.define([
 			}
 			mHeaders = {"If-Match" : oETagEntity || oEntity};
 			sEditUrl += that.oRequestor.buildQueryString(that.sMetaPath, that.mQueryOptions, true);
-			// the existence of an onCancel callback causes a pending change in the requestor
 			oRequestPromise = oGroupLock
 				? that.oRequestor.request("DELETE", sEditUrl, oGroupLock, mHeaders, undefined,
 					undefined, cleanUp, undefined,
@@ -240,10 +231,10 @@ sap.ui.define([
 					vCacheData.$deleted.splice(vCacheData.$deleted.indexOf(oDeleted), 1);
 					delete vCacheData.$byPredicate[sKeyPredicate];
 					delete vCacheData.$byPredicate[sTransientPredicate];
-				} else if (vDeleteProperty) {
+				} else if (sDeleteProperty) {
 					// set to null and notify listeners
 					_Helper.updateExisting(that.mChangeListeners, sParentPath,
-						vCacheData, _Helper.makeUpdateData([vDeleteProperty], null));
+						vCacheData, _Helper.makeUpdateData([sDeleteProperty], null));
 				} else { // deleting at root level
 					oEntity["$ui5.deleted"] = true;
 				}
@@ -398,8 +389,7 @@ sap.ui.define([
 		if (iIndex === undefined) {
 			return; // not in the list -> nothing to adjust
 		}
-		if (!sPath) {
-			// If the path is empty, we are in a _CollectionCache and aReadRequest exists
+		if (!sPath && this.aReadRequests) {
 			this.aReadRequests.forEach(function (oReadRequest) {
 				if (oReadRequest.iStart >= iIndex) {
 					oReadRequest.iStart += iOffset;
@@ -430,7 +420,7 @@ sap.ui.define([
 	 *   The meta path for the entity
 	 * @returns {string|undefined}
 	 *   The key predicate or <code>undefined</code>, if key predicate cannot be determined
-	 * @private
+	 * @protected
 	 */
 	// Note: overridden by _AggregationCache.calculateKeyPredicate
 	_Cache.prototype.calculateKeyPredicate = function (oInstance, mTypeForMetaPath, sMetaPath) {
@@ -484,6 +474,10 @@ sap.ui.define([
 	 *   fails
 	 * @param {function} fnSubmitCallback
 	 *   A function which is called just before a POST request for the create is sent
+	 * @param {function} [fnCancelCallback]
+	 *   A function which is called when the create has been canceled (after internal clean-up and
+	 *   just before {@link sap.ui.model.odata.v4.lib._GroupLock#cancel}), except if the entity is
+	 *   simply inactive
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise which is resolved with the created entity when the POST request has been
 	 *   successfully sent and the entity has been marked as non-transient
@@ -492,7 +486,7 @@ sap.ui.define([
 	 * @public
 	 */
 	_Cache.prototype.create = function (oGroupLock, oPostPathPromise, sPath, sTransientPredicate,
-			oEntityData, bAtEndOfCreated, fnErrorCallback, fnSubmitCallback) {
+			oEntityData, bAtEndOfCreated, fnErrorCallback, fnSubmitCallback, fnCancelCallback) {
 		var aCollection = this.getValue(sPath),
 			sGroupId = oGroupLock.getGroupId(),
 			oPostBody,
@@ -534,6 +528,9 @@ sap.ui.define([
 			}
 			delete aCollection.$byPredicate[sTransientPredicate];
 			that.adjustIndexes(sPath, aCollection, iIndex, -1);
+			if (fnCancelCallback) {
+				fnCancelCallback();
+			}
 			oGroupLock.cancel();
 		}
 
@@ -720,7 +717,7 @@ sap.ui.define([
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise that is resolved with the result matching to <code>sPath</code>
 	 *
-	 * @private
+	 * @protected
 	 */
 	_Cache.prototype.drillDown = function (oData, sPath, oGroupLock, bCreateOnDemand) {
 		var oDataPromise = SyncPromise.resolve(oData),
@@ -1218,7 +1215,7 @@ sap.ui.define([
 	 * @param {object} mQueryOptions - The query options
 	 * @returns {object} The download query options derived from the given query options
 	 *
-	 * @private
+	 * @protected
 	 */
 	_Cache.prototype.getDownloadQueryOptions = function (mQueryOptions) {
 		return mQueryOptions;
@@ -1631,7 +1628,7 @@ sap.ui.define([
 	 * @param {string} sPath The path
 	 * @param {object} [oListener] The listener
 	 *
-	 * @private
+	 * @protected
 	 */
 	_Cache.prototype.registerChangeListener = function (sPath, oListener) {
 		if (!(this.bSharedRequest && sPath)) {
@@ -1640,13 +1637,13 @@ sap.ui.define([
 	};
 
 	/**
-	 * Removes the element at the given index from the given array, taking care of
-	 * <code>$byPredicate</code>, <code>$created</code>, the array's count, and a collection cache's
-	 * limit and number of active elements (if applicable).
+	 * Removes the element at the given index from the given array, taking care of the array's
+	 * <code>$byPredicate</code>, <code>$created</code> and <code>$count</code>, and a collection
+	 * cache's limit and number of active elements (if applicable).
 	 *
 	 * @param {object[]} aElements
 	 *   The array of elements
-	 * @param {number} iIndex
+	 * @param {number} [iIndex]
 	 *   The array index of the old element to be removed or <code>undefined</code> in case the
 	 *   element is a kept-alive element without an index
 	 * @param {string} sPredicate
@@ -1654,10 +1651,10 @@ sap.ui.define([
 	 * @param {string} sPath
 	 *   The element collection's path within this cache (as used by change listeners), may be
 	 *   <code>""</code> (only in a CollectionCache)
-	 * @returns {number} The index at which the element actually was (it might have moved due to
-	 *   parallel insert/delete)
+	 * @returns {number|undefined} The index at which the element actually was (it might have moved
+	 *   due to parallel insert/delete)
 	 *
-	 * @private
+	 * @protected
 	 */
 	_Cache.prototype.removeElement = function (aElements, iIndex, sPredicate, sPath) {
 		var oElement = aElements.$byPredicate[sPredicate],
@@ -1682,11 +1679,10 @@ sap.ui.define([
 				if (!bDeleted) {
 					delete aElements.$byPredicate[sTransientPredicate];
 				}
-			}
-			this.adjustIndexes(sPath, aElements, iIndex, -1);
-			if (!sPath && !sTransientPredicate) {
+			} else if (!sPath) {
 				this.iLimit -= 1; // this doesn't change Infinity
 			}
+			this.adjustIndexes(sPath, aElements, iIndex, -1);
 		}
 		return iIndex;
 	};
@@ -1883,6 +1879,37 @@ sap.ui.define([
 	};
 
 	/**
+	 * Restores the element in the given array at the given index, taking care of the array's
+	 * <code>$created</code> and <code>$count</code>, and a collection cache's limit and number of
+	 * active elements (if applicable).
+	 *
+	 * @param {object[]} aElements - The array of elements
+	 * @param {number} iIndex - The index to restore at
+	 * @param {object} oElement - The element to restore
+	 * @param {string} sPath
+	 *   The element collection's path within this cache (as used by change listeners), may be
+	 *   <code>""</code> (only in a CollectionCache)
+	 * @param {int} [iDeletedIndex]
+	 *   The index of the entry in <code>aElements.$deleted</code> if any
+	 *
+	 * @protected
+	 */
+	_Cache.prototype.restoreElement = function (aElements, iIndex, oElement, sPath, iDeletedIndex) {
+		this.adjustIndexes(sPath, aElements, iIndex, 1, iDeletedIndex);
+		const sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate");
+		if (sTransientPredicate) {
+			aElements.$created += 1;
+			if (!sPath) {
+				this.iActiveElements += 1;
+			}
+		} else if (!sPath) {
+			this.iLimit += 1; // this doesn't change Infinity
+		}
+		_Helper.addToCount(this.mChangeListeners, sPath, aElements, 1);
+		aElements.splice(iIndex, 0, oElement);
+	};
+
+	/**
 	 * Adds or removes a usage of this cache. A cache with active usages must not be destroyed.
 	 * If a usage is removed, all change listeners are removed too. Note: shared caches have no
 	 * listeners.
@@ -2050,9 +2077,6 @@ sap.ui.define([
 	 *   If no back-end request is needed, the function is not called.
 	 * @param {function} fnIsKeepAlive
 	 *   A function to tell whether the entity is kept-alive
-	 * @param {boolean} [bInactive]
-	 *   If <code>true</code>, the cache and the POST request will be updated, but the entity stays
-	 *   inactive
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise for the PATCH request (resolves with <code>undefined</code>); rejected in case of
 	 *   cancellation or if no <code>fnErrorCallback</code> is given
@@ -2062,7 +2086,7 @@ sap.ui.define([
 	 */
 	_Cache.prototype.update = function (oGroupLock, sPropertyPath, vValue, fnErrorCallback,
 			sEditUrl, sEntityPath, sUnitOrCurrencyPath, bPatchWithoutSideEffects, fnPatchSent,
-			fnIsKeepAlive, bInactive) {
+			fnIsKeepAlive) {
 		var oPromise,
 			aPropertyPath = sPropertyPath.split("/"),
 			aUnitOrCurrencyPath,
@@ -2254,12 +2278,6 @@ sap.ui.define([
 			if (oPostBody) {
 				// change listeners are informed later
 				_Helper.updateAll({}, sEntityPath, oPostBody, oUpdateData);
-				if (oEntity["@$ui5.context.isInactive"] && !bInactive) {
-					oUpdateData["@$ui5.context.isInactive"] = false;
-					_Helper.deletePrivateAnnotation(oEntity, "initialData");
-					that.iActiveElements += 1;
-					_Helper.addToCount(that.mChangeListeners, "", that.aElements, 1);
-				}
 			}
 			// write the changed value into the cache
 			_Helper.updateAll(that.mChangeListeners, sEntityPath, oEntity, oUpdateData);
@@ -2280,13 +2298,8 @@ sap.ui.define([
 			}
 			if (sTransientGroup) {
 				// When updating a transient entity, the above _Helper.updateAll has already updated
-				// the POST request.
-				// If the entity remains inactive, update the request, but keep it parked
-				if (bInactive) {
-					_Helper.updateAll(that.mChangeListeners, sEntityPath, oEntity,
-						{"@$ui5.context.isInactive" : 1}
-					);
-				} else if (sParkedGroup) {
+				// the POST request. An inactive entity must remain parked.
+				if (sParkedGroup && !oEntity["@$ui5.context.isInactive"]) {
 					_Helper.setPrivateAnnotation(oEntity, "transient", sTransientGroup);
 					that.oRequestor.relocate(sParkedGroup, oPostBody, sTransientGroup);
 				}
@@ -3583,9 +3596,41 @@ sap.ui.define([
 	};
 
 	/**
+	 * Sets the cache's $count at the root level to 0.
+	 *
+	 * @protected
+	 */
+	_CollectionCache.prototype.setEmpty = function () {
+		this.iLimit = this.aElements.$count = 0;
+	};
+
+	/**
+	 * Sets the isInactive annotation at the entity with the given path, which might activate it.
+	 *
+	 * @param {string} sPath - The path
+	 * @param {boolean|number} bInactive
+	 *   The new value, either <code>false</code> to activate it, or <code>1</code> to mark it as
+	 *   inactive, but changed
+	 *
+	 * @public
+	 */
+	_CollectionCache.prototype.setInactive = function (sPath, bInactive) {
+		const oElement = this.getValue(sPath);
+		_Helper.updateAll(this.mChangeListeners, sPath, oElement,
+			{"@$ui5.context.isInactive" : bInactive});
+		if (!bInactive) { // activate
+			_Helper.deletePrivateAnnotation(oElement, "initialData");
+			this.iActiveElements += 1;
+			_Helper.addToCount(this.mChangeListeners, "", this.aElements, 1);
+		}
+	};
+
+	/**
 	 * Sets the cache's elements to the given collection after a deep create.
 	 *
 	 * @param {object} aElements - The elements from the deep create
+	 *
+	 * @public
 	 */
 	_CollectionCache.prototype.setPersistedCollection = function (aElements) {
 		this.aElements = aElements;

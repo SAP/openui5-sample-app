@@ -57,7 +57,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.117.1
+		 * @version 1.118.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -376,7 +376,9 @@ sap.ui.define([
 	 * detailed reason as parameters.
 	 *
 	 * @param {sap.ui.base.Event} oEvent
+	 *    The event object
 	 * @param {object} oEvent.getParameters
+	 *    Object containing all event parameters
 	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters.reason
 	 *   The reason for the 'change' event is
 	 *   <ul>
@@ -408,6 +410,7 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource() This binding
+	 * @param {object} oEvent.getParameters Object containing all event parameters
 	 * @param {sap.ui.model.odata.v4.Context} oEvent.getParameters.context The affected context
 	 *
 	 * @event sap.ui.model.odata.v4.ODataListBinding#createActivate
@@ -472,9 +475,11 @@ sap.ui.define([
 	 * {@link sap.ui.base.Event#cancelBubble oEvent.cancelBubble()}.
 	 *
 	 * @param {sap.ui.base.Event} oEvent
+	 *    The event object
 	 * @param {function} oEvent.cancelBubble
 	 *   A callback function to prevent that the event is bubbled up to the model
 	 * @param {object} oEvent.getParameters
+	 *    Object containing all event parameters
 	 * @param {object} [oEvent.getParameters.data]
 	 *   An empty data object if a back-end request succeeds
 	 * @param {Error} [oEvent.getParameters.error] The error object if a back-end request failed.
@@ -544,7 +549,9 @@ sap.ui.define([
 	 * binding. Registered event handlers are called with the change reason as parameter.
 	 *
 	 * @param {sap.ui.base.Event} oEvent
+	 *    The event object
 	 * @param {object} oEvent.getParameters
+	 *    Object containing all event parameters
 	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters.reason
 	 *   The reason for the 'refresh' event could be
 	 *   <ul>
@@ -740,12 +747,10 @@ sap.ui.define([
 	 * of <code>Error</code>, even if the deep create succeeds. This error always has the property
 	 * <code>canceled</code> with the value <code>true</code>.
 	 *
-	 * Since 1.117.0 deep create also supports single-valued navigation properties; no API call is
+	 * Since 1.118.0 deep create also supports single-valued navigation properties; no API call is
 	 * required in this case. Simply bind properties of the related entity relative to a transient
 	 * context. An update to the property adds it to the POST request of the parent entity, and by
 	 * this the create becomes deep.
-	 *
-	 * <b>Note</b>: Deep create for single-valued navigation properties is <b>experimental</b>.
 	 *
 	 * Deep create requires the <code>autoExpandSelect</code> parameter at the
 	 * {@link sap.ui.model.odata.v4.ODataModel#constructor model}. The refresh after a deep create
@@ -767,7 +772,7 @@ sap.ui.define([
 	 * pending, and no other modification (including collapse of some ancestor node) must happen
 	 * while this creation is pending!
 	 *
-	 * @param {object} [oInitialData={}]
+	 * @param {Object<any>} [oInitialData={}]
 	 *   The initial data for the created entity
 	 * @param {boolean} [bSkipRefresh]
 	 *   Whether an automatic refresh of the created entity will be skipped.
@@ -1096,20 +1101,35 @@ sap.ui.define([
 	 */
 	ODataListBinding.prototype.delete = function (oGroupLock, sEditUrl, oContext, oETagEntity,
 			bDoNotRequestCount, fnUndelete) {
-		// When deleting a context with negative index, iCreatedContexts et al. must be adjusted.
-		// However, when re-inserting, the context has lost its index. Beware: Do NOT use the
-		// created() promise, because doReplaceWith places a context w/o the promise here.
-		var bCreated = oContext.iIndex < 0,
-			sPath = oContext.iIndex === undefined
-				// context is not in aContexts -> use the predicate
-				? _Helper.getRelativePath(oContext.getPath(), this.oHeaderContext.getPath())
-				: String(oContext.iIndex),
-			bReset = false,
+		var bReset = false,
 			that = this;
 
+		const oAggregation = this.mParameters.$$aggregation;
+		if (oAggregation) {
+			if (oAggregation.expandTo > 1) {
+				throw new Error("Unsupported $$aggregation.expandTo: " + oAggregation.expandTo);
+			}
+			if (oContext.iIndex === undefined) {
+				throw new Error("Unsupported kept-alive context: " + oContext);
+			}
+		}
 		if (oContext.isDeleted()) {
 			return oContext.oDeletePromise; // do not delete twice
 		}
+
+		const bExpanded = oContext.isExpanded();
+		if (bExpanded) {
+			this.collapse(oContext);
+		}
+
+		// When deleting a context with negative index, iCreatedContexts et al. must be adjusted.
+		// However, when re-inserting, the context has lost its index. Beware: Do NOT use the
+		// created() promise, because doReplaceWith places a context w/o the promise here.
+		const bCreated = oContext.iIndex < 0;
+		const sPath = oContext.iIndex === undefined
+			// context is not in aContexts -> use the predicate
+			? _Helper.getRelativePath(oContext.getPath(), this.oHeaderContext.getPath())
+			: String(oContext.getModelIndex());
 
 		this.iDeletedContexts += 1;
 
@@ -1181,6 +1201,9 @@ sap.ui.define([
 				that.oCache.reset(that.getKeepAlivePredicates());
 				that.reset(ChangeReason.Change);
 			} else {
+				if (bExpanded) {
+					that.expand(oContext); // runs synchronously because it was expanded before
+				}
 				that._fireChange({reason : ChangeReason.Add});
 			}
 			throw oError;
@@ -2071,13 +2094,13 @@ sap.ui.define([
 	 * @since 1.98.0
 	 */
 	ODataListBinding.prototype.getAllCurrentContexts = function () {
-		var aElements = [];
+		var aElements;
 
 		this.withCache(function (oCache, sPath) {
 				aElements = oCache.getAllElements(sPath);
 			}, "", /*bSync*/true);
 
-		if (this.createContexts(0, aElements)) {
+		if (aElements && this.createContexts(0, aElements)) {
 			// In the case that a control has requested new data and the data request is already
 			// completed, but the new contexts are not yet created, we have to ensure that a change
 			// event is fired to inform the control about these new contexts.
@@ -2806,7 +2829,7 @@ sap.ui.define([
 	 * @param {boolean} [bWithSystemQueryOptions]
 	 *   Whether system query options should be returned as well. The parameter value
 	 *   <code>true</code> is not supported.
-	 * @returns {object} mQueryOptions
+	 * @returns {Object<any>} mQueryOptions
 	 *   The object with the query options. Query options can be provided with
 	 *   {@link sap.ui.model.odata.v4.ODataModel#bindList},
 	 *   {@link sap.ui.model.odata.v4.ODataModel#bindContext},
@@ -3464,18 +3487,28 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataListBinding.prototype.removeCreated = function (oContext) {
-		var iIndex = oContext.getModelIndex(), // Note: MUST not be undefined, or we fail utterly!
-			i;
+		var iIndex, i;
 
-		this.iCreatedContexts -= 1;
-		if (!oContext.isInactive()) {
-			this.iActiveContexts -= 1;
-		}
-		for (i = 0; i < iIndex; i += 1) {
-			this.aContexts[i].iIndex += 1;
-		}
-		if (!this.iCreatedContexts) {
-			this.bFirstCreateAtEnd = undefined;
+		if (this.mParameters.$$aggregation) {
+			this.iMaxLength -= 1;
+			iIndex = this.aContexts.indexOf(oContext);
+			for (i = this.aContexts.length - 1; i > iIndex; i -= 1) {
+				if (this.aContexts[i]) {
+					this.aContexts[i].iIndex -= 1;
+				}
+			}
+		} else {
+			iIndex = oContext.getModelIndex(); // Note: MUST not be undefined, or we fail utterly!
+			this.iCreatedContexts -= 1; // Note: affects #getModelIndex!
+			if (!this.iCreatedContexts) {
+				this.bFirstCreateAtEnd = undefined;
+			}
+			if (!oContext.isInactive()) {
+				this.iActiveContexts -= 1;
+			}
+			for (i = 0; i < iIndex; i += 1) {
+				this.aContexts[i].iIndex += 1;
+			}
 		}
 		this.aContexts.splice(iIndex, 1);
 		if (!oContext.isEffectivelyKeptAlive()) {
@@ -4279,7 +4312,7 @@ sap.ui.define([
 	 * @param {string} [aAggregation[].as]
 	 *   Measures only: The alias, that is the name of the dynamic property used for aggregation of
 	 *   this measure; see "3.1.1 Keyword as" (since 1.55.0)
-	 * @returns {object|undefined}
+	 * @returns {{measureRangePromise: Promise<Object<{min:number,max:number}>>}|undefined}
 	 *   The return object contains a property <code>measureRangePromise</code> if and only if at
 	 *   least one measure has requested a minimum or maximum value; its value is a
 	 *   promise which resolves with the measure range map as soon as data has been received; the

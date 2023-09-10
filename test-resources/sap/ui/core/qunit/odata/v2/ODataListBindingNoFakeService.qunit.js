@@ -192,7 +192,6 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [
-	{operationMode : OperationMode.Auto, useFilterParams : false},
 	{operationMode : OperationMode.Client, useFilterParams : true},
 	{operationMode : OperationMode.Default, useFilterParams : true},
 	{operationMode : OperationMode.Server, useFilterParams : true}
@@ -232,6 +231,40 @@ sap.ui.define([
 		ODataListBinding.prototype._getLength.call(oBinding);
 	});
 });
+
+	//*********************************************************************************************
+	/** @deprecated As of version 1.102.0, reason OperationMode.Auto */
+	QUnit.test("_getLength: calls _addFilterQueryOption; operation mode=OperationMode.Auto", function (assert) {
+		var oModel = {read : function () {}},
+			oBinding = {
+				sCountMode : CountMode.Request,
+				oModel : oModel,
+				sOperationMode : OperationMode.Auto,
+				sPath : "/~Path",
+				_addFilterQueryOption : function () {},
+				getResolvedPath : function () {}
+			};
+
+		this.mock(oBinding).expects("_addFilterQueryOption")
+			.withExactArgs([], false)
+			.callsFake(function (aParams) {
+				aParams.push("~filter"); // simulate _addFilterQueryOption implementation
+			});
+		this.mock(oBinding).expects("getResolvedPath").withExactArgs().returns("/~Path");
+
+		this.mock(oModel).expects("read").withExactArgs("/~Path/$count", {
+				canonicalRequest : undefined,
+				context : undefined,
+				error : sinon.match.func,
+				groupId : undefined,
+				success : sinon.match.func,
+				urlParameters : ["~filter"],
+				withCredentials : undefined
+			});
+
+		// code under test
+		ODataListBinding.prototype._getLength.call(oBinding);
+	});
 
 	//*********************************************************************************************
 [{
@@ -1704,6 +1737,7 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+/** @deprecated As of version 1.102.0, reason OperationMode.Auto */
 [CountMode.Request, CountMode.Both].forEach(function (sCountMode, i) {
 	QUnit.test("getContexts: return empty array; check OperationMode/CountMode; #" + i,
 			function (assert) {
@@ -2474,16 +2508,15 @@ sap.ui.define([
 		var oBinding = {
 				aKeys : [],
 				bLengthFinal : true,
-				iLength : "~length",
+				iLength : 42,
 				_getCreatedContexts : function () {},
 				isFirstCreateAtEnd : function () {}
 			};
 
-		this.mock(oBinding).expects("_getCreatedContexts").withExactArgs(); // return value unused
+		this.mock(oBinding).expects("_getCreatedContexts").withExactArgs().returns(["~oCreated1"]);
 		this.mock(oBinding).expects("isFirstCreateAtEnd").withExactArgs().returns(false);
 		this.mock(ODataUtils).expects("_getReadIntervals")
-			.withExactArgs(sinon.match.same(oBinding.aKeys), "~startIndex", "~length",
-				"~maximumPrefetchSize", "~length")
+			.withExactArgs(sinon.match.same(oBinding.aKeys), "~startIndex", "~length", "~maximumPrefetchSize", 43)
 			.returns("~aIntervals");
 		this.mock(ODataUtils).expects("_mergeIntervals")
 			.withExactArgs("~aIntervals")
@@ -2498,27 +2531,27 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [
-	{interval : {start : 222, end : 333}, result : {skip : 222 - 1, top : 111}},
+	{interval : {start : 222, end : 333}, result : {skip : 222 - 2, top : 111}},
 	{interval : undefined, result : undefined}
 ].forEach(function (oFixture, i) {
 	QUnit.test("_getSkipAndTop, creation at start, binding has data: #" + i, function (assert) {
 		var oBinding = {
 				aKeys : ["key0", "key1"],
 				bLengthFinal : true,
-				iLength : "~length",
+				iLength : 42,
 				_getCreatedContexts : function () {},
 				isFirstCreateAtEnd : function () {}
 			};
 
 		this.mock(oBinding).expects("_getCreatedContexts")
 			.withExactArgs()
-			.returns(["created0"]);
+			.returns(["created0", "created1"]);
 		this.mock(oBinding).expects("isFirstCreateAtEnd")
 			.withExactArgs()
 			.returns(false);
 		this.mock(ODataUtils).expects("_getReadIntervals")
-			.withExactArgs(["created0", "key0", "key1"], "~startIndex", "~length",
-				"~maximumPrefetchSize", "~length")
+			.withExactArgs(["created0", "created1", "key0", "key1"], "~startIndex", "~length",
+				"~maximumPrefetchSize", 44)
 			.returns("~aIntervals");
 		this.mock(ODataUtils).expects("_mergeIntervals")
 			.withExactArgs("~aIntervals")
@@ -2568,7 +2601,7 @@ sap.ui.define([
 		var oBinding = {
 				aKeys : [],
 				bLengthFinal : true,
-				iLength : "~length",
+				iLength : 42,
 				_getCreatedContexts : function () {},
 				isFirstCreateAtEnd : function () {}
 			};
@@ -2576,8 +2609,7 @@ sap.ui.define([
 		this.mock(oBinding).expects("_getCreatedContexts").withExactArgs().returns([]);
 		this.mock(oBinding).expects("isFirstCreateAtEnd").withExactArgs().returns(false);
 		this.mock(ODataUtils).expects("_getReadIntervals")
-			.withExactArgs(sinon.match.same(oBinding.aKeys) , 0, 10, "~maximumPrefetchSize",
-				"~length")
+			.withExactArgs(sinon.match.same(oBinding.aKeys) , 0, 10, "~maximumPrefetchSize", 42)
 			.returns("~aIntervals");
 		this.mock(ODataUtils).expects("_mergeIntervals")
 			.withExactArgs("~aIntervals")
@@ -3769,5 +3801,23 @@ sap.ui.define([
 
 		// code under test
 		ODataListBinding.prototype.addComparators.call(oBinding, [/*unused*/], false /*bSort unused*/);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("getContextByIndex", function (assert) {
+		var oBinding = {
+				_getContexts : function () {}
+			},
+			oBindingMock = this.mock(oBinding);
+
+		oBindingMock.expects("_getContexts").withExactArgs(42, 1).returns([]);
+
+		// code under test
+		assert.strictEqual(ODataListBinding.prototype.getContextByIndex.call(oBinding, 42), undefined);
+
+		oBindingMock.expects("_getContexts").withExactArgs(77, 1).returns(["~oContext"]);
+
+		// code under test
+		assert.strictEqual(ODataListBinding.prototype.getContextByIndex.call(oBinding, 77), "~oContext");
 	});
 });

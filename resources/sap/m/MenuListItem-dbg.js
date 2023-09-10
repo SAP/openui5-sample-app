@@ -10,9 +10,10 @@ sap.ui.define([
 	'./library',
 	'sap/ui/core/IconPool',
 	'sap/ui/core/library',
-	'./MenuListItemRenderer'
+	'./MenuListItemRenderer',
+    'sap/m/Image'
 ],
-	function(ListItemBase, library, IconPool, coreLibrary, MenuListItemRenderer) {
+	function(ListItemBase, library, IconPool, coreLibrary, MenuListItemRenderer, Image) {
 		"use strict";
 
 		// shortcut for sap.ui.core.TextDirection
@@ -32,7 +33,7 @@ sap.ui.define([
 		 * @extends sap.m.ListItemBase
 		 *
 		 * @author SAP SE
-		 * @version 1.117.1
+		 * @version 1.118.0
 		 *
 		 * @constructor
 		 * @private
@@ -124,7 +125,7 @@ sap.ui.define([
 					src : sSrc,
 					densityAware : bIconDensityAware,
 					useIconTooltip : false
-				}, sap.m.Image).setParent(this, null, true);
+				}, Image).setParent(this, null, true);
 			}
 
 			if (oImage.isA("sap.m.Image")) {
@@ -146,7 +147,7 @@ sap.ui.define([
 					id: this.getId() + "-arrowRight",
 					src : "sap-icon://slim-arrow-right",
 					useIconTooltip : false
-				}, sap.m.Image).setParent(this, null, true);
+				}, Image).setParent(this, null, true);
 				this._imageRightArrow.addStyleClass("sapMMenuLIArrowRightIcon", true);
 			}
 

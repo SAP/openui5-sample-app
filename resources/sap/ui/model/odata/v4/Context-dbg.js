@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.117.1
+		 * @version 1.118.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -94,6 +94,7 @@ sap.ui.define([
 		this.oSyncCreatePromise = oCreatePromise;
 		// a promise waiting for the deletion, also used as indicator for #isDeleted
 		this.oDeletePromise = null;
+		this.bFiringCreateActivate = false; // see #doSetProperty
 		this.iGeneration = iGeneration || 0;
 		this.bInactive = bInactive || undefined; // be in sync with the annotation
 		this.iIndex = iIndex;
@@ -242,6 +243,11 @@ sap.ui.define([
 	 * model itself ensures that all bindings depending on this context become unresolved, but no
 	 * attempt is made to restore these bindings in case of reset or failure.
 	 *
+	 * Deleting a child node is supported (@experimental as of version 1.118.0) in a recursive
+	 * hierarchy (see {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}). As a
+	 * precondition, <code>oAggregation.expandTo</code> must be equal to one, and the context must
+	 * not be {@link #setKeepAlive kept-alive} and hidden (for example due to a filter).
+	 *
 	 * @param {string} [sGroupId]
 	 *   The group ID to be used for the DELETE request; if not specified, the update group ID for
 	 *   the context's binding is used, see {@link #getUpdateGroupId}. Since 1.81, if this context
@@ -275,7 +281,8 @@ sap.ui.define([
 	 *     <li> a <code>null</code> group ID is used with a context which is not
 	 *       {@link #isKeepAlive kept alive},
 	 *     <li> the context is already being deleted,
-	 *     <li> the context's binding is a list binding with data aggregation.
+	 *     <li> the context's binding is a list binding with data aggregation,
+	 *     <li> the restrictions for deleting from a recursive hierarchy (see above) are not met.
 	 *   </ul>
 	 *
 	 * @function
@@ -298,7 +305,7 @@ sap.ui.define([
 		if (this.isDeleted()) {
 			throw new Error("Must not delete twice: " + this);
 		}
-		if (this.oBinding.mParameters.$$aggregation) {
+		if (_Helper.isDataAggregation(this.oBinding.mParameters)) {
 			throw new Error("Cannot delete " + this + " when using data aggregation");
 		}
 		this.oBinding.checkSuspended();
@@ -536,17 +543,16 @@ sap.ui.define([
 							bUpdating);
 					}
 
-					if (that.isInactive()) {
+					if (that.isInactive() && !that.bFiringCreateActivate) {
 						// early cache update so that the new value is properly available on the
 						// event listener
 						// runs synchronously - setProperty calls fetchValue with $cached
 						oCache.setProperty(oResult.propertyPath, vValue, sEntityPath, bUpdating)
 							.catch(that.oModel.getReporter());
-						if (oBinding.fireCreateActivate(that)) {
-							that.bInactive = false;
-						} else {
-							that.bInactive = 1;
-						}
+						that.bFiringCreateActivate = true;
+						that.bInactive = oBinding.fireCreateActivate(that) ? false : 1;
+						oCache.setInactive(sEntityPath, that.bInactive);
+						that.bFiringCreateActivate = false;
 					}
 
 					// if request is canceled fnPatchSent and fnErrorCallback are not called and
@@ -555,7 +561,7 @@ sap.ui.define([
 						bSkipRetry ? undefined : errorCallback, oResult.editUrl, sEntityPath,
 						oMetaModel.getUnitOrCurrencyPath(that.oModel.resolve(sPath, that)),
 						oBinding.isPatchWithoutSideEffects(), patchSent,
-						that.isEffectivelyKeptAlive.bind(that), that.isInactive()
+						that.isEffectivelyKeptAlive.bind(that)
 					).then(function () {
 						firePatchCompleted(true);
 					}, function (oError) {
@@ -1431,8 +1437,8 @@ sap.ui.define([
 	 * If the group ID has submit mode {@link sap.ui.model.odata.v4.SubmitMode.Auto} and there are
 	 * currently running updates or creates this method first waits for them to be processed.
 	 *
-	 * The events 'dataRequested' and 'dataReceived' are not fired. Whatever should happen in the
-	 * event handler attached to...
+	 * The 'dataRequested' and 'dataReceived' events are not fired unless a binding is refreshed
+	 * completely. Whatever should happen in the event handler attached to...
 	 * <ul>
 	 *   <li> 'dataRequested', can instead be done before calling {@link #requestSideEffects}.
 	 *   <li> 'dataReceived', can instead be done once the <code>oPromise</code> returned by
@@ -1440,7 +1446,7 @@ sap.ui.define([
 	 *     <code>oPromise.then(function () {...}, function () {...})</code>).
 	 * </ul>
 	 *
-	 * @param {object[]|string[]} aPathExpressions
+	 * @param {Array<sap.ui.model.odata.v4.ts.NavigationPropertyPathExpression|sap.ui.model.odata.v4.ts.PropertyPathExpression|string>} aPathExpressions
 	 *   The "14.5.11 Expression edm:NavigationPropertyPath" or
 	 *   "14.5.13 Expression edm:PropertyPath" objects describing which properties need to be
 	 *   loaded because they may have changed due to side effects of a previous update, for example
@@ -1786,9 +1792,13 @@ sap.ui.define([
 	 *
 	 * @param {boolean} bKeepAlive
 	 *   Whether to keep the context alive
-	 * @param {function} [fnOnBeforeDestroy]
-	 *   Callback function that is executed once for a kept-alive context just before it is
-	 *   destroyed, see {@link #destroy}. Supported since 1.84.0
+	 * @param {function((sap.ui.model.odata.v4.Context|undefined))} [fnOnBeforeDestroy]
+	 *   Callback function that is executed once for a kept-alive context without any argument just
+	 *   before the context is destroyed; see {@link #destroy}. If a context has been replaced in a
+	 *   list binding (see {@link #replaceWith} and
+	 *   {@link sap.ui.odata.v4.ODataContextBinding#execute}), the callback will later also be
+	 *   called just before the replacing context is destroyed, but with that context as the only
+	 *   argument. Supported since 1.84.0
 	 * @param {boolean} [bRequestMessages]
 	 *   Whether to request messages for this entity. Only used if <code>bKeepAlive</code> is
 	 *   <code>true</code>. Determines the messages property from the annotation

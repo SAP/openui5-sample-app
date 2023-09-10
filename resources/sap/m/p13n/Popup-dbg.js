@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @public
 	 * @since 1.97
@@ -298,7 +298,7 @@ sap.ui.define([
 		var oPopover = new ResponsivePopover(this.getId() + "-responsivePopover", {
 			title: this.getTitle(),
 			horizontalScrolling: mDialogSettings.hasOwnProperty("horizontalScrolling") ? mDialogSettings.horizontalScrolling : false,
-			verticalScrolling: !bUseContainer,
+			verticalScrolling: !bUseContainer && !(aPanels[0] && aPanels[0].getVerticalScrolling instanceof Function && aPanels[0].getVerticalScrolling()),
 			contentWidth: mDialogSettings.contentWidth ? mDialogSettings.contentWidth : "30rem",
 			resizable: mDialogSettings.hasOwnProperty("resizable") ? mDialogSettings.resizable : true,
 			contentHeight: mDialogSettings.contentHeight ? mDialogSettings.contentHeight : "35rem",
@@ -334,7 +334,7 @@ sap.ui.define([
 			initialFocus: oInitialFocusedControl,
 			title: this.getTitle(),
 			horizontalScrolling: mDialogSettings.hasOwnProperty("horizontalScrolling") ? mDialogSettings.horizontalScrolling : false,
-			verticalScrolling: !bUseContainer,
+			verticalScrolling: !bUseContainer && !(aPanels[0] && aPanels[0].getVerticalScrolling instanceof Function && aPanels[0].getVerticalScrolling()),
 			contentWidth: mDialogSettings.contentWidth ? mDialogSettings.contentWidth : "40rem",
 			contentHeight: mDialogSettings.contentHeight ? mDialogSettings.contentHeight : "55rem",
 			draggable: true,

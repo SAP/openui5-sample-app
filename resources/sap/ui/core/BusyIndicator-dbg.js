@@ -42,7 +42,7 @@ sap.ui.define([
 	 * Provides methods to show or hide a waiting animation covering the whole
 	 * page and blocking user interaction.
 	 * @namespace
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @public
 	 * @alias sap.ui.core.BusyIndicator
 	 */
@@ -109,7 +109,7 @@ sap.ui.define([
 		oRootDomRef.id = this.sDOM_ID;
 
 		var oBusyContainer = document.createElement("div");
-		this._oResBundle = Library.get("sap.ui.core").getResourceBundle();
+		this._oResBundle = Library.getResourceBundleFor("sap.ui.core");
 		var sTitle = this._oResBundle.getText("BUSY_TEXT");
 		delete this._oResBundle;
 

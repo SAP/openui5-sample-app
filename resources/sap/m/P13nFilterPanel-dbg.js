@@ -23,7 +23,7 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class The P13nFilterPanel control is used to define filter-specific settings for table personalization.
 	 * @extends sap.m.P13nPanel
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @constructor
 	 * @public
 	 * @since 1.26.0
@@ -542,7 +542,13 @@ sap.ui.define([
 				this._modifyFieldOperationsBasedOnMaxLength(oField);
 			}, this);
 
-			this.setKeyFields(aKeyFields, aKeyFieldsExclude);
+            /**
+             * @deprecated Since 1.34. This method does not work anymore - you should use the Items aggregation
+             * @private
+             */
+            (function() {
+                this.setKeyFields && this.setKeyFields(aKeyFields, aKeyFieldsExclude);
+            }.bind(this))();
 
 			var aConditions = [];
 			sModelName = (this.getBindingInfo("filterItems") || {}).model;

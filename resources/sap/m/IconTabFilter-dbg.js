@@ -93,7 +93,7 @@ sap.ui.define([
 	 * @implements sap.m.IconTab
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -1360,7 +1360,7 @@ sap.ui.define([
 				oRbArgs = [sText, oRootTab.getText()];
 			} else {
 				sRbKey = "ICONTABFILTER_BADGE_MSG";
-				oRbArgs = sText;
+				oRbArgs = [sText];
 			}
 		}
 

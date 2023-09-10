@@ -16,7 +16,7 @@ sap.ui.define(['./Element', './library', './Lib', "sap/base/assert"],
 		 * Helper functionality for value state support.
 		 *
 		 * @author SAP SE
-		 * @version 1.117.1
+		 * @version 1.118.0
 		 * @public
 		 * @namespace sap.ui.core.ValueStateSupport
 		 */
@@ -27,7 +27,7 @@ sap.ui.define(['./Element', './library', './Lib', "sap/base/assert"],
 		var ensureTexts = function() {
 			if (!mTexts) { // initialize texts if required
 				mTexts = {};
-				var rb = Library.get("sap.ui.core").getResourceBundle();
+				var rb = Library.getResourceBundleFor("sap.ui.core");
 				mTexts[ValueState.Error] = rb.getText("VALUE_STATE_ERROR");
 				mTexts[ValueState.Warning] = rb.getText("VALUE_STATE_WARNING");
 				mTexts[ValueState.Success] = rb.getText("VALUE_STATE_SUCCESS");

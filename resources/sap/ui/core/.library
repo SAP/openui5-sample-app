@@ -6,7 +6,7 @@
   <copyright>OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.117.1</version>
+  <version>1.118.0</version>
 
   <documentation>The SAPUI5 Core Runtime.
 
@@ -457,6 +457,7 @@
                 <module>sap/ui/core/StandardMargins</module>
                 <module>sap/ui/core/ContainerPadding</module>
                 <module>sap/ui/core/InvisibleText</module>
+                <module>sap/ui/core/webc/*</module>
             </modules>
         </component>
 
@@ -492,6 +493,13 @@
             <name>CA-UI5-CTR-ROD</name>
             <modules>
                 <module>sap/ui/core/hyphenation/*</module>
+            </modules>
+        </component>
+
+        <component>
+            <name>CA-UI5-CTR-PIR</name>
+            <modules>
+                <module>sap/ui/core/delegate/ScrollEnablement</module>
             </modules>
         </component>
     </ownership>

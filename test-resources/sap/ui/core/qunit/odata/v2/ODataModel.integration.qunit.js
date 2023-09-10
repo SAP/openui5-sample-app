@@ -14,6 +14,7 @@ sap.ui.define([
 	"sap/ui/core/Configuration",
 	"sap/ui/core/Core",
 	"sap/ui/core/library",
+	"sap/ui/core/Messaging",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/message/Message",
 	"sap/ui/core/mvc/Controller",
@@ -38,8 +39,8 @@ sap.ui.define([
 	// load Table resources upfront to avoid loading times > 1 second for the first test using Table
 	// "sap/ui/table/Table"
 ], function (Log, merge, uid, Input, Device, ManagedObjectObserver, SyncPromise, Configuration,
-		Core, coreLibrary, UI5Date, Message, Controller, View, Rendering, BindingMode, Filter, FilterOperator,
-		FilterType, Model, Sorter, JSONModel, MessageModel, CountMode, MessageScope, Context,
+		Core, coreLibrary, Messaging, UI5Date, Message, Controller, View, Rendering, BindingMode, Filter,
+		FilterOperator, FilterType, Model, Sorter, JSONModel, MessageModel, CountMode, MessageScope, Context,
 		ODataModel, XMLModel, TestUtils, datajs, XMLHelper) {
 	/*global QUnit, sinon*/
 	/*eslint max-nested-callbacks: 0, no-warning-comments: 0, quote-props: 0*/
@@ -578,8 +579,9 @@ sap.ui.define([
 				}
 				delete this.mListChanges[sControlId];
 			}
-			if (Core.getUIDirty()
-					|| Core.getMessageManager().getMessageModel().getObject("/").length	< this.aMessages.length) {
+
+			if (Rendering.isPending()
+					|| Messaging.getMessageModel().getObject("/").length < this.aMessages.length) {
 				setTimeout(this.checkFinish.bind(this, assert), 10);
 
 				return;
@@ -597,7 +599,7 @@ sap.ui.define([
 		 * @param {object} assert The QUnit assert object
 		 */
 		checkMessages : function (assert) {
-			var aCurrentMessages = Core.getMessageManager().getMessageModel()
+			var aCurrentMessages = Messaging.getMessageModel()
 					.getObject("/").sort(compareMessages),
 				aExpectedMessages = this.aMessages.slice().sort(compareMessages);
 
@@ -1090,7 +1092,7 @@ sap.ui.define([
 					that.oView.setModel(mNamedModels[sModelName], sModelName);
 				}
 				// enable parse error messages in the message manager
-				Core.getMessageManager().registerObject(that.oView, true);
+				Messaging.registerObject(that.oView, true);
 				// Place the view in the page so that it is actually rendered. In some situations,
 				// esp. for the table.Table this is essential.
 				that.oView.placeAt("qunit-fixture");
@@ -1667,12 +1669,11 @@ sap.ui.define([
 		 * Removes all persistent and technical message from the message model.
 		 */
 		removePersistentAndTechnicalMessages : function () {
-			var oMessageManager = Core.getMessageManager(),
-				aMessages = oMessageManager.getMessageModel().getObject("/").filter(function (oMessage) {
+			var aMessages = Messaging.getMessageModel().getObject("/").filter(function (oMessage) {
 					return oMessage.getPersistent() || oMessage.getTechnical();
 				});
 
-			oMessageManager.removeMessages(aMessages);
+			Messaging.removeMessages(aMessages);
 		},
 
 		/**
@@ -4716,7 +4717,7 @@ usePreliminaryContext : false}}">\
 		oModel.setMessageScope(MessageScope.BusinessObject);
 
 		return this.createView(assert, sView, oModel).then(function () {
-			oMessage = Core.getMessageManager().getMessageModel().getObject("/")[0];
+			oMessage = Messaging.getMessageModel().getObject("/")[0];
 			oObjectPage = that.oView.byId("objectPage");
 
 			assert.deepEqual(oMessage.getControlIds(), []);
@@ -9280,10 +9281,18 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 		const oModel = createModel("/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS");
 		const sView = '\
 <t:AnalyticalTable id="table" threshold="10" visibleRowCount="4">\
-	<t:AnalyticalColumn grouped="true" leadingProperty="CompanyCode" template="CompanyCode"/>\
-	<t:AnalyticalColumn grouped="false" leadingProperty="Customer" template="Customer"/>\
-	<t:AnalyticalColumn leadingProperty="AmountInCompanyCodeCurrency" summed="true"\
-		template="AmountInCompanyCodeCurrency"/>\
+	<t:AnalyticalColumn grouped="true" leadingProperty="CompanyCode">\
+		<Label text="CompanyCode"/>\
+		<t:template><Text wrapping="false" text="{CompanyCode}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn grouped="false" leadingProperty="Customer">\
+		<Label text="Customer"/>\
+		<t:template><Text wrapping="false" text="{Customer}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn summed="true" leadingProperty="AmountInCompanyCodeCurrency">\
+		<Label text="AmountInCompanyCodeCurrency"/>\
+		<t:template><Text wrapping="false" text="{AmountInCompanyCodeCurrency}"/></t:template>\
+	</t:AnalyticalColumn>\
 </t:AnalyticalTable>';
 
 		return this.createView(assert, sView, oModel).then(() => {
@@ -9342,10 +9351,18 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 		const oModel = createModel("/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS");
 		const sView = '\
 <t:AnalyticalTable id="table" threshold="10" visibleRowCount="4">\
-	<t:AnalyticalColumn grouped="true" leadingProperty="CompanyCode" template="CompanyCode"/>\
-	<t:AnalyticalColumn grouped="false" leadingProperty="Customer" template="Customer"/>\
-	<t:AnalyticalColumn leadingProperty="AmountInCompanyCodeCurrency" summed="true"\
-		template="AmountInCompanyCodeCurrency"/>\
+	<t:AnalyticalColumn grouped="true" leadingProperty="CompanyCode">\
+		<Label text="CompanyCode"/>\
+		<t:template><Text wrapping="false" text="{CompanyCode}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn grouped="false" leadingProperty="Customer">\
+		<Label text="Customer"/>\
+		<t:template><Text wrapping="false" text="{Customer}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn summed="true" leadingProperty="AmountInCompanyCodeCurrency">\
+		<Label text="AmountInCompanyCodeCurrency"/>\
+		<t:template><Text wrapping="false" text="{AmountInCompanyCodeCurrency}"/></t:template>\
+	</t:AnalyticalColumn>\
 </t:AnalyticalTable>';
 
 		return this.createView(assert, sView, oModel).then(() => {
@@ -10482,7 +10499,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}])
 				.expectValueState("note", "Error", "Some message");
 
-			Core.getMessageManager().addMessages(new Message({
+			Messaging.addMessages(new Message({
 				message : "Some message",
 				processor : oModel,
 				target : "/Note",
@@ -10520,7 +10537,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}])
 				.expectValueState("note", "Error", "Some message");
 
-			Core.getMessageManager().addMessages(new Message({
+			Messaging.addMessages(new Message({
 				message : "Some message",
 				processor : oModel,
 				target : "/Note",
@@ -10758,6 +10775,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 		});
 	});
 
+	/** @deprecated As of version 1.102.0, reason OperationMode.Auto */
 	//*********************************************************************************************
 	// Scenario: If operation mode auto and a threshold is set as binding parameter and a count
 	// request returns a count smaller than the threshold then this count is used as the $top
@@ -11568,7 +11586,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}])
 				.expectValueState("quantity", "Error", "Some message");
 
-			Core.getMessageManager().addMessages(new Message({
+			Messaging.addMessages(new Message({
 				message : "Some message",
 				processor : oModel,
 				target : "/RequestedQuantity",
@@ -14257,6 +14275,57 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 	});
 
 	//*********************************************************************************************
+	// Scenario: If a list binding contains created entries at the start of the list and the
+	// binding's length is final, ensure that all data is requested if the user scrolls to the end
+	// of the list.
+	// BCP: 002075129400006921272023
+	QUnit.test("Created entries at start: scrolling to the end reads all data", function (assert) {
+		var oTable,
+			oModel = createSalesOrdersModel({defaultCountMode : CountMode.Inline}),
+			sView = '\
+<Table growing="true" growingThreshold="3" id="table" items="{/SalesOrderSet}">\
+	<Input id="note" value="{Note}"/>\
+</Table>',
+		that = this;
+
+		this.expectHeadRequest()
+			.expectRequest("SalesOrderSet?$skip=0&$top=3&$inlinecount=allpages", {
+				__count : "5",
+				results : [
+					{__metadata : {uri : "SalesOrderSet('1')"}, Note : "SO1", SalesOrderID : "1"},
+					{__metadata : {uri : "SalesOrderSet('2')"}, Note : "SO2", SalesOrderID : "2"},
+					{__metadata : {uri : "SalesOrderSet('3')"}, Note : "SO3", SalesOrderID : "3"}
+				]
+			})
+			.expectValue("note", ["SO1", "SO2", "SO3"]);
+
+		return this.createView(assert, sView, oModel).then(function () {
+			oTable = that.oView.byId("table");
+
+			that.expectValue("note", ["SONew", "SO1", "SO2", "SO3"]);
+
+			// code under test - create an item at the start of the list
+			oTable.getBinding("items").create({Note : "SONew"});
+
+			return that.waitForChanges(assert);
+		}).then(function () {
+			that.expectRequest("SalesOrderSet?$skip=3&$top=2", {
+				results : [
+					{__metadata : {uri : "SalesOrderSet('4')"}, Note : "SO4", SalesOrderID : "4"},
+					{__metadata : {uri : "SalesOrderSet('5')"}, Note : "SO5", SalesOrderID : "5"}
+				]
+			});
+
+			that.expectValue("note", ["SO3", "SO4", "SO5"], 3);
+
+			// code under test - scroll down to get all data from server
+			oTable.requestItems();
+
+			return that.waitForChanges(assert);
+		});
+	});
+
+	//*********************************************************************************************
 	// Scenario: If the table displays only transient entities (no threshold is set) and a new
 	// control filter is set on the table the number of available entities is properly displayed.
 	// CPOUI5MODELS-692
@@ -14331,14 +14400,28 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 	// Scenario: Simple test for creation at the end of the list; more complex cases are tested in
 	// all pairs tests for multi create.
 	// JIRA: CPOUI5MODELS-617
+	// Scenario 2: Contexts can be retrieved using getContextByIndex
+	// BCP: 002075129400004574672023
 	QUnit.test("Creation at the end of a list", function (assert) {
-		var oModel = createSalesOrdersModel(),
+		var oRowsBinding,
+			oModel = createSalesOrdersModel(),
 			sView = '\
 <t:Table id="table" rows="{/SalesOrderSet}" visibleRowCount="2">\
 	<Text id="id" text="{SalesOrderID}"/>\
 	<Text id="note" text="{Note}"/>\
 </t:Table>',
 			that = this;
+
+		function checkContextByIndex(bCreated) {
+			assert.strictEqual(oRowsBinding.getContextByIndex(-1), undefined);
+			assert.strictEqual(oRowsBinding.getContextByIndex(0).getPath(), "/SalesOrderSet('42')");
+			if (bCreated) {
+				assert.strictEqual(oRowsBinding.getContextByIndex(1).isTransient(), true);
+			} else {
+				assert.strictEqual(oRowsBinding.getContextByIndex(1), undefined);
+			}
+			assert.strictEqual(oRowsBinding.getContextByIndex(2), undefined);
+		}
 
 		this.expectHeadRequest()
 			.expectRequest("SalesOrderSet?$skip=0&$top=102", {
@@ -14352,11 +14435,15 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			.expectValue("note", ["First SalesOrder", ""]);
 
 		return this.createView(assert, sView, oModel).then(function () {
+			oRowsBinding = that.oView.byId("table").getBinding("rows");
+
 			that.expectValue("note", "New 1", 1);
+			checkContextByIndex(false);
 
 			// code under test
-			that.oView.byId("table").getBinding("rows").create({Note : "New 1"}, /*bAtEnd*/true);
+			oRowsBinding.create({Note : "New 1"}, /*bAtEnd*/true);
 
+			checkContextByIndex(true);
 			return that.waitForChanges(assert);
 		});
 	});
@@ -17700,9 +17787,8 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 	// restores the tree state for property and hierarchy changes, regardless of whether
 	// refreshAfterChange is true or false.
 	// JIRA: CPOUI5MODELS-958
-	// Scenario: To perform hierarchy changes both ODataModel#submitChanges and
-	// ODataTreeBinding#submitChanges can be used and both behave the same. For simple property
-	// changes via ODataModel#submitChanges a refresh/restoreTreeState is not needed.
+	// Scenario: To perform hierarchy changes ODataModel#submitChanges can be used. For simple property
+	// changes a refresh/restoreTreeState is not needed.
 	// JIRA: CPOUI5MODELS-745
 [false, true].forEach(function (bRefreshAfterChange) {
 	var sTitle = "ODataTreeBindingFlat: ODataModel#submitChanges for refreshAfterChange="
@@ -17845,15 +17931,15 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 		});
 	});
 });
+
 	/** @deprecated As of version 1.104.0 */
 	//*********************************************************************************************
 	// Scenario: A table using ODataTreeBindingFlat with restoreTreeStateAfterChange=true correctly
 	// restores the tree state for property and hierarchy changes, regardless of whether
 	// refreshAfterChange is true or false.
 	// JIRA: CPOUI5MODELS-958
-	// Scenario: To perform hierarchy changes both ODataModel#submitChanges and
-	// ODataTreeBinding#submitChanges can be used and both behave the same. For simple property
-	// changes via ODataModel#submitChanges a refresh/restoreTreeState is not needed.
+	// Scenario: To perform hierarchy changes ODataTreeBinding#submitChanges can be used. For simple property
+	// changes a refresh/restoreTreeState is needed.
 	// JIRA: CPOUI5MODELS-745
 [false, true].forEach(function (bRefreshAfterChange) {
 	var sTitle = "ODataTreeBindingFlat: ODataTreeBindingFlat#submitChanges for refreshAfterChange="
@@ -18019,15 +18105,11 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 	// restoreTreeStateAfterChange=false. After property / hierarchy changes have been submitted the
 	// binding gets refreshed.
 	// JIRA: CPOUI5MODELS-959
-	// Scenario: To perform hierarchy changes both ODataModel#submitChanges and
-	// ODataTreeBinding#submitChanges can be used and both behave the same. For simple property
-	// changes via ODataModel#submitChanges a refresh/restoreTreeState is not needed.
+	// Scenario: To perform hierarchy changes ODataModel#submitChanges can be used. For simple property
+	// changes a refresh/restoreTreeState is not needed.
 	// JIRA: CPOUI5MODELS-745
-[false, true].forEach(function (bSubmitOnModel) {
-	var sTitle = "ODataTreeBindingFlat: " + (bSubmitOnModel ? "ODataModel" : "ODataTreeBindingFlat")
-			+ "#submitChanges for refreshAfterChange=false and restoreTreeStateAfterChange=false";
-
-	QUnit.test(sTitle, function (assert) {
+	QUnit.test("ODataTreeBindingFlat: ODataModel#submitChanges for refreshAfterChange=false and "
+			+ "restoreTreeStateAfterChange=false", function (assert) {
 		var oBinding, oTable,
 			oModel = createHierarchyMaintenanceModel({refreshAfterChange : false}),
 			oNode100 = {
@@ -18084,9 +18166,161 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 </t:TreeTable>',
 			that = this;
 
-		function fnSubmitChanges() {
-			(bSubmitOnModel ? oModel : oBinding).submitChanges();
-		}
+		this.expectHeadRequest()
+			.expectRequest({
+				batchNo : 1,
+				requestUri : "ErhaOrder('1')/to_Item?$skip=0&$top=103&$inlinecount=allpages"
+					+ "&$filter=HierarchyDistanceFromRoot le 0"
+			}, {
+				__count : "1",
+				results : [oNode100]
+			})
+			.expectValue("itemName", ["foo", "", ""]);
+
+		return this.createView(assert, sView, oModel).then(function () {
+			oTable = that.oView.byId("table");
+
+			that.expectRequest({
+					batchNo : 2,
+					requestUri : "ErhaOrder('1')/to_Item?$skip=0&$top=103&$inlinecount=allpages"
+						+ "&$filter=HierarchyParentNode eq '100'"
+				}, {
+					__count : "2",
+					results : [oNode200, oNode300]
+				})
+				.expectValue("itemName", ["bar", "baz"], 1);
+
+			oTable.expand(0);
+
+			return that.waitForChanges(assert);
+		}).then(function () {
+			oBinding = oTable.getBinding("rows");
+
+			that.expectRequest({
+					batchNo : 3,
+					method : "DELETE",
+					requestUri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='300')"
+				}, NO_CONTENT)
+				.expectValue("itemName", "", 2)
+				.expectRequest({
+					batchNo : 4,
+					requestUri : "ErhaOrder('1')/to_Item?$skip=0&$top=103&$inlinecount=allpages"
+						+ "&$filter=HierarchyDistanceFromRoot le 0"
+				}, {
+					__count : "1",
+					results : [oNode100]
+				})
+				.expectValue("itemName", "", 1); // binding gets refreshed, no restore tree state
+
+			// code under test: hierarchy change
+			oBinding.removeContext(oTable.getContextByIndex(2));
+			oModel.submitChanges();
+
+			return that.waitForChanges(assert);
+		}).then(function () {
+			oTable = that.oView.byId("table");
+
+			that.expectRequest({
+					batchNo : 5,
+					requestUri : "ErhaOrder('1')/to_Item?$skip=0&$top=103&$inlinecount=allpages"
+						+ "&$filter=HierarchyParentNode eq '100'"
+				}, {
+					__count : "1",
+					results : [oNode200]
+				})
+				.expectValue("itemName", "bar", 1);
+
+			// manually expand the node again
+			oTable.expand(0);
+
+			return that.waitForChanges(assert);
+		}).then(function () {
+			that.expectValue("itemName", "bar: renamed", 1)
+				.expectRequest({
+					batchNo : 6,
+					data : {
+						__metadata : {uri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"},
+						ErhaOrderItemName : "bar: renamed"
+					},
+					key : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')",
+					method : "MERGE",
+					requestUri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"
+				}, NO_CONTENT);
+
+			// code under test: property change
+			oModel.setProperty("ErhaOrderItemName", "bar: renamed", oTable.getContextByIndex(1));
+			oModel.submitChanges();
+
+			return that.waitForChanges(assert);
+		});
+	});
+
+	/** @deprecated As of version 1.104.0 */
+	//*********************************************************************************************
+	// Scenario: A table using ODataTreeBindingFlat with refreshAfterChange=false and
+	// restoreTreeStateAfterChange=false. After property / hierarchy changes have been submitted the
+	// binding gets refreshed.
+	// JIRA: CPOUI5MODELS-959
+	// Scenario: To perform hierarchy changes ODataTreeBinding#submitChanges can be used. For simple property
+	// changes a refresh/restoreTreeState is needed.
+	// JIRA: CPOUI5MODELS-745
+	QUnit.test("ODataTreeBindingFlat: ODataTreeBindingFlat#submitChanges for refreshAfterChange=false and "
+			+ "restoreTreeStateAfterChange=false", function (assert) {
+		var oBinding, oTable,
+			oModel = createHierarchyMaintenanceModel({refreshAfterChange : false}),
+			oNode100 = {
+				__metadata : {uri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='100')"},
+				ErhaOrder : "1",
+				ErhaOrderItem : "100",
+				ErhaOrderItemName : "foo",
+				HierarchyNode : "100",
+				HierarchyParentNode : "",
+				HierarchyDescendantCount : 0,
+				HierarchyDistanceFromRoot : 0,
+				HierarchyDrillState : "collapsed",
+				HierarchyPreorderRank : 0,
+				HierarchySiblingRank : 0
+			},
+			oNode200 = {
+				__metadata : {uri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"},
+				ErhaOrder : "1",
+				ErhaOrderItem : "200",
+				ErhaOrderItemName : "bar",
+				HierarchyNode : "200",
+				HierarchyParentNode : "100",
+				HierarchyDescendantCount : 0,
+				HierarchyDistanceFromRoot : 1,
+				HierarchyDrillState : "leaf",
+				HierarchyPreorderRank : 0,
+				HierarchySiblingRank : 0
+			},
+			oNode300 = {
+				__metadata : {uri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='300')"},
+				ErhaOrder : "1",
+				ErhaOrderItem : "300",
+				ErhaOrderItemName : "baz",
+				HierarchyNode : "300",
+				HierarchyParentNode : "100",
+				HierarchyDescendantCount : 0,
+				HierarchyDistanceFromRoot : 1,
+				HierarchyDrillState : "leaf",
+				HierarchyPreorderRank : 1,
+				HierarchySiblingRank : 1
+			},
+			sView = '\
+<t:TreeTable id="table"\
+		rows="{\
+			parameters : {\
+				countMode : \'Inline\',\
+				numberOfExpandedLevels : 0\
+			},\
+			path : \'/ErhaOrder(\\\'1\\\')/to_Item\'\
+		}"\
+		visibleRowCount="3"\
+		visibleRowCountMode="Fixed">\
+	<Text id="itemName" text="{ErhaOrderItemName}" />\
+</t:TreeTable>',
+			that = this;
 
 		this.expectHeadRequest()
 			.expectRequest({
@@ -18136,7 +18370,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 
 			// code under test: hierarchy change
 			oBinding.removeContext(oTable.getContextByIndex(2));
-			fnSubmitChanges();
+			oBinding.submitChanges();
 
 			return that.waitForChanges(assert);
 		}).then(function () {
@@ -18169,7 +18403,6 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					requestUri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"
 				}, NO_CONTENT);
 
-			if (!bSubmitOnModel) {
 				that.expectRequest({
 						batchNo : 7,
 						requestUri : "ErhaOrder('1')/to_Item?$skip=0&$top=103&$inlinecount=allpages"
@@ -18180,28 +18413,22 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					})
 					// binding gets refreshed, no restore tree state
 					.expectValue("itemName", "", 1);
-			}
 
 			// code under test: property change
 			oModel.setProperty("ErhaOrderItemName", "bar: renamed", oTable.getContextByIndex(1));
-			fnSubmitChanges();
+			oBinding.submitChanges();
 
 			return that.waitForChanges(assert);
 		});
 	});
-});
 
 	//*********************************************************************************************
 	// Scenario: A table using ODataTreeBindingFlat with refreshAfterChange=true and
 	// restoreTreeStateAfterChange=false. After property / hierarchy changes have been submitted
-	// either via ODataModel#submitChanges or via ODataTreeBindingFlat#submitChanges the binding
-	// gets refreshed only once via <code>refreshAfterChange</code>.
+	// via ODataModel#submitChanges the binding gets refreshed only once via <code>refreshAfterChange</code>.
 	// JIRA: CPOUI5MODELS-970
-[false, true].forEach(function (bSubmitOnModel) {
-	var sTitle = "ODataTreeBindingFlat: " + (bSubmitOnModel ? "ODataModel" : "ODataTreeBindingFlat")
-			+ "#submitChanges for refreshAfterChange=true and restoreTreeStateAfterChange=false";
-
-	QUnit.test(sTitle, function (assert) {
+	QUnit.test("ODataTreeBindingFlat: ODataModel#submitChanges for refreshAfterChange=true and "
+			+ "restoreTreeStateAfterChange=false", function (assert) {
 		var oBinding, oTable,
 			oModel = createHierarchyMaintenanceModel({refreshAfterChange : true}),
 			oNode100 = {
@@ -18257,10 +18484,6 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 	<Text id="itemName" text="{ErhaOrderItemName}" />\
 </t:TreeTable>',
 			that = this;
-
-		function fnSubmitChanges() {
-			(bSubmitOnModel ? oModel : oBinding).submitChanges();
-		}
 
 		this.expectHeadRequest()
 			.expectRequest({
@@ -18335,7 +18558,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			// code under test: hierarchy change
 			oBinding.removeContext(oMoveContext);
 			oBinding.addContexts(oParentContext, [oMoveContext]);
-			fnSubmitChanges();
+			oModel.submitChanges();
 
 			return that.waitForChanges(assert);
 		}).then(function () {
@@ -18380,12 +18603,11 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 
 			// code under test: property change
 			oModel.setProperty("ErhaOrderItemName", "bar: renamed", oTable.getContextByIndex(1));
-			fnSubmitChanges();
+			oModel.submitChanges();
 
 			return that.waitForChanges(assert);
 		});
 	});
-});
 
 	//*********************************************************************************************
 	// Scenario: It has to be possible to change a property with Edm.Time type to a different value

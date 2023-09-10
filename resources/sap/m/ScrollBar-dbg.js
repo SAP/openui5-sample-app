@@ -25,7 +25,7 @@ function(Control, ScrollBarRenderer) {
 	 * care of only rendering the currently visible rows and use this <code>ScrollBar</code> control to make
 	 * the users think they are actually scrolling through a long list.
 	 * @extends sap.ui.core.Control
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @private
 	 * @alias sap.m.ScrollBar

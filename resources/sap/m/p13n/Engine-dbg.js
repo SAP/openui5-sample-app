@@ -57,7 +57,7 @@ sap.ui.define([
 	 * @alias sap.m.p13n.Engine
 	 * @extends sap.m.p13n.modules.AdaptationProvider
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @public
 	 * @since 1.104
 	 */
@@ -164,6 +164,13 @@ sap.ui.define([
 			}
 
 		}.bind(this));
+
+		//In case the control is marked as modified, the state change event is triggered once initially to apply the default state
+		var oXConfig = oControl.getCustomData().find((oCustomData) => oCustomData.getKey() == "xConfig");
+		if (oXConfig && JSON.parse((oXConfig.getValue()).replace(/\\/g, ''))?.modified) {
+			this.fireStateChange(oControl);
+		}
+
 	};
 
 
@@ -213,9 +220,7 @@ sap.ui.define([
 	 * @returns {Promise<sap.m.p13n.Popup>} Promise resolving in the <code>sap.m.p13n.Popup</code> instance
 	 */
 	Engine.prototype.show = function (oControl, vPanelKeys, mSettings) {
-		return this.getModificationHandler(oControl).hasChanges({selector: oControl}).then((enableReset) => {
-			return enableReset;
-		})
+		return this.hasChanges(oControl)
 		.catch((oError) => {
 			return false;
 		})
@@ -248,6 +253,28 @@ sap.ui.define([
 	 */
 	Engine.prototype.detachStateChange = function (fnStateEventHandler) {
 		return this.stateHandlerRegistry.detachChange(fnStateEventHandler);
+	};
+
+	/**
+	 * Check if there are changes for a given control instance
+	 *
+	 * @private
+         * @ui5-restricted sap.m, sap.ui.mdc
+         *
+	 * @param {sap.ui.core.Control} control The control instance
+	 * @param {string} key The affected controller key
+	 * @returns {Promise<boolean>} A Promise that resolves if the given control instance has applied changes
+	 */
+	Engine.prototype.hasChanges = function(control, key) {
+		const changeOperations = this.getController(control, key)?.getChangeOperations();
+		let changeTypes;
+		if (changeOperations) {
+			changeTypes = Object.values(changeOperations);
+		}
+		var oModificationSetting = this._determineModification(control);
+		return this.getModificationHandler(control).hasChanges({selector: control, changeTypes}, oModificationSetting?.payload).then((enableReset) => {
+			return enableReset;
+		});
 	};
 
 	/**
@@ -716,6 +743,7 @@ sap.ui.define([
 					//to simplify debugging
 					oRegistryEntry.xConfig = oConfig;
 				}
+				return oConfig;
 			});
 	};
 
@@ -812,7 +840,8 @@ sap.ui.define([
 
 	Engine.prototype.checkControlInitialized = function (vControl) {
 		var oControl = Engine.getControlInstance(vControl);
-		return oControl.initialized instanceof Function ? oControl.initialized() : Promise.resolve();
+		var pInitialize = oControl.initialized instanceof Function ? oControl.initialized() : Promise.resolve();
+		return pInitialize || Promise.resolve();
 	};
 
 	Engine.prototype.checkPropertyHelperInitialized = function (vControl) {
@@ -1068,13 +1097,18 @@ sap.ui.define([
 	};
 
 	Engine.prototype.getTrace = function (vControl, oChange) {
-		var oRegistryEntry = this._getRegistryEntry(vControl);
-		return Object.keys(oRegistryEntry.pendingAppliance);
+		var oRegistryEntry = this._getRegistryEntry(vControl), oTrace;
+		if (oRegistryEntry) {
+			oTrace = Object.keys(oRegistryEntry.pendingAppliance);
+		}
+		return oTrace;
 	};
 
 	Engine.prototype.clearTrace = function (vControl, oChange) {
 		var oRegistryEntry = this._getRegistryEntry(vControl);
-		oRegistryEntry.pendingAppliance = {};
+		if (oRegistryEntry) {
+			oRegistryEntry.pendingAppliance = {};
+		}
 	};
 
 	/**

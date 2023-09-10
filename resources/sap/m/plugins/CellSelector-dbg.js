@@ -20,19 +20,30 @@ sap.ui.define([
 	/**
 	 * Constructor for a new CellSelector plugin.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new <code>CellSelector</code>, generated automatically if no id is given
+	 * @param {object} [mSettings] Initial settings for the new <code>CellSelector</code>
 	 *
-	 * The CellSelector plugins enables cell selection inside the table, when it is added as a dependent to the control.
+	 * The <code>CellSelector</code> plugin enables cell selection inside the table when it is added as a dependent to the control.
 	 * It allows the user to individually select a cell block.
+	 *
+	 * The <code>CellSelector</code> plugin currently does not offer touch support.
+	 *
+	 * The <code>CellSelector</code> plugin cannot be used if the following applies:
+	 * <ul>
+	 * 	<li>Drag and drop is active</li>
+	 * 	<li>The target control is not a {@link sap.ui.table.Table}</li>
+	 *	<li>If used in combination with {@link sap.ui.table.Table#cellClick}</li>
+	 *	<li>If used in combination with the following selection behavior: <code>sap.ui.table.SelectionBehavior.RowOnly</code> and <code>sap.ui.table.SelectionBehavior.Row</code>
+	 * </ul>
 	 *
 	 * @extends sap.m.plugins.PluginBase
 	 * @class
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @author SAP SE
 	 *
 	 * @private
 	 * @experimental
+	 * @since 1.118
 	 * @alias sap.m.plugins.CellSelector
 	 */
 	var CellSelector = PluginBase.extend("sap.m.plugins.CellSelector", {
@@ -73,8 +84,18 @@ sap.ui.define([
 	- Edge: Extend/reduce selection freely.
 	*/
 
+	CellSelector.prototype.isApplicable = function() {
+		if (this.getControl().getDragDropConfig().length > 0
+			|| !this.getControl().isA("sap.ui.table.Table")) {
+			return !this.getControl()
+				.getDragDropConfig()
+				.some((oConfig) => oConfig.getSourceAggregation() == this.getConfig("dataCellAggregation"));
+		}
+
+		return this.getConfig("isApplicable", this.getControl());
+	};
+
 	CellSelector.prototype.onActivate = function (oControl) {
-		this._iRtl = Core.getConfiguration().getRTL() ? -1 : 1;
 		oControl.addDelegate(this, true, this);
 		this._oSession = { cellRefs: [] };
 		this._mTimeouts = {};
@@ -106,7 +127,7 @@ sap.ui.define([
 	};
 
 	CellSelector.prototype.destroy = function() {
-		if (this.getControl()  && !this.getControl().isDestroyed()) {
+		if (this.getControl()  && !this.getControl().isDestroyed() && this._oSession) {
 			this.removeSelection();
 		}
 		this._deregisterEvents();
@@ -117,6 +138,7 @@ sap.ui.define([
 	};
 
 	CellSelector.prototype.onBeforeRendering = function() {
+		this._iRtl = Core.getConfiguration().getRTL() ? -1 : 1;
 		if (this._oResizer) {
 			// remove resizer, as due to rerendering table element may be gone
 			this._oResizer.remove();
@@ -146,8 +168,10 @@ sap.ui.define([
 		if (this.getControl()) {
 			this.getControl().detachEvent(this.getConfig("scrollEvent"), this._fnControlUpdate);
 			var oScrollArea = this.getControl().getDomRef(this.getConfig("scrollArea"));
-			oScrollArea.removeEventListener("mouseleave", this._fnOnMouseOut);
-			oScrollArea.removeEventListener("mouseenter", this._fnOnMouseEnter);
+			if (oScrollArea) {
+				oScrollArea.removeEventListener("mouseleave", this._fnOnMouseOut);
+				oScrollArea.removeEventListener("mouseenter", this._fnOnMouseEnter);
+			}
 		}
 		document.removeEventListener("mousemove", this._fnOnMouseMove);
 		document.removeEventListener("mouseup", this._fnOnMouseUp);
@@ -366,11 +390,7 @@ sap.ui.define([
 
 			if (mDiff.rowIndex != 0 || mDiff.colIndex != 0) {
 				const { from, to } = this._getUpdatedBounds(mDiff.rowIndex, mDiff.colIndex, oBorder);
-
 				this._selectCells(from, to);
-
-				this._oSession.border.rowIndex += mDiff.rowIndex;
-				this._oSession.border.colIndex += mDiff.colIndex;
 			}
 		} else {
 			this._startSelection(oEvent, true);
@@ -433,7 +453,11 @@ sap.ui.define([
 			var sType = bForward ? "to" : "from";
 
 			mDiff[sDirectionType] = bForward ? 1 : -1;
-			const { from, to } = this._getUpdatedBounds(mDiff[DIRECTION.ROW], mDiff[DIRECTION.COL], mBounds[sType]);
+			let mOldFocus = mBounds[sType];
+			if (this._bBorderDown) {
+				mOldFocus = this._oSession.border;
+			}
+			const { from, to } = this._getUpdatedBounds(mDiff[DIRECTION.ROW], mDiff[DIRECTION.COL], mOldFocus);
 			this._selectCells(from, to);
 		}
 	};
@@ -525,6 +549,9 @@ sap.ui.define([
 		if (!this._bBorderDown) {
 			mFocus.rowIndex = Math.max(0, mFocus.rowIndex + iRowDiff);
 			mFocus.colIndex = Math.max(0, mFocus.colIndex + iColDiff);
+		} else {
+			this._oSession.border.rowIndex += iRowDiff;
+			this._oSession.border.colIndex += iColDiff;
 		}
 
 		return {
@@ -614,6 +641,12 @@ sap.ui.define([
 	CellSelector.prototype._updateResizers = function(mBounds, iPositionX, iPositionY) {
 		var oResizer = this._getResizer();
 
+		if (this._iRtl == -1) {
+			const iFromColIndex = mBounds.from.colIndex;
+			mBounds.from.colIndex = mBounds.to.colIndex;
+			mBounds.to.colIndex = iFromColIndex;
+		}
+
 		var oFromRef = this.getConfig("getCellRef", this.getControl(), mBounds.from, false),
 			oToRef = this.getConfig("getCellRef", this.getControl(), mBounds.to, false);
 		var mOutOfBounds = { 0: false, 1: false }; // 0: top, 1: bottom
@@ -631,9 +664,10 @@ sap.ui.define([
 		var oFromRect = oFromRef.getBoundingClientRect(),
 			oToRect = oToRef.getBoundingClientRect(),
 			oTableRect = this.getControl().getDomRef().getBoundingClientRect();
+		var iOffsetLeft = this.getControl().getDomRef().offsetLeft;
 
 		var mStyleMap = {
-			x: { 0: oFromRect.left, 1: oToRect.left + oToRect.width },
+			x: { 0: oFromRect.left - iOffsetLeft, 1: oToRect.left + oToRect.width - iOffsetLeft },
 			y: { 0: oFromRect.top - oTableRect.top, 1: oToRect.top + oToRect.height - oTableRect.top }
 		};
 		var mDiffMap = {
@@ -685,7 +719,9 @@ sap.ui.define([
 
 			this._oResizer.addEventListener("mousedown", this._onborderdown.bind(this));
 
-			this.getControl().getDomRef().appendChild(this._oResizer);
+			if (this.getControl().getDomRef()) {
+				this.getControl().getDomRef().appendChild(this._oResizer);
+			}
 		}
 		return this._oResizer;
 	};
@@ -726,9 +762,7 @@ sap.ui.define([
 		const iMaxColumns = this.getConfig("getVisibleColumns", this.getControl()).length;
 		const iMaxRows = this.getRangeLimit() == 0 ? this.getConfig("getRowCount", this.getControl()) : this.getRangeLimit();
 
-		let toRowIndex = Math.max(mFrom.rowIndex, mTo.rowIndex);
-		let toColIndex =  Math.max(mFrom.colIndex, mTo.colIndex);
-
+		let toRowIndex = Math.max(mFrom.rowIndex, mTo.rowIndex), toColIndex = Math.max(mFrom.colIndex, mTo.colIndex);
 		if (!bKeepBounds) {
 			toRowIndex = Math.min(iMaxRows - 1, toRowIndex);
 			toColIndex = Math.min(iMaxColumns, toColIndex);
@@ -757,6 +791,14 @@ sap.ui.define([
 			selectableCells: ".sapUiTableDataCell",
 			scrollArea: "sapUiTableCtrlScr",
 			scrollEvent: "_rowsUpdated",
+			/**
+			 * Checks if the table is compatible with cell selection.
+			 * @param {sap.ui.table.Table} oTable table instance
+			 * @returns {boolean} compatibility with cell selection
+			 */
+			isApplicable: function(oTable) {
+				return !oTable.hasListeners("cellClick") && oTable.getSelectionBehavior() == "RowSelector";
+			},
 			/**
 			 * Get visible columns of the table.
 			 * @param {sap.ui.table.Table} oTable table instance

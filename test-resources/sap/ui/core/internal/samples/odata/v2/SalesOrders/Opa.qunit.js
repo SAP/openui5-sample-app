@@ -4,13 +4,14 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*global QUnit */
-QUnit.config.autostart = false;
-
-sap.ui.getCore().attachInit(function () {
+(function() {
 	"use strict";
+	QUnit.config.autostart = false;
+
 	var sTestPrefix = "sap/ui/core/internal/samples/odata/v2/SalesOrders/tests/";
 
 	sap.ui.require([
+		"sap/ui/core/Core",
 		"sap/ui/core/sample/common/pages/Any",
 		sTestPrefix + "pages/Main",
 		sTestPrefix + "MessagesForNoteFields",
@@ -28,7 +29,9 @@ sap.ui.getCore().attachInit(function () {
 		sTestPrefix + "ODataListBinding.create/TC2_CreateItems",
 		sTestPrefix + "ODataListBinding.create/TC3_SalesOrders_InlineCreationRow",
 		sTestPrefix + "ODataListBinding.create/TC4_SalesOrderItems_InlineCreationRow"
-	], function () {
-		QUnit.start();
+	], function (Core) {
+		Core.ready().then(function () {
+			QUnit.start();
+		});
 	});
-});
+})();

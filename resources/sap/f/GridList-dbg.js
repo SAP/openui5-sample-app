@@ -93,7 +93,7 @@ sap.ui.define([
 	 * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout MDN web docs: CSS Grid Layout}
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @extends sap.m.ListBase
 	 * @implements sap.ui.layout.cssgrid.IGridConfigurable
@@ -291,9 +291,6 @@ sap.ui.define([
 				.setFocusedIndex(0);
 
 			this.addDelegate(this._oItemNavigation);
-
-			// set the tab index of active items
-			this._setItemNavigationTabIndex(0);
 		}
 
 		ListBase.prototype._startItemNavigation.apply(this, arguments);

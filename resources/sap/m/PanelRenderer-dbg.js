@@ -41,7 +41,8 @@ sap.ui.define(["sap/m/library", "sap/ui/Device"],
 			bIsStickyPanel = oControl.getStickyHeader(),
 			oAccAttributes = {
 				role: oControl.getAccessibleRole().toLowerCase()
-			};
+			},
+			bExpanded = oControl.getExpanded();
 
 		oRm.openStart("div", oControl);
 		oRm.class("sapMPanel");
@@ -51,6 +52,10 @@ sap.ui.define(["sap/m/library", "sap/ui/Device"],
 
 		if (bIsExpandable) {
 			oRm.class("sapMPanelExpandable");
+		}
+
+		if (bExpanded) {
+			oRm.class("sapMPanelExpanded");
 		}
 
 		oRm.style("width", oControl.getWidth());

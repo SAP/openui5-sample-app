@@ -61,7 +61,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IContextMenu
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -238,7 +238,7 @@ sap.ui.define([
 	Menu.prototype.invalidate = function(oOrigin){
 		if (oOrigin instanceof MenuItemBase && this.getDomRef()) {
 			this._delayedRerenderItems();
-		} else {
+		} else if (this.oPopup && this.oPopup.isOpen()) {
 			Control.prototype.invalidate.apply(this, arguments);
 		}
 	};

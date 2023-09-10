@@ -111,7 +111,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.117.1
+		 * @version 1.118.0
 		 *
 		 * @constructor
 		 * @private
@@ -2349,6 +2349,16 @@ sap.ui.define([
 			return specialDates;
 		};
 
+		SinglePlanningCalendarGrid.prototype._isNonWorkingDay = function(oCalendarDate) {
+			return this._getSpecialDates().filter(function(oDateRange) {
+				return oDateRange.getType() === unifiedLibrary.CalendarDayType.NonWorking;
+			}).map(function(oDateRange) {
+				return CalendarDate.fromLocalJSDate(oDateRange.getStartDate());
+			}).some(function(oDate) {
+				return oDate.isSame(oCalendarDate);
+			});
+		};
+
 		function getResizeGhost() {
 			var $ghost = jQuery("<span></span>").addClass("sapUiCalAppResizeGhost");
 			$ghost.appendTo(document.body);
@@ -2389,7 +2399,7 @@ sap.ui.define([
 
 			// Initialize the delegate and apply it to the control (only once)
 			if (!this._oItemNavigation) {
-				this._oItemNavigation = new ItemNavigation();
+				this._oItemNavigation = new ItemNavigation(undefined, undefined, true);
 				this.addDelegate(this._oItemNavigation);
 			}
 			// After each rendering the delegate needs to be initialized as well

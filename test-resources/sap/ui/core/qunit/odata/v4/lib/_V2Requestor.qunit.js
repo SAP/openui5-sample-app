@@ -1737,7 +1737,7 @@ sap.ui.define([
 			oRequestor = _Requestor.create("/", oModelInterface, undefined, undefined, "2.0");
 
 		// code under test
-		oRequestor.reportHeaderMessages("[]");
+		oRequestor.reportHeaderMessages("resource/path", "[]");
 
 		assert.notOk(fnreportTransitionMessages.called);
 	});

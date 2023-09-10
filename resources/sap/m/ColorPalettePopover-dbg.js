@@ -37,7 +37,7 @@ sap.ui.define([
 		 * A thin wrapper over {@link sap.m.ColorPalette} allowing the latter to be used in a popover.
 		 *
 		 * @extends sap.ui.core.Control
-		 * @version 1.117.1
+		 * @version 1.118.0
 		 *
 		 * @public
 		 * @since 1.54

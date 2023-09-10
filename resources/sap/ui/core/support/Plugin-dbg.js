@@ -5,11 +5,15 @@
  */
 
 // Provides class sap.ui.core.support.Plugin
-sap.ui.define(['sap/ui/base/Object', "sap/ui/thirdparty/jquery", "sap/base/util/uid"],
-	function(BaseObject, jQuery, uid) {
+sap.ui.define([
+	"sap/ui/base/Object",
+	"sap/ui/thirdparty/jquery",
+	"sap/base/util/uid",
+	"sap/m/MessageBox",
+	"sap/ui/core/Lib"
+],
+	function(BaseObject, jQuery, uid, MessageBox, Library) {
 	"use strict";
-
-
 
 	/**
 	 * Creates an instance of sap.ui.core.support.Plugin.
@@ -17,7 +21,7 @@ sap.ui.define(['sap/ui/base/Object', "sap/ui/thirdparty/jquery", "sap/base/util/
 	 *
 	 * @abstract
 	 * @extends sap.ui.base.Object
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @private
 	 * @ui5-restricted
 	 * @alias sap.ui.core.support.Plugin
@@ -30,6 +34,7 @@ sap.ui.define(['sap/ui/base/Object', "sap/ui/thirdparty/jquery", "sap/base/util/
 			this._bActive = false;
 			this._aEventIds = [];
 			this._bIsToolPlugin = oStub.isToolStub();
+			this._oStub = oStub;
 		}
 	});
 
@@ -241,6 +246,21 @@ sap.ui.define(['sap/ui/base/Object', "sap/ui/thirdparty/jquery", "sap/base/util/
 	 */
 	Plugin.prototype.isActive = function(){
 		return this._bActive;
+	};
+
+	Plugin.prototype.confirmReload = function (fnConfirmCb) {
+		MessageBox.confirm(this._getText("TechInfo.ReloadApp.ConfirmMessage"), {
+			title: this._getText("TechInfo.DebugSources.ConfirmTitle"),
+			onClose: function (oAction) {
+				if (oAction === MessageBox.Action.OK) {
+					fnConfirmCb();
+				}
+			}
+		});
+	};
+
+	Plugin.prototype._getText = function (sKey, aParameters) {
+		return Library.getResourceBundleFor("sap.ui.core").getText(sKey, aParameters);
 	};
 
 	return Plugin;

@@ -52,7 +52,7 @@ sap.ui.define([
 	 * @extends sap.ui.unified.MenuItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -91,7 +91,8 @@ sap.ui.define([
 	MenuTextFieldItem.prototype.render = function(oRenderManager, oItem, oMenu, oInfo){
 		var rm = oRenderManager,
 			bIsEnabled = oMenu.checkEnabled(oItem),
-			itemId = oItem.getId();
+			itemId = oItem.getId(),
+			oIcon;
 
 		rm.openStart("li", oItem);
 		if (oItem.getVisible()) {
@@ -127,7 +128,11 @@ sap.ui.define([
 		if (oItem.getIcon()) {
 			// icon/check column
 			rm.openStart("div").class("sapUiMnuItmIco").openEnd();
-			rm.icon(oItem.getIcon(), null, {title: null});
+
+			oIcon = oItem._getIcon(oItem);
+
+			rm.renderControl(oIcon);
+
 			rm.close("div");
 		}
 
@@ -139,6 +144,7 @@ sap.ui.define([
 		rm.openStart("div", itemId + "-str").class("sapUiMnuTfItmStretch").openEnd().close("div"); // Helper to strech the width if needed
 		rm.openStart("div").class("sapUiMnuTfItemWrppr").openEnd();
 		rm.voidStart("input", itemId + "-tf").attr("tabindex", "-1");
+		rm.attr("role", "textbox");
 		if (oItem.getValue()) {
 			rm.attr("value", oItem.getValue());
 		}

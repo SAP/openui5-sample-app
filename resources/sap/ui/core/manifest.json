@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.117.1"
+      "version": "1.118.0"
     },
     "title": "The SAPUI5 Core Runtime.",
     "description": "The SAPUI5 Core Runtime.\n\n  Contains the UI5 jQuery plugins (jQuery.sap.*), the Core and all its components,\n  base classes for Controls, Components and the Model View Controller classes.",
@@ -264,7 +264,7 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.117",
+      "minUI5Version": "1.118",
       "libs": {}
     },
     "library": {

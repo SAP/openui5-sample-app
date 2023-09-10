@@ -221,7 +221,12 @@ sap.ui.define(["sap/ui/core/ControlBehavior", "./library", "sap/ui/Device", "sap
 	 * @protected
 	 */
 	ListItemBaseRenderer.getAriaRole = function(oLI) {
-		return "listitem";
+		if (oLI.isGroupHeader()) {
+			return "listitem";
+		}
+
+		var oList = oLI.getList();
+		return (oList && oList.getAriaRole() == "listbox") ? "option" : "listitem";
 	};
 
 	/**
@@ -275,6 +280,17 @@ sap.ui.define(["sap/ui/core/ControlBehavior", "./library", "sap/ui/Device", "sap
 	};
 
 	/**
+	 * Returns the accessibility position of the control
+	 *
+	 * @param {sap.m.ListItemBase} oLI an object representation of the control
+	 * @protected
+	 */
+	ListItemBaseRenderer.getAccessbilityPosition = function(oLI) {
+		var oList = oLI.getList();
+		return oList && oList.getAccessbilityPosition && oList.getAccessbilityPosition(oLI);
+	};
+
+	/**
 	 * Returns the accessibility state of the control
 	 *
 	 * @param {sap.m.ListItemBase} oLI an object representation of the control
@@ -284,6 +300,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior", "./library", "sap/ui/Device", "sap
 		var sAriaLabelledBy = this.getAriaLabelledBy(oLI),
 			sAriaDescribedBy = this.getAriaDescribedBy(oLI),
 			sRole = this.getAriaRole(oLI),
+			bPositionNeeded = true,
 			mAccessibilityState = {
 				role: sRole
 			};
@@ -309,8 +326,9 @@ sap.ui.define(["sap/ui/core/ControlBehavior", "./library", "sap/ui/Device", "sap
 		if (sRole === "listitem") {
 			mAccessibilityState.selected = null;
 			if (oLI.isGroupHeader()) {
+				bPositionNeeded = false;
 				mAccessibilityState.role = "group";
-				mAccessibilityState.roledescription = oLI.getAccessibilityType(Library.getResourceBundleFor("sap.m"));
+				mAccessibilityState.roledescription = Library.getResourceBundleFor("sap.m").getText("LIST_ITEM_GROUP_HEADER");
 				var aGroupedItems = oLI.getGroupedItems();
 				if (aGroupedItems && aGroupedItems.length) {
 					mAccessibilityState.owns = aGroupedItems.join(" ");
@@ -318,6 +336,11 @@ sap.ui.define(["sap/ui/core/ControlBehavior", "./library", "sap/ui/Device", "sap
 			}
 		} else if (oLI.isSelectable()) {
 			mAccessibilityState.selected = oLI.getSelected();
+		}
+
+		if (bPositionNeeded) {
+			var mPosition = this.getAccessbilityPosition(oLI);
+			Object.assign(mAccessibilityState, mPosition);
 		}
 
 		return mAccessibilityState;

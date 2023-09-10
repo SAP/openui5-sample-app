@@ -10,10 +10,11 @@
 sap.ui.define([
 	'sap/ui/base/DataType',
 	'sap/ui/core/Lib',
+	'sap/ui/core/message/MessageType', // provides sap.ui.core.message.MessageType
 	'sap/ui/core/mvc/ViewType', // provides sap.ui.core.mvc.ViewType
 	'./CalendarType' // provides sap.ui.core.CalendarType
 ],
-	function(DataType, Library, ViewType) {
+	function(DataType, Library, MessageType, ViewType) {
 	"use strict";
 
 	/**
@@ -25,13 +26,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.117.1",
+		 version: "1.118.0",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 types: [
 
@@ -150,6 +151,9 @@ sap.ui.define([
 					 "sap/ui/core/support/plugins/Trace",
 					 "sap/ui/core/support/plugins/Selector",
 					 "sap/ui/core/support/plugins/Breakpoint",
+					 /**
+					  * @deprecated As of version 1.117
+					  */
 					 "sap/ui/core/support/plugins/ViewInfo",
 					 "sap/ui/core/support/plugins/LocalStorage",
 					 "sap/ui/core/support/plugins/Interaction",
@@ -1302,49 +1306,6 @@ sap.ui.define([
 		Indication08 : "Indication08"
 	};
 
-
-	/**
-	 * Defines the different message types.
-	 *
-	 * @enum {string}
-	 * @public
-	 * @since 1.10
-	 */
-	thisLib.MessageType = {
-
-		/**
-		 * Message should be just an information
-		 * @public
-		 */
-		Information : "Information",
-
-		/**
-		 * Message is a warning
-		 * @public
-		 */
-		Warning : "Warning",
-
-		/**
-		 * Message is an error
-		 * @public
-		 */
-		Error : "Error",
-
-		/**
-		 * Message has no specific level
-		 * @public
-		 */
-		None : "None",
-
-		/**
-		 * Message is a success message
-		 * @public
-		 */
-		Success : "Success"
-
-	};
-
-
 	/**
 	 * Defines the different possible states of an element that can be open or closed and does not only
 	 * toggle between these states, but also spends some time in between (e.g. because of an animation).
@@ -1539,7 +1500,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0
@@ -2265,6 +2226,15 @@ sap.ui.define([
 	thisLib.mvc = thisLib.mvc || {};
 
 	/**
+	 * Specifies possible message types.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @alias sap.ui.core.MessageType
+	 */
+	thisLib.MessageType = MessageType;
+
+	/**
 	 * Specifies possible view types.
 	 *
 	 * @enum {string}
@@ -2386,6 +2356,7 @@ sap.ui.define([
 		}
 
 		// lazy imports
+		lazy("sap.ui.core.message.MessageManager");
 		lazy("sap.ui.core.BusyIndicator", "show hide attachOpen detachOpen attachClose detachClose");
 		lazy("sap.ui.core.tmpl.Template", "registerType unregisterType");
 		lazy("sap.ui.core.Fragment", "registerType byId createId");

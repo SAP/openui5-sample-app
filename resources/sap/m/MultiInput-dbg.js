@@ -107,7 +107,7 @@ function(
 	* @implements sap.ui.core.ISemanticFormContent
 	*
 	* @author SAP SE
-	* @version 1.117.1
+	* @version 1.118.0
 	*
 	* @constructor
 	* @public

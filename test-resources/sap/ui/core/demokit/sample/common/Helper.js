@@ -455,8 +455,10 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 		 *  The QUnit module name
 		 * @param {number} [iTestTimeout]
 		 *  The desired timeout in seconds for one QUnit.test() within the current QUnit module.
+		 * @param {function} [fnBeforeEach] - Runs before each test
+		 * @param {function} [fnAfterEach] - Runs after each test
 		 */
-		qUnitModule : function (sName, iTestTimeout) {
+		qUnitModule : function (sName, iTestTimeout, fnBeforeEach, fnAfterEach) {
 			var sDefaultLanguage = Configuration.getLanguage(),
 				iTimeoutBefore,
 				bSetTimeout = TestUtils.isRealOData() && iTestTimeout;
@@ -474,7 +476,9 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 					if (bSetTimeout) {
 						QUnit.config.testTimeout = iTimeoutBefore;
 					}
-				}
+				},
+				beforeEach : fnBeforeEach,
+				afterEach : fnAfterEach
 			});
 		}
 	};

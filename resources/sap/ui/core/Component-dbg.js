@@ -232,7 +232,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -321,7 +321,7 @@ sap.ui.define([
 				componentData: 'any'
 			},
 			version : "0.0",
-			/*enable/disable type validation by MessageManager
+			/*enable/disable type validation by Messaging
 			handleValidation: 'boolean'*/
 			includes : [],    // css, javascript files that should be used in the component
 			dependencies : {  // external dependencies
@@ -416,9 +416,16 @@ sap.ui.define([
 	 * @typedef {sap.ui.base.ManagedObject.MetadataOptions} sap.ui.core.Component.MetadataOptions
 	 *
 	 * The structure of the "metadata" object which is passed when inheriting from sap.ui.core.Component using its static "extend" method.
-	 * See {@link sap.ui.core.Component.extend} for details on its usage.
+	 * See {@link sap.ui.core.Component.extend} and {@link sap.ui.core.Component.create} for additional details on its usage.
 	 *
-	 * @property {"json"} [manifest]  When set to the string literal "json", this property indicates that the component configuration
+	 * @property {undefined|false|object|"json"} [manifest=undefined] The manifest option determines how a component manifest should be evaluated.
+	 *            Default is <code>undefined</code>.
+	 *
+	 *            When set to <code>false</code> or <code>undefined</code>, no manifest.json is present for this Component, however the Component can
+         *            still be started with a manifest given as an argument of the factory function, see {@link sap.ui.core.Component.create}.
+	 *            When set to an object, this object will be interpreted as a manifest and must adhere to the
+	 *            {@link topic:be0cf40f61184b358b5faedaec98b2da descriptor schema for components}.
+	 *            When set to the string literal <code>"json"</code>, this property indicates that the component configuration
 	 *            should be read from a manifest.json file which is assumed to exist next to the Component.js file.
 	 *
 	 * @public
@@ -904,10 +911,10 @@ sap.ui.define([
 		// destroy the object
 		ManagedObject.prototype.destroy.apply(this, arguments);
 
-		// unregister for messaging (on MessageManager)
-		var MessageManager = sap.ui.require("sap/ui/core/message/MessageManager");
-		if (MessageManager) {
-			MessageManager.unregisterObject(this);
+		// unregister for messaging (on Messaging)
+		var Messaging = sap.ui.require("sap/ui/core/Messaging");
+		if (Messaging) {
+			Messaging.unregisterObject(this);
 		}
 
 		// manifest exit (unload includes, ... / unregister customzing)
@@ -2353,7 +2360,7 @@ sap.ui.define([
 	 * @param {string} [mOptions.altManifestUrl] @since 1.61.0 Alternative URL for the manifest.json. If <code>mOptions.manifest</code>
 	 *     is set to an object value, this URL specifies the location to which the manifest object should resolve the relative
 	 *     URLs to.
-	 * @param {string} [mOptions.handleValidation=false] If set to <code>true</code> validation of the component is handled by the <code>MessageManager</code>
+	 * @param {string} [mOptions.handleValidation=false] If set to <code>true</code> validation of the component is handled by the <code>Messaging</code>
 	 * @param {object} [mOptions.asyncHints] Hints for asynchronous loading.
 	 *     <b>Beware:</b> This parameter is only used internally by the UI5 framework and compatibility cannot be guaranteed.
 	 *     The parameter must not be used in productive code, except in code delivered by the UI5 teams.
@@ -2457,7 +2464,7 @@ sap.ui.define([
 	 *              Component controller. Defaults to <code>sap.ui.getCore().getConfiguration().getManifestFirst()</code>
 	 *              <br/><b>DEPRECATED since 1.49.0, use <code>vConfig.manifest=true|false</code> instead!</b>
 	 *              Note that this property is ignored when <code>vConfig.manifest</code> has a value other than <code>undefined</code>.
-	 * @param {string} [vConfig.handleValidation=false] If set to <code>true</code> validation of the component is handled by the <code>MessageManager</code>
+	 * @param {string} [vConfig.handleValidation=false] If set to <code>true</code> validation of the component is handled by the <code>Messaging</code>
 	 * @returns {sap.ui.core.Component|Promise} the Component instance or a Promise in case of asynchronous loading
 	 *
 	 * @deprecated Since 1.56, use {@link sap.ui.core.Component.get Component.get} or {@link sap.ui.core.Component.create Component.create} instead.
@@ -2578,13 +2585,13 @@ sap.ui.define([
 			 */
 			var bHandleValidation = oInstance.getMetadata()._getManifestEntry("/sap.ui5/handleValidation");
 			if (bHandleValidation !== undefined || vConfig.handleValidation) {
-				var MessageManager = sap.ui.require("sap/ui/core/message/MessageManager");
-				if (MessageManager) {
-					MessageManager.registerObject(oInstance, bHandleValidation === undefined ? vConfig.handleValidation : bHandleValidation);
+				var Messaging = sap.ui.require("sap/ui/core/Messaging");
+				if (Messaging) {
+					Messaging.registerObject(oInstance, bHandleValidation === undefined ? vConfig.handleValidation : bHandleValidation);
 				} else {
-					sap.ui.require(["sap/ui/core/message/MessageManager"], function(MessageManager) {
+					sap.ui.require(["sap/ui/core/Messaging"], function(Messaging) {
 						if (!oInstance.isDestroyed()) {
-							MessageManager.registerObject(oInstance, bHandleValidation === undefined ? vConfig.handleValidation : bHandleValidation);
+							Messaging.registerObject(oInstance, bHandleValidation === undefined ? vConfig.handleValidation : bHandleValidation);
 						}
 					});
 				}

@@ -13,6 +13,7 @@
 sap.ui.define([
 	"sap/base/Log",
 	"sap/base/config/_Configuration",
+	"sap/base/config/GlobalConfigurationProvider",
 	"sap/base/util/Deferred",
 	"sap/ui/core/boot/initDOM",
 	"sap/ui/core/boot/loadManifest",
@@ -20,6 +21,7 @@ sap.ui.define([
 ], function(
 	Log,
 	_Configuration,
+	GlobalConfigurationProvider,
 	Deferred,
 	initDOM,
 	loadManifest
@@ -41,6 +43,12 @@ sap.ui.define([
 
 	// create boot facade
 	var boot = {
+		/** Returns a Promise that resolves if the Core is initialized.
+		 *
+		 * @param {function():void} [fnReady] If the Core is ready the function will be called immediately, otherwise when the ready Promise resolves.
+		 * @returns {Promise<undefined>} The ready promise
+		 * @private
+		 */
 		ready: function(fnReady) {
 			if (fnReady && bReady) {
 				fnReady();
@@ -87,6 +95,7 @@ sap.ui.define([
 		// execute pre boot tasks
 		return executeTasks(aTasks, config);
 	}).then(function() {
+		GlobalConfigurationProvider.freeze();
 		// load core boot tasks
 		return loadTasks(oBootManifest.boot);
 	}).then(function(aTasks) {

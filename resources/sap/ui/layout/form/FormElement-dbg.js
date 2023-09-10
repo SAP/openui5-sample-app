@@ -26,7 +26,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -85,6 +85,8 @@ sap.ui.define([
 
 	FormElement.prototype.init = function(){
 
+		this._oInitPromise = library.form.FormHelper.init();
+
 		this._oFieldDelegate = {oElement: this, onAfterRendering: _fieldOnAfterRendering};
 
 		this._oObserver = new ManagedObjectObserver(this._observeChanges.bind(this));
@@ -139,7 +141,18 @@ sap.ui.define([
 		this.setAggregation("label", vAny);
 		var oLabel = vAny;
 		if (typeof oLabel === "string") {
-			this._setInternalLabel(oLabel);
+			if (this._oInitPromise) {
+				// module needs to be loaded -> create Label async
+				this._oInitPromise.then(function () {
+					delete this._oInitPromise; // not longer needed as resolved
+					var oLabel = this.getLabel(); // Label might have changed
+					if (typeof oLabel === "string") {
+						this._setInternalLabel(oLabel);
+					}
+				}.bind(this));
+			} else {
+				this._setInternalLabel(oLabel);
+			}
 		} else {
 			if (this._oLabel) {
 				this._oLabel.destroy();
@@ -170,7 +183,7 @@ sap.ui.define([
 
 		if (!this._oLabel) {
 			this._oLabel = library.form.FormHelper.createLabel(sText, this.getId() + "-label");
-			this.setAggregation("_label", this._oLabel, true); // use Aggregation to allow model inheritance
+			this.setAggregation("_label", this._oLabel); // use Aggregation to allow model inheritance
 			this._oLabel.disableRequiredChangeCheck(true);
 			if (this._oLabel.isRequired) {
 				this._oLabel.isRequired = _labelIsRequired;
@@ -214,7 +227,12 @@ sap.ui.define([
 		if (this._oLabel) {
 			return this._oLabel;
 		} else {
-			return this.getLabel();
+			var vLabel = this.getLabel();
+			if (typeof vLabel === "string") {
+				// happens if internal label needs to be created async (see this._oInitPromise)
+				vLabel = null;
+			}
+			return vLabel;
 		}
 
 	};

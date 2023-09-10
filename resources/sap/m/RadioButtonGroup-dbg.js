@@ -61,7 +61,7 @@ sap.ui.define([
 			 * @implements sap.ui.core.IFormContent
 			 *
 			 * @author SAP SE
-			 * @version 1.117.1
+			 * @version 1.118.0
 			 *
 			 * @constructor
 			 * @public

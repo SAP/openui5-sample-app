@@ -21,7 +21,8 @@ sap.ui.define([
 	"sap/ui/core/LabelEnablement",
 	"sap/m/BadgeEnabler",
 	"sap/ui/core/InvisibleText",
-	"sap/base/Log"
+	"sap/base/Log",
+	"sap/m/Image"
 ], function(
 	library,
 	Core,
@@ -38,7 +39,8 @@ sap.ui.define([
 	LabelEnablement,
 	BadgeEnabler,
 	InvisibleText,
-	Log
+	Log,
+	Image
 ) {
 	"use strict";
 
@@ -96,7 +98,7 @@ sap.ui.define([
 	 * @mixes sap.ui.core.ContextMenuSupport
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -816,7 +818,7 @@ sap.ui.define([
 				// do not use default tooltip in icon as the button renders it's own tooltip
 				useIconTooltip: false
 
-			}, sap.m.Image).addStyleClass("sapMBtnCustomIcon").setParent(this, null, true);
+			}, Image).addStyleClass("sapMBtnCustomIcon").setParent(this, null, true);
 		}
 
 		// add style classes to the object
@@ -851,7 +853,7 @@ sap.ui.define([
 				// do not use default tootip in icon as the button renders it's own tooltip
 				useIconTooltip: false
 
-			}, sap.m.Image).setParent(this, null, true);
+			}, Image).setParent(this, null, true);
 		}
 
 		// add style classes to the object

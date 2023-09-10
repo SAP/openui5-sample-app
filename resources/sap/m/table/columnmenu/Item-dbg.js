@@ -23,7 +23,7 @@ sap.ui.define([
 	 * @extends sap.m.table.columnmenu.ItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -75,11 +75,15 @@ sap.ui.define([
 				/**
 				 * This event is fired when the Confirm button is pressed.
 				 */
-				confirm: {},
+				confirm: {
+					allowPreventDefault: true
+				},
 				/**
 				 * This event is fired when the Cancel button is pressed.
 				 */
-				cancel: {}
+				cancel: {
+					allowPreventDefault: true
+				}
 			}
 		}
 	});
@@ -126,6 +130,31 @@ sap.ui.define([
 			cancel: {visible: bShowCancelButton}
 		});
 		return this;
+	};
+
+	/**
+	 * @inheritDoc
+	 */
+	Item.prototype.onConfirm = function (oEvent) {
+		if (!this.fireConfirm()) {
+			oEvent.preventDefault();
+		}
+	};
+
+	/**
+	 * @inheritDoc
+	 */
+	Item.prototype.onCancel = function (oEvent) {
+		if (!this.fireCancel()) {
+			oEvent.preventDefault();
+		}
+	};
+
+	/**
+	 * @inheritDoc
+	 */
+	Item.prototype.onReset = function (oEvent) {
+		this.fireReset();
 	};
 
 	return Item;

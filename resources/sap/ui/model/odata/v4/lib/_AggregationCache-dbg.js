@@ -119,9 +119,82 @@ sap.ui.define([
 
 	// make _AggregationCache a _Cache, but actively disinherit some critical methods
 	_AggregationCache.prototype = Object.create(_Cache.prototype);
-	_AggregationCache.prototype._delete = null;
 	_AggregationCache.prototype.addTransientCollection = null;
 	_AggregationCache.prototype.getAndRemoveValue = null;
+
+	/**
+	 * Deletes an entity on the server and in the cached data.
+	 *
+	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
+	 *   A lock for the group ID to be used for the DELETE request
+	 * @param {string} sEditUrl
+	 *   The entity's edit URL to be used for the DELETE request
+	 * @param {string} sIndex
+	 *   The entity's index
+	 * @param {object} [oETagEntity]
+	 *   An entity with the ETag of the binding for which the deletion was requested. This is
+	 *   provided if the deletion is delegated from a context binding with empty path to a list
+	 *   binding
+	 * @param {function(number,number):void} fnCallback
+	 *   A function which is called immediately when an entity has been deleted from the cache, or
+	 *   when it was re-inserted; the index of the entity and an offset (-1 for deletion, 1 for
+	 *   re-insertion) are passed as parameter
+	 * @returns {sap.ui.base.SyncPromise}
+	 *   A promise which is resolved without a result in case of success, or rejected with an
+	 *   instance of <code>Error</code> in case of failure
+	 * @throws {Error} If the cache is shared, <code>this.oAggregation.expandTo > 1</code>, or
+	 *   <code>sIndex</code> is not a number.
+	 *
+	 * @public
+	 */
+	// @override sap.ui.model.odata.v4.lib._Cache#_delete
+	_AggregationCache.prototype._delete = function (oGroupLock, sEditUrl, sIndex, oETagEntity,
+			fnCallback) {
+		if (this.oAggregation.expandTo > 1) {
+			throw new Error("Unsupported expandTo: " + this.oAggregation.expandTo);
+		}
+
+		let iFlatIndex = parseInt(sIndex);
+		if (isNaN(iFlatIndex)) {
+			throw new Error(`Unsupported kept-alive entity: ${this.sResourcePath}${sIndex}`);
+		}
+
+		const oElement = this.aElements[iFlatIndex];
+		const oLevelCache = _Helper.getPrivateAnnotation(oElement, "parent");
+		const iLevelIndex = _Helper.getPrivateAnnotation(oElement, "index");
+		let iParentIndex = iFlatIndex - iLevelIndex - 1;
+		const oParent = this.aElements[iParentIndex];
+		return oLevelCache._delete(oGroupLock, sEditUrl, iLevelIndex.toString(), oETagEntity,
+			(iIndex, iOffset) => {
+				if (iOffset < 0) { // deleting
+					this.shiftIndex(iFlatIndex, iOffset);
+					this.removeElement(this.aElements, iFlatIndex,
+						_Helper.getPrivateAnnotation(oElement, "predicate"), "");
+					if (oParent && !oLevelCache.getValue("$count")) {
+						_Helper.updateAll(this.mChangeListeners,
+							_Helper.getPrivateAnnotation(oParent, "predicate"), oParent,
+							{"@$ui5.node.isExpanded" : undefined});
+						// _Helper.updateAll only sets it to undefined
+						delete oParent["@$ui5.node.isExpanded"];
+					}
+				} else { // reinserting
+					if (oParent) {
+						if (oParent !== this.aElements[iParentIndex]) { // parent moved
+							iParentIndex = this.aElements.indexOf(oParent);
+						}
+						if (oLevelCache.getValue("$count") === 1) {
+							_Helper.updateAll(this.mChangeListeners,
+								_Helper.getPrivateAnnotation(oParent, "predicate"), oParent,
+								{"@$ui5.node.isExpanded" : true});
+						}
+					}
+					iFlatIndex = iParentIndex + iIndex + 1;
+					this.restoreElement(this.aElements, iFlatIndex, oElement, "");
+					this.shiftIndex(iFlatIndex, iOffset);
+				}
+				fnCallback(iFlatIndex, iOffset);
+			});
+	};
 
 	/**
 	 * Copies the given elements from a cache read into <code>this.aElements</code>.
@@ -252,7 +325,7 @@ sap.ui.define([
 			iCount = 0,
 			iDescendants,
 			aElements = this.aElements,
-			oGroupNode = this.fetchValue(_GroupLock.$cached, sGroupNodePath).getResult(),
+			oGroupNode = this.getValue(sGroupNodePath),
 			iGroupNodeLevel = oGroupNode["@$ui5.node.level"],
 			iIndex = aElements.indexOf(oGroupNode),
 			i = iIndex + 1;
@@ -349,10 +422,12 @@ sap.ui.define([
 		if (oParentNode["@$ui5.node.isExpanded"] === false) {
 			throw new Error("Unsupported collapsed parent: " + sParentPath);
 		}
+		const iIndex = aElements.indexOf(oParentNode) + 1;
 
 		let oCache = _Helper.getPrivateAnnotation(oParentNode, "cache");
 		if (!oCache) {
 			oCache = this.createGroupLevelCache(oParentNode);
+			oCache.setEmpty();
 			_Helper.setPrivateAnnotation(oParentNode, "cache", oCache);
 			_Helper.updateAll(this.mChangeListeners, sParentPredicate, oParentNode,
 				{"@$ui5.node.isExpanded" : true}); // not a leaf anymore
@@ -360,16 +435,26 @@ sap.ui.define([
 
 		delete oEntityData["@$ui5.node.parent"];
 		const oResult = oCache.create(oGroupLock, oPostPathPromise, sPath, sTransientPredicate,
-			oEntityData, bAtEndOfCreated, fnErrorCallback, fnSubmitCallback);
+			oEntityData, bAtEndOfCreated, fnErrorCallback, fnSubmitCallback, function onCancel() {
+				this.shiftIndex(iIndex, -1);
+				aElements.$count -= 1;
+				delete aElements.$byPredicate[
+					_Helper.getPrivateAnnotation(oEntityData, "transientPredicate")];
+				aElements.splice(aElements.indexOf(oEntityData), 1);
+			}.bind(this));
+
 		// add @odata.bind to POST body only
 		_Helper.getPrivateAnnotation(oEntityData, "postBody")
-			[this.oAggregation.$ParentNavigationProperty + "@odata.bind"] = sParentPath;
+			[this.oAggregation.$ParentNavigationProperty + "@odata.bind"]
+				= _Helper.makeRelativeUrl("/" + sParentPath, "/" + this.sResourcePath);
 		oEntityData["@$ui5.node.level"] = oParentNode["@$ui5.node.level"] + 1;
 
-		const iIndex = aElements.indexOf(oParentNode) + 1;
 		aElements.splice(iIndex, 0, null); // create a gap
 		this.addElements(oEntityData, iIndex, oCache, 0);
 		aElements.$count += 1;
+		// increase "index" for all children of oCache;
+		// oParentNode is expanded, thus all such nodes or placeholders are inside aElements
+		this.shiftIndex(iIndex, +1);
 
 		return oResult.then(function () {
 			aElements.$byPredicate[_Helper.getPrivateAnnotation(oEntityData, "predicate")]
@@ -457,7 +542,7 @@ sap.ui.define([
 			iCount,
 			aElements = this.aElements,
 			oGroupNode = typeof vGroupNodeOrPath === "string"
-				? this.fetchValue(_GroupLock.$cached, vGroupNodeOrPath).getResult()
+				? this.getValue(vGroupNodeOrPath)
 				: vGroupNodeOrPath,
 			iIndex,
 			aSpliced = _Helper.getPrivateAnnotation(oGroupNode, "spliced"),
@@ -1123,6 +1208,14 @@ sap.ui.define([
 
 	/**
 	 * @override
+	 * @see sap.ui.model.odata.v4.lib._CollectionCache#resetChangesForPath
+	 */
+	_AggregationCache.prototype.resetChangesForPath = function (sPath) {
+		_Helper.getPrivateAnnotation(this.getValue(sPath), "parent").resetChangesForPath(sPath);
+	};
+
+	/**
+	 * @override
 	 * @see sap.ui.model.odata.v4.lib._CollectionCache#restore
 	 */
 	_AggregationCache.prototype.restore = function (bReally) {
@@ -1132,6 +1225,36 @@ sap.ui.define([
 		}
 		// "super" call (like @borrows ...)
 		this.oFirstLevel.restore.call(this, bReally);
+	};
+
+	/**
+	 * Shifts the "index" of all siblings (nodes or placeholders) after the node at the given index
+	 * by the given offset.
+	 *
+	 * @param {number} iIndex
+	 *   Index in <code>this.aElements</code> of a node which is inserted (+1) or removed (-1)
+	 * @param {number} iOffset
+	 *   Offset (either -1 or +1) to add to "index"
+	 *
+	 * @private
+	 */
+	_AggregationCache.prototype.shiftIndex = function (iIndex, iOffset) {
+		const aElements = this.aElements;
+		const oNode = aElements[iIndex];
+		const oCache = _Helper.getPrivateAnnotation(oNode, "parent");
+		for (let i = iIndex + 1; i < aElements.length; i += 1) {
+			const oSibling = aElements[i];
+			if (_Helper.getPrivateAnnotation(oSibling, "parent") === oCache) {
+				_Helper.setPrivateAnnotation(oSibling, "index",
+					_Helper.getPrivateAnnotation(oSibling, "index") + iOffset);
+			}
+			if (oSibling["@$ui5.node.level"] < oNode["@$ui5.node.level"]
+					&& !_Helper.hasPrivateAnnotation(oSibling, "placeholder")) {
+				// Note: level 0 means "don't know" for initial *placeholders* of 1st level cache!
+				// Note: oCache !== this.oFirstLevel, thus "descendants" should not matter
+				break;
+			}
+		}
 	};
 
 	/**

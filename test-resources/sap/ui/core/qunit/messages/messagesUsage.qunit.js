@@ -5,21 +5,22 @@ sap.ui.define([
 	'sap/ui/model/Model',
 	'sap/ui/model/type/Integer',
 	'sap/ui/core/message/Message',
-	'sap/ui/core/message/MessageManager',
+	'sap/ui/core/Messaging',
 	'sap/ui/core/library',
 	'sap/ui/core/Component',
 	'sap/ui/core/ComponentContainer',
 	'sap/ui/model/json/JSONModel',
 	'sap/ui/core/UIComponent',
 	'sap/ui/qunit/utils/createAndAppendDiv',
+	"sap/ui/qunit/utils/nextUIUpdate",
 	"sap/ui/test/TestUtils"
-], function(isPlainObject, Input, Model, Integer, Message, MessageManager, library, Component, ComponentContainer, JSONModel, UIComponent, createAndAppendDiv, TestUtils){
+], function(isPlainObject, Input, Model, Integer, Message, Messaging, library, Component, ComponentContainer, JSONModel, UIComponent, createAndAppendDiv, nextUIUpdate, TestUtils){
 	"use strict";
 
 	// create content div
 	createAndAppendDiv('content');
 
-	QUnit.module("MessageManager components", {
+	QUnit.module("Messaging components", {
 		before: function(){
 			this.spyDataState = function(oControl, fnTest) {
 				if (oControl.refreshDataState) {
@@ -74,9 +75,7 @@ sap.ui.define([
 				sap.ui.getCore().setModel(this.oModel);
 			};
 
-			return Promise.all([pCompContRendered, pCompContEnabledRendered, pCompContDisabledRendered]).then(function() {
-				sap.ui.getCore().applyChanges();
-			});
+			return Promise.all([pCompContRendered, pCompContEnabledRendered, pCompContDisabledRendered]).then(nextUIUpdate);
 		},
 
 		beforeEach : function() {
@@ -120,8 +119,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("componentDisabled", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oMessageModel = oMessageManager.getMessageModel();
+		var oMessageModel = Messaging.getMessageModel();
 		var oCompZip = sap.ui.getCore().byId("zip_disabled");
 
 		var oValHandler = function(oEvent) {
@@ -137,8 +135,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("component handle validation undefined", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oMessageModel = oMessageManager.getMessageModel();
+		var oMessageModel = Messaging.getMessageModel();
 
 		var oCompZip = sap.ui.getCore().byId("zip");
 		var oChangeHandler = function(oEvent) {
@@ -193,12 +190,12 @@ sap.ui.define([
 		},
 		afterEach: function() {
 			this.oComponent.destroy();
+			Messaging.removeAllMessages();
 		}
 	});
 
 	QUnit.test("Metadata: n/a, instance: n/a", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oRegisterObjectSpy = this.spy(oMessageManager, "registerObject");
+		var oRegisterObjectSpy = this.spy(Messaging, "registerObject");
 
 		return this.createComponent(undefined, undefined).then(function(oComponent) {
 			sinon.assert.callCount(oRegisterObjectSpy, 0);
@@ -206,8 +203,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Metadata: n/a, instance: false", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oRegisterObjectSpy = this.spy(oMessageManager, "registerObject");
+		var oRegisterObjectSpy = this.spy(Messaging, "registerObject");
 
 		return this.createComponent(undefined, false).then(function(oComponent) {
 			sinon.assert.callCount(oRegisterObjectSpy, 0);
@@ -215,8 +211,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Metadata: n/a, instance: true", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oRegisterObjectSpy = this.spy(oMessageManager, "registerObject");
+		var oRegisterObjectSpy = this.spy(Messaging, "registerObject");
 
 		return this.createComponent(undefined, true).then(function(oComponent) {
 			sinon.assert.callCount(oRegisterObjectSpy, 1);
@@ -225,8 +220,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Metadata: false, instance: false", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oRegisterObjectSpy = this.spy(oMessageManager, "registerObject");
+		var oRegisterObjectSpy = this.spy(Messaging, "registerObject");
 
 		return this.createComponent(false, false).then(function(oComponent) {
 			sinon.assert.callCount(oRegisterObjectSpy, 1);
@@ -235,8 +229,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Metadata: false, instance: n/a", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oRegisterObjectSpy = this.spy(oMessageManager, "registerObject");
+		var oRegisterObjectSpy = this.spy(Messaging, "registerObject");
 
 		return this.createComponent(false, undefined).then(function(oComponent) {
 			sinon.assert.callCount(oRegisterObjectSpy, 1);
@@ -245,8 +238,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Metadata: false, instance: true", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oRegisterObjectSpy = this.spy(oMessageManager, "registerObject");
+		var oRegisterObjectSpy = this.spy(Messaging, "registerObject");
 
 		return this.createComponent(false, true).then(function(oComponent) {
 			sinon.assert.callCount(oRegisterObjectSpy, 1);
@@ -255,8 +247,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Metadata: true, instance: true", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oRegisterObjectSpy = this.spy(oMessageManager, "registerObject");
+		var oRegisterObjectSpy = this.spy(Messaging, "registerObject");
 
 		return this.createComponent(true, true).then(function(oComponent) {
 			sinon.assert.callCount(oRegisterObjectSpy, 1);
@@ -265,8 +256,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Metadata: true, instance: n/a", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oRegisterObjectSpy = this.spy(oMessageManager, "registerObject");
+		var oRegisterObjectSpy = this.spy(Messaging, "registerObject");
 
 		return this.createComponent(true, undefined).then(function(oComponent) {
 			sinon.assert.callCount(oRegisterObjectSpy, 1);
@@ -275,8 +265,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Metadata: true, instance: false", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oRegisterObjectSpy = this.spy(oMessageManager, "registerObject");
+		var oRegisterObjectSpy = this.spy(Messaging, "registerObject");
 
 		return this.createComponent(true, false).then(function(oComponent) {
 			sinon.assert.callCount(oRegisterObjectSpy, 1);
@@ -318,9 +307,7 @@ sap.ui.define([
 		oModel.refresh(true);
 	});
 
-	QUnit.test("MessageManager:register/unregisterObject", function(assert) {
-		var oMessageManager = sap.ui.getCore().getMessageManager();
-		var oHandlererrorSpy = sinon.spy(MessageManager.prototype, "_handleError");
+	QUnit.test("Messaging:register/unregisterObject", function(assert) {
 		var oModel = new JSONModel(
 			{
 				data: {
@@ -337,14 +324,16 @@ sap.ui.define([
 				models: oModel
 			}
 		);
-		oMessageManager.registerObject(oInput);
+		assert.equal(Messaging.getMessageModel().getData().length, 0, "No Messages");
+		Messaging.registerObject(oInput, true);
 		oInput.setValue("abc");
-		assert.equal(oHandlererrorSpy.callCount, 1, "Changes detected - _handleError");
+		assert.equal(Messaging.getMessageModel().getData().length, 1, "Message created");
+		assert.equal(Messaging.getMessageModel().getData()[0].type, 'Error', "Message has type error");
 		oInput.setValue("2");
-		oMessageManager.unregisterObject(oInput);
+		assert.equal(Messaging.getMessageModel().getData().length, 0, "Message deleted");
+		Messaging.unregisterObject(oInput, true);
 		oInput.setValue("abc");
-		assert.equal(oHandlererrorSpy.callCount, 1, "No Changes detected - _handleError");
-		oHandlererrorSpy.restore();
+		assert.equal(Messaging.getMessageModel().getData().length, 0, "No new Message created");
 	});
 
 });

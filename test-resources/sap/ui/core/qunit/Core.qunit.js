@@ -11,10 +11,12 @@ sap.ui.define([
 	'sap/ui/core/UIArea',
 	'sap/ui/core/Element',
 	'sap/ui/core/Configuration',
+	'sap/ui/core/Rendering',
 	'sap/ui/core/RenderManager',
 	'sap/ui/core/theming/ThemeManager',
-	'sap/ui/qunit/utils/createAndAppendDiv'
-], function(ResourceBundle, Log, LoaderExtensions, ObjectPath, Device, Interface, VersionInfo, oCore, UIArea, Element, Configuration, RenderManager, ThemeManager, createAndAppendDiv) {
+	'sap/ui/qunit/utils/createAndAppendDiv',
+	"sap/ui/qunit/utils/nextUIUpdate"
+], function(ResourceBundle, Log, LoaderExtensions, ObjectPath, Device, Interface, VersionInfo, oCore, UIArea, Element, Configuration, Rendering, RenderManager, ThemeManager, createAndAppendDiv, nextUIUpdate) {
 	"use strict";
 
 	var privateLoaderAPI = sap.ui.loader._;
@@ -213,14 +215,16 @@ sap.ui.define([
 	});
 
 	QUnit.test("testSetThemeRoot", function(assert) {
+		var corePath, mobilePath, otherPath, oCoreLink;
+
 		oCore.setThemeRoot("my_theme", ["sap.ui.core"], "http://core.something.corp");
 		oCore.setThemeRoot("my_theme", "http://custom.something.corp");
 		oCore.setThemeRoot("my_theme", ["sap.m"], "http://mobile.something.corp");
 
 		return Promise.resolve().then(function () {
-			var corePath = ThemeManager._getThemePath("sap.ui.core", "my_theme");
-			var mobilePath = ThemeManager._getThemePath("sap.m", "my_theme");
-			var otherPath = ThemeManager._getThemePath("sap.ui.other", "my_theme");
+			corePath = ThemeManager._getThemePath("sap.ui.core", "my_theme");
+			mobilePath = ThemeManager._getThemePath("sap.m", "my_theme");
+			otherPath = ThemeManager._getThemePath("sap.ui.other", "my_theme");
 
 			assert.equal(corePath, "http://core.something.corp/sap/ui/core/themes/my_theme/", "path should be as configured");
 			assert.equal(mobilePath, "http://mobile.something.corp/sap/m/themes/my_theme/", "path should be as configured");
@@ -236,25 +240,21 @@ sap.ui.define([
 
 			// Set theme root for all libs with forceUpdate
 			oCore.setThemeRoot("test_theme", "/foo/", true);
+		}).then(function () {
+			corePath = ThemeManager._getThemePath("sap.ui.core", "test_theme");
+			oCoreLink = document.getElementById("sap-ui-theme-sap.ui.core");
 
-			return Promise.resolve().then(function () {
-				corePath = ThemeManager._getThemePath("sap.ui.core", "test_theme");
-				var oCoreLink = document.getElementById("sap-ui-theme-sap.ui.core");
+			assert.equal(corePath, "/foo/sap/ui/core/themes/test_theme/", "path should be as configured");
+			assert.equal(oCoreLink.getAttribute("href"), new URL("/foo/sap/ui/core/themes/test_theme/library.css", document.baseURI).href, "Stylesheet should have been updated");
 
-				assert.equal(corePath, "/foo/sap/ui/core/themes/test_theme/", "path should be as configured");
-				assert.equal(oCoreLink.getAttribute("href"), "/foo/sap/ui/core/themes/test_theme/library.css", "Stylesheet should have been updated");
+			// Set theme root for sap.ui.core lib with forceUpdate
+			oCore.setThemeRoot("test_theme", ["sap.ui.core"], "/bar/", true);
+		}).then(function () {
+			corePath = ThemeManager._getThemePath("sap.ui.core", "test_theme");
+			oCoreLink = document.getElementById("sap-ui-theme-sap.ui.core");
 
-				// Set theme root for sap.ui.core lib with forceUpdate
-				oCore.setThemeRoot("test_theme", ["sap.ui.core"], "/bar/", true);
-
-				return Promise.resolve().then(function () {
-					corePath = ThemeManager._getThemePath("sap.ui.core", "test_theme");
-					oCoreLink = document.getElementById("sap-ui-theme-sap.ui.core");
-
-					assert.equal(corePath, "/bar/sap/ui/core/themes/test_theme/", "path should be as configured");
-					assert.equal(oCoreLink.getAttribute("href"), "/bar/sap/ui/core/themes/test_theme/library.css", "Stylesheet should have been updated");
-				});
-			});
+			assert.equal(corePath, "/bar/sap/ui/core/themes/test_theme/", "path should be as configured");
+			assert.equal(oCoreLink.getAttribute("href"), new URL("/bar/sap/ui/core/themes/test_theme/library.css", document.baseURI).href, "Stylesheet should have been updated");
 		});
 
 	});
@@ -327,7 +327,7 @@ sap.ui.define([
 		assert.equal(oHtml.getAttribute("lang"), sLocale, "lang attribute matches locale");
 	});
 
-	QUnit.test("prerendering tasks", function (assert) {
+	QUnit.test("prerendering tasks", async function (assert) {
 		var bCalled1 = false,
 			bCalled2 = false;
 
@@ -340,19 +340,21 @@ sap.ui.define([
 			bCalled2 = true;
 		}
 
-		oCore.addPrerenderingTask(task1);
-		oCore.addPrerenderingTask(task2);
+		Rendering.addPrerenderingTask(task1);
+		Rendering.addPrerenderingTask(task2);
 
 		assert.ok(!bCalled1, "not yet called");
 		assert.ok(!bCalled2, "not yet called");
-
-		oCore.applyChanges();
+		var oMyArea = UIArea.create("qunit-fixture");
+		oMyArea.invalidate();
+		await nextUIUpdate();
 
 		assert.ok(bCalled1, "first task called");
 		assert.ok(bCalled2, "second task called");
+		oMyArea.destroy();
 	});
 
-	QUnit.test("prerendering tasks: reverse order", function (assert) {
+	QUnit.test("prerendering tasks: reverse order", async function (assert) {
 		var bCalled1 = false,
 			bCalled2 = false;
 
@@ -365,16 +367,18 @@ sap.ui.define([
 			bCalled2 = true;
 		}
 
-		oCore.addPrerenderingTask(task2);
-		oCore.addPrerenderingTask(task1, true);
+		Rendering.addPrerenderingTask(task2);
+		Rendering.addPrerenderingTask(task1, true);
 
 		assert.ok(!bCalled1, "not yet called");
 		assert.ok(!bCalled2, "not yet called");
-
-		oCore.applyChanges();
+		var oMyArea = UIArea.create("qunit-fixture");
+		oMyArea.invalidate();
+		await nextUIUpdate();
 
 		assert.ok(bCalled1, "first task called");
 		assert.ok(bCalled2, "second task called");
+		oMyArea.destroy();
 	});
 
 

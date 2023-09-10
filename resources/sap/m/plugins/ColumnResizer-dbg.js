@@ -40,7 +40,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @public
 	 * @since 1.91
@@ -448,6 +448,7 @@ sap.ui.define([
 		this._setSessionDistanceX(iDistanceX);
 		this._setColumnWidth();
 		this._endResizeSession();
+		oEvent.stopImmediatePropagation(true);
 	};
 
 	ColumnResizer.detectTextSelection = function(oDomRef) {
@@ -546,22 +547,19 @@ sap.ui.define([
 	PluginBase.setConfigs({
 		"sap.m.Table": {
 			container: "listUl",
-			resizable: ".sapMListTblHeaderCell:not([aria-hidden=true])",
-			focusable: ".sapMColumnHeaderFocusable",
+			resizable: ".sapMListTblHeaderCell",
 			cellPaddingStyleClass: "sapMListTblCell",
 			fixAutoWidthColumns: true,
 			onActivate: function(oTable) {
 				this._vOrigFixedLayout = oTable.getFixedLayout();
 
 				if (!oTable.bActiveHeaders) {
-					oTable.bFocusableHeaders = true;
 					this.allowTouchResizing = ColumnResizer._isInTouchMode();
 				}
 
 				oTable.setFixedLayout("Strict");
 			},
 			onDeactivate: function(oTable) {
-				oTable.bFocusableHeaders = false;
 				oTable.setFixedLayout(this._vOrigFixedLayout);
 
 				// rerendering of the table is required if _vOrigFixedLayout == "Strict", since the focusable DOM must be removed

@@ -278,6 +278,21 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns the context at the given index.
+	 *
+	 * @param {number} iIndex The index of the context
+	 *
+	 * @returns {sap.ui.model.odata.v2.Context|undefined}
+	 *   The context at the given index or <code>undefined</code> if no context exists at the given index
+	 *
+	 * @private
+	 * @ui5-restricted sap.ui.table
+	 */
+	ODataListBinding.prototype.getContextByIndex = function (iIndex) {
+		return this._getContexts(iIndex, 1)[0];
+	};
+
+	/**
 	 * Return contexts for the list.
 	 *
 	 * @param {int} [iStartIndex=0]
@@ -2128,10 +2143,15 @@ sap.ui.define([
 			bFirstCreateAtStart = this.isFirstCreateAtEnd() === false,
 			aKeys = bFirstCreateAtStart && this.aKeys.length
 				? aCreatedContexts.concat(this.aKeys)
-				: this.aKeys;
+				: this.aKeys,
+			iLimit = this.bLengthFinal ? this.iLength : undefined;
 
-		aIntervals = ODataUtils._getReadIntervals(aKeys, iStartIndex, iLength, iMaximumPrefetchSize,
-			/*iLimit*/this.bLengthFinal ? this.iLength : undefined);
+		if (bFirstCreateAtStart && iLimit) {
+			// when adding the created contexts to aKeys the final length has to be increased too
+			iLimit += aCreatedContexts.length;
+		}
+
+		aIntervals = ODataUtils._getReadIntervals(aKeys, iStartIndex, iLength, iMaximumPrefetchSize, iLimit);
 		oInterval = ODataUtils._mergeIntervals(aIntervals);
 
 		if (oInterval && bFirstCreateAtStart && this.aKeys.length) {

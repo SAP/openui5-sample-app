@@ -10,7 +10,7 @@
  * @alias module:sap/base/util/restricted/_castArray
  * @author SAP SE
  * @since 1.71
- * @version 1.117.1
+ * @version 1.118.0
  * @private
  * @ui5-restricted
 */

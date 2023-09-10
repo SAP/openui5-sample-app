@@ -20,13 +20,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.layout
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @since 1.15
 	 * @public
 	 */
 	var thisLib = sap.ui.getCore().initLibrary({
 		name : "sap.ui.layout",
-		version: "1.117.1",
+		version: "1.118.0",
 		dependencies: ["sap.ui.core"],
 		designtime: "sap/ui/layout/designtime/library.designtime",
 		types: [
@@ -773,8 +773,9 @@ sap.ui.define([
 	// factory for Form to create labels and buttons to be overwritten by commons and mobile library
 	if (!thisLib.form.FormHelper) {
 		thisLib.form.FormHelper = {
+			init: function() {return null;}, /* must return a Promise if modules still needs to be loaded. The promise must be fulfilled if everything is loaded. */
 			createLabel: function(sText){ throw new Error("no Label control available!"); }, /* must return a Label control */
-			createButton: function(sId, fPressFunction, fnCallback){ throw new Error("no Button control available!"); }, /* must return a button control */
+			createButton: function(sId, fPressFunction, oListener){ throw new Error("no Button control available!"); }, /* must return a button control */
 			setButtonContent: function(oButton, sText, sTooltip, sIcon, sIconHovered){ throw new Error("no Button control available!"); },
 			addFormClass: function(){ return null; },
 			setToolbar: function(oToolbar){ return oToolbar; }, /* allow to overwrite toolbar settings */

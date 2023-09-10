@@ -16,7 +16,7 @@ sap.ui.define(['./library', 'sap/ui/core/Lib'],
 		 * Helper functionality for indication color support.
 		 *
 		 * @author SAP SE
-		 * @version 1.117.1
+		 * @version 1.118.0
 		 * @public
 		 * @namespace sap.ui.core.IndicationColorSupport
 		 * @since 1.66
@@ -28,7 +28,7 @@ sap.ui.define(['./library', 'sap/ui/core/Lib'],
 		var ensureTexts = function() {
 			if (!mTexts) { // initialize texts if required
 				mTexts = {};
-				var rb = Library.get("sap.ui.core").getResourceBundle();
+				var rb = Library.getResourceBundleFor("sap.ui.core");
 				mTexts[IndicationColor.Indication01] = rb.getText("INDICATION_STATE_INDICATION01");
 				mTexts[IndicationColor.Indication02] = rb.getText("INDICATION_STATE_INDICATION02");
 				mTexts[IndicationColor.Indication03] = rb.getText("INDICATION_STATE_INDICATION03");

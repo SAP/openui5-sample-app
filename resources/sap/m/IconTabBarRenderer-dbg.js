@@ -72,7 +72,7 @@ sap.ui.define([],
 
 		if (oHeader.oSelectedItem) {
 			oRM.accessibilityState({
-				labelledby: oHeader.oSelectedItem.getId()
+				labelledby: oHeader.oSelectedItem._getRootTab().getId()
 			});
 		}
 

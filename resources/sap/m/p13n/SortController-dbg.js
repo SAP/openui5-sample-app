@@ -22,7 +22,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.SelectionController
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @public
 	 * @alias sap.m.p13n.SortController
 	 */

@@ -72,13 +72,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		name : "sap.m",
-		version: "1.117.1",
+		version: "1.118.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -101,6 +101,7 @@ sap.ui.define([
 			"sap.m.DialogRoleType",
 			"sap.m.DialogType",
 			"sap.m.DraftIndicatorState",
+			"sap.m.DynamicDateRangeGroups",
 			"sap.m.FacetFilterListDataType",
 			"sap.m.FacetFilterType",
 			"sap.m.FlexAlignContent",
@@ -2780,21 +2781,22 @@ sap.ui.define([
 	thisLib.ListKeyboardMode = {
 
 		/**
-		 * This default mode is suitable if the number of items is unlimited or if there is no editable field
-		 * within the item.
+		 * This default mode is suitable if the List or Table contains editable and/or non-editable fields.
 		 *
-		 * While the last/first interactive element within an item has the focus, pressing tab/shift+tab moves
-		 * the focus to the next/previous element in the tab chain after/before the <code>sap.m.List</code>
-		 * or <code>sap.m.Table</code>.
+		 * In this mode, the first focus goes to the first item.
+		 * If the focus is on the item, or cell, pressing tab/shift+tab moves the focus to the next/previous element in the tab chain after/before
+		 * the <code>sap.m.List</code> or <code>sap.m.Table</code> control.
+		 * If the focus is on the interactive element, pressing tab/shift+tab moves the focus to the next/previous element in the tab chain after/before
+		 * the focused interactive element.
 		 * @public
 		 */
 		Navigation : "Navigation",
 
 		/**
-		 * This mode is suitable if the number of items is limited and if there are editable fields within the item.
+		 * This mode is suitable if there are only editable fields within the item.
 		 *
-		 * While the last/first interactive element within an item has the focus, pressing tab/shift+tab moves
-		 * the focus to the next/previous element in the tab chain after/before the item </code>.
+		 * In this mode, the first focus goes to the first interactive element within the first item and this is the only difference between the <code>Edit</code>
+		 * and <code>Navigation</code> mode.
 		 * @public
 		 */
 		Edit : "Edit"
@@ -2919,6 +2921,52 @@ sap.ui.define([
 		 * @public
 		 */
 		Delimited: "Delimited"
+	};
+
+	/**
+	 * Defines the groups in {@link sap.m.DynamicDateRange}.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.118
+	 */
+	 thisLib.DynamicDateRangeGroups = {
+
+		/**
+		 * Group of options that provide selection of single dates.
+		 * @public
+		 */
+		SingleDates: "SingleDates",
+
+		/**
+		 * Group of options that provide selection of date ranges.
+		 * @public
+		 */
+		DateRanges: "DateRanges",
+
+		/**
+		 * Group of options that provide selection of week related ranges.
+		 * @public
+		 */
+		Weeks: "Weeks",
+
+		/**
+		 * Group of options that provide selection of month related ranges.
+		 * @public
+		 */
+		Month: "Month",
+
+		/**
+		 * Group of options that provide selection of quarter related ranges.
+		 * @public
+		 */
+		Quarters: "Quarters",
+
+		/**
+		 * Group of options that provide selection of year related ranges.
+		 * @public
+		 */
+		Years: "Years"
 	};
 
 	/**
@@ -3176,13 +3224,13 @@ sap.ui.define([
 	 * Implementation of this interface should include the following methods:
 	 * <ul>
 	 * <li><code>getTitle</code></li>
+	 * <li><code>getVerticalScrolling</code></li>
 	 * </ul>
 	 *
 	 * @since 1.97
 	 * @name sap.m.p13n.IContent
 	 * @interface
 	 * @public
-	 * @experimental
 	 */
 
 	/**
@@ -3193,7 +3241,17 @@ sap.ui.define([
 	 * @function
 	 * @name sap.m.p13n.IContent.getTitle
 	 * @public
-	 * @experimental
+	 */
+
+	/**
+	 * Optionally returns the enablement of the contents vertical scrolling in case only one panel is used to determine if the content provides its own
+	 * scrolling capabilites.
+	 *
+	 * @returns {boolean} The enablement of the vertical scrolling enablement for the <code>sap.m.p13n.Popup</code>.
+	 *
+	 * @function
+	 * @name sap.m.p13n.IContent.getVerticalScrolling?
+	 * @public
 	 */
 
 	/**
@@ -5852,13 +5910,39 @@ sap.ui.define([
 	// implement Form helper factory with m controls
 	// possible is set before layout lib is loaded.
 	ObjectPath.set("sap.ui.layout.form.FormHelper", {
-		createLabel: function(sText, sId){
-			return new sap.m.Label(sId, {text: sText});
+		Label: undefined,
+		Button: undefined,
+		Text: undefined,
+		init: function() {
+			// normally this basic controls should be always loaded
+			this.Label = sap.ui.require("sap/m/Label");
+			this.Text = sap.ui.require("sap/m/Text");
+			this.Button = sap.ui.require("sap/m/Button");
+
+			if (!this.Label || !this.Text || !this.Button) {
+				if (!this.oInitPromise) {
+					this.oInitPromise = new Promise(function(fResolve, fReject) {
+						sap.ui.require(["sap/m/Label", "sap/m/Text", "sap/m/Button"], function(Label, Text, Button) {
+							this.Label = Label;
+							this.Text = Text;
+							this.Button = Button;
+							fResolve(true);
+						}.bind(this));
+					}.bind(this));
+				}
+				return this.oInitPromise;
+			} else if (this.oInitPromise) {
+				delete this.oInitPromise; // not longer needed
+			}
+			return null;
 		},
-		createButton: function(sId, fnPressFunction, fnCallback){
-			var oButton = new sap.m.Button(sId, {type: thisLib.ButtonType.Transparent});
-			oButton.attachEvent("press", fnPressFunction, this); // attach event this way to have the right this-reference in handler
-			fnCallback.call(this, oButton);
+		createLabel: function(sText, sId){
+			return new this.Label(sId, {text: sText});
+		},
+		createButton: function(sId, fnPressFunction, oListener){
+			var oButton = new this.Button(sId, {type: thisLib.ButtonType.Transparent});
+			oButton.attachEvent("press", fnPressFunction, oListener); // attach event this way to have the right this-reference in handler
+			return oButton;
 		},
 		setButtonContent: function(oButton, sText, sTooltip, sIcon, sIconHovered){
 			oButton.setText(sText);
@@ -5892,10 +5976,10 @@ sap.ui.define([
 			}
 		},
 		createDelimiter: function(sDelimiter, sId){
-			return new sap.m.Text(sId, {text: sDelimiter, textAlign: CoreLibrary.TextAlign.Center});
+			return new this.Text(sId, {text: sDelimiter, textAlign: CoreLibrary.TextAlign.Center});
 		},
 		createSemanticDisplayControl: function(sText, sId){
-			return new sap.m.Text(sId, {text: sText});
+			return new this.Text(sId, {text: sText});
 		},
 		updateDelimiter: function(oText, sDelimiter){
 			oText.setText(sDelimiter);
@@ -5954,6 +6038,9 @@ sap.ui.define([
 
 	//implement table helper factory with m controls
 	//possible is set before layout lib is loaded.
+	/**
+	 * @deprecated As of version 1.118
+	 */
 	ObjectPath.set("sap.ui.table.TableHelper", {
 		createLabel: function(mConfig){
 			return new sap.m.Label(mConfig);

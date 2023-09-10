@@ -35,8 +35,8 @@ sap.ui.define([
 	"sap/ui/base/SyncPromise",
 	"sap/ui/core/Configuration",
 	"sap/ui/core/library",
+	"sap/ui/core/Messaging",
 	"sap/ui/core/message/Message",
-	"sap/ui/core/message/MessageManager",
 	"sap/ui/core/message/MessageParser",
 	"sap/ui/model/_Helper",
 	"sap/ui/model/BindingMode",
@@ -58,7 +58,7 @@ sap.ui.define([
 ], function(_CreatedContextsCache, Context, ODataAnnotations, ODataContextBinding, ODataListBinding,
 		ODataTreeBinding, assert, Log, encodeURL, deepEqual, deepExtend, each, extend,
 		isEmptyObject, isPlainObject, merge, uid, UriParameters, SyncPromise, Configuration,
-		coreLibrary, Message, MessageManager, MessageParser, _Helper, BindingMode, BaseContext, FilterProcessor,
+		coreLibrary, Messaging, Message, MessageParser, _Helper, BindingMode, BaseContext, FilterProcessor,
 		Model, CountMode, MessageScope, ODataMetadata, ODataMetaModel, ODataMessageParser,
 		ODataPropertyBinding, ODataUtils, OperationMode, UpdateMethod, OData, URI, isCrossOriginURL
 ) {
@@ -213,7 +213,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -6427,7 +6427,7 @@ sap.ui.define([
 		} else {
 			delete this.mChangedEntities[sKey];
 		}
-		MessageManager.removeMessages(this.getMessagesByEntity(sKey,
+		Messaging.removeMessages(this.getMessagesByEntity(sKey,
 			/*bExcludePersistent*/!bDeleteEntity));
 
 		return pMetaDataLoaded;
@@ -6970,7 +6970,7 @@ sap.ui.define([
 			});
 			that._removeEntity(sKey);
 			//cleanup Messages for created Entry
-			MessageManager.removeMessages(
+			Messaging.removeMessages(
 				this.getMessagesByEntity(oContext.getPath(), true));
 		}
 	};
@@ -7808,7 +7808,7 @@ sap.ui.define([
 	/**
 	 * Sets the <code>MessageParser</code> that is invoked upon every back-end request.
 	 *
-	 * This message parser analyzes the response and notifies the <code>MessageManager</code> about added and deleted messages.
+	 * This message parser analyzes the response and notifies the <code>Messaging</code> about added and deleted messages.
 	 *
 	 * @param {object|null} [oParser] The <code>MessageParser</code> instance that parses the responses and adds messages to the <code>MessageManager</code>
 	 * @return {this} Model instance for method chaining

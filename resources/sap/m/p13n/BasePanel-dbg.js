@@ -53,7 +53,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @public
 	 * @abstract
@@ -616,9 +616,9 @@ sap.ui.define([
 		return this.getModel(this.P13N_MODEL);
 	};
 
-	BasePanel.prototype._getResourceText = function(sText, vValue) {
+	BasePanel.prototype._getResourceText = function(sText, aValue) {
 		this.oResourceBundle = this.oResourceBundle ? this.oResourceBundle : sap.ui.getCore().getLibraryResourceBundle("sap.m");
-		return sText ? this.oResourceBundle.getText(sText, vValue) : this.oResourceBundle;
+		return sText ? this.oResourceBundle.getText(sText, aValue) : this.oResourceBundle;
 	};
 
 	BasePanel.prototype._addTableColumns = function(aColumns) {

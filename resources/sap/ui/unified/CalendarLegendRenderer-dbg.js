@@ -28,6 +28,9 @@ sap.ui.define(['sap/ui/core/InvisibleText'],
 			aCustomItems = oLeg.getItems(),
 			iCustomItemsLength = this.defineItemsLength(oLeg, aCustomItems.length),
 			iCount = (aStandardItems ? aStandardItems.length : 0) + (aCustomItems ? aCustomItems.length : 0),
+			sOwnedItemIds = "",
+			aStandardItems = aStandardItems || [],
+			aCustomItems = aCustomItems || [],
 			i,
 			iIdLength,
 			sColumnWidth,
@@ -37,6 +40,9 @@ sap.ui.define(['sap/ui/core/InvisibleText'],
 		oRm.class("sapUiUnifiedLegend");
 		oRm.attr("aria-label", oLeg._getLegendAriaLabel());
 		oRm.attr("role", "list");
+		sOwnedItemIds = oLeg._extractItemIdsString(aStandardItems.concat(aCustomItems));
+		oRm.attr("aria-owns", sOwnedItemIds);
+
 		oRm.openEnd();
 
 		this.renderItemsHeader(oRm, oLeg);

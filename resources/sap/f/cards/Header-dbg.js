@@ -24,6 +24,7 @@ sap.ui.define([
 
 	var AvatarShape = mLibrary.AvatarShape;
 	var AvatarColor = mLibrary.AvatarColor;
+	var AvatarImageFitType = mLibrary.AvatarImageFitType;
 
 	/**
 	 * Constructor for a new <code>Header</code>.
@@ -46,7 +47,7 @@ sap.ui.define([
 	 * @implements sap.f.cards.IHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -166,10 +167,8 @@ sap.ui.define([
 	Header.prototype.exit = function () {
 		BaseHeader.prototype.exit.apply(this, arguments);
 
-		if (this._oAriaAvatarText) {
-			this._oAriaAvatarText.destroy();
-			this._oAriaAvatarText = null;
-		}
+		this._oAriaAvatarText.destroy();
+		this._oAriaAvatarText = null;
 	};
 
 	/**
@@ -208,7 +207,9 @@ sap.ui.define([
 	Header.prototype._getAvatar = function () {
 		var oAvatar = this.getAggregation("_avatar");
 		if (!oAvatar) {
-			oAvatar = new Avatar().addStyleClass("sapFCardIcon");
+			oAvatar = new Avatar({
+				imageFitType: AvatarImageFitType.Contain
+			}).addStyleClass("sapFCardIcon");
 			this.setAggregation("_avatar", oAvatar);
 		}
 		return oAvatar;

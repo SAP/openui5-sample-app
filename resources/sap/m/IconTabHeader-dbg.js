@@ -77,7 +77,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -581,7 +581,7 @@ sap.ui.define([
 			} else {
 				//change the content aria-labelled by the newly selected tab;
 				if (bIsParentIconTabBar) {
-					oParent.$("content").attr('aria-labelledby', oItem.sId);
+					oParent.$("content").attr('aria-labelledby', oItem._getRootTab().getId());
 				}
 
 				// set new item
@@ -1764,6 +1764,8 @@ sap.ui.define([
 
 		var oTab = oEvent.srcControl,
 			iTabStripEnd = this.indexOfItem(this._getItemsInStrip().pop());
+
+		oEvent.preventDefault();
 
 		this._moveTab(oTab, oEvent.keyCode, iTabStripEnd);
 		oTab.$().trigger("focus");

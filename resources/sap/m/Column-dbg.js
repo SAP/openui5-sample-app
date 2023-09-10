@@ -6,16 +6,16 @@
 
 // Provides control sap.m.Column.
 sap.ui.define([
-	'./library',
-	'sap/ui/core/Element',
-	'sap/ui/core/Renderer',
-	'sap/ui/core/library',
-	'sap/ui/Device',
+	"./library",
+	"sap/ui/core/Core",
+	"sap/ui/core/Element",
+	"sap/ui/core/Renderer",
+	"sap/ui/core/library",
+	"sap/ui/Device",
 	"sap/ui/core/InvisibleText"
 ],
-	function(library, Element, Renderer, coreLibrary, Device, InvisibleText) {
+	function(library, Core, Element, Renderer, coreLibrary, Device, InvisibleText) {
 	"use strict";
-
 
 
 	// shortcut for sap.m.PopinDisplay
@@ -46,7 +46,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -267,7 +267,7 @@ sap.ui.define([
 	Column.prototype.onsapenter = Column.prototype.onsapspace;
 
 	Column.prototype.oncontextmenu = function (oEvent) {
-		var oMenu = this._getHeaderMenuInstance();
+		var oMenu = this.getHeaderMenuInstance();
 		if (oMenu) {
 			oMenu.openBy(this);
 			oEvent.preventDefault();
@@ -562,19 +562,6 @@ sap.ui.define([
 		}
 	};
 
-	// when the popover opens and later closed, the focus is lost
-	// hence overwriting the getFocusDomRef to restore the focus on the active column header
-	Column.prototype.getFocusDomRef = function() {
-		var oParent = this.getParent();
-		if (oParent && (oParent.bActiveHeaders || oParent.bFocusableHeaders || this.getHeaderMenu())) {
-			var oColumnDomRef = this.getDomRef();
-			if (oColumnDomRef) {
-				return oColumnDomRef.firstChild;
-			}
-		}
-		return Element.prototype.getFocusDomRef.apply(this, arguments);
-	};
-
 	// returns the minScreenWidth property in pixel as integer
 	Column.prototype.getCalculatedMinScreenWidth = function() {
 		return parseInt(this._minWidth) || 0;
@@ -596,8 +583,8 @@ sap.ui.define([
 	 * @returns {sap.ui.core.IColumnHeaderMenu | undefined} The column header menu instance
 	 * @private
 	 */
-	Column.prototype._getHeaderMenuInstance = function () {
-		return sap.ui.getCore().byId(this.getHeaderMenu());
+	Column.prototype.getHeaderMenuInstance = function () {
+		return Core.byId(this.getHeaderMenu());
 	};
 
 	Column.prototype.setHeader = function (oControl) {
@@ -623,8 +610,8 @@ sap.ui.define([
 			return;
 		}
 
-		if (this.getTable().bActiveHeaders || this._getHeaderMenuInstance()) {
-			this.$("ah")[oEvent.getSource().getRequired() ? "addAriaDescribedBy" : "removeAriaDescribedBy"](InvisibleText.getStaticId("sap.m", "CONTROL_IN_COLUMN_REQUIRED"));
+		if (this.getTable().bActiveHeaders || this.getHeaderMenuInstance()) {
+			this.$()[oEvent.getSource().getRequired() ? "addAriaDescribedBy" : "removeAriaDescribedBy"](InvisibleText.getStaticId("sap.m", "CONTROL_IN_COLUMN_REQUIRED"));
 		}
 	};
 

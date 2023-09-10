@@ -94,7 +94,7 @@ sap.ui.define([
 	 * @implements sap.m.ObjectHeaderContainer, sap.f.IDynamicPageStickyContent
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @public
 	 * @alias sap.m.IconTabBar
@@ -628,7 +628,7 @@ sap.ui.define([
 	 * @returns {sap.m.IconTabBar|null} Aggregation for the IconTabBar.
 	 */
 	IconTabBar.prototype._getIconTabHeader = function () {
-		if (this.isDestroyed()) {
+		if (this.isDestroyStarted()) {
 			return null;
 		}
 

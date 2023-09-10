@@ -61,7 +61,7 @@ sap.ui.define([
 	 * See also {@link module:sap/ui/core/ComponentSupport}.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.ComponentContainer
@@ -93,7 +93,7 @@ sap.ui.define([
 				async : {type : "boolean", defaultValue : false},
 
 				/**
-				 * Enable/disable validation handling by MessageManager for this component.
+				 * Enable/disable validation handling by Messaging for this component.
 				 * The resulting Messages will be propagated to the controls.
 				 * This property can only be applied initially.
 				 */

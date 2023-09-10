@@ -6,13 +6,13 @@
 
 // Provides control sap.m.upload.UploadSetTable.
 sap.ui.define([
-    "sap/m/Table",
-    "sap/m/ToolbarSpacer",
-    "sap/m/upload/UploadSetTableRenderer",
-    "sap/ui/unified/FileUploader",
-    "sap/m/upload/UploadSetToolbarPlaceholder",
-    "sap/m/upload/UploaderHttpRequestMethod",
-    "sap/m/OverflowToolbar",
+	"sap/m/Table",
+	"sap/m/ToolbarSpacer",
+	"sap/m/upload/UploadSetTableRenderer",
+	"sap/ui/unified/FileUploader",
+	"sap/m/upload/UploadSetToolbarPlaceholder",
+	"sap/m/upload/UploaderHttpRequestMethod",
+	"sap/m/OverflowToolbar",
 	"sap/m/upload/UploadSetTableItem",
 	"sap/base/util/deepEqual",
 	"sap/base/Log",
@@ -23,10 +23,12 @@ sap.ui.define([
 	"sap/m/upload/UploaderTableItem",
 	"sap/ui/core/dnd/DragDropInfo",
 	"sap/ui/core/dnd/DropInfo",
-	"sap/ui/core/dnd/DragInfo"
+	"sap/ui/core/dnd/DragInfo",
+	"sap/m/upload/FilePreviewDialog",
+	"sap/ui/base/Event"
 ], function (Table, ToolbarSpacer, UploadSetTableRenderer, FileUploader,
     UploadSetToolbarPlaceholder, UploaderHttpRequestMethod, OverFlowToolbar, UploadSetTableItem, deepEqual, Log, Library, IllustratedMessageType,
-	IllustratedMessage, IllustratedMessageSize, Uploader, DragDropInfo, DropInfo, DragInfo) {
+	IllustratedMessage, IllustratedMessageSize, Uploader, DragDropInfo, DropInfo, DragInfo, FilePreviewDialog, Event) {
     "use strict";
 
 	/**
@@ -44,16 +46,15 @@ sap.ui.define([
 	 * @internal
 	 * @alias sap.m.upload.UploadSetTable
 	 */
-
-    var UploadSetTable = Table.extend("sap.m.upload.UploadSetTable", {
-        library: "sap.m",
-        metadata: {
-            properties: {
+	var UploadSetTable = Table.extend("sap.m.upload.UploadSetTable", {
+		library: "sap.m",
+		metadata: {
+			properties: {
 				/**
 				 * Allowed file types for files to be uploaded.
 				 * <br>If this property is not set, any file can be uploaded.
 				 */
-                fileTypes: {type: "string[]", defaultValue: null},
+				fileTypes: {type: "string[]", defaultValue: null},
 				/**
 				 * Maximum length of names of files to be uploaded.
 				 * <br>If set to <code>null</code> or <code>0</code>, any files can be uploaded,
@@ -90,7 +91,7 @@ sap.ui.define([
 				 * URL where the uploaded files will be stored.
 				 */
 				uploadUrl: {type: "string", defaultValue: null},
-				 /**
+				/**
 				 * HTTP request method chosen for file upload.
 				 */
 				httpRequestMethod: {type: "sap.m.upload.UploaderHttpRequestMethod", defaultValue: UploaderHttpRequestMethod.Post},
@@ -105,18 +106,15 @@ sap.ui.define([
 				 */
 				uploadButtonInvisible: {type: "boolean", group: "Appearance", defaultValue: false},
 				/**
-				 * Defines whether the upload process should be triggered as soon as the file is added.<br>
-				 * If set to <code>false</code>, no upload is triggered when a file is added.
-				 */
-				instantUpload: {type: "boolean", defaultValue: true},
-				/**
-				 * Function callback invoked with dropped files, by the control to provide custom handling for drag and drop of files into the control area
-				 */
-				customDropFilesHandler: {type: "function", defaultValue: null},
-				/**
 				 * Defines whether the upload action is allowed.
 				 */
-				uploadEnabled: {type: "boolean", defaultValue: true}
+				uploadEnabled: {type: "boolean", defaultValue: true},
+				/**
+				 * Property as function will be invoked with UploadSetTableItem queued for upload.
+				 * Expects promise to be returned to the control with function invocation, when promise resolved control will initiate the upload process.
+				 * configure this property only when additional configuration to be performed before upload of each item / manually trigger the upload process by resolving the promise returned to the control.
+				 */
+				onItemValidationSuccess: {type: "function", defaultValue: null}
             },
             aggregations: {
                 headerToolbar : {
@@ -130,10 +128,14 @@ sap.ui.define([
 				/**
 				 * Header fields to be included in the header section of an XHR request.
 				 */
-				headerFields: {type: "sap.ui.core.Item", multiple: true, singularName: "headerField"}
-            },
+				headerFields: {type: "sap.ui.core.Item", multiple: true, singularName: "headerField"},
+				/**
+				 * Additional buttons for the file preview dialog footer.
+				 */
+				previewDialogAdditionalFooterButtons: {type: "sap.m.Button", multiple: true}
+			},
 			defaultAggregation : "items",
-            events: {
+			events: {
 				/**
 				 * The event is triggered when the file name is changed.
 				 */
@@ -179,11 +181,11 @@ sap.ui.define([
 						item: {type: "sap.m.upload.UploadSetTableItem"},
 						/**
 						 * Response message which comes from the server.
-					 	*
-					 	* On the server side this response has to be put within the &quot;body&quot; tags of the response
-					 	* document of the iFrame. It can consist of a return code and an optional message. This does not
-					 	* work in cross-domain scenarios.
-					 	*/
+						*
+						* On the server side this response has to be put within the &quot;body&quot; tags of the response
+						* document of the iFrame. It can consist of a return code and an optional message. This does not
+						* work in cross-domain scenarios.
+						*/
 						response : {type : "string"},
 						/**
 						 * ReadyState of the XHR request.
@@ -192,30 +194,29 @@ sap.ui.define([
 						 * to true. This property is not supported by Internet Explorer 9.
 						 */
 						readyState : {type : "string"},
-
 						/**
-					 	* Status of the XHR request.
-					 	*
-					 	* Required for receiving a <code>status</code> is to set the property <code>sendXHR</code> to true.
-					 	* This property is not supported by Internet Explorer 9.
-					 	*/
+						* Status of the XHR request.
+						*
+						* Required for receiving a <code>status</code> is to set the property <code>sendXHR</code> to true.
+						* This property is not supported by Internet Explorer 9.
+						*/
 						status : {type : "string"},
 						/**
-					 	* Http-Response which comes from the server.
-					 	*
-					 	* Required for receiving <code>responseXML</code> is to set the property <code>sendXHR</code> to true.
+						* Http-Response which comes from the server.
 						*
-					 	* This property is not supported by Internet Explorer 9.
-					 	*/
+						* Required for receiving <code>responseXML</code> is to set the property <code>sendXHR</code> to true.
+						*
+						* This property is not supported by Internet Explorer 9.
+						*/
 						responseXML : {type : "string"},
 						/**
-					 	* Http-Response which comes from the server.
-					 	*
-					 	* Required for receiving <code>responseText</code> is to set the property <code>sendXHR</code> to true.
+						* Http-Response which comes from the server.
 						*
-					 	* This property is not supported by Internet Explorer 9.
-					 	*/
-						 responseText : {type : "string"},
+						* Required for receiving <code>responseText</code> is to set the property <code>sendXHR</code> to true.
+						*
+						* This property is not supported by Internet Explorer 9.
+						*/
+						responseText : {type : "string"},
 						/**
 						* Http-Response-Headers which come from the server.
 						*
@@ -223,8 +224,8 @@ sap.ui.define([
 						* object, with the property value reflecting the header-field's content.
 						*
 						* Required for receiving <code>headers</code> is to set the property <code>sendXHR</code> to true.
-					 	* This property is not supported by Internet Explorer 9.
-					 	*/
+						* This property is not supported by Internet Explorer 9.
+						*/
 						headers : {type : "object"}
 					}
 				},
@@ -302,7 +303,6 @@ sap.ui.define([
 						item: {type: "object"}
 					}
 				},
-
 				/**
 				 * This event is fired when a file that is selected to be uploaded and just before initiating the file upload process
 				 * Use this event to set additional info dynamically specific for each item before upload process is initiated
@@ -329,7 +329,6 @@ sap.ui.define([
 				 */
 				itemDragStart: {
 				},
-
 				/**
 				 * This event is fired when an uploaded item is dropped on the new list position.
 				 * @event
@@ -344,12 +343,12 @@ sap.ui.define([
 				 * @public
 				 * @since 1.99
 				 */
-				 itemDrop: {
+				itemDrop: {
 				}
 			}
-        },
-        renderer: UploadSetTableRenderer
-    });
+		},
+		renderer: UploadSetTableRenderer
+	});
 
 	var UploadState = Library.UploadState;
 
@@ -361,6 +360,8 @@ sap.ui.define([
         Table.prototype.init.call(this);
 		this._setDragDropConfig();
         this._filesTobeUploaded = [];
+		this._filePreviewDialogControl = null;
+		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
     };
 
 	UploadSetTable.prototype.onBeforeRendering = function() {
@@ -573,48 +574,14 @@ sap.ui.define([
 	};
 
 	/**
-	 * Invokes fileselection handler and return the selected files through the callback function passed (selectedItemsCallback)
-	 * @param {function} fnSelectedItemsCallback Callback funtion which is invoked and returned with selected items from the fileselectionhandler
+	 * Invokes native files selection handler.
 	 * @public
 	 */
-	UploadSetTable.prototype.fileSelectionHandler = function(fnSelectedItemsCallback) {
-		if (!(typeof fnSelectedItemsCallback === "function")) {
-			Log.warning("Invalid Callback function passed.");
-			return;
-		}
-		this._fnSelectedItemsCallback = fnSelectedItemsCallback;
+	UploadSetTable.prototype.fileSelectionHandler = function() {
 		var oUploaderInstance = this.getDefaultFileUploader();
 		if (oUploaderInstance && oUploaderInstance.oFileUpload && oUploaderInstance.oFileUpload.click) {
 			oUploaderInstance.oFileUpload.click();
 		}
-	};
-
-	/**
-	 * Uploads each item passed by validting the pre conditions set for file and instant upload configured.
-	 * @param {sap.m.upload.UploadSetTableItem[]} aItemTobeUploaded Array of items to be uploaded individually
-	 * @public
-	 */
-	UploadSetTable.prototype.uploadItems = function(aItemTobeUploaded) {
-
-		if (!this.getUploadEnabled()) {
-			Log.warning("Upload is currently disabled for this upload set with Table.");
-			return;
-		}
-
-		if (!Array.isArray(aItemTobeUploaded)) {
-			return;
-		}
-
-		// only items of instance UploadSetTableItem are accepted.
-		aItemTobeUploaded = aItemTobeUploaded.filter(function(item) {
-			return item instanceof UploadSetTableItem;
-		});
-
-		aItemTobeUploaded.forEach(function(oItem) {
-			if (this.getInstantUpload()) {
-				this._uploadItemIfGoodToGo(oItem);
-			}
-		}.bind(this));
 	};
 
 	/**
@@ -642,25 +609,47 @@ sap.ui.define([
 	/**
 	 * API to upload File via URL
 	 * @param {string} sName file name to be set for the file to be uploaded.
-	 * @param {sap.ui.core.Item[]} aHeaders addition headers to be set
+	 * @param {string} sUrl Url for the file.
+	 * @param {Promise} oPromise Promise when resolved, control to initate the upload process.
+	 * @returns {UploadSetTableItem} oItem, UploadSetTableItem instance created with file object.
 	 * @public
 	 */
-	UploadSetTable.prototype.uploadItemViaUrl = function (sName, aHeaders) {
+	UploadSetTable.prototype.uploadItemViaUrl = function (sName, sUrl, oPromise) {
 		var oFileObject = new File([new Blob([])], sName);
-		// resetting custom callback
-		this._fnSelectedItemsCallback = null;
-		this._processSelectedFileObjects([oFileObject], aHeaders);
+
+		var oItem = new UploadSetTableItem({
+			uploadState: UploadState.Ready
+		});
+		oItem._setFileObject(oFileObject);
+		oItem.setFileName(oFileObject.name);
+		oItem.setUrl(sUrl);
+
+		oPromise
+		.then(() => this._initateItemUpload(oItem).bind(this))
+		.catch(() => oItem.destroy()); // cancelling the upload.
+
+		return oItem;
 	};
 
 	/**
 	 * API to upload Item without file
-	 * @param {sap.ui.core.Item[]} aHeaders addition headers to be set
+	 * @param {Promise} oPromise promise when resolved, Control to initate the upload process.
+	 * @return {UploadSetTableItem} oItem, UploadSetTableItem instance created with file object.
 	 * @public
 	 */
-	UploadSetTable.prototype.uploadItemWithoutFile = function (aHeaders) {
+	UploadSetTable.prototype.uploadItemWithoutFile = function (oPromise) {
 		var oFileObject = new File([new Blob([])], '-');
-		this._fnSelectedItemsCallback = null;
-		this._processSelectedFileObjects([oFileObject], aHeaders);
+		var oItem = new UploadSetTableItem({
+			uploadState: UploadState.Ready
+		});
+		oItem._setFileObject(oFileObject);
+		oItem.setFileName(oFileObject.name);
+
+		oPromise
+		.then(() => this._initateItemUpload(oItem))
+		.catch(() => oItem.destroy()); // cancelling the upload.
+
+		return oItem;
 	};
 
 	/* ============== */
@@ -683,16 +672,22 @@ sap.ui.define([
 
     UploadSetTable.prototype._onFileUploaderChange = function (oEvent) {
         var oFiles = oEvent.getParameter("files");
+
 		if (oFiles && oFiles.length) {
+			var aSelectedItems = this.getSelectedItems();
+			var oSelectedItem = aSelectedItems && aSelectedItems.length == 1 ? aSelectedItems[0] : null;
+			var bEmptyFileSelected = oSelectedItem ? oSelectedItem && oSelectedItem.getFileName && oSelectedItem.getFileName() === "-" : false;
+
+			// update existing file after upload
+			if (bEmptyFileSelected) {
+				this._oItemToUpdate = oFiles[0];
+			}
 			this._processSelectedFileObjects(oFiles);
-		} else {
-			// resetting the callback funtion if cancel clicked
-			this._fnSelectedItemsCallback = null;
 		}
     };
 
-    UploadSetTable.prototype._processSelectedFileObjects = function (oFiles, aHeaders) {
-        var aFiles = [];
+    UploadSetTable.prototype._processSelectedFileObjects = function (oFiles) {
+		var aFiles = [];
 
 		// Need to explicitly copy the file list, FileUploader deliberately resets its form completely
 		// along with 'files' parameter when it (mistakenly) thinks that all is done.
@@ -700,34 +695,56 @@ sap.ui.define([
 			aFiles.push(oFiles[i]);
 		}
 
-		var selectedFiles = [];
-		aFiles.forEach(function (oFile) {
+		aFiles.forEach((oFile) => {
 			var oItem = new UploadSetTableItem({
 				uploadState: UploadState.Ready
 			});
 			oItem._setFileObject(oFile);
 			oItem.setFileName(oFile.name);
-			selectedFiles.push(oItem);
 
-			if (aHeaders && aHeaders.length) {
-				aHeaders.forEach(function(oHeader){
-					oItem.addHeaderField(oHeader);
+
+			if (this.getOnItemValidationSuccess() && typeof this.getOnItemValidationSuccess() === "function" ) {
+
+				const oEvent = new Event("onItemValidation", this, {
+					item: oItem,
+					totalItemsForUpload: aFiles.length
 				});
-			}
 
-			this.fireBeforeInitiatingItemUpload({item: oItem});
-			if (this.getInstantUpload() && !this._fnSelectedItemsCallback) {
-				this._uploadItemIfGoodToGo(oItem);
+				var oPromise = this.getOnItemValidationSuccess()(oEvent);
+				if (oPromise && oPromise instanceof Promise) {
+					oPromise
+					.then((item) => {
+						if (item instanceof UploadSetTableItem) {
+							this._initateItemUpload(item);
+						}
+					})
+					.catch((item) => {
+						// Reset variable to avoid update if upload rejected.
+						if (item && this._oItemToUpdate && item instanceof UploadSetTableItem && item.getId() === this._oItemToUpdate.getId()) {
+							this._oItemToUpdate = null;
+						}
+					});
+				} else {
+					oItem.destroy();
+					// if promise is not returned to the onItemValidationSuccess hook log error and destroy the item
+					Log.error("Invalid usage, missing Promise: onItemvalidationSuccess expects Promise to be returned.");
+				}
+			} else {
+				/* if no validation handler is provided control continues with normal upload else waits for the application to manually
+				trigger the upload by resolving the promise */
+				this._initateItemUpload(oItem);
 			}
-		}.bind(this));
+		});
+	};
 
-		// fire the fncallback stored set through fileSelectionHandler invocation
-		if (this._fnSelectedItemsCallback) {
-			this._fnSelectedItemsCallback({selectedItems: selectedFiles});
-			this._fnSelectedItemsCallback = null;
+	UploadSetTable.prototype._initateItemUpload = function(oItem) {
+		this.fireBeforeInitiatingItemUpload({item: oItem});
+		if (this._oItemToUpdate) {
+			// Registering item to be update with selected file contents post successful upload.
+			this._oItemToUpdate = oItem;
 		}
-
-    };
+		this._uploadItemIfGoodToGo(oItem);
+	};
 
     UploadSetTable.prototype._fireFileTypeMismatch = function (oItem) {
         var aMediaTypes = this.getMediaTypes();
@@ -781,6 +798,11 @@ sap.ui.define([
 			"status": oResponseXHRParams.status,
 			"headers": oResponseXHRParams.headers
 		};
+		if (this._oItemToUpdate) {
+			this._oItemToUpdate.setFileName(oItem.getFileName());
+			this._oItemToUpdate._setFileObject(oItem.getFileObject());
+			this._oItemToUpdate = null;
+		}
 		oItem.setUploadState(UploadState.Complete);
 		this.fireUploadCompleted(oXhrParams);
 	};
@@ -816,8 +838,8 @@ sap.ui.define([
 			this._illustratedMessage = new IllustratedMessage({
 				illustrationType: IllustratedMessageType.UploadCollection,
 				illustrationSize: IllustratedMessageSize.Spot,
-				title: this.getNoDataText() ? this.getNoDataText() : "No Data Available",
-				description: this.getNoDataDescription() ? this.getNoDataDescription() : "Drag and Drop files here to upload"
+				title: this.getNoDataText() ? this.getNoDataText() : this._oRb.getText("UPLOADSET_WITH_TABLE_NO_DATA_TEXT"),
+				description: this.getNoDataDescription() ? this.getNoDataDescription() : this._oRb.getText("UPLOADSET_WITH_TABLE_NO_DATA_DESCRIPTION")
 			});
 		}
 
@@ -889,39 +911,31 @@ sap.ui.define([
 
 
 			if (aItems && aItems.length) {
-				var oFileUploaderInstance = this.getDefaultFileUploader();
-						if (oFileUploaderInstance && oFileUploaderInstance._areFilesAllowed && oFileUploaderInstance._areFilesAllowed(aItems)) {
-							var aFiles = [];
-
-							// Need to explicitly copy the file list, FileUploader deliberately resets its form completely
-							// along with 'files' parameter when it (mistakenly) thinks that all is done.
-							for (var i = 0; i < aItems.length; i++) {
-								aFiles.push(aItems[i]);
-							}
-
-							var selectedFiles = [];
-							aFiles.forEach(function (oFile) {
-								var oItem = new UploadSetTableItem({
-									uploadState: UploadState.Ready
-								});
-								oItem._setFileObject(oFile);
-								oItem.setFileName(oFile.name);
-								selectedFiles.push(oItem);
-								/* fire the beforeInitiatingUpload to support use case for non instant uploads,
-								where additional item properties can be set by the consumer of the control */
-								this.fireBeforeInitiatingItemUpload({item: oItem});
-								if (this.getInstantUpload() && !this.getCustomDropFilesHandler()) {
-									this._uploadItemIfGoodToGo(oItem);
-								}
-							}.bind(this));
-
-							// fire the fncallback stored set through customDropFileHandler invocation
-							// this would be use for the consumers to get the files dropped into the area and to have custom inputs taken for each file dropped.
-							if (this.getCustomDropFilesHandler()) {
-								this.getCustomDropFilesHandler()({selectedItems: selectedFiles});
-							}
-						}
+				this._processSelectedFileObjects(aItems);
 			}
+		}
+	};
+
+	/**
+	* Opens preview of the item pressed.
+	* @param {sap.m.upload.UploadSetTableItem} oItem item to be previewed.
+	* @private
+	*/
+	UploadSetTable.prototype._openFilePreview = function (oItem) {
+		var aitems = this.getPreviewDialogAdditionalFooterButtons();
+		if (!this._filePreviewDialogControl) {
+			this._filePreviewDialogControl = new FilePreviewDialog({
+				previewItem: oItem,
+				items: this.getItems(),
+				additionalFooterButtons: this.getPreviewDialogAdditionalFooterButtons()
+			});
+			this.addDependent(this._filePreviewDialogControl);
+			this._filePreviewDialogControl.open();
+		} else {
+			this._filePreviewDialogControl.setPreviewItem(oItem);
+			this._filePreviewDialogControl.setItems(this.getItems());
+			aitems.forEach((item) => this._filePreviewDialogControl.insertAddDiitionalFooterButton(item));
+			this._filePreviewDialogControl.open();
 		}
 	};
 

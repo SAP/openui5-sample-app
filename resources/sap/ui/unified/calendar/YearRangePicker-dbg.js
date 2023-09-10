@@ -45,7 +45,7 @@ sap.ui.define([
 	 * @extends sap.ui.unified.calendar.YearPicker
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @private
@@ -96,6 +96,9 @@ sap.ui.define([
 		oCalDate.setMonth(0, 1);
 
 		this.setProperty("date", oRangeMidDate);
+		/**
+		 * @deprecated As of version 1.34
+		 */
 		this.setProperty("year", oCalDate.getYear());
 		this._oDate = oCalDate;
 
@@ -198,6 +201,9 @@ sap.ui.define([
 		}
 
 		this.setProperty("date", oDate.toLocalJSDate());
+		/**
+		 * @deprecated As of version 1.34
+		 */
 		this.setProperty("year", oDate.getYear());
 
 		return true;

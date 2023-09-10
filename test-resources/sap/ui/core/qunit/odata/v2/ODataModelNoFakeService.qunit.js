@@ -7,6 +7,7 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/ui/base/SyncPromise",
 	"sap/ui/core/Configuration",
+	"sap/ui/core/Messaging",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/message/Message",
 	"sap/ui/model/_Helper",
@@ -27,7 +28,7 @@ sap.ui.define([
 	"sap/ui/model/odata/v2/ODataListBinding",
 	"sap/ui/model/odata/v2/ODataModel",
 	"sap/ui/model/odata/v2/ODataTreeBinding"
-], function (Log, SyncPromise, Configuration, UI5Date, Message, _Helper, BaseContext,
+], function (Log, SyncPromise, Configuration, Messaging, UI5Date, Message, _Helper, BaseContext,
 		FilterProcessor, Model, _ODataMetaModelUtils, CountMode, MessageScope, ODataMessageParser,
 		ODataMetaModel, ODataPropertyBinding, ODataUtils, _CreatedContextsCache, Context,
 		ODataAnnotations, ODataContextBinding, ODataListBinding, ODataModel, ODataTreeBinding
@@ -6658,7 +6659,7 @@ sap.ui.define([
 	QUnit.test(sTitle, function (assert) {
 		var oFindAndRemoveContext, oRemoveEntity, fnResolve,
 			oContext = {removeFromTransientParent : function () {}},
-			oMessageManagerMock = this.mock(sap.ui.getCore().getMessageManager()),
+			oMessagingMock = this.mock(Messaging),
 			oMetadata = {
 				loaded : function () {}
 			},
@@ -6713,7 +6714,7 @@ sap.ui.define([
 		oModelMock.expects("getMessagesByEntity")
 			.withExactArgs("~sKey", !bDeleteEntity)
 			.returns("~aMessages");
-		oMessageManagerMock.expects("removeMessages").withExactArgs("~aMessages");
+		oMessagingMock.expects("removeMessages").withExactArgs("~aMessages");
 
 		// code under test
 		assert.strictEqual(
@@ -6770,7 +6771,7 @@ sap.ui.define([
 		this.mock(oModel).expects("getMessagesByEntity")
 			.withExactArgs("~sKey", false)
 			.returns("~aMessages");
-		this.mock(sap.ui.getCore().getMessageManager()).expects("removeMessages")
+		this.mock(Messaging).expects("removeMessages")
 			.withExactArgs("~aMessages");
 
 		// code under test
@@ -8709,4 +8710,27 @@ sap.ui.define([
 		ODataModel.prototype._isReloadNeeded.call(oModel, "~path", oFixture.parameters);
 	});
 });
+
+	/** @deprecated As of version 1.32.0 */
+	//*********************************************************************************************
+	QUnit.test("setDeferredBatchGroups", function (assert) {
+		const oModel = {setDeferredGroups() {}};
+
+		this.mock(oModel).expects("setDeferredGroups").withExactArgs("~mParameters");
+
+		// code under test
+		ODataModel.prototype.setDeferredBatchGroups.call(oModel, "~mParameters");
+	});
+
+	/** @deprecated As of version 1.32.0 */
+	//*********************************************************************************************
+	QUnit.test("setChangeBatchGroups", function (assert) {
+		const oModel = {setChangeGroups() {}};
+
+		this.mock(oModel).expects("setChangeGroups")
+			.withExactArgs({"*" : {batchGroupId : "~groupId", groupId: "~groupId"}});
+
+		// code under test
+		ODataModel.prototype.setChangeBatchGroups.call(oModel, {"*" : {batchGroupId : "~groupId"}});
+	});
 });

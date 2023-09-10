@@ -10,10 +10,11 @@
  */
 sap.ui.define([
 	"sap/m/MessageBox",
+	"sap/ui/core/Messaging",
 	"sap/ui/core/UIComponent",
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator"
-], function (MessageBox, UIComponent, Filter, FilterOperator) {
+], function (MessageBox, Messaging, UIComponent, Filter, FilterOperator) {
 	"use strict";
 
 	return UIComponent.extend("sap.ui.core.sample.odata.v4.FlatDataAggregation.Component", {
@@ -22,8 +23,7 @@ sap.ui.define([
 		},
 
 		init : function () {
-			var oMessageManager = sap.ui.getCore().getMessageManager(),
-				oMessageModel = oMessageManager.getMessageModel(),
+			var oMessageModel = Messaging.getMessageModel(),
 				bMessageOpen = false;
 
 			UIComponent.prototype.init.apply(this, arguments);
@@ -44,7 +44,7 @@ sap.ui.define([
 				aContexts.forEach(function (oContext) {
 					aMessages.push(oContext.getObject());
 				});
-				oMessageManager.removeMessages(aMessages);
+				Messaging.removeMessages(aMessages);
 
 				// Due to batching there can be more than one technical message. However the UX
 				// guidelines say "display a single message in a message box" assuming that there

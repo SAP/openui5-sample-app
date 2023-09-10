@@ -80,7 +80,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -241,11 +241,6 @@ sap.ui.define([
 				this._oQuickActionContainer.destroyFormContainers();
 			}
 			if (this._oItemsContainer) {
-				this._getAllEffectiveItems().forEach(function(oMenuItem){
-					if (oMenuItem.destroyContent instanceof Function) {
-						oMenuItem.destroyContent();
-					}
-				});
 				this._oItemsContainer.destroy();
 				this._oItemsContainer = null;
 			}
@@ -440,7 +435,7 @@ sap.ui.define([
 			}),
 			beforeViewSwitch: [function (oEvent) {
 				var mParameters = oEvent.getParameters();
-
+				this.invalidate();
 				if (mParameters.target !== "$default") {
 					var oContainerItem = this._oItemsContainer.getView(mParameters.target);
 					var oColumnMenuItem = this._getItemFromContainerItem(oContainerItem);
@@ -450,6 +445,14 @@ sap.ui.define([
 				}
 			}, this],
 			afterViewSwitch: [function (oEvent) {
+				var aDependents = this.getDependents();
+				if (aDependents) {
+					aDependents.forEach(function (oDependent) {
+						if (oDependent && oDependent.isA("sap.ui.core.Control")) {
+							oDependent.invalidate();
+						}
+					});
+				}
 				var mParameters = oEvent.getParameters();
 				this._oItemsContainer.getLayout().setShowFooter(mParameters.target !== "$default");
 
@@ -489,9 +492,9 @@ sap.ui.define([
 		}
 	};
 
-	Menu.prototype._getResourceText = function(sText, vValue) {
+	Menu.prototype._getResourceText = function(sText, aValue) {
 		this.oResourceBundle = this.oResourceBundle ? this.oResourceBundle : sap.ui.getCore().getLibraryResourceBundle("sap.m");
-		return sText ? this.oResourceBundle.getText(sText, vValue) : this.oResourceBundle;
+		return sText ? this.oResourceBundle.getText(sText, aValue) : this.oResourceBundle;
 	};
 
 	var mSortOrder = {};

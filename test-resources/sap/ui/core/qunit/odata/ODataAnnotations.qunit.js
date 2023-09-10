@@ -5,8 +5,9 @@ sap.ui.define([
 	"sap/ui/model/odata/ODataAnnotations",
 	"sap/ui/model/odata/ODataModel",
 	"sap/ui/model/odata/v2/ODataModel",
-	"sap/ui/util/XMLHelper"
-], function(Log, Configuration, fakeService, ODataAnnotations, V1ODataModel, V2ODataModel, XMLHelper) {
+	"sap/ui/util/XMLHelper",
+	"sap/ui/qunit/utils/nextUIUpdate"
+], function(Log, Configuration, fakeService, ODataAnnotations, V1ODataModel, V2ODataModel, XMLHelper, nextUIUpdate) {
 	"use strict";
 
 	/*global QUnit, sinon */
@@ -55,25 +56,31 @@ sap.ui.define([
 	}
 
 	function fnCreateModel(assert, iModelVersion, sServiceUrl, aAnnotationUrls, mMetadataUrlParams) {
-		var oModel;
+		var oModel, bUnknownModelVersion = true;
+		/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 		if (iModelVersion == 1) {
 			oModel = new V1ODataModel(sServiceUrl, {
 				annotationURI : aAnnotationUrls,
 				loadMetadataAsync: true,
 				metadataUrlParams: mMetadataUrlParams
 			});
-		} else if (iModelVersion == 2) {
+			bUnknownModelVersion = false;
+		}
+		if (iModelVersion == 2) {
 			oModel = new V2ODataModel(sServiceUrl, {
 				annotationURI : aAnnotationUrls,
 				metadataUrlParams: mMetadataUrlParams
 			});
-		} else {
+			bUnknownModelVersion = false;
+		}
+		if (bUnknownModelVersion){
 			assert.ok(false, "Unknown ODataModel version requested for test: " + iModelVersion);
 		}
 		return oModel;
 	}
 
 	function cleanOdataCache() {
+		/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 		V1ODataModel.mServiceData = {};
 		V2ODataModel.mSharedData = {server: {}, service: {}, meta: {}};
 	}
@@ -373,6 +380,8 @@ sap.ui.define([
 		aServices.push(mTest);
 	}
 
+/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
+(function() {
 	QUnit.module("Synchronous loading");
 
 	fnTest = function(sServiceURI, mModelOptions, bServiceValid, sAnnotationsValid, bSharedMetadata) {
@@ -558,6 +567,7 @@ sap.ui.define([
 			fnTest(sServiceURI, mModelOptions, bServiceValid, sAnnotationsValid)
 		);
 	}
+}());
 
 	QUnit.module("V2: Asynchronous loading");
 
@@ -688,7 +698,8 @@ sap.ui.define([
 		);
 	}
 
-
+/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
+(function() {
 	QUnit.module("Asynchronous loading (joined events)");
 
 	fnTest = function(sServiceURI, mModelOptions, bServiceValid, sAnnotationsValid, bSharedMetadata) {
@@ -817,7 +828,7 @@ sap.ui.define([
 			fnTest(sServiceURI, mModelOptions, bServiceValid, sAnnotationsValid)
 		);
 	}
-
+}());
 
 	QUnit.module("V2: Asynchronous loading (joined events)");
 
@@ -955,7 +966,8 @@ sap.ui.define([
 			fnTest(sServiceURI, mModelOptions, bServiceValid, sAnnotationsValid));
 	}
 
-
+/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
+(function() {
 	QUnit.module("V1 only: Synchronous loading and MetaModel");
 
 	var fnTestSynchronousLoading = function(mTest, assert) {
@@ -1010,8 +1022,6 @@ sap.ui.define([
 		mModelOptions.loadAnnotationsJoined = false;
 		mModelOptions.loadMetadataAsync = false;
 		mModelOptions.skipMetadataAnnotationParsing = true;
-
-		var mTest = mAdditionalTestsServices["Joined Loading with automated $metadata parsing"];
 
 		QUnit.test("V1 only: Synchronous Metadata loading and Metamodel - " + sTestType, fnTestSynchronousLoading.bind(this, aServices[i]));
 	}
@@ -1117,6 +1127,7 @@ sap.ui.define([
 			});
 		}
 	});
+}());
 
 	QUnit.module("V2: Multiple Annotation Sources Merged");
 
@@ -1185,6 +1196,7 @@ sap.ui.define([
 
 	QUnit.module("Additional tests for fixed bugs");
 
+	/** @deprecated As of version 1.66.0, reason sap.ui.model.odata.ODataAnnotations */
 	QUnit.test("ODataAnnotations#getData", function (assert) {
 		var oODataAnnotations = new ODataAnnotations({annotationData : "~annotationData"});
 
@@ -1192,6 +1204,7 @@ sap.ui.define([
 		assert.strictEqual(oODataAnnotations.getData(), "~annotationData");
 	});
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Apply Function", function(assert) {
 		assert.expect(12);
 
@@ -1383,7 +1396,7 @@ sap.ui.define([
 		});
 	});
 
-
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Multiple Property Annotations", function(assert) {
 		assert.expect(11);
 
@@ -1477,7 +1490,6 @@ sap.ui.define([
 
 		oModel.destroy();
 	});
-
 
 	QUnit.test("V2: Multiple Property Annotations", function(assert) {
 		var done = assert.async();
@@ -1577,7 +1589,7 @@ sap.ui.define([
 		});
 	});
 
-
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Qualifiers in Property Annotations", function(assert) {
 		assert.expect(8);
 
@@ -1713,7 +1725,7 @@ sap.ui.define([
 		});
 	});
 
-
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Other Property Values", function(assert) {
 		assert.expect(8);
 
@@ -1845,7 +1857,7 @@ sap.ui.define([
 		});
 	});
 
-
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Aliases in Namespaces", function(assert) {
 		assert.expect(8);
 
@@ -1980,6 +1992,7 @@ sap.ui.define([
 		});
 	});
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Namespaces in Other Property Values", function(assert) {
 		assert.expect(22);
 
@@ -2390,6 +2403,7 @@ sap.ui.define([
 		});
 	});
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Text Properties", function(assert) {
 		assert.expect(14);
 
@@ -2546,6 +2560,7 @@ sap.ui.define([
 		});
 	});
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Entity Containers", function(assert) {
 		assert.expect(30);
 
@@ -2984,6 +2999,7 @@ sap.ui.define([
 		});
 	});
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Simple Values", function(assert) {
 		assert.expect(3);
 
@@ -3045,7 +3061,7 @@ sap.ui.define([
 		});
 	});
 
-
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Collection with Namespace", function(assert) {
 		assert.expect(6);
 
@@ -3116,6 +3132,7 @@ sap.ui.define([
 		});
 	});
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("UrlRef", function(assert) {
 		assert.expect(78);
 
@@ -3485,7 +3502,7 @@ sap.ui.define([
 	});
 
 
-
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Alias Replacement", function(assert) {
 		assert.expect(13);
 
@@ -3528,7 +3545,7 @@ sap.ui.define([
 	});
 
 
-
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("DynamicExpressions", function(assert) {
 		assert.expect(15);
 
@@ -3563,6 +3580,7 @@ sap.ui.define([
 		oModel.destroy();
 	});
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("DynamicExpressions 2", function(assert) {
 		assert.expect(56);
 
@@ -3630,6 +3648,7 @@ sap.ui.define([
 		oModel.destroy();
 	});
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("CollectionsWithSimpleValues", function(assert) {
 		assert.expect(13);
 
@@ -3662,6 +3681,7 @@ sap.ui.define([
 		oModel.destroy();
 	});
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Multiple Simple Values", function(assert) {
 		assert.expect(9);
 
@@ -3988,6 +4008,7 @@ sap.ui.define([
 		});
 	});
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("Apply in If", function(assert) {
 		var done = assert.async();
 		assert.expect(71);
@@ -4283,6 +4304,7 @@ sap.ui.define([
 		});
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: Annotation in Record", fnTestAnnotationInRecord.bind(this, 1));
 	QUnit.test("V2: Annotation in Record", fnTestAnnotationInRecord.bind(this, 2));
 
@@ -4321,6 +4343,7 @@ sap.ui.define([
 		});
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: Empty collection", fnTestEmptyCollection.bind(this, 1));
 	QUnit.test("V2: Empty collection", fnTestEmptyCollection.bind(this, 2));
 
@@ -4361,6 +4384,7 @@ sap.ui.define([
 		});
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: Multiple Enums", fnTestEmptyCollection.bind(this, 1));
 	QUnit.test("V2: Multiple Enums", fnTestEmptyCollection.bind(this, 2));
 
@@ -4495,6 +4519,7 @@ sap.ui.define([
 
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: Cached Value Lists", fnTestCachedValueLists.bind(this, 1));
 	QUnit.test("V2: Cached Value Lists", fnTestCachedValueLists.bind(this, 2));
 
@@ -4558,6 +4583,7 @@ sap.ui.define([
 		});
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: Cached Value Lists with Service-URL-Parameters", fnTestCachedMetadataValueLists.bind(this, 1));
 	QUnit.test("V2: Cached Value Lists with Service-URL-Parameters", fnTestCachedMetadataValueLists.bind(this, 2));
 
@@ -4628,6 +4654,7 @@ sap.ui.define([
 		});
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: Cached Value Lists with additional Metadata Parameters", fnTestCachedMetadataValueListsAdditionParameters.bind(this, 1));
 	QUnit.test("V2: Cached Value Lists with additional Metadata Parameters", fnTestCachedMetadataValueListsAdditionParameters.bind(this, 2));
 
@@ -4721,6 +4748,7 @@ sap.ui.define([
 
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: Overwrite on Term Level", fnTestOverwritingOnTermLevel.bind(this, 1));
 	QUnit.test("V2: Overwrite on Term Level", fnTestOverwritingOnTermLevel.bind(this, 2));
 
@@ -4880,6 +4908,7 @@ sap.ui.define([
 		});
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: Overwrite on Term Level 2", fnTestOverwritingOnTermLevel2.bind(this, 1));
 	QUnit.test("V2: Overwrite on Term Level 2", fnTestOverwritingOnTermLevel2.bind(this, 2));
 
@@ -4945,7 +4974,7 @@ sap.ui.define([
 			oModel3.setHeaders({});
 			Configuration.setLanguage("en");
 			return oModel3.addAnnotationUrl("fakeService://replay-headers");
-		}).then(function() {
+		}).then(async function() {
 			var oAnnotations = oModel3.getServiceAnnotations();
 			assert.equal(oAnnotations["Replay.Headers"]["Accept-Language"]["String"], "en", "Accept-Language header set correctly");
 			assert.equal(oAnnotations["Replay.Headers"]["X-Unfug"], undefined, "Custom header removed correctly");
@@ -4956,11 +4985,12 @@ sap.ui.define([
 			oModel2.destroy();
 			oModel3.destroy();
 
-			sap.ui.getCore().applyChanges();
+			await nextUIUpdate();
 			done();
 		});
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: Send Accept-Language Header", fnTestAceptHeader.bind(this, 1));
 	QUnit.test("V2: Send Accept-Language Header", fnTestAceptHeader.bind(this, 2));
 
@@ -5065,6 +5095,7 @@ sap.ui.define([
 		});
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: EDMType for NavigationProperties", fnTestEdmTypeForNavigationProperties.bind(this, 1));
 	QUnit.test("V2: EDMType for NavigationProperties", fnTestEdmTypeForNavigationProperties.bind(this, 2));
 
@@ -5356,6 +5387,7 @@ sap.ui.define([
 		});
 	};
 
+	/** @deprecated As of version 1.48.0, reason sap.ui.model.odata.ODataModel */
 	QUnit.test("V1: Nested Annotations", fnTestNestedAnnotations.bind(this, 1));
 	QUnit.test("V2: Nested Annotations", fnTestNestedAnnotations.bind(this, 2));
 

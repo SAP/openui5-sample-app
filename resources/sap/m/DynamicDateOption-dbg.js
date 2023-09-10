@@ -40,7 +40,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.117.1
+		 * @version 1.118.0
 		 *
 		 * @public
 		 * @since 1.92
@@ -259,7 +259,7 @@ sap.ui.define([
 		 * 5 - Quarters
 		 * 6 - Years
 		 *
-		 * @returns {int} A group index
+		 * @returns { int | string} A group key from {@link sap.m.DynamicDateRangeGroups}
 		 * @public
 		 */
 		DynamicDateOption.prototype.getGroup = function() {

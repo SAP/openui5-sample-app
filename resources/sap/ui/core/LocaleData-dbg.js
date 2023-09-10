@@ -47,7 +47,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @public
 	 * @alias sap.ui.core.LocaleData
 	 */
@@ -1832,7 +1832,7 @@ sap.ui.define([
 			var oMessageBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.core", this.oLocale.toString()),
 				sKey = "date.week.calendarweek." + sStyle;
 
-			return oMessageBundle.getText(sKey, iWeekNumber);
+			return oMessageBundle.getText(sKey, iWeekNumber ? [iWeekNumber] : undefined);
 		},
 
 		/**

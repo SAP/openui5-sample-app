@@ -93,7 +93,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.TreeBinding
 	 * @hideconstructor
 	 * @public
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 */
 	var ODataTreeBinding = TreeBinding.extend("sap.ui.model.odata.v2.ODataTreeBinding", /** @lends sap.ui.model.odata.v2.ODataTreeBinding.prototype */ {
 
@@ -2609,16 +2609,42 @@ sap.ui.define([
 	 */
 
 	/**
-	 * Creates a new binding context related to this binding instance.
+	 * Creates a new entry for the tree.
 	 *
-	 * The available API is the same as for the v2.ODataModel.
-	 * See the API documentation here: {@link sap.ui.model.odata.v2.ODataModel#createEntry createEntry}.
+	 * A context object is returned which can be inserted in the tree hierarchy via
+	 * {@link sap.ui.model.odata.v2.ODataTreeBinding#addContexts addContexts}.
+	 * <b>Note:</b> The back-end request to create the entry is sent with the batch group stored at this binding's model
+	 * for this binding's resolved path.
 	 *
-	 * This feature is only available when the underlying OData service exposes the "hierarchy-node-descendant-count-for" annotation.
-	 * See the constructor documentation for more details.
+	 * This feature is only available when the underlying OData service exposes the
+	 * "hierarchy-node-descendant-count-for" annotation. See
+	 * {@link sap.ui.model.odata.v2.ODataModel#bindTree} for more details.
 	 *
 	 * @function
 	 * @name sap.ui.model.odata.v2.ODataTreeBinding.prototype.createEntry
+	 * @param {object} [mParameters]
+	 *   A map of the following parameters:
+	 * @param {string} [mParameters.changeSetId]
+	 *   The ID of the <code>ChangeSet</code> that this request should belong to
+	 * @param {function} [mParameters.created]
+	 *   The callback function that is called after the metadata of the service has been loaded and the
+	 *   {@link sap.ui.model.odata.v2.Context} instance for the newly created entry is available;
+	 *   The {@link sap.ui.model.odata.v2.Context} instance for the newly created entry is passed as
+	 *   the first and only parameter.
+	 * @param {function} [mParameters.error]
+	 *   The error callback function
+	 * @param {Object<string,string>} [mParameters.headers]
+	 *   A map of headers
+	 * @param {array|object} [mParameters.properties]
+	 *   An array that specifies a set of properties or the initial data for the new entity as an object
+	 * @param {function} [mParameters.success]
+	 *   The success callback function
+	 * @param {Object<string,string>} [mParameters.urlParameters]
+	 *   A map of URL parameters
+	 * @returns {sap.ui.model.odata.v2.Context|undefined}
+	 *   An OData V2 context object that points to the newly created entry, or
+	 *   <code>undefined</code> if the service metadata are not yet loaded or if a
+	 *   <code>created</code> callback parameter is given
 	 * @private
 	 * @ui5-restricted
 	 */
@@ -2635,6 +2661,7 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @name sap.ui.model.odata.v2.ODataTreeBinding.prototype.submitChanges
+	 * @deprecated Since 1.104 use {@link sap.ui.model.odata.v2.ODataModel#submitChanges} instead
 	 * @private
 	 * @ui5-restricted
 	 */

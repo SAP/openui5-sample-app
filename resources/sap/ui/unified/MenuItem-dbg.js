@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 	 * @extends sap.ui.unified.MenuItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -59,7 +59,8 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 	MenuItem.prototype.render = function(oRenderManager, oItem, oMenu, oInfo){
 		var rm = oRenderManager,
 			oSubMenu = oItem.getSubmenu(),
-			bIsEnabled = oItem.getEnabled();
+			bIsEnabled = oItem.getEnabled(),
+			oIcon;
 
 		rm.openStart("li", oItem);
 
@@ -106,12 +107,15 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 		rm.openEnd();
 		rm.close("div");
 
-		if (oItem.getIcon()) {
+		if (oItem.getIcon() && oItem._getIcon) {
 			// icon/check column
 			rm.openStart("div");
 			rm.class("sapUiMnuItmIco");
 			rm.openEnd();
-			rm.icon(oItem.getIcon(), null, {title: null});
+
+			oIcon = oItem._getIcon(oItem);
+			rm.renderControl(oIcon);
+
 			rm.close("div");
 		}
 

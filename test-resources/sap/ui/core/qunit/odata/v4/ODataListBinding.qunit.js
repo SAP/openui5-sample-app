@@ -3925,6 +3925,39 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+[false, true].forEach(function (bIsEffectivelyKeptAlive) {
+	QUnit.test(`removeCreated: $$aggregation, ${bIsEffectivelyKeptAlive}`, function (assert) {
+		var oBinding = this.bindList("/EMPLOYEES", undefined, undefined, undefined,
+				{$$aggregation : {}}), // Note: no hierarchyQualifier!
+			oContext = {
+				// no getModelIndex, isInactive
+				isEffectivelyKeptAlive : mustBeMocked
+			};
+
+		oBinding.iActiveContexts = "~iActiveContexts~";
+		oBinding.iCreatedContexts = "~iCreatedContexts~";
+		oBinding.bFirstCreateAtEnd = "~bFirstCreateAtEnd~";
+		oBinding.aContexts
+			= [{iIndex : "#0"}, {iIndex : "#1"}, oContext, {iIndex : 3},, {iIndex : 5}];
+		oBinding.iMaxLength = 43;
+		this.mock(oContext).expects("isEffectivelyKeptAlive").withExactArgs()
+			.returns(bIsEffectivelyKeptAlive);
+		this.mock(oBinding).expects("destroyLater").exactly(bIsEffectivelyKeptAlive ? 0 : 1)
+			.withExactArgs(sinon.match.same(oContext));
+
+		// code under test
+		oBinding.removeCreated(oContext);
+
+		assert.strictEqual(oBinding.iActiveContexts, "~iActiveContexts~");
+		assert.strictEqual(oBinding.iCreatedContexts, "~iCreatedContexts~");
+		assert.strictEqual(oBinding.bFirstCreateAtEnd, "~bFirstCreateAtEnd~");
+		assert.deepEqual(oBinding.aContexts,
+			[{iIndex : "#0"}, {iIndex : "#1"}, {iIndex : 2},, {iIndex : 4}]);
+		assert.strictEqual(oBinding.iMaxLength, 42);
+	});
+});
+
+	//*********************************************************************************************
 [0, 1].forEach(function (iCurrentEnd) {
 	var sTitle = "destroyLater: iCurrentEnd=" + iCurrentEnd;
 
@@ -4331,7 +4364,12 @@ sap.ui.define([
 // undefined -> the reinsertion callback is not called because the binding already has another cache
 [undefined, false, true].forEach(function (bSuccess) {
 	[false, true].forEach(function (bCreated) { // the deleted context is created-persisted
-		var sTitle = "delete: success=" + bSuccess + ", created=" + bCreated;
+		[undefined, false, true].forEach(function (bExpanded) { // undefined -> no hierarchy
+			const sTitle = "delete: success=" + bSuccess + ", created=" + bCreated
+				+ ", expanded=" + bExpanded;
+			if (bCreated && bExpanded) {
+				return;
+			}
 
 		QUnit.test(sTitle, function (assert) {
 			var oBinding = this.bindList("/EMPLOYEES"),
@@ -4349,12 +4387,14 @@ sap.ui.define([
 					fnReject = reject;
 				}),
 				oETagEntity = {},
-				sPath = "1",
 				aPreviousContexts,
 				oPromise,
 				fnUndelete = sinon.spy(),
 				that = this;
 
+			if (bExpanded !== undefined) {
+				oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
+			}
 			oBinding.createContexts(0, aData.slice(0, 3));
 			aData2.$count = 5; // non-empty short read adds $count
 			oBinding.createContexts(4, aData2);
@@ -4365,13 +4405,17 @@ sap.ui.define([
 			sContext1Path = oContext1.getPath();
 			if (bCreated) { // fake a created context: it needs a negative index
 				oContext1.iIndex = -1;
-				sPath = "-1";
 			}
-			oContext1Mock.expects("isDeleted").withExactArgs().returns(false);
+			oContext1Mock.expects("getModelIndex").withExactArgs().returns(42);
+			// also called from sinon.match.same() via toString()
+			oContext1Mock.expects("isDeleted").atLeast(1).withExactArgs().returns(false);
+			oContext1Mock.expects("isExpanded").withExactArgs().returns(bExpanded);
+			oBindingMock.expects("collapse").exactly(bExpanded ? 1 : 0)
+				.withExactArgs(sinon.match.same(oContext1));
 			oBindingMock.expects("destroyPreviousContexts").never();
 			oContext1Mock.expects("resetKeepAlive").never();
 			oDeleteCall = oContext1Mock.expects("doDelete")
-				.withExactArgs("myGroup", "EMPLOYEES('1')", sPath, sinon.match.same(oETagEntity),
+				.withExactArgs("myGroup", "EMPLOYEES('1')", "42", sinon.match.same(oETagEntity),
 					sinon.match.same(oBinding), sinon.match.func)
 				.callsFake(function () {
 					// Although delete works with existing cache data and the cache immediately
@@ -4396,6 +4440,8 @@ sap.ui.define([
 					oBindingMock.expects("destroyPreviousContextsLater").exactly(bSuccess ? 1 : 0)
 						.withExactArgs([sContext1Path]);
 					// expectations for catch
+					oBindingMock.expects("expand").exactly(!bSuccess && bExpanded ? 1 : 0)
+						.withExactArgs(sinon.match.same(oContext1));
 					oBindingMock.expects("_fireChange").exactly(bSuccess ? 0 : 1)
 						.withExactArgs({reason : ChangeReason.Add});
 
@@ -4445,7 +4491,7 @@ sap.ui.define([
 							assert.strictEqual(oBinding.aContexts[5], aPreviousContexts[5]);
 							assert.notOk(oContext1.getPath() in oBinding.mPreviousContextsByPath);
 							oBinding.aContexts.forEach(function (oContext, i) {
-								assert.strictEqual(oContext.getModelIndex(), i);
+								assert.strictEqual(oContext.iIndex + oBinding.iCreatedContexts, i);
 							});
 							sinon.assert.calledOnceWithExactly(fnUndelete);
 						}
@@ -4471,6 +4517,7 @@ sap.ui.define([
 				sinon.assert.calledWithExactly(fnUndelete); // might be called twice
 			});
 		});
+		});
 	});
 });
 	//TODO check the row of a pending update with higher index
@@ -4480,8 +4527,9 @@ sap.ui.define([
 		var oBinding = this.bindList("/EMPLOYEES"),
 			oContext = {
 				oDeletePromise : "~oDeletePromise~",
+				getModelIndex : function () {}, // result does not matter
 				iIndex : 1,
-				isDeleted : function () {}
+				isDeleted : mustBeMocked
 			};
 
 		this.mock(oContext).expects("isDeleted").withExactArgs().returns(true);
@@ -4524,10 +4572,11 @@ sap.ui.define([
 			oKeptAliveContext = {
 				iIndex : undefined,
 				created : function () { return undefined; },
-				doDelete : function () {},
+				doDelete : mustBeMocked,
 				getPath : function () { return "~contextPath~"; },
-				isDeleted : function () {},
-				resetKeepAlive : function () {}
+				isDeleted : mustBeMocked,
+				isExpanded : mustBeMocked,
+				resetKeepAlive : mustBeMocked
 			},
 			iOldMaxLength = oFixture.lengthFinal ? 42 : Infinity,
 			oPromise,
@@ -4545,6 +4594,7 @@ sap.ui.define([
 		};
 
 		this.mock(oKeptAliveContext).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oKeptAliveContext).expects("isExpanded").withExactArgs().returns(false);
 		oBindingMock.expects("destroyPreviousContexts").never();
 		oHelperMock.expects("getRelativePath")
 			.withExactArgs("~contextPath~", "/EMPLOYEES").returns("~predicate~");
@@ -4612,6 +4662,32 @@ sap.ui.define([
 		});
 	});
 });
+
+	//*********************************************************************************************
+	QUnit.test("_delete: recursive hierarchy, restrictions not met", function (assert) {
+		const oBinding = this.bindList("/EMPLOYEES");
+
+		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
+		// too far :-(
+		oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
+
+		const oContext = {
+			// noIndex
+			toString : function () { return "~toString~"; } // cannot be mocked?
+		};
+
+		assert.throws(function () {
+			// code under test
+			oBinding.delete("~oGroupLock~", "~sEditUrl~", oContext);
+		}, new Error("Unsupported kept-alive context: ~toString~"));
+
+		oBinding.mParameters.$$aggregation = {expandTo : 2, hierarchyQualifier : "X"};
+
+		assert.throws(function () {
+			// code under test
+			oBinding.delete("~oGroupLock~", "~sEditUrl~", {/*oContext*/});
+		}, new Error("Unsupported $$aggregation.expandTo: 2"));
+	});
 
 	//*********************************************************************************************
 	QUnit.test("create: callbacks and eventing", function (assert) {
@@ -5624,6 +5700,7 @@ sap.ui.define([
 		// code under test - create a second entity without bAtEnd
 		oContext2 = oBinding.create(undefined);
 
+		this.mock(oContext1).expects("isExpanded").withExactArgs().returns(false);
 		this.mock(oContext1).expects("doDelete")
 			.callsArgWith(5, 0, -1) // the callback removing the context
 			.returns(SyncPromise.resolve());
@@ -5636,6 +5713,7 @@ sap.ui.define([
 		// code under test
 		oBinding.create(undefined, false, /*bAtEnd*/true);
 
+		this.mock(oContext2).expects("isExpanded").withExactArgs().returns(false);
 		this.mock(oContext2).expects("doDelete")
 			.callsArgWith(5, 0, -1) // the callback removing the context
 			.returns(SyncPromise.resolve());
@@ -5669,10 +5747,12 @@ sap.ui.define([
 		oContext1 = oBinding.create(undefined, false, /*bAtEnd*/true);
 		oContext2 = oBinding.create(undefined, false, /*bAtEnd*/true);
 
+		this.mock(oContext1).expects("isExpanded").withExactArgs().returns(false);
 		this.mock(oContext1).expects("doDelete")
 			.withArgs(sinon.match.same(oGroupLock), "~1")
 			.callsArgWith(5, 0, -1) // the callback removing the context
 			.returns(SyncPromise.resolve(Promise.resolve()));
+		this.mock(oContext2).expects("isExpanded").withExactArgs().returns(false);
 		this.mock(oContext2).expects("doDelete")
 			.withArgs(null, "~2")
 			.callsArgWith(5, 0, -1) // the callback removing the context
@@ -9691,15 +9771,24 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
-	QUnit.test("getAllCurrentContexts: no cache yet", function (assert) {
-		var oBinding = this.bindList("relativePath");
+	QUnit.test("getAllCurrentContexts: currently no cache", function (assert) {
+		const oBinding = this.bindList("relativePath");
+		oBinding.aContexts = ["~oTransientContext~"];
+
+		const oKeptContext = {isEffectivelyKeptAlive : function () {}};
+		oBinding.mPreviousContextsByPath = {"~sPath~" : oKeptContext};
 
 		this.mock(oBinding).expects("withCache").withExactArgs(sinon.match.func, "", true);
-		this.mock(oBinding).expects("createContexts").withExactArgs(0, []).returns(false);
+		this.mock(oBinding).expects("createContexts").never();
 		this.mock(oBinding).expects("_fireChange").never();
+		this.mock(oKeptContext).expects("isEffectivelyKeptAlive").withExactArgs().returns(true);
 
 		// code under test
-		assert.deepEqual(oBinding.getAllCurrentContexts(), []);
+		const aContexts = oBinding.getAllCurrentContexts();
+
+		assert.strictEqual(aContexts.length, 2);
+		assert.strictEqual(aContexts[0], "~oTransientContext~");
+		assert.strictEqual(aContexts[1], oKeptContext);
 	});
 
 	//*********************************************************************************************

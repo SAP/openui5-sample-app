@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.BasePanel
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @private
 	 * @ui5-restricted sap.m, sap.ui.mdc
@@ -52,6 +52,9 @@ sap.ui.define([
 
 	// shortcut for sap.m.FlexJustifyContent
 	var FlexJustifyContent = mLibrary.FlexJustifyContent;
+
+	// shortcut for sap.m.ListKeyboardMode
+	var ListKeyboardMode = mLibrary.ListKeyboardMode;
 
 	// shortcut for sap.m.ButtonType
 	var ButtonType = mLibrary.ButtonType;
@@ -145,10 +148,12 @@ sap.ui.define([
 	};
 
 	QueryPanel.prototype._createInnerListControl = function () {
-		return new List(this.getId() + "-innerP13nList", {
+		var oList = new List(this.getId() + "-innerP13nList", {
 			itemPress: [this._onItemPressed, this],
 			dragDropConfig: this._getDragDropConfig()
 		});
+		oList.setKeyboardMode(ListKeyboardMode.Edit);
+		return oList;
 	};
 
 	QueryPanel.prototype._getModelEntry = function(oRow) {

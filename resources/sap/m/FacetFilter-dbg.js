@@ -174,7 +174,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IShrinkable
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -1787,7 +1787,7 @@ sap.ui.define([
 	 * @private
 	 */
 	FacetFilter.prototype._createSelectAllCheckboxBar = function(oList) {
-		if (!oList.getMultiSelect()) {
+		if (oList.getMode() !== ListMode.MultiSelect) {
 			return null;
 		}
 

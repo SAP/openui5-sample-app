@@ -67,7 +67,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -226,12 +226,16 @@ sap.ui.define([
 
 		this.setProperty("expanded", bExpanded, true);
 
+		// toggle class to apply styles during animation
+		this.addStyleClass("sapMPanelAnimating");
+
 		if (!this.getExpandable()) {
 			return this;
 		}
 
 		this._toggleExpandCollapse(function () {
 			// invalidate once the animation is over so rerendering could be smoоth
+			that.removeStyleClass("sapMPanelAnimating");
 			that.invalidate();
 		});
 

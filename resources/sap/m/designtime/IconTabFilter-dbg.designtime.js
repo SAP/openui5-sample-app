@@ -17,7 +17,7 @@ sap.ui.define([],
 				}
 			},
 			actions: {
-				rename: function (oPage) {
+				rename: function () {
 					return {
 						changeType: "rename",
 						domRef: function (oControl) {
@@ -28,8 +28,17 @@ sap.ui.define([],
 			},
 			aggregations: {
 				content: {
-					actions: {
-						move: "moveControls"
+					propagateMetadata: function (oControl) {
+						if (oControl.getParent().isA("sap.m.IconTabFilter")) {
+							return {
+								actions: {
+									remove: null,
+									reveal: null
+								}
+							};
+						}
+
+						return undefined;
 					}
 				}
 			}

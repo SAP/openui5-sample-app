@@ -1,8 +1,9 @@
 sap.ui.define([
 	'sap/ui/qunit/utils/createAndAppendDiv',
-	'sap/ui/core/Core',
+	"sap/ui/qunit/utils/nextUIUpdate",
 	'sap/ui/core/Component',
 	'sap/ui/core/ComponentContainer',
+	'sap/ui/core/Messaging',
 	'sap/ui/core/UIComponentMetadata',
 	'sap/ui/test/routing/Component',
 	'sap/ui/test/routing/RouterExtension',
@@ -11,7 +12,7 @@ sap.ui.define([
 	'sap/base/util/LoaderExtensions',
 	'sap/ui/core/Manifest',
 	'sap/base/i18n/ResourceBundle'
-], function (createAndAppendDiv, Core, Component, ComponentContainer, UIComponentMetadata, SamplesRoutingComponent, SamplesRouterExtension, Log, deepExtend, LoaderExtensions, Manifest, ResourceBundle) {
+], function (createAndAppendDiv, nextUIUpdate, Component, ComponentContainer, Messaging, UIComponentMetadata, SamplesRoutingComponent, SamplesRouterExtension, Log, deepExtend, LoaderExtensions, Manifest, ResourceBundle) {
 
 	"use strict";
 	/*global sinon, QUnit, foo*/
@@ -79,8 +80,8 @@ sap.ui.define([
 		}
 	});
 
-	QUnit.test("Simple Component Instance", function(assert){
-		Core.applyChanges();
+	QUnit.test("Simple Component Instance", async function(assert){
+		await nextUIUpdate();
 		assert.ok(document.getElementById("CompCont1"));
 		var elem = document.getElementById("buttonComponent---mybutn");
 		assert.equal(elem.textContent, "Text changed through settings", "Settings applied");
@@ -209,7 +210,7 @@ sap.ui.define([
 		},
 		afterEach: function() {
 			// Clear all messages so the tests don't interfere with eachother
-			Core.getMessageManager().removeAllMessages();
+			Messaging.removeAllMessages();
 		}
 	});
 
@@ -224,19 +225,18 @@ sap.ui.define([
 			assert.ok(oComp, "Component created.");
 			assert.strictEqual(false, oComp.getManifestEntry("/sap.ui5/handleValidation"), "Correct handleValidation value was returned on instance: false");
 
-			// fire a validation error -> should NOT create a Message via the global MessageManager
+			// fire a validation error -> should NOT create a Message via Messaging
 			// the Component has set "handleValidation" to <false> and thus is not registered to the
-			// global MessageManager
+			// Messaging
 			oComp.fireValidationError({
 				element: oComp,
 				property: "handleValidationTest",
 				newValue: false
 			});
 
-			var oMM = Core.getMessageManager();
-			var aMessages = oMM.getMessageModel().getData();
+			var aMessages = Messaging.getMessageModel().getData();
 
-			assert.equal(aMessages.length, 0, "No messages must be created. The Component should not be registered to the MessageManager.");
+			assert.equal(aMessages.length, 0, "No messages must be created. The Component should not be registered to the Messaging.");
 
 		}).finally(function() {
 			oComponentGeneric.destroy();
@@ -272,19 +272,18 @@ sap.ui.define([
 			assert.ok(oComp, "Component created.");
 			assert.strictEqual(true, oComp.getManifestEntry("/sap.ui5/handleValidation"), "Correct handleValidation value was returned on instance: true");
 
-			// fire a validation error -> should create a Message via the global MessageManager
+			// fire a validation error -> should create a Message via the Messaging
 			// the Component has set "handleValidation" to <true> and thus is automatically registered to the
-			// global MessageManager
+			// Messaging
 			oComp.fireValidationError({
 				element: oComp,
 				property: "handleValidationTest",
 				newValue: true
 			});
 
-			var oMM = Core.getMessageManager();
-			var aMessages = oMM.getMessageModel().getData();
+			var aMessages = Messaging.getMessageModel().getData();
 
-			assert.equal(aMessages.length, 1, "One messages must be created. The Component is automatically registered to the MessageManager.");
+			assert.equal(aMessages.length, 1, "One messages must be created. The Component is automatically registered to the Messaging.");
 
 		}).finally(function() {
 			oComponentInstanceSpecific.destroy();

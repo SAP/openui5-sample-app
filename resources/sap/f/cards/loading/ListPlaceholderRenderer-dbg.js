@@ -77,7 +77,6 @@ sap.ui.define(["sap/ui/core/Renderer", "./PlaceholderBaseRenderer"], function(Re
 	};
 
 	ListPlaceholderRenderer.renderContent = function(oControl, oRm) {
-
 		var iMinItems = oControl.getMinItems(),
 			oItem = oControl.getItem();
 
@@ -98,7 +97,7 @@ sap.ui.define(["sap/ui/core/Renderer", "./PlaceholderBaseRenderer"], function(Re
 			oRm.openStart("div")
 				.class("sapFCardListPlaceholderRows")
 				.openEnd();
-			//debugger
+
 			if (oItem) {
 				this.renderTitleAndDescription(oRm, oItem);
 				this.renderAttributes(oRm, oItem);

@@ -72,7 +72,7 @@ sap.ui.define([
 		 * The message toast has the same behavior on all devices. However, you can adjust the width of the control, for example, for use on a desktop device.
 		 *
 		 * @author SAP SE
-		 * @version 1.117.1
+		 * @version 1.118.0
 		 *
 		 * @namespace
 		 * @public
@@ -350,10 +350,12 @@ sap.ui.define([
 		MessageToast._fnKeyDown = function(oEvent) {
 			var oFocusableElement;
 			var oPopup = this._aPopups[0];
-			var bAlt = oEvent.altKey;
-			var bCtrl = oEvent.ctrlKey;
+			var bShift = oEvent.shiftKey;
+			var bMetaKey = Device.os.macintosh ? oEvent.metaKey : oEvent.ctrlKey;
 
-			if (oPopup && oPopup.isOpen() && bAlt && bCtrl && oEvent.code === "KeyM") {
+			if (oPopup && oPopup.isOpen() && bShift && bMetaKey && oEvent.code === "KeyM") {
+				oEvent.preventDefault();
+
 				oFocusableElement = document.querySelector(".sapMMessageToastHiddenFocusable");
 				oPopup.getContent().classList.add("sapMFocus");
 				oFocusableElement.focus();
@@ -363,11 +365,13 @@ sap.ui.define([
 
 		// Close the message when in permanent display mode
 		function handleKbdClose(oEvent) {
-			var bAlt = oEvent.altKey;
-			var bCtrl = oEvent.ctrlKey;
+			var bShift = oEvent.shiftKey;
+			var bMetaKey = Device.os.macintosh ? oEvent.metaKey : oEvent.ctrlKey;
 			var oPopup = this._aPopups[0];
 
-			if (oEvent.code === "Escape" || (bAlt && bCtrl && oEvent.code === "KeyM")) {
+			if (oEvent.code === "Escape" || (bShift && bMetaKey && oEvent.code === "KeyM")) {
+				oEvent.preventDefault();
+
 				setTimeout(function() {
 					this._mSettings.opener && this._mSettings.opener.focus();
 				}.bind(this), 0);
@@ -513,8 +517,8 @@ sap.ui.define([
 			this._iCloseTimeoutId = setTimeout(oPopup["close"].bind(oPopup), mSettings.duration);
 
 			function fnClearTimeout() {
-				clearTimeout(this._iCloseTimeoutId);
-				this._iCloseTimeoutId = null;
+				clearTimeout(that._iCloseTimeoutId);
+				that._iCloseTimeoutId = null;
 
 				function fnMouseLeave() {
 					iMouseLeaveTimeoutId = setTimeout(oPopup["close"].bind(oPopup), mSettings.duration);

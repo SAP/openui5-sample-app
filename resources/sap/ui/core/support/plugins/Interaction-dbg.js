@@ -6,7 +6,7 @@
 
 // Provides class sap.ui.core.support.plugins.Performance
 sap.ui.define([
-	'jquery.sap.global',
+	'sap/ui/core/Configuration',
 	'sap/ui/core/support/Plugin',
 	'sap/ui/core/support/controls/InteractionSlider',
 	'sap/ui/core/support/controls/InteractionTree',
@@ -19,7 +19,7 @@ sap.ui.define([
 	"sap/ui/core/date/UI5Date"
 	],
 	function(
-		jQuery,
+		Configuration,
 		Plugin,
 		InteractionSlider,
 		InteractionTree,
@@ -40,15 +40,13 @@ sap.ui.define([
 		 * With this plugIn the performance measurements are displayed
 		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.117.1
+		 * @version 1.118.0
 		 * @private
 		 * @alias sap.ui.core.support.plugins.Interaction
 		 */
 		var Interaction = Plugin.extend("sap.ui.core.support.plugins.Interaction", {
 			constructor : function(oSupportStub) {
 				Plugin.apply(this, ["sapUiSupportInteraction", "Interaction", oSupportStub]);
-
-				this._oStub = oSupportStub;
 
 				if (this.runsAsToolPlugin()) {
 
@@ -162,8 +160,14 @@ sap.ui.define([
 			}.bind(this));
 			this.dom("odata").checked = this._bODATA_Stats_On;
 			this.dom("odata").addEventListener("click", function(oEvent) {
-				jQuery.sap.statistics(!jQuery.sap.statistics());
-			});
+				this._bODATA_Stats_On = !this._bODATA_Stats_On;
+				this.confirmReload(function () {
+					this._oStub.sendEvent(this._oStub.getMetadata().getClass().EventType.RELOAD_WITH_PARAMETER, {
+						parameterName: "sap-statistics",
+						parameterValue: this._bODATA_Stats_On
+					});
+				}.bind(this));
+			}.bind(this));
 
 
 			this.dom('record').dataset.state = (!this._bFesrActive) ? 'Start recording' : 'Stop recording';
@@ -186,8 +190,7 @@ sap.ui.define([
 
 		function initInApps(oSupportStub) {
 			var _bFesrActive = /sap-ui-xx-fesr=(true|x|X)/.test(window.location.search);
-			var _bODATA_Stats_On = jQuery.sap.statistics() ||
-				/sap-statistics=(true|x|X)/.test(window.location.search);
+			var _bODATA_Stats_On = Configuration.getStatisticsEnabled();
 
 			this._oStub.sendEvent(this.getId() + "SetQueryString", {"queryString": { bFesrActive: _bFesrActive,
 				bODATA_Stats_On: _bODATA_Stats_On}});
@@ -256,7 +259,6 @@ sap.ui.define([
 			this.dom('record').dataset.state = (!this._bFesrActive) ? 'Start recording' : 'Stop recording';
 		};
 
-
 		/**
 		 * Handler for sapUiSupportInteractionSetMeasurements event
 		 *
@@ -322,8 +324,6 @@ sap.ui.define([
 		 * @private
 		 */
 		Interaction.prototype.onsapUiSupportInteractionEnd = function(oEvent) {
-
-			//jQuery.sap.measure.end(this.getId() + "-perf");
 			Interaction.end(/* bForce= */true);
 		};
 
@@ -520,5 +520,4 @@ sap.ui.define([
 		};
 
 		return Interaction;
-
 	});

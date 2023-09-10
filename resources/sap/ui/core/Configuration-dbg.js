@@ -48,7 +48,7 @@ sap.ui.define([
 	"use strict";
 
 	var M_SETTINGS;
-	var VERSION = "1.117.1";
+	var VERSION = "1.118.0";
 	var mCompatVersion;
 
 	// Helper Functions
@@ -1033,18 +1033,6 @@ sap.ui.define([
 		 */
 		getDisableCustomizing : function() {
 			return BaseConfig.get({name: "sapUiXxDisableCustomizing", type: BaseConfig.Type.Boolean});
-		},
-
-		/**
-		 * Flag, representing the status of the view cache.
-		 * @see {sap.ui.xmlview}
-		 *
-		 * @returns {boolean} true if view cache is enabled
-		 * @private
-		 * @experimental Since 1.44
-		 */
-		getViewCache : function() {
-			return Configuration.getValue("xx-viewCache");
 		},
 
 		/**

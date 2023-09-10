@@ -53,7 +53,7 @@ sap.ui.define([
 	 * and requests, unified behavior of instant and deferred uploads, as well as improved progress indication.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -678,8 +678,6 @@ sap.ui.define([
 			case KeyCodes.ENTER:
 				if (oItem === this._oEditedItem) {
 					this._handleItemEditConfirmation(oEvent, oItem);
-				} else {
-					oItem._handleFileNamePressed();
 				}
 				break;
 			default:
@@ -1588,6 +1586,7 @@ sap.ui.define([
 				buttons: [
 					new Button({
 						text: this._oRb.getText("UPLOAD_SET_OKBUTTON_TEXT"),
+						type: MobileLibrary.ButtonType.Emphasized,
 						press: [onPressOk, this]
 					}),
 					new Button({

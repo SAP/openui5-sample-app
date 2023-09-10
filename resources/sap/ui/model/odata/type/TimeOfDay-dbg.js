@@ -92,7 +92,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 * @public
 	 * @since 1.37.0
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 */
 	var TimeOfDay = ODataType.extend("sap.ui.model.odata.type.TimeOfDay", {
 			constructor : function (oFormatOptions, oConstraints) {
@@ -292,6 +292,8 @@ sap.ui.define([
 
 	/**
 	 * Returns the model value for the given ISO string.
+	 * The milliseconds part of the string is either truncated or padded with <code>0</code>, so that its length
+	 * fits the types precision constraint.
 	 *
 	 * @param {string|null} sISOString
 	 *   A string according to ISO 8601, as returned by {@link #getISOStringFromModelValue}
@@ -304,7 +306,9 @@ sap.ui.define([
 	 * @ui5-restricted sap.fe, sap.suite.ui.generic.template, sap.ui.comp, sap.ui.generic
 	 */
 	TimeOfDay.prototype.getModelValueFromISOString = function (sISOString) {
-		return sISOString ? sISOString : null;
+		return sISOString
+			? this.getModelFormat().format(UI5Date.getInstance("1970-01-01T" + sISOString + "Z"))
+			: null;
 	};
 
 	/**

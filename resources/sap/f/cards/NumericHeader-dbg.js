@@ -6,15 +6,32 @@
 sap.ui.define([
 	"./BaseHeader",
 	"./NumericIndicators",
+	"sap/base/Log",
+	"sap/m/library",
 	"sap/m/Text",
-	"sap/f/cards/NumericHeaderRenderer"
+	"sap/m/ObjectStatus",
+	"sap/f/cards/NumericHeaderRenderer",
+	"sap/ui/core/library",
+	"sap/m/Avatar",
+	"sap/ui/core/InvisibleText"
 ], function (
 	BaseHeader,
 	NumericIndicators,
+	Log,
+	mLibrary,
 	Text,
-	NumericHeaderRenderer
+	ObjectStatus,
+	NumericHeaderRenderer,
+	coreLibrary,
+	Avatar,
+	InvisibleText
 ) {
 	"use strict";
+
+	var ValueState = coreLibrary.ValueState;
+	var AvatarShape = mLibrary.AvatarShape;
+	var AvatarColor = mLibrary.AvatarColor;
+	var AvatarImageFitType = mLibrary.AvatarImageFitType;
 
 	/**
 	 * Constructor for a new <code>NumericHeader</code>.
@@ -39,7 +56,7 @@ sap.ui.define([
 	 * @extends sap.f.cards.BaseHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @constructor
 	 * @public
@@ -78,6 +95,51 @@ sap.ui.define([
 				 * Defines the status text.
 				 */
 				statusText: { type: "string", defaultValue: "" },
+
+				/**
+				 * Defines the shape of the icon.
+				 * @experimental Since 1.118. For usage only by Work Zone.
+				 * @since 1.118
+				 */
+				iconDisplayShape: { type: "sap.m.AvatarShape", defaultValue: AvatarShape.Circle },
+
+				/**
+				 * Defines the icon source.
+				 * @experimental Since 1.118. For usage only by Work Zone.
+				 * @since 1.118
+				 */
+				iconSrc: { type: "sap.ui.core.URI", defaultValue: "" },
+
+				/**
+				 * Defines the initials of the icon.
+				 * @experimental Since 1.118. For usage only by Work Zone.
+				 * @since 1.118
+				 */
+				iconInitials: { type: "string", defaultValue: "" },
+
+				/**
+				 * Defines an alt text for the avatar or icon.
+				 *
+				 * @experimental Since 1.118. For usage only by Work Zone.
+				 * @since 1.118
+				 */
+				iconAlt: { type: "string", defaultValue: "" },
+
+				/**
+				 * Defines a background color for the avatar or icon.
+				 *
+				 * @experimental Since 1.118. For usage only by Work Zone.
+				 * @since 1.118
+				 */
+				iconBackgroundColor: { type: "sap.m.AvatarColor", defaultValue: AvatarColor.Transparent },
+
+				/**
+				 * Defines whether the card icon is visible.
+				 *
+				 * @experimental Since 1.118. For usage only by Work Zone.
+				 * @since 1.118
+				 */
+				iconVisible: { type: "boolean", defaultValue: true },
 
 				/**
 				 * General unit of measurement for the header. Displayed as side information to the subtitle.
@@ -121,6 +183,13 @@ sap.ui.define([
 				details: { "type": "string", group: "Appearance" },
 
 				/**
+				 * The semantic color which represents the state of the details text.
+				 * @experimental Since 1.118. For usage only by Work Zone.
+				 * @since 1.118
+				 */
+				detailsState: { type : "sap.ui.core.ValueState", group: "Appearance", defaultValue: ValueState.None },
+
+				/**
 				 * Limits the number of lines for the details.
 				 * @experimental since 1.101
 				 */
@@ -130,7 +199,6 @@ sap.ui.define([
 				 * The alignment of the side indicators.
 				 */
 				sideIndicatorsAlignment: { "type": "sap.f.cards.NumericHeaderSideIndicatorsAlignment", group: "Appearance", defaultValue : "Begin" }
-
 			},
 			aggregations: {
 
@@ -157,6 +225,11 @@ sap.ui.define([
 				_subtitle: { type: "sap.m.Text", multiple: false, visibility: "hidden" },
 
 				/**
+				* Defines the inner avatar control.
+				*/
+				_avatar: { type: "sap.m.Avatar", multiple: false, visibility: "hidden" },
+
+				/**
 				 * Shows unit of measurement next to subtitle
 				 */
 				_unitOfMeasurement: { type: "sap.m.Text", multiple: false, visibility: "hidden" },
@@ -164,7 +237,7 @@ sap.ui.define([
 				/**
 				 * Display details
 				 */
-				_details: { type: "sap.m.Text", multiple: false, visibility: "hidden" },
+				_details: { type: "sap.ui.core.Control", multiple: false, visibility: "hidden" },
 
 				/**
 				 * Displays the main and side indicators
@@ -190,10 +263,16 @@ sap.ui.define([
 		BaseHeader.prototype.init.apply(this, arguments);
 
 		this.data("sap-ui-fastnavgroup", "true", true); // Define group for F6 handling
+
+		this._oAriaAvatarText = new InvisibleText({id: this.getId() + "-ariaAvatarText"});
+		this._oAriaAvatarText.setText(this._oRb.getText("ARIA_HEADER_AVATAR_TEXT"));
 	};
 
 	NumericHeader.prototype.exit = function () {
 		BaseHeader.prototype.exit.apply(this, arguments);
+
+		this._oAriaAvatarText.destroy();
+		this._oAriaAvatarText = null;
 	};
 
 	/**
@@ -212,9 +291,28 @@ sap.ui.define([
 			.setMaxLines(this.getSubtitleMaxLines());
 
 		this._getUnitOfMeasurement().setText(this.getUnitOfMeasurement());
-		this._getDetails()
-			.setText(this.getDetails())
-			.setMaxLines(this.getDetailsMaxLines());
+
+		var oAvatar = this._getAvatar();
+
+		oAvatar.setDisplayShape(this.getIconDisplayShape());
+		oAvatar.setSrc(this.getIconSrc());
+		oAvatar.setInitials(this.getIconInitials());
+		oAvatar.setTooltip(this.getIconAlt());
+		oAvatar.setBackgroundColor(this.getIconBackgroundColor());
+
+		if (!this.isPropertyInitial("detailsState") && !this.isPropertyInitial("detailsMaxLines")) {
+			Log.error("Both details state and details max lines can not be used at the same time. Max lines setting will be ignored.");
+		}
+
+		if (!this.isPropertyInitial("detailsState")) {
+			this._createDetails(true)
+				.setText(this.getDetails())
+				.setState(this.getDetailsState());
+		} else {
+			this._createDetails()
+				.setText(this.getDetails())
+				.setMaxLines(this.getDetailsMaxLines());
+		}
 
 		this._getNumericIndicators()
 			.setNumber(this.getNumber())
@@ -225,6 +323,13 @@ sap.ui.define([
 			.setNumberVisible(this.getNumberVisible());
 	};
 
+	/**
+	 * @protected
+	 * @returns {boolean} If the icon should be shown.
+	 */
+	NumericHeader.prototype.shouldShowIcon = function () {
+		return this.getIconVisible();
+	};
 
 	/**
 	 * This method is a hook for the RenderManager that gets called
@@ -286,6 +391,22 @@ sap.ui.define([
 	};
 
 	/**
+	 * Lazily creates an avatar control and returns it.
+	 * @private
+	 * @returns {sap.m.Avatar} The inner avatar aggregation
+	 */
+	NumericHeader.prototype._getAvatar = function () {
+		var oAvatar = this.getAggregation("_avatar");
+		if (!oAvatar) {
+			oAvatar = new Avatar({
+				imageFitType: AvatarImageFitType.Contain
+			}).addStyleClass("sapFCardIcon");
+			this.setAggregation("_avatar", oAvatar);
+		}
+		return oAvatar;
+	};
+
+	/**
 	 * Lazily create a unit of measurement and return it.
 	 *
 	 * @private
@@ -306,22 +427,51 @@ sap.ui.define([
 	};
 
 	/**
-	 * Lazily create details and return it.
-	 *
+	 * Create details and return it.
 	 * @private
-	 * @return {sap.m.Text} The details aggregation
+	 * @param {boolean} bUseObjectStatus If set to true the details will be sap.m.ObjectStatus
+	 * @return {sap.m.Text|sap.m.ObjectStatus} The details aggregation
 	 */
-	NumericHeader.prototype._getDetails = function () {
+	NumericHeader.prototype._createDetails = function (bUseObjectStatus) {
 		var oControl = this.getAggregation("_details");
 
-		if (!oControl) {
-			oControl = new Text({
-				id: this.getId() + "-details"
-			});
-			this.setAggregation("_details", oControl);
+		if (oControl?.isA("sap.m.Text") && bUseObjectStatus) {
+			oControl.destroy();
+		} else if (oControl) {
+			return oControl;
 		}
 
+		var oSettings = {
+			id: this._getDetailsId()
+		};
+
+		if (bUseObjectStatus) {
+			oControl = new ObjectStatus(oSettings);
+		} else {
+			oControl = new Text(oSettings);
+		}
+
+		this.setAggregation("_details", oControl);
+
 		return oControl;
+	};
+
+	/**
+	 * Gets the control create for showing details.
+	 * @private
+	 * @return {sap.m.Text|sap.m.ObjectStatus} The details aggregation
+	 */
+	NumericHeader.prototype._getDetails = function () {
+		return this.getAggregation("_details");
+	};
+
+	/**
+	 * Gets the id for details control.
+	 * @private
+	 * @return {string} The id for details control.
+	 */
+	NumericHeader.prototype._getDetailsId = function () {
+		return this.getId() + "-details";
 	};
 
 	/**
@@ -353,6 +503,7 @@ sap.ui.define([
 			sSubtitleId = "",
 			sStatusTextId = "",
 			sUnitOfMeasureId = this._getUnitOfMeasurement().getId(),
+			sAvatarId = "",
 			sMainIndicatorId = "",
 			sSideIndicatorsIds = this._getSideIndicatorIds(),
 			sDetailsId = "",
@@ -374,15 +525,19 @@ sap.ui.define([
 			sStatusTextId = this.getId() + "-status";
 		}
 
+		if (this.getIconSrc() || this.getIconInitials()) {
+			sAvatarId = this.getId() + "-ariaAvatarText";
+		}
+
 		if (this.getDetails()) {
-			sDetailsId = this._getDetails().getId();
+			sDetailsId = this._getDetailsId();
 		}
 
 		if (this.getNumber() || this.getScale()) {
 			sMainIndicatorId = this._getNumericIndicators()._getMainIndicator().getId();
 		}
 
-		sIds = sCardTypeId + " " + sTitleId + " " + sSubtitleId + " " + sStatusTextId + " " + sUnitOfMeasureId + " " + sMainIndicatorId + " " + sSideIndicatorsIds + " " + sDetailsId;
+		sIds = sCardTypeId + " " + sTitleId + " " + sSubtitleId + " " + sStatusTextId + " " + sUnitOfMeasureId + " " + sAvatarId + " " + sMainIndicatorId + " " + sSideIndicatorsIds + " " + sDetailsId;
 
 		// remove whitespace from both sides
 		// and merge the consecutive spaces into one

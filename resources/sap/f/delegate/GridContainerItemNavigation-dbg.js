@@ -10,7 +10,7 @@ sap.ui.define([
 	"sap/ui/dom/containsOrEquals",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/dom/jquery/Selectors" // provides jQuery custom selector ":sapTabbable"
-], function (
+], function(
 	Element,
 	ItemNavigation,
 	GridItemNavigation,
@@ -41,7 +41,7 @@ sap.ui.define([
 	 *
 	 *
 	 * @author SAP SE
-	 * @version 1.117.1
+	 * @version 1.118.0
 	 *
 	 * @extends sap.f.delegate.GridItemNavigation
 	 *
@@ -50,16 +50,16 @@ sap.ui.define([
 	 * @alias sap.f.delegate.GridContainerItemNavigation
 	 */
 	var GridContainerItemNavigation = GridItemNavigation.extend("sap.f.delegate.GridContainerItemNavigation", /** @lends sap.f.delegate.GridContainerItemNavigation.prototype */ {
-		constructor: function () {
+		constructor: function() {
 			GridItemNavigation.apply(this, arguments);
 
 			this.attachEvent(ItemNavigation.Events.FocusLeave, this._onFocusLeave, this);
 		}
 	});
 
-	GridContainerItemNavigation.prototype._onFocusLeave = function (oEvent) {
+	GridContainerItemNavigation.prototype._onFocusLeave = function(oEvent) {
 		var currentFocused = this.getFocusedDomRef();
-		this.getItemDomRefs().forEach(function (item, index) {
+		this.getItemDomRefs().forEach(function(item, index) {
 			if (currentFocused === item) {
 				var nextFocusableIndex = index++;
 				this.setFocusedIndex(nextFocusableIndex);
@@ -100,13 +100,13 @@ sap.ui.define([
 		var $AllTabbables = $LastFocused.find(":sapTabbable");
 
 		// leave only real tabbable elements in the tab chain, GridContainer and List types have dummy areas
-		$AllTabbables.map(function (index, element) {
-			if (element.className.indexOf("DummyArea") === -1) {
+		$AllTabbables.map(function(index, element) {
+			if (element.className.indexOf("DummyArea") === -1 && element.className.indexOf("sapMListUl") === -1) {
 				Tabbables.push(element);
 			}
 		});
 
-		var focusableIndex = Tabbables.length  - 1;
+		var focusableIndex = Tabbables.length - 1;
 		if (focusableIndex === -1 ||
 			(Element.closestTo(Tabbables[focusableIndex]) && Element.closestTo(Tabbables[focusableIndex]).getId() === oEvent.target.id)) {
 			this._lastFocusedElement = oEvent.target;
