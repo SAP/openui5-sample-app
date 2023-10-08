@@ -22,6 +22,7 @@ sap.ui.define([
 	"use strict";
 	var mChanges;
 	var oWritableConfig = BaseConfig.getWritableInstance();
+	let sLanguageSetByApi;
 	var bLanguageWarningLogged = false;
 
 	/**
@@ -238,6 +239,17 @@ sap.ui.define([
 		},
 
 		/**
+		 * Returns the list of active terminologies defined via the Configuration.
+		 *
+		 * @returns {string[]|undefined} if no active terminologies are set, the default value <code>undefined</code> is returned.
+		 * @public
+		 * @since 1.119.0
+		 */
+		getActiveTerminologies : function() {
+			return oWritableConfig.get({name: "sapUiActiveTerminologies", type: BaseConfig.Type.StringArray, defaultValue: undefined, external: true});
+		},
+
+		/**
 		 * Returns a string that identifies the current language.
 		 *
 		 * The value returned by config method in most cases corresponds to the exact value that has been
@@ -272,6 +284,9 @@ sap.ui.define([
 			var oLanguageTag,
 				sDerivedLanguage;
 
+			if (sLanguageSetByApi) {
+				return sLanguageSetByApi;
+			}
 			var sLanguage = oWritableConfig.get({
 				name: "sapUiLanguage",
 				type: BaseConfig.Type.String,
@@ -403,7 +418,7 @@ sap.ui.define([
 					external: true
 				})) {
 				oWritableConfig.set("sapLanguage", sSAPLogonLanguage);
-				oWritableConfig.set("sapUiLanguage", sLanguage);
+				sLanguageSetByApi = sLanguage;
 				mChanges = {};
 				mChanges.language = Localization.getLanguageTag().toString();
 				var bRtl = Localization.getRTL();

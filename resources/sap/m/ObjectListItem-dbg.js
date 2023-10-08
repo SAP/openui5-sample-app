@@ -60,7 +60,7 @@ function(
 		 *
 		 * <b>Note:</b> The control must only be used in the context of a list.
 		 * @extends sap.m.ListItemBase
-		 * @version 1.118.0
+		 * @version 1.119.0
 		 *
 		 * @constructor
 		 * @public
@@ -301,7 +301,14 @@ function(
 		 */
 		ObjectListItem.prototype._hasBottomContent = function() {
 
-			return (this._hasAttributes() || this._hasStatus() || this.getShowMarkers() || this.getMarkLocked() || this._getVisibleMarkers().length > 0);
+			/**
+			 * @deprecated as of version 1.42.0
+			*/
+			if (this.getShowMarkers() || this.getMarkLocked()){
+				return true;
+			}
+
+			return (this._hasAttributes() || this._hasStatus() || this._getVisibleMarkers().length > 0);
 		};
 
 		/**
@@ -636,6 +643,7 @@ function(
 		 * @param {string} markerType the type of the marker which should be created to updated
 		 * @param {boolean} bMarked the new value
 		 * @returns {this} this pointer for chaining
+		 * @deprecated as of version 1.42.0
 		 */
 		ObjectListItem.prototype._setOldMarkers = function (markerType, bMarked) {
 			var aAllMarkers = this.getMarkers();
@@ -671,7 +679,6 @@ function(
 
 			return this;
 		};
-
 
 		/**
 		 * @private

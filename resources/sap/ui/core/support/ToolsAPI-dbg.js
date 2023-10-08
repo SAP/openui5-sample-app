@@ -7,7 +7,9 @@
 sap.ui.define([
 	"sap/ui/Global",
 	"sap/ui/core/Configuration",
+	"sap/ui/core/Element",
 	"sap/ui/core/ElementMetadata",
+	"sap/ui/core/Theming",
 	"sap/base/util/LoaderExtensions",
 	"sap/base/util/UriParameters",
 	"sap/ui/thirdparty/jquery"
@@ -15,7 +17,9 @@ sap.ui.define([
 	function(
 		Global,
 		Configuration,
+		Element,
 		ElementMetadata,
+		Theming,
 		LoaderExtensions,
 		UriParameters,
 		jQuery
@@ -93,7 +97,7 @@ sap.ui.define([
 				},
 				configurationBootstrap: window['sap-ui-config'] || Object.create(null),
 				configurationComputed: {
-					theme: Configuration.getTheme(),
+					theme: Theming.getTheme(),
 					language: Configuration.getLanguage(),
 					formatLocale: Configuration.getFormatLocale(),
 					accessibility: Configuration.getAccessibility(),
@@ -131,7 +135,7 @@ sap.ui.define([
 				var childNode = node.firstElementChild;
 				var results = resultArray;
 				var subResult = results;
-				var control = sap.ui.getCore().byId(node.id);
+				var control = Element.getElementById(node.id);
 
 				if (node.getAttribute('data-sap-ui') && control) {
 					results.push({
@@ -244,7 +248,7 @@ sap.ui.define([
 			 * @private
 			 */
 			_getProperties: function (controlId) {
-				var control = sap.ui.getCore().byId(controlId);
+				var control = Element.getElementById(controlId);
 				var properties = Object.create(null);
 
 				if (control) {
@@ -377,7 +381,7 @@ sap.ui.define([
 			 */
 			getControlBindings: function (controlId) {
 				var result = Object.create(null);
-				var control = sap.ui.getCore().byId(controlId);
+				var control = Element.getElementById(controlId);
 				var bindingContext;
 
 				if (!control) {

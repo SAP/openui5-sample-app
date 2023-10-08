@@ -68,7 +68,7 @@ sap.ui.define([
 	 * @implements sap.m.IBreadcrumbs, sap.m.IOverflowToolbarContent, sap.ui.core.IShrinkable
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -159,6 +159,14 @@ sap.ui.define([
 		this._sSeparatorSymbol = Breadcrumbs.STYLE_MAPPER[this.getSeparatorStyle()];
 		this._aCachedInvisibleTexts = [];
 		this._getInvisibleText();
+		this.MIN_WIDTH_IN_OFT = parseInt(Parameters.get({
+			name: "_sap_m_Breadcrumbs_MinWidth_OFT",
+			callback: function(sValue) {
+				this.MIN_WIDTH_IN_OFT = parseInt(sValue);
+				this._iMinWidth = this.MIN_WIDTH_IN_OFT;
+			}.bind(this)
+		}));
+		this._iMinWidth = this.MIN_WIDTH_IN_OFT;
 	};
 
 	Breadcrumbs.prototype.onBeforeRendering = function () {
@@ -195,11 +203,33 @@ sap.ui.define([
 
 	Breadcrumbs.prototype._setMinWidth = function () {
 		var oCurrentLocation = this._getCurrentLocation(),
-			sWidth = oCurrentLocation.$().width();
-
+			iWidth,
+			iDefaultMinWidthOFT;
 		// When in OFT, set min-width=width of the currentLocationText, so that it won't be truncated too much, before going into the overflow menu
-		if (this.$().hasClass("sapMTBShrinkItem") && parseInt(sWidth) > Rem.toPx(Parameters.get("_sap_m_Toolbar_ShrinkItem_MinWidth"))) {
-			this.$().css("min-width", oCurrentLocation.$().width());
+		if (this.$().hasClass("sapMTBShrinkItem")) {
+
+			if (!this._iMinWidth || this._iMinWidth !== this.MIN_WIDTH_IN_OFT) {
+				return;
+			}
+
+			this.$().removeClass("sapMTBShrinkItem");
+			iWidth = oCurrentLocation.$().width();
+
+			// Theme parameters should be resolved when reaching this point
+			iDefaultMinWidthOFT = Rem.toPx(Parameters.get({
+				name: "_sap_m_Toolbar_ShrinkItem_MinWidth",
+				callback: function(sValue) {
+					iDefaultMinWidthOFT = Rem.toPx(sValue);
+				}
+			}));
+			this.$().addClass("sapMTBShrinkItem");
+
+			if (iWidth > iDefaultMinWidthOFT) {
+				this.$().css("min-width", iWidth);
+			}
+
+			this.fireEvent("_minWidthChange");
+			this._iMinWidth = iWidth;
 		}
 	};
 
@@ -744,6 +774,8 @@ sap.ui.define([
 
 		if (oCurrentLocation.getText() !== sText) {
 			oCurrentLocation.setText(sText);
+			// Enable new measuring of the currentLocationText
+			this._iMinWidth = this.MIN_WIDTH_IN_OFT;
 			this._resetControl();
 		}
 
@@ -804,10 +836,16 @@ sap.ui.define([
 			canOverflow: true,
 			getCustomImportance: function () {
 				return "Medium";
-			}
+			},
+			invalidationEvents: ["_minWidthChange"],
+			onAfterExitOverflow: this._onAfterExitOverflow.bind(this)
 		};
 
 		return oConfig;
+	};
+
+	Breadcrumbs.prototype._onAfterExitOverflow = function () {
+		this._resetControl();
 	};
 
 	/**

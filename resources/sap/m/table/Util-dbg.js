@@ -23,7 +23,7 @@ sap.ui.define([
 	 * @namespace
 	 * @alias module:sap/m/table/Util
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @since 1.96.0
 	 * @private
 	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp
@@ -346,26 +346,28 @@ sap.ui.define([
 		}
 
 		pGetSelectAllPopover = Promise.all(
-            [new Promise(function(fnResolve) {
+			[new Promise(function(fnResolve) {
 				sap.ui.require([
 					"sap/m/Popover",
 					"sap/m/Bar",
 					"sap/m/HBox",
 					"sap/m/Title",
+					"sap/ui/core/Icon",
 					"sap/ui/core/library",
 					"sap/m/Text"
-				], function(Popover, Bar, HBox, Title, coreLib, Text) {
+				], function(Popover, Bar, HBox, Title, Icon, coreLib, Text) {
 					fnResolve({
 						Popover: Popover,
 						Bar: Bar,
 						HBox: HBox,
 						Title: Title,
+						Icon: Icon,
 						coreLib: coreLib,
 						Text: Text
 					});
 				});
 			}),
-            Core.getLibraryResourceBundle('sap.m', true)
+			Core.getLibraryResourceBundle('sap.m', true)
 		]).then(function(aResult) {
 			var oModules = aResult[0];
 			var oResourceBundle = aResult[1];
@@ -377,7 +379,7 @@ sap.ui.define([
 					contentMiddle: [
 						new oModules.HBox({
 							items: [
-								new oModules.coreLib.Icon({src: "sap-icon://message-warning", color: sIconColor})
+								new oModules.Icon({src: "sap-icon://message-warning", color: sIconColor})
 									.addStyleClass("sapUiTinyMarginEnd"),
 								new oModules.Title({text: oResourceBundle.getText("TABLE_SELECT_LIMIT_TITLE"), level: sTitleLevel})
 							],

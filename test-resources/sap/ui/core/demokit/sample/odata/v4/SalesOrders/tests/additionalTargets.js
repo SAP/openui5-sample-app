@@ -58,6 +58,7 @@ sap.ui.define([
 				name : sUIComponent || "sap.ui.core.sample.odata.v4.SalesOrders"
 			}
 		});
+		Then.onAnyPage.iTeardownMyUIComponentInTheEnd();
 
 		Opa.getContext().sViewName = "sap.ui.core.sample.odata.v4.SalesOrders.Main";
 
@@ -97,6 +98,5 @@ sap.ui.define([
 		// delete created sales orders
 		When.onAnyPage.cleanUp("SalesOrderList");
 		Then.onAnyPage.checkLog(aExpectedLogs);
-		Then.iTeardownMyUIComponent();
 	};
 });

@@ -20,7 +20,7 @@ sap.ui.define([
 		 * @class This class represents the selector plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.118.0
+		 * @version 1.119.0
 		 * @private
 		 * @alias sap.ui.core.support.plugins.Selector
 		 */
@@ -107,7 +107,7 @@ sap.ui.define([
 
 		function highlight(sId, oPlugin, bSend){
 			if (sId) {
-				var oElem = Core.byId(sId);
+				var oElem = Element.getElementById(sId);
 				if (oElem) {
 					var jPopupRef = jQuery(document.getElementById(oPlugin._sPopupId));
 					var jRef = oElem.$();

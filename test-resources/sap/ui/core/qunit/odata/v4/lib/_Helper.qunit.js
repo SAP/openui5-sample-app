@@ -3833,28 +3833,6 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
-[true, false].forEach(function (bAbsolute) {
-	var sTitle = "getReturnValueContextPath with "
-			+ (bAbsolute ? "absolute" : "relative") + " path";
-
-	QUnit.test(sTitle, function (assert) {
-		var sPathPrefix = bAbsolute ? "/" : "";
-
-		// code under test
-		assert.strictEqual(
-			_Helper.getReturnValueContextPath(
-				sPathPrefix + "Artists('42')/special.cases.Action(...)", "('77')"),
-			sPathPrefix + "Artists('77')");
-
-		// code under test
-		assert.strictEqual(
-			_Helper.getReturnValueContextPath(
-				sPathPrefix + "Artists/special.cases.Action(...)", "('77')"),
-			sPathPrefix + "Artists('77')");
-	});
-});
-
-	//*********************************************************************************************
 	QUnit.test("hasPathPrefix", function (assert) {
 		var oHelperMock = this.mock(_Helper);
 
@@ -5389,6 +5367,7 @@ sap.ui.define([
 			nested2 : ["~created21~"]
 		});
 		assert.strictEqual(oCacheEntity.nested1.$created, 0);
+		assert.ok(oCacheEntity.nested1.$transfer, true);
 		assert.deepEqual(oCacheEntity.nested1.$byPredicate, {
 			"~predicate11~" : "~created11~",
 			"~predicate12~" : "~created12~"
@@ -5397,6 +5376,7 @@ sap.ui.define([
 		assert.deepEqual(oCacheEntity.nested2.$byPredicate, {
 			"~predicate21~" : "~created21~"
 		});
+		assert.notOk("$transfer" in oCacheEntity.nested2);
 		assert.notOk("$postBodyCollection" in oCacheEntity.nested1);
 	});
 

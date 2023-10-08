@@ -3,8 +3,8 @@
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['sap/ui/thirdparty/jquery', 'sap/ui/Global'],
-	function(jQuery) {
+sap.ui.define(['sap/ui/thirdparty/jquery', 'sap/ui/core/Element', 'sap/ui/Global'],
+	function(jQuery, Element) {
 	"use strict";
 
 	/**
@@ -37,8 +37,7 @@ sap.ui.define(['sap/ui/thirdparty/jquery', 'sap/ui/Global'],
 			} else {
 				sControlId = jQuery(this).closest("[data-sap-ui]").attr("id");
 			}
-			// @evo-todo: remove this global access (for now requiring the Core module would introduce a circular dependency)
-			return sap.ui.getCore().byId(sControlId);
+			return Element.getElementById(sControlId);
 		});
 
 		return aControls.get(iIndex);

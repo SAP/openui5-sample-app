@@ -31,6 +31,7 @@ sap.ui.require([
 					name : "sap.ui.core.sample.odata.v4.DeepCreate"
 				}
 			});
+			Then.onAnyPage.iTeardownMyUIComponentInTheEnd();
 
 			Opa.getContext().sViewName = "sap.ui.core.sample.odata.v4.DeepCreate.ObjectPage";
 
@@ -66,7 +67,6 @@ sap.ui.require([
 			When.onAnyPage.cleanUp("SO_2_SOITEM");
 			Then.onAnyPage.checkLog();
 			Then.onAnyPage.analyzeSupportAssistant();
-			Then.iTeardownMyUIComponent();
 		});
 
 		QUnit.start();

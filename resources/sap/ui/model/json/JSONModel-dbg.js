@@ -48,7 +48,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.ClientModel
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @public
 	 * @alias sap.ui.model.json.JSONModel
 	 */
@@ -302,8 +302,7 @@ sap.ui.define([
 	};
 
 	/*
-	 * @see sap.ui.model.Model.prototype.bindProperty
-	 *
+	 * @see sap.ui.model.ClientModel#bindProperty
 	 */
 	JSONModel.prototype.bindProperty = function(sPath, oContext, mParameters) {
 		var oBinding = new JSONPropertyBinding(this, sPath, oContext, mParameters);

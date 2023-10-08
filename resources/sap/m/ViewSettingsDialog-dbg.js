@@ -148,7 +148,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -1359,6 +1359,9 @@ function(
 			groupItem : Core.byId(this._getSelectedGroupItem()),
 			groupDescending : this.getGroupDescending(),
 			presetFilterItem : Core.byId(this.getSelectedPresetFilterItem()),
+			/**
+			 * @deprecated as of version 1.42
+			 */
 			filterKeys : this.getSelectedFilterKeys(),
 			filterCompoundKeys: this.getSelectedFilterCompoundKeys(),
 			navPage : this._getNavContainer().getCurrentPage(),
@@ -2026,19 +2029,19 @@ function(
 
 		if (this._segmentedButton === undefined) {
 			this._segmentedButton = new SegmentedButton({
-				select : function(oEvent) {
-					var selectedId = oEvent.getParameter('id');
-					if (selectedId === that.getId() + "-sortbutton") {
+				selectionChange : function(oEvent) {
+					var selectedButtonId = oEvent.getSource().getSelectedButton();
+					if (selectedButtonId === that.getId() + "-sortbutton") {
 						that._switchToPage(0);
-					} else if (selectedId === that.getId() + "-groupbutton") {
+					} else if (selectedButtonId === that.getId() + "-groupbutton") {
 						that._switchToPage(1);
-					} else if (selectedId === that.getId() + "-filterbutton") {
+					} else if (selectedButtonId === that.getId() + "-filterbutton") {
 						that._switchToPage(2);
 					} else {
 						for (i = 0; i < iCustomTabsLength; i++) {
 							var oCustomTab = aCustomTabs[i],
 								sCustomTabId = that.getId() + that._sCustomTabsButtonsIdPrefix + oCustomTab.getId();
-							if (!that._isEmptyTab(oCustomTab) && selectedId === sCustomTabId) {
+							if (!that._isEmptyTab(oCustomTab) && selectedButtonId === sCustomTabId) {
 								that._switchToPage(oCustomTab.getId());
 								break;
 							}
@@ -3469,6 +3472,9 @@ function(
 					groupDescending     : that.getGroupDescending(),
 					presetFilterItem    : Core.byId(that.getSelectedPresetFilterItem()),
 					filterItems         : that.getSelectedFilterItems(),
+					/**
+					 * @deprecated as of version 1.42
+					 */
 					filterKeys          : that.getSelectedFilterKeys(),
 					filterCompoundKeys  : that.getSelectedFilterCompoundKeys(),
 					filterString        : that.getSelectedFilterString()

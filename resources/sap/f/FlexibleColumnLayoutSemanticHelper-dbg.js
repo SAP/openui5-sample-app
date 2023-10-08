@@ -49,7 +49,7 @@ sap.ui.define([
 	 *
 	 * For more information, see {@link sap.f.FlexibleColumnLayoutSemanticHelper#getCurrentUIState} and {@link sap.f.FlexibleColumnLayoutSemanticHelper#getNextUIState}
 	 *
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @param {sap.f.FlexibleColumnLayout} oFlexibleColumnLayout
 	 * The <code>sap.f.FlexibleColumnLayout</code> object whose state will be manipulated.
 	 *
@@ -85,7 +85,7 @@ sap.ui.define([
 	 *
 	 * <li>Value of <code>2</code> - A 2-column layout will be suggested for logical level 0.</li></ul>
 	 *
-	 * @param {string} oSettings.mode
+	 * @param {string} [oSettings.mode]
 	 * <b>Deprecated as of version 1.50</b>, use <code>maxColumnsCount</code> param
 	 * instead.
 	 *
@@ -271,7 +271,7 @@ sap.ui.define([
 	 *
 	 * @typedef {object} sap.f.FlexibleColumnLayoutSemanticHelper.UIState
 	 *
-	 * @property {string} [layout]
+	 * @property {sap.f.LayoutType} [layout]
 	 *  The value of the {@link sap.f.FlexibleColumnLayout#getLayout layout} property.
 	 * @property {number} [maxColumnsCount]
 	 *  The maximum number of columns that can be displayed at once based on the control width. See {@link sap.f.FlexibleColumnLayout#getMaxColumnsCount}

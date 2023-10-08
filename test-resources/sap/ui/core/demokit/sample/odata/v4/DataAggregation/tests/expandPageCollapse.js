@@ -113,6 +113,7 @@ sap.ui.define([
 				name : "sap.ui.core.sample.odata.v4.DataAggregation"
 			}
 		});
+		Then.onAnyPage.iTeardownMyUIComponentInTheEnd();
 
 		aInitialTableState = [{
 			level : 0,
@@ -451,6 +452,5 @@ sap.ui.define([
 		checkSubtotalsAtBottom(16, oBwSmall, true);
 
 		Then.onAnyPage.checkLog();
-		Then.iTeardownMyUIComponent();
 	};
 });

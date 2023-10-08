@@ -21,7 +21,7 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 	 * @class ViewSerializer class.
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @alias sap.ui.core.util.serializer.ViewSerializer
 	 * @private
 	 * @ui5-restricted sap.watt, com.sap.webide
@@ -31,7 +31,7 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 		constructor : function (oRootControl, oWindow, sDefaultXmlNamespace) {
 			EventProvider.apply(this);
 			this._oRootControl = oRootControl;
-			this._oWindow = oWindow || window;
+			this._oWindow = oWindow || globalThis;
 			this._mViews = {};
 			this._sDefaultXmlNamespace = sDefaultXmlNamespace;
 		}
@@ -50,6 +50,7 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 	 * Serializes all views into HTML.
 	 *
 	 * @returns {map} the serialized views. The keys are the view name.
+	 * @deprecated Since 1.119
 	 */
 	ViewSerializer.prototype.serializeToHTML = function () {
 		return this.serialize("HTML");
@@ -71,9 +72,16 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 
 	ViewSerializer.prototype._getViewType = function(oView) {
 		if (!this._sConvertToViewType) {
-			if (oView instanceof this._oWindow.sap.ui.core.mvc.HTMLView) {
+			// retrieve View classes from the (injected) window
+
+			/**
+			 * @deprecated Since 1.119.0
+			 */
+			if (oView?.isA?.("sap.ui.core.mvc.HTMLView")) {
 				return "HTML";
-			} else if (oView instanceof this._oWindow.sap.ui.core.mvc.XMLView) {
+			}
+
+			if (oView?.isA?.("sap.ui.core.mvc.XMLView")) {
 				return "XML";
 			}
 		}
@@ -90,8 +98,12 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 	ViewSerializer.prototype._serializeRecursive = function (oControl) {
 
 		assert(typeof oControl !== "undefined", "The control must not be undefined");
+
+		var UIArea = this._oWindow.sap.ui.require("sap/ui/core/UIArea");
+		var ComponentContainer = this._oWindow.sap.ui.require("sap/ui/core/ComponentContainer");
+
 		// serialize view
-		if (oControl instanceof this._oWindow.sap.ui.core.mvc.View) {
+		if (oControl?.isA?.("sap.ui.core.mvc.View")) {
 			var oViewSerializer = this._getViewSerializer(oControl, this._getViewType(oControl));
 			if (oViewSerializer) {
 				var oViewName = oControl.getViewName() || oControl.getControllerName();
@@ -101,12 +113,12 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 			}
 		}
 
-		if (oControl.getMetadata().getClass() === this._oWindow.sap.ui.core.UIArea) {
+		if (oControl.getMetadata().getClass() === UIArea) {
 			var aContent = oControl.getContent();
 			for (var i = 0; i < aContent.length; i++) {
 				this._serializeRecursive(aContent[i]);
 			}
-		} else if (oControl.getMetadata().getClass() === this._oWindow.sap.ui.core.ComponentContainer) {
+		} else if (oControl.getMetadata().getClass() === ComponentContainer) {
 			this._serializeRecursive(oControl.getComponentInstance().getRootControl());
 		} else {
 			var mAggregations = oControl.getMetadata().getAllAggregations();
@@ -118,11 +130,11 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 					if (oValue && oValue.length) {
 						for (var i = 0;i < oValue.length;i++) {
 							var oObj = oValue[i];
-							if (oObj instanceof this._oWindow.sap.ui.core.Element) {
+							if (oObj?.isA?.("sap.ui.core.Element")) {
 								this._serializeRecursive(oObj);
 							}
 						}
-					} else if (oValue instanceof this._oWindow.sap.ui.core.Element) {
+					} else if (oValue?.isA?.("sap.ui.core.Element")) {
 						this._serializeRecursive(oValue);
 					}
 				}
@@ -175,13 +187,18 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 
 		// create the appropriate view serializer
 
+		/**
+		 * @deprecated Since 1.119.0
+		 */
 		if (sType === "HTML") {
 			return new HTMLViewSerializer(
 					oView,
 					this._oWindow,
 					fnGetControlId,
 					fnGetEventHandlerName);
-		} else if (sType === "XML") {
+		}
+
+		if (sType === "XML") {
 			return new XMLViewSerializer(
 					oView,
 					this._oWindow,

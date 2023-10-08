@@ -44,6 +44,7 @@ sap.ui.define([
 					name : sUIComponent || "sap.ui.core.sample.odata.v4.SalesOrders"
 				}
 			});
+			Then.onAnyPage.iTeardownMyUIComponentInTheEnd();
 
 			// ************************************************************************************
 			// Unbound/Bound Messages
@@ -414,7 +415,6 @@ sap.ui.define([
 			When.onTheMainPage.pressConfirmStrictModeButton();
 
 			Then.onAnyPage.checkLog(aExpectedLogs);
-			Then.iTeardownMyUIComponent();
 		}
 	};
 });

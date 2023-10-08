@@ -738,7 +738,7 @@ sap.ui.predefine("sap/m/rules/IconTabBar.support", ["sap/ui/support/library", "s
 	//**********************************************************
 
 	var oIconTabBarRuleHDesign = {
-		id: "iconTabFilterWithHorizontalDesingShouldHaveIcons",
+		id: "iconTabFilterWithHorizontalDesignShouldHaveIcons",
 		audiences: [Audiences.Application],
 		categories: [Categories.FioriGuidelines],
 		enabled: true,

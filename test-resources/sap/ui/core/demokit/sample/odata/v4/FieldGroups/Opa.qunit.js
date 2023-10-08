@@ -31,6 +31,8 @@ sap.ui.require([
 						name : "sap.ui.core.sample.odata.v4.FieldGroups"
 					}
 				});
+				Then.onAnyPage.iTeardownMyUIComponentInTheEnd();
+
 				Then.onTheMainPage.checkField("firstName", "Karl");
 				Then.onTheMainPage.checkField("lastName", "Müller");
 
@@ -44,7 +46,6 @@ sap.ui.require([
 
 				Then.onAnyPage.checkLog();
 				Then.onAnyPage.analyzeSupportAssistant();
-				Then.iTeardownMyUIComponent();
 			});
 
 			opaTest("Enter a last name, leave field group and request side effects",
@@ -55,6 +56,8 @@ sap.ui.require([
 						name : "sap.ui.core.sample.odata.v4.FieldGroups"
 					}
 				});
+				Then.onAnyPage.iTeardownMyUIComponentInTheEnd();
+
 				Then.onTheMainPage.checkField("firstName", "Karl");
 				Then.onTheMainPage.checkField("lastName", "Müller");
 
@@ -71,7 +74,6 @@ sap.ui.require([
 				]);
 
 				Then.onAnyPage.checkLog();
-				Then.iTeardownMyUIComponent();
 			});
 
 			QUnit.start();

@@ -29,8 +29,10 @@ sap.ui.define(["sap/ui/core/library", "./library", "./ListItemBase", "./GroupHea
 	 *
 	 * @extends sap.m.ListItemBase
 	 *
+	 * @implements sap.m.ITableItem
+
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -39,7 +41,9 @@ sap.ui.define(["sap/ui/core/library", "./library", "./ListItemBase", "./GroupHea
 	 */
 	var GroupHeaderListItem = ListItemBase.extend("sap.m.GroupHeaderListItem", /** @lends sap.m.GroupHeaderListItem.prototype */ {
 		metadata : {
-
+			interfaces : [
+				"sap.m.ITableItem"
+			],
 			library : "sap.m",
 			properties : {
 

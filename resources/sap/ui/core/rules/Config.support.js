@@ -439,6 +439,9 @@ sap.ui.define([
 		}
 	};
 
+	/**
+	 * @deprecated Since 1.119
+	 */
 	var oAsynchronousXMLViews = {
 		id: "asynchronousXMLViews",
 		audiences: [Audiences.Application],
@@ -522,6 +525,7 @@ sap.ui.define([
 		oReuseComponents,
 		oModelPreloading,
 		oModelPreloadAndEarlyRequests,
+		/** @deprecated */
 		oAsynchronousXMLViews
 	];
 }, true);

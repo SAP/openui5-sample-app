@@ -27,6 +27,7 @@ sap.ui.require([
 					name : "sap.ui.core.sample.odata.v4.SalesOrderTP100_V4"
 				}
 			});
+			Then.onAnyPage.iTeardownMyUIComponentInTheEnd();
 
 			When.onTheMainPage.pressMoreButton("SalesOrders");
 			When.onTheMainPage.selectSalesOrder(1);
@@ -34,7 +35,6 @@ sap.ui.require([
 
 			Then.onAnyPage.checkLog();
 			Then.onAnyPage.analyzeSupportAssistant();
-			Then.iTeardownMyUIComponent();
 		});
 
 		QUnit.start();

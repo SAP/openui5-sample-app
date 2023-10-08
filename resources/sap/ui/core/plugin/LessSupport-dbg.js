@@ -42,7 +42,7 @@
 			 *        feature - DO NOT USE IN PRODUCTIVE SCENARIOS!!
 			 *
 			 * @author Peter Muessig
-			 * @version 1.118.0
+			 * @version 1.119.0
 			 * @private
 			 * @alias sap.ui.core.plugin.LessSupport
 			 */
@@ -147,7 +147,7 @@
 					if (ok) {
 						ThemeManager.themeLoaded = true;
 						setTimeout(function () {
-							ThemeManager.fireThemeChanged({theme: Theming.getTheme()});
+							ThemeManager.fireThemeApplied({theme: Theming.getTheme()});
 						}, 0);
 					} else {
 						that.iCheckThemeAppliedTimeout = setTimeout(checkThemeApplied, 100);
@@ -515,7 +515,7 @@
 			 */
 			LessSupport.refresh = function() {
 				oThis.refreshLess(true);
-				ThemeManager.checkThemeChanged();
+				ThemeManager.checkThemeApplied();
 			};
 
 			return LessSupport;

@@ -37,6 +37,7 @@ sap.ui.define([
 	 * Check controller code for obsolete function calls.
 	 *
 	 * e.g. <code>{aObsoleteFunctionNames:["jQuery.sap.sjax"]}</code>
+	 * @deprecated Since 1.119
 	 */
 	var oControllerSyncCodeCheckRule = {
 		id: "controllerSyncCodeCheck",
@@ -138,6 +139,7 @@ sap.ui.define([
 	 * Check for usage of stubbed global API, which leads to a sync request and should be avoided.
 	 *
 	 * e.g. <code>jQuery.sap.assert(bValue)</code>
+	 * @deprecated Since 1.119
 	 */
 	var oGlobalAPIRule = {
 		id: "globalApiUsage",
@@ -168,6 +170,7 @@ sap.ui.define([
 
 	/**
 	 * Check for usage of jquery.sap modules and provide a hint on the alternatives.
+	 * @deprecated Since 1.119
 	 */
 	var oJquerySapRule = {
 		id: "jquerySapUsage",
@@ -210,6 +213,7 @@ sap.ui.define([
 
 	/**
 	 * Check if deprecated factories are called.
+	 * @deprecated Since 1.119
 	 */
 	var oSyncFactoryLoadingRule = {
 		id: "syncFactoryLoading",
@@ -254,6 +258,7 @@ sap.ui.define([
 
 	/**
 	 * Check if deprecated sap.ui.core.mvc.JSView is used.
+	 * @deprecated Since 1.119
 	 */
 	 var oJSViewRule = {
 		id: "deprecatedJSViewUsage",
@@ -284,6 +289,7 @@ sap.ui.define([
 
 	/**
 	 * Check for avoidable synchronous XHRs.
+	 * @deprecated Since 1.119
 	 */
 	var oGlobalSyncXhrRule = {
 		id: "globalSyncXHR",
@@ -319,6 +325,7 @@ sap.ui.define([
 	/**
 	 * Check for deprecated API calls in general.
 	 * Not specific to factories or already covered APIs.
+	 * @deprecated Since 1.119
 	 */
 	var oDeprecatedAPIRule = {
 		id: "deprecatedApiUsage",
@@ -376,6 +383,7 @@ sap.ui.define([
 	/**
 	 * With jQuery 3.x we provide a compatibility layer to bridge gaps between jQuery 3.x and 2.x.
 	 * Our compatibility module logs warnings when deprecated jQuery APIs are used.
+	 * @deprecated Since 1.119
 	 */
 	var oJQueryThreeDeprecationRule = {
 		id: "jQueryThreeDeprecation",
@@ -476,5 +484,26 @@ sap.ui.define([
 		}
 	};
 
-	return [oControllerSyncCodeCheckRule, oGlobalAPIRule, oJquerySapRule, oSyncFactoryLoadingRule, oGlobalSyncXhrRule, oDeprecatedAPIRule, oControllerExtensionRule, oJQueryThreeDeprecationRule, oMissingSuperInitRule, oMissingSuperConstructorRule, oJSViewRule];
+	return [
+		/** @deprecated */
+		oControllerSyncCodeCheckRule,
+		/** @deprecated */
+		oGlobalAPIRule,
+		/** @deprecated */
+		oJquerySapRule,
+		/** @deprecated */
+		oSyncFactoryLoadingRule,
+		/** @deprecated */
+		oGlobalSyncXhrRule,
+		/** @deprecated */
+		oDeprecatedAPIRule,
+		/** @deprecated */
+		oJQueryThreeDeprecationRule,
+		/** @deprecated */
+		oJSViewRule,
+
+		oMissingSuperInitRule,
+		oMissingSuperConstructorRule,
+		oControllerExtensionRule
+	];
 }, true);

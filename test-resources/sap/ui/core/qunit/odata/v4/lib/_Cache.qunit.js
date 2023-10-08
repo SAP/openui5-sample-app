@@ -934,7 +934,7 @@ sap.ui.define([
 	//*********************************************************************************************
 	QUnit.test("_Cache#removeElement for a created kept-alive context inside", function (assert) {
 		var oCache = new _Cache(this.oRequestor, "EMPLOYEES"),
-			aCacheData = [{
+			aElements = [{
 				"@$ui5._" : {predicate : "('2')"},
 				"@odata.etag" : "before"
 			}, {
@@ -943,69 +943,83 @@ sap.ui.define([
 			}, {
 				"@odata.etag" : "after"
 			}],
-			oElement = aCacheData[1],
+			oElement = aElements[1],
 			iIndex;
 
-		aCacheData.$byPredicate = {
+		aElements.$byPredicate = {
 			"($uid=id-1-23)" : oElement,
 			"('1')" : oElement,
-			"('2')" : aCacheData[0]
+			"('2')" : aElements[0]
 		};
-		aCacheData.$count = 42;
-		aCacheData.$created = 23;
+		aElements.$count = 42;
+		aElements.$created = 23;
 		oCache.iActiveElements = 19;
+		oCache.aElements = aElements;
 		oCache.iLimit = 42;
 		this.mock(_Cache).expects("getElementIndex")
-			.withExactArgs(sinon.match.same(aCacheData), "('1')", 2).returns(1);
+			.withExactArgs(sinon.match.same(aElements), "('1')", 2).returns(1);
 		this.mock(_Helper).expects("addToCount")
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "",
-				sinon.match.same(aCacheData), -1);
+				sinon.match.same(aElements), -1);
 		this.mock(oCache).expects("adjustIndexes")
-			.withExactArgs("", sinon.match.same(aCacheData), 1, -1);
+			.withExactArgs("", sinon.match.same(aElements), 1, -1);
 
 		// code under test
-		iIndex = oCache.removeElement(aCacheData, 2, "('1')", "");
+		iIndex = oCache.removeElement(undefined, 2, "('1')", "");
 
 		assert.strictEqual(iIndex, 1);
-		assert.strictEqual(aCacheData.$created, 22);
+		assert.strictEqual(aElements.$created, 22);
 		assert.strictEqual(oCache.iActiveElements, 18);
 		assert.strictEqual(oCache.iLimit, 42);
-		assert.deepEqual(aCacheData, [{
+		assert.deepEqual(aElements, [{
 			"@$ui5._" : {predicate : "('2')"},
 			"@odata.etag" : "before"
 		}, {
 			"@odata.etag" : "after"
 		}]);
-		assert.deepEqual(aCacheData.$byPredicate, {"('2')" : aCacheData[0]});
+		assert.deepEqual(aElements.$byPredicate, {"('2')" : aElements[0]});
 	});
 
 	//*********************************************************************************************
 ["", "~path~"].forEach(function (sPath) {
 	[false, true].forEach(function (bTransient) {
-	QUnit.test(`_Cache#restoreElement, path=${sPath}, transient=${bTransient}`, function (assert) {
+		[false, true].forEach(function (bDefault) {
+			const sTitle = `_Cache#restoreElement, path=${sPath}, transient=${bTransient},
+ default=${bDefault}`;
+
+	QUnit.test(sTitle, function (assert) {
 		const oCache = new _Cache(this.oRequestor, "TEAMS");
 		oCache.iLimit = 234;
 		oCache.iActiveElements = 1;
 		const aElements = [];
+		aElements.$byPredicate = {};
 		aElements.$created = 2;
-
+		if (bDefault) {
+			oCache.aElements = aElements;
+		}
 		this.mock(oCache).expects("adjustIndexes")
 			.withExactArgs(sPath, sinon.match.same(aElements), 42, 1, "~iDeletedIndex~");
-		this.mock(_Helper).expects("getPrivateAnnotation")
+		const oHelperMock = this.mock(_Helper);
+		oHelperMock.expects("getPrivateAnnotation")
 			.withExactArgs("~oElement~", "transientPredicate")
 			.returns(bTransient ? "($uid=id-1-23)" : undefined);
-		this.mock(_Helper).expects("addToCount")
+		oHelperMock.expects("addToCount")
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), sPath,
 				sinon.match.same(aElements), 1);
 		this.mock(aElements).expects("splice").withExactArgs(42, 0, "~oElement~");
+		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~oElement~", "predicate")
+			.returns("~predicate~");
 
 		// code under test
-		oCache.restoreElement(aElements, 42, "~oElement~", sPath, "~iDeletedIndex~");
+		oCache.restoreElement(bDefault ? undefined : aElements, 42, "~oElement~", sPath,
+			"~iDeletedIndex~");
 
 		assert.strictEqual(oCache.iLimit, bTransient || sPath ? 234 : 235);
 		assert.strictEqual(aElements.$created, bTransient ? 3 : 2);
 		assert.strictEqual(oCache.iActiveElements, bTransient && !sPath ? 2 : 1);
+		assert.deepEqual(aElements.$byPredicate, {"~predicate~" : "~oElement~"});
 	});
+		});
 	});
 });
 
@@ -2774,7 +2788,6 @@ sap.ui.define([
 			fnPatchSent = function () {},
 			oRequestCall,
 			oRequestLock = {unlock : function () {}},
-			mTypeForMetaPath = {},
 			oUpdatePromise,
 			that = this;
 
@@ -2784,7 +2797,7 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(_GroupLock.$cached), sEntityPath)
 			.returns(SyncPromise.resolve(oEntity));
 		oCacheMock.expects("fetchTypes").withExactArgs()
-			.returns(SyncPromise.resolve(mTypeForMetaPath));
+			.returns(SyncPromise.resolve({}));
 		oHelperMock.expects("makeUpdateData")
 			.withExactArgs(["Address", "City"], "Walldorf")
 			.returns("~oUpdateData~");
@@ -3077,6 +3090,20 @@ sap.ui.define([
 				assert.strictEqual(iCount, aExpectations.length);
 			});
 		});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("Cache#getTypes", function (assert) {
+		var oCache = new _Cache(this.oRequestor, "TEAMS('42')/Foo"),
+			oSyncPromise = {
+				getResult : mustBeMocked
+			};
+
+		this.mock(oCache).expects("fetchTypes").withExactArgs().returns(oSyncPromise);
+		this.mock(oSyncPromise).expects("getResult").withExactArgs().returns("~mTypeForMetaPath~");
+
+		// code under test
+		assert.strictEqual(oCache.getTypes(), "~mTypeForMetaPath~");
 	});
 
 	//*********************************************************************************************
@@ -4670,8 +4697,7 @@ sap.ui.define([
 			oCache.mLateQueryOptions = {};
 		}
 		oHelperMock.expects("getMetaPath").withExactArgs("").returns("~resMetaPath~");
-		this.mock(oCache).expects("fetchTypes")
-			.withExactArgs().returns(SyncPromise.resolve(mTypeForMetaPath));
+		this.mock(oCache).expects("getTypes").withExactArgs().returns(mTypeForMetaPath);
 		oHelperMock.expects("buildPath").withExactArgs(oCache.sMetaPath, "~resMetaPath~")
 			.returns("~metaPath~");
 		oHelperMock.expects("getQueryOptionsForPath")
@@ -4771,8 +4797,7 @@ sap.ui.define([
 		oCache.mLateQueryOptions = {};
 		oHelperMock.expects("getMetaPath").withExactArgs("('31')/entity/path")
 			.returns("entity/path");
-		this.mock(oCache).expects("fetchTypes")
-			.withExactArgs().returns(SyncPromise.resolve(mTypeForMetaPath));
+		this.mock(oCache).expects("getTypes").withExactArgs().returns(mTypeForMetaPath);
 		oHelperMock.expects("getQueryOptionsForPath")
 			.withExactArgs(sinon.match.same(oCache.mLateQueryOptions), "('31')/entity/path")
 			.returns(mQueryOptionsForPath);
@@ -4894,8 +4919,7 @@ sap.ui.define([
 		oCache.mLateQueryOptions = {};
 		oHelperMock.expects("getMetaPath").withExactArgs("('1')/entity/path")
 			.returns("entity/path");
-		this.mock(oCache).expects("fetchTypes")
-			.withExactArgs().returns(SyncPromise.resolve(mTypeForMetaPath));
+		this.mock(oCache).expects("getTypes").withExactArgs().returns(mTypeForMetaPath);
 		oHelperMock.expects("buildPath").withExactArgs(oCache.sMetaPath, "entity/path")
 			.returns(oCache.sMetaPath + "/entity/path");
 		oHelperMock.expects("getQueryOptionsForPath")
@@ -4992,8 +5016,7 @@ sap.ui.define([
 			};
 
 		oCache.mLateQueryOptions = {};
-		this.mock(oCache).expects("fetchTypes").twice()
-			.withExactArgs().returns(SyncPromise.resolve(mTypeForMetaPath));
+		this.mock(oCache).expects("getTypes").twice().withExactArgs().returns(mTypeForMetaPath);
 		oHelperMock.expects("getQueryOptionsForPath").twice()
 			.withExactArgs(sinon.match.same(oCache.mLateQueryOptions), "")
 			.returns(mQueryOptionsForPath);
@@ -5068,7 +5091,7 @@ sap.ui.define([
 		oCache.fetchValue = function () {};
 
 		oCache.mLateQueryOptions = {};
-		this.mock(oCache).expects("fetchTypes").withExactArgs().returns(SyncPromise.resolve({}));
+		this.mock(oCache).expects("getTypes").withExactArgs().returns({});
 		this.mock(_Helper).expects("getQueryOptionsForPath")
 			.withExactArgs(sinon.match.same(oCache.mLateQueryOptions), "")
 			.returns(mQueryOptionsForPath);
@@ -5147,8 +5170,7 @@ sap.ui.define([
 			$expand : {expand : {}},
 			$select : ["select"]
 		};
-		this.mock(oCache).expects("fetchTypes").withExactArgs()
-			.returns(SyncPromise.resolve(mTypeForMetaPath));
+		this.mock(oCache).expects("getTypes").withExactArgs().returns(mTypeForMetaPath);
 		this.mock(_Helper).expects("getQueryOptionsForPath")
 			.withExactArgs(sinon.match.same(oCache.mLateQueryOptions), "")
 			.returns(mQueryOptionsForPath);
@@ -5193,6 +5215,7 @@ sap.ui.define([
 	QUnit.test("Cache#fetchLateProperty: no late properties", function (assert) {
 		var oCache = new _Cache(this.oRequestor, "Employees");
 
+		this.mock(oCache).expects("getTypes").withExactArgs().returns({});
 		this.mock(_Helper).expects("intersectQueryOptions").never();
 		this.oRequestorMock.expects("request").never();
 		this.mock(_Helper).expects("updateSelected").never();
@@ -5210,6 +5233,7 @@ sap.ui.define([
 		var oCache = new _Cache(this.oRequestor, "Employees");
 
 		oCache.mLateQueryOptions = {};
+		this.mock(oCache).expects("getTypes").withExactArgs().returns({});
 		this.mock(_Helper).expects("intersectQueryOptions").never();
 		this.oRequestorMock.expects("request").never();
 		this.mock(_Helper).expects("updateSelected").never();
@@ -5228,6 +5252,7 @@ sap.ui.define([
 			mQueryOptionsForPath = {};
 
 		oCache.mLateQueryOptions = {};
+		this.mock(oCache).expects("getTypes").withExactArgs().returns({});
 		this.mock(_Helper).expects("getMetaPath").withExactArgs("('1')").returns("");
 		this.mock(_Helper).expects("getQueryOptionsForPath")
 			.withExactArgs(sinon.match.same(oCache.mLateQueryOptions), "('1')")
@@ -5779,22 +5804,67 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("Cache#getAndRemoveValue", function (assert) {
-		var oCache = new _Cache(this.oRequestor, "SalesOrders('1')"),
-			oParent = {
-				value : "~value~"
-			};
+[false, true].forEach(function (bTransferable) {
+	QUnit.test(`Cache#getAndRemoveCollection: transferable=${bTransferable}`, function (assert) {
+		const oCache = new _Cache(this.oRequestor, "SalesOrders('1')");
+			oCache.fetchValue = function () {};
+		const aCollection = [];
+		if (bTransferable) {
+			aCollection.$transfer = true;
+		}
+		const oParent = {
+			collection : aCollection
+		};
 
-		oCache.fetchValue = function () {};
 		this.mock(oCache).expects("fetchValue")
 			.withExactArgs(sinon.match.same(_GroupLock.$cached), "path/to")
 			.returns(SyncPromise.resolve(oParent));
 		this.mock(oCache).expects("checkSharedRequest").withExactArgs();
 
 		// code under test
-		assert.strictEqual(oCache.getAndRemoveValue("path/to/value"), "~value~");
+		assert.strictEqual(oCache.getAndRemoveCollection("path/to/collection"),
+			bTransferable ? aCollection : undefined);
 
-		assert.notOk("value" in oParent);
+		if (bTransferable) {
+			assert.notOk("collection" in oParent);
+		} else {
+			assert.strictEqual(oParent.collection, aCollection);
+		}
+		assert.notOk("$transfer" in aCollection);
+	});
+});
+
+	//*********************************************************************************************
+	QUnit.test("Cache#getAndRemoveCollection: empty", function (assert) {
+		const oCache = new _Cache(this.oRequestor, "SalesOrders('1')");
+		oCache.fetchValue = function () {};
+
+		this.mock(oCache).expects("fetchValue")
+			.withExactArgs(sinon.match.same(_GroupLock.$cached), "path/to")
+			.returns(SyncPromise.resolve({}));
+		this.mock(oCache).expects("checkSharedRequest").withExactArgs();
+
+		// code under test
+		assert.strictEqual(oCache.getAndRemoveCollection("path/to/collection"), undefined);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("Cache#getAndRemoveCollection: not a collection", function (assert) {
+		const oCache = new _Cache(this.oRequestor, "SalesOrders('1')");
+		oCache.fetchValue = function () {};
+		const oParent = {
+			value : "foo"
+		};
+
+		this.mock(oCache).expects("fetchValue")
+			.withExactArgs(sinon.match.same(_GroupLock.$cached), "path/to")
+			.returns(SyncPromise.resolve(oParent));
+		this.mock(oCache).expects("checkSharedRequest").withExactArgs();
+
+		assert.throws(function () {
+			// code under test
+			oCache.getAndRemoveCollection("path/to/value");
+		}, new Error("path/to/value must point to a collection"));
 	});
 
 	//*********************************************************************************************
@@ -6647,6 +6717,8 @@ sap.ui.define([
 	QUnit.test("CollectionCache#getExclusiveFilter: no created entities", function (assert) {
 		var oCache = this.createCache("Employees");
 
+		this.mock(oCache).expects("getTypes").never();
+
 		// code under test
 		assert.strictEqual(oCache.getExclusiveFilter(), undefined);
 	});
@@ -6672,8 +6744,7 @@ sap.ui.define([
 			oHelperMock = this.mock(_Helper),
 			mTypeForMetaPath = {};
 
-		this.mock(oCache).expects("fetchTypes")
-			.returns(SyncPromise.resolve(mTypeForMetaPath));
+		this.mock(oCache).expects("getTypes").returns(mTypeForMetaPath);
 		oCache.aElements.$created = 0;
 		if (oFixture.single || oFixture.multiple) {
 			oCache.aElements.unshift(oElement0);
@@ -7408,8 +7479,8 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-[false, true].forEach(function (bError) {
-	QUnit.test("CollectionCache#requestElements: error=" + bError, function (assert) {
+[false, true, undefined].forEach(function (bSuccess) { // undefined -> obsolete
+	QUnit.test("CollectionCache#requestElements: success=" + bSuccess, function (assert) {
 		var oCache = this.createCache("Employees"),
 			oCacheMock = this.mock(oCache),
 			oCheckRangeExpectation,
@@ -7419,15 +7490,15 @@ sap.ui.define([
 			iStart = 0,
 			oFetchPromise = Promise.resolve("~mTypes~"),
 			oHandleResponseExpectation,
+			oPromise,
 			oResetExpectation, // avoid "was used before it was defined"
 			oRequestPromise = Promise.resolve().then(function () {
 				oCheckRangeExpectation = oCacheMock.expects("checkRange")
-					.withExactArgs(sinon.match(function (oPromise) {
-							return oPromise === oFillExpectation.args[0][0];
-						}), iStart, iEnd);
-				if (bError) {
-					oResetExpectation = oCacheMock.expects("fill")
-						.withExactArgs(undefined, iStart, iEnd);
+					.exactly(bSuccess !== undefined ? 1 : 0)
+					.withExactArgs(sinon.match.same(oPromise), iStart, iEnd);
+				oResetExpectation = oCacheMock.expects("fill").exactly(bSuccess === false ? 1 : 0)
+					.withExactArgs(undefined, iStart, iEnd);
+				if (bSuccess === false) {
 					throw oError;
 				}
 				return "~oResult~";
@@ -7442,33 +7513,36 @@ sap.ui.define([
 				/*oPayload*/undefined, "~fnDataRequested~")
 			.returns(oRequestPromise);
 		oCacheMock.expects("fetchTypes").withExactArgs().returns(oFetchPromise);
-		oHandleResponseExpectation = oCacheMock.expects("handleResponse").exactly(bError ? 0 : 1)
+		oHandleResponseExpectation = oCacheMock.expects("handleResponse").exactly(bSuccess ? 1 : 0)
 			.withExactArgs("~oResult~", iStart, "~mTypes~")
 			.returns("~iFiltered~");
-		oCacheMock.expects("handleCount").exactly(bError ? 0 : 1)
+		oCacheMock.expects("handleCount").exactly(bSuccess ? 1 : 0)
 			.withExactArgs("~oGroupLock~", 0, iStart, iEnd, "~oResult~", "~iFiltered~");
 		oFillExpectation = oCacheMock.expects("fill")
 			.withExactArgs(sinon.match.instanceOf(SyncPromise), iStart, iEnd);
 
 		// code under test
-		oCache.requestElements(iStart, iEnd, "~oGroupLock~", 0, "~fnDataRequested~");
+		oPromise = oCache.requestElements(iStart, iEnd, "~oGroupLock~", 0, "~fnDataRequested~");
 
+		assert.deepEqual(oCache.aReadRequests, [{iStart, iEnd}]);
+		if (bSuccess === undefined) {
+			oCache.aReadRequests[0].obsolete = true;
+		}
 		assert.strictEqual(oCache.bSentRequest, true);
+		assert.strictEqual(oFillExpectation.args[0][0], oPromise);
 
-		return Promise.all([
-			oFetchPromise,
-			oRequestPromise.catch(function () {})
-		]).then(function () {
-			var oPromise = oFillExpectation.args[0][0];
-
-			return oPromise.then(function () {
-				assert.notOk(bError);
-				assert.ok(oCheckRangeExpectation.calledBefore(oHandleResponseExpectation));
-			}, function (oRequestError) {
-				assert.ok(bError);
+		return oPromise.then(function () {
+			assert.ok(bSuccess);
+			assert.ok(oCheckRangeExpectation.calledBefore(oHandleResponseExpectation));
+		}, function (oRequestError) {
+			assert.notOk(bSuccess);
+			if (bSuccess === false) {
 				assert.strictEqual(oRequestError, oError);
 				assert.ok(oCheckRangeExpectation.calledBefore(oResetExpectation));
-			});
+			} else {
+				assert.ok(oRequestError.canceled);
+				assert.strictEqual(oRequestError.message, "Request is obsolete");
+			}
 		});
 	});
 });
@@ -9932,8 +10006,7 @@ sap.ui.define([
 					oCacheMock.expects("keepOnlyGivenElements").exactly(bSingle ? 0 : 1)
 						.withExactArgs(aPredicates).callThrough(); // too hard to refactor :-(
 					// Note: fetchTypes() would have been triggered by read() already
-					oCacheMock.expects("fetchTypes").withExactArgs()
-						.returns(SyncPromise.resolve(mTypeForMetaPath));
+					oCacheMock.expects("getTypes").withExactArgs().returns(mTypeForMetaPath);
 					oCache.beforeUpdateSelected = function () {};
 					for (i = 0; i < iReceivedLength; i += 1) { // prepare request/response
 						sPredicate = "('" + oFixture.aValues[i].key + "')";
@@ -10053,7 +10126,6 @@ sap.ui.define([
 			oPromise,
 			mQueryOptions = {},
 			sResourcePath = "TEAMS('42')/Foo",
-			mTypeForMetaPath = {},
 			oCache = this.createCache(sResourcePath);
 
 		// cache preparation
@@ -10062,8 +10134,7 @@ sap.ui.define([
 		oCache.aElements.$byPredicate = mByPredicate;
 		oCache.mLateQueryOptions = mLateQueryOptions;
 
-		this.mock(oCache).expects("fetchTypes").withExactArgs()
-			.returns(SyncPromise.resolve(mTypeForMetaPath));
+		this.mock(oCache).expects("getTypes").withExactArgs().returns({});
 		this.mock(Object).expects("assign")
 			.withExactArgs({}, sinon.match.same(oCache.mQueryOptions),
 				sinon.match.same(oCache.mLateQueryOptions))
@@ -10102,10 +10173,7 @@ sap.ui.define([
 		// Note: fill cache with more than just "visible" rows
 		return this.mockRequestAndRead(oCache, 0, sResourcePath, 0, 4, 4, undefined, "26")
 			.then(function () {
-				var mTypeForMetaPath = {};
-
-				that.mock(oCache).expects("fetchTypes").withExactArgs()
-					.returns(SyncPromise.resolve(mTypeForMetaPath));
+				that.mock(oCache).expects("getTypes").withExactArgs().returns({});
 				that.mock(_Helper).expects("intersectQueryOptions").returns({/*don't care*/});
 				that.mock(oCache).expects("keepOnlyGivenElements").withExactArgs([])
 					.returns([]);
@@ -10177,8 +10245,7 @@ sap.ui.define([
 				oCache.aElements[2].Bar = {
 					"@$ui5._" : {predicate : "(2)"}
 				};
-				that.mock(oCache).expects("fetchTypes").withExactArgs()
-					.returns(SyncPromise.resolve(mTypeForMetaPath));
+				that.mock(oCache).expects("getTypes").withExactArgs().returns(mTypeForMetaPath);
 				that.mock(Object).expects("assign")
 					.withExactArgs({}, sinon.match.same(oCache.mQueryOptions),
 						sinon.match.same(oCache.mLateQueryOptions))
@@ -10252,8 +10319,7 @@ sap.ui.define([
 					var mTypeForMetaPath = {};
 
 					oCache.aElements[0] = undefined; // can result from a failed requestElements
-					oCacheMock.expects("fetchTypes").withExactArgs()
-						.returns(SyncPromise.resolve(mTypeForMetaPath));
+					oCacheMock.expects("getTypes").withExactArgs().returns(mTypeForMetaPath);
 					that.mock(Object).expects("assign")
 						.withExactArgs({}, sinon.match.same(oCache.mQueryOptions),
 							sinon.match.same(oCache.mLateQueryOptions))
@@ -10332,8 +10398,7 @@ sap.ui.define([
 			oCache.aElements.push(oElement);
 			oCache.aElements.$byPredicate["('c')"] = oElement;
 
-			this.mock(oCache).expects("fetchTypes").withExactArgs()
-				.returns(SyncPromise.resolve(mTypeForMetaPath));
+			this.mock(oCache).expects("getTypes").withExactArgs().returns(mTypeForMetaPath);
 			this.mock(oCache).expects("checkSharedRequest").withExactArgs();
 			this.mock(Object).expects("assign")
 				.withExactArgs({}, sinon.match.same(oCache.mQueryOptions),
@@ -10651,15 +10716,26 @@ sap.ui.define([
 		oCache.mChangeListeners = mChangeListeners;
 		oCache.sContext = "~context~";
 		oCache.aElements.$count = oCache.iLimit = 3;
+		oCache.aReadRequests = [{iStart : 1, iEnd : 2}, {iStart : 3, iEnd : 4}];
 
 		oSetQueryOptionsExpectation = this.mock(oCache).expects("setQueryOptions")
 			.withExactArgs("~mQueryOptions~", true);
 		oFireChangeExpectation = this.mock(_Helper).expects("fireChange")
-			.withExactArgs({"" : "~listeners~"}, "");
+			.withExactArgs({"" : "~listeners~"}, "")
+			.callsFake(function () {
+				assert.deepEqual(oCache.aReadRequests, [
+					{iStart : 1, iEnd : 2, obsolete : true},
+					{iStart : 3, iEnd : 4, obsolete : true}
+				]);
+			});
 
 		// code under test
 		oCache.reset([], undefined, "~mQueryOptions~");
 
+		assert.deepEqual(oCache.aReadRequests, [
+			{iStart : 1, iEnd : 2, obsolete : true},
+			{iStart : 3, iEnd : 4, obsolete : true}
+		]);
 		assert.strictEqual(oCache.aElements, aElements);
 		assert.strictEqual(oCache.aElements.length, 0);
 		assert.strictEqual(oCache.aElements.$created, 0);
@@ -12488,15 +12564,23 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("CollectionCache#drop", function (assert) {
-		var oCache = this.createCache("Employees");
-
+[undefined, "($uid=id-1-23)"].forEach((sTransientPredicate) => {
+	QUnit.test(`CollectionCache#drop, ${sTransientPredicate}`, function (assert) {
+		const oCache = this.createCache("Employees");
 		oCache.aElements[23] = "~b~";
 		oCache.aElements.$byPredicate = {
 			"('a')" : "~a~",
 			"('b')" : "~b~",
 			"('c')" : "~c~"
 		};
+		oCache.aElements.$created = 7;
+		oCache.iActiveElements = 5;
+		oCache.iLimit = 42;
+		if (sTransientPredicate) {
+			oCache.aElements.$byPredicate[sTransientPredicate] = "~b~";
+		}
+		this.mock(_Helper).expects("getPrivateAnnotation")
+			.withExactArgs("~b~", "transientPredicate").returns(sTransientPredicate);
 
 		// code under test
 		oCache.drop(23, "('b')");
@@ -12507,6 +12591,22 @@ sap.ui.define([
 			"('a')" : "~a~",
 			"('c')" : "~c~"
 		});
+		assert.strictEqual(oCache.aElements.$created, sTransientPredicate ? 6 : 7);
+		assert.strictEqual(oCache.iActiveElements, sTransientPredicate ? 4 : 5);
+		assert.strictEqual(oCache.iLimit, sTransientPredicate ? 43 : 42);
+	});
+});
+
+	//*********************************************************************************************
+	QUnit.test("CollectionCache#drop: Must not drop a transient element", function (assert) {
+		const oCache = this.createCache("Employees");
+		oCache.aElements[23] = {"@$ui5.context.isTransient" : true};
+		this.mock(_Helper).expects("getPrivateAnnotation").never();
+
+		assert.throws(function () {
+			// code under test
+			oCache.drop(23, "n/a");
+		}, new Error("Must not drop a transient element"));
 	});
 
 	//*********************************************************************************************
@@ -12824,7 +12924,7 @@ sap.ui.define([
 
 		// refreshKeptElements
 		oCacheMock.expects("checkSharedRequest").withExactArgs();
-		oCacheMock.expects("fetchTypes").returns(SyncPromise.resolve(mTypes));
+		oCacheMock.expects("getTypes").returns(mTypes);
 		this.mock(this.oRequestor).expects("request")
 			.withExactArgs("GET", "Employees?$filter=" + oFixture.sFilter,
 				sinon.match.same(oGroupLock))
@@ -12868,6 +12968,7 @@ sap.ui.define([
 	QUnit.test("refreshKeptElements w/o kept-alive element", function (assert) {
 		var oCache = _Cache.create(this.oRequestor, "Employees", {});
 
+		this.mock(oCache).expects("getTypes").never();
 		this.mock(oCache).expects("checkSharedRequest").withExactArgs();
 		this.mock(oCache.oRequestor).expects("request").never();
 

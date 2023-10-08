@@ -83,7 +83,7 @@ function(
 	 *
 	 *
 	 * @author Frank Weigel
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @since 0.8.6
 	 * @alias sap.ui.base.ManagedObjectMetadata
 	 * @extends sap.ui.base.Metadata
@@ -441,7 +441,7 @@ function(
 			this._getTarget = (function(sIdSuffix) {
 				return function() {
 					Element = Element || sap.ui.require("sap/ui/core/Element");
-					return Element && Element.registry.get(this.getId() + sIdSuffix); // "this" context is the ManagedObject instance
+					return Element && Element.getElementById(this.getId() + sIdSuffix); // "this" context is the ManagedObject instance
 				};
 			})(oForwardTo.idSuffix);
 
@@ -2027,7 +2027,8 @@ function(
 	 * Get the prefix used for the generated IDs from configuration
 	 *
 	 * @return {string} The prefix for the generated IDs
-	 * @private
+	 * @public
+	 * @since 1.119.0
 	 */
 	ManagedObjectMetadata.getUIDPrefix = function() {
 		if (sUIDPrefix === undefined) {

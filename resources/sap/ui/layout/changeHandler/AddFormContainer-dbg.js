@@ -17,7 +17,7 @@ sap.ui.define([
 		* Change handler for adding a form group.
 		* @alias sap.ui.layout.changeHandler.AddFormContainer
 		* @author SAP SE
-		* @version 1.118.0
+		* @version 1.119.0
 		* @experimental Since 1.48.0
 		*/
 	var AddGroup = { };

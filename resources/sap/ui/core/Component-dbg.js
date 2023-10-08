@@ -10,6 +10,7 @@ sap.ui.define([
 	'./ComponentMetadata',
 	'./Element',
 	'sap/base/config',
+	'sap/base/i18n/Localization',
 	'sap/base/util/extend',
 	'sap/base/util/deepExtend',
 	'sap/base/util/merge',
@@ -35,6 +36,7 @@ sap.ui.define([
 	ComponentMetadata,
 	Element,
 	BaseConfig,
+	Localization,
 	extend,
 	deepExtend,
 	merge,
@@ -232,7 +234,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -785,36 +787,41 @@ sap.ui.define([
 		// init the component models
 		this.initComponentModels();
 
-		// error handler (if exists)
-		if (this.onWindowError) {
-			this._fnWindowErrorHandler = function(oEvent) {
-				var oError = oEvent.originalEvent;
-				this.onWindowError(oError.message, oError.filename, oError.lineno);
+		/**
+		 * @deprecated Since 1.119
+		 */
+		(() => {
+			// error handler (if exists)
+			if (this.onWindowError) {
+				this._fnWindowErrorHandler = function(oEvent) {
+					var oError = oEvent.originalEvent;
+					this.onWindowError(oError.message, oError.filename, oError.lineno);
 
-			}.bind(this);
-			window.addEventListener("error", this._fnWindowErrorHandler);
-		}
+				}.bind(this);
+				window.addEventListener("error", this._fnWindowErrorHandler);
+			}
 
-		// before unload handler (if exists)
-		if (this.onWindowBeforeUnload) {
-			this._fnWindowBeforeUnloadHandler = function(oEvent) {
-				var vReturnValue = this.onWindowBeforeUnload.apply(this, arguments);
-				// set returnValue for Chrome
-				if (typeof (vReturnValue) === 'string') {
-					oEvent.returnValue = vReturnValue;
-					oEvent.preventDefault();
-					return vReturnValue;
-				}
-			}.bind(this);
-			window.addEventListener("beforeunload", this._fnWindowBeforeUnloadHandler);
-		}
+			// before unload handler (if exists)
+			if (this.onWindowBeforeUnload) {
+				this._fnWindowBeforeUnloadHandler = function(oEvent) {
+					var vReturnValue = this.onWindowBeforeUnload.apply(this, arguments);
+					// set returnValue for Chrome
+					if (typeof (vReturnValue) === 'string') {
+						oEvent.returnValue = vReturnValue;
+						oEvent.preventDefault();
+						return vReturnValue;
+					}
+				}.bind(this);
+				window.addEventListener("beforeunload", this._fnWindowBeforeUnloadHandler);
+			}
 
-		// unload handler (if exists)
-		if (this.onWindowUnload) {
+			// unload handler (if exists)
+			if (this.onWindowUnload) {
 
-			this._fnWindowUnloadHandler = this.onWindowUnload.bind(this);
-			window.addEventListener("unload", this._fnWindowUnloadHandler);
-		}
+				this._fnWindowUnloadHandler = this.onWindowUnload.bind(this);
+				window.addEventListener("unload", this._fnWindowUnloadHandler);
+			}
+		})();
 
 	};
 
@@ -858,19 +865,24 @@ sap.ui.define([
 		}
 		delete this._mManifestModels;
 
-		// remove the event handlers
-		if (this._fnWindowErrorHandler) {
-			window.removeEventListener("error", this._fnWindowErrorHandler);
-			delete this._fnWindowErrorHandler;
-		}
-		if (this._fnWindowBeforeUnloadHandler) {
-			window.removeEventListener("beforeunload", this._fnWindowBeforeUnloadHandler);
-			delete this._fnWindowBeforeUnloadHandler;
-		}
-		if (this._fnWindowUnloadHandler) {
-			window.removeEventListener("unload", this._fnWindowUnloadHandler);
-			delete this._fnWindowUnloadHandler;
-		}
+		/**
+		 * @deprecated Since 1.119
+		 */
+		(() => {
+			// remove the event handlers
+			if (this._fnWindowErrorHandler) {
+				window.removeEventListener("error", this._fnWindowErrorHandler);
+				delete this._fnWindowErrorHandler;
+			}
+			if (this._fnWindowBeforeUnloadHandler) {
+				window.removeEventListener("beforeunload", this._fnWindowBeforeUnloadHandler);
+				delete this._fnWindowBeforeUnloadHandler;
+			}
+			if (this._fnWindowUnloadHandler) {
+				window.removeEventListener("unload", this._fnWindowUnloadHandler);
+				delete this._fnWindowUnloadHandler;
+			}
+		})();
 
 		// destroy event bus
 		if (this._oEventBus) {
@@ -912,10 +924,8 @@ sap.ui.define([
 		ManagedObject.prototype.destroy.apply(this, arguments);
 
 		// unregister for messaging (on Messaging)
-		var Messaging = sap.ui.require("sap/ui/core/Messaging");
-		if (Messaging) {
-			Messaging.unregisterObject(this);
-		}
+		const Messaging = sap.ui.require("sap/ui/core/Messaging");
+		Messaging?.unregisterObject(this);
 
 		// manifest exit (unload includes, ... / unregister customzing)
 		//   => either call exit on the instance specific manifest or the static one on the ComponentMetadata
@@ -1396,6 +1406,8 @@ sap.ui.define([
 	 * @since 1.15.1
 	 * @name sap.ui.core.Component.prototype.onWindowBeforeUnload
 	 * @function
+	 * @deprecated Since version 1.119, recommended to use the browser-native page lifecycle API,
+	 * providing events such as 'pageshow' and 'pagehide'
 	 */
 	//onWindowBeforeUnload : function() {},
 
@@ -1409,6 +1421,9 @@ sap.ui.define([
 	 * @since 1.15.1
 	 * @name sap.ui.core.Component.prototype.onWindowUnload
 	 * @function
+	 * @deprecated Since 1.119. Newer browser versions deprecate the browser-native 'unload' event.
+	 * Therefore, the former API won't reliably work anymore. Please have a look at the
+	 * browser-native page lifecycle API, e.g. its events 'pageshow' and 'pagehide'.
 	 */
 	//onWindowUnload : function() {},
 
@@ -1424,6 +1439,8 @@ sap.ui.define([
 	 * @since 1.15.1
 	 * @name sap.ui.core.Component.prototype.onWindowError
 	 * @function
+	 * @deprecated Since version 1.119, recommended to use the browser-native API
+	 * to listen for errors: window.addEventListener("error", function() { ... })
 	 */
 	//onWindowError : null, // function(sMessage, sFile, iLine) - function not added directly as it might result in bad stack traces in older browsers
 
@@ -2513,15 +2530,15 @@ sap.ui.define([
 		var oOwnerComponent = Component.get(ManagedObject._sOwnerId);
 
 		if (Array.isArray(vConfig.activeTerminologies) && vConfig.activeTerminologies.length &&
-			Array.isArray(Configuration.getActiveTerminologies()) && Configuration.getActiveTerminologies().length) {
-			if (JSON.stringify(vConfig.activeTerminologies) !== JSON.stringify(Configuration.getActiveTerminologies())) {
+			Array.isArray(Localization.getActiveTerminologies()) && Localization.getActiveTerminologies().length) {
+			if (JSON.stringify(vConfig.activeTerminologies) !== JSON.stringify(Localization.getActiveTerminologies())) {
 				Log.warning(bLegacy ? "sap.ui.component: " : "Component.create: " +
-					"The 'activeTerminolgies' passed to the component factory differ from the ones defined on the global 'sap.ui.core.Configuration#getActiveTerminologies';" +
+					"The 'activeTerminolgies' passed to the component factory differ from the ones defined on the global 'sap/base/i18n/Localization.getActiveTerminologies';" +
 					"This might lead to inconsistencies; ResourceModels that are not defined in the manifest and created by the component will use the globally configured terminologies.");
 			}
 		}
 		// get terminologies information: API -> Owner Component -> Configuration
-		var aActiveTerminologies = vConfig.activeTerminologies || (oOwnerComponent && oOwnerComponent.getActiveTerminologies()) || Configuration.getActiveTerminologies();
+		var aActiveTerminologies = vConfig.activeTerminologies || (oOwnerComponent && oOwnerComponent.getActiveTerminologies()) || Localization.getActiveTerminologies();
 
 		// Inherit cacheTokens from owner component if not defined in asyncHints
 		if (!vConfig.asyncHints || !vConfig.asyncHints.cacheTokens) {
@@ -2585,7 +2602,7 @@ sap.ui.define([
 			 */
 			var bHandleValidation = oInstance.getMetadata()._getManifestEntry("/sap.ui5/handleValidation");
 			if (bHandleValidation !== undefined || vConfig.handleValidation) {
-				var Messaging = sap.ui.require("sap/ui/core/Messaging");
+				const Messaging = sap.ui.require("sap/ui/core/Messaging");
 				if (Messaging) {
 					Messaging.registerObject(oInstance, bHandleValidation === undefined ? vConfig.handleValidation : bHandleValidation);
 				} else {

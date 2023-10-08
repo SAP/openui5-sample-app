@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.CompositeType
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @alias sap.ui.model.type.DateInterval
 	 * @param {object} [oFormatOptions]
@@ -304,7 +304,6 @@ sap.ui.define([
 	 * @returns {string|undefined}
 	 *   The language-dependent placeholder text or <code>undefined</code> if the type does not offer a placeholder
 	 *
-	 * @experimental As of version 1.114.0
 	 * @public
 	 */
 	DateInterval.prototype.getPlaceholderText = function () {

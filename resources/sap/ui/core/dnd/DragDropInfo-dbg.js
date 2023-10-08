@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["./DragInfo", "./DropInfo", "sap/base/Log"],
-	function(DragInfo, DropInfo, Log) {
+sap.ui.define(["sap/ui/core/Element", "./DragInfo", "./DropInfo", "sap/base/Log"],
+	function(Element, DragInfo, DropInfo, Log) {
 	"use strict";
 
 	/**
@@ -22,7 +22,7 @@ sap.ui.define(["./DragInfo", "./DropInfo", "sap/base/Log"],
 	 * @extends sap.ui.core.dnd.DropInfo
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @public
 	 * @since 1.52
@@ -59,7 +59,7 @@ sap.ui.define(["./DragInfo", "./DropInfo", "sap/base/Log"],
 			 * @param {object} oControlEvent.getParameters
 			 * @param {sap.ui.core.Element} oControlEvent.getParameters.target The target element that will be dragged
 			 * @param {sap.ui.core.dnd.DragSession} oControlEvent.getParameters.dragSession The UI5 <code>dragSession</code> object that exists only during drag and drop
-			 * @param {Event} oControlEvent.getParameters.browserEvent The underlying browser event
+			 * @param {DragEvent} oControlEvent.getParameters.browserEvent The underlying browser event
 			 * @public
 			 */
 			dragStart: {
@@ -76,7 +76,7 @@ sap.ui.define(["./DragInfo", "./DropInfo", "sap/base/Log"],
 			 * @param {object} oControlEvent.getParameters
 			 * @param {sap.ui.core.Element} oControlEvent.getParameters.target The target element that is being dragged
 			 * @param {sap.ui.core.dnd.DragSession} oControlEvent.getParameters.dragSession The UI5 <code>dragSession</code> object that exists only during drag and drop
-			 * @param {Event} oControlEvent.getParameters.browserEvent The underlying browser event
+			 * @param {DragEvent} oControlEvent.getParameters.browserEvent The underlying browser event
 			 * @public
 			 * @since 1.56
 			 */
@@ -91,7 +91,7 @@ sap.ui.define(["./DragInfo", "./DropInfo", "sap/base/Log"],
 	DragDropInfo.prototype.getDropTarget = function() {
 		var sTargetElement = this.getTargetElement();
 		if (sTargetElement) {
-			return sap.ui.getCore().byId(sTargetElement);
+			return Element.getElementById(sTargetElement);
 		}
 
 		return this.getParent();

@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.BasePanel
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @private
 	 * @ui5-restricted sap.m, sap.ui.mdc

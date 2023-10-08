@@ -14,6 +14,7 @@ sap.ui.define([], function () {
 					name : sUIComponent || "sap.ui.core.sample.odata.v4.SalesOrders"
 				}
 			});
+			Then.onAnyPage.iTeardownMyUIComponentInTheEnd();
 
 			When.onTheMainPage.firstSalesOrderIsVisible();
 
@@ -103,7 +104,6 @@ sap.ui.define([], function () {
 			When.onTheValueHelpPopover.close();
 
 			Then.onAnyPage.checkLog();
-			Then.iTeardownMyUIComponent();
 		}
 	};
 });

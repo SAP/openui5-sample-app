@@ -10,8 +10,9 @@
 sap.ui.define([
 	"sap/m/library",
 	"sap/m/Popover",
-	"sap/m/ValueStateHeader"
-], function (library, Popover, ValueStateHeader) {
+	"sap/m/ValueStateHeader",
+	"sap/ui/core/Configuration"
+], function (library, Popover, ValueStateHeader, Configuration) {
 	"use strict";
 
 	// shortcut for sap.m.PlacementType
@@ -26,6 +27,7 @@ sap.ui.define([
 		 * @returns {sap.m.Popover} The newly created picker.
 		 */
 		this.createPopover = function (oInput) {
+			var bRTL = Configuration.getRTL();
 			var that = this,
 				oPopover = new Popover(oInput.getId() + "-popup", {
 					showArrow: false,
@@ -41,8 +43,15 @@ sap.ui.define([
 						}
 					},
 					afterOpen: function () {
-						// Subtract the side margins of the suggestions popover from the dynamic Popover's content width to avoid overflow
-						this.getDomRef("cont").style.maxWidth = parseInt(this.getDomRef("cont").style.maxWidth) - 32 + "px";
+						if (!parseInt(this.getDomRef().style.right) && bRTL ) {
+							this.addStyleClass("sapUiSmallMarginBegin");
+						} else if (!parseInt(this.getDomRef().style.left) && !bRTL) {
+							this.addStyleClass("sapUiSmallMarginBegin");
+						} else {
+							this.removeStyleClass("sapUiSmallMarginBegin");
+						}
+
+						this.addStyleClass("sapUiSmallMarginEnd");
 					}
 				});
 

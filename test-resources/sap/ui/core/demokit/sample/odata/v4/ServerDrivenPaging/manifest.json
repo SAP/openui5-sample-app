@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR",
 		"applicationVersion" : {
-			"version" : "1.118.0"
+			"version" : "1.119.0"
 		},
 		"description" : "Test OData V4 server-driven paging",
 		"dataSources" : {

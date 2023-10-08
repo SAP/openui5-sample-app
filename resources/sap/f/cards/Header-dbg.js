@@ -22,9 +22,10 @@ sap.ui.define([
 ) {
 	"use strict";
 
-	var AvatarShape = mLibrary.AvatarShape;
-	var AvatarColor = mLibrary.AvatarColor;
-	var AvatarImageFitType = mLibrary.AvatarImageFitType;
+	const AvatarShape = mLibrary.AvatarShape;
+	const AvatarColor = mLibrary.AvatarColor;
+	const AvatarImageFitType = mLibrary.AvatarImageFitType;
+	const AvatarSize = mLibrary.AvatarSize;
 
 	/**
 	 * Constructor for a new <code>Header</code>.
@@ -47,7 +48,7 @@ sap.ui.define([
 	 * @implements sap.f.cards.IHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -121,7 +122,14 @@ sap.ui.define([
 				 *
 				 * @experimental Since 1.83 this feature is experimental and the API may change.
 				 */
-				iconVisible: { type: "boolean", defaultValue: true }
+				iconVisible: { type: "boolean", defaultValue: true },
+
+				/**
+				 * Defines the size of the icon.
+				 *
+				 * @experimental Since 1.119 this feature is experimental and the API may change.
+				 */
+				iconSize: { type: "sap.m.AvatarSize", defaultValue: AvatarSize.S }
 			},
 			aggregations: {
 
@@ -230,13 +238,13 @@ sap.ui.define([
 			.setText(this.getSubtitle())
 			.setMaxLines(this.getSubtitleMaxLines());
 
-		var oAvatar = this._getAvatar();
-
-		oAvatar.setDisplayShape(this.getIconDisplayShape());
-		oAvatar.setSrc(this.getIconSrc());
-		oAvatar.setInitials(this.getIconInitials());
-		oAvatar.setTooltip(this.getIconAlt());
-		oAvatar.setBackgroundColor(this.getIconBackgroundColor());
+		this._getAvatar()
+			.setDisplayShape(this.getIconDisplayShape())
+			.setSrc(this.getIconSrc())
+			.setInitials(this.getIconInitials())
+			.setTooltip(this.getIconAlt())
+			.setBackgroundColor(this.getIconBackgroundColor())
+			.setDisplaySize(this.getIconSize());
 	};
 
 	/**
@@ -271,38 +279,31 @@ sap.ui.define([
 	 * @returns {string} IDs of controls
 	 */
 	Header.prototype._getAriaLabelledBy = function () {
-		var sCardTypeId = "",
-			sTitleId = "",
-			sSubtitleId = "",
-			sStatusTextId = "",
-			sAvatarId = "",
-			sIds;
+		const aIds = [];
 
 		if (this.getParent() && this.getParent()._ariaText) {
-			sCardTypeId = this.getParent()._ariaText.getId();
+			aIds.push(this.getParent()._ariaText.getId());
 		}
 
 		if (this.getTitle()) {
-			sTitleId = this._getTitle().getId();
+			aIds.push(this._getTitle().getId());
 		}
 
 		if (this.getSubtitle()) {
-			sSubtitleId = this._getSubtitle().getId();
+			aIds.push(this._getSubtitle().getId());
 		}
 
 		if (this.getStatusText()) {
-			sStatusTextId = this.getId() + "-status";
+			aIds.push(this.getId() + "-status");
 		}
 
 		if (this.getIconSrc() || this.getIconInitials()) {
-			sAvatarId = this.getId() + "-ariaAvatarText";
+			aIds.push(this.getId() + "-ariaAvatarText");
 		}
 
-		sIds = sCardTypeId + " " + sTitleId + " " + sSubtitleId + " " + sStatusTextId + " " + sAvatarId;
+		aIds.push(this._getBannerLinesIds());
 
-		// remove whitespace from both sides
-		// and merge consecutive spaces into one
-		return sIds.replace(/ {2,}/g, ' ').trim();
+		return aIds.filter((sElement) => { return !!sElement; }).join(" ");
 	};
 
 	Header.prototype.isLoading = function () {

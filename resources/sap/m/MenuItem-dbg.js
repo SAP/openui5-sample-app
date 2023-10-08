@@ -23,7 +23,7 @@ sap.ui.define(['./library', 'sap/ui/core/Item', 'sap/ui/base/ManagedObjectObserv
 		 * @extends sap.ui.core.Item
 		 *
 		 * @author SAP SE
-		 * @version 1.118.0
+		 * @version 1.119.0
 		 *
 		 * @constructor
 		 * @public
@@ -217,12 +217,12 @@ sap.ui.define(['./library', 'sap/ui/core/Item', 'sap/ui/base/ManagedObjectObserv
 			return Item.prototype.destroy.apply(this, arguments);
 		};
 
-		MenuItem.prototype.addEventDelegate = function (oDelegate) {
+		MenuItem.prototype.addEventDelegate = function (oDelegate, oThis) {
 			Item.prototype.addEventDelegate.apply(this, arguments);
 
 			if (this._getVisualControl()) {
 				var oVisualControl = sap.ui.getCore().byId(this._getVisualControl());
-				oVisualControl.addEventDelegate(oDelegate, this);
+				oVisualControl.addEventDelegate(oDelegate, oThis);
 			}
 
 			return this;

@@ -36,6 +36,7 @@ sap.ui.define([
 	'sap/ui/core/date/CalendarUtils',
 	'sap/ui/core/Locale',
 	"sap/ui/core/date/UI5Date",
+	"sap/ui/events/KeyCodes",
 	'sap/m/Avatar',
 	'sap/m/Toolbar',
 	'sap/m/Table',
@@ -85,6 +86,7 @@ sap.ui.define([
 	CalendarDateUtils,
 	Locale,
 	UI5Date,
+	KeyCodes,
 	Avatar,
 	Toolbar,
 	Table,
@@ -201,7 +203,7 @@ sap.ui.define([
 	 * {@link sap.m.PlanningCalendarView PlanningCalendarView}'s properties.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -289,9 +291,10 @@ sap.ui.define([
 				 *
 				 * <b>Note:</b> On phone devices this property is ignored, appointments are always rendered in full height
 				 * to facilitate touching.
+				 * @deprecated Since version 1.119. Please use the <code>appointmentHeight</code> with value "Automatic" property instead.
 				 * @since 1.38.0
 				 */
-				appointmentsReducedHeight : {type : "boolean", group : "Appearance", defaultValue : false},
+				appointmentsReducedHeight : {type : "boolean", group : "Appearance", defaultValue : false, deprecated: true},
 
 				/**
 				 * Determines the different possible sizes for appointments.
@@ -582,6 +585,7 @@ sap.ui.define([
 				/**
 				 * Fires when a row header is clicked.
 				 * @since 1.46.0
+				 * @deprecated Since version 1.119
 				 */
 				rowHeaderClick: {
 					parameters : {
@@ -597,6 +601,27 @@ sap.ui.define([
 
 						/**
 						 * The row user clicked on.
+						 */
+						row : {type : "sap.m.PlanningCalendarRow"}
+					}
+				},
+				/**
+				 * Fires when a row header press is triggered with mouse click, SPACE or ENTER press.
+				 * @since 1.119.0
+				 */
+				rowHeaderPress: {
+					parameters : {
+
+						/**
+						 * The ID of the <code>PlanningCalendarRowHeader</code> of the selected appointment.
+						 *
+						 * <b>Note:</b> Intended to be used as an easy way to get an ID of a <code>PlanningCalendarRowHeader</code>. Do NOT use for modification.
+						 *
+						 */
+						headerId : {type : "string"},
+
+						/**
+						 * The row user pressed.
 						 */
 						row : {type : "sap.m.PlanningCalendarRow"}
 					}
@@ -789,17 +814,30 @@ sap.ui.define([
 
 		oTable.addDelegate({
 			onBeforeRendering: function () {
-				if (this._rowHeaderClickEvent) {
-					this._rowHeaderClickEvent.off();
+				if (this._rowHeaderPressEventMouse) {
+					this._rowHeaderPressEventMouse.off();
+				}
+				if (this._rowHeaderPressEventKeyboard) {
+					this._rowHeaderPressEventKeyboard.off();
 				}
 			},
 			onAfterRendering: function () {
-				this._rowHeaderClickEvent = oTable.$().find(".sapMPlanCalRowHead > div.sapMLIB").on("click", function (oEvent) {
+				this._rowHeaderPressEventMouse = oTable.$().find(".sapMPlanCalRowHead > div.sapMLIB").on("click", function (oEvent) {
 					var oRowHeader = Element.closestTo(oEvent.currentTarget),
 						oRow = getRow(oRowHeader.getParent()),
 						sRowHeaderId = oRowHeader.getId();
 
 					this.fireRowHeaderClick({headerId: sRowHeaderId, row: oRow});
+					this.fireRowHeaderPress({headerId: sRowHeaderId, row: oRow});
+				}.bind(this));
+				this._rowHeaderPressEventKeyboard = oTable.$().find(".sapMPlanCalRowHead").on("keydown", function (oEvent) {
+					if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER) {
+						var oRowListItem = Element.closestTo(oEvent.currentTarget),
+							oRow = getRow(oRowListItem),
+							sRowHeaderId = oRowListItem.getAggregation("cells")[0].getId();
+
+						this.fireRowHeaderPress({headerId: sRowHeaderId, row: oRow});
+					}
 				}.bind(this));
 				this._adjustColumnHeadersTopOffset();
 			}
@@ -851,10 +889,16 @@ sap.ui.define([
 			this._oSelectAllCheckBox.destroy();
 		}
 
-		// Remove event listener for rowHeaderClick event
-		if (this._rowHeaderClickEvent) {
-			this._rowHeaderClickEvent.off();
-			this._rowHeaderClickEvent = null;
+		// Remove event listener for rowHeaderPress event
+		if (this._rowHeaderPressEventMouse) {
+			this._rowHeaderPressEventMouse.off();
+			this._rowHeaderPressEventMouse = null;
+		}
+
+		// Remove event listener for rowHeaderPress event
+		if (this._rowHeaderPressEventKeyboard) {
+			this._rowHeaderPressEventKeyboard.off();
+			this._rowHeaderPressEventKeyboard = null;
 		}
 	};
 
@@ -3649,6 +3693,9 @@ sap.ui.define([
 		oRowTimeline.setShowIntervalHeaders(this.getShowIntervalHeaders());
 		oRowTimeline.setShowEmptyIntervalHeaders(this.getShowEmptyIntervalHeaders());
 		oRowTimeline.setGroupAppointmentsMode(this.getGroupAppointmentsMode());
+		/**
+		 * @deprecated As of version 1.119
+		 */
 		oRowTimeline.setAppointmentsReducedHeight(this.getAppointmentsReducedHeight());
 		oRowTimeline.setAppointmentRoundWidth(this.getAppointmentRoundWidth());
 		oRowTimeline.setLegend(this.getLegend());

@@ -6,6 +6,7 @@
 
 // Provides class sap.ui.core.support.plugins.ViewInfo (ViewInfo support plugin)
 sap.ui.define([
+	"sap/ui/core/Element",
 	"sap/ui/core/support/Plugin",
 	"sap/ui/core/support/controls/TreeViewer",
 	"sap/ui/core/support/controls/ObjectViewer",
@@ -15,6 +16,7 @@ sap.ui.define([
 	"sap/ui/base/ManagedObject",
 	"sap/ui/thirdparty/jquery"
 ], function(
+	Element,
 	Plugin,
 	TreeViewer,
 	ObjectViewer,
@@ -30,7 +32,7 @@ sap.ui.define([
 		 * Creates an instance of sap.ui.core.support.plugins.ViewInfo.
 		 * @class This class represents the ViewInfo plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.118.0
+		 * @version 1.119.0
 		 * @private
 		 * @deprecated As of version 1.118
 		 * @alias sap.ui.core.support.plugins.ViewInfo
@@ -644,7 +646,7 @@ sap.ui.define([
 				if (oDataObject.Control && oDataObject.Control[Object.keys(oDataObject.Control)[0]].__highlightid) {
 					if (sSectionKey === "Control" && oDataObject.Clones) {
 						for (var n in oDataObject.Clones) {
-							var oClone = opener.sap.ui.getCore().byId(oDataObject.Clones[n].value);
+							var oClone = opener.Element.getElementById(oDataObject.Clones[n].value);
 							if (oClone && oClone.getDomRef()) {
 								this._highlightControls.push({
 									control: oClone,
@@ -658,7 +660,7 @@ sap.ui.define([
 							oObject = oDataObject.Control[Object.keys(oDataObject.Control)[0]];
 						}
 						if (sSectionKey === "Control" && oObject) {
-							var oControl = opener.sap.ui.getCore().byId(oObject.value);
+							var oControl = opener.Element.getElementById(oObject.value);
 							if (oControl && oControl.getDomRef()) {
 								this._highlightControl = {
 									control: oControl,
@@ -671,7 +673,7 @@ sap.ui.define([
 						}
 					}
 					if (sSectionKey === "Clones") {
-						var oControl = opener.sap.ui.getCore().byId(oObject.value);
+						var oControl = opener.Element.getElementById(oObject.value);
 						if (oControl && oControl.getDomRef()) {
 							this._highlightControl = {
 								control: oControl,

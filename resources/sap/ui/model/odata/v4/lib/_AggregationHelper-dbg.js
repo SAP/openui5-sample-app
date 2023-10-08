@@ -158,7 +158,7 @@ sap.ui.define([
 				&& oPlaceholder["@$ui5.node.level"] !== 0) {
 				throw new Error("Wrong placeholder");
 			}
-			["descendants", "filter", "predicate"].forEach(function (sAnnotation) {
+			["descendants", "predicate"].forEach(function (sAnnotation) {
 				if (_Helper.hasPrivateAnnotation(oPlaceholder, sAnnotation)
 					&& _Helper.getPrivateAnnotation(oPlaceholder, sAnnotation)
 						!== _Helper.getPrivateAnnotation(oElement, sAnnotation)) {
@@ -526,9 +526,7 @@ sap.ui.define([
 					select("LimitedDescendantCountProperty");
 				}
 			}
-			if (!bAllLevels) {
-				select("DrillStateProperty");
-			}
+			select("DrillStateProperty");
 			mQueryOptions.$apply = sApply;
 
 			return mQueryOptions;
@@ -593,7 +591,7 @@ sap.ui.define([
 					throw new Error("Not a matching value for '" + sPath + "'");
 				}
 			} else if (typeof vType === "object") {
-				var bIsMap = "*" in vType;
+				const bIsMap = "*" in vType;
 
 				if (typeof vValue !== "object" || !vValue || Array.isArray(vValue)) {
 					throw new Error("Not an object value for '" + sPath + "'");

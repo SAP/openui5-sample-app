@@ -60,7 +60,7 @@ function(
 	 * @class
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @public
 	 * @alias sap.ui.core.Fragment
 	 */
@@ -233,7 +233,7 @@ function(
 			Log.error("sap.ui.core.Fragment.byId: two strings must be given as parameters, but are: " + sFragmentId + " and " + sId);
 			return undefined;
 		}
-		return sap.ui.getCore().byId(sFragmentId + "--" + sId);
+		return Element.getElementById(sFragmentId + "--" + sId);
 	};
 
 	/**

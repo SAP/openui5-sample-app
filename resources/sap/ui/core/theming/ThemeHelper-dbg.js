@@ -8,7 +8,6 @@ sap.ui.define([
 ], function (Log) {
 	"use strict";
 
-	// TODO reset map onThemeChanged
 	var mLibThemeMetadata = {};
 
 

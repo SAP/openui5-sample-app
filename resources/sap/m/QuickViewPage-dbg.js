@@ -13,6 +13,7 @@ sap.ui.define([
 	"sap/ui/layout/form/SimpleForm",
 	"sap/ui/layout/VerticalLayout",
 	"sap/ui/layout/HorizontalLayout",
+	"sap/m/library",
 	"sap/m/Avatar",
 	"sap/m/Page",
 	"sap/m/Button",
@@ -41,6 +42,7 @@ sap.ui.define([
 	SimpleForm,
 	VerticalLayout,
 	HorizontalLayout,
+	mLibrary,
 	Avatar,
 	Page,
 	Button,
@@ -87,6 +89,9 @@ sap.ui.define([
 
 	var oRB = Core.getLibraryResourceBundle('sap.m');
 
+	// shortcut for sap.m.PageBackgroundDesign
+	var PageBackgroundDesign = mLibrary.PageBackgroundDesign;
+
 	/**
 	 * Constructor for a new QuickViewPage.
 	 *
@@ -100,7 +105,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -306,7 +311,8 @@ sap.ui.define([
 			oPage.setCustomHeader(new Bar());
 		} else {
 			oPage = this._oPage = new Page(mNavContext.quickViewId + '-' + this.getPageId(), {
-				customHeader : new Bar()
+				customHeader : new Bar(),
+				backgroundDesign: PageBackgroundDesign.Transparent
 			});
 
 			oPage.addEventDelegate({

@@ -12,6 +12,7 @@ sap.ui.define([
 	"sap/ui/thirdparty/jquery",
 	"sap/base/Log",
 	"sap/base/security/encodeURL",
+	"sap/ui/core/Element",
 	"sap/ui/core/Lib"
 ], function (
 	EventProvider,
@@ -20,6 +21,7 @@ sap.ui.define([
 	jQuery,
 	Log,
 	encodeURL,
+	Element,
 	Library
 ) {
 	"use strict";
@@ -31,7 +33,7 @@ sap.ui.define([
 	 * @class This class provides the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 	 *
 	 * @extends sap.ui.base.EventProvider
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @private
 	 * @alias sap.ui.core.support.Support
 	 */
@@ -821,9 +823,9 @@ sap.ui.define([
 			for (var n in mSupportInfos) {
 				var oData = mSupportInfos[n];
 				if (oData && oData.indexOf(sSupportData) === 0) {
-					var oInstance = sap.ui.getCore().byId(n);
+					var oInstance = Element.getElementById(n);
 					if (oInstance) {
-						aControls.push(sap.ui.getCore().byId(n));
+						aControls.push(Element.getElementById(n));
 					}
 				}
 			}

@@ -21,7 +21,7 @@ sap.ui.define(['sap/ui/base/EventProvider', "sap/base/assert"],
 	 * @class Serializer class.
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @alias sap.ui.core.util.serializer.Serializer
 	 * @private
 	 * @ui5-restricted sap.watt, com.sap.webide
@@ -33,7 +33,7 @@ sap.ui.define(['sap/ui/base/EventProvider', "sap/base/assert"],
 			this._oRootControl = oRootControl;
 			this._delegate = serializeDelegate;
 			this._bSkipRoot = !!bSkipRoot;
-			this._oWindow = oWindow || window;
+			this._oWindow = oWindow || globalThis;
 			this._fnSkipAggregations = fnSkipAggregations;
 			this._fnSkipElement = fnSkipElement;
 		}
@@ -128,7 +128,7 @@ sap.ui.define(['sap/ui/base/EventProvider', "sap/base/assert"],
 	 * @private
 	 */
 	Serializer.prototype._isObjectSerializable = function (oObject) {
-		return oObject instanceof this._oWindow.sap.ui.core.Element &&
+		return !!(oObject?.isA?.("sap.ui.core.Element")) &&
 			!(this._fnSkipElement && this._fnSkipElement(oObject));
 	};
 

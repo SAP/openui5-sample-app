@@ -31,7 +31,7 @@ sap.ui.define([
 	 *
 	 * @class Metadata for a class.
 	 * @author Frank Weigel
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @since 0.8.6
 	 * @public
 	 * @alias sap.ui.base.Metadata
@@ -46,7 +46,7 @@ sap.ui.define([
 			oClassInfo = {
 				metadata : oClassInfo || {},
 				// retrieve class by its name. Using a lookup costs time but avoids the need for redundant arguments to this function
-				constructor : ObjectPath.get(sClassName)
+				constructor : ObjectPath.get(sClassName) // legacy-relevant, code path not used by extend call
 			};
 			oClassInfo.metadata.__version = 1.0;
 		}
@@ -89,7 +89,7 @@ sap.ui.define([
 				}
 			} else {
 				// lookup base class by its name - same reasoning as above
-				oParentClass = ObjectPath.get(oStaticInfo.baseType);
+				oParentClass = ObjectPath.get(oStaticInfo.baseType); // legacy-relevant, code path not used by extend call
 				if ( !isFunction(oParentClass) ) {
 					Log.fatal("base class '" + oStaticInfo.baseType + "' does not exist");
 				}

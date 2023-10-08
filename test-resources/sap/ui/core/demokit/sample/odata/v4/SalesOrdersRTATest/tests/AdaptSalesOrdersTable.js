@@ -14,6 +14,7 @@ sap.ui.define([], function () {
 					name : sUIComponent || "sap.ui.core.sample.odata.v4.SalesOrdersRTA"
 				}
 			});
+			Then.onAnyPage.iTeardownMyUIComponentInTheEnd();
 
 			When.onAnyPage.applySupportAssistant();
 
@@ -97,7 +98,6 @@ sap.ui.define([], function () {
 
 			Then.onAnyPage.checkLog();
 			Then.onAnyPage.analyzeSupportAssistant();
-			Then.iTeardownMyUIComponent();
 		}
 	};
 });

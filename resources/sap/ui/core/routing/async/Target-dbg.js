@@ -7,10 +7,11 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/ui/base/ManagedObjectMetadata",
 	"sap/ui/core/ComponentContainer",
+	"sap/ui/core/Element",
 	"sap/ui/core/Placeholder",
 	"sap/ui/core/library",
 	"sap/ui/core/Configuration"
-], function(Log, ManagedObjectMetadata, ComponentContainer, Placeholder, coreLib, Configuration) {
+], function(Log, ManagedObjectMetadata, ComponentContainer, Element, Placeholder, coreLib, Configuration) {
 	"use strict";
 
 	// shortcut for sap.ui.core.ComponentLifecycle
@@ -337,7 +338,7 @@ sap.ui.define([
 							var oView;
 
 							if (oRootViewId) {
-								oView = sap.ui.getCore().byId(oRootViewId);
+								oView = Element.getElementById(oRootViewId);
 								oOptions.rootView = oRootViewId;
 							}
 
@@ -370,7 +371,7 @@ sap.ui.define([
 
 						if (!oContainerControl) {
 							//Test if control exists in core (without prefix) since it was not found in the parent or root view
-							oContainerControl =  sap.ui.getCore().byId(oOptions.controlId);
+							oContainerControl =  Element.getElementById(oOptions.controlId);
 						}
 
 						return oContainerControl;
@@ -425,7 +426,7 @@ sap.ui.define([
 				var sComponentContainerId = oOptions.id + "-container";
 
 				oObject = (oOwnerComponent && oOwnerComponent.byId(sComponentContainerId))
-					|| sap.ui.getCore().byId(sComponentContainerId);
+					|| Element.getElementById(sComponentContainerId);
 
 				if (!oObject) {
 					// defaults mixed in with configured settings

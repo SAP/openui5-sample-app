@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IFormContent, sap.ui.unified.IProcessableBlobs
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -2072,35 +2072,40 @@ sap.ui.define([
 		if (this.oBrowse &&  this.oBrowse.$().length) {
 			$browse = this.oBrowse.$();
 			$browse.attr("type', 'button"); // The default type of button is submit that's why on click of label there are submit of the form. This way we are avoiding the submit of form.
-			// exapnd to multiple event types listening
 
-			var oEvents = {
-				"click": (oEvent) => {
-					oEvent.preventDefault();
-					oEvent.stopPropagation();
-					this.FUEl.click(); // The default behaviour on click on label is to open "open file" dialog. The only way to attach click event that is transferred from the label to the button is this way. AttachPress and attachTap don't work in this case.
-				},
-				dragover: (oEvent) => oEvent.preventDefault(),
-				dragenter: (oEvent) => oEvent.preventDefault(),
-				drop: (oEvent) => {
-					oEvent.preventDefault();
-					var aFileList = oEvent.originalEvent.dataTransfer.files;
-					// TODO: enable directory drag and drop
-					if ((!this.getMultiple() && aFileList.length > 1) || this.getDirectory()) {
-						return;
-					}
+			$browse.off("click").on("click", (oEvent) => {
+				oEvent.preventDefault();
+				oEvent.stopPropagation();
+				this.FUEl.click(); // The default behaviour on click on label is to open "open file" dialog. The only way to attach click event that is transferred from the label to the button is this way. AttachPress and attachTap don't work in this case.
+			});
 
-					this.oFileUpload.files = aFileList;
-					var oChangeEvent = {
-						target: {
-							files: aFileList
-						}
-					};
-					this.handlechange(oChangeEvent);
+			// The event propagation needs to be stopped so composing controls, which also react on
+			// drag and drop events like the sap.m.UploadCollection or sap.m.upload.UploadSet aren't affected.
+			$browse.off("dragover").on("dragover", (oEvent) => {
+				oEvent.preventDefault();
+				oEvent.stopPropagation();
+			});
+			$browse.off("dragenter").on("dragenter", (oEvent) => {
+				oEvent.preventDefault();
+				oEvent.stopPropagation();
+			});
+			$browse.off("drop").on("drop", (oEvent) => {
+				oEvent.preventDefault();
+				oEvent.stopPropagation();
+				var aFileList = oEvent.originalEvent.dataTransfer.files;
+				// TODO: enable directory drag and drop
+				if ((!this.getMultiple() && aFileList.length > 1) || this.getDirectory()) {
+					return;
 				}
-			};
 
-			$browse.off(oEvents).on(oEvents);
+				this.oFileUpload.files = aFileList;
+				var oChangeEvent = {
+					target: {
+						files: aFileList
+					}
+				};
+				this.handlechange(oChangeEvent);
+			});
 		}
 	};
 

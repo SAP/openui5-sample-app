@@ -14,8 +14,8 @@ sap.ui.define([
 	"./_MinMaxHelper",
 	"sap/base/Log",
 	"sap/ui/base/SyncPromise"
-], function (_AggregationHelper, _Cache, _ConcatHelper, _GroupLock, _Helper, _MinMaxHelper,
-		Log, SyncPromise) {
+], function (_AggregationHelper, _Cache, _ConcatHelper, _GroupLock, _Helper, _MinMaxHelper, Log,
+		SyncPromise) {
 	"use strict";
 
 	//*********************************************************************************************
@@ -120,7 +120,7 @@ sap.ui.define([
 	// make _AggregationCache a _Cache, but actively disinherit some critical methods
 	_AggregationCache.prototype = Object.create(_Cache.prototype);
 	_AggregationCache.prototype.addTransientCollection = null;
-	_AggregationCache.prototype.getAndRemoveValue = null;
+	_AggregationCache.prototype.getAndRemoveCollection = null;
 
 	/**
 	 * Deletes an entity on the server and in the cached data.
@@ -191,6 +191,7 @@ sap.ui.define([
 					iFlatIndex = iParentIndex + iIndex + 1;
 					this.restoreElement(this.aElements, iFlatIndex, oElement, "");
 					this.shiftIndex(iFlatIndex, iOffset);
+					_Helper.setPrivateAnnotation(oElement, "index", iIndex);
 				}
 				fnCallback(iFlatIndex, iOffset);
 			});
@@ -332,6 +333,8 @@ sap.ui.define([
 
 		function collapse(j) {
 			delete aElements.$byPredicate[_Helper.getPrivateAnnotation(aElements[j], "predicate")];
+			delete aElements.$byPredicate[
+				_Helper.getPrivateAnnotation(aElements[j], "transientPredicate")];
 			iCount += 1;
 		}
 
@@ -497,13 +500,14 @@ sap.ui.define([
 			});
 		}
 		if (oGroupNode) {
+			const sParentFilter = _Helper.getPrivateAnnotation(oGroupNode, "filter")
+				|| _Helper.getKeyFilter(oGroupNode, oAggregation.$metaPath, this.getTypes());
 			// Note: parent filter is just eq/and, no need for parentheses, but
 			// $$filterBeforeAggregate is a black box! Put specific filter 1st for performance!
-			mQueryOptions.$$filterBeforeAggregate
-				= _Helper.getPrivateAnnotation(oGroupNode, "filter")
-					+ (mQueryOptions.$$filterBeforeAggregate
-						? " and (" + mQueryOptions.$$filterBeforeAggregate + ")"
-						: "");
+			mQueryOptions.$$filterBeforeAggregate = sParentFilter
+				+ (mQueryOptions.$$filterBeforeAggregate
+					? " and (" + mQueryOptions.$$filterBeforeAggregate + ")"
+					: "");
 		}
 		if (!bHasConcatHelper) {
 			// Note: UI5__count currently handled only by _ConcatHelper!
@@ -538,15 +542,11 @@ sap.ui.define([
 	 * @see #collapse
 	 */
 	_AggregationCache.prototype.expand = function (oGroupLock, vGroupNodeOrPath, fnDataRequested) {
-		var oCache,
-			iCount,
-			aElements = this.aElements,
+		var iCount,
 			oGroupNode = typeof vGroupNodeOrPath === "string"
 				? this.getValue(vGroupNodeOrPath)
 				: vGroupNodeOrPath,
-			iIndex,
 			aSpliced = _Helper.getPrivateAnnotation(oGroupNode, "spliced"),
-			bStale,
 			that = this;
 
 		if (vGroupNodeOrPath !== oGroupNode) {
@@ -557,20 +557,20 @@ sap.ui.define([
 
 		if (aSpliced) {
 			_Helper.deletePrivateAnnotation(oGroupNode, "spliced");
-			bStale = aSpliced.$stale;
-
-			iIndex = aElements.indexOf(oGroupNode) + 1;
+			const aOldElements = this.aElements;
+			const iIndex = aOldElements.indexOf(oGroupNode) + 1;
 			// insert aSpliced at iIndex
-			this.aElements = aElements.concat(aSpliced, aElements.splice(iIndex));
-			this.aElements.$byPredicate = aElements.$byPredicate;
-
+			this.aElements = aOldElements.concat(aSpliced, aOldElements.splice(iIndex));
+			this.aElements.$byPredicate = aOldElements.$byPredicate;
 			iCount = aSpliced.length;
-			this.aElements.$count = aElements.$count + iCount;
+			this.aElements.$count = aOldElements.$count + iCount;
+			const iDiff = oGroupNode["@$ui5.node.level"] + 1 - aSpliced[0]["@$ui5.node.level"];
 			aSpliced.forEach(function (oElement) {
 				var sPredicate = _Helper.getPrivateAnnotation(oElement, "predicate");
 
+				oElement["@$ui5.node.level"] += iDiff;
 				if (!_Helper.hasPrivateAnnotation(oElement, "placeholder")) {
-					if (bStale) {
+					if (aSpliced.$stale) {
 						that.turnIntoPlaceholder(oElement, sPredicate);
 					} else {
 						that.aElements.$byPredicate[sPredicate] = oElement;
@@ -584,7 +584,7 @@ sap.ui.define([
 			return SyncPromise.resolve(iCount);
 		}
 
-		oCache = _Helper.getPrivateAnnotation(oGroupNode, "cache");
+		let oCache = _Helper.getPrivateAnnotation(oGroupNode, "cache");
 		if (!oCache) {
 			oCache = this.createGroupLevelCache(oGroupNode);
 			_Helper.setPrivateAnnotation(oGroupNode, "cache", oCache);
@@ -831,6 +831,87 @@ sap.ui.define([
 
 			that.turnIntoPlaceholder(oElement, sPredicate);
 		});
+	};
+
+	/**
+	 * Moves the (child) node with the given path to the parent node with the given path by sending
+	 * a PATCH request for "<parent navigation>@odata.bind".
+	 *
+	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
+	 *   A lock for the group to associate the requests with
+	 * @param {string} sChildPath
+	 *   The (child) node's path relative to the cache
+	 * @param {string} sParentPath
+	 *   The parent node's path relative to the cache
+	 * @returns {sap.ui.base.SyncPromise<void>}
+	 *   A promise which is resolved without a defined result when the move is finished, or
+	 *   rejected in case of an error
+	 *
+	 * @public
+	 */
+	_AggregationCache.prototype.move = function (oGroupLock, sChildPath, sParentPath) {
+		const sChildPredicate = sChildPath.slice(sChildPath.indexOf("("));
+		const oChildNode = this.aElements.$byPredicate[sChildPredicate];
+
+		return this.oRequestor.request("PATCH", sChildPath, oGroupLock, {
+					"If-Match" : oChildNode,
+					Prefer : "return=minimal"
+				}, {[this.oAggregation.$ParentNavigationProperty + "@odata.bind"] : sParentPath},
+				/*fnSubmit*/null, function fnCancel() { /*nothing to do*/ })
+			.then((oPatchResult) => {
+				// update the cache with the PATCH response (Note: "@odata.etag" is optional!)
+				_Helper.updateExisting(this.mChangeListeners, sChildPredicate, oChildNode,
+					{"@odata.etag" : oPatchResult["@odata.etag"]});
+
+				const iOldIndex = this.aElements.indexOf(oChildNode);
+				this.shiftIndex(iOldIndex, -1);
+				this.aElements.splice(iOldIndex, 1);
+
+				// remove original element from its cache's collection
+				const oOldParentCache = _Helper.getPrivateAnnotation(oChildNode, "parent");
+				oOldParentCache.removeElement(undefined,
+					_Helper.getPrivateAnnotation(oChildNode, "index"), sChildPredicate, "");
+				if (oOldParentCache.getValue("$count") === 0) { // last child has gone
+					const oOldParent = this.aElements[iOldIndex - 1];
+					_Helper.updateAll(this.mChangeListeners,
+						_Helper.getPrivateAnnotation(oOldParent, "predicate"),
+						oOldParent, {"@$ui5.node.isExpanded" : undefined}); // a leaf now
+					// _Helper.updateAll only sets it to undefined
+					delete oOldParent["@$ui5.node.isExpanded"];
+					_Helper.deletePrivateAnnotation(oOldParent, "cache");
+					oOldParentCache.setActive(false);
+				}
+
+				// once oChildNode has moved, it should look 'created' because of its new position
+				if (!_Helper.hasPrivateAnnotation(oChildNode, "transientPredicate")) {
+					const sTransientPredicate = "($uid=" + _Helper.uid() + ")";
+					_Helper.setPrivateAnnotation(oChildNode, "transientPredicate",
+						sTransientPredicate);
+					this.aElements.$byPredicate[sTransientPredicate] = oChildNode;
+					_Helper.updateAll(this.mChangeListeners, sChildPredicate, oChildNode,
+						{"@$ui5.context.isTransient" : false});
+				}
+
+				const sParentPredicate = sParentPath.slice(sParentPath.indexOf("("));
+				const oParentNode = this.aElements.$byPredicate[sParentPredicate];
+				let oCache = _Helper.getPrivateAnnotation(oParentNode, "cache");
+				if (!oCache) {
+					oCache = this.createGroupLevelCache(oParentNode);
+					oCache.setEmpty();
+					_Helper.setPrivateAnnotation(oParentNode, "cache", oCache);
+					_Helper.updateAll(this.mChangeListeners, sParentPredicate, oParentNode,
+						{"@$ui5.node.isExpanded" : true}); // not a leaf anymore
+				}
+				oCache.restoreElement(undefined, 0, oChildNode, "");
+				_Helper.setPrivateAnnotation(oChildNode, "index", 0);
+				_Helper.setPrivateAnnotation(oChildNode, "parent", oCache);
+
+				_Helper.updateAll(this.mChangeListeners, sChildPredicate, oChildNode,
+					{"@$ui5.node.level" : oParentNode["@$ui5.node.level"] + 1});
+				const iNewIndex = this.aElements.indexOf(oParentNode) + 1;
+				this.aElements.splice(iNewIndex, 0, oChildNode);
+				this.shiftIndex(iNewIndex, +1); // relies on "parent" & "@$ui5.node.level"!
+			});
 	};
 
 	/**
@@ -1273,7 +1354,8 @@ sap.ui.define([
 	/**
 	 * Turns the given element, which has the given predicate, into a placeholder which keeps all
 	 * private annotations plus the hierarchy node value. The original element is removed from its
-	 * corresponding cache and must not be used any longer.
+	 * corresponding cache and must not be used any longer. Created persisted elements loose their
+	 * special treatment!
 	 *
 	 * @param {object} oElement - An element
 	 * @param {string} sPredicate - Its predicate
@@ -1406,8 +1488,6 @@ sap.ui.define([
 
 			case "collapsed":
 				bIsExpanded = false;
-				_Helper.setPrivateAnnotation(oElement, "filter",
-					_Helper.getKeyFilter(oElement, sMetaPath, mTypeForMetaPath));
 				break;
 
 			default: // "leaf"

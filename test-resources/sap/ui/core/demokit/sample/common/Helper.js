@@ -14,7 +14,8 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 	"sap/ui/core/Configuration"
 ], function (Log, Opa5, EnterText, Press, Interactable, TestUtils, Configuration) {
 	"use strict";
-	var Helper;
+	var aCleanupTasks = [],
+		Helper;
 
 	/**
 	 * Checks the value/text of a sap.m.Input/.Text field
@@ -73,6 +74,14 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 
 	// Helper functions used within sap.ui.core.sample.common namespace
 	Helper = {
+		/**
+		 * Adds a clean-up task which is called in <code>afterEach</code>.
+		 *
+		 * @param {function():void} fnTask - The task
+		 */
+		addToCleanUp : function (fnTask) {
+			aCleanupTasks.push(fnTask);
+		},
 
 		/**
 		 * Changes the value of a sap.m.Input field
@@ -478,7 +487,11 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 					}
 				},
 				beforeEach : fnBeforeEach,
-				afterEach : fnAfterEach
+				afterEach : function () {
+					aCleanupTasks.forEach((fnTask) => fnTask());
+					aCleanupTasks.length = 0;
+					return fnAfterEach && fnAfterEach.apply(this, arguments);
+				}
 			});
 		}
 	};

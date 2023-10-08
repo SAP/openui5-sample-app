@@ -58,7 +58,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.118.0
+		 * @version 1.119.0
 		 *
 		 * @constructor
 		 * @public
@@ -381,7 +381,7 @@ sap.ui.define([
 					minus2_left: "-2 0"
 				};
 
-			this._isSplitButton() && this.fireBeforeMenuOpen();
+			this.fireBeforeMenuOpen();
 
 			if (!oMenu) {
 				return;

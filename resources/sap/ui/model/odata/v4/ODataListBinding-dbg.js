@@ -57,7 +57,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.118.0
+		 * @version 1.119.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -145,7 +145,7 @@ sap.ui.define([
 		// #destroyPreviousContexts after the next call to #createContexts.
 		// A kept-alive context may be parked here for a longer time, with undefined index.
 		this.mPreviousContextsByPath = {};
-		this.aPreviousData = [];
+		this.aPreviousData = null; // no previous data for E.C.D. known yet
 		this.bRefreshKeptElements = false; // refresh kept elements when resuming?
 		this.sResumeAction = undefined; // a special resume action for $$sharedRequest
 		this.bSharedRequest = "$$sharedRequest" in mParameters
@@ -281,7 +281,7 @@ sap.ui.define([
 		 * @param {string} sNewPath - The path with the transient predicate replaced
 		 */
 		function adjustPreviousData(sOldPath, sNewPath) {
-			var iIndex = that.aPreviousData.indexOf(sOldPath);
+			var iIndex = that.aPreviousData?.indexOf(sOldPath);
 
 			if (iIndex >= 0) {
 				that.aPreviousData[iIndex] = sNewPath;
@@ -377,8 +377,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent
 	 *    The event object
-	 * @param {object} oEvent.getParameters
-	 *    Object containing all event parameters
+	 * @param {function():Object<any>} oEvent.getParameters
+	 *   Function which returns an object containing all event parameters
 	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters.reason
 	 *   The reason for the 'change' event is
 	 *   <ul>
@@ -410,7 +410,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource() This binding
-	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {function():Object<any>} oEvent.getParameters
+	 *   Function which returns an object containing all event parameters
 	 * @param {sap.ui.model.odata.v4.Context} oEvent.getParameters.context The affected context
 	 *
 	 * @event sap.ui.model.odata.v4.ODataListBinding#createActivate
@@ -426,7 +427,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource() This binding
-	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {function():Object<any>} oEvent.getParameters
+	 *   Function which returns an object containing all event parameters
 	 * @param {sap.ui.model.odata.v4.Context} oEvent.getParameters.context
 	 *   The context for the created entity
 	 * @param {boolean} oEvent.getParameters.success
@@ -445,7 +447,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource() This binding
-	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {function():Object<any>} oEvent.getParameters
+	 *   Function which returns an object containing all event parameters
 	 * @param {sap.ui.model.odata.v4.Context} oEvent.getParameters.context
 	 *   The context for the created entity
 	 *
@@ -478,8 +481,8 @@ sap.ui.define([
 	 *    The event object
 	 * @param {function} oEvent.cancelBubble
 	 *   A callback function to prevent that the event is bubbled up to the model
-	 * @param {object} oEvent.getParameters
-	 *    Object containing all event parameters
+	 * @param {function():Object<any>} oEvent.getParameters
+	 *   Function which returns an object containing all event parameters
 	 * @param {object} [oEvent.getParameters.data]
 	 *   An empty data object if a back-end request succeeds
 	 * @param {Error} [oEvent.getParameters.error] The error object if a back-end request failed.
@@ -518,7 +521,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource() This binding
-	 * @param {object} oEvent.getParameters Object containing all event parameters
+	 * @param {function():Object<any>} oEvent.getParameters
+	 *   Function which returns an object containing all event parameters
 	 * @param {boolean} oEvent.getParameters.success
 	 *   Whether all PATCHes are successfully processed
 	 *
@@ -550,8 +554,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent
 	 *    The event object
-	 * @param {object} oEvent.getParameters
-	 *    Object containing all event parameters
+	 * @param {function():Object<any>} oEvent.getParameters
+	 *   Function which returns an object containing all event parameters
 	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters.reason
 	 *   The reason for the 'refresh' event could be
 	 *   <ul>
@@ -661,13 +665,15 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.model.odata.v4.Context} oContext
 	 *   The context corresponding to the group node
+	 * @param {boolean} [bSilent]
+	 *   Whether no ("change") events should be fired
 	 * @throws {Error}
 	 *   If the binding's root binding is suspended
 	 *
 	 * @private
 	 * @see #expand
 	 */
-	ODataListBinding.prototype.collapse = function (oContext) {
+	ODataListBinding.prototype.collapse = function (oContext, bSilent) {
 		var aContexts = this.aContexts,
 			iCount = this.oCache.collapse(
 				_Helper.getRelativePath(oContext.getPath(), this.oHeaderContext.getPath())),
@@ -685,7 +691,9 @@ sap.ui.define([
 				}
 			}
 			this.iMaxLength -= iCount;
-			this._fireChange({reason : ChangeReason.Change});
+			if (!bSilent) {
+				this._fireChange({reason : ChangeReason.Change});
+			}
 		} // else: collapse before expand has finished
 	};
 
@@ -768,9 +776,9 @@ sap.ui.define([
 	 * {@link sap.ui.model.odata.v4.Context} instance given as
 	 * <code>oInitialData["@$ui5.node.parent"]</code>. <code>oAggregation.expandTo</code> (see
 	 * {@link #setAggregation}) must be one, <code>bSkipRefresh</code> must be set, but both
-	 * <code>bAtEnd</code> and <code>bInactive</code> must not be set. No other creation must be
-	 * pending, and no other modification (including collapse of some ancestor node) must happen
-	 * while this creation is pending!
+	 * <code>bAtEnd</code> and <code>bInactive</code> must not be set. No other creation or
+	 * {@link sap.ui.model.odata.v4.Context#move move} must be pending, and no other modification
+	 * (including collapse of some ancestor node) must happen while this creation is pending!
 	 *
 	 * @param {Object<any>} [oInitialData={}]
 	 *   The initial data for the created entity
@@ -1616,7 +1624,7 @@ sap.ui.define([
 
 			if (oCache) {
 				if (!oCache.hasSentRequest() && ODataListBinding.isBelowCreated(oContext)) {
-					aElements = oContext.getAndRemoveValue(that.sPath);
+					aElements = oContext.getAndRemoveCollection(that.sPath);
 					if (aElements) { // there is a collection from a finished deep create
 						// copy the created elements into the newly created cache
 						oCache.setPersistedCollection(aElements);
@@ -2058,6 +2066,9 @@ sap.ui.define([
 	 *     <li> "$DistanceFromRootProperty" holds the path to the property which provides the raw
 	 *       value for "@$ui5.node.level" (minus one) and should be used only to interpret the
 	 *       response retrieved via {@link #getDownloadUrl}.
+	 *     <li> "$DrillStateProperty" holds the path to the property which provides the raw value
+	 *       for "@$ui5.node.isExpanded" and should be used only to interpret the response retrieved
+	 *       via {@link #getDownloadUrl}.
 	 *     <li> "$NodeProperty" holds the path to the property which provides the hierarchy node
 	 *       value. That property is always $select'ed automatically and can be accessed as usual.
 	 *   </ul>
@@ -2071,7 +2082,8 @@ sap.ui.define([
 	ODataListBinding.prototype.getAggregation = function (bVerbose) {
 		return _Helper.clone(this.mParameters.$$aggregation, function (sKey, vValue) {
 			return sKey[0] === "$"
-				&& !(bVerbose && ["$DistanceFromRootProperty", "$NodeProperty"].includes(sKey))
+				&& !(bVerbose && ["$DistanceFromRootProperty", "$DrillStateProperty",
+					"$NodeProperty"].includes(sKey))
 				? undefined
 				: vValue;
 		});
@@ -2248,7 +2260,7 @@ sap.ui.define([
 		}
 
 		if (!this.isResolved()) { // unresolved relative binding
-			this.aPreviousData = []; // compute diff from scratch when binding is resolved again
+			this.aPreviousData = null; // compute diff from scratch when binding is resolved again
 			return [];
 		}
 
@@ -2316,7 +2328,7 @@ sap.ui.define([
 					};
 				}
 				if (bFireChange) {
-					if (bChanged || (that.oDiff && that.oDiff.aDiff.length)) {
+					if (bChanged || (that.oDiff && that.oDiff.aDiff?.length)) {
 						that._fireChange({reason : sChangeReason});
 					} else { // we cannot keep a diff if we do not tell the control to fetch it!
 						that.oDiff = undefined;
@@ -2490,7 +2502,7 @@ sap.ui.define([
 	 *   The length of the range requested in getContexts
 	 * @returns {object}
 	 *   The array of differences which is the comparison of current versus previous data as given
-	 *   by {@link #getContextData}.
+	 *   by {@link #getContextData}, or <code>null</code> in case no previous data is known.
 	 *
 	 * @private
 	 */
@@ -2502,7 +2514,7 @@ sap.ui.define([
 			return that.getContextData(oContext);
 		});
 
-		return this.diffData(aPreviousData, this.aPreviousData);
+		return aPreviousData ? this.diffData(aPreviousData, this.aPreviousData) : null;
 	};
 
 	/**
@@ -3059,6 +3071,64 @@ sap.ui.define([
 		}
 
 		return aContexts;
+	};
+
+	/**
+	 * Moves the given (child) node to the given parent.
+	 *
+	 * @param {sap.ui.model.odata.v4.Context} oChildContext - The (child) node to be moved
+	 * @param {sap.ui.model.odata.v4.Context} oParentContext - The new parent's context
+	 * @returns {sap.ui.base.SyncPromise<void>}
+	 *   A promise which is resolved without a defined result when the move is finished, or
+	 *   rejected in case of an error
+	 *
+	 * @private
+	 */
+	ODataListBinding.prototype.move = function (oChildContext, oParentContext) {
+		/*
+		 * Sets the <code>iIndex</code> of every context instance inside the given range.
+		 *
+		 * @param {number} iFrom - Start index
+		 * @param {number} iToInclusive - Inclusive end index
+		 */
+		const setIndices = (iFrom, iToInclusive) => {
+			for (let i = iFrom; i <= iToInclusive; i += 1) {
+				if (this.aContexts[i]) {
+					this.aContexts[i].iIndex = i;
+				}
+			}
+		};
+
+		const bExpanded = oChildContext.isExpanded();
+		if (bExpanded) {
+			this.collapse(oChildContext, /*bSilent*/true);
+		}
+
+		const sChildPath = oChildContext.getCanonicalPath().slice(1);
+		const sParentPath = oParentContext.getCanonicalPath().slice(1); // before #lockGroup!
+		const oGroupLock = this.lockGroup(this.getUpdateGroupId(), true, true);
+
+		return this.oCache.move(oGroupLock, sChildPath, sParentPath).then(() => {
+			const iChildIndex = this.aContexts.indexOf(oChildContext);
+			const iParentIndex = this.aContexts.indexOf(oParentContext); // Note: !== iChildIndex
+			if (iChildIndex < iParentIndex) {
+				this.aContexts.splice(iParentIndex + 1, 0, oChildContext);
+				this.aContexts.splice(iChildIndex, 1); // parent moves to lower index!
+				setIndices(iChildIndex, iParentIndex);
+			} else if (iChildIndex > iParentIndex + 1) {
+				this.aContexts.splice(iChildIndex, 1); // parent unaffected!
+				this.aContexts.splice(iParentIndex + 1, 0, oChildContext);
+				setIndices(iParentIndex + 1, iChildIndex);
+			} // else: iChildIndex === iParentIndex + 1 => nothing to do
+			if (!oChildContext.created()) {
+				oChildContext.setCreatedPersisted();
+			}
+			if (bExpanded) {
+				this.expand(oChildContext); // guaranteed to by sync! incl. _fireChange
+			} else {
+				this._fireChange({reason : ChangeReason.Change});
+			}
+		});
 	};
 
 	/**

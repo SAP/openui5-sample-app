@@ -3,10 +3,11 @@ sap.ui.define([
 	"sap/ui/base/ManagedObject",
 	"sap/ui/core/Component",
 	"sap/ui/core/ComponentContainer",
+	"sap/ui/core/Element",
 	"sap/ui/core/UIComponent",
 	"sap/ui/core/mvc/View",
 	"sap/ui/qunit/utils/nextUIUpdate"
-], function(Log, ManagedObject, Component, ComponentContainer, UIComponent, View, nextUIUpdate) {
+], function(Log, ManagedObject, Component, ComponentContainer, Element, UIComponent, View, nextUIUpdate) {
 
 	"use strict";
 	/*global sinon, QUnit*/
@@ -145,7 +146,7 @@ sap.ui.define([
 
 			assert.equal(oComponent.getAutoPrefixId(), false, "AutoPrefixId is false!");
 
-			var oButton = sap.ui.getCore().byId("theButton");
+			var oButton = Element.getElementById("theButton");
 			assert.ok(!!oButton, "Button was prefixed with Component id!");
 
 			oComponentContainer.destroy();
@@ -169,7 +170,7 @@ sap.ui.define([
 
 			assert.equal(oComponent.getAutoPrefixId(), true, "AutoPrefixId is true!");
 
-			var oButton = sap.ui.getCore().byId(oComponent.createId("theButton"));
+			var oButton = Element.getElementById(oComponent.createId("theButton"));
 			assert.ok(!!oButton, "Button was prefixed with Component id!");
 
 			oComponentContainer.destroy();
@@ -193,7 +194,7 @@ sap.ui.define([
 
 			assert.equal(oComponent.getAutoPrefixId(), false, "AutoPrefixId is false!");
 
-			var oButton = sap.ui.getCore().byId("theButton");
+			var oButton = Element.getElementById("theButton");
 			assert.ok(!!oButton, "Button was not prefixed with Component id!");
 
 			oComponentContainer.destroy();
@@ -853,6 +854,9 @@ sap.ui.define([
 						"type": "sap.ui.model.resource.ResourceModel",
 						"uri": "i18n/i18n.properties"
 					},
+					/**
+					 * @deprecated as of version 1.48
+					 */
 					"odm1": {
 						"type": "sap.ui.model.odata.ODataModel",
 						"uri": "./some/odata/service"
@@ -860,6 +864,10 @@ sap.ui.define([
 					"odm2": {
 						"type": "sap.ui.model.odata.v2.ODataModel",
 						"uri": "./some/odata/service"
+					},
+					"odm4": {
+						"type": "sap.ui.model.odata.v4.ODataModel",
+						"uri": "./some/odata/service/"
 					}
 				},
 				"routing": {
@@ -889,14 +897,22 @@ sap.ui.define([
 					assert.ok(requireSpy.calledWith(["sap/ui/core/mvc/JSONView"]), "JSONView type required");
 					assert.ok(requireSpy.calledWith(["sap/ui/model/resource/ResourceModel"]), "ResourceModel required");
 					assert.ok(requireSpy.calledWith(["sap/ui/core/routing/Router"]), "Router loaded");
+					/**
+					 * @deprecated as of version 1.48
+					 */
 					assert.ok(requireSpy.calledWith(["sap/ui/model/odata/ODataModel"]), "ODataModel required");
 					assert.ok(requireSpy.calledWith(["sap/ui/model/odata/v2/ODataModel"]), "ODataModel v2 required");
+					assert.ok(requireSpy.calledWith(["sap/ui/model/odata/v4/ODataModel"]), "ODataModel v4 required");
 
 					assert.ok(sap.ui.require("sap/ui/core/mvc/JSONView"), "JSONView type loaded");
 					assert.ok(sap.ui.require("sap/ui/model/resource/ResourceModel"), "ResourceModel loaded");
 					assert.ok(sap.ui.require("sap/ui/core/routing/Router"), "Router loaded");
+					/**
+					 * @deprecated as of version 1.48
+					 */
 					assert.ok(sap.ui.require("sap/ui/model/odata/ODataModel"), "ODataModel loaded");
 					assert.ok(sap.ui.require("sap/ui/model/odata/v2/ODataModel"), "ODataModel v2 loaded");
+					assert.ok(sap.ui.require("sap/ui/model/odata/v4/ODataModel"), "ODataModel v4 loaded");
 
 					UIComponent.apply(this, arguments);
 				}

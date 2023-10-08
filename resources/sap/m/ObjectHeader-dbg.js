@@ -82,7 +82,7 @@ sap.ui.define([
 	 * <code>sapUiResponsivePadding--header</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -736,6 +736,7 @@ sap.ui.define([
 
 	/**
 	 * @private
+	 * @deprecated as of version 1.42.0, replaced by <code>markers</code> aggregation.
 	 * @param {string} markerType the type of the marker which should be created to updated
 	 * @param {boolean} bMarked visibility of the marker
 	 * @returns {this} this pointer for chaining
@@ -1254,7 +1255,13 @@ sap.ui.define([
 	 * @returns {boolean} IF there is status
 	 */
 	ObjectHeader.prototype._hasStatus = function() {
-		var bHasStatus = ((this.getFirstStatus() && !this.getFirstStatus()._isEmpty()) || (this.getSecondStatus() && !this.getSecondStatus()._isEmpty()));
+		var bHasStatus = false;
+
+		/**
+		 *  @deprecated as of version 1.16
+		 */
+		bHasStatus = ((this.getFirstStatus() && !this.getFirstStatus()._isEmpty()) || (this.getSecondStatus() && !this.getSecondStatus()._isEmpty()));
+
 
 		if (!bHasStatus && this.getStatuses() && this.getStatuses().length > 0) {
 			var statuses = this.getStatuses();
@@ -1277,8 +1284,13 @@ sap.ui.define([
 	 */
 	ObjectHeader.prototype._hasMarkers = function() {
 		var aMarkers = this.getMarkers(),
-			bHasOldMarkers = this.getShowMarkers() && (this.getMarkFavorite() || this.getMarkFlagged()),
+			bHasOldMarkers = false,
 			bHasMarkers = aMarkers && aMarkers.length;
+
+		/**
+		 * @deprecated as of version 1.42.0
+		 */
+		bHasOldMarkers = this.getShowMarkers() && (this.getMarkFavorite() || this.getMarkFlagged());
 
 		return (bHasOldMarkers || bHasMarkers);
 	};

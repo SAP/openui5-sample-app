@@ -16,7 +16,7 @@ sap.ui.define('sap/ui/debug/DebugEnv', ['sap/ui/base/Interface', './ControlTree'
 	 * @class Central Class for the Debug Environment
 	 *
 	 * @author Martin Schaus, Frank Weigel
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @private
 	 * @alias sap.ui.debug.DebugEnv
 	 */
@@ -165,11 +165,20 @@ sap.ui.define('sap/ui/debug/DebugEnv', ['sap/ui/base/Interface', './ControlTree'
 			this.oControlTree.renderDelayed();
 		}
 
-		window.addEventListener("unload", function(oEvent) {
-			this.oControlTree.exit();
-			this.oPropertyList.exit();
-		}.bind(this));
-
+		/**
+		 * The block below is not needed because it only did a cleanup
+		 * before the page was closed. This should not be necessary.
+		 * Nevertheless we leave the coding here and only deprecate it,
+		 * in order to keep the BFCache behavior stable.
+		 * Removing the 'unload' handler could potentially activate
+		 * the BFCache and cause a different behavior in browser versions
+		 * where the 'unload' handler is still supported.
+		 * Therefore we only removed the not needed cleanup coding
+		 * but still attach a noop to ensure this handler would still
+		 * invalidate the BFCache.
+		 * @deprecated as of 1.119
+		 */
+		window.addEventListener("unload", () => {});
 	};
 
 	/**

@@ -161,7 +161,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -228,6 +228,7 @@ function(
 				 * If set to true, direct text input is disabled and the control will trigger the event "valueHelpRequest" for all user interactions. The properties "showValueHelp", "editable", and "enabled" must be set to true, otherwise the property will have no effect.
 				 * In this scenario, the <code>showItems</code> API will not work.
 				 * @since 1.21.0
+				 * @deprecated As of version 1.119 The property valueHelpOnly should not be used anymore
 				 */
 				valueHelpOnly : {type : "boolean", group : "Behavior", defaultValue : false},
 
@@ -401,7 +402,7 @@ function(
 				 * <b>Note:</b> If <code>suggestionItems</code> & <code>suggestionRows</code> are set in parallel, the last aggeragtion to come would overwrite the previous ones.
 				 * @since 1.21.1
 				 */
-				suggestionRows : {type : "sap.m.ColumnListItem", altTypes: ["sap.m.GroupHeaderListItem"], multiple : true, singularName : "suggestionRow", bindable : "bindable", forwarding: {getter: "_getSuggestionsTable", aggregation: "items"}},
+				suggestionRows : {type : "sap.m.ITableItem", multiple : true, singularName : "suggestionRow", bindable : "bindable", forwarding: {getter: "_getSuggestionsTable", aggregation: "items"}},
 
 				/**
 				 * The suggestion popup (can be a Dialog or Popover); aggregation needed to also propagate the model and bindings to the content of the popover
@@ -1135,25 +1136,29 @@ function(
 				decorative: false,
 				noTabStop: true,
 				press: function (oEvent) {
-					// if the property valueHelpOnly is set to true, the event is triggered in the ontap function
-					if (!that.getValueHelpOnly()) {
-						var oParent = this.getParent(),
-							$input;
+					/**
+					 * @deprecated As of version 1.119
+					 */
+					 if (that.getValueHelpOnly()) {
+						// if the property valueHelpOnly is set to true, the event is triggered in the ontap function
+						return;
+					 }
+					var oParent = this.getParent(),
+						$input;
 
-						if (Device.support.touch) {
-							// prevent opening the soft keyboard
-							$input = oParent.$('inner');
-							$input.attr('readonly', 'readonly');
-							oParent.focus();
-							$input.removeAttr('readonly');
-						} else {
-							oParent.focus();
-						}
-
-						that.bValueHelpRequested = true;
-
-						that._fireValueHelpRequest(false);
+					if (Device.support.touch) {
+						// prevent opening the soft keyboard
+						$input = oParent.$('inner');
+						$input.attr('readonly', 'readonly');
+						oParent.focus();
+						$input.removeAttr('readonly');
+					} else {
+						oParent.focus();
 					}
+
+					that.bValueHelpRequested = true;
+
+					that._fireValueHelpRequest(false);
 				}
 			});
 		} else if (this._oValueHelpIcon.getSrc() !== sIconSrc) {
@@ -1227,7 +1232,7 @@ function(
 
 	/**
 	 * Fire valueHelpRequest event if conditions for ValueHelpOnly property are met.
-	 *
+	 * @deprecated As of version 1.119 the property valueHelpOnly should not be used anymore
 	 * @private
 	 */
 	Input.prototype._fireValueHelpRequestForValueHelpOnly = function() {
@@ -1249,6 +1254,9 @@ function(
 	Input.prototype.ontap = function(oEvent) {
 		InputBase.prototype.ontap.call(this, oEvent);
 
+		/**
+		* @deprecated As of version 1.119
+		*/
 		if (this.isValueHelpOnlyOpener(oEvent.target)) {
 			this._fireValueHelpRequestForValueHelpOnly();
 		}
@@ -2324,7 +2332,7 @@ function(
 
 	/**
 	 * Event handler for input select.
-	 *
+	 * @deprecated As of version 1.119 the property valueHelpOnly should not be used anymore
 	 * @private
 	 * @param {jQuery.Event} oEvent Keyboard event.
 	 */
@@ -3080,9 +3088,11 @@ function(
 					}
 
 					if (iInputWidth <= parseInt(sPopoverMaxWidth) && !Device.system.phone) {
-						oSuggPopover.getPopover().getDomRef().style.setProperty("max-width", "40rem");
+						oSuggPopover.getPopover().addStyleClass("sapMSuggestionPopoverDefaultWidth");
 					} else {
 						oSuggPopover.getPopover().getDomRef().style.setProperty("max-width", iInputWidth + "px");
+						oSuggPopover.getPopover().addStyleClass("sapMSuggestionPopoverInputWidth");
+
 					}
 
 					oSuggPopover.getPopover().getDomRef().style.setProperty("min-width", iInputWidth + "px");
@@ -3247,6 +3257,7 @@ function(
 	 * In the context of the Input, all targets are valid.
 	 *
 	 * @protected
+	 * @deprecated As of version 1.119 the property valueHelpOnly should not be used anymore
 	 * @param {HTMLElement|undefined} oTarget The target of the event.
 	 * @returns {boolean} Boolean indicating if the target is a valid opener.
 	 */

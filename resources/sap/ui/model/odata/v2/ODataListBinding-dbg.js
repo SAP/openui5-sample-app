@@ -102,10 +102,8 @@ sap.ui.define([
 
 			this.sFilterParams = null;
 			this.sSortParams = null;
-			this.sRangeParams = null;
 			this.sCustomParams = this.oModel.createCustomParams(this.mParameters);
 			this.mCustomParams = mParameters && mParameters.custom;
-			this.iStartIndex = 0;
 			this.iLength = 0;
 			this.bPendingChange = false;
 			this.aAllKeys = null;
@@ -792,49 +790,52 @@ sap.ui.define([
 	/**
 	 * Load data for the given range from server.
 	 *
-	 * @param {int} iStartIndex The start index
-	 * @param {int} iLength The amount of data to be requested
+	 * @param {int} [iStartIndex] The start index
+	 * @param {int} [iLength] The amount of data to be requested
 	 * @private
 	 */
 	ODataListBinding.prototype.loadData = function(iStartIndex, iLength) {
-		var sGroupId,
+		var sGroupId, oReadParameters,
 			sGuid = uid(),
 			bInlineCountRequested = false,
-			aParams = [],
+			iLimit = this.oModel.iSizeLimit,
 			sPath = this.sPath,
 			bRemovePersistedCreatedAfterRefresh = this.bRemovePersistedCreatedAfterRefresh,
+			aResultPages = [],
+			bUseClientMode = this.useClientMode(),
 			that = this;
 
-		// create range parameters and store start index for sort/filter requests
-		if (iStartIndex || iLength) {
-			this.sRangeParams = "$skip=" + iStartIndex + "&$top=" + iLength;
-			this.iStartIndex = iStartIndex;
-		} else {
-			iStartIndex = this.iStartIndex;
-		}
+		function getUrlParameters() {
+			var aParameters = [];
+			// create range parameters and store start index for sort/filter requests
+			if (iLength) {
+				aParameters.push("$skip=" + iStartIndex + "&$top=" + iLength);
+			} else {
+				// For OperationMode.Client and OperationMode.Auto (if the threshold was sufficient)
+				// loadData is called without iStartIndex and iLength, try reading all data without
+				// $skip and $top
+				iStartIndex = 0;
+			}
+			if (that.sSortParams) {
+				aParameters.push(that.sSortParams);
+			}
+			that._addFilterQueryOption(aParameters, !bUseClientMode);
+			if (that.sCustomParams) {
+				aParameters.push(that.sCustomParams);
+			}
+			if (that.sCountMode == CountMode.InlineRepeat
+					|| !that.bLengthFinal
+						&& (that.sCountMode === CountMode.Inline || that.sCountMode === CountMode.Both)) {
+				aParameters.push("$inlinecount=allpages");
+				bInlineCountRequested = true;
+			} else {
+				bInlineCountRequested = false;
+			}
 
-		// create the request url
-		// $skip/$top and are excluded for OperationMode.Client and Auto if the threshold was sufficient
-		if (this.sRangeParams && !this.useClientMode()) {
-			aParams.push(this.sRangeParams);
-		}
-		if (this.sSortParams) {
-			aParams.push(this.sSortParams);
-		}
-		this._addFilterQueryOption(aParams, !this.useClientMode());
-		if (this.sCustomParams) {
-			aParams.push(this.sCustomParams);
-		}
-		if (this.sCountMode == CountMode.InlineRepeat ||
-			!this.bLengthFinal &&
-			(this.sCountMode === CountMode.Inline ||
-			 this.sCountMode === CountMode.Both)) {
-			aParams.push("$inlinecount=allpages");
-			bInlineCountRequested = true;
+			return aParameters;
 		}
 
 		function fnSuccess(oData) {
-
 			// update iLength (only when the inline count was requested and is available)
 			if (bInlineCountRequested && oData.__count !== undefined) {
 				that.iLength = parseInt(oData.__count);
@@ -862,12 +863,24 @@ sap.ui.define([
 				}
 			}
 
-			if (that.useClientMode()) {
+			if (bUseClientMode) {
 				// For clients mode, store all keys separately and set length to final
-				that.aKeys = [];
+				if (!iStartIndex) {
+					that.aKeys = [];
+				}
 				each(oData.results, function(i, entry) {
-					that.aKeys[i] = that.oModel._getKey(entry);
+					that.aKeys[iStartIndex + i] = that.oModel._getKey(entry);
 				});
+				aResultPages.push(oData.results);
+				if (oData.__next && that.aKeys.length < iLimit /*first request may return enough*/) {
+					// continue reading
+					iStartIndex = that.aKeys.length;
+					iLength = iLimit - iStartIndex; // read up to model size limit
+					oReadParameters.urlParameters = getUrlParameters();
+					that.mRequestHandles[sGuid] = that.oModel.read(that.sPath, oReadParameters);
+
+					return;
+				}
 				that.updateExpandedList(that.aKeys);
 				that.aAllKeys = that.aKeys.slice();
 				that.iLength = that.aKeys.length;
@@ -928,9 +941,17 @@ sap.ui.define([
 				that._removePersistedCreatedContexts();
 			}
 
-			//register datareceived call as  callAfterUpdate
-			that.oModel.callAfterUpdate(function() {
-				that.fireDataReceived({data: oData});
+			that.oModel.callAfterUpdate(function () {
+				if (aResultPages.length > 1) {
+					that.fireDataReceived({
+						data: {
+							__count: String(that.iLength),
+							results: Array.prototype.concat.apply([], aResultPages)
+						}
+					});
+				} else {
+					that.fireDataReceived({data: oData});
+				}
 			});
 		}
 
@@ -957,13 +978,11 @@ sap.ui.define([
 			if (!that.bSkipDataEvents) {
 				that.fireDataReceived();
 			}
-
 		}
 
 		if (this.isRelative()){
 			sPath = this.getResolvedPath();
 		}
-
 		if (sPath) {
 			// Execute the request and use the metadata if available
 			this.bPendingRequest = true;
@@ -973,20 +992,20 @@ sap.ui.define([
 			this.bSkipDataEvents = false;
 			//if load is triggered by a refresh we have to check the refreshGroup
 			sGroupId = this.sRefreshGroupId ? this.sRefreshGroupId : this.sGroupId;
-			this.mRequestHandles[sGuid] = this.oModel.read(this.sPath, {
+			oReadParameters = {
 				headers: this.bTransitionMessagesOnly
 					? {"sap-messages" : "transientOnly"}
 					: undefined,
 				context: this.oContext,
 				groupId: sGroupId,
-				urlParameters: aParams,
+				urlParameters: getUrlParameters(),
 				success: fnSuccess,
 				error: fnError,
 				canonicalRequest: this.bCanonicalRequest,
 				updateAggregatedMessages: this.bRefresh
-			});
+			};
+			this.mRequestHandles[sGuid] = this.oModel.read(this.sPath, oReadParameters);
 		}
-
 	};
 
 	ODataListBinding.prototype.isLengthFinal = function() {
@@ -1737,7 +1756,7 @@ sap.ui.define([
 		if (!this.aApplicationFilters || !Array.isArray(this.aApplicationFilters)) {
 			this.aApplicationFilters = [];
 		}
-
+		/** @deprecated As of version 1.22.0, reason sap.ui.model.odata.Filter.js */
 		this.convertFilters();
 		this.oCombinedFilter = FilterProcessor.combineFilters(this.aFilters, this.aApplicationFilters);
 
@@ -1785,6 +1804,7 @@ sap.ui.define([
 	/**
 	 * Convert sap.ui.model.odata.Filter to sap.ui.model.Filter
 	 *
+	 * @deprecated As of version 1.22.0, reason sap.ui.model.odata.Filter.js
 	 * @private
 	 */
 	ODataListBinding.prototype.convertFilters = function() {
@@ -1823,6 +1843,7 @@ sap.ui.define([
 		this.addComparators(this.aSorters, true);
 		this.addComparators(this.aFilters);
 		this.addComparators(this.aApplicationFilters);
+		/** @deprecated As of version 1.22.0, reason sap.ui.model.odata.Filter.js */
 		this.convertFilters();
 		this.oCombinedFilter = FilterProcessor.combineFilters(this.aFilters, this.aApplicationFilters);
 
@@ -2058,18 +2079,24 @@ sap.ui.define([
 			sResolvedPath = this.getResolvedPath(),
 			that = this;
 
+		function isNonTransientTarget(sFullTarget) {
+			return aCreatedContextDeepPaths
+				.every((sCreatedContextDeepPath) => !sFullTarget.startsWith(sCreatedContextDeepPath));
+		}
+
 		if (!sResolvedPath) {
 			return Promise.resolve(null);
 		}
 
+		const aCreatedContextDeepPaths = this._getCreatedContexts()
+			.map((oCreatedContext) => oCreatedContext.getDeepPath());
 		this.oModel.getMessagesByPath(sDeepPath, true).forEach(function (oMessage) {
 			var sPredicate;
 
 			if (!fnFilter || fnFilter(oMessage)) {
-				// this.oModel.getMessagesByPath returns only messages with full target starting with
-				// deep path
+				// this.oModel.getMessagesByPath returns only messages with full target starting with deep path
 				oMessage.aFullTargets.forEach(function (sFullTarget) {
-					if (sFullTarget.startsWith(sDeepPath)) {
+					if (sFullTarget.startsWith(sDeepPath) && isNonTransientTarget(sFullTarget)) {
 						sPredicate = sFullTarget.slice(sDeepPath.length).split("/")[0];
 						if (sPredicate) {
 							aPredicateSet.add(sPredicate);
@@ -2295,14 +2322,16 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataListBinding.prototype.fireCreateActivate = function (oContext) {
-		if (this.fireEvent("createActivate", {context : oContext}, /*bAllowPreventDefault*/true)) {
-			oContext.finishActivation();
-			this._fireChange({reason : ChangeReason.Change});
-		} else {
-			oContext.cancelActivation();
-			oContext.fetchActivationStarted()
-				.then(this.fireCreateActivate.bind(this, oContext))
-				.catch(this.oModel.getReporter(sClassName));
+		if (!this.bIsBeingDestroyed) {
+			if (this.fireEvent("createActivate", {context : oContext}, /*bAllowPreventDefault*/true)) {
+				oContext.finishActivation();
+				this._fireChange({reason : ChangeReason.Change});
+			} else {
+				oContext.cancelActivation();
+				oContext.fetchActivationStarted()
+					.then(this.fireCreateActivate.bind(this, oContext))
+					.catch(this.oModel.getReporter(sClassName));
+			}
 		}
 	};
 

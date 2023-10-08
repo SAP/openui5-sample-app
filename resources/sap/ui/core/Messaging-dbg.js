@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-// Provides sap.ui.core.Messaging
 sap.ui.define([
 	"sap/base/Log",
 	"sap/base/util/deepEqual",
@@ -14,7 +13,7 @@ sap.ui.define([
 	"sap/ui/core/message/MessageType",
 	"sap/ui/core/message/MessageProcessor",
 	"sap/ui/model/message/MessageModel"
-], function(
+], (
 	Log,
 	deepEqual,
 	merge,
@@ -23,7 +22,7 @@ sap.ui.define([
 	MessageType,
 	MessageProcessor,
 	MessageModel
-) {
+) => {
 	"use strict";
 
 	var oMessageModel;
@@ -31,7 +30,7 @@ sap.ui.define([
 	var mAllMessages = {};
 	var oControlMessageProcessor;
 
-		/**
+	/**
 	 * Messaging provides a central place for managing <code>sap.ui.core.message.Messages</code>.
 	 *
 	 * @namespace
@@ -200,7 +199,7 @@ sap.ui.define([
 		 */
 		getMessageModel: function() {
 			if (!oMessageModel) {
-				oMessageModel = new MessageModel(this);
+				oMessageModel = new MessageModel();
 				oMessageModel.setData([]);
 			}
 			return oMessageModel;

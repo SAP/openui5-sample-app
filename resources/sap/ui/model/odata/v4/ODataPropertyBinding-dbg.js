@@ -6,6 +6,7 @@
 
 //Provides class sap.ui.model.odata.v4.ODataPropertyBinding
 sap.ui.define([
+	"./Context",
 	"./ODataBinding",
 	"./lib/_Cache",
 	"./lib/_Helper",
@@ -13,9 +14,8 @@ sap.ui.define([
 	"sap/ui/base/SyncPromise",
 	"sap/ui/model/BindingMode",
 	"sap/ui/model/ChangeReason",
-	"sap/ui/model/odata/v4/Context",
 	"sap/ui/model/PropertyBinding"
-], function (asODataBinding, _Cache, _Helper, Log, SyncPromise, BindingMode, ChangeReason, Context,
+], function (Context, asODataBinding, _Cache, _Helper, Log, SyncPromise, BindingMode, ChangeReason,
 		PropertyBinding) {
 	"use strict";
 	/*eslint max-nested-callbacks: 0 */
@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.118.0
+		 * @version 1.119.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -118,8 +118,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent
 	 *    The event object
-	 * @param {object} oEvent.getParameters
-	 *    Object containing all event parameters
+	 * @param {function():Object<any>} oEvent.getParameters
+	 *   Function which returns an object containing all event parameters
 	 * @param {sap.ui.model.ChangeReason} oEvent.getParameters.reason
 	 *   The reason for the 'change' event could be
 	 *   <ul>
@@ -157,8 +157,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.base.Event} oEvent
 	 *    The event object
-	 * @param {object} oEvent.getParameters
-	 *    Object containing all event parameters
+	 * @param {function():Object<any>} oEvent.getParameters
+	 *   Function which returns an object containing all event parameters
 	 * @param {object} [oEvent.getParameters.data]
 	 *   An empty data object if a back-end request succeeds
 	 * @param {Error} [oEvent.getParameters.error] The error object if a back-end request failed.
@@ -368,12 +368,9 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataPropertyBinding.prototype.deregisterChangeListener = function () {
-		var that = this;
-
-		this.withCache(function (_oCache, sPath, oBinding) {
-				oBinding.doDeregisterChangeListener(sPath, that);
-			}, /*sPath*/"", /*bSync*/false, /*bWithOrWithoutCache*/true)
-			.catch(this.oModel.getReporter());
+		if (this.sReducedPath) {
+			this.doDeregisterChangeListener(this.sReducedPath, this);
+		}
 	};
 
 	/**

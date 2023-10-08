@@ -107,7 +107,7 @@ sap.ui.define([
 				}
 
 				if (oOptions.viewId) {
-					var oCoreElement = UI5Element.registry.get(oOptions.viewId);
+					var oCoreElement = UI5Element.getElementById(oOptions.viewId);
 					if (oCoreElement instanceof View && (!sViewName || oCoreElement.getViewName() === sViewName)) {
 						oView = oCoreElement;
 					}
@@ -509,7 +509,7 @@ sap.ui.define([
 				var hasExpectedType = makeTypeFilterFn(oOptions.controlType);
 
 				if (typeof oOptions.id === "string") {
-					var oControl = UI5Element.registry.get(oOptions.id) || null;
+					var oControl = UI5Element.getElementById(oOptions.id) || null;
 
 					if (oControl && !hasExpectedType(oControl)) {
 						this._oLogger.error("A control with global ID '" + oOptions.id + "' is found but does not have required controlType '" +
@@ -539,7 +539,7 @@ sap.ui.define([
 				var aUnmatchedIds = [];
 
 				aMatchIds.forEach(function (sId) {
-					var oControl = UI5Element.registry.get(sId);
+					var oControl = UI5Element.getElementById(sId);
 					// only return defined controls
 					if (oControl && hasExpectedType(oControl) && !oControl.bIsDestroyed) {
 						aMatchingControls.push(oControl);

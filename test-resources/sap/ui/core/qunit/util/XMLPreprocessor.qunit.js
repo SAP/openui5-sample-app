@@ -706,9 +706,8 @@ sap.ui.define([
 
 	//*********************************************************************************************
 	// Note: "X" is really nothing special
-[false, true].forEach(function (bAsync) {
 	["true", true, 1, "X"].forEach(function (oFlag) {
-		QUnit.test("XML with template:if test='{/flag}', truthy, flag = " + oFlag,
+		QUnit.test("XML with template:if test='{/flag}', truthy, async = true, flag = " + oFlag,
 			function (assert) {
 				this.oSapUiMock.expects("require").on(sap.ui)
 					.atLeast(0) // only for the 1st run
@@ -721,11 +720,34 @@ sap.ui.define([
 					'</mvc:View>'
 				], {
 					models: new JSONModel({flag: oFlag})
-				}, undefined, /*bAsync*/bAsync);
+				}, undefined, true);
 			}
 		);
 	});
-});
+
+	//*********************************************************************************************
+	// Note: "X" is really nothing special
+	["true", true, 1, "X"].forEach(function (oFlag) {
+		/**
+		 * @deprecated since 1.119.0
+		 */
+		QUnit.test("XML with template:if test='{/flag}', truthy, async = false, flag = " + oFlag,
+			function (assert) {
+				this.oSapUiMock.expects("require").on(sap.ui)
+					.atLeast(0) // only for the 1st run
+					.withArgs(["sap/ui/model/type/Boolean"]).callThrough();
+				return this.check(assert, [
+					mvcView("t"),
+					'<t:if test="{path: \'/flag\', type: \'sap.ui.model.type.Boolean\'}">',
+					'<In id="flag"/>',
+					'</t:if>',
+					'</mvc:View>'
+				], {
+					models: new JSONModel({flag: oFlag})
+				}, undefined, false);
+			}
+		);
+	});
 
 	//*********************************************************************************************
 	// Note: " " intentionally not included yet, should not matter for OData!

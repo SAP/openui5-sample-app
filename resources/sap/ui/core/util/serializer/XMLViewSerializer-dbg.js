@@ -20,7 +20,7 @@ sap.ui.define(['sap/ui/base/EventProvider', './Serializer', './delegate/XML', 's
 	 * @class XMLViewSerializer class.
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @alias sap.ui.core.util.serializer.XMLViewSerializer
 	 * @private
 	 * @ui5-restricted sap.watt, com.sap.webide
@@ -60,7 +60,7 @@ sap.ui.define(['sap/ui/base/EventProvider', './Serializer', './delegate/XML', 's
 		var that = this;
 		// a function to understand if to skip aggregations
 		var fnSkipAggregations = function (oControl) {
-			return oControl instanceof this._oWindow.sap.ui.core.mvc.View && oControl !== that._oView;
+			return oControl?.isA?.("sap.ui.core.mvc.View") && oControl !== that._oView;
 		};
 
 		// create serializer

@@ -84,7 +84,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -469,10 +469,10 @@ sap.ui.define([
 			return;
 		}
 		this.firePress({/* no parameters */});
-		if (this.hasListeners("press")) {
-			this.isPressed = !this.isPressed;
-			this.toggleStyleClass("sapMAvatarPressed", this._isPressed);
-		}
+		// if (this.hasListeners("press")) {
+		// 	this.isPressed = !this.isPressed;
+		// 	this.toggleStyleClass("sapMAvatarPressed", this._isPressed);
+		// }
 	};
 
 	/**

@@ -4,19 +4,24 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"sap/ui/core/Configuration",
+	"sap/ui/base/config/URLConfigurationProvider",
 	"sap/ui/core/message/Message",
 	"sap/ui/core/Messaging",
 	"sap/ui/model/message/MessageModel"
-], function(Configuration, Message, Messaging, MessageModel) {
-	/*global QUnit */
+], function(URLConfigurationProvider, Message, Messaging, MessageModel) {
+	/*global QUnit sinon */
 	"use strict";
 
+	var oURLConfigurationProviderStub;
 	QUnit.module("sap/ui/core/message/MessageManager", {
 		beforeEach : function () {
 			// avoid attaching to validation events on UI5 core
-			this.stub(Configuration, "getHandleValidation").returns(false);
-		}
+			oURLConfigurationProviderStub = sinon.stub(URLConfigurationProvider, "get");
+			oURLConfigurationProviderStub.callsFake(function(sKey) {
+				return sKey === "sapUiXxHandleValidation" ? false : oURLConfigurationProviderStub.wrappedMethod.call(this, sKey);
+			});
+		},
+		afterEach: () => oURLConfigurationProviderStub.restore()
 	});
 
 	var oProcessor = {getId : function () { return "id"; }, setMessages: function() {}},

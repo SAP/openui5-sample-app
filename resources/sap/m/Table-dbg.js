@@ -64,7 +64,7 @@ sap.ui.define([
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -1326,6 +1326,9 @@ sap.ui.define([
 
 	Table.prototype._fireUpdateFinished = function(oInfo) {
 		ListBase.prototype._fireUpdateFinished.apply(this, arguments);
+
+		// handle the select all checkbox state
+		this.updateSelectAllCheckbox();
 
 		// after binding update we need to update the aria-rowcount
 		var oNavigationRoot = this.getNavigationRoot();

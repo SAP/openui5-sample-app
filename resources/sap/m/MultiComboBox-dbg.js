@@ -145,7 +145,7 @@ function(
 	 * </ul>
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @extends sap.m.ComboBoxBase
@@ -1402,9 +1402,10 @@ function(
 		}
 
 		if (iInputWidth <= parseInt(sPopoverMaxWidth) && !Device.system.phone) {
-			this.getPicker().getDomRef().style.setProperty("max-width", "40rem");
+			this.getPicker().addStyleClass("sapMSuggestionPopoverDefaultWidth");
 		} else {
 			this.getPicker().getDomRef().style.setProperty("max-width", iInputWidth + "px");
+			this.getPicker().addStyleClass("sapMSuggestionPopoverInputWidth");
 		}
 
 	};

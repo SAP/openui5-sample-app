@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.118.0
+		 * @version 1.119.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -94,7 +94,8 @@ sap.ui.define([
 		this.oSyncCreatePromise = oCreatePromise;
 		// a promise waiting for the deletion, also used as indicator for #isDeleted
 		this.oDeletePromise = null;
-		this.bFiringCreateActivate = false; // see #doSetProperty
+		// avoids recursion when calling #doSetProperty within the createActivate event handler
+		this.bFiringCreateActivate = false;
 		this.iGeneration = iGeneration || 0;
 		this.bInactive = bInactive || undefined; // be in sync with the annotation
 		this.iIndex = iIndex;
@@ -551,8 +552,8 @@ sap.ui.define([
 							.catch(that.oModel.getReporter());
 						that.bFiringCreateActivate = true;
 						that.bInactive = oBinding.fireCreateActivate(that) ? false : 1;
-						oCache.setInactive(sEntityPath, that.bInactive);
 						that.bFiringCreateActivate = false;
+						oCache.setInactive(sEntityPath, that.bInactive);
 					}
 
 					// if request is canceled fnPatchSent and fnErrorCallback are not called and
@@ -695,16 +696,18 @@ sap.ui.define([
 	};
 
 	/**
-	 * Returns the value at the given path and removes it from the cache.
+	 * Returns the collection at the given path and removes it from the cache if it is marked as
+	 * transferable.
 	 *
-	 * @param {string} sPath - The relative path of the property
-	 * @returns {any} The value
+	 * @param {string} sPath - The relative path of the collection
+	 * @returns {object[]|undefined} The collection or <code>undefined</code>
+	 * @throws {Error} If the given path does not point to a collection.
 	 *
 	 * @private
 	 */
-	Context.prototype.getAndRemoveValue = function (sPath) {
+	Context.prototype.getAndRemoveCollection = function (sPath) {
 		return this.withCache(function (oCache, sCachePath) {
-			return oCache.getAndRemoveValue(sCachePath);
+			return oCache.getAndRemoveCollection(sCachePath);
 		}, sPath, true).getResult();
 	};
 
@@ -1134,6 +1137,35 @@ sap.ui.define([
 	 */
 	Context.prototype.isTransient = function () {
 		return this.oSyncCreatePromise && this.oSyncCreatePromise.isPending();
+	};
+
+	/**
+	 * Moves this node to the given parent (in case of a recursive hierarchy, see
+	 * {@link #setAggregation}, where <code>oAggregation.expandTo</code> must be one). No other
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#create creation}, {@link #delete deletion}, or
+	 * move must be pending, and no other modification (including collapse of some ancestor node)
+	 * must happen while this move is pending!
+	 *
+	 * This context's {@link #getIndex index} may change and it becomes "created persisted", with
+	 * {@link #isTransient} returning <code>false</code> etc.
+	 *
+	 * @param {object} oParameters - A parameter object
+	 * @param {sap.ui.model.odata.v4.Context} oParameters.parent - The new parent's context
+	 * @returns {Promise<void>}
+	 *   A promise which is resolved without a defined result when the move is finished, or
+	 *   rejected in case of an error
+	 * @throws (Error)
+	 *   If the parent is missing or (a descendant of) this node.
+	 *
+	 * @experimental As of version 1.119.0
+	 * @public
+	 */
+	Context.prototype.move = function ({parent : oParent}) {
+		if (!oParent || oParent === this) {
+			throw new Error("Unsupported parent context: " + oParent);
+		}
+
+		return Promise.resolve(this.oBinding.move(this, oParent));
 	};
 
 	/**
@@ -1727,7 +1759,8 @@ sap.ui.define([
 
 		if (this.iIndex === iVIRTUAL || this.isTransient() && !this.isInactive()
 			|| this.oBinding.getHeaderContext && this === this.oBinding.getHeaderContext()
-			|| this.oBinding.getParameterContext && this === this.oBinding.getParameterContext()) {
+			// only operation bindings have a parameter context, for others the function fails
+			|| this.oBinding.oOperation && this === this.oBinding.getParameterContext()) {
 			throw new Error("Cannot reset: " + this);
 		}
 
@@ -1761,11 +1794,28 @@ sap.ui.define([
 	};
 
 	/**
+	 * Sets this context's state from "persisted" to "created persisted".
+	 *
+	 * Note: this is a private and internal API. Do not call this!
+	 *
+	 * @throws {Error} If this context is already "created"
+	 *
+	 * @private
+	 */
+	Context.prototype.setCreatedPersisted = function () {
+		if (this.oCreatedPromise) {
+			throw new Error("Already 'created', currently transient: " + this.isTransient());
+		}
+		this.oCreatedPromise = Promise.resolve();
+		this.oSyncCreatePromise = SyncPromise.resolve();
+	};
+
+	/**
 	 * Sets the inactive flag to <code>true</code>
 	 *
 	 * Note: this is a private and internal API. Do not call this!
 	 *
-	 * @throws {Error} - If this context is not inactive
+	 * @throws {Error} If this context is not inactive
 	 *
 	 * @private
 	 * @see #isInactive

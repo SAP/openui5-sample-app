@@ -937,7 +937,7 @@ sap.ui.define([
 			mQueryOptions,
 			sRequestPath,
 			sResourceMetaPath = _Helper.getMetaPath(sResourcePath),
-			mTypeForMetaPath = this.fetchTypes().getResult(),
+			mTypeForMetaPath = this.getTypes(),
 			aUpdateProperties,
 			that = this;
 
@@ -1081,6 +1081,7 @@ sap.ui.define([
 	 *   A promise that is resolved with a map from resource path + entity path to the type
 	 *
 	 * @private
+	 * @see #getTypes
 	 */
 	_Cache.prototype.fetchTypes = function () {
 		var aPromises, mTypeForMetaPath,
@@ -1146,21 +1147,31 @@ sap.ui.define([
 	 */
 
 	/**
-	 * Returns the value at the given path and removes it from the cache.
+	 * Returns the collection at the given path and removes it from the cache if it is marked as
+	 * transferable.
 	 *
 	 * @param {string} sPath - The relative path of the property
-	 * @returns {any} The value
-	 * @throws {Error} If the cache is shared
+	 * @returns {object[]|undefined} The collection or <code>undefined</code>
+	 * @throws {Error} If the cache is shared or if the given path does not point to a collection.
 	 *
 	 * @public
 	 */
-	_Cache.prototype.getAndRemoveValue = function (sPath) {
+	_Cache.prototype.getAndRemoveCollection = function (sPath) {
 		var aSegments = sPath.split("/"),
 			sName = aSegments.pop(),
 			oParent = this.fetchValue(_GroupLock.$cached, aSegments.join("/")).getResult(),
 			vValue = oParent[sName];
 
 		this.checkSharedRequest();
+		if (vValue) {
+			if (!Array.isArray(vValue)) {
+				throw new Error(`${sPath} must point to a collection`);
+			}
+			if (!vValue.$transfer) {
+				return undefined;
+			}
+			delete vValue.$transfer;
+		}
 		delete oParent[sName];
 
 		return vValue;
@@ -1285,6 +1296,19 @@ sap.ui.define([
 	 */
 	_Cache.prototype.getQueryOptions = function () {
 		return this.mQueryOptions;
+	};
+
+	/**
+	 * Returns the existing map from meta path to type.
+	 *
+	 * @returns {Object<object>}
+	 *   A map from resource path + entity path to the type
+	 *
+	 * @private
+	 * @see #fetchTypes
+	 */
+	_Cache.prototype.getTypes = function () {
+		return this.fetchTypes().getResult();
 	};
 
 	/**
@@ -1641,8 +1665,8 @@ sap.ui.define([
 	 * <code>$byPredicate</code>, <code>$created</code> and <code>$count</code>, and a collection
 	 * cache's limit and number of active elements (if applicable).
 	 *
-	 * @param {object[]} aElements
-	 *   The array of elements
+	 * @param {object[]} [aElements]
+	 *   The array of elements, defaults to a collection cache's own elements
 	 * @param {number} [iIndex]
 	 *   The array index of the old element to be removed or <code>undefined</code> in case the
 	 *   element is a kept-alive element without an index
@@ -1656,7 +1680,9 @@ sap.ui.define([
 	 *
 	 * @protected
 	 */
-	_Cache.prototype.removeElement = function (aElements, iIndex, sPredicate, sPath) {
+	// eslint-disable-next-line default-param-last
+	_Cache.prototype.removeElement = function (aElements = this.aElements, iIndex, sPredicate,
+			sPath) {
 		var oElement = aElements.$byPredicate[sPredicate],
 			bDeleted = oElement["@$ui5.context.isDeleted"],
 			sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate");
@@ -1880,10 +1906,10 @@ sap.ui.define([
 
 	/**
 	 * Restores the element in the given array at the given index, taking care of the array's
-	 * <code>$created</code> and <code>$count</code>, and a collection cache's limit and number of
-	 * active elements (if applicable).
+	 * <code>$byPredicate</code>, <code>$created</code> and <code>$count</code>, and a collection
+	 * cache's limit and number of active elements (if applicable).
 	 *
-	 * @param {object[]} aElements - The array of elements
+	 * @param {object[]} [aElements] - The array of elements
 	 * @param {number} iIndex - The index to restore at
 	 * @param {object} oElement - The element to restore
 	 * @param {string} sPath
@@ -1894,7 +1920,9 @@ sap.ui.define([
 	 *
 	 * @protected
 	 */
-	_Cache.prototype.restoreElement = function (aElements, iIndex, oElement, sPath, iDeletedIndex) {
+	// eslint-disable-next-line default-param-last
+	_Cache.prototype.restoreElement = function (aElements = this.aElements, iIndex, oElement, sPath,
+			iDeletedIndex) {
 		this.adjustIndexes(sPath, aElements, iIndex, 1, iDeletedIndex);
 		const sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate");
 		if (sTransientPredicate) {
@@ -1907,12 +1935,13 @@ sap.ui.define([
 		}
 		_Helper.addToCount(this.mChangeListeners, sPath, aElements, 1);
 		aElements.splice(iIndex, 0, oElement);
+		aElements.$byPredicate[_Helper.getPrivateAnnotation(oElement, "predicate")] = oElement;
 	};
 
 	/**
 	 * Adds or removes a usage of this cache. A cache with active usages must not be destroyed.
-	 * If a usage is removed, all change listeners are removed too. Note: shared caches have no
-	 * listeners.
+	 * If the last usage is removed, all change listeners are removed too. Note: shared caches have
+	 * no listeners except for the empty path (cf. <code>registerChangeListener("", th</code>).
 	 *
 	 * @param {boolean} bActive
 	 *   Whether a usage is added or removed
@@ -2625,14 +2654,31 @@ sap.ui.define([
 	};
 
 	/**
-	 * Drops the element with the given index and predicate from this cache's collection.
+	 * Drops the element with the given index and predicate from this cache's collection, so that it
+	 * will be read again from the server later on. Created persisted elements loose their special
+	 * treatment!
 	 *
 	 * @param {number} iIndex - An index
 	 * @param {string} sPredicate - A key predicate
+	 * @throws {Error} When the element with the given index is still transient
+	 *
+	 * @public
 	 */
 	_CollectionCache.prototype.drop = function (iIndex, sPredicate) {
+		const oElement = this.aElements[iIndex];
+		if (oElement["@$ui5.context.isTransient"]) {
+			throw new Error("Must not drop a transient element");
+		}
 		delete this.aElements[iIndex];
 		delete this.aElements.$byPredicate[sPredicate];
+
+		const sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate");
+		if (sTransientPredicate) { // createdPersisted => persisted
+			this.aElements.$created -= 1;
+			this.iActiveElements -= 1;
+			this.iLimit += 1;
+			delete this.aElements.$byPredicate[sTransientPredicate];
+		}
 	};
 
 	/**
@@ -2745,8 +2791,7 @@ sap.ui.define([
 		function addKeyFilter(oElement) {
 			var sKeyFilter;
 
-			mTypeForMetaPath = mTypeForMetaPath
-				|| that.fetchTypes().getResult(); // Note: $metadata already read
+			mTypeForMetaPath = mTypeForMetaPath || that.getTypes(); // Note: $metadata already read
 			sKeyFilter = _Helper.getKeyFilter(oElement, that.sMetaPath, mTypeForMetaPath);
 			if (sKeyFilter) {
 				aKeyFilters.push(sKeyFilter);
@@ -3075,7 +3120,8 @@ sap.ui.define([
 	 *   with a number property <code>$count</code> representing the element count on server-side;
 	 *   <code>$count</code> may be <code>undefined</code>, but not <code>Infinity</code>). If an
 	 *   HTTP request fails, the error from the _Requestor is returned and the requested range is
-	 *   reset to <code>undefined</code>.
+	 *   reset to <code>undefined</code>. If the request has been obsoleted by a {@link #reset}, the
+	 *   promise is rejected with an error having a property <code>canceled = true</code>.
 	 * @throws {Error} If given index or length is less than 0
 	 *
 	 * @public
@@ -3245,7 +3291,7 @@ sap.ui.define([
 			return undefined;
 		}
 
-		mTypes = this.fetchTypes().getResult(); // in this stage the promise is resolved
+		mTypes = this.getTypes(); // in this stage the promise is resolved
 
 		return this.oRequestor.request("GET", calculateKeptElementsQuery(), oGroupLock)
 			.then(function (oResponse) {
@@ -3306,7 +3352,8 @@ sap.ui.define([
 	 *   The function is called when the back-end requests have been sent.
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise which is resolved without a defined result when the request is finished and
-	 *   rejected in case of error
+	 *   rejected in case of error; if the request has been obsoleted by a {@link #reset} the error
+	 *   has a property <code>canceled = true</code>)
 	 * @throws {Error}
 	 *   If group ID is '$cached'. The error has a property <code>$cached = true</code>
 	 *
@@ -3331,6 +3378,11 @@ sap.ui.define([
 		]).then(function (aResult) {
 			var iFiltered;
 
+			if (oReadRequest.obsolete) {
+				const oError = new Error("Request is obsolete");
+				oError.canceled = true;
+				throw oError;
+			}
 			that.checkRange(oPromise, oReadRequest.iStart, oReadRequest.iEnd);
 			if (that.aElements.$tail === oPromise) {
 				that.aElements.$tail = undefined;
@@ -3340,8 +3392,10 @@ sap.ui.define([
 			return that.handleCount(oGroupLock, iTransientElements, oReadRequest.iStart,
 				oReadRequest.iEnd, aResult[0], iFiltered);
 		}).catch(function (oError) {
-			that.checkRange(oPromise, oReadRequest.iStart, oReadRequest.iEnd);
-			that.fill(undefined, oReadRequest.iStart, oReadRequest.iEnd);
+			if (!oError.canceled) {
+				that.checkRange(oPromise, oReadRequest.iStart, oReadRequest.iEnd);
+				that.fill(undefined, oReadRequest.iStart, oReadRequest.iEnd);
+			}
 			throw oError;
 		}).finally(function () {
 			that.aReadRequests.splice(that.aReadRequests.indexOf(oReadRequest), 1);
@@ -3387,7 +3441,7 @@ sap.ui.define([
 			mQueryOptions,
 			sResourcePath,
 			bSkip,
-			mTypeForMetaPath = this.fetchTypes().getResult(),
+			mTypeForMetaPath = this.getTypes(),
 			that = this;
 
 		this.checkSharedRequest();
@@ -3557,6 +3611,10 @@ sap.ui.define([
 		aKeptElementPredicates.forEach(function (sPredicate) {
 			that.aElements.$byPredicate[sPredicate] = mByPredicate[sPredicate];
 		});
+		// Beware: fireChange can trigger a read which must not be obsoleted
+		this.aReadRequests?.forEach((oReadRequest) => {
+			oReadRequest.obsolete = true;
+		});
 		if (mChangeListeners[""]) {
 			this.mChangeListeners[""] = mChangeListeners[""];
 			_Helper.fireChange(this.mChangeListeners, "");
@@ -3605,7 +3663,8 @@ sap.ui.define([
 	};
 
 	/**
-	 * Sets the isInactive annotation at the entity with the given path, which might activate it.
+	 * Sets the "@$ui5.context.isInactive" annotation at the entity with the given path, which might
+	 * activate it.
 	 *
 	 * @param {string} sPath - The path
 	 * @param {boolean|number} bInactive

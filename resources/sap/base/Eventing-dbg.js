@@ -18,7 +18,7 @@ sap.ui.define([
 	 * Eventing mixin
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @param {module:sap/base/Event} fnEventClass The Event class
 	 * @mixin module:sap/base/Eventing
 	 * @private

@@ -75,7 +75,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -420,7 +420,7 @@ function(
 		}
 
 		if (this.getCounter()) {
-			aOutput.push(oBundle.getText("LIST_ITEM_COUNTER", this.getCounter()));
+			aOutput.push(oBundle.getText("LIST_ITEM_COUNTER", [this.getCounter()]));
 		}
 
 		if (sType == ListItemType.Navigation) {

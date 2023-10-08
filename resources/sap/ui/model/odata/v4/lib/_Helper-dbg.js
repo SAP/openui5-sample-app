@@ -1712,26 +1712,6 @@ sap.ui.define([
 		},
 
 		/**
-		 * Returns the path for the return value context. Supports bound operations on an entity or
-		 * a collection.
-		 *
-		 * @param {string} sPath
-		 *   The bindings's path; either a resolved model path or a resource path; for example:
-		 *   "/Artists(ArtistID='42',IsActiveEntity=true)/special.cases.EditAction(...)" or
-		 *   "/Artists/special.cases.Create(...)", the leading "/" can be omitted.
-		 * @param {string} sResponsePredicate The key predicate of the response entity
-		 * @returns {string} The path for the return value context.
-		 *
-		 * @public
-		 */
-		getReturnValueContextPath : function (sPath, sResponsePredicate) {
-			var sBoundParameterPath = sPath.slice(0, sPath.lastIndexOf("/")),
-				i = sBoundParameterPath.indexOf("(");
-
-			return (i < 0 ? sBoundParameterPath : sPath.slice(0, i)) + sResponsePredicate;
-		},
-
-		/**
 		 * Tells whether <code>sPath</code> has <code>sBasePath</code> as path prefix. It returns
 		 * <code>true</code> iff {@link .getRelativePath} does not return <code>undefined</code>.
 		 *
@@ -2795,6 +2775,12 @@ sap.ui.define([
 				aNestedCreatedEntities.$count = undefined; // -> setCount must fire a change event
 				aNestedCreatedEntities.$created = 0;
 				aNestedCreatedEntities.$byPredicate = {};
+				// If mSelectForMetaPath has query options, the corresponding nested ODLB will get a
+				// cache later and must transfer the data to its own cache; otherwise, the nested
+				// binding has no cache and must not lose its data (BCP: 2380101762)
+				if (mSelectForMetaPath[sSegment]) {
+					aNestedCreatedEntities.$transfer = true;
+				}
 				const sCollectionPath = sPath + "/" + sSegment;
 				_Helper.setCount(mChangeListeners, sCollectionPath, aNestedCreatedEntities,
 					aNestedCreatedEntities.length);

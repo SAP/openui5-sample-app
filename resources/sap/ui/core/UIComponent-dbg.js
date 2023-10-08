@@ -55,7 +55,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Component
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @alias sap.ui.core.UIComponent
 	 * @since 1.9.2
 	 */
@@ -609,7 +609,7 @@ sap.ui.define([
 	 * @public
 	 */
 	UIComponent.prototype.byId = function(sId) {
-		return Element.registry.get(this.createId(sId));
+		return Element.getElementById(this.createId(sId));
 	};
 
 	/**

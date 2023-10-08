@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR",
 		"applicationVersion" : {
-			"version" : "1.118.0"
+			"version" : "1.119.0"
 		},
 		"description" : "Example for OData V4 EPM Sales Orders using XML Templating",
 		"dataSources" : {

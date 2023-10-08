@@ -24,6 +24,7 @@ sap.ui.define([
 	"sap/ui/core/Fragment",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/Configuration",
+	"sap/ui/core/Element",
 	"sap/ui/core/Lib",
 	"sap/ui/core/Messaging"
 ], function(
@@ -46,6 +47,7 @@ sap.ui.define([
 	Fragment,
 	jQuery,
 	Configuration,
+	Element,
 	Library,
 	Messaging
 ) {
@@ -919,9 +921,9 @@ sap.ui.define([
 		 */
 		_getControl:function (sControlId, sFragmentId) {
 			if (sFragmentId) {
-				return sap.ui.getCore().byId(sFragmentId + "--" + sControlId);
+				return Element.getElementById(sFragmentId + "--" + sControlId);
 			}
-			return sap.ui.getCore().byId(sControlId);
+			return Element.getElementById(sControlId);
 		},
 
 		/**

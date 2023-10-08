@@ -88,9 +88,34 @@ sap.ui.define([
 			});
 		assert.ok(bCreatedPromisePending, "Created Promise still pending");
 
+		assert.throws(function () {
+			// code under test
+			oContext.setCreatedPersisted();
+		}, new Error("Already 'created', currently transient: true"));
+
 		fnResolve("bar");
 		return oCreatedPromise.then(function () {
 			assert.strictEqual(bCreatedPromisePending, false, "Created Promise resolved");
+		});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("setCreatedPersisted", function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/foo", 42);
+
+		// code under test
+		oContext.setCreatedPersisted();
+
+		assert.strictEqual(oContext.isTransient(), false);
+		assert.ok(oContext.created() instanceof Promise);
+
+		assert.throws(function () {
+			// code under test
+			oContext.setCreatedPersisted();
+		}, new Error("Already 'created', currently transient: false"));
+
+		return oContext.created().then(function (vResult) {
+			assert.strictEqual(vResult, undefined);
 		});
 	});
 
@@ -1988,7 +2013,67 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("patch", function () {
+	QUnit.test("move", function (assert) {
+		const oBinding = {
+			move : mustBeMocked
+		};
+		const oContext = Context.create({/*oModel*/}, oBinding, "/EMPLOYEES('42')");
+		let bResolved = false;
+		this.mock(oBinding).expects("move").withExactArgs(sinon.match.same(oContext), "~oParent~")
+			.returns(new SyncPromise(function (resolve) {
+				setTimeout(function () {
+					bResolved = true;
+					resolve(); // Note: without a defined result
+				}, 0);
+			}));
+
+		// code under test
+		const oPromise = oContext.move({parent : "~oParent~"});
+
+		assert.ok(oPromise instanceof Promise);
+		return oPromise.then(function () {
+			assert.ok(bResolved, "not too soon");
+		});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("move: fails", function (assert) {
+		const oBinding = {
+			move : mustBeMocked
+		};
+		const oContext = Context.create({/*oModel*/}, oBinding, "/EMPLOYEES('42')");
+
+		assert.throws(function () {
+			// code under test
+			oContext.move({});
+		}, new Error("Unsupported parent context: undefined"));
+
+		assert.throws(function () {
+			// code under test
+			oContext.move({parent : null});
+		}, new Error("Unsupported parent context: null"));
+
+		assert.throws(function () {
+			// code under test
+			oContext.move({parent : oContext});
+		}, new Error("Unsupported parent context: " + oContext));
+
+		this.mock(oBinding).expects("move").withExactArgs(sinon.match.same(oContext), "~oParent~")
+			.returns(SyncPromise.reject("~error~"));
+
+		// code under test
+		const oPromise = oContext.move({parent : "~oParent~"});
+
+		assert.ok(oPromise instanceof Promise);
+		return oPromise.then(function () {
+			assert.ok(false, "unexpected success");
+		}, function (vError) {
+			assert.strictEqual(vError, "~error~");
+		});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("patch", function (assert) {
 		var oCache = {
 				patch : function () {}
 			},
@@ -1998,11 +2083,11 @@ sap.ui.define([
 
 		this.mock(oContext).expects("withCache").withExactArgs(sinon.match.func, "")
 			.callsArgWith(0, oCache, sPath)
-			.returns(Promise.resolve());
+			.returns("~result~");
 		this.mock(oCache).expects("patch").withExactArgs(sPath, sinon.match.same(oData));
 
 		// code under test
-		return oContext.patch(oData);
+		assert.strictEqual(oContext.patch(oData), "~result~");
 	});
 
 	//*********************************************************************************************
@@ -3717,6 +3802,7 @@ sap.ui.define([
 	QUnit.test("resetChanges, w/o oDeletePromise, bInactive=" + bInactive, function (assert) {
 		var oBinding = {
 				checkSuspended : function () {},
+				getParameterContext : "must not be called",
 				resetChangesForPath : function () {}
 			},
 			oModel = {
@@ -3850,7 +3936,7 @@ sap.ui.define([
 
 	//*********************************************************************************************
 	QUnit.test("resetChanges: throws error on parameter context", function (assert) {
-		var oBinding = {getParameterContext : function () {}},
+		var oBinding = {oOperation : {}, getParameterContext : function () {}},
 			oContext = Context.create({/*oModel*/}, oBinding, "/Operation(...)/$Parameter");
 
 		this.mock(oContext).expects("isTransient").withExactArgs().returns(false);
@@ -4365,9 +4451,9 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("getAndRemoveValue", function (assert) {
+	QUnit.test("getAndRemoveCollection", function (assert) {
 		var oCache = {
-				getAndRemoveValue : function () {}
+				getAndRemoveCollection : function () {}
 			},
 			oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/path"),
 			oExpectation;
@@ -4377,9 +4463,10 @@ sap.ui.define([
 			.returns(SyncPromise.resolve("~valueFromWithCache~"));
 
 		// code under test
-		assert.strictEqual(oContext.getAndRemoveValue("relative/path"), "~valueFromWithCache~");
+		assert.strictEqual(oContext.getAndRemoveCollection("relative/path"),
+			"~valueFromWithCache~");
 
-		this.mock(oCache).expects("getAndRemoveValue").withExactArgs("cache/path")
+		this.mock(oCache).expects("getAndRemoveCollection").withExactArgs("cache/path")
 			.returns("~value~");
 
 		// code under test

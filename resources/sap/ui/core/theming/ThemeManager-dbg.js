@@ -52,7 +52,7 @@ sap.ui.define([
 	 * Helper class used by the UI5 Core to check whether the themes are applied correctly.
 	 *
 	 * It could happen that e.g. in onAfterRendering not all themes are available. In these cases the
-	 * check waits until the CSS is applied and fires an onThemeChanged event.
+	 * check waits until the CSS is applied and fires an onThemeApplied event.
 	 *
 	 * @namespace
 	 * @author SAP SE
@@ -74,11 +74,11 @@ sap.ui.define([
 		 * @private
 		 * @ui5-restricted sap.ui.core
 		 */
-		checkThemeChanged : function() {
+		checkThemeApplied : function() {
 			ThemeManager.reset();
 			delayedCheckTheme(true);
 			if (!_sThemeCheckId) {
-				ThemeManager.fireThemeChanged();
+				ThemeManager.fireThemeApplied();
 			}
 		},
 
@@ -148,17 +148,18 @@ sap.ui.define([
 
 			// include the stylesheet for the library (except for "classic" and "legacy" lib)
 			if ((sLibName != "sap.ui.legacy") && (sLibName != "sap.ui.classic")) {
-				var oGetCssVariablesParam = {
+				var sCssVariablesParam = BaseConfig.get({
 					name: "sapUiXxCssVariables",
-					type: BaseConfig.Type.Boolean
-				};
+					type: BaseConfig.Type.String,
+					external: true
+				});
 
 				// no variant?
 				if (!sVariant) {
 					sVariant = "";
 				}
 				// determine CSS Variables / RTL
-				var sCssVars = BaseConfig.get(oGetCssVariablesParam) ? "_skeleton" : "";
+				var sCssVars = /^(true|x)$/i.test(sCssVariablesParam) ? "_skeleton" : "";
 				var sRtl = (Localization.getRTL() ? "-RTL" : "");
 
 				// create the library file name
@@ -173,7 +174,7 @@ sap.ui.define([
 
 				var sLinkId = "sap-ui-theme-" + sLibId;
 				var sSkeletonLinkId = "sap-ui-themeskeleton-" + sLibId;
-				var bCssVariables = /^(true|x|additional)$/i.test(BaseConfig.get(oGetCssVariablesParam));
+				var bCssVariables = /^(true|x|additional)$/i.test(sCssVariablesParam);
 				if (!document.querySelector("LINK[id='" + sLinkId + "']") || (bCssVariables && !document.querySelector("LINK[id='" + sSkeletonLinkId + "']"))) {
 					var sCssBasePath = new URL(ThemeManager._getThemePath(sLibName, Theming.getTheme()), document.baseURI).toString();
 					// Create a link tag and set the URL as href in order to ensure AppCacheBuster handling.
@@ -193,7 +194,6 @@ sap.ui.define([
 					fnAddFoucmarker(sLinkId);
 
 					// include the css variables
-					oGetCssVariablesParam.type = BaseConfig.Type.String;
 					if (bCssVariables) {
 						Log.info("Including " + sCssVariablesPathAndName + " -  sap.ui.core.theming.ThemeManager.includeLibraryTheme()");
 						includeStylesheet(sCssVariablesPathAndName, sLinkId);
@@ -211,7 +211,7 @@ sap.ui.define([
 					if (Parameters) {
 						Parameters._addLibraryTheme(sLibId);
 					}
-					ThemeManager.checkThemeChanged();
+					ThemeManager.checkThemeApplied();
 				}
 			}
 		},
@@ -256,7 +256,8 @@ sap.ui.define([
 		 * @private
 		 * @ui5-restricted sap.ui.core
 		 */
-		fireThemeChanged: function () {
+		fireThemeApplied: function () {
+			ThemeHelper.reset();
 			// special hook for resetting theming parameters before the controls get
 			// notified (lightweight coupling to static Parameters module)
 			var ThemeParameters = sap.ui.require("sap/ui/core/theming/Parameters");
@@ -264,7 +265,7 @@ sap.ui.define([
 				ThemeParameters._reset(/* bOnlyWhenNecessary= */ true);
 			}
 
-			ThemeManager.fireEvent("ThemeChanged", {
+			ThemeManager.fireEvent("applied", {
 				theme: Theming.getTheme()
 			});
 		}
@@ -499,7 +500,7 @@ sap.ui.define([
 		} else if (!bFirst) {
 			ThemeManager.reset();
 			ThemeManager.themeLoaded = true;
-			ThemeManager.fireThemeChanged();
+			ThemeManager.fireThemeApplied();
 			if (bEmergencyExit) {
 				Log.error("ThemeManager: max. check cycles reached.");
 			}
@@ -547,7 +548,7 @@ sap.ui.define([
 		html.classList.add("sapUiTheme-" + sTheme);
 
 		// notify the listeners
-		ThemeManager.checkThemeChanged();
+		ThemeManager.checkThemeApplied();
 	}
 
 

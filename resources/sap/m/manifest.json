@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.118.0"
+      "version": "1.119.0"
     },
     "title": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
     "description": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
@@ -29,17 +29,17 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.118",
+      "minUI5Version": "1.119",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.118.0"
+          "minVersion": "1.119.0"
         },
         "sap.ui.layout": {
-          "minVersion": "1.118.0",
+          "minVersion": "1.119.0",
           "lazy": true
         },
         "sap.ui.unified": {
-          "minVersion": "1.118.0",
+          "minVersion": "1.119.0",
           "lazy": true
         }
       }
@@ -275,8 +275,8 @@
           "sap.m.UploadCollectionToolbarPlaceholder",
           "sap.m.upload.UploadSet",
           "sap.m.upload.UploadSetToolbarPlaceholder",
-          "sap.m.upload.UploadSetTable",
-          "sap.m.upload.UploadSetTableItem",
+          "sap.m.upload.UploadSetwithTable",
+          "sap.m.upload.UploadSetwithTableItem",
           "sap.m.VariantManagement",
           "sap.m.VBox",
           "sap.m.ViewSettingsDialog",
@@ -351,6 +351,7 @@
           "sap.m.upload.Uploader",
           "sap.m.upload.UploaderTableItem",
           "sap.m.upload.UploadSetItem",
+          "sap.m.upload.FilePreviewDialog",
           "sap.m.VariantItem",
           "sap.m.ViewSettingsCustomItem",
           "sap.m.ViewSettingsCustomTab",
@@ -503,6 +504,7 @@
           "sap.m.VerticalPlacementType",
           "sap.m.WrappingType",
           "sap.m.WizardRenderMode",
+          "sap.m.plugins.CopyPreference",
           "sap.m.semantic.SemanticRuleSetType",
           "sap.m.table.columnmenu.Category",
           "sap.m.upload.UploaderHttpRequestMethod"
@@ -511,6 +513,7 @@
           "sap.m.IBar",
           "sap.m.IBadge",
           "sap.m.IBreadcrumbs",
+          "sap.m.ITableItem",
           "sap.m.p13n.IContent",
           "sap.m.IconTab",
           "sap.m.IScale",

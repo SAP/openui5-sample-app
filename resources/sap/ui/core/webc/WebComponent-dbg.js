@@ -37,8 +37,8 @@ function(
 	 * @private
 	 */
 	var fnGetControlFor = function(obj) {
-		if (obj.id && Element.registry.get(obj.id)) {
-			return Element.registry.get(obj.id);
+		if (obj.id && Element.getElementById(obj.id)) {
+			return Element.getElementById(obj.id);
 		}
 	};
 
@@ -108,7 +108,7 @@ function(
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @public
 	 * @since 1.118.0
 	 * @alias sap.ui.core.webc.WebComponent

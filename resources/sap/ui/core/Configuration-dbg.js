@@ -13,6 +13,7 @@ sap.ui.define([
 	'./Locale',
 	"./format/TimezoneUtil",
 	"sap/ui/core/_ConfigurationProvider",
+	"sap/ui/core/getCompatibilityVersion",
 	"sap/ui/core/date/CalendarWeekNumbering",
 	"sap/ui/core/Theming",
 	"sap/base/util/Version",
@@ -20,7 +21,6 @@ sap.ui.define([
 	"sap/base/assert",
 	"sap/base/config",
 	"sap/base/Event",
-	"sap/base/strings/camelize",
 	"sap/base/util/deepClone",
 	"sap/base/i18n/Localization",
 	"sap/base/i18n/Formatting"
@@ -33,6 +33,7 @@ sap.ui.define([
 		Locale,
 		TimezoneUtil,
 		_ConfigurationProvider,
+		getCompatibilityVersion,
 		CalendarWeekNumbering,
 		Theming,
 		Version,
@@ -40,7 +41,6 @@ sap.ui.define([
 		assert,
 		BaseConfig,
 		BaseEvent,
-		camelize,
 		deepClone,
 		Localization,
 		Formatting
@@ -48,38 +48,7 @@ sap.ui.define([
 	"use strict";
 
 	var M_SETTINGS;
-	var VERSION = "1.118.0";
-	var mCompatVersion;
-
-	// Helper Functions
-	function _calcCompatVersions() {
-		var PARAM_CVERS = "sapUiCompatversion";
-
-		function _getCVers(key){
-			var v = !key ? DEFAULT_CVERS || BASE_CVERS.toString()
-					: BaseConfig.get({
-						name: camelize(PARAM_CVERS + "-" + key.toLowerCase()),
-						type: BaseConfig.Type.String
-					}) || DEFAULT_CVERS || M_COMPAT_FEATURES[key] || BASE_CVERS.toString();
-			v = Version(v.toLowerCase() === "edge" ? VERSION : v);
-			//Only major and minor version are relevant
-			return Version(v.getMajor(), v.getMinor());
-		}
-
-		var DEFAULT_CVERS = BaseConfig.get({
-			name: PARAM_CVERS,
-			type: BaseConfig.Type.String
-		});
-		var BASE_CVERS = Version("1.14");
-		mCompatVersion = {};
-
-		mCompatVersion._default = _getCVers();
-		for (var n in M_COMPAT_FEATURES) {
-			mCompatVersion[n] = _getCVers(n);
-		}
-
-		return mCompatVersion;
-	}
+	var VERSION = "1.119.0";
 
 	function detectLanguage() {
 
@@ -257,17 +226,6 @@ sap.ui.define([
 		"xx-measure-cards"      : { type : "boolean",  defaultValue : false }
 	};
 
-	var M_COMPAT_FEATURES = {
-		"xx-test"               : "1.15", //for testing purposes only
-		"flexBoxPolyfill"       : "1.14",
-		"sapMeTabContainer"     : "1.14",
-		"sapMeProgessIndicator" : "1.14",
-		"sapMGrowingList"       : "1.14",
-		"sapMListAsTable"       : "1.14",
-		"sapMDialogWithPadding" : "1.14",
-		"sapCoreBindingSyntax"  : "1.24"
-	};
-
 	// Lazy dependency to core
 	var oCore;
 
@@ -338,6 +296,7 @@ sap.ui.define([
 	 * @borrows module:sap/ui/core/Theming.getTheme as getTheme
 	 * @borrows module:sap/ui/core/Theming.setTheme as setTheme
 	 * @borrows module:sap/ui/core/ControlBehavior.isAccessibilityEnabled as getAccessibility
+	 * @borrows module:sap/ui/core/getCompatibilityVersion as getCompatibilityVersion
 	 */
 	var Configuration = BaseObject.extend("sap.ui.core.Configuration", /** @lends sap.ui.core.Configuration.prototype */ {
 
@@ -362,7 +321,6 @@ sap.ui.define([
 
 		// apply settings from global config object (already merged with script tag attributes)
 		var oCfg = window["sap-ui-config"] || {};
-		oCfg.oninit = oCfg.oninit || oCfg["evt-oninit"];
 		for (var n in M_SETTINGS) {
 			// collect the defaults
 			config[n] = Array.isArray(M_SETTINGS[n].defaultValue) ? [] : M_SETTINGS[n].defaultValue;
@@ -504,20 +462,7 @@ sap.ui.define([
 			return config._version;
 		},
 
-		/**
-		 * Returns the used compatibility version for the given feature.
-		 *
-		 * @param {string} sFeature the key of desired feature
-		 * @return {module:sap/base/util/Version} the used compatibility version
-		 * @public
-		 */
-		getCompatibilityVersion : function (sFeature) {
-			var mCompatVersion = _calcCompatVersions();
-			if (typeof (sFeature) === "string" && mCompatVersion[sFeature]) {
-				return mCompatVersion[sFeature];
-			}
-			return mCompatVersion._default;
-		},
+		getCompatibilityVersion : getCompatibilityVersion,
 
 		getTheme : Theming.getTheme,
 
@@ -654,66 +599,6 @@ sap.ui.define([
 		getLocale : function() {
 			var oLanguageTag = Localization.getLanguageTag();
 			return Locale._getCoreLocale(oLanguageTag);
-		},
-
-		/**
-		 * Checks whether the Cache Manager is switched on.
-		 * @ui5-restricted sap.ui.core
-		 * @since 1.37.0
-		 * @returns {boolean} If cache is enabled
-		 * @private
-		 */
-		isUI5CacheOn: function () {
-			return Configuration.getValue("xx-cache-use");
-		},
-
-		/**
-		 * Enables/Disables the Cache configuration.
-		 * @since 1.37.0
-		 * @param {boolean} on true to switch it on, false if to switch it off
-		 * @returns {this} The Configuration for chaining
-		 * @private
-		 * @ui5-restricted sap.ui.core
-		 */
-		setUI5CacheOn: function (on) {
-			config["xx-cache-use"] = on;
-			return this;
-		},
-
-		/**
-		 * Checks whether the Cache Manager serialization support is switched on.
-		 * @since 1.37.0
-		 * @returns {boolean} Wether cache serialization is supported or not
-		 * @private
-		 * @ui5-restricted sap.ui.core
-		 */
-		isUI5CacheSerializationSupportOn: function () {
-			return Configuration.getValue("xx-cache-serialization");
-		},
-
-		/**
-		 * Enables/Disables the Cache serialization support
-		 * @since 1.37.0
-		 * @param {boolean} on true to switch it on, false if to switch it off
-		 * @returns {this} The Configuration for chaining
-		 * @private
-		 * @ui5-restricted sap.ui.core
-		 */
-		setUI5CacheSerializationSupport: function (on) {
-			config["xx-cache-serialization"] = on;
-			return this;
-		},
-
-		/**
-		 * Returns all keys, that the CacheManager will ignore when set/get values.
-		 * @private
-		 * @ui5-restricted sap.ui.core
-		 * @since 1.37.0
-		 * @returns {string[]} array of keys that CacheManager should ignore
-		 * @see sap.ui.core.cache.LRUPersistentCache#keyMatchesExclusionStrings
-		 */
-		getUI5CacheExcludedKeys: function () {
-			return Configuration.getValue("xx-cache-excludedKeys");
 		},
 
 		/**
@@ -918,9 +803,11 @@ sap.ui.define([
 		 *
 		 * @returns {string} the prefix to be used
 		 * @public
+		 * @deprecated since 1.119.0. Please use {@link sap.ui.base.ManagedObjectMetadata.getUIDPrefix ManagedObjectMetadata.getUIDPrefix} instead.
 		 */
 		getUIDPrefix : function() {
-			return Configuration.getValue("uidPrefix");
+			var ManagedObjectMetadata = sap.ui.require("sap/ui/base/ManagedObjectMetadata");
+			return ManagedObjectMetadata.getUIDPrefix();
 		},
 
 
@@ -1072,20 +959,16 @@ sap.ui.define([
 		 */
 		getSyncCallBehavior : function() {
 			var syncCallBehavior = 0; // ignore
-			var mOptions = {
+			var sNoSync = BaseConfig.get({
 				name: "sapUiXxNoSync",
 				type: BaseConfig.Type.String,
 				external: true,
 				freeze: true
-			};
-			var sNoSync = BaseConfig.get(mOptions);
+			});
 			if (sNoSync === 'warn') {
 				syncCallBehavior = 1;
-			} else {
-				mOptions.type = BaseConfig.Type.Boolean;
-				if (BaseConfig.get(mOptions)) {
-					syncCallBehavior = 2;
-				}
+			} else if (/^(true|x)$/i.test(sNoSync)) {
+				syncCallBehavior = 2;
 			}
 			return syncCallBehavior;
 		},
@@ -1294,26 +1177,15 @@ sap.ui.define([
 		},
 
 		/**
-		 * Return whether type validation is handled by core.
-		 *
-		 * @returns {boolean} whether whether type validation is handled by core
-		 * @since 1.28.0
-		 * @private
-		 */
-		getHandleValidation : function() {
-			return Configuration.getValue("xx-handleValidation");
-		},
-
-		/**
 		 * Returns the list of active terminologies defined via the Configuration.
 		 *
 		 * @returns {string[]|undefined} if no active terminologies are set, the default value <code>undefined</code> is returned.
 		 * @since 1.77.0
 		 * @public
+		 * @function
+		 * @deprecated Since 1.118. Please use {@link module:sap/base/i18n/Localization.getActiveTerminologies} instead.
 		 */
-		getActiveTerminologies : function() {
-			return BaseConfig.get({name: "sapUiActiveTerminologies", type: BaseConfig.Type.StringArray, defaultValue: undefined, external: true});
-		},
+		getActiveTerminologies : Localization.getActiveTerminologies,
 
 		/**
 		 * Returns the security token handlers of an OData V4 model.
@@ -1325,17 +1197,6 @@ sap.ui.define([
 		 */
 		getSecurityTokenHandlers : function () {
 			return Configuration.getValue("securityTokenHandlers").slice();
-		},
-
-		/**
-		 * Gets if performance measurement for UI5 Integration Cards should happen.
-		 *
-		 * @returns {boolean} whether measurement should be executed
-		 * @since 1.112.0
-		 * @experimental
-		 */
-		getMeasureCards: function () {
-			return Configuration.getValue("xx-measure-cards");
 		},
 
 		/**
@@ -1353,19 +1214,6 @@ sap.ui.define([
 					"Not a function: " + fnSecurityTokenHandler);
 			});
 			config.securityTokenHandlers = aSecurityTokenHandlers.slice();
-		},
-
-		getBindingSyntax: function() {
-			var sBindingSyntax = BaseConfig.get({
-				name: "sapUiBindingSyntax",
-				type: BaseConfig.Type.String,
-				defaultValue: "default",
-				freeze: true
-			});
-			if ( sBindingSyntax === "default" ) {
-				sBindingSyntax = (Configuration.getCompatibilityVersion("sapCoreBindingSyntax").compareTo("1.26") < 0) ? "simple" : "complex";
-			}
-			return sBindingSyntax;
 		},
 
 		/**

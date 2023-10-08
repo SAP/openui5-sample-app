@@ -32,7 +32,7 @@ sap.ui.define('sap/ui/debug/PropertyList', [
 	 *
 	 * @extends sap.ui.base.EventProvider
 	 * @author Martin Schaus
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @param {sap.ui.core.Core}
 	 *            oCore Core instance of the app; version might differ!
@@ -88,7 +88,7 @@ sap.ui.define('sap/ui/debug/PropertyList', [
 		var sControlId = this.sControlId = oParams.getParameter("controlId");
 		this.oParentDomRef.innerHTML = "";
 
-		var oControl = this.oCore.byId(sControlId);
+		var oControl = Element.getElementById(sControlId);
 		if (!oControl) {
 			this.oParentDomRef.innerHTML = "Please select a valid control";
 			return;
@@ -232,7 +232,7 @@ sap.ui.define('sap/ui/debug/PropertyList', [
 	 * @private
 	 */
 	PropertyList.prototype.applyChange = function(oField) {
-		var oControl = this.oCore.byId(this.sControlId),
+		var oControl = Element.getElementById(this.sControlId),
 			sName = oField.dataset.name,
 			oSetting = oControl.getMetadata().getPropertyLikeSetting(sName);
 

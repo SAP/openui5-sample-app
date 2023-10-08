@@ -10,11 +10,11 @@
 sap.ui.define([
 	'sap/ui/base/DataType',
 	'sap/ui/core/Lib',
-	'sap/ui/core/message/MessageType', // provides sap.ui.core.message.MessageType
+	'sap/ui/core/message/MessageType',
 	'sap/ui/core/mvc/ViewType', // provides sap.ui.core.mvc.ViewType
 	'./CalendarType' // provides sap.ui.core.CalendarType
 ],
-	function(DataType, Library, MessageType, ViewType) {
+	function(DataType, Library, MessageType, ViewType, CalendarType) {
 	"use strict";
 
 	/**
@@ -26,13 +26,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.118.0",
+		 version: "1.119.0",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 types: [
 
@@ -874,9 +874,9 @@ sap.ui.define([
 		Section : "Section"
 	};
 
-	// Note: the imported module sap/ui/core/CalendarType already defines the global sap.ui.core.CalendarType,
-	// this assignment here is only kept as a reminder
-	// thisLib.CalendarType = CalendarType;
+	// this assignment here is kept so that imports via the library module continue to work
+	// even when the export via globals is abandoned
+	thisLib.CalendarType = CalendarType;
 
 	/**
 	 * @classdesc A string type that represents CSS color values (CSS Color Level 3).
@@ -1500,7 +1500,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0
@@ -2230,7 +2230,12 @@ sap.ui.define([
 	 *
 	 * @enum {string}
 	 * @public
-	 * @alias sap.ui.core.MessageType
+	 * @name sap.ui.core.MessageType
+	 * @borrows module:sap/ui/core/message/MessageType.Information as Information
+	 * @borrows module:sap/ui/core/message/MessageType.Error as Error
+	 * @borrows module:sap/ui/core/message/MessageType.Warning as Warning
+	 * @borrows module:sap/ui/core/message/MessageType.Success as Success
+	 * @borrows module:sap/ui/core/message/MessageType.None as None
 	 */
 	thisLib.MessageType = MessageType;
 

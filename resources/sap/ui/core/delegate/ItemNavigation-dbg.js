@@ -82,7 +82,7 @@ sap.ui.define([
 	 * @param {Element[]} aItemDomRefs Array of DOM references representing the items for the navigation
 	 * @param {boolean} [bNotInTabChain=false] Whether the selected element should be in the tab chain or not
 	 *
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @alias sap.ui.core.delegate.ItemNavigation
 	 * @public
 	 */
@@ -789,7 +789,7 @@ sap.ui.define([
 	 * @private
 	 */
 	ItemNavigation.prototype.onsapfocusleave = function(oEvent) {
-		if (!oEvent.relatedControlId || !this.oDomRef || !this.oDomRef.contains(Element.registry.get(oEvent.relatedControlId).getFocusDomRef())) {
+		if (!oEvent.relatedControlId || !this.oDomRef || !this.oDomRef.contains(Element.getElementById(oEvent.relatedControlId).getFocusDomRef())) {
 
 			// entirely leaving the control handled by this ItemNavigation instance
 			var iIndex;
@@ -817,7 +817,7 @@ sap.ui.define([
 					}
 				}
 
-				if (!oEvent.relatedControlId || oParentDomRef.contains(Element.registry.get(oEvent.relatedControlId).getFocusDomRef())) {
+				if (!oEvent.relatedControlId || oParentDomRef.contains(Element.getElementById(oEvent.relatedControlId).getFocusDomRef())) {
 					jQuery(this.aItemDomRefs[this.iFocusedIndex]).attr("tabindex", -1);
 				}
 			}

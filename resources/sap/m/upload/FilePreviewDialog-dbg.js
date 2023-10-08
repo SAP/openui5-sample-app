@@ -21,13 +21,13 @@ sap.ui.define([
 	"use strict";
 
 	// get resource translation bundle;
-	var oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+	const oLibraryResourceBundle = Core.getLibraryResourceBundle("sap.m");
 
 	/**
 	 * Media types that can be previewed.
 	 * @enum {string}
 	 */
-	var PreviewableMediaType = {
+	const PreviewableMediaType = {
 		Png: "image/png",
 		Bmp: "image/bmp",
 		Jpeg: "image/jpeg",
@@ -43,34 +43,46 @@ sap.ui.define([
 	};
 
 	/**
-	 * The file preview dialog.
+	 * Constructor for a new FilePreviewDialog.
 	 *
-   * @class Dialog with a carousel to preview files uploaded using the UploadSet control.
-	 * @param {sap.m.upload.UploadSetTableItem} oPreviewItem The initial active UploadSetTableItem to be previewed.
+   * @class
+   * Dialog with a carousel to preview files uploaded using the UploadSetwithTable control.
+   * This Element should only be used within the {@link sap.m.upload.UploadSetwithTable UploadSetwithTable} control as an association.
+   * @author SAP SE
+   * @param {string} [sId] id for the new control, generated automatically if no id is given.
+   * @param {object} [mSettings] Initial settings for the new control.
+   * @constructor
    * @private
    * @extends sap.ui.core.Element
    * @name sap.m.upload.FilePreviewDialog
    */
-	var FilePreviewDialog = Element.extend("sap.m.upload.FilePreviewDialog", {
+	const FilePreviewDialog = Element.extend("sap.m.upload.FilePreviewDialog", {
 		library: "sap.m",
 		metadata: {
 			properties: {
 				/**
-				Current item being previwed in the carousel dialog.
-				*/
-				previewItem: {type: "sap.m.upload.UploadSetTableItem", defaultValue: null},
+				 * Show or hide carousel's arrows.
+				 */
+				showCarouselArrows: {type: "boolean", defaultValue: true},
 				/**
-				 * Items set to build the preview Carousel.
-				 * */
-				items: {type: "sap.m.upload.UploadSetTableItem[]", defaultValue: []}
+				 * Size limit of the file in megabytes that is allowed to be previewed.
+				 * <br>If not set, files of any size can be previewed.
+				 */
+				maxFileSizeforPreview: {type: "float", defaultValue: null}
 			},
+			defaultAggregation: "additionalFooterButtons",
 			aggregations: {
 				/**
 				 * Custom buttons, to be displayed in the preview dialog footer.
+				 * <br>Control by default adds two buttons (download and close).
 				 */
 				additionalFooterButtons: {type: "sap.m.Button", multiple: true}
 			}
 		},
+
+		_previewItem: null,
+
+		_items: [],
 
 		init: function () {
 			this._oRichTextEditor = null;
@@ -81,17 +93,18 @@ sap.ui.define([
 
 		/**
 		 * Opens the {@link sap.m.upload.FilePreviewDialog}.
+		 * @private
 	 	*/
-		open: async function () {
-			var aItems = this.getItems();
-			if (aItems?.length && this.getPreviewItem()) {
+		_open: async function () {
+			const aItems = this._items;
+			if (aItems?.length && this._previewItem) {
 				this._oCarousel = await this._createCarousel();
 				if (!this._oDialog) {
 					this._oDialog = this._createDialog();
 				} else {
-					// set title of the dialog to the current previewable item filename.
-					this._oDialog.setTitle(this.getPreviewItem()?.getFileName() || "");
-					// remove all the existing content and set the new content on the dialog
+					// Sets the title of the dialog to the currently previewed item filename.
+					this._oDialog.setTitle(this._previewItem?.getFileName() || "");
+					// Removes all the existing content and set the new content on the dialog.
 					this._oDialog.removeAllContent();
 					this._oDialog.insertContent(this._oCarousel);
 				}
@@ -107,14 +120,14 @@ sap.ui.define([
 		_loadVkDependency: function() {
 			return new Promise(function (resolve, reject) {
 				Core.loadLibrary("sap.ui.vk", { async: true })
-					.then(function() {
-						sap.ui.require(["sap/ui/vk/Viewer", "sap/ui/vk/ContentResource"], function(viewer, contentResource) {
+					.then(() => {
+						sap.ui.require(["sap/ui/vk/Viewer", "sap/ui/vk/ContentResource"], (viewer, contentResource) => {
 							resolve({ viewer, contentResource});
-						}, function (error) {
+						}, (error) => {
 							reject(error);
 						});
 					})
-					.catch(function () {
+					.catch(() => {
 						reject("sap.ui.vk.Viewer Control not available.");
 					});
 			});
@@ -126,16 +139,16 @@ sap.ui.define([
 		 * @private
 		 */
 		_loadRichTextEditorDependency: function() {
-			return new Promise(function (resolve, reject) {
+			return new Promise((resolve, reject) => {
 				Core.loadLibrary("sap.ui.richtexteditor", { async: true })
-					.then(function() {
-						sap.ui.require(["sap/ui/richtexteditor/RichTextEditor"], function(richTextEditor) {
+					.then(() => {
+						sap.ui.require(["sap/ui/richtexteditor/RichTextEditor"], (richTextEditor) => {
 							resolve(richTextEditor);
-						}, function (error) {
+						}, (error) => {
 							reject(error);
 						});
 					})
-					.catch(function () {
+					.catch(() => {
 						reject("RichTextEditor Control not available.");
 					});
 			});
@@ -151,7 +164,7 @@ sap.ui.define([
 			const oIllustratedMessage = new IllustratedMessage({
 				illustrationType: IllustratedMessageType.NoData,
 				title: sFileName,
-				description: "No preview available for this file.",
+				description: oLibraryResourceBundle.getText("FILE_PREVIEW_DIALOG_NO_PREVIEW_AVAILABLE_MSG"),
 				enableVerticalResponsiveness: true
 			});
 			return oIllustratedMessage;
@@ -159,7 +172,7 @@ sap.ui.define([
 
 		/**
 		 * Creates a viewer for .vds files
-		 * @param {sap.m.upload.UploadSetTableItem} oItem The UploadSetTableItem to be previewed
+		 * @param {sap.m.upload.UploadSetwithTableItem} oItem The UploadSetwithTableItem to be previewed
 		 * @return {sap.ui.vk.Viewer} A vds viewer instance or undefined if dependency unavailable
 		 * @private
 		 */
@@ -189,7 +202,7 @@ sap.ui.define([
 
 		/**
 		 * Creates a rich text viewer
-		 * @param {sap.m.upload.UploadSetTableItem} oItem The UploadSetTableItem to be previewed
+		 * @param {sap.m.upload.UploadSetwithTableItem} oItem The UploadSetwithTableItem to be previewed
 		 * @return {sap.ui.richtexteditor.RichTextEditor} A rich text editor instance or undefined if dependency unavailable
 		 * @private
 		 */
@@ -230,16 +243,16 @@ sap.ui.define([
      	* @private
      	*/
 		_createCarousel: async function () {
-			const oPreviewItem = this.getPreviewItem();
-			const aItems = this.getItems();
-			var sActivePageId = "";
-			var aPagePromises = aItems.map(async (oItem) => {
-				var sMediaType = oItem.getMediaType();
+			const oPreviewItem = this._previewItem;
+			const aItems = !this.getShowCarouselArrows() ? [this._previewItem] : this._items;
+			let sActivePageId = "";
+			const aPagePromises = aItems.map(async (oItem) => {
+				const sMediaType = oItem.getMediaType();
 
-				var sFileName = oItem.getFileName();
-				var oPage = this._createIllustratedMessage(sFileName);
+				const sFileName = oItem.getFileName();
+				let oPage = this._createIllustratedMessage(sFileName);
 
-				if (oItem.getPreviewable()) {
+				if (oItem.getPreviewable() && this.isFileSizeWithinMaxLimit(oItem)) {
 					switch (sMediaType?.toLowerCase()) {
 						case PreviewableMediaType.Png:
 						case PreviewableMediaType.Bmp:
@@ -288,6 +301,8 @@ sap.ui.define([
 					}
 				}
 
+				oPage = !this.isFileSizeWithinMaxLimit(oItem) ? this._getMaxSizePageIllustration(oItem) : oPage;
+
 				sActivePageId = oItem?.getId() === oPreviewItem?.getId() ? oPage?.getId() : sActivePageId;
 
 				return oPage;
@@ -296,20 +311,27 @@ sap.ui.define([
 			const aPages = await Promise.all(aPagePromises);
 
 			const oCarousel = new Carousel({
-				showPageIndicator: true,
+				showPageIndicator: this.getShowCarouselArrows() ? true : false,
 				pages: [
 					aPages
 				],
 				activePage: sActivePageId,
 				height: "85vh",
 				pageChanged: (oEvent) => {
-					var iIndex = aPages.findIndex(function(oPage) {
+					const iIndex = aPages.findIndex(function(oPage) {
 						return oPage.sId === oEvent.getParameter("newActivePageId");
 					});
-					var sNewDialogTitle = aItems[iIndex].getFileName();
+					const sNewDialogTitle = aItems[iIndex].getFileName();
 					this._oDialog.setTitle(sNewDialogTitle);
 				}
 			});
+
+			// prevent all swipe related events so carousel movement is disabled.
+			if (!this.getShowCarouselArrows()) {
+				oCarousel.ontouchstart = oCarousel.ontouchmove = oCarousel.ontouchend = (oEvent) => {
+					oEvent.preventDefault();
+				};
+			}
 
 			return oCarousel;
 		},
@@ -320,25 +342,26 @@ sap.ui.define([
 	 	* @private
 		*/
 		_createDialog: function() {
-			var that = this;
-			var oActiveItem = this._getActiveUploadSetTableItem();
-			var oDialog = new Dialog({
+			const oActiveItem = this._getActiveUploadSetwithTableItem();
+			const oDialog = new Dialog({
 				title: oActiveItem.getFileName(),
-				content: that._oCarousel,
-				horizontalScrolling: true,
-				verticalScrolling: true,
+				content: this._oCarousel,
+				horizontalScrolling: false,
+				verticalScrolling: false,
+				contentWidth: "100%",
+				contentHeight: "100%",
 				buttons: [
-					that.getAdditionalFooterButtons(),
+					this.getAdditionalFooterButtons(),
 					new Button({
 						text: oLibraryResourceBundle.getText("UPLOAD_SET_TABLE_FILE_PREVIEW_DIALOG_DOWNLOAD"),
-						press: function () {
-							that._getActiveUploadSetTableItem().download(true);
+						press: () => {
+							this._getActiveUploadSetwithTableItem().download(true);
 						}
 					}),
 					new Button({
 						text: oLibraryResourceBundle.getText("UPLOAD_SET_TABLE_FILE_PREVIEW_DIALOG_CLOSE"),
-						press: function () {
-							that._oDialog.close();
+						press: () => {
+							this._oDialog.close();
 						}
 					})
 				]
@@ -349,18 +372,43 @@ sap.ui.define([
 
 		/**
      	* Creates a {@link sap.m.Carousel} of uploaded files.
-		* @return {sap.m.upload.UploadSetTableItem} The currently active UploadSetTableItem.
+		* @return {sap.m.upload.UploadSetwithTableItem} The currently active UploadSetwithTableItem.
      	* @private
      	*/
-		_getActiveUploadSetTableItem: function () {
-			var sActivePageId = this._oCarousel.getActivePage();
-			var aPages = this._oCarousel.getPages();
-			var iIndex = aPages.findIndex(function (oPage) {
+		_getActiveUploadSetwithTableItem: function () {
+			const sActivePageId = this._oCarousel.getActivePage();
+			const aPages = this._oCarousel.getPages();
+			const iIndex = aPages.findIndex((oPage) => {
 				return oPage.sId === sActivePageId;
 			});
-			return this.getItems()[iIndex];
+			return this._items[iIndex];
+		},
+		isFileSizeWithinMaxLimit: function(oItem) {
+			let maxFileSize = this.getMaxFileSizeforPreview();
+			const iFileSize = oItem && oItem.getFileSize ? oItem.getFileSize() : 0; // if no file size
+
+			// if maxfilesize or filesize is not defined any file size can be previwed.
+			if (!maxFileSize || !iFileSize) {
+				return true;
+			}
+
+			maxFileSize = maxFileSize * (FilePreviewDialog.MEGABYTE);
+
+			return iFileSize <= maxFileSize;
+
+		},
+		_getMaxSizePageIllustration: function(oItem) {
+			const oIllustratedMessage = new IllustratedMessage({
+				illustrationType: IllustratedMessageType.NoData,
+				title: oItem?.getFileName(),
+				description: oLibraryResourceBundle.getText("FILE_PREVIEW_DIALOG_MAX_PREVIEW_SIZE_EXCEEDED", this.getMaxFileSizeforPreview()),
+				enableVerticalResponsiveness: true
+			});
+			return oIllustratedMessage;
 		}
 	});
+
+	FilePreviewDialog.MEGABYTE = 1048576;
 
   return FilePreviewDialog;
 });

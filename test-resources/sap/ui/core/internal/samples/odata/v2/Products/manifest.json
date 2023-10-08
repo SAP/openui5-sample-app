@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR-MOD",
 		"applicationVersion" : {
-			"version" : "1.118.0"
+			"version" : "1.119.0"
 		},
 		"description" : "Example for OData V2 EPM Products (UI5 GWSAMPLE_BASIC)",
 		"dataSources" : {

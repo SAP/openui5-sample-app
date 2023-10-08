@@ -34,7 +34,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @public
 	 * @since 1.27.0
@@ -206,7 +206,7 @@ sap.ui.define([
 		for ( sKey in mTextIds ) {
 			p = sKey.indexOf('|');
 			oBundle = Library.getResourceBundleFor(sKey.slice(0, p));
-			oText = Element.registry.get(mTextIds[sKey]);
+			oText = Element.getElementById(mTextIds[sKey]);
 			oText && oText.setText(oBundle.getText(sKey.slice(p + 1)));
 		}
 	});

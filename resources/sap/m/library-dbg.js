@@ -72,13 +72,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		name : "sap.m",
-		version: "1.118.0",
+		version: "1.119.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -185,6 +185,7 @@ sap.ui.define([
 			"sap.m.VerticalPlacementType",
 			"sap.m.WrappingType",
 			"sap.m.WizardRenderMode",
+			"sap.m.plugins.CopyPreference",
 			"sap.m.semantic.SemanticRuleSetType",
 			"sap.m.table.columnmenu.Category",
 			"sap.m.upload.UploaderHttpRequestMethod"
@@ -193,6 +194,7 @@ sap.ui.define([
 			"sap.m.IBar",
 			"sap.m.IBadge",
 			"sap.m.IBreadcrumbs",
+			"sap.m.ITableItem",
 			"sap.m.p13n.IContent",
 			"sap.m.IconTab",
 			"sap.m.IScale",
@@ -380,8 +382,8 @@ sap.ui.define([
 			"sap.m.UploadCollectionToolbarPlaceholder",
 			"sap.m.upload.UploadSet",
 			"sap.m.upload.UploadSetToolbarPlaceholder",
-			"sap.m.upload.UploadSetTable",
-			"sap.m.upload.UploadSetTableItem",
+			"sap.m.upload.UploadSetwithTable",
+			"sap.m.upload.UploadSetwithTableItem",
 			"sap.m.VariantManagement",
 			"sap.m.VBox",
 			"sap.m.ViewSettingsDialog",
@@ -456,6 +458,7 @@ sap.ui.define([
 			"sap.m.upload.Uploader",
 			"sap.m.upload.UploaderTableItem",
 			"sap.m.upload.UploadSetItem",
+			"sap.m.upload.FilePreviewDialog",
 			"sap.m.VariantItem",
 			"sap.m.ViewSettingsCustomItem",
 			"sap.m.ViewSettingsCustomTab",
@@ -2093,6 +2096,16 @@ sap.ui.define([
 	 *
 	 * @since 1.52
 	 * @name sap.m.IBreadcrumbs
+	 * @interface
+	 * @public
+	 */
+
+	/**
+	 *
+	 * Common interface for sap.m.ColumnListItem and sap.m.GroupHeaderListItem
+	 *
+	 * @since 1.119
+	 * @name sap.m.ITableItem
 	 * @interface
 	 * @public
 	 */
@@ -5031,6 +5044,30 @@ sap.ui.define([
 		SelectAll: "SelectAll"
 	};
 
+	thisLib.plugins = thisLib.plugins || {};
+
+	/**
+	 * Enumeration of the <code>copyPreference</code> in <code>CopyProvider</code>. Determines what is copied during a copy operation.
+	 * @enum {string}
+	 * @public
+	 * @since 1.119
+	 */
+	thisLib.plugins.CopyPreference = {
+		/**
+		 * The entire selected scope is copied, including both row and cell selection.
+		 * @public
+		 */
+		Full: "Full",
+
+		/**
+		 * If cells are selected, only the content of the selected cells is copied,
+		 * regardless of any other rows or elements that might also be selected. If no cells are selected,
+		 * the copy operation will default to copying the selected rows.
+		 * @public
+		 */
+		Cells: "Cells"
+	};
+
 	/**
 	 * @deprecated since 1.56 as lazy loading implies sync loading
 	 */
@@ -5958,7 +5995,7 @@ sap.ui.define([
 				oOldToolbar.setDesign(oOldToolbar.getDesign(), true);
 			}
 			if (oToolbar && oToolbar.setDesign) {
-				oToolbar.setDesign(sap.m.ToolbarDesign.Transparent, true);
+				oToolbar.setDesign(thisLib.ToolbarDesign.Transparent, true);
 			}
 			return oToolbar;
 		},

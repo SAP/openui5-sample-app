@@ -18,7 +18,7 @@ sap.ui.define([
 	 *
 	 * @alias sap.m.changeHandler.CombineButtons
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @experimental Since 1.48
 	 */
 	var CombineButtons = {};
@@ -231,7 +231,9 @@ sap.ui.define([
 				return oModifier.attachEvent(
 					oMenu,
 					"itemSelected",
-					"sap.m.changeHandler.CombineButtons.pressHandler"
+					"sap.m.changeHandler.CombineButtons.pressHandler",
+					null,
+					CombineButtons.pressHandler
 				);
 			})
 			.then(function(){

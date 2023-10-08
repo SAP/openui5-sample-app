@@ -19,7 +19,7 @@ sap.ui.define(["sap/base/assert"],
 	 * @param {object} oParameters Parameters for this event. The parameters will be accessible as properties of the Event instance.
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @alias module:sap/base/Event
 	 * @private
 	 * @ui5-restricted sap.ui.core

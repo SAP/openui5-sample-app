@@ -64,7 +64,7 @@ sap.ui.define([
 	 * @hideconstructor
 	 * @public
 	 * @since 1.93.0
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 */
 	var Context = BaseContext.extend("sap.ui.model.odata.v2.Context", {
 			constructor : function (oModel, sPath, sDeepPath, oCreatePromise, bInactive,
@@ -99,13 +99,17 @@ sap.ui.define([
 				this.fnStartActivation = undefined;
 				// the promise on activation start of this context
 				this.oStartActivationPromise = bInactive
-					? new SyncPromise(function (resolve) { that.fnStartActivation = resolve; })
+					? new SyncPromise(function (resolve) {
+						that.fnStartActivation = resolve;
+					})
 					: SyncPromise.resolve();
 				// the function to activate this context
 				this.fnActivate = undefined;
 				// the promise on activation of this context
 				this.oActivatedPromise = bInactive
-					? new SyncPromise(function (resolve) { that.fnActivate = resolve; })
+					? new SyncPromise(function (resolve) {
+						that.fnActivate = resolve;
+					})
 					: SyncPromise.resolve();
 				// for a transient context, maps navigation property name to (array of)
 				// sub-context(s) for deep create
@@ -142,7 +146,9 @@ sap.ui.define([
 	Context.prototype.cancelActivation = function () {
 		var that = this;
 
-		this.oStartActivationPromise = new SyncPromise(function (resolve) { that.fnStartActivation = resolve; });
+		this.oStartActivationPromise = new SyncPromise(function (resolve) {
+			that.fnStartActivation = resolve;
+		});
 	};
 
 	/**
@@ -257,7 +263,9 @@ sap.ui.define([
 					context : that,
 					error : reject,
 					groupId : oGroupInfo.groupId,
-					success : function () {resolve();}
+					success : function () {
+						resolve();
+					}
 				}, mParameters));
 		});
 	};

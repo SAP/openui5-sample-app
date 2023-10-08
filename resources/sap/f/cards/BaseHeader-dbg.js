@@ -42,7 +42,7 @@ sap.ui.define([
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 *
 	 * @constructor
 	 * @public
@@ -350,6 +350,16 @@ sap.ui.define([
 	 */
 	BaseHeader.prototype.getAriaRoleDescription = function () {
 		return this.hasListeners("press") ? this._oRb.getText("ARIA_ROLEDESCRIPTION_INTERACTIVE_CARD_HEADER") : this._oRb.getText("ARIA_ROLEDESCRIPTION_CARD_HEADER");
+	};
+
+	/**
+	 * Gets the ids of the banner lines to be used in aria-labelledby
+	 * @returns {string} The ids of the banner lines.
+	 */
+	BaseHeader.prototype._getBannerLinesIds = function () {
+		return this.getBannerLines().map((oBannerLine) => {
+			return oBannerLine.getId();
+		}).join(" ");
 	};
 
 	/**

@@ -81,7 +81,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.118.0
+	 * @version 1.119.0
 	 * @alias sap.ui.core.Control
 	 */
 	var Control = Element.extend("sap.ui.core.Control", /** @lends sap.ui.core.Control.prototype */ {
@@ -657,7 +657,7 @@ sap.ui.define([
 			// 1st try to resolve the oRef as a container control
 			var oContainer = oRef;
 			if (typeof oRef === "string") {
-				oContainer = Element.registry.get(oRef);
+				oContainer = Element.getElementById(oRef);
 			}
 
 			if (oContainer instanceof Element) {
