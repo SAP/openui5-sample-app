@@ -26,13 +26,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.119.0
+	 * @version 1.119.1
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.119.0",
+		 version: "1.119.1",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 types: [
 
@@ -1500,7 +1500,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.119.0
+	 * @version 1.119.1
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0

@@ -48,7 +48,7 @@ sap.ui.define([
 	"use strict";
 
 	var M_SETTINGS;
-	var VERSION = "1.119.0";
+	var VERSION = "1.119.1";
 
 	function detectLanguage() {
 

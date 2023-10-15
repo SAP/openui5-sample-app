@@ -73,7 +73,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 *
 	 * @author SAP SE
-	 * @version 1.119.0
+	 * @version 1.119.1
 	 *
 	 * @alias sap.ui.model.odata.type.Double
 	 * @param {object} [oFormatOptions]

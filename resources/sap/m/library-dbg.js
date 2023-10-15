@@ -72,13 +72,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.119.0
+	 * @version 1.119.1
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		name : "sap.m",
-		version: "1.119.0",
+		version: "1.119.1",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [

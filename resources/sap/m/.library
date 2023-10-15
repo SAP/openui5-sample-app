@@ -6,7 +6,7 @@
   <copyright>OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.119.0</version>
+  <version>1.119.1</version>
 
   <documentation>The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.</documentation>
 

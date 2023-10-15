@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.119.0
+		 * @version 1.119.1
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding

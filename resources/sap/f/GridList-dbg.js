@@ -93,7 +93,7 @@ sap.ui.define([
 	 * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout MDN web docs: CSS Grid Layout}
 	 *
 	 * @author SAP SE
-	 * @version 1.119.0
+	 * @version 1.119.1
 	 *
 	 * @extends sap.m.ListBase
 	 * @implements sap.ui.layout.cssgrid.IGridConfigurable

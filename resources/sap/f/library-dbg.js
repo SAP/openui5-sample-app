@@ -36,13 +36,13 @@ sap.ui.define(["sap/ui/base/DataType",
 	 * @namespace
 	 * @alias sap.f
 	 * @author SAP SE
-	 * @version 1.119.0
+	 * @version 1.119.1
 	 * @since 1.44
 	 * @public
 	 */
 	var thisLib = sap.ui.getCore().initLibrary({
 		name : "sap.f",
-		version: "1.119.0",
+		version: "1.119.1",
 		dependencies : ["sap.ui.core", "sap.m", "sap.ui.layout"],
 		designtime: "sap/f/designtime/library.designtime",
 		interfaces: [

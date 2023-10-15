@@ -4,7 +4,7 @@
 		"_version" : "1.1.0",
 		"ach" : "CA-UI5-COR",
 		"applicationVersion" : {
-			"version" : "1.119.0"
+			"version" : "1.119.1"
 		},
 		"description" : "Example for consuming an OData V2 Service via an OData V4 Model",
 		"dataSources" : {

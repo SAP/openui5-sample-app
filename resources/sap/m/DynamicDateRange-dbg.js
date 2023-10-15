@@ -257,7 +257,7 @@ sap.ui.define([
 		 * is opened. The dialog is closed via a date time period value selection or by pressing the "Cancel" button.
 		 *
 		 * @author SAP SE
-		 * @version 1.119.0
+		 * @version 1.119.1
 		 *
 		 * @constructor
 		 * @public

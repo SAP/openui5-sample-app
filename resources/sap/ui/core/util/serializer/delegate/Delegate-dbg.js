@@ -17,7 +17,7 @@ sap.ui.define(['sap/ui/base/EventProvider'],
 	 * @class Abstract serializer delegate class.
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.119.0
+	 * @version 1.119.1
 	 * @alias sap.ui.core.util.serializer.delegate.Delegate
 	 * @private
 	 * @ui5-restricted sap.watt, com.sap.webide

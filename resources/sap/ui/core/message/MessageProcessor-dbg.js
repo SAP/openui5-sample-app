@@ -27,7 +27,7 @@ sap.ui.define(['sap/ui/base/EventProvider', "sap/base/util/uid"],
 	 * @extends sap.ui.base.EventProvider
 	 *
 	 * @author SAP SE
-	 * @version 1.119.0
+	 * @version 1.119.1
 	 *
 	 * @public
 	 * @alias sap.ui.core.message.MessageProcessor

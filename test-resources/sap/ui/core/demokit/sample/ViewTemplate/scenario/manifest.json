@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR",
 		"applicationVersion" : {
-			"version" : "1.119.0"
+			"version" : "1.119.1"
 		},
 		"description": "Complete demo scenario for XML Templating based on OData V4 annotations",
 		"id" : "sap.ui.core.sample.ViewTemplate.scenario",

@@ -21,7 +21,7 @@ sap.ui.define(['./Tile', './library', './CustomTileRenderer'],
 	 * Use the CustomTile control to display application specific content in the Tile control.
 	 * The tile width is 8.5em and height is 10em.
 	 * @extends sap.m.Tile
-	 * @version 1.119.0
+	 * @version 1.119.1
 	 *
 	 * @constructor
 	 * @public
