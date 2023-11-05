@@ -49,7 +49,7 @@ sap.ui.define([
 	 *
 	 * For more information, see {@link sap.f.FlexibleColumnLayoutSemanticHelper#getCurrentUIState} and {@link sap.f.FlexibleColumnLayoutSemanticHelper#getNextUIState}
 	 *
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @param {sap.f.FlexibleColumnLayout} oFlexibleColumnLayout
 	 * The <code>sap.f.FlexibleColumnLayout</code> object whose state will be manipulated.
 	 *
@@ -215,7 +215,7 @@ sap.ui.define([
 	 */
 
 	/**
-	 * Configures the target layouts of the navigation acion buttons in a column.
+	 * Configures the target layouts of the navigation action buttons in a column.
 	 *
 	 * @typedef {object} sap.f.FlexibleColumnLayoutSemanticHelper.NavigationActionsTargets
 	 *
@@ -398,8 +398,8 @@ sap.ui.define([
 	FlexibleColumnLayoutSemanticHelper.prototype._getUIStateForLayout = function (sLayout) {
 
 		var aSizes = this._oFCL._getColumnWidthDistributionForLayout(sLayout, true),
-			sColumnWidthDistribution = aSizes.join("/"),
-			iMaxColumnsCount = this._oFCL.getMaxColumnsCount();
+			iMaxColumnsCount = this._oFCL.getMaxColumnsCount(),
+			sDefaultColumnWidthDistribution = this._oFCL._getDefaultColumnWidthDistributionForLayout(sLayout, iMaxColumnsCount);
 
 		return {
 			layout: sLayout,
@@ -408,7 +408,7 @@ sap.ui.define([
 			columnsVisibility: this._getColumnsVisibility(aSizes),
 			isFullScreen: this._getIsFullScreen(aSizes),
 			isLogicallyFullScreen: this._getIsLogicallyFullScreen(sLayout),
-			actionButtonsInfo: this._getActionButtonsInfo(sColumnWidthDistribution, iMaxColumnsCount)
+			actionButtonsInfo: this._getActionButtonsInfo(sDefaultColumnWidthDistribution, iMaxColumnsCount)
 		};
 
 	};

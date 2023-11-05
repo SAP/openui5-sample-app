@@ -16,7 +16,7 @@ sap.ui.define([
 
 	const BASE_CVERS = Version("1.14");
 
-	const VERSION = "1.119.1";
+	const VERSION = "1.120.0";
 
 	var M_COMPAT_FEATURES = {
 		"xx-test"               : "1.15", //for testing purposes only
@@ -40,7 +40,7 @@ sap.ui.define([
 	 * @deprecated As of version 1.119.0
 	 */
 	const fnGetCompatibilityVersion = (sFeature) => {
-		const PARAM_CVERS = "sapUiCompatversion";
+		const PARAM_CVERS = "sapUiCompatVersion";
 		const DEFAULT_CVERS = BaseConfig.get({
 			name: PARAM_CVERS,
 			type: BaseConfig.Type.String

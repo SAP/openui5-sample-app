@@ -91,6 +91,9 @@ sap.ui.define([
 	 *   Deprecated since 1.102.0, as {@link sap.ui.model.odata.OperationMode.Auto} is deprecated;
 	 *   the threshold that defines how many entries should be fetched at least by the binding if
 	 *   <code>operationMode</code> is set to <code>Auto</code>.
+	 * @throws {Error} If one of the filters uses an operator that is not supported by the underlying model
+	 *   implementation or if the {@link sap.ui.model.Filter.NONE} filter instance is contained in
+	 *   <code>aFilters</code> together with other filters
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataListBinding
 	 * @extends sap.ui.model.ListBinding
@@ -356,7 +359,7 @@ sap.ui.define([
 			}
 		}
 		aContexts = this._getContexts(iStartIndex, iLength);
-		if (this._hasTransientParentContext()) {
+		if (this.oCombinedFilter === Filter.NONE || this._hasTransientParentContext()) {
 			// skip #loadData
 		} else if (this.useClientMode()) {
 			if (!this.aAllKeys && !this.bPendingRequest && this.oModel.getServiceMetadata()) {
@@ -1404,7 +1407,8 @@ sap.ui.define([
 		this.aKeys = [];
 		this.aAllKeys = null;
 		this.iLength = 0;
-		this.bLengthFinal = this._hasTransientParentContext() || !this.isResolved();
+		this.bLengthFinal = this.oCombinedFilter === Filter.NONE || this._hasTransientParentContext()
+			|| !this.isResolved();
 		this.sChangeReason = undefined;
 		this.bDataAvailable = false;
 		this.bLengthRequested = false;
@@ -1445,7 +1449,9 @@ sap.ui.define([
 	 * sort/filter/custom parameters.
 	 *
 	 * @param {string} sFormat Value for the $format Parameter
-	 * @return {string} URL which can be used for downloading
+	 * @return {string|null} URL which can be used for downloading; <code>null</code> if this binding uses
+	 *   {@link sap.ui.model.Filter.NONE}
+	 *
 	 * @since 1.24
 	 * @public
 	 */
@@ -1453,6 +1459,9 @@ sap.ui.define([
 		var aParams = [],
 			sPath;
 
+		if (this.oCombinedFilter === Filter.NONE) {
+			return null;
+		}
 		if (sFormat) {
 			aParams.push("$format=" + encodeURIComponent(sFormat));
 		}
@@ -1760,13 +1769,15 @@ sap.ui.define([
 		this.convertFilters();
 		this.oCombinedFilter = FilterProcessor.combineFilters(this.aFilters, this.aApplicationFilters);
 
-		if (!this.useClientMode()) {
+		if (!this.useClientMode() && this.oCombinedFilter !== Filter.NONE) {
 			this.createFilterParams(this.oCombinedFilter);
 		}
 
 		if (!this.bInitial) {
-			this.addComparators(this.aFilters);
-			this.addComparators(this.aApplicationFilters);
+			if (this.oCombinedFilter !== Filter.NONE) {
+				this.addComparators(this.aFilters);
+				this.addComparators(this.aApplicationFilters);
+			}
 
 			if (this.useClientMode()) {
 				// apply clientside filters/sorters only if data is available
@@ -2064,9 +2075,13 @@ sap.ui.define([
 	 *   given {@link sap.ui.core.message.Message} is considered. If no callback function is given,
 	 *   all messages are considered.
 	 * @returns {Promise<sap.ui.model.Filter|null>}
-	 *   A Promise that resolves with a {@link sap.ui.model.Filter} representing the entries with
-	 *   messages; it resolves with <code>null</code> if the binding is not resolved or if there is
-	 *   no message for any entry
+	 *   A Promise that resolves with an {@link sap.ui.model.Filter} representing the entries with
+	 *   messages, except in the following cases:
+	 *   <ul>
+	 *     <li> If only transient entries have messages, it resolves with {@link sap.ui.model.Filter.NONE}
+	 *     <li> If the binding is not resolved or if there is no message for any entry, it resolves with
+	 *     <code>null</code>
+	 *   </ul>
 	 *
 	 * @protected
 	 * @since 1.77.0
@@ -2077,6 +2092,7 @@ sap.ui.define([
 			aFilters = [],
 			aPredicateSet = new Set(),
 			sResolvedPath = this.getResolvedPath(),
+			bTransientMatched = false,
 			that = this;
 
 		function isNonTransientTarget(sFullTarget) {
@@ -2096,10 +2112,14 @@ sap.ui.define([
 			if (!fnFilter || fnFilter(oMessage)) {
 				// this.oModel.getMessagesByPath returns only messages with full target starting with deep path
 				oMessage.aFullTargets.forEach(function (sFullTarget) {
-					if (sFullTarget.startsWith(sDeepPath) && isNonTransientTarget(sFullTarget)) {
-						sPredicate = sFullTarget.slice(sDeepPath.length).split("/")[0];
-						if (sPredicate) {
-							aPredicateSet.add(sPredicate);
+					if (sFullTarget.startsWith(sDeepPath)) {
+						if (isNonTransientTarget(sFullTarget)) {
+							sPredicate = sFullTarget.slice(sDeepPath.length).split("/")[0];
+							if (sPredicate) {
+								aPredicateSet.add(sPredicate);
+							}
+						} else {
+							bTransientMatched = true;
 						}
 					}
 				});
@@ -2113,6 +2133,8 @@ sap.ui.define([
 			oFilter = aFilters[0];
 		} else if (aFilters.length > 1) {
 			oFilter = new Filter({filters : aFilters});
+		} else if (bTransientMatched) {
+			oFilter = Filter.NONE;
 		} // else oFilter = null
 
 		return Promise.resolve(oFilter);

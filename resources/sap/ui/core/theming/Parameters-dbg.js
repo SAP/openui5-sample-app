@@ -3,31 +3,21 @@
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-
-/**
- * @namespace
- * @name sap.ui.core.theming
- * @public
- */
-
 sap.ui.define([
-	'sap/ui/core/Core',
-	'sap/ui/core/Configuration',
 	'sap/ui/core/Lib',
 	'sap/ui/core/Theming',
 	'sap/ui/thirdparty/URI',
 	'../Element',
-	'sap/base/util/UriParameters',
 	'sap/base/Log',
 	'sap/base/util/extend',
 	'sap/base/util/syncFetch',
 	'sap/ui/core/theming/ThemeManager',
 	'./ThemeHelper'
 ],
-	function(Core, Configuration, Library, Theming, URI, Element, UriParameters, Log, extend, syncFetch, ThemeManager, ThemeHelper) {
+	function(Library, Theming, URI, Element, Log, extend, syncFetch, ThemeManager, ThemeHelper) {
 	"use strict";
 
-	var syncCallBehavior = Configuration.getSyncCallBehavior();
+	var syncCallBehavior = sap.ui.loader._.getSyncCallBehavior();
 
 		/**
 		 * A helper used for (read-only) access to CSS parameters at runtime.
@@ -53,7 +43,7 @@ sap.ui.define([
 		// match a CSS url
 		var rCssUrl = /url[\s]*\('?"?([^\'")]*)'?"?\)/;
 
-		var bUseInlineParameters = UriParameters.fromQuery(window.location.search).get("sap-ui-xx-no-inline-theming-parameters") !== "true";
+		var bUseInlineParameters = new URLSearchParams(window.location.search).get("sap-ui-xx-no-inline-theming-parameters") !== "true";
 
 		/**
 		 * Resolves relative URLs in parameter values.
@@ -623,8 +613,12 @@ sap.ui.define([
 			if (!sTheme) {
 				sTheme = Theming.getTheme();
 			}
-			// Parameters.get() without arguments returns
-			// copy of complete default parameter set
+
+			/**
+			 * Parameters.get() without arguments returns
+			 * copy of complete default parameter set
+			 * @deprecated As of Version 1.120
+			 */
 			if (arguments.length === 0) {
 				Log.warning(
 					"Legacy variant usage of sap.ui.core.theming.Parameters.get API detected. Do not use the Parameters.get() API to retrieve ALL theming parameters, " +
@@ -658,7 +652,12 @@ sap.ui.define([
 				fnAsyncCallback = vName.callback;
 				aNames = typeof vName.name === "string" ? [vName.name] : vName.name;
 				bAsync = true;
-			} else {
+			}
+
+			/**
+			 * @deprecated As of Version 1.120
+			 */
+			if (!(vName instanceof Object && !Array.isArray(vName))) {
 				// legacy variant
 				if (typeof vName === "string") {
 					aNames = [vName];
@@ -704,7 +703,7 @@ sap.ui.define([
 			if (bAsync && fnAsyncCallback && Object.keys(vResult).length !== aNames.length) {
 				if (!ThemeManager.themeLoaded) {
 					resolveWithParameter = function () {
-						ThemeManager.detachEvent("applied", resolveWithParameter);
+						ThemeManager._detachThemeApplied(resolveWithParameter);
 						var vParams = this.get({ // Don't pass callback again
 							name: vName.name,
 							scopeElement: vName.scopeElement
@@ -721,12 +720,12 @@ sap.ui.define([
 					// Check if identical callback is already registered and reregister with current parameters
 					iIndex = aCallbackRegistry.findIndex(findRegisteredCallback);
 					if (iIndex >= 0) {
-						ThemeManager.detachEvent("applied", aCallbackRegistry[iIndex].eventHandler);
+						ThemeManager._detachThemeApplied(aCallbackRegistry[iIndex].eventHandler);
 						aCallbackRegistry[iIndex].eventHandler = resolveWithParameter;
 					} else {
 						aCallbackRegistry.push({ callback: fnAsyncCallback, eventHandler: resolveWithParameter });
 					}
-					ThemeManager.attachEvent("applied", resolveWithParameter);
+					ThemeManager._attachThemeApplied(resolveWithParameter);
 					return undefined; // Don't return partial result in case we expect applied event.
 				} else {
 					Log.error("One or more parameters could not be found.", "sap.ui.core.theming.Parameters");

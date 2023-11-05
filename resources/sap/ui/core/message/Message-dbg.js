@@ -35,7 +35,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @param {object} [mParameters] a map which contains the following parameter properties:
 	 * @param {string} [mParameters.id] The message id: will be generated if no id is set
@@ -352,7 +352,7 @@ sap.ui.define([
 	 * @public
 	 */
 	Message.prototype.setMessageProcessor = function(oMessageProcessor) {
-		if (BaseObject.isA(oMessageProcessor, "sap.ui.core.message.MessageProcessor")) {
+		if (BaseObject.isObjectA(oMessageProcessor, "sap.ui.core.message.MessageProcessor")) {
 			this.processor = oMessageProcessor;
 		} else {
 			Log.error("oMessageProcessor must be an instance of 'sap.ui.core.message.MessageProcessor'");

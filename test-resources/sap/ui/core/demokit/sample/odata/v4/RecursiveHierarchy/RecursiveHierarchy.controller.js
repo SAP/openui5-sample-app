@@ -4,11 +4,10 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"sap/base/util/UriParameters",
 	"sap/m/MessageBox",
 	"sap/ui/core/sample/common/Controller",
 	"sap/ui/test/TestUtils"
-], function (UriParameters, MessageBox, Controller, TestUtils) {
+], function (MessageBox, Controller, TestUtils) {
 	"use strict";
 
 	return Controller.extend("sap.ui.core.sample.odata.v4.RecursiveHierarchy.RecursiveHierarchy", {
@@ -19,18 +18,63 @@ sap.ui.define([
 					"@$ui5.node.parent" : oParentContext
 				}, /*bSkipRefresh*/true);
 			} catch (oError) {
-				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR,
-					title : "Error"});
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
+			}
+		},
+
+		onCreateRoot : async function () {
+			try {
+				await this.byId("table").getBinding("rows").create({
+						// "@$ui5.node.parent" : null
+					}, /*bSkipRefresh*/true);
+			} catch (oError) {
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
+			}
+		},
+
+		onCreateRootInTreeTable : async function () {
+			try {
+				await this.byId("treeTable").getBinding("rows").create({
+						"@$ui5.node.parent" : null
+					}, /*bSkipRefresh*/true);
+			} catch (oError) {
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
+			}
+		},
+
+		onCut : function (oEvent) {
+			try {
+				const oNode = oEvent.getSource().getBindingContext();
+				oNode.delete("noSubmit");
+				MessageBox.confirm("Restore again (undo cut)", {
+					actions : MessageBox.Action.OK,
+					emphasizedAction : MessageBox.Action.OK,
+					onClose : function () {
+						oNode.resetChanges();
+					}
+				});
+			} catch (oError) {
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
+			}
+		},
+
+		onDelete : async function (oEvent) {
+			try {
+				await oEvent.getSource().getBindingContext().delete();
+			} catch (oError) {
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
 			}
 		},
 
 		onInit : function () {
-			const oUriParameters = UriParameters.fromQuery(window.location.search);
+			const oUriParameters = new URLSearchParams(window.location.search);
 			const sExpandTo = TestUtils.retrieveData( // controlled by OPA
 					"sap.ui.core.sample.odata.v4.RecursiveHierarchy.expandTo")
 				|| oUriParameters.get("expandTo");
 			this._oAggregation = {
-				expandTo : parseInt(sExpandTo || "3"),
+				expandTo : sExpandTo === "*"
+					? Number.MAX_SAFE_INTEGER
+					: parseInt(sExpandTo || "3"),
 				hierarchyQualifier : "OrgChart"
 			};
 			const sVisibleRowCount = TestUtils.retrieveData( // controlled by OPA
@@ -71,6 +115,7 @@ sap.ui.define([
 		onMove : function (oEvent) {
 			this.oNode = oEvent.getSource().getBindingContext();
 			const oSelectDialog = this.byId("moveDialog");
+			oSelectDialog.setBindingContext(this.oNode);
 			const oListBinding = oSelectDialog.getBinding("items");
 			if (oListBinding.isSuspended()) {
 				oListBinding.resume();
@@ -81,13 +126,13 @@ sap.ui.define([
 		onMoveConfirm : async function (oEvent) {
 			try {
 				this.getView().setBusy(true);
-				const sParentId = oEvent.getParameter("selectedItem").getTitle();
+				const sParentId = oEvent.getParameter("selectedItem").getBindingContext()
+					.getProperty("ID");
 				const oParent = this.oNode.getBinding().getAllCurrentContexts()
 					.find((oNode) => oNode.getProperty("ID") === sParentId);
 				await this.oNode.move({parent : oParent});
 			} catch (oError) {
-				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR,
-					title : "Error"});
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
 			} finally {
 				this.getView().setBusy(false);
 			}

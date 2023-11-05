@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @since 1.97
@@ -379,6 +379,7 @@ sap.ui.define([
 		var fnReset = this.getReset();
 		var sTitle = this.getTitle();
 		var sWarningText = this.getWarningText();
+        var oPopup = this;
 
 		var oBar;
 
@@ -409,6 +410,7 @@ sap.ui.define([
 								// --> focus "OK" button after 'reset' has been triggered
 								oDialog.getButtons()[0].focus();
 								oEvt.getSource().setEnabled(false);
+								oPopup._resetPanels();
 								fnReset(oControl);
 							}
 						}
@@ -420,6 +422,19 @@ sap.ui.define([
 
 		return oBar;
 
+	};
+
+	/**
+	 * Trigger the <code>#onReset</code> method on the aggregated panels to apply certain updates such as clearing search values.
+	 *
+	 * @private
+	 */
+	Popup.prototype._resetPanels = function() {
+		this.getPanels().forEach((oPanel) => {
+			if (oPanel.onReset instanceof Function) {
+				oPanel.onReset();
+			}
+		});
 	};
 
 	Popup.prototype._getContainer = function(oSource) {

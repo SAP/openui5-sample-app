@@ -26,7 +26,7 @@ sap.ui.define(['./Metadata', "sap/base/Log"],
 	 * @class Base class for all SAPUI5 Objects.
 	 * @abstract
 	 * @author Malte Wedel
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @public
 	 * @alias sap.ui.base.Object
 	 * @throws {Error} When an instance of the class or its subclasses is created without the <code>new</code> operator.
@@ -240,8 +240,26 @@ sap.ui.define(['./Metadata', "sap/base/Log"],
 	 * @public
 	 * @since 1.56
 	 * @static
+	 * @deprecated Since 1.120, please use {@link sap.ui.base.Object.isObjectA}.
 	 */
 	BaseObject.isA = function(oObject, vTypeName) {
+		return oObject instanceof BaseObject && oObject.isA(vTypeName);
+	};
+
+	/**
+	 * Checks whether the given object is an instance of the named type.
+	 * This function is a short-hand convenience for {@link sap.ui.base.Object#isA}.
+	 *
+	 * Please see the API documentation of {@link sap.ui.base.Object#isA} for more details.
+	 *
+	 * @param {any} oObject Object which will be checked whether it is an instance of the given type
+	 * @param {string|string[]} vTypeName Type or types to check for
+	 * @returns {boolean} Whether the given object is an instance of the given type or of any of the given types
+	 * @public
+	 * @since 1.120
+	 * @static
+	 */
+	BaseObject.isObjectA = function(oObject, vTypeName) {
 		return oObject instanceof BaseObject && oObject.isA(vTypeName);
 	};
 

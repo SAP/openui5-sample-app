@@ -43,7 +43,7 @@ sap.ui.define([
 	 *
 	 * Applications could inherit from this element to add own fields.
 	 * @extends sap.ui.unified.DateTypeRange
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -270,7 +270,7 @@ sap.ui.define([
 			return document.getElementById(sSuffix ? this.getId() + "-" + this._sAppointmentPartSuffix + "-" + sSuffix : this.getId() + "-" + this._sAppointmentPartSuffix);
 		}
 
-		var oAppointmentParts = document.querySelectorAll(".sapUiCalendarRowApps[id^='" + this. getId() + "']");
+		var oAppointmentParts = document.querySelectorAll(".sapUiCalendarRowApps[id^='" + this. getId() + "-']");
 		return oAppointmentParts.length > 0 ? oAppointmentParts[0] : null;
 	};
 

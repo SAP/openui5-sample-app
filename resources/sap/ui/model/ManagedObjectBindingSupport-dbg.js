@@ -332,8 +332,8 @@ sap.ui.define([
 			}
 
 			if (this.isBound(sName)) {
-				var oBindingInfo = this.mBindingInfos[sName],
-					oBinding = oBindingInfo.binding;
+				oBindingInfo = this.mBindingInfos[sName];
+				oBinding = oBindingInfo.binding;
 
 				// If property change was triggered by the model, don't update the model again
 				if (oBindingInfo.skipModelUpdate || (oBinding && oBinding.isSuspended())) {
@@ -474,7 +474,7 @@ sap.ui.define([
 				});
 			}
 
-			if (BaseObject.isA(oBinding, "sap.ui.model.ListBinding")) {
+			if (BaseObject.isObjectA(oBinding, "sap.ui.model.ListBinding")) {
 				aContexts = oBinding.getContexts(oBindingInfo.startIndex, oBindingInfo.length);
 				bGrouped = oBinding.isGrouped() && that[sGroupFunction];
 				if (bGrouped || oBinding.bWasGrouped) {
@@ -492,7 +492,7 @@ sap.ui.define([
 					update(this, aContexts);
 				}
 				oBinding.bWasGrouped = bGrouped;
-			} else if (BaseObject.isA(oBinding, "sap.ui.model.TreeBinding")) {
+			} else if (BaseObject.isObjectA(oBinding, "sap.ui.model.TreeBinding")) {
 				// Destroy all children in case a factory function is used
 				if (!oBindingInfo.template) {
 					this[oAggregationInfo._sDestructor]();

@@ -5,8 +5,8 @@
  */
 
 // Provides default renderer for control sap.ui.unified.FileUploader
-sap.ui.define(['sap/ui/unified/library', "sap/ui/thirdparty/jquery"],
-	function(library, jQuery) {
+sap.ui.define(['sap/ui/unified/library', "sap/ui/thirdparty/jquery", "./FileUploaderHelper"],
+	function(library, jQuery, FileUploaderHelper) {
 	"use strict";
 
 
@@ -26,6 +26,7 @@ sap.ui.define(['sap/ui/unified/library', "sap/ui/thirdparty/jquery"],
 	 */
 	FileUploaderRenderer.render = function(oRm, oFileUploader) {
 		var bEnabled = oFileUploader.getEnabled();
+		var oFileUploaderHelper = FileUploaderHelper.getHelper();
 
 		oRm.openStart("div", oFileUploader);
 		oRm.class("sapUiFup");
@@ -34,7 +35,7 @@ sap.ui.define(['sap/ui/unified/library', "sap/ui/thirdparty/jquery"],
 			oRm.class("sapUiFupButtonOnly");
 		}
 
-		var sClass = library.FileUploaderHelper.addFormClass();
+		var sClass = oFileUploaderHelper.addFormClass();
 		if (sClass) {
 			oRm.class(sClass);
 		}

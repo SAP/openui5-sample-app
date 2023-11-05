@@ -183,7 +183,7 @@ sap.ui.define([
 				}
 				if (vCacheData.$postBodyCollection) { // within a deep create
 					vCacheData.$postBodyCollection.splice(iIndex, 1);
-					that.removeElement(vCacheData, iIndex, sTransientPredicate, sParentPath);
+					that.removeElement(iIndex, sTransientPredicate, vCacheData, sParentPath);
 					fnCallback(iIndex, -1);
 					oError = new Error("Deleted from deep create");
 					oError.canceled = true;
@@ -204,7 +204,7 @@ sap.ui.define([
 			if (Array.isArray(vCacheData)) {
 				oDeleted = that.addDeleted(vCacheData, iIndex, sKeyPredicate, oGroupLock,
 					!!sTransientPredicate);
-				that.removeElement(vCacheData, iIndex, sKeyPredicate, sParentPath);
+				that.removeElement(iIndex, sKeyPredicate, vCacheData, sParentPath);
 			}
 			fnCallback(iIndex, -1);
 			if (oGroupLock) {
@@ -331,7 +331,7 @@ sap.ui.define([
 			sRootPathEnd = sPath.indexOf(")", sPath.indexOf("($uid=")) + 1,
 			// the root transient element of the deep create
 			oRoot = this.getValue(sPath.slice(0, sRootPathEnd)),
-			mSelectForMetaPath = _Helper.getPrivateAnnotation(oRoot, "select") || {},
+			mSelectForMetaPath = _Helper.getPrivateAnnotation(oRoot, "select", {}),
 			that = this;
 
 		function setPostBodyCollection() {
@@ -1431,9 +1431,11 @@ sap.ui.define([
 	 * @param {string} sPath
 	 *   The entity collection's path within this cache, may be <code>""</code>
 	 * @param {number} [iIndex]
-	 *   The array index of the entity to be refreshed
+	 *   The array index of the entity to be refreshed, <code>-1</code> if unknown (then a key
+	 *   predicate must be given)
 	 * @param {string} [sPredicate]
-	 *   The key predicate of the entity; only evaluated if <code>iIndex === undefined</code>
+	 *   The key predicate of the entity; only evaluated if <code>iIndex</code> is undefined or
+	 *   negative
 	 * @param {boolean} [bKeepAlive]
 	 *   Whether the entity is kept-alive
 	 * @param {boolean} [bWithMessages]
@@ -1443,7 +1445,7 @@ sap.ui.define([
 	 *   The function is called just before the back-end request is sent.
 	 *   If no back-end request is needed, the function is not called.
 	 * @returns {sap.ui.base.SyncPromise}
-	 *   A promise which resolves without a defined result when it is updated in the cache; it
+	 *   A promise which resolves with the refreshed entity after it was updated in the cache, and
 	 *   rejects with an error when no key predicate is known.
 	 * @throws {Error} If the cache is shared
 	 *
@@ -1464,7 +1466,7 @@ sap.ui.define([
 					_Helper.getQueryOptionsForPath(that.mQueryOptions, sPath)),
 				sReadUrl;
 
-			if (iIndex !== undefined) {
+			if (iIndex >= 0) {
 				sPredicate = _Helper.getPrivateAnnotation(aElements[iIndex], "predicate");
 			}
 			if (!sPredicate) { // Note: no need to give path here, error is wrapped by ODLB!
@@ -1501,6 +1503,8 @@ sap.ui.define([
 
 				that.replaceElement(aElements, iIndex, sPredicate, oElement, aResult[1], sPath,
 					bKeepReportedMessagesPath);
+
+				return oElement;
 			});
 		});
 	};
@@ -1627,12 +1631,12 @@ sap.ui.define([
 					throw new Error(
 						"Unexpected server response, more than one entity returned.");
 				} else if (aReadResult.length === 0) {
-					that.removeElement(aElements, iIndex, sPredicate, sPath);
+					that.removeElement(iIndex, sPredicate, aElements, sPath);
 					that.oRequestor.getModelInterface()
 						.reportStateMessages(that.sResourcePath, {}, [sPath + sPredicate]);
 					fnOnRemove(false);
 				} else if (bRemoveFromCollection) {
-					that.removeElement(aElements, iIndex, sPredicate, sPath);
+					that.removeElement(iIndex, sPredicate, aElements, sPath);
 					// element no longer in cache -> re-insert via replaceElement
 					that.replaceElement(aElements, undefined, sPredicate, aReadResult[0],
 						mTypeForMetaPath, sPath);
@@ -1665,14 +1669,18 @@ sap.ui.define([
 	 * <code>$byPredicate</code>, <code>$created</code> and <code>$count</code>, and a collection
 	 * cache's limit and number of active elements (if applicable).
 	 *
-	 * @param {object[]} [aElements]
-	 *   The array of elements, defaults to a collection cache's own elements
+	 * If the predicate is given, the index is determined again to handle the case that the element
+	 * has been moved (via a parallel insert/delete) in the meantime. Otherwise, the index is taken
+	 * as is.
+	 *
 	 * @param {number} [iIndex]
 	 *   The array index of the old element to be removed or <code>undefined</code> in case the
 	 *   element is a kept-alive element without an index
-	 * @param {string} sPredicate
+	 * @param {string} [sPredicate]
 	 *   The key predicate of the old element to be removed
-	 * @param {string} sPath
+	 * @param {object[]} [aElements]
+	 *   The array of elements, defaults to a collection cache's own elements
+	 * @param {string} [sPath=""]
 	 *   The element collection's path within this cache (as used by change listeners), may be
 	 *   <code>""</code> (only in a CollectionCache)
 	 * @returns {number|undefined} The index at which the element actually was (it might have moved
@@ -1680,23 +1688,27 @@ sap.ui.define([
 	 *
 	 * @protected
 	 */
-	// eslint-disable-next-line default-param-last
-	_Cache.prototype.removeElement = function (aElements = this.aElements, iIndex, sPredicate,
-			sPath) {
-		var oElement = aElements.$byPredicate[sPredicate],
-			bDeleted = oElement["@$ui5.context.isDeleted"],
-			sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate");
+	_Cache.prototype.removeElement = function (iIndex, sPredicate, aElements = this.aElements,
+			sPath = "") {
+		const oElement = sPredicate
+			? aElements.$byPredicate[sPredicate]
+			: aElements[iIndex]; // undefined in case it was not yet read
 
-		if (iIndex !== undefined) {
+		if (!sPredicate) {
+			sPredicate = oElement && _Helper.getPrivateAnnotation(oElement, "predicate");
+		} else if (iIndex !== undefined) {
 			// the element might have moved due to parallel insert/delete
 			iIndex = _Cache.getElementIndex(aElements, sPredicate, iIndex);
 		}
+		const bDeleted = oElement?.["@$ui5.context.isDeleted"];
 		if (!bDeleted) {
 			delete aElements.$byPredicate[sPredicate];
 		}
 		if (iIndex >= 0) {
 			aElements.splice(iIndex, 1);
 			_Helper.addToCount(this.mChangeListeners, sPath, aElements, -1);
+			const sTransientPredicate
+				= oElement && _Helper.getPrivateAnnotation(oElement, "transientPredicate");
 			if (sTransientPredicate) {
 				aElements.$created -= 1;
 				if (!sPath) {
@@ -1917,14 +1929,15 @@ sap.ui.define([
 	 *   <code>""</code> (only in a CollectionCache)
 	 * @param {int} [iDeletedIndex]
 	 *   The index of the entry in <code>aElements.$deleted</code> if any
-	 *
+	 * @param {string} [sTransientPredicate]
+	 *  The element's (future) transient predicate
 	 * @protected
 	 */
 	// eslint-disable-next-line default-param-last
 	_Cache.prototype.restoreElement = function (aElements = this.aElements, iIndex, oElement, sPath,
-			iDeletedIndex) {
+			iDeletedIndex,
+			sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate")) {
 		this.adjustIndexes(sPath, aElements, iIndex, 1, iDeletedIndex);
-		const sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate");
 		if (sTransientPredicate) {
 			aElements.$created += 1;
 			if (!sPath) {
@@ -2432,7 +2445,7 @@ sap.ui.define([
 					if (!sCollectionPath) {
 						// remember the key predicates / indices of the root entries to remove all
 						// messages for entities that have been read
-						aCachePaths.push(sPredicate || iIndex.toString());
+						aCachePaths.push(sPredicate || "" + iIndex);
 					}
 					if (sPredicate) {
 						mByPredicate[sPredicate] = vInstance;
@@ -2655,16 +2668,20 @@ sap.ui.define([
 
 	/**
 	 * Drops the element with the given index and predicate from this cache's collection, so that it
-	 * will be read again from the server later on. Created persisted elements loose their special
+	 * will be read again from the server later on. Created persisted elements lose their special
 	 * treatment!
 	 *
 	 * @param {number} iIndex - An index
 	 * @param {string} sPredicate - A key predicate
+	 * @param {boolean} [bIndexIsSkip] - Whether <code>iIndex</code> is a raw $skip index
 	 * @throws {Error} When the element with the given index is still transient
 	 *
 	 * @public
 	 */
-	_CollectionCache.prototype.drop = function (iIndex, sPredicate) {
+	_CollectionCache.prototype.drop = function (iIndex, sPredicate, bIndexIsSkip) {
+		if (bIndexIsSkip) {
+			iIndex += this.aElements.$created;
+		}
 		const oElement = this.aElements[iIndex];
 		if (oElement["@$ui5.context.isTransient"]) {
 			throw new Error("Must not drop a transient element");
@@ -3114,6 +3131,8 @@ sap.ui.define([
 	 * @param {function} [fnDataRequested]
 	 *   The function is called just before a back-end request is sent.
 	 *   If no back-end request is needed, the function is not called.
+	 * @param {boolean} [bIndexIsSkip]
+	 *   Whether <code>iIndex</code> is a raw $skip index
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise to be resolved with the requested range given as an OData response object (with
 	 *   "@odata.context" and the rows as an array in the property <code>value</code>, enhanced
@@ -3128,7 +3147,7 @@ sap.ui.define([
 	 * @see sap.ui.model.odata.v4.lib._Requestor#request
 	 */
 	_CollectionCache.prototype.read = function (iIndex, iLength, iPrefetchLength, oGroupLock,
-			fnDataRequested) {
+			fnDataRequested, bIndexIsSkip) {
 		var iCreatedPersisted = 0,
 			oElement,
 			aElementsRange,
@@ -3148,10 +3167,14 @@ sap.ui.define([
 
 		if (oPromise) {
 			return oPromise.then(function () {
-				return that.read(iIndex, iLength, iPrefetchLength, oGroupLock, fnDataRequested);
+				return that.read(iIndex, iLength, iPrefetchLength, oGroupLock, fnDataRequested,
+					bIndexIsSkip);
 			});
 		}
 
+		if (bIndexIsSkip) {
+			iIndex += this.aElements.$created;
+		}
 		for (i = 0; i < this.aElements.$created; i += 1) {
 			oElement = this.aElements[i];
 			if (_Helper.getPrivateAnnotation(oElement, "transient") === oGroupLock.getGroupId()) {
@@ -3311,7 +3334,7 @@ sap.ui.define([
 						oElement = that.aElements.$byPredicate[sPredicate];
 						if (_Helper.hasPrivateAnnotation(oElement, "transientPredicate")) {
 							// Note: iIndex unknown, use -1 instead
-							iIndex = that.removeElement(that.aElements, -1, sPredicate, "");
+							iIndex = that.removeElement(-1, sPredicate);
 						} else {
 							delete that.aElements.$byPredicate[sPredicate];
 						}

@@ -95,7 +95,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.119.1
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @public
@@ -708,8 +708,7 @@ function(
 		 * @private
 		 */
 		MessagePopover.prototype._expandMsgPopover = function () {
-			var sDomHeight,
-				sHeight = DEFAULT_CONTENT_HEIGHT,
+			var sHeight = DEFAULT_CONTENT_HEIGHT,
 				sDomHeight = this._oPopover.$("cont").css("height");
 
 			if (this.getInitiallyExpanded() && sDomHeight !== "0px") {

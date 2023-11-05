@@ -1605,7 +1605,8 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
-	QUnit.test("_processSuccess: _updateChangedEntity is called correctly", function (assert) {
+[204, "204", 205, "205"].forEach(function (vStatusCode, i){
+	QUnit.test("_processSuccess: _updateChangedEntity is called correctly, #" + i, function (assert) {
 		var mEntityTypes = {},
 			oModel = {
 				oMetadata : {
@@ -1628,7 +1629,7 @@ sap.ui.define([
 				key : "key",
 				requestUri : "/service/path"
 			},
-			oResponse = {statusCode : 204};
+			oResponse = {statusCode : vStatusCode};
 
 		oModelMock.expects("_normalizePath").withExactArgs("/path").returns("normalizedPath");
 		this.mock(oModel.oMetadata).expects("_getEntityTypeByPath")
@@ -1659,6 +1660,7 @@ sap.ui.define([
 			/*fnSuccess*/ undefined, /*mGetEntities*/ {}, /*mChangeEntities*/ {}, mEntityTypes,
 			/*bBatch*/ false, "aRequests");
 	});
+});
 
 	//*********************************************************************************************
 [{
@@ -6831,7 +6833,7 @@ sap.ui.define([
 				.withExactArgs("~oAbortedError");
 		}
 		oModelMock.expects("getMessagesByEntity")
-			.withExactArgs("~sKey", !bDeleteEntity)
+			.withExactArgs("~sKey", true)
 			.returns("~aMessages");
 		oMessagingMock.expects("removeMessages").withExactArgs("~aMessages");
 
@@ -6888,7 +6890,7 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(oContext));
 		this.mock(oModel).expects("_removeEntity").withExactArgs("~sKey");
 		this.mock(oModel).expects("getMessagesByEntity")
-			.withExactArgs("~sKey", false)
+			.withExactArgs("~sKey", true)
 			.returns("~aMessages");
 		this.mock(Messaging).expects("removeMessages")
 			.withExactArgs("~aMessages");

@@ -23,7 +23,7 @@ sap.ui.define(['./Object', "sap/base/assert"],
 	 * @extends sap.ui.base.Object
 	 * @implements sap.ui.base.Poolable
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @alias sap.ui.base.Event
 	 * @public
 	 * @template {Object<string,any>} [ParamsType=object]
@@ -59,7 +59,7 @@ sap.ui.define(['./Object', "sap/base/assert"],
 	 */
 	Event.prototype.init = function(sId, oSource, oParameters) {
 		assert(typeof sId === "string", "Event.init: sId must be a string");
-		assert(BaseObject.isA(oSource, 'sap.ui.base.EventProvider'), "Event.init: oSource must be an EventProvider");
+		assert(BaseObject.isObjectA(oSource, 'sap.ui.base.EventProvider'), "Event.init: oSource must be an EventProvider");
 
 		this.sId = sId;
 		this.oSource = oSource;

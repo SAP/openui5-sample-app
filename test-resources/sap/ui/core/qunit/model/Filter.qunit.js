@@ -9,6 +9,9 @@ sap.ui.define([
 	var sDefaultLanguage = Configuration.getLanguage();
 
 	QUnit.module("sap.ui.model.Filter", {
+		before() {
+			this.__ignoreIsolatedCoverage__ = true;
+		},
 		beforeEach : function () {
 			Configuration.setLanguage("en-US");
 		},
@@ -747,5 +750,51 @@ sap.ui.define([
 		], false).getAST(true).origin, "EQ", "Multifilter with single filter should have inner filter origin");
 
 
+	});
+
+	//*********************************************************************************************
+	QUnit.test("Static never fulfilled filter", function(assert) {
+		assert.ok(Filter.NONE instanceof Filter);
+		assert.strictEqual(Filter.NONE.getPath(), "/");
+		assert.strictEqual(typeof Filter.NONE.getTest(), "function");
+		assert.strictEqual(Filter.NONE.getTest()(), false);
+	});
+
+	//*********************************************************************************************
+[
+	{filters : [{}, Filter.NONE]},
+	[{}, Filter.NONE],
+	{condition : Filter.NONE}
+].forEach((oFixture, i) => {
+	QUnit.test("Filter.NONE passed to constructor, " + i, function(assert) {
+		assert.throws(() => {
+			// code under test
+			new Filter(oFixture);
+		}, new Error("Filter.NONE not allowed "
+			+ (oFixture.condition ? "as condition" : "in multiple filter")));
+	});
+});
+
+	//*********************************************************************************************
+	QUnit.test("checkFilterNone", function(assert) {
+		// code under test
+		Filter.checkFilterNone();
+
+		// code under test
+		Filter.checkFilterNone(Filter.NONE);
+
+		// code under test
+		Filter.checkFilterNone([Filter.NONE]);
+
+		const oFilter = new Filter("path", FilterOperator.EQ, "value");
+		oFilter.length = 2;
+
+		// code under test - no error in case of tagged filter or Filter subclass with length property
+		Filter.checkFilterNone(oFilter);
+
+		// code under test
+		assert.throws(function () {
+			Filter.checkFilterNone([new Filter("path", FilterOperator.EQ, "value"), Filter.NONE]);
+		}, new Error("Filter.NONE cannot be used together with other filters"));
 	});
 });

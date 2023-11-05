@@ -17,12 +17,13 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Type for <code>columnsItems</code> aggregation in <code>P13nColumnsPanel</code> control.
 	 * @extends sap.ui.core.Item
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @constructor
 	 * @author SAP SE
 	 * @public
 	 * @since 1.26.0
 	 * @alias sap.m.P13nColumnsItem
+     * @deprecated since 1.120
 	 */
 	var P13nColumnsItem = Item.extend("sap.m.P13nColumnsItem", /** @lends sap.m.P13nColumnsItem.prototype */
 	{

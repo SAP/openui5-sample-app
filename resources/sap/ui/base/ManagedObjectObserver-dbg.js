@@ -118,6 +118,7 @@ sap.ui.define([
 			if (!fnCallback && typeof fnCallback !== "function") {
 				throw new Error("Missing callback function in ManagedObjectObserver constructor");
 			}
+			BaseObject.call(this);
 			this._fnCallback = fnCallback;
 		}
 	});

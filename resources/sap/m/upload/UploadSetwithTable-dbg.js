@@ -10,7 +10,6 @@ sap.ui.define([
 	"sap/m/ToolbarSpacer",
 	"sap/m/upload/UploadSetwithTableRenderer",
 	"sap/ui/unified/FileUploader",
-	"sap/m/upload/UploadSetToolbarPlaceholder",
 	"sap/m/upload/UploaderHttpRequestMethod",
 	"sap/m/OverflowToolbar",
 	"sap/m/upload/UploadSetwithTableItem",
@@ -23,7 +22,6 @@ sap.ui.define([
 	"sap/m/upload/UploaderTableItem",
 	"sap/ui/core/dnd/DragDropInfo",
 	"sap/ui/core/dnd/DropInfo",
-	"sap/ui/core/dnd/DragInfo",
 	"sap/m/upload/FilePreviewDialog",
 	"sap/ui/base/Event",
 	"sap/m/Dialog",
@@ -31,25 +29,41 @@ sap.ui.define([
 	"sap/m/Input",
 	"sap/m/MessageBox",
 	"sap/m/Button",
-	"sap/ui/base/Event",
-	"sap/ui/core/Core"
-], function (Table, ToolbarSpacer, UploadSetwithTableRenderer, FileUploader,
-    UploadSetToolbarPlaceholder, UploaderHttpRequestMethod, OverFlowToolbar, UploadSetwithTableItem, deepEqual, Log, Library, IllustratedMessageType,
-	IllustratedMessage, IllustratedMessageSize, Uploader, DragDropInfo, DropInfo, DragInfo, FilePreviewDialog, Event, Dialog, Label, Input, MessageBox, Button, EventBase, Core) {
-    "use strict";
+	"sap/ui/core/Core",
+	"sap/ui/fl/variants/VariantManagement",
+	"sap/m/upload/p13n/PersManager",
+	"sap/m/upload/p13n/mediator/ColumnsMediator",
+	"sap/m/upload/p13n/mediator/SortMediator",
+	"sap/m/upload/p13n/mediator/GroupMediator",
+	"sap/m/upload/p13n/mediator/FilterMediator",
+	"sap/ui/core/mvc/XMLView",
+	"sap/ui/core/Element",
+	"sap/m/MenuButton",
+	"sap/m/MenuItem",
+	"sap/m/Menu"
+	], function (Table, ToolbarSpacer, UploadSetwithTableRenderer, FileUploader, UploaderHttpRequestMethod, OverFlowToolbar, UploadSetwithTableItem, deepEqual, Log, Library, IllustratedMessageType,
+	IllustratedMessage, IllustratedMessageSize, Uploader, DragDropInfo, DropInfo, FilePreviewDialog, EventBase, Dialog, Label, Input, MessageBox, Button, Core, VariantManagement, PersManager,
+	ColumnsMediator, SortMediator, GroupMediator, FilterMediator, View, Element, MenuButton, MenuItem, Menu) {
+	"use strict";
 
 	/**
 	 * Constructor for a new UploadSetwithTable.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given.
+	 * @param {string} [sId] Id for the new control, it is generated automatically if no id is provided.
 	 * @param {object} [mSettings] Initial settings for the new control.
-	 * @class This control allows you to upload one or more files from your device, such as desktop, tablet or phone, and attach them to your application in a tabular manner.
+	 * @class This control allows you to upload one or more files from your device, such as desktop, tablet or phone, and attach them to your application in a responsive tabular manner.<br>
+	 * This control builds on the {@link sap.m.upload.UploadSet UploadSet} control. Provides flexibility to tailor the design of the table including columns, cells and the content to suit specific requirements.
+	 *
+	 * To render the <code> sap.m.upload.UploadSetwithTable </code>control properly, the order of the columns aggregation should match the order of the cells aggregation (sap.m.upload.UploadSetwithTableItem).
+	 *
+	 * <b>Note:</b> Control recommends to use <code> sap.m.upload.Column </code> with the columns aggregation. <code>sap.m.upload.Column</code> control is built on <code> sap.m.Column </code> ({@link sap.m.Column Column}) control and provides ability to define personalization specific properties for column and is essential to setup personalization for the <code>sap.m.upload.UploadSetwithTable</code> control.
 	 * @extends sap.m.Table
 	 * @author SAP SE
 	 * @constructor
-	 * @private
-	 * @experimental
-	 * @internal
+	 * @public
+	 * @experimental since 1.120
+	 * @since 1.120
+	 * @version 1.120.0
 	 * @alias sap.m.upload.UploadSetwithTable
 	 */
 	var UploadSetwithTable = Table.extend("sap.m.upload.UploadSetwithTable", {
@@ -118,6 +132,7 @@ sap.ui.define([
 				 * @description Item info object sent as paramter to {@link sap.m.upload.UploadSetwithTable.itemValidationHandler itemValidationHandler callback}
 				 * @property {sap.m.upload.UploadSetwithTableItem} oItem Current item queued for upload.
 				 * @property {number} iTotalItemsForUpload Total count of items queued for upload.
+				 * @property {sap.m.upload.UploadSetwithTable} oSource Source on which the callback was invoked.
 				 * @public
 				**/
 
@@ -135,16 +150,28 @@ sap.ui.define([
 				/**
 				 * Determines which illustration type is displayed when the control holds no data.
 				 */
-				noDataIllustrationType: {type: "sap.m.IllustratedMessageType", group: "Appearance", defaultValue: IllustratedMessageType.UploadCollection}
-            },
-            aggregations: {
+				noDataIllustrationType: {type: "sap.m.IllustratedMessageType", group: "Appearance", defaultValue: IllustratedMessageType.UploadCollection},
 				/**
-				 * The header area can be used as a toolbar to add extra controls for user interactions. Note: When set, this overwrites the headerText property.
+				 * If set to true, the variant management gets enabled.
 				 */
-                headerToolbar : {
-                    type: "sap.m.OverflowToolbar",
-                    multiple: false
-                },
+				enableVariantManagement: {type: "boolean", defaultValue: false},
+				/**
+				  * Enables CloudFile picker feature to upload files from cloud.
+				  * @experimental Since 1.120
+				  */
+				cloudFilePickerEnabled: { type: "boolean", group: "Behavior", defaultValue: false },
+				/**
+				  * Url of the FileShare OData V4 service supplied for CloudFile picker control.
+				  * @experimental Since 1.120.
+				  */
+				cloudFilePickerServiceUrl: { type: "sap.ui.core.URI", group: "Data", defaultValue: "" },
+				/**
+				  * The text of the CloudFile picker button. The default text is "Upload from cloud" (translated to the respective language).
+				  * @experimental Since 1.120.
+				  */
+				cloudFilePickerButtonText: { type: 'string', defaultValue: "" }
+			},
+				aggregations: {
 				/**
 				 * Defines the uploader to be used. If not specified, the default implementation is used.
 				 */
@@ -152,11 +179,7 @@ sap.ui.define([
 				/**
 				 * Header fields to be included in the header section of an XHR request.
 				 */
-				headerFields: {type: "sap.ui.core.Item", multiple: true, singularName: "headerField"},
-				/**
-				 * Additional buttons can be added to the footer of file preview dialog
-				 */
-				additionalFooterButtons: {type: "sap.m.Button", multiple: true}
+				headerFields: {type: "sap.ui.core.Item", multiple: true, singularName: "headerField"}
 			},
 			associations: {
 				/**
@@ -165,7 +188,6 @@ sap.ui.define([
 				 */
 				previewDialog: {type: "sap.m.upload.FilePreviewDialog", multiple: false}
 			},
-			defaultAggregation : "items",
 			events: {
 				/**
 				 * The event is triggered when the file name is changed.
@@ -368,26 +390,40 @@ sap.ui.define([
 	});
 
 	var UploadState = Library.UploadState;
+	var UploadSetwithTableActionPlaceHolder = Library.UploadSetwithTableActionPlaceHolder;
 
 	/* ================== */
 	/* Lifecycle handling */
 	/* ================== */
 
     UploadSetwithTable.prototype.init = function () {
-        Table.prototype.init.call(this);
+		Table.prototype.init.call(this);
 		this._setDragDropConfig();
-        this._filesTobeUploaded = [];
+		this._filesTobeUploaded = [];
 		this._filePreviewDialogControl = null;
 		this._oRb = Core.getLibraryResourceBundle("sap.m");
-    };
+		this._bPersoRegistered = false;
+		this._setIllustratedMessage();
+	};
 
 	UploadSetwithTable.prototype.onBeforeRendering = function() {
 		Table.prototype.onBeforeRendering.call(this);
-		this._setIllustratedMessage();
 	};
 
 	UploadSetwithTable.prototype.onAfterRendering = function() {
 		Table.prototype.onAfterRendering.call(this);
+		if (!this._bPersoRegistered){
+			PersManager.getInstance().register(this, { mediators: {
+				columns: new ColumnsMediator({control: this, targetAggregation: "columns", p13nMetadataTarget: "columns"}),
+				sort: new SortMediator({control: this, targetAggregation: "sortConditions", p13nMetadataTarget: "sort"}),
+				group: new GroupMediator({control: this, targetAggregation: "groupConditions", p13nMetadataTarget: "group"}),
+				filter: new FilterMediator({control: this, targetAggregation: "filterConditions", p13nMetadataTarget: "filter"})
+			}});
+			this._bPersoRegistered = true;
+		}
+		if (this.getCloudFilePickerEnabled()) {
+			this._oFileUploader.addStyleClass("sapMUSTFileUploaderVisibility");
+		}
 	};
 
 	UploadSetwithTable.prototype.exit = function () {
@@ -404,33 +440,155 @@ sap.ui.define([
 			this._illustratedMessage.destroy();
 			this._illustratedMessage = null;
 		}
+		this._bPersoRegistered = false;
+		PersManager.getInstance().deregister(this);
 	};
 
-    /* ===================== */
-	/* Overriden API methods */
-	/* ===================== */
+	/* ====================== */
+	/* Overridden API methods */
+	/* ====================== */
 
     UploadSetwithTable.prototype.getHeaderToolbar = function () {
 		if (!this._oToolbar) {
 			this._oToolbar = this.getAggregation("headerToolbar");
+
+			var oUploaderButton = this.getCloudFilePickerEnabled() && !this.getUploadButtonInvisible() ? this._getCloudFilePickerMenu() : this.getDefaultFileUploader();
+			var oCloudFilPickerButton = this.getCloudFilePickerEnabled() && this.getUploadButtonInvisible() ? this._getCloudFilePickerButton() : null;
+			var oPersonalizationSettingsButton = this.getEnableVariantManagement() ? this._getPersonalizationControl() : null;
+
 			if (!this._oToolbar) {
+				const aToolbarContent = [new ToolbarSpacer(), oUploaderButton, oCloudFilPickerButton , oPersonalizationSettingsButton];
+				if (this.getEnableVariantManagement()) {
+					aToolbarContent.unshift(this._getVariantManagementControl());
+				}
 				this._oToolbar = new OverFlowToolbar(this.getId() + "-toolbar", {
-					content: [new ToolbarSpacer(), this.getDefaultFileUploader()]
+					content: aToolbarContent
 				});
-				this._iFileUploaderPH = 2;
 				this.addDependent(this._oToolbar);
 			} else {
-				this._iFileUploaderPH = this._getFileUploaderPlaceHolderPosition(this._oToolbar);
-				if (this._oToolbar && this._iFileUploaderPH > -1) {
-					this._setFileUploaderInToolbar(this.getDefaultFileUploader());
+				const iFileUploaderPH = this._getPlaceholderPosition(this._oToolbar, UploadSetwithTableActionPlaceHolder.UploadButtonPlaceholder);
+				if (this._oToolbar && iFileUploaderPH > -1) {
+					this._setControlInToolbar(iFileUploaderPH, oUploaderButton);
 				} else if (this._oToolbar) {
-					// fallback position to add file uploader control if UploadSetToolbarPlaceHolder instance not found
-					this._oToolbar.addContent(this.getDefaultFileUploader());
+					// fallback position to add file uploader control if UploadSetwithTableActionPlaceHolder.UploadButtonPlaceholder instance not found
+					this._oToolbar.addContent(oUploaderButton);
+				}
+
+				const iCloudFilePickerPH = this._getPlaceholderPosition(this._oToolbar, UploadSetwithTableActionPlaceHolder.CloudFilePickerButtonPlaceholder);
+				if (this._oToolbar && iCloudFilePickerPH > -1) {
+					this._setControlInToolbar(iCloudFilePickerPH, oCloudFilPickerButton);
+				} else if (this._oToolbar) {
+					// fallback position to add cloud file picker control if UploadSetwithTableActionPlaceHolder.CloudFilePickerButtonPlaceholder instance not found
+					this._oToolbar.addContent(oCloudFilPickerButton);
+				}
+
+				const iPersonalizationPH = this._getPlaceholderPosition(this._oToolbar, UploadSetwithTableActionPlaceHolder.PersonalizationSettingsPlaceholder);
+				if (this._oToolbar && iPersonalizationPH > -1) {
+					this._setControlInToolbar(iPersonalizationPH, this._getPersonalizationControl());
+				} else if (this._oToolbar) {
+					// fallback position to add file uploader control if UploadSetwithTableActionPlaceHolder.PersonalizationSettingsPlaceholder instance not found
+					// add personalization settings button only if variant management is enabled and placeholder not provided by default.
+					if (this.getEnableVariantManagement()) {
+						this._oToolbar.addContent(this._getPersonalizationControl());
+					}
+				}
+
+				if (this.getEnableVariantManagement()) {
+					const iVmPH = this._getPlaceholderPosition(this._oToolbar, UploadSetwithTableActionPlaceHolder.VariantManagementPlaceholder);
+					if (iVmPH > -1) {
+						this._setControlInToolbar(iVmPH, this._getVariantManagementControl());
+					} else {
+						this._oToolbar.insertContent(this._getVariantManagementControl(), 0);
+					}
 				}
 			}
+			// Rendering the upload button on the toolbar which is required to maintain the FUEL instance in case we hide it and reuse it for cloudfilepicker menu.
+			if (this.getCloudFilePickerEnabled()) {
+				this._oToolbar.addContent(this.getDefaultFileUploader());
+			}
 		}
-
 		return this._oToolbar;
+	};
+
+	/**
+	 * Returns the button that is used to open p13n dialog.
+	 * @private
+	 * @returns {sap.m.Button} button.
+	 */
+	UploadSetwithTable.prototype._getPersonalizationControl = function () {
+		return new Button({
+			icon: "sap-icon://action-settings",
+			press: function () {
+				PersManager.getInstance().show(this, ["columns", "sort", "group", "filter"]);
+			}.bind(this)
+		});
+	};
+
+	/**
+	 * Returns variant management control.
+	 * @private
+	 * @returns {sap.ui.fl.variants.VariantManagement} control.
+	 */
+	UploadSetwithTable.prototype._getVariantManagementControl = function () {
+		if (!this._oVariantManagement) {
+			this._oVariantManagement = new VariantManagement({
+				"id": this.getId() + "-variantManagement",
+				"for": [
+					this//container
+				 ]
+			});
+		}
+		return this._oVariantManagement;
+	};
+
+	UploadSetwithTable.prototype.getView = function () {
+		return this.getControlOfType(this, View);
+	};
+
+	UploadSetwithTable.prototype.getControlOfType = function (oControl, oType) {
+		if (oControl instanceof oType) {
+			return oControl;
+		}
+		if (oControl && typeof oControl["getParent" === "function"]) {
+			return this.getControlOfType(oControl.getParent(), oType);
+		}
+		return undefined;
+	};
+
+	/**
+	 * Collects and return p13n metadata from UploadSetwithTable column for p13n dialog panels.
+	 * @private
+	 * @returns {object} object with data for p13n panels.
+	 */
+	UploadSetwithTable.prototype._getP13nMetadata = function () {
+		if (!this._p13nMetadata) {
+			const oView = this.getView(),
+				aInitMetadata = this.getColumns().map(function(entry) {
+				return {
+					key: oView ? oView.getLocalId(entry.getId()) : entry.getId(),
+					label: entry.getColumnPersonalizationText(),
+					path: entry.getPath(),
+					visible: entry.getVisible(),
+					sortable: entry.getSortable(),
+					groupable: entry.getGroupable(),
+					filterable: entry.getFilterable()
+				};
+			});
+			this._p13nMetadata = {columns: [], sort: [], group: [], filter: []};
+			aInitMetadata.forEach((entry) => {
+				this._p13nMetadata.columns.push({key: entry.key, label: entry.label});
+				if (entry.sortable && entry.path) {
+					this._p13nMetadata.sort.push({key: entry.key, label: entry.label, path: entry.path});
+				}
+				if (entry.groupable && entry.path) {
+					this._p13nMetadata.group.push({key: entry.key, label: entry.label, path: entry.path});
+				}
+				if (entry.filterable && entry.path) {
+					this._p13nMetadata.filter.push({key: entry.key, label: entry.label, path: entry.path});
+				}
+			});
+		}
+		return this._p13nMetadata;
 	};
 
 	UploadSetwithTable.prototype.setFileTypes = function (aNewTypes) {
@@ -481,6 +639,8 @@ sap.ui.define([
 
 	UploadSetwithTable.prototype.setUploadButtonInvisible = function (bUploadButtonInvisible) {
 		if (bUploadButtonInvisible !== this.getUploadButtonInvisible()) {
+			var bVisible = !bUploadButtonInvisible;
+			this.getDefaultFileUploader().setVisible(bVisible);
 			this.setProperty("uploadButtonInvisible", bUploadButtonInvisible, true);
 		}
 		return this;
@@ -502,20 +662,42 @@ sap.ui.define([
 		return this;
 	};
 
-	UploadSetwithTable.prototype.setMultiple = function (bMultiple) {
-		if (this.getMultiple() !== bMultiple) {
-			this.setProperty("multiple", bMultiple);
-			this.getDefaultFileUploader().setMultiple(bMultiple);
-		}
-		return this;
-	};
-
 	UploadSetwithTable.prototype.setDirectory = function (bDirectory) {
 		if (this.getDirectory() !== bDirectory) {
 			this.setProperty("directory", bDirectory);
 			this.getDefaultFileUploader().setDirectory(bDirectory);
 			if (bDirectory) {
 				this.setProperty("multiple", false); // disable multiple files selection when directory selection is enabled.
+			}
+		}
+		return this;
+	};
+
+	UploadSetwithTable.prototype.setNoDataIllustrationType = function (setIllustrationType) {
+		if (this.getNoDataIllustrationType() !== setIllustrationType) {
+			this.setProperty("noDataIllustrationType", setIllustrationType);
+			if (this._illustratedMessage) {
+				this._illustratedMessage.setIllustrationType(this.getNoDataIllustrationType());
+			}
+		}
+		return this;
+	};
+
+	UploadSetwithTable.prototype.setNoDataText = function(sNoDataTxt) {
+		if (this.getNoData() !== sNoDataTxt) {
+			this.setProperty("noDataText", sNoDataTxt);
+			if (this._illustratedMessage) {
+				this._illustratedMessage.setTitle(this.getNoDataText());
+			}
+		}
+		return this;
+	};
+
+	UploadSetwithTable.prototype.setNoDataDescription = function(sNoDataDescription) {
+		if (this.getNoDataDescription() !== sNoDataDescription) {
+			this.setProperty("noDataDescription", sNoDataDescription);
+			if (this._illustratedMessage) {
+				this._illustratedMessage.setDescription(this.getNoDataDescription());
 			}
 		}
 		return this;
@@ -556,7 +738,7 @@ sap.ui.define([
                 typeMissmatch: [this._fireFileTypeMismatch, this],
 				fileSizeExceed: [this._fireFileSizeExceed, this],
 				filenameLengthExceed: [this._fireFilenameLengthExceed, this],
-				visible: true,
+				visible: !this.getUploadButtonInvisible(),
 				directory: this.getDirectory()
 			});
 		}
@@ -573,28 +755,6 @@ sap.ui.define([
 	 */
 	UploadSetwithTable.getIconForFileType = function (mediaType, fileName) {
         return UploadSetwithTableItem._getIconByMimeType(mediaType, fileName);
-    };
-
-	/**
-	 * Downloads the item. Only possible when the item has a valid URL specified in the <code>url</code> property of the item.
-	 * @param {UploadSetwithTableItem[]} aItemsToDownload The list items the selection state is to be set for
-	 * @param {boolean} bAskForLocation If the location is to be determined as to where the file is to be downloaded.
-	 * @public
-	 */
-	UploadSetwithTable.prototype.downloadItems = function (aItemsToDownload, bAskForLocation) {
-        if (aItemsToDownload && aItemsToDownload.length) {
-			aItemsToDownload.forEach(function(oItem){
-				// Check if items are instances of "sap.m.UploadSetwithTableItem"
-				var isUploadSetwithTableItemInstance = oItem && oItem instanceof UploadSetwithTableItem ? true : false;
-				var oParent = oItem && oItem.getParent ? oItem.getParent() : null;
-				// Download files individually
-				if (isUploadSetwithTableItemInstance && oParent === this) {
-					this._getActiveUploader().download(oItem, [], bAskForLocation);
-				} else {
-					Log.warning("Download cannot proceed without a parent association.");
-				}
-			}.bind(this));
-		}
     };
 
 	/**
@@ -625,7 +785,7 @@ sap.ui.define([
 	 * API recommended for file size formatting purpose.
 	 * @param {int} iFileSize fileSize to determine units
 	 * @public
-	 * @returns {sFileSizeWithUnit} file size in KB/MB/GB default unit is KB
+	 * @returns {string} sFileSizeWithUnit file size in KB/MB/GB default unit is KB
 	 */
 	UploadSetwithTable.getFileSizeWithUnits = function(iFileSize) {
 		var iKilobyte = 1024;
@@ -691,7 +851,7 @@ sap.ui.define([
 
 	/**
 	 * API to rename the document of an item.
-	 * @param {sap.m.upload.UploadSetwithTableItem} oItem, target item.
+	 * @param {sap.m.upload.UploadSetwithTableItem} oItem target item.
 	 * @public
 	 */
 	UploadSetwithTable.prototype.renameItem = function (oItem) {
@@ -705,15 +865,15 @@ sap.ui.define([
 	/* Private methods */
 	/* ============== */
 
-    UploadSetwithTable.prototype._setFileUploaderInToolbar = function(fileUploader) {
-        this._oToolbar.getContent()[this._iFileUploaderPH].setVisible(false);
-		this._oToolbar.insertContent(fileUploader, this._iFileUploaderPH);
+	UploadSetwithTable.prototype._setControlInToolbar = function(iIndex, control) {
+		this._oToolbar.getContent()[iIndex].setVisible(false);
+		this._oToolbar.insertContent(control, iIndex);
 	};
 
-    UploadSetwithTable.prototype._getFileUploaderPlaceHolderPosition = function(toolbar) {
-        for (var i = 0; i < toolbar.getContent().length; i++) {
-            if (toolbar.getContent()[i] instanceof UploadSetToolbarPlaceholder) {
-                return i;
+	UploadSetwithTable.prototype._getPlaceholderPosition = function(toolbar, placeholderType) {
+		for (var i = 0; i < toolbar.getContent().length; i++) {
+			if (toolbar.getContent()[i].isA("sap.m.upload.ActionsPlaceholder") && toolbar.getContent()[i].getPlaceholderFor() === placeholderType) {
+				return i;
 			}
 		}
 		return -1;
@@ -733,9 +893,9 @@ sap.ui.define([
 			}
 			this._processSelectedFileObjects(oFiles);
 		}
-    };
+	};
 
-    UploadSetwithTable.prototype._processSelectedFileObjects = function (oFiles) {
+	UploadSetwithTable.prototype._processSelectedFileObjects = function (oFiles) {
 		var aFiles = [];
 
 		// Need to explicitly copy the file list, FileUploader deliberately resets its form completely
@@ -748,6 +908,7 @@ sap.ui.define([
 			var oItem = new UploadSetwithTableItem({
 				uploadState: UploadState.Ready
 			});
+			oItem.setParent(this); // setting the parent as UploadSetwithTable for file validations
 			oItem._setFileObject(oFile);
 			oItem.setFileName(oFile.name);
 
@@ -756,7 +917,8 @@ sap.ui.define([
 
 				const oItemInfo = {
 					oItem: oItem,
-					iTotalItemsForUpload: aFiles.length
+					iTotalItemsForUpload: aFiles.length,
+					oSource: this
 				};
 
 				var oPromise = this.getItemValidationHandler()(oItemInfo);
@@ -805,10 +967,17 @@ sap.ui.define([
 		var bMediaRestricted = (!!aMediaTypes && (aMediaTypes.length > 0) && !!sMediaType && aMediaTypes.indexOf(sMediaType) === -1);
 		var bFileRestricted = (!!aFileTypes && (aFileTypes.length > 0) && !!sFileType && aFileTypes.indexOf(sFileType) === -1);
 
-        var oMismatchItem = {
-            fileType: sFileType,
-            mimeType: sMediaType
-        };
+		var parts = [new Blob([])];
+
+		var oFileMetaData = {
+			type: oItem.getParameter('fileType'),
+			webkitRelativePath: '',
+			name: oItem.getParameter('fileName')
+		};
+		var oFileObject = new File(parts, oItem.getParameter('fileName'), oFileMetaData);
+		var oMismatchItem = new UploadSetwithTableItem();
+		oMismatchItem._setFileObject(oFileObject);
+		oMismatchItem.setFileName(oFileObject.name);
 
 		if (bMediaRestricted){
 			this.fireMediaTypeMismatch({item: oMismatchItem});
@@ -818,11 +987,15 @@ sap.ui.define([
     };
 
     UploadSetwithTable.prototype._fireFilenameLengthExceed = function (oItem) {
-        this.fireFileNameLengthExceeded({item: oItem});
+		var oTargetItem = new UploadSetwithTableItem();
+		oTargetItem.setFileName(oItem.getParameter('fileName'));
+        this.fireFileNameLengthExceeded({item: oTargetItem});
     };
 
     UploadSetwithTable.prototype._fireFileSizeExceed = function (oItem) {
-        this.fireFileSizeExceeded({item: oItem});
+		var oTargetItem = new UploadSetwithTableItem();
+		oTargetItem.setFileName(oItem.getParameter('fileName'));
+        this.fireFileSizeExceeded({item: oTargetItem});
     };
 
 	UploadSetwithTable.prototype._onUploadStarted = function (oEvent) {
@@ -1049,8 +1222,8 @@ sap.ui.define([
 			const oAssociatedPreviewDialog = new FilePreviewDialog();
 			this.setPreviewDialog(oAssociatedPreviewDialog);
 		}
-		this._filePreviewDialogControl = Core.byId(this.getPreviewDialog());
-		// var aitems = this.getAdditionalFooterButtons();
+		this._filePreviewDialogControl = Element.getElementById(this.getPreviewDialog());
+
 		if (this._filePreviewDialogControl) {
 			this._filePreviewDialogControl._previewItem = oItem;
 			this._filePreviewDialogControl._items = this.getItems();
@@ -1205,6 +1378,227 @@ sap.ui.define([
 			oInput.setShowValueStateMessage(false);
 			oInput.setProperty("valueState", "None", true);
 		}
+	};
+
+	/**
+	 * Returns CloudFile picker menu button
+	 * @return {sap.m.MenuButton} CloudPicker & LocalFileUpload Menu button
+	 * @private
+	 */
+	UploadSetwithTable.prototype._getCloudFilePickerMenu = function () {
+		this._oMenuButton = new MenuButton({
+			text: this._oRb.getText("UPLOAD_SET_DEFAULT_LFP_BUTTON_TEXT"),
+			buttonMode: sap.m.MenuButtonMode.Split,
+			menu: this._getMenuButtonItems(),
+			defaultAction: this.fileSelectionHandler.bind(this)
+		});
+		return this._oMenuButton;
+	};
+
+	/**
+	 * Returns Cloud File picker button
+	 * @return {sap.m.Button} Cloudfile Picker button
+	 * @private
+	 */
+	UploadSetwithTable.prototype._getCloudFilePickerButton = function () {
+		this._oCloudFilePickerButton = new Button({
+			text: this.getCloudFilePickerButtonText() ? this.getCloudFilePickerButtonText() : this._oRb.getText("UPLOAD_SET_DEFAULT_CFP_BUTTON_TEXT"),
+			press: this._invokeCloudFilePicker.bind(this)
+		});
+		return this._oCloudFilePickerButton;
+	};
+
+	UploadSetwithTable.prototype._itemSelectedCallback = function (oEvent) {
+		var oItem = oEvent.getParameter("item");
+		// eslint-disable-next-line default-case
+		switch (oItem.getText()) {
+			case this.getCloudFilePickerButtonText() ? this.getCloudFilePickerButtonText() : this._oRb.getText("UPLOAD_SET_DEFAULT_CFP_BUTTON_TEXT"):
+				this._oMenuButton
+					.detachEvent("defaultAction", this.fileSelectionHandler.bind(this))
+					.attachEvent("defaultAction", this._invokeCloudFilePicker.bind(this));
+
+				this._invokeCloudFilePicker();
+				this._oMenuButton.setText(oItem.getText());
+				break;
+			case this._oRb.getText("UPLOAD_SET_DEFAULT_LFP_BUTTON_TEXT"):
+				this._oMenuButton
+					.detachEvent("defaultAction", this._invokeCloudFilePicker.bind(this))
+					.attachEvent("defaultAction", this.fileSelectionHandler.bind(this));
+
+				this.fileSelectionHandler();
+				this._oMenuButton.setText(oItem.getText());
+				break;
+		}
+	};
+
+	UploadSetwithTable.prototype._getMenuButtonItems = function () {
+		return new Menu({
+			items: [
+				new MenuItem({ text: this._oRb.getText("UPLOAD_SET_DEFAULT_LFP_BUTTON_TEXT") }),
+				new MenuItem({ text: this.getCloudFilePickerButtonText() ? this.getCloudFilePickerButtonText() : this._oRb.getText("UPLOAD_SET_DEFAULT_CFP_BUTTON_TEXT") })
+			],
+			itemSelected: this._itemSelectedCallback.bind(this)
+		});
+	};
+
+	/**
+	 * Creates and invokes CloudFilePicker control instance
+	 * @private
+	 * @returns {Object} cloudFile picker instance
+	 */
+	UploadSetwithTable.prototype._invokeCloudFilePicker = function () {
+		var oCloudFilePickerInstance = null;
+		if (this._cloudFilePickerControl) {
+			oCloudFilePickerInstance = this._getCloudFilePickerInstance();
+			oCloudFilePickerInstance.open();
+		} else {
+			// Dynamically load and cache CloudFilePicker control for first time
+			this._loadCloudFilePickerDependency()
+				.then( (cloudFilePicker) => {
+					this._cloudFilePickerControl = cloudFilePicker;
+					oCloudFilePickerInstance = this._getCloudFilePickerInstance();
+					oCloudFilePickerInstance.open();
+				})
+				.catch((error) => {
+					Log.error(error);
+				});
+		}
+		return oCloudFilePickerInstance;
+	};
+
+	/**
+	 * Event handler for CloudFile picker selector
+	 * @param {Object} oEvent CloudFile picker file selection DOM change event
+	 * @private
+	 */
+	UploadSetwithTable.prototype._onCloudPickerFileChange = function (oEvent) {
+
+		var mParameters = oEvent.getParameters();
+		var aFiles = [];
+		if (mParameters && mParameters.selectedFiles) {
+			mParameters.selectedFiles.forEach( (file) => {
+				aFiles.push(this._createFileFromCloudPickerFile(file));
+			});
+		}
+
+		// invoking this method to handle file uploads
+		this._processNewCloudPickerFileObjects(aFiles);
+	};
+
+	/**
+	 * Creates file object that is to be uploaded from the CloudFilePicker file object
+	 * @param {sap.suite.ui.commons.CloudFileInfo} oCloudFile CloudFilepicker file object
+	 * @returns {Object} file metadata with file object and fileshare properties
+	 * @private
+	 */
+	UploadSetwithTable.prototype._createFileFromCloudPickerFile = function (oCloudFile) {
+		var parts = [new Blob([])];
+		var oFileMetaData = {
+			type: oCloudFile.getFileShareItemContentType(),
+			size: oCloudFile.getFileShareItemContentSize(),
+			webkitRelativePath: '',
+			name: oCloudFile.getFileShareItemName()
+		};
+		var oFile = new File(parts, oCloudFile.getFileShareItemName(), oFileMetaData);
+		return {
+			file: oFile,
+			fileShareProperties: oCloudFile.mProperties
+		};
+	};
+
+	/**
+	 * Processing and uploading of file objects selected from the CloudFilePicker
+	 * @param {Array} oFiles File metadata list containing file to be uploaded and fileshare properties used for mapping
+	 * @private
+	 */
+	UploadSetwithTable.prototype._processNewCloudPickerFileObjects = function (oFiles) {
+
+		oFiles.forEach( (oFileMetaData) => {
+			var oFile = oFileMetaData.file;
+			// set the fileshareProperties for the new file created.
+			const oFileShareProperties = oFileMetaData.fileShareProperties;
+
+			var oItem = new UploadSetwithTableItem({
+				uploadState: UploadState.Ready
+			});
+			oItem._setFileObject(oFile);
+			oItem.setFileName(oFile.name);
+
+			// Set the file share properties if its cloud picker selected file. So that the info is avilable on the item getCloudFileInfo API.
+			if (oFile && oFileShareProperties) {
+				oItem._setCloudFileInfo(oFileShareProperties);
+			}
+
+
+			if (this.getItemValidationHandler() && typeof this.getItemValidationHandler() === "function" ) {
+
+				const oItemInfo = {
+					oItem: oItem,
+					iTotalItemsForUpload: oFiles.length,
+					oSource: this
+				};
+
+				var oPromise = this.getItemValidationHandler()(oItemInfo);
+				if (oPromise && oPromise instanceof Promise) {
+					oPromise
+					.then((item) => {
+						if (item instanceof UploadSetwithTableItem) {
+							this._initateItemUpload(item);
+						}
+					})
+					.catch((item) => {
+						// Reset variable to avoid update if upload rejected.
+						if (item && this._oItemToUpdate && item instanceof UploadSetwithTableItem && item.getId() === this._oItemToUpdate.getId()) {
+							this._oItemToUpdate = null;
+						}
+					});
+				} else {
+					oItem.destroy();
+					// if promise is not returned to the ItemValidation hook log error and destroy the item
+					Log.error("Invalid usage, missing Promise: ItemValidationHandler callback expects Promise to be returned.");
+				}
+			} else {
+				/* if no validation handler is provided control continues with normal upload else waits for the application to manually
+				trigger the upload by resolving the promise */
+				this._initateItemUpload(oItem);
+			}
+		});
+	};
+
+	/**
+	 * Dynamically require CloudFilePicker Control
+	 * @returns {Promise} Promise that resolves on sucessful load of CloudFilePicker control
+	 * @private
+	 */
+	UploadSetwithTable.prototype._loadCloudFilePickerDependency = function () {
+		return new Promise( (resolve, reject) => {
+			Core.loadLibrary("sap.suite.ui.commons", { async: true })
+				.then(function (data) {
+					sap.ui.require(["sap/suite/ui/commons/CloudFilePicker"], function (cloudFilePicker) {
+						resolve(cloudFilePicker);
+					}, function (error) {
+						reject(error);
+					});
+				})
+				.catch(function () {
+					reject("CloudFilePicker Control not available.");
+				});
+		});
+	};
+
+	/**
+	 * Creates CloudFilePicker Instance
+	 * @returns {sap.suite.ui.commons.CloudFilePicker} CloudFilePicker instance
+	 * @private
+	 */
+	UploadSetwithTable.prototype._getCloudFilePickerInstance = function () {
+		return new this._cloudFilePickerControl({
+			serviceUrl: this.getCloudFilePickerServiceUrl(),
+			confirmButtonText: this._oRb.getText("SELECT_PICKER_TITLE_TEXT"),
+			title: this._oRb.getText("SELECT_PICKER_TITLE_TEXT"),
+			fileNameMandatory: true,
+			select: this._onCloudPickerFileChange.bind(this)
+		});
 	};
 
     return UploadSetwithTable;

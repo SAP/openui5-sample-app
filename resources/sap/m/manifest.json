@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.119.1"
+      "version": "1.120.0"
     },
     "title": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
     "description": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
@@ -29,17 +29,17 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.119",
+      "minUI5Version": "1.120",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.119.1"
+          "minVersion": "1.120.0"
         },
         "sap.ui.layout": {
-          "minVersion": "1.119.1",
+          "minVersion": "1.120.0",
           "lazy": true
         },
         "sap.ui.unified": {
-          "minVersion": "1.119.1",
+          "minVersion": "1.120.0",
           "lazy": true
         }
       }
@@ -79,6 +79,7 @@
           "ko",
           "lt",
           "lv",
+          "mk",
           "ms",
           "nl",
           "no",
@@ -315,6 +316,7 @@
           "sap.m.IconTabSeparator",
           "sap.m.ImageCustomData",
           "sap.m.LightBoxItem",
+          "sap.m.LinkTileContent",
           "sap.m.OverflowToolbarLayoutData",
           "sap.m.MaskInputRule",
           "sap.m.MenuItem",
@@ -421,8 +423,10 @@
           "sap.m.DialogType",
           "sap.m.DraftIndicatorState",
           "sap.m.DynamicDateRangeGroups",
+          "sap.m.EmptyIndicatorMode",
           "sap.m.FacetFilterListDataType",
           "sap.m.FacetFilterType",
+          "sap.m.FilterPanelField",
           "sap.m.FlexAlignContent",
           "sap.m.FlexAlignItems",
           "sap.m.FlexAlignSelf",
@@ -507,7 +511,8 @@
           "sap.m.plugins.CopyPreference",
           "sap.m.semantic.SemanticRuleSetType",
           "sap.m.table.columnmenu.Category",
-          "sap.m.upload.UploaderHttpRequestMethod"
+          "sap.m.upload.UploaderHttpRequestMethod",
+          "sap.m.UploadSetwithTableActionPlaceHolder"
         ],
         "interfaces": [
           "sap.m.IBar",

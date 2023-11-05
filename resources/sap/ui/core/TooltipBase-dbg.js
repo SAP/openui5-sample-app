@@ -9,11 +9,12 @@ sap.ui.define([
 	'./Control',
 	'./Element',
 	'./Popup',
+	'./StaticArea',
 	'./library',
 	"sap/ui/events/KeyCodes",
 	"sap/ui/thirdparty/jquery"
 ],
-	function(Control, Element, Popup, library, KeyCodes, jQuery) {
+	function(Control, Element, Popup, StaticArea, library, KeyCodes, jQuery) {
 	"use strict";
 
 
@@ -30,7 +31,7 @@ sap.ui.define([
 	 * @class
 	 * Abstract class that can be extended in order to implement any extended tooltip. For example, RichTooltip Control is based on it. It provides the opening/closing behavior and the main "text" property.
 	 * @extends sap.ui.core.Control
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.TooltipBase
@@ -134,7 +135,7 @@ sap.ui.define([
 			var oPopup = this._getPopup();
 			if (!(oPopup.isOpen() && oPopup.getContent() == this)) {
 				// Update Tooltip or create a new span with texts.
-				sap.ui.getCore().createRenderManager().render(this, sap.ui.getCore().getStaticAreaRef(), true);
+				sap.ui.getCore().createRenderManager().render(this, StaticArea.getDomRef(), true);
 			}
 
 			// Attach accessibility info to the control oSC

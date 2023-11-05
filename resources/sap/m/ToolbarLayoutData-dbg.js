@@ -25,7 +25,7 @@ sap.ui.define(['./library', 'sap/ui/core/LayoutData'],
 	 * <code>layoutData</code> aggregation of {@link sap.m.ToolbarSpacer} and if set it's ignored.
 	 *
 	 * @extends sap.ui.core.LayoutData
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public

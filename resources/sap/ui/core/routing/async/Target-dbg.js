@@ -477,7 +477,7 @@ sap.ui.define([
 					});
 				}
 
-				if (oPlaceholderConfig.placeholder && Configuration.getPlaceholder()) {
+				if (oPlaceholderConfig.placeholder && Placeholder.isEnabled()) {
 					pPlaceholder = this.showPlaceholder(oPlaceholderConfig);
 				}
 			}

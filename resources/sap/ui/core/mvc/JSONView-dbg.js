@@ -43,10 +43,13 @@ sap.ui.define([
 	 * @class
 	 * A View defined using JSON.
 	 * @extends sap.ui.core.mvc.View
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.JSONView
+	 * @deprecated Since version 1.120, please consider using {@link sap.ui.core.mvc.XMLView XMLViews} or "typed views" (view classes
+	 *             written in JavaScript) instead. For more information, see the documentation on
+	 *             {@link topic:91f27e3e6f4d1014b6dd926db0e91070 View types}.
 	 */
 	var JSONView = View.extend("sap.ui.core.mvc.JSONView", /** @lends sap.ui.core.mvc.JSONView.prototype */ {
 		metadata : {

@@ -24,12 +24,13 @@ sap.ui.define([
 	'sap/ui/Global',
 	'sap/ui/base/Object',
 	'sap/ui/core/Element',
+	'sap/ui/core/StaticArea',
 	'sap/ui/core/mvc/View',
 	'sap/ui/test/matchers/Ancestor',
 	'sap/ui/test/matchers/MatcherFactory',
 	'sap/ui/test/pipelines/MatcherPipeline',
 	'sap/ui/test/_OpaLogger'
-], function (extend, ObjectPath, $, Global, UI5Object, UI5Element, View, Ancestor, MatcherFactory,
+], function (extend, ObjectPath, $, Global, UI5Object, UI5Element, StaticArea, View, Ancestor, MatcherFactory,
 			MatcherPipeline, _OpaLogger) {
 
 		/**
@@ -43,6 +44,7 @@ sap.ui.define([
 		var OpaPlugin = UI5Object.extend("sap.ui.test.OpaPlugin", /** @lends sap.ui.test.OpaPlugin.prototype */ {
 
 			constructor : function() {
+				UI5Object.call(this);
 				this._oLogger = _OpaLogger.getLogger("sap.ui.test.Opa5");
 				this._oMatcherFactory = new MatcherFactory();
 			},
@@ -145,8 +147,12 @@ sap.ui.define([
 			 * @public
 			 */
 			getControlInView : function (oOptions) {
-				var oView = this._getMatchingView(oOptions);
-				var bSearchForSingleControl = typeof oOptions.id === "string";
+				var bSearchForSingleControl = typeof oOptions.id === "string",
+					oView;
+
+				if (oOptions.viewName || oOptions.viewId) {
+					oView = this._getMatchingView(oOptions);
+				}
 
 				if (!oView) {
 					return bSearchForSingleControl ? null : [];
@@ -237,13 +243,17 @@ sap.ui.define([
 
 			// get control in static area that matches a control type, ID (string, array, regex), viewId, viewName, fragmentId
 			_getControlsInStaticArea: function (oOptions) {
-				var oStaticArea = $(sap.ui.getCore().getStaticAreaRef());
+				var oStaticArea = $(StaticArea.getDomRef());
 				var vControls = this._getControlsInContainer(oStaticArea) || [];
 
 				if (oOptions.id) {
 					vControls = this._filterUniqueControlsByCondition(vControls, function (oControl) {
-						var sUnprefixedControlId = oControl.getId();
-						var oView = this._getMatchingView(oOptions);
+						var sUnprefixedControlId = oControl.getId(),
+							oView;
+
+						if (oOptions.viewName || oOptions.viewId) {
+							oView = this._getMatchingView(oOptions);
+						}
 
 						if (oView) {
 							// the view could be set globally or from page object. in this case, search inside open dialogs should take priority:

@@ -13,8 +13,11 @@ sap.ui.define([
 	"./NumericContentRenderer",
 	"sap/ui/events/KeyCodes",
 	"sap/base/util/deepEqual",
-	"sap/ui/core/Configuration"
-], function (library, Control, IconPool, ResizeHandler, Image, NumericContentRenderer, KeyCodes, deepEqual, Configuration) {
+	"sap/ui/core/Configuration",
+	"sap/ui/core/Core",
+	"sap/ui/core/Lib",
+	"sap/ui/core/Theming"
+], function (library, Control, IconPool, ResizeHandler, Image, NumericContentRenderer, KeyCodes, deepEqual, Configuration, Core, CoreLib, Theming) {
 	"use strict";
 
 	var LANG_MAP = { // keys are compared in lowercase
@@ -108,7 +111,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @since 1.34
 	 *
 	 * @public
@@ -218,9 +221,9 @@ sap.ui.define([
 	/* --- Lifecycle methods --- */
 
 	NumericContent.prototype.init = function () {
-		this._rb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._rb = CoreLib.getResourceBundleFor("sap.m");
 		this.setTooltip("{AltText}");
-		sap.ui.getCore().attachInit(this._registerResizeHandler.bind(this));
+		Core.ready(this._registerResizeHandler.bind(this));
 	};
 
 	NumericContent.prototype._getParentTile = function () {
@@ -283,11 +286,7 @@ sap.ui.define([
 		this.$().on("mouseenter", this._addTooltip.bind(this));
 		this.$().on("mouseleave", this._removeTooltip.bind(this));
 
-		if (!sap.ui.getCore().isThemeApplied()) {
-			sap.ui.getCore().attachThemeChanged(this._checkIfIconFits, this);
-		} else {
-			this._checkIfIconFits();
-		}
+		Theming.attachApplied(this._checkIfIconFits.bind(this));
 	};
 
 	/**

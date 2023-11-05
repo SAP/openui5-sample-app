@@ -203,7 +203,7 @@ sap.ui.define([
 	 * {@link sap.m.PlanningCalendarView PlanningCalendarView}'s properties.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -827,6 +827,9 @@ sap.ui.define([
 						oRow = getRow(oRowHeader.getParent()),
 						sRowHeaderId = oRowHeader.getId();
 
+					/**
+					 * @deprecated As of version 1.119
+					 */
 					this.fireRowHeaderClick({headerId: sRowHeaderId, row: oRow});
 					this.fireRowHeaderPress({headerId: sRowHeaderId, row: oRow});
 				}.bind(this));
@@ -1765,13 +1768,11 @@ sap.ui.define([
 	PlanningCalendar.prototype.setCalendarWeekNumbering = function(sCalendarWeekNumbering) {
 		var oHeader = this._getHeader(),
 			oCalendarPicker = oHeader._oPopup && oHeader._oPopup.getContent()[0],
-			sLocale = Configuration.getFormatSettings().getFormatLocale().toString(),
-			oWeekConfiguration = CalendarDateUtils.getWeekConfigurationValues(sCalendarWeekNumbering, new Locale(sLocale)),
 			key;
 
 		this.setProperty("calendarWeekNumbering", sCalendarWeekNumbering);
 
-		this._dateNav.setWeekConfiguration(oWeekConfiguration);
+		this._updateWeekConfiguration();
 		oHeader.setCalendarWeekNumbering(sCalendarWeekNumbering);
 		oCalendarPicker && oCalendarPicker.setCalendarWeekNumbering(sCalendarWeekNumbering);
 		for (key in INTERVAL_METADATA) {
@@ -2091,7 +2092,23 @@ sap.ui.define([
 			}.bind(this));
 		}
 
-		return this.setProperty("firstDayOfWeek", iFirstDayOfWeek);
+		this.setProperty("firstDayOfWeek", iFirstDayOfWeek);
+		this._updateWeekConfiguration();
+
+		return this;
+	};
+
+	PlanningCalendar.prototype._updateWeekConfiguration = function() {
+		var sLocale = Configuration.getFormatSettings().getFormatLocale().toString(),
+			sCalendarWeekNumbering = this.getCalendarWeekNumbering(),
+			iFirstDayOfWeek = this.getFirstDayOfWeek(),
+			oWeekConfiguration = CalendarDateUtils.getWeekConfigurationValues(sCalendarWeekNumbering, new Locale(sLocale));
+
+		if (iFirstDayOfWeek > -1 ) {
+			oWeekConfiguration.firstDayOfWeek = iFirstDayOfWeek;
+		}
+
+		this._dateNav.setWeekConfiguration(oWeekConfiguration);
 	};
 
 	PlanningCalendar.prototype._handleFocus = function (oEvent) {
@@ -3219,9 +3236,13 @@ sap.ui.define([
 					this._setRowsStartDate(oFocusedDate);
 					this._oOneMonthsRow._focusDate(CalendarDate.fromLocalJSDate(oFocusedDate, this._getPrimaryCalendarType()), true);
 				} else if (CalendarUtils._isNextMonth(oEvtSelectedStartCalendarDate.toLocalJSDate(), this.getStartDate())) {
-					this.shiftToDate(oEvtSelectedStartCalendarDate);
+					this.shiftToDate(oEvtSelectedStartCalendarDate.toLocalJSDate());
 					this._addMonthFocusDelegate(this._getRowInstanceByViewKey(this.getViewKey()));
-					return;
+					oEndDate.setUTCDate(oEndDate.getUTCDate() + 1);
+					oEndDate.setUTCMilliseconds(oEndDate.getUTCMilliseconds() - 1);
+					oEndDate = CalendarUtils._createLocalDate(oEndDate, true);
+
+					return this.fireIntervalSelect({startDate: oEvtSelectedStartDate, endDate: oEndDate, subInterval: false, row: undefined});
 				}
 				oEndDate.setUTCDate(oEndDate.getUTCDate() + 1);
 				break;
@@ -3755,7 +3776,7 @@ sap.ui.define([
 					} else {
 						oRowHeader.setProperty(oChanges.name, oChanges.current);
 					}
-					oRowHeader.getAvatar() && oRowHeader.getAvatar().setSrc(oChanges.current);
+					oRowHeader.getAvatar() && oRowHeader.getAvatar().setSrc(oChanges.current).setVisible(!!oChanges.current);
 				},
 				text: function (oChanges) {
 					// Large row style class
@@ -3836,7 +3857,10 @@ sap.ui.define([
 	 * @private
 	 */
 	PlanningCalendar.prototype._createPlanningCalendarListItem = function(oRow) {
-		var oListItem, oRowHeader, oRowTimeline;
+		var oListItem,
+			oRowHeader,
+			oRowTimeline,
+			oIcon = oRow.getIcon();
 
 		//if there's a headerContent in the row or binding - render only the content,
 		//otherwise render PlanningCalendarRowHeader
@@ -3845,10 +3869,11 @@ sap.ui.define([
 		} else {
 			oRowHeader = new PlanningCalendarRowHeader(oRow.getId() + "-Head", {
 				avatar: new Avatar({
-					src: oRow.getIcon(),
-					displayShape: this.getIconShape()
+					src: oIcon,
+					displayShape: this.getIconShape(),
+					visible: !!oIcon
 				}),
-				icon : oRow.getIcon(),
+				icon : oIcon,
 				description : oRow.getText(),
 				title : oRow.getTitle(),
 				tooltip : oRow.getTooltip(),

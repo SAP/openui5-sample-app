@@ -17,7 +17,7 @@ sap.ui.define([
 	'sap/ui/core/Element',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/core/InvisibleMessage',
-	'sap/ui/core/UIArea',
+	'sap/ui/core/StaticArea',
 	'sap/ui/Device',
 	'sap/m/Toolbar',
 	'sap/m/Text',
@@ -38,7 +38,7 @@ function(
 	Element,
 	InvisibleText,
 	InvisibleMessage,
-	UIArea,
+	StaticArea,
 	Device,
 	Toolbar,
 	Text,
@@ -126,7 +126,7 @@ function(
 	 * @extends sap.m.SelectDialogBase
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -550,8 +550,7 @@ function(
 		// sap.ui.core.Popup removes its content on close()/destroy() automatically from the static UIArea,
 		// but only if it added it there itself. As we did that, we have to remove it also on our own
 		if ( this._bAppendedToUIArea ) {
-			var oStatic = sap.ui.getCore().getStaticAreaRef();
-			oStatic = UIArea.registry.get(oStatic.id);
+			var oStatic = StaticArea.getUIArea();
 			oStatic.removeContent(this, true);
 		}
 
@@ -619,8 +618,7 @@ function(
 		// Important: do not rely on the ui area fix, it will be removed with a later version of UI5
 		// use fragments instead or take care of proper parent-child dependencies
 		if ((!this.getParent() || !this.getUIArea()) && !this._bAppendedToUIArea) {
-			var oStatic = sap.ui.getCore().getStaticAreaRef();
-			oStatic = UIArea.registry.get(oStatic.id);
+			var oStatic = StaticArea.getUIArea();
 			oStatic.addContent(this, true);
 			this._bAppendedToUIArea = true;
 		}

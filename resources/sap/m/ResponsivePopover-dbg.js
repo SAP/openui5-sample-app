@@ -11,7 +11,7 @@ sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
 	'sap/ui/core/IconPool',
-	'sap/ui/core/UIArea',
+	'sap/ui/core/StaticArea',
 	'sap/ui/Device',
 	'./ResponsivePopoverRenderer',
 	'./Toolbar',
@@ -24,7 +24,7 @@ sap.ui.define([
 		library,
 		Control,
 		IconPool,
-		UIArea,
+		StaticArea,
 		Device,
 		ResponsivePopoverRenderer,
 		Toolbar,
@@ -63,7 +63,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -427,8 +427,7 @@ sap.ui.define([
 	 */
 	ResponsivePopover.prototype.openBy = function(oParent){
 		if (!this._bAppendedToUIArea && !this.getParent()) {
-			var oStatic = sap.ui.getCore().getStaticAreaRef();
-			oStatic = UIArea.registry.get(oStatic.id);
+			var oStatic = StaticArea.getUIArea();
 			oStatic.addContent(this, true);
 			this._bAppendedToUIArea = true;
 		}
@@ -636,8 +635,15 @@ sap.ui.define([
 				oOldButton = this[sGetterName](),
 				oFooter = this._createButtonFooter(),
 				sPrivateName = "_o" + this._firstLetterUpperCase(sPos) + "Button",
-				iIndex = (sPos.toLowerCase() === "begin" ? 0 : 1),
-				sOtherGetterName = (sPos.toLowerCase() === "begin" ? "getEndButton" : "getBeginButton");
+				sOtherGetterName = (sPos.toLowerCase() === "begin" ? "getEndButton" : "getBeginButton"),
+				iIndex;
+
+			if (sPos.toLowerCase() === "begin") {
+				iIndex = 0;
+			} else {
+				// place end button as first when no begin button is availble
+				iIndex = this.getBeginButton() ? 1 : 0;
+			}
 
 			if (oOldButton) {
 				oFooter.removeContent(oOldButton);

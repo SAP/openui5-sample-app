@@ -43,7 +43,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.mvc.View
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @since 1.9.2
@@ -52,7 +52,7 @@ sap.ui.define([
 	 *    and as the use of HTML as syntax does not bring any advantages over XML. The HTML necessary for
 	 *    the <code>HTMLView</code> is not re-used for the HTML of the controls, but is fully replaced.
 	 *
-	 *    Consider using {@link sap.ui.core.mvx.XMLView XMLViews} or "typed views" (view classes
+	 *    Consider using {@link sap.ui.core.mvc.XMLView XMLViews} or "typed views" (view classes
 	 *    written in JavaScript) instead. For more information, see the documentation on
 	 *    {@link topic:91f27e3e6f4d1014b6dd926db0e91070 View types}.
 	 */

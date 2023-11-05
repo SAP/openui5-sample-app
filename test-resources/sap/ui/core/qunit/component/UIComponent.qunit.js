@@ -894,6 +894,9 @@ sap.ui.define([
 					manifest: "json"
 				},
 				constructor: function() {
+					/**
+					 * @deprecated as of version 1.120
+					 */
 					assert.ok(requireSpy.calledWith(["sap/ui/core/mvc/JSONView"]), "JSONView type required");
 					assert.ok(requireSpy.calledWith(["sap/ui/model/resource/ResourceModel"]), "ResourceModel required");
 					assert.ok(requireSpy.calledWith(["sap/ui/core/routing/Router"]), "Router loaded");
@@ -904,6 +907,9 @@ sap.ui.define([
 					assert.ok(requireSpy.calledWith(["sap/ui/model/odata/v2/ODataModel"]), "ODataModel v2 required");
 					assert.ok(requireSpy.calledWith(["sap/ui/model/odata/v4/ODataModel"]), "ODataModel v4 required");
 
+					/**
+					 * @deprecated as of version 1.120
+					 */
 					assert.ok(sap.ui.require("sap/ui/core/mvc/JSONView"), "JSONView type loaded");
 					assert.ok(sap.ui.require("sap/ui/model/resource/ResourceModel"), "ResourceModel loaded");
 					assert.ok(sap.ui.require("sap/ui/core/routing/Router"), "Router loaded");
@@ -1043,8 +1049,8 @@ sap.ui.define([
 					manifest: "json"
 				},
 				constructor: function() {
-					assert.ok(logWarningSpy.calledWith('Can not preload module "sap/ui/model/odata/ODataModelNotExists". This will most probably cause an error once the module is used later on.'), "Model not found");
-					assert.ok(logWarningSpy.calledWith('Can not preload module "someRouterNotExists". This will most probably cause an error once the module is used later on.'), "Router not found");
+					assert.ok(logWarningSpy.calledWith("Cannot load module 'sap/ui/model/odata/ODataModelNotExists'. This will most probably cause an error once the module is used later on."), "Model not found");
+					assert.ok(logWarningSpy.calledWith("Cannot load module 'someRouterNotExists'. This will most probably cause an error once the module is used later on."), "Router not found");
 					UIComponent.apply(this, arguments);
 				}
 			});

@@ -242,74 +242,6 @@ sap.ui.define([
 				"the view itself shouldn't have the preserve attribute set.");
 		}
 	}, {
-		testDescription: "Error should be thrown when HTML nodes exist in the binding template of the bound 'content' aggregation",
-		viewName: ".view.XMLTemplateProcessorAsync_require_bind_content_html",
-		settings: {
-			async: {
-				create: createView,
-				additionalViewSettings: {
-					id: "viewWithBoundContentHTML"
-				}
-			}
-		},
-		runAssertions: function (oView, mSpies, assert, bAsync) {
-			assert.notOk(true, "The promise should NOT resolve");
-		},
-		onRejection: function(assert, oError) {
-			assert.equal(oError.message,
-				"Error found in View (id: 'viewWithBoundContentHTML').\nXML node: '<html:div xmlns:html=\"http://www.w3.org/1999/xhtml\"></html:div>':\nNo XHTML or SVG node is allowed because the 'content' aggregation is bound.",
-				"Error message is correct");
-		}
-	}, {
-		testDescription: "Parsing core:require and forward it to XHTML",
-		viewName: ".view.XMLTemplateProcessorAsync_require_in_html",
-		settings: {
-			async: {
-				create: createView
-			}
-		},
-		runAssertions: function (oView, mSpies, assert, bAsync) {
-			var BusyIndicator = sap.ui.require("sap/ui/core/BusyIndicator");
-			var MessageBox = sap.ui.require("sap/m/MessageBox");
-
-			assert.ok(BusyIndicator, "Class is loaded");
-			assert.ok(MessageBox, "Class is loaded");
-
-			var oButton = oView.byId("button");
-			var oNestedButton = oView.byId("nestedButton");
-
-			var oBusyIndicatorShowSpy = this.spy(BusyIndicator, "show");
-
-			oButton.fireEvent("press");
-			assert.ok(oBusyIndicatorShowSpy.calledOnce, "show method is called once");
-			BusyIndicator.hide();
-			oBusyIndicatorShowSpy.resetHistory();
-
-			var sText = oNestedButton.getText();
-			assert.equal(sText, "NESTED BUTTON", "The button text is formatted to upper case");
-			oNestedButton.fireEvent("press");
-			assert.ok(oBusyIndicatorShowSpy.calledOnce, "show method is called once again");
-			BusyIndicator.hide();
-			oBusyIndicatorShowSpy.resetHistory();
-
-			var oButtonInPanel = oView.byId("buttonInPanel");
-			var oNestedButtonInPanel = oView.byId("nestedButtonInPanel");
-
-			sText = oButtonInPanel.getText();
-			assert.equal(sText, "Click Me", "The button text is formatted by the updated formatter");
-			oButtonInPanel.fireEvent("press");
-			assert.ok(oBusyIndicatorShowSpy.calledOnce, "show method is called once again");
-			BusyIndicator.hide();
-			oBusyIndicatorShowSpy.resetHistory();
-
-			sText = oNestedButtonInPanel.getText();
-			assert.equal(sText, "OK", "The button text is formatted by the updated formatter");
-			oNestedButtonInPanel.fireEvent("press");
-			assert.ok(oBusyIndicatorShowSpy.calledOnce, "show method is called once again");
-			BusyIndicator.hide();
-			oBusyIndicatorShowSpy.resetHistory();
-		}
-	}, {
 		testDescription: "Parsing core:require in fragment",
 		viewName: ".view.XMLTemplateProcessorAsync_fragment_require",
 		settings: {
@@ -505,18 +437,6 @@ sap.ui.define([
 				spies: {
 					warning: [Log, "warning"]
 				}
-			},
-			sync: {
-				create: function () {
-					return sap.ui.component({
-						name: TESTDATA_PREFIX + ".extension-points.Child",
-						manifestUrl: sap.ui.require.toUrl("testdata/xml-require/extension-points/Child/manifest-sync-rootview.json"),
-						async: false
-					}).getRootControl().loaded();
-				},
-				spies: {
-					warning: [Log, "warning"]
-				}
 			}
 		},
 		runAssertions: function (oView, mSpies, assert, bAsync) {
@@ -553,7 +473,12 @@ sap.ui.define([
 		settings: {
 			async: {
 				create: createView,
-				spies: {}
+				spies: {
+					/**
+					 * @deprecated As of version 1.120
+					 */
+					requireSync: [sap.ui, "requireSync"]
+				}
 			}
 		},
 		runAssertions: function (oView, mSpies, assert, bAsync) {
@@ -575,7 +500,8 @@ sap.ui.define([
 					title: "item3"
 				}, {
 					title: "item4"
-				}]
+				}],
+				date: 1697125987000
 			});
 
 			oView.setModel(oModel);
@@ -591,6 +517,27 @@ sap.ui.define([
 			assert.strictEqual(oView.byId("formatterLocal").getText(), "TEST", "text is set");
 			assert.strictEqual(oView.byId("text").getText(), "text2", "text2 is set");
 			assert.strictEqual(oView.byId("type").getText(), "123.45678", "text is formatted with correct type");
+
+			var oController = oView.getController();
+			var oButtonPressSpy = this.spy(oController, "onButtonPress");
+
+			var oButton = oView.byId("button");
+			oButton.firePress();
+
+			assert.equal(oButtonPressSpy.callCount, 1, "Button's press handler is called");
+			sinon.assert.calledWith(oButtonPressSpy, "2023-10");
+
+			oButtonPressSpy.resetHistory();
+
+			var oButton1 = oView.byId("button1");
+			oButton1.firePress();
+
+			assert.equal(oButtonPressSpy.callCount, 1, "Button's press handler is called");
+			sinon.assert.calledWith(oButtonPressSpy, "2023");
+			/**
+			 * @deprecated As of version 1.120
+			 */
+			sinon.assert.notCalled(mSpies.requireSync);
 		}
 	}].forEach(function (oConfig) {
 		// Run async variant

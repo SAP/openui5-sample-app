@@ -20,6 +20,7 @@ sap.ui.define([
 	'sap/ui/core/library',
 	'sap/ui/core/Element',
 	'sap/ui/core/ResizeHandler',
+	'sap/ui/core/StaticArea',
 	'./PopoverRenderer',
 	"sap/ui/dom/containsOrEquals",
 	"sap/ui/thirdparty/jquery",
@@ -45,6 +46,7 @@ sap.ui.define([
 		coreLibrary,
 		Element,
 		ResizeHandler,
+		StaticArea,
 		PopoverRenderer,
 		containsOrEquals,
 		jQuery,
@@ -120,7 +122,7 @@ sap.ui.define([
 		* @extends sap.ui.core.Control
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.119.1
+		* @version 1.120.0
 		*
 		* @public
 		* @alias sap.m.Popover
@@ -1415,8 +1417,7 @@ sap.ui.define([
 				iOffsetY = this._getOffsetY();
 
 			var aParts = sOffset.split(" ");
-			var sOffset = (parseInt(aParts[0]) + iOffsetX) + " " + (parseInt(aParts[1]) + iOffsetY);
-			return sOffset;
+			return (parseInt(aParts[0]) + iOffsetX) + " " + (parseInt(aParts[1]) + iOffsetY);
 		};
 
 		Popover.prototype._calcPlacement = function () {
@@ -2207,7 +2208,7 @@ sap.ui.define([
 		 */
 		Popover.prototype._isPopupElement = function (oDOMNode) {
 			var oParentDomRef = this._getOpenByDomRef();
-			return !!(jQuery(oDOMNode).closest(sap.ui.getCore().getStaticAreaRef()).length) || !!(jQuery(oDOMNode).closest(oParentDomRef).length);
+			return !!(jQuery(oDOMNode).closest(StaticArea.getDomRef()).length) || !!(jQuery(oDOMNode).closest(oParentDomRef).length);
 		};
 
 		/**

@@ -111,7 +111,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.119.1
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @private
@@ -570,7 +570,7 @@ sap.ui.define([
 						bIsFullDay = this.isAllDayAppointment(oAppointment.getStartDate(), oAppointment.getEndDate()),
 						fnAlignIndicator = function () {
 							var $Indicator = jQuery(oDragSession.getIndicator()),
-								iAppHeight = oAppointment.$().outerHeight(),
+								iAppHeight = document.querySelectorAll(".sapUiCalendarRowApps[id^='" + oDragSession.getDragControl().getId() + "']")[0].offsetHeight,
 								oGrid = oDropTarget.$().closest(".sapMSinglePCColumn").get(0).getBoundingClientRect(),
 								oDropDim = oDragSession.getDropControl().getDomRef().getBoundingClientRect(),
 								iSubtractFromHeight = (oDropDim.top + iAppHeight) - (oGrid.top + oGrid.height);

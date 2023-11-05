@@ -72,13 +72,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		name : "sap.m",
-		version: "1.119.1",
+		version: "1.120.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -102,8 +102,10 @@ sap.ui.define([
 			"sap.m.DialogType",
 			"sap.m.DraftIndicatorState",
 			"sap.m.DynamicDateRangeGroups",
+			"sap.m.EmptyIndicatorMode",
 			"sap.m.FacetFilterListDataType",
 			"sap.m.FacetFilterType",
+			"sap.m.FilterPanelField",
 			"sap.m.FlexAlignContent",
 			"sap.m.FlexAlignItems",
 			"sap.m.FlexAlignSelf",
@@ -188,7 +190,8 @@ sap.ui.define([
 			"sap.m.plugins.CopyPreference",
 			"sap.m.semantic.SemanticRuleSetType",
 			"sap.m.table.columnmenu.Category",
-			"sap.m.upload.UploaderHttpRequestMethod"
+			"sap.m.upload.UploaderHttpRequestMethod",
+			"sap.m.UploadSetwithTableActionPlaceHolder"
 		],
 		interfaces: [
 			"sap.m.IBar",
@@ -422,6 +425,7 @@ sap.ui.define([
 			"sap.m.IconTabSeparator",
 			"sap.m.ImageCustomData",
 			"sap.m.LightBoxItem",
+			"sap.m.LinkTileContent",
 			"sap.m.OverflowToolbarLayoutData",
 			"sap.m.MaskInputRule",
 			"sap.m.MenuItem",
@@ -621,7 +625,8 @@ sap.ui.define([
 				},
 				"sap.m.ObjectHeader": {
 					"moveControls": "default"
-				}
+				},
+				"sap.m.upload.UploadSetwithTable":"sap/m/upload/p13n/flexibility/UploadSetwithTable"
 			},
 			//Configuration used for rule loading of Support Assistant
 			"sap.ui.support": {
@@ -664,6 +669,36 @@ sap.ui.define([
 		Translucent : "Translucent"
 
 	};
+
+	/**
+	*  Defines the placeholder type for the control to be replaced.
+	*
+	* @enum {string}
+	* @public
+	* @since 1.120
+	*/
+	thisLib.UploadSetwithTableActionPlaceHolder = {
+	   /**
+		* Placeholder for variant management.
+		* @public
+		*/
+	   VariantManagementPlaceholder: "VariantManagementPlaceholder",
+	   /**
+		* Placeholder for personalization settings button.
+		* @public
+		*/
+	   PersonalizationSettingsPlaceholder: "PersonalizationSettingsPlaceholder",
+	   /**
+		* Placeholder for upload button control.
+		* @public
+		*/
+	   UploadButtonPlaceholder : "UploadButtonPlaceholder",
+	   /**
+		* Placeholder for cloud file picker button.
+		* @public
+	   */
+	   CloudFilePickerButtonPlaceholder : "CloudFilePickerButtonPlaceholder"
+   };
 
 	/**
 	 * Types of state of {@link sap.m.BadgeEnabler} to expose its current state.
@@ -3026,14 +3061,14 @@ sap.ui.define([
 	thisLib.MenuButtonMode = {
 
 		/**
-		 * Default regular type (Menu button appears as a regular button, pressing opens a menu)
+		 * Default Regular type - MenuButton appears as a regular button, pressing it opens a menu.
 		 * @public
 		 */
 		Regular: "Regular",
 
 		/**
-		 * Split type (Menu button appears as a split button, pressing fires the default action a menu,
-		 * pressing the arrow part opens a menu)
+		 * Split type - MenuButton appears as a split button separated into two areas: the text and the arrow button. Pressing the
+		 * text area fires the default (or last) action, pressing the arrow part opens a menu.
 		 * @public
 		 */
 		Split: "Split"
@@ -3235,9 +3270,16 @@ sap.ui.define([
 	 *
 	 * Interface for P13nPopup which are suitable as content for the <code>sap.m.p13n.Popup</code>.
 	 * Implementation of this interface should include the following methods:
+	 *
 	 * <ul>
 	 * <li><code>getTitle</code></li>
+	 * </ul>
+	 *
+	 * Implementation of this interface can optionally provide the following methods:
+	 *
+	 * <ul>
 	 * <li><code>getVerticalScrolling</code></li>
+	 * <li><code>onReset</code></li>
 	 * </ul>
 	 *
 	 * @since 1.97
@@ -3264,6 +3306,14 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @name sap.m.p13n.IContent.getVerticalScrolling?
+	 * @public
+	 */
+
+	/**
+	 * Optional hook that will be executed when the panel is used by a <code>sap.m.p13n.Popup</code> that may trigger a reset on the panel
+	 *
+	 * @function
+	 * @name sap.m.p13n.IContent.onReset?
 	 * @public
 	 */
 
@@ -5944,135 +5994,6 @@ sap.ui.define([
 		return oInputODataSuggestProvider;
 	}());
 
-	// implement Form helper factory with m controls
-	// possible is set before layout lib is loaded.
-	ObjectPath.set("sap.ui.layout.form.FormHelper", {
-		Label: undefined,
-		Button: undefined,
-		Text: undefined,
-		init: function() {
-			// normally this basic controls should be always loaded
-			this.Label = sap.ui.require("sap/m/Label");
-			this.Text = sap.ui.require("sap/m/Text");
-			this.Button = sap.ui.require("sap/m/Button");
-
-			if (!this.Label || !this.Text || !this.Button) {
-				if (!this.oInitPromise) {
-					this.oInitPromise = new Promise(function(fResolve, fReject) {
-						sap.ui.require(["sap/m/Label", "sap/m/Text", "sap/m/Button"], function(Label, Text, Button) {
-							this.Label = Label;
-							this.Text = Text;
-							this.Button = Button;
-							fResolve(true);
-						}.bind(this));
-					}.bind(this));
-				}
-				return this.oInitPromise;
-			} else if (this.oInitPromise) {
-				delete this.oInitPromise; // not longer needed
-			}
-			return null;
-		},
-		createLabel: function(sText, sId){
-			return new this.Label(sId, {text: sText});
-		},
-		createButton: function(sId, fnPressFunction, oListener){
-			var oButton = new this.Button(sId, {type: thisLib.ButtonType.Transparent});
-			oButton.attachEvent("press", fnPressFunction, oListener); // attach event this way to have the right this-reference in handler
-			return oButton;
-		},
-		setButtonContent: function(oButton, sText, sTooltip, sIcon, sIconHovered){
-			oButton.setText(sText);
-			oButton.setTooltip(sTooltip);
-			oButton.setIcon(sIcon);
-			oButton.setActiveIcon(sIconHovered);
-		},
-		addFormClass: function(){ return "sapUiFormM"; },
-		setToolbar: function(oToolbar){
-			var oOldToolbar = this.getToolbar();
-			if (oOldToolbar && oOldToolbar.setDesign) {
-				// check for setDesign because we don't know what kind of custom toolbars might be used.
-				oOldToolbar.setDesign(oOldToolbar.getDesign(), true);
-			}
-			if (oToolbar && oToolbar.setDesign) {
-				oToolbar.setDesign(thisLib.ToolbarDesign.Transparent, true);
-			}
-			return oToolbar;
-		},
-		getToolbarTitle: function(oToolbar) {
-			// determine Title to point aria-label on this. As Fallback use the whole Toolbar
-			if (oToolbar) {
-				var aContent = oToolbar.getContent();
-				for (var i = 0; i < aContent.length; i++) {
-					var oContent = aContent[i];
-					if (oContent.isA("sap.m.Title")) {
-						return oContent.getId();
-					}
-				}
-				return oToolbar.getId(); // fallback
-			}
-		},
-		createDelimiter: function(sDelimiter, sId){
-			return new this.Text(sId, {text: sDelimiter, textAlign: CoreLibrary.TextAlign.Center});
-		},
-		createSemanticDisplayControl: function(sText, sId){
-			return new this.Text(sId, {text: sText});
-		},
-		updateDelimiter: function(oText, sDelimiter){
-			oText.setText(sDelimiter);
-		},
-		updateSemanticDisplayControl: function(oText, sText){
-			oText.setText(sText);
-		},
-		bArrowKeySupport: false, /* disables the keyboard support for arrow keys */
-		bFinal: true
-	});
-
-	//implement FileUploader helper factory with m controls
-	ObjectPath.set("sap.ui.unified.FileUploaderHelper", {
-		createTextField: function(sId){
-			var oTextField = new sap.m.Input(sId);
-			return oTextField;
-		},
-		setTextFieldContent: function(oTextField, sWidth){
-			oTextField.setWidth(sWidth);
-		},
-		createButton: function(sId){
-			var oButton = new sap.m.Button(sId);
-			return oButton;
-		},
-		addFormClass: function(){ return "sapUiFUM"; },
-		bFinal: true
-	});
-
-	// implements ColorPicker helper factory with common controls
-	ObjectPath.set("sap.ui.unified.ColorPickerHelper", {
-		isResponsive: function () {
-			return true;
-		},
-		factory: {
-			createLabel: function (mConfig) {
-				return new sap.m.Label(mConfig);
-			},
-			createInput: function (sId, mConfig) {
-				return new sap.m.InputBase(sId, mConfig);
-			},
-			createSlider: function (sId, mConfig) {
-				return new sap.m.Slider(sId, mConfig);
-			},
-			createRadioButtonGroup: function (mConfig) {
-				return new sap.m.RadioButtonGroup(mConfig);
-			},
-			createRadioButtonItem: function (mConfig) {
-				return new sap.m.RadioButton(mConfig);
-			},
-			createButton: function (sId, mConfig) {
-				return new sap.m.Button(sId, mConfig);
-			}
-		},
-		bFinal: true
-	});
-
 	//implement table helper factory with m controls
 	//possible is set before layout lib is loaded.
 	/**
@@ -6089,12 +6010,31 @@ sap.ui.define([
 		bFinal: true /* This table helper wins, even when commons helper was set before */
 	});
 
+	/**
+	 * @deprecated As of version 1.120
+	 */
 	ObjectPath.set("sap.ui.layout.GridHelper", {
 		getLibrarySpecificClass: function () {
 			return "";
 		},
 		bFinal: true
 	});
+
+	/**
+	 * An object type that represents sap.m.upload.FilterPanel fields properties.
+	 * @typedef {object}
+	 * @public
+	 * @property {string} label field name.
+	 * @property {string} path model path.
+	 */
+	thisLib.FilterPanelField = DataType.createType("sap.m.FilterPanelField", {
+		isValid: function (oValue) {
+			var aValueKeys = Object.keys(oValue);
+			return ["label", "path"].every(function (sKey) {
+				return aValueKeys.indexOf(sKey) !== -1;
+			});
+		}
+	}, "object");
 
 	/* Android browsers do not scroll a focused input into the view correctly after resize */
 	if (Device.os.android) {

@@ -174,7 +174,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IShrinkable
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -2079,6 +2079,7 @@ sap.ui.define([
 		if (!oFooter) {
 			oButton = new Button({
 				text: this._bundle.getText("FACETFILTER_ACCEPT"),
+				type: ButtonType.Emphasized,
 				press: function() {
 					this._closePopover();
 				}.bind(this)

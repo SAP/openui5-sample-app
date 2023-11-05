@@ -58,7 +58,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.119.1
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @public
@@ -186,8 +186,8 @@ sap.ui.define([
 					defaultAction: {},
 
 					/**
-					 * Fired before menu opening when the <code>buttonMode</code> is set to <code>Split</code> and the user
-					 * presses the arrow button.
+					 * In <code>Regular</code> button mode – fires when the user presses the button.
+					 * Alternatively, if the <code>buttonMode</code> is set to <code>Split</code> - fires when the user presses the arrow button.
 					 *
 					 * @since 1.94.0
 					 */

@@ -15,7 +15,7 @@ sap.ui.define([
 	'./SelectDialogBase',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/core/InvisibleMessage',
-	'sap/ui/core/UIArea',
+	'sap/ui/core/StaticArea',
 	'sap/ui/Device',
 	'sap/m/Toolbar',
 	'sap/m/Text',
@@ -33,7 +33,7 @@ sap.ui.define([
 	SelectDialogBase,
 	InvisibleText,
 	InvisibleMessage,
-	UIArea,
+	StaticArea,
 	Device,
 	Toolbar,
 	Text,
@@ -110,7 +110,7 @@ sap.ui.define([
 	 * When using the <code>sap.m.TableSelectDialog</code> in SAP Quartz and Horizon themes, the breakpoints and layout paddings could be determined by the dialog's width. To enable this concept and add responsive paddings to an element of the control, you have to add the following classes depending on your use case: <code>sapUiResponsivePadding--header</code>, <code>sapUiResponsivePadding--subHeader</code>, <code>sapUiResponsivePadding--content</code>, <code>sapUiResponsivePadding--footer</code>.
 	 * @extends sap.m.SelectDialogBase
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -491,8 +491,7 @@ sap.ui.define([
 		// sap.ui.core.Popup removes its content on close()/destroy() automatically from the static UIArea,
 		// but only if it added it there itself. As we did that, we have to remove it also on our own
 		if ( this._bAppendedToUIArea ) {
-			var oStatic = sap.ui.getCore().getStaticAreaRef();
-			oStatic = UIArea.registry.get(oStatic.id);
+			var oStatic = StaticArea.getUIArea();
 			oStatic.removeContent(this, true);
 		}
 
@@ -559,8 +558,7 @@ sap.ui.define([
 	 */
 	TableSelectDialog.prototype.open = function (sSearchValue) {
 		if (!this.getParent() && !this._bAppendedToUIArea) {
-			var oStatic = sap.ui.getCore().getStaticAreaRef();
-			oStatic = UIArea.registry.get(oStatic.id);
+			var oStatic = StaticArea.getUIArea();
 			oStatic.addContent(this, true);
 			this._bAppendedToUIArea = true;
 		}

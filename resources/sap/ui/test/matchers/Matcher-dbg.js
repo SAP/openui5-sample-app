@@ -26,8 +26,8 @@ sap.ui.define([
 		},
 
 		constructor: function () {
+			ManagedObject.prototype.constructor.apply(this, arguments);
 			this._oLogger = _OpaLogger.getLogger(this.getMetadata().getName());
-			return ManagedObject.prototype.constructor.apply(this, arguments);
 		},
 
 		/**

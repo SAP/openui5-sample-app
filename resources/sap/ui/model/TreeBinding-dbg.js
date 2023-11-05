@@ -33,6 +33,8 @@ sap.ui.define(['./Binding', './Filter', './Sorter'],
 	 *         [mParameters=null] Additional model specific parameters (optional)
 	 * @param {sap.ui.model.Sorter|sap.ui.model.Sorter[]}
 	 *         [aSorters=null] Predefined sorter or an array of sorters (optional)
+	 * @throws {Error} If the {@link sap.ui.model.Filter.NONE} filter instance is contained in
+	 *   <code>aFilters</code> together with other filters
 	 * @public
 	 * @alias sap.ui.model.TreeBinding
 	 * @extends sap.ui.model.Binding
@@ -44,6 +46,7 @@ sap.ui.define(['./Binding', './Filter', './Sorter'],
 			this.aFilters = [];
 
 			this.aSorters = makeArray(aSorters, Sorter);
+			Filter.checkFilterNone(aFilters);
 			this.aApplicationFilters = makeArray(aFilters, Filter);
 			this.oCombinedFilter = null;
 

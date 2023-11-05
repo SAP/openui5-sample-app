@@ -6,7 +6,7 @@
   <copyright>OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.119.1</version>
+  <version>1.120.0</version>
 
   <documentation>The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.</documentation>
 
@@ -76,6 +76,7 @@
                 <module>sap/m/CustomAttribute</module>
                 <module>sap/m/SlideTile</module>
                 <module>sap/m/GenericTile</module>
+                <module>sap/m/LinkTileContent</module>
                 <module>sap/m/TileContent</module>
                 <module>sap/m/FeedContent</module>
                 <module>sap/m/NewsContent</module>
@@ -103,6 +104,12 @@
                 <module>sap/m/upload/UploadSet</module>
                 <module>sap/m/upload/UploadSetItem</module>
                 <module>sap/m/upload/UploadSetToolbarPlaceholder</module>
+                <module>sap/m/upload/UploadSetwithTable</module>
+                <module>sap/m/upload/UploadSetwithTableItem</module>
+                <module>sap/m/upload/UploaderTableItem</module>
+                <module>sap/m/upload/FilePreviewDialog</module>
+                <module>sap/m/upload/Column</module>
+                <module>sap/m/upload/ActionsPlaceholder</module>
             </modules>
         </component>
         <component>

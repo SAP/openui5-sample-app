@@ -17,17 +17,19 @@ sap.ui.define([
 	/**
 	 * Constructor for a new UploadSetwithTableItem.
 	 *
-	 * @param {string} [sId] ID for the new control, will be generated automatically if no ID is provided.
+	 * @param {string} [sId] Id for the new control, it is generated automatically if no ID is provided.
 	 * @param {object} [mSettings] Initial settings for the new control.
 	 * @class
 	 * <code>sap.m.UploadSetwithTableItem</code> represents one item to be uploaded using the {@link sap.m.upload.UploadSetwithTable UploadSetwithTable} control. This control can be used with the cells aggregation to create rows for the {@link sap.m.upload.UploadSetwithTable UploadSetwithTable} control. The columns aggregation of the sap.m.upload.UploadSetwithTable should match with the cells aggregation.
-	 * Note: This control should only be used within the {@link sap.m.upload.UploadSetwithTable UploadSetwithTable} control. The inherited counter property of sap.m.ListItemBase is not supported.
+	 *
+	 * <b>Note:</b> This control should only be used within the {@link sap.m.upload.UploadSetwithTable UploadSetwithTable} control. The inherited counter property of sap.m.ListItemBase is not supported.
 	 * @extends sap.m.ColumnListItem
 	 * @author SAP SE
 	 * @constructor
-	 * @private
-	 * @experimental
-	 * @internal
+	 * @public
+	 * @experimental since 1.120
+	 * @since 1.120
+	 * @version 1.120.0
 	 * @alias sap.m.upload.UploadSetwithTableItem
 	 */
     var UploadSetwithTableItem = ColumnListItem.extend("sap.m.upload.UploadSetwithTableItem", {
@@ -87,6 +89,7 @@ sap.ui.define([
 		this._bSizeRestricted = false;
 		this._bMediaTypeRestricted = false;
 		this._oRb = Core.getLibraryResourceBundle("sap.m");
+		this._oCloudFileInfo = null;
     };
 
     UploadSetwithTableItem.prototype.onBeforeRendering = function () {
@@ -168,19 +171,23 @@ sap.ui.define([
 		return this._isRestricted();
 	};
 
+	/**
+	 * Returns the details of the file selected from the CloudFilePicker control.
+	 * @returns {sap.suite.ui.commons.CloudFileInfo} oCloudFileInfo Specifies the details of the file selected from the cloudFilePicker control.
+	 * @public
+	 */
+	UploadSetwithTableItem.prototype.getCloudFileInfo = function() {
+		return this._oCloudFileInfo;
+	};
+
 	/* =============== */
 	/* Private methods */
 	/* =============== */
 
 	UploadSetwithTableItem._getIconByMimeType = function(sMimeType, fileName) {
 
-		var mimeTypeForImages = ["image/png", "image/tiff", "image/bmp", "image/jpeg", "image/gif"];
-
 		if (sMimeType) {
-			if (mimeTypeForImages.indexOf(sMimeType) === -1) {
-				return IconPool.getIconForMimeType(sMimeType);
-			}
-			return UploadSetwithTableItem._getIconByFileType(fileName);
+			return IconPool.getIconForMimeType(sMimeType);
 		} else {
 			return UploadSetwithTableItem._getIconByFileType(fileName);
 		}
@@ -321,6 +328,14 @@ sap.ui.define([
 
 	UploadSetwithTableItem.prototype._isRestricted = function () {
 		return this._bFileTypeRestricted || this._bNameLengthRestricted || this._bSizeRestricted || this._bMediaTypeRestricted;
+	};
+
+	/**
+	 * @param {suite.ui.commons.CloudFileInfo} oCloudFileInfo info the file selected from the CloudFilePicker control.
+	 * @private
+	 */
+	UploadSetwithTableItem.prototype._setCloudFileInfo = function(oCloudFileInfo) {
+		this._oCloudFileInfo = oCloudFileInfo;
 	};
 
     UploadSetwithTableItem.IMAGE_FILE_ICON = "sap-icon://card";

@@ -84,7 +84,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -210,7 +210,15 @@ sap.ui.define([
 				 * A disabled <code>Button</code> has different colors depending on the {@link sap.m.AvatarColor AvatarColor}.
 				 * @since 1.117.0
 				 */
-				enabled : {type : "boolean", group : "Behavior", defaultValue : true}
+				enabled : {type : "boolean", group : "Behavior", defaultValue : true},
+
+				/**
+				 * Determines whether the <code>Avatar</code> is active/toggled (default is set to <code>false</code>).
+				 * Active state is meant to be toggled when user clicks on the <code>Avatar</code>.
+				 * The Active state is only applied, when the <code>Avatar</code> has <code>press</code> listeners.
+				 * @since 1.120.0
+				 */
+				active : {type : "boolean", group : "Behavior", defaultValue : false}
 			},
 			aggregations : {
 				/**
@@ -469,10 +477,6 @@ sap.ui.define([
 			return;
 		}
 		this.firePress({/* no parameters */});
-		// if (this.hasListeners("press")) {
-		// 	this.isPressed = !this.isPressed;
-		// 	this.toggleStyleClass("sapMAvatarPressed", this._isPressed);
-		// }
 	};
 
 	/**

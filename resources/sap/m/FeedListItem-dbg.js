@@ -17,7 +17,8 @@ sap.ui.define([
 	"sap/m/AvatarShape",
 	"sap/m/AvatarSize",
 	"sap/ui/util/openWindow",
-	"sap/ui/core/Configuration"
+	"sap/ui/core/Configuration",
+	"sap/ui/core/Lib"
 ],
 function(
 	ListItemBase,
@@ -32,7 +33,8 @@ function(
 	AvatarShape,
 	AvatarSize,
 	openWindow,
-	Configuration
+	Configuration,
+	CoreLib
 	) {
 	"use strict";
 
@@ -58,7 +60,7 @@ function(
 	 * @extends sap.m.ListItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -254,7 +256,7 @@ function(
 		renderer: FeedListItemRenderer
 	});
 
-	FeedListItem._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+	FeedListItem._oRb = CoreLib.getResourceBundleFor("sap.m");
 	FeedListItem._nMaxCharactersMobile = 300;
 	FeedListItem._nMaxCharactersDesktop = 500;
 

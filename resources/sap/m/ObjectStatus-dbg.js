@@ -46,7 +46,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -136,8 +136,10 @@ sap.ui.define([
 
 				/**
 				 * Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).
+				 *
+				 * <b>Note:</b> The additional labelling text will take effect only if <code>active</code> property is set to <code>true</code>.
 				 */
-				 ariaLabelledBy: {type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy"}
+				ariaLabelledBy: {type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy"}
 			},
 			events : {
 
@@ -349,10 +351,6 @@ sap.ui.define([
 
 		if (this.getIcon()) {
 			sResult += sId + "-statusIcon ";
-		}
-
-		if (this.getState() !== ValueState.None) {
-			sResult += sId + "-state ";
 		}
 
 		return sResult.trim();

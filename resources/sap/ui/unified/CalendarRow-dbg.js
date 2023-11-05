@@ -88,7 +88,7 @@ sap.ui.define([
 	 * @class
 	 * A calendar row with a header and appointments. The Appointments will be placed in the defined interval.
 	 * @extends sap.ui.core.Control
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -1167,6 +1167,11 @@ sap.ui.define([
 
 		for (i = 0; i < aAppointments.length; i++) {
 			oAppointment = aAppointments[i];
+
+			if (!oAppointment || !oAppointment.getStartDate()) {
+				continue;
+			}
+
 			var oAppointmentStartDate = CalendarUtils._createUniversalUTCDate(oAppointment.getStartDate(), undefined, true);
 			var oAppointmentStartDateTime = oAppointmentStartDate.getTime();
 			oAppointmentStartDate.setUTCSeconds(0); // ignore seconds

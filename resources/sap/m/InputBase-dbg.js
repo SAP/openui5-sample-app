@@ -66,7 +66,7 @@ function(
 	 * @implements sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -243,6 +243,7 @@ function(
 	 * https://html.spec.whatwg.org/multipage/forms.html#input-type-attr-summary
 	 *
 	 * @see sap.m.InputBase#oninput
+	 * @type boolean
 	 * @protected
 	 */
 	InputBase.prototype.bShowLabelAsPlaceholder = !Device.support.input.placeholder;
@@ -298,6 +299,7 @@ function(
 		/**
 		 * Indicates whether the input field is in the rendering phase.
 		 *
+		 * @type boolean
 		 * @protected
 		 */
 		this.bRenderingPhase = false;

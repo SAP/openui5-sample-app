@@ -130,13 +130,13 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [
-	{aControlMessages : [], bForceUpdate : false, bSameContext : true},
-	{aControlMessages : [], bForceUpdate : false, bSameContext : false},
-	{aControlMessages : [{}], bForceUpdate : true, bSameContext : false}
+	{aMessages : [], bForceUpdate : false, bSameContext : true},
+	{aMessages : [], bForceUpdate : false, bSameContext : false},
+	{aMessages : [{}], bForceUpdate : true, bSameContext : false}
 ].forEach(function (oFixture) {
 	var sTitle = "setContext: changed context (relative binding)"
 			+ "; same context = " + oFixture.bSameContext
-			+ "; number of control messages = " + oFixture.aControlMessages.length;
+			+ "; number of messages = " + oFixture.aMessages.length;
 
 	QUnit.test(sTitle, function (assert) {
 		var oContext = {
@@ -149,7 +149,7 @@ sap.ui.define([
 				isRelative : function () {}
 			},
 			oDataState = {
-				getControlMessages : function () {}
+				getMessages : function () {}
 			};
 
 		this.mock(oContext).expects("isPreliminary").withExactArgs().returns(false);
@@ -159,8 +159,7 @@ sap.ui.define([
 		this.mock(oBinding).expects("isRelative").withExactArgs().returns(true);
 		if (!oFixture.bSameContext) {
 			this.mock(oBinding).expects("getDataState").withExactArgs().returns(oDataState);
-			this.mock(oDataState).expects("getControlMessages").withExactArgs()
-				.returns(oFixture.aControlMessages);
+			this.mock(oDataState).expects("getMessages").withExactArgs().returns(oFixture.aMessages);
 		}
 
 		this.mock(oBinding).expects("checkUpdate").withExactArgs(oFixture.bForceUpdate);

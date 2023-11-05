@@ -3,8 +3,8 @@
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['sap/ui/core/routing/Target', './async/Target', './sync/Target', "sap/base/Log", "sap/base/util/UriParameters"],
-	function(Target, asyncTarget, syncTarget, Log, UriParameters) {
+sap.ui.define(['sap/ui/core/routing/Target', './async/Target', './sync/Target', "sap/base/Log"],
+	function(Target, asyncTarget, syncTarget, Log) {
 		"use strict";
 
 		/**
@@ -25,7 +25,7 @@ sap.ui.define(['sap/ui/core/routing/Target', './async/Target', './sync/Target', 
 				this._oTargetHandler = oTargetHandler;
 				// temporarily: for checking the url param
 				function checkUrl() {
-					if (UriParameters.fromQuery(window.location.search).get("sap-ui-xx-asyncRouting") === "true") {
+					if (new URLSearchParams(window.location.search).get("sap-ui-xx-asyncRouting") === "true") {
 						Log.warning("Activation of async view loading in routing via url parameter is only temporarily supported and may be removed soon", "MobileTarget");
 						return true;
 					}

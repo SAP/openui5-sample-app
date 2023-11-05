@@ -78,7 +78,8 @@ sap.ui.define([
 	},
 	{
 		Control: TimePicker,
-		textInControl: "2:00:00 AM",
+		// \u202f is a Narrow No-Break Space which has been introduced with CLDR version 43
+		textInControl: "2:00:00\u202fAM",
 		changeEvent: "change",
 		changeEventParameter: "value",
 		props: {
@@ -87,8 +88,8 @@ sap.ui.define([
 	},
 	{
 		Control: TimePicker,
-		textInControl: "3:00:00 AM",
-		textToEnter: "2:00:00 AM",
+		textInControl: "3:00:00\u202fAM",
+		textToEnter: "2:00:00\u202fAM", // user could also enter standard space instead of \u202f
 		changeEvent: "change",
 		changeEventParameter: "value",
 		clearTextFirst: true
@@ -254,6 +255,53 @@ sap.ui.define([
 			success: function (aItems) {
 				Opa5.assert.strictEqual(aItems.length, 2, "Should show suggestions");
 				Opa5.assert.strictEqual(this.oControl.getValue(), sTextInControl, "Should change input value");
+				fnSuggestTriggered();
+			}.bind(this)
+		});
+	});
+
+	opaTest("Should enter text over selection", function (oOpa) {
+		var fnSuggestTriggered = Opa5.assert.async();
+		this.oControl = new Input({
+			showSuggestion: true,
+			suggestionItems: [
+				new ListItem({ text: "One" }),
+				new ListItem({ text: "Two" }),
+				new ListItem({ text: "Test" })
+			]
+		});
+		this.oControl.placeAt("qunit-fixture");
+		sap.ui.getCore().applyChanges();
+
+		var sTextInControl = "T";
+
+		this.oControl._bDoTypeAhead = true;
+
+		// Type T
+		oOpa.waitFor({
+			controlType: "sap.m.Input",
+			actions: new EnterText({
+				text: sTextInControl,
+				keepFocus: true,
+				clearTextFirst: false
+			})
+		});
+
+		// Type w
+		oOpa.waitFor({
+			controlType: "sap.m.Input",
+			actions: new EnterText({
+				text: "w",
+				keepFocus: true,
+				clearTextFirst: false
+			})
+		});
+
+		oOpa.waitFor({
+			controlType: "sap.m.StandardListItem",
+			success: function () {
+				// Two should be suggested
+				Opa5.assert.strictEqual(this.oControl.getFocusDomRef().value, "Two", "Selection is considered when typing");
 				fnSuggestTriggered();
 			}.bind(this)
 		});

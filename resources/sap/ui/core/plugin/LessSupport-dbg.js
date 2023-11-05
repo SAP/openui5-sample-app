@@ -6,6 +6,8 @@
 
 /**
  * FEATURE TO INCREASE DEVELOPMENT EXPERIENCE! NO PRODUCTIVE USAGE ALLOWED!
+ * @fileoverview
+ * @deprecated As of version 1.120
  */
 (function() {
 	"use strict";
@@ -42,7 +44,7 @@
 			 *        feature - DO NOT USE IN PRODUCTIVE SCENARIOS!!
 			 *
 			 * @author Peter Muessig
-			 * @version 1.119.1
+			 * @version 1.120.0
 			 * @private
 			 * @alias sap.ui.core.plugin.LessSupport
 			 */

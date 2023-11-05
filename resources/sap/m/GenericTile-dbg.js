@@ -24,7 +24,9 @@ sap.ui.define([
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/library",
 	"sap/ui/core/Configuration",
-	"sap/ui/core/InvisibleText"
+	"sap/ui/core/InvisibleText",
+	"sap/ui/core/Core",
+	"sap/ui/core/Theming"
 ], function (
 	library,
 	Control,
@@ -45,7 +47,9 @@ sap.ui.define([
 	jQuery,
 	coreLibrary,
 	Configuration,
-	InvisibleText
+	InvisibleText,
+	Core,
+	Theming
 ) {
 	"use strict";
 
@@ -81,7 +85,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @since 1.34.0
 	 *
 	 * @public
@@ -264,6 +268,11 @@ sap.ui.define([
 				 */
 				tileContent: {type: "sap.m.TileContent", multiple: true, bindable: "bindable"},
 				/**
+				 * LinkTileContent is being added to the GenericTile, it is advised to use in TwoByOne frameType
+				 * @since 1.120
+				 */
+				linkTileContents: {type: "sap.m.LinkTileContent", multiple: true, singularName: "linkTileContent"},
+				/**
 				 * An icon or image to be displayed in the control.
 				 * This aggregation is deprecated since version 1.36.0, to display an icon or image use sap.m.ImageContent control instead.
 				 * @deprecated since version 1.36.0. This aggregation is deprecated, use sap.m.ImageContent control to display an icon instead.
@@ -351,7 +360,7 @@ sap.ui.define([
 	/* --- Lifecycle Handling --- */
 
 	GenericTile.prototype.init = function () {
-		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oRb = Core.getLibraryResourceBundle("sap.m");
 
 		// Defines custom screen range set: smaller than or equal to 449px defines 'small' and bigger than 449px defines 'large' screen
 		if (!Device.media.hasRangeSet(DEVICE_SET)) {
@@ -413,13 +422,8 @@ sap.ui.define([
 		this._bTilePress = true;
 
 		this._sBGColor = DEFAULT_BG_COLOR;
-		this._bThemeApplied = true;
-		if (!sap.ui.getCore().isInitialized()) {
-			this._bThemeApplied = false;
-			sap.ui.getCore().attachInit(this._handleCoreInitialized.bind(this));
-		} else {
-			this._handleCoreInitialized();
-		}
+		this._bThemeApplied = false;
+		Core.ready(this._handleCoreInitialized.bind(this));
 
 		//Navigate Action Button in Article Mode
 		this._oNavigateAction = new Button(this.getId() + "-navigateAction");
@@ -462,10 +466,7 @@ sap.ui.define([
 	 * @private
 	 */
 	GenericTile.prototype._handleCoreInitialized = function () {
-		this._bThemeApplied = sap.ui.getCore().isThemeApplied();
-		if (!this._bThemeApplied) {
-			sap.ui.getCore().attachThemeChanged(this._handleThemeApplied, this);
-		}
+		Theming.attachApplied(this._handleThemeApplied.bind(this));
 	};
 
 	/**
@@ -476,7 +477,7 @@ sap.ui.define([
 	GenericTile.prototype._handleThemeApplied = function () {
 		this._bThemeApplied = true;
 		this._oTitle.clampHeight();
-		sap.ui.getCore().detachThemeChanged(this._handleThemeApplied, this);
+		Theming.detachApplied(this._handleThemeApplied.bind(this));
 	};
 
 	/**
@@ -666,6 +667,7 @@ sap.ui.define([
 		if (this._isIconMode()) {
 			this._validateBackgroundColor();
 		}
+		this._isLinkTileContentPresent = this.getLinkTileContents().length > 0;
 	};
 
 	GenericTile.prototype.onAfterRendering = function () {
@@ -722,7 +724,7 @@ sap.ui.define([
 		}
 
 		//Adds Extra height to the TileContent when GenericTile is in ActionMode
-		if (this.getFrameType()  === FrameType.TwoByOne && this.getMode() === GenericTileMode.ActionMode && this.getState() === LoadState.Loaded && !this.isA("sap.m.ActionTile")) {
+		if (this.getFrameType()  === FrameType.TwoByOne && (this.getMode() === GenericTileMode.ActionMode || this._isLinkTileContentPresent) && this.getState() === LoadState.Loaded && !this.isA("sap.m.ActionTile")) {
 			this._applyExtraHeight();
 		}
 
@@ -749,6 +751,24 @@ sap.ui.define([
 			this.getDomRef("content").classList.add("sapMGTFtrMarginTop");
 		} else {
 			this.getDomRef("content").classList.remove("sapMGTFtrMarginTop");
+		}
+		if (this._isLinkTileContentPresent) {
+			this._adjustFocusOnLinkTiles(this.getDomRef().classList.contains("sapMTileSmallPhone"),iHeaderLines);
+		}
+	};
+
+	GenericTile.prototype._adjustFocusOnLinkTiles = function(bIsSmall,iHeaderLines) {
+		var iVisibleLinks = (bIsSmall) ? 5 : 6;
+		iVisibleLinks = (iHeaderLines === 2) ? --iVisibleLinks : iVisibleLinks;
+		var i;
+		//This removes the focus from the hidden links while navigating from tab
+		for (i = this.getLinkTileContents().length - 1; i > iVisibleLinks - 1; --i) {
+			this.getLinkTileContents() [i]._getLink().getDomRef().setAttribute("tabindex",-1);
+		}
+		//The logic mentioned here is useful when a small tile is being changed to a normal tile. In this case, the focus is removed for a couple of links at the bottom. To restore this focus, the tabindex is set back to 0
+		while ( i >= 0) {
+			this.getLinkTileContents() [i]._getLink().getDomRef().setAttribute("tabindex",0);
+			i--;
 		}
 	};
 	/**
@@ -879,6 +899,9 @@ sap.ui.define([
 			} else {
 				this.$().removeClass("sapMTileSmallPhone");
 				this.removeStyleClass("sapMGTStretch");
+			}
+			if (this.__isLinkTileContentPresent) {
+				this._applyExtraHeight();
 			}
 		}.bind(this);
 
@@ -1217,7 +1240,7 @@ sap.ui.define([
 	};
 
 	GenericTile.prototype.ontap = function (event) {
-		if (!_isInnerTileButtonPressed(event, this)) {
+		if (!_isInnerTileButtonPressed(event, this) && !this._isLinkPressed(event)) {
 			var oParams;
 			// The ActionMore button in IconMode tile would be fired irrespective of the pressEnabled property
 			if ((this._bTilePress || this._isActionMoreButtonVisibleIconMode(event)) && this.getState() !== LoadState.Disabled) {
@@ -1233,7 +1256,7 @@ sap.ui.define([
 
 	var preventPress = false;
 	GenericTile.prototype.onkeydown = function (event) {
-		if (!_isInnerTileButtonPressed(event, this)) {
+		if (!_isInnerTileButtonPressed(event, this) && !this._isLinkPressed(event)) {
 			preventPress = (event.keyCode === 16 || event.keyCode === 27) ? true : false;
 			var currentKey = keyPressed[event.keyCode];
 			if (!currentKey) {
@@ -1281,7 +1304,7 @@ sap.ui.define([
 		}
 	};
 	GenericTile.prototype.onkeyup = function (event) {
-		if (!_isInnerTileButtonPressed(event, this)) {
+		if (!_isInnerTileButtonPressed(event, this) && !this._isLinkPressed(event)) {
 			var currentKey = keyPressed[event.keyCode];    //disable navigation to other tiles when one tile is selected
 			if (currentKey) {
 				delete keyPressed[event.keyCode];
@@ -1385,7 +1408,7 @@ sap.ui.define([
 			}
 			this._oTitle.setMaxLines(iHeaderLines);
 			this._oSubTitle.setMaxLines(iSubHeaderLines);
-		} else if (frameType === FrameType.TwoByOne && this.getMode() === GenericTileMode.ActionMode) {
+		} else if (frameType === FrameType.TwoByOne && (this.getLinkTileContents() > 0 || this.getMode() === GenericTileMode.ActionMode)) {
 			this._oTitle.setMaxLines(2);
 		} else if (frameType === FrameType.OneByHalf || frameType === FrameType.TwoByHalf) {
 			this._oTitle.setMaxLines(2);
@@ -1433,7 +1456,7 @@ sap.ui.define([
 			} else {
 				this._oTitle.setMaxLines(2);
 			}
-		} else if (frameType === FrameType.TwoByOne && this.getMode() === GenericTileMode.ActionMode) {
+		} else if (frameType === FrameType.TwoByOne && (this.getLinkTileContents().length > 0 || this.getMode() === GenericTileMode.ActionMode)) {
 			if (bSubheader) {
 				this._oTitle.setMaxLines(1);
 			} else {
@@ -1569,7 +1592,11 @@ sap.ui.define([
 		}
 		if (!bHideSizeAnnouncement) {
 			sAriaText = sAriaText.trim();
-			sAriaText += ("\n" + this._getSizeDescription());
+			if (this.getLinkTileContents().length > 0) {
+				sAriaText += ("\n" + this._oRb.getText("GENERICTILE_LINK_TILE_CONTENT_DESCRIPTION"));
+			} else {
+				sAriaText += ("\n" + this._getSizeDescription());
+			}
 		}
 		return sAriaText.trim();  // ARIA label set by the app, equal to tooltip
 	};
@@ -1658,6 +1685,14 @@ sap.ui.define([
 		return this.getScope() === GenericTileScope.Actions
 			|| this.getScope() === GenericTileScope.ActionMore
 			|| this.getScope() === GenericTileScope.ActionRemove;
+	};
+
+	GenericTile.prototype._isLinkPressed = function (oEvent)  {
+		var sEventId = oEvent.target.id;
+		var oLinkTileContent = this.getLinkTileContents().find(function(oLinkTileContent){
+			return oLinkTileContent._getLink().getDomRef().id === sEventId;
+		});
+		return !!oLinkTileContent;
 	};
 
 	/**

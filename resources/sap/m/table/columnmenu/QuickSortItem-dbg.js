@@ -34,7 +34,7 @@ sap.ui.define([
 	 * @extends sap.m.table.columnmenu.QuickActionItem
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -80,7 +80,7 @@ sap.ui.define([
 
 	QuickSortItem.prototype._getLabel = function() {
 		var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
-		return oBundle.getText("table.COLUMNMENU_QUICK_SORT", this.getLabel());
+		return oBundle.getText("table.COLUMNMENU_QUICK_SORT", [this.getLabel()]);
 	};
 
 	QuickSortItem.prototype._createContent = function() {

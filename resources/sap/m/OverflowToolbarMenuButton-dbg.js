@@ -23,7 +23,7 @@ sap.ui.define(['sap/m/MenuButton', 'sap/m/MenuButtonRenderer', 'sap/ui/core/Icon
 		 * @extends sap.m.MenuButton
 		 *
 		 * @author SAP SE
-		 * @version 1.119.1
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @public

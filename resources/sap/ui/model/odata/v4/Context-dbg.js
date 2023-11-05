@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.119.1
+		 * @version 1.120.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -244,10 +244,12 @@ sap.ui.define([
 	 * model itself ensures that all bindings depending on this context become unresolved, but no
 	 * attempt is made to restore these bindings in case of reset or failure.
 	 *
-	 * Deleting a child node is supported (@experimental as of version 1.118.0) in a recursive
-	 * hierarchy (see {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}). As a
-	 * precondition, <code>oAggregation.expandTo</code> must be equal to one, and the context must
-	 * not be {@link #setKeepAlive kept-alive} and hidden (for example due to a filter).
+	 * Deleting a node in a recursive hierarchy
+	 * (see {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}) is supported
+	 * (@experimental as of version 1.118.0). As a precondition, the context must not be
+	 * {@link #setKeepAlive kept-alive} and hidden (for example due to a filter), and the group ID
+	 * must not have {@link sap.ui.model.odata.v4.SubmitMode.API}. Such a deletion is not a pending
+	 * change.
 	 *
 	 * @param {string} [sGroupId]
 	 *   The group ID to be used for the DELETE request; if not specified, the update group ID for
@@ -868,6 +870,30 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns the parent node (in case of a recursive hierarchy, see {@link #setAggregation}, where
+	 * <code>oAggregation.expandTo</code> must be equal to one).
+	 *
+	 * @returns {sap.ui.model.odata.v4.Context|null}
+	 *   The parent node, or <code>null</code> if this node is a root node and thus has no parent
+	 * @throws {Error} If
+	 *   <ul>
+	 *     <li> this context is not a list binding's context,
+	 *     <li> this context is not part of a recursive hierarchy,
+	 *     <li> <code>oAggregation.expandTo</code> is greater than one.
+	 *    </ul>
+	 *
+	 * @experimental As of version 1.120.0
+	 * @public
+	 * @see #requestParent
+	 */
+	Context.prototype.getParent = function () {
+		if (!this.oBinding.getParent) {
+			throw new Error("Not a list binding's context: " + this);
+		}
+		return this.oBinding.getParent(this);
+	};
+
+	/**
 	 * Returns the property value for the given path relative to this context. The path is expected
 	 * to point to a structural property with primitive type. Returns <code>undefined</code>
 	 * if the data is not (yet) available; no request is triggered. Use {@link #requestProperty}
@@ -1009,6 +1035,25 @@ sap.ui.define([
 	};
 
 	/**
+	 * Tells whether this node is an ancestor of (or the same as) the given node (in case of a
+	 * recursive hierarchy, see {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}).
+	 *
+	 * @param {sap.ui.model.odata.v4.Context} oNode - Some node which may be a descendant
+	 * @returns {boolean} Whether the assumed ancestor relation holds
+	 * @throws {Error} If either context does not represent a node in a recursive hierarchy
+	 *   according to the hierarchy's current {@link #isExpanded expanded state}
+	 *
+	 * @public
+	 * @since 1.120.0
+	 */
+	Context.prototype.isAncestorOf = function (oNode) {
+		if (!this.oBinding.isAncestorOf) {
+			throw new Error("Missing recursive hierarchy");
+		}
+		return this.oBinding.isAncestorOf(this, oNode);
+	};
+
+	/**
 	 * Returns whether this context is deleted. It becomes <code>true</code> immediately after
 	 * calling {@link #delete}, even while the request is waiting for
 	 * {@link sap.ui.model.odata.v4.ODataModel#submitBatch submitBatch} or is in process. It becomes
@@ -1141,7 +1186,8 @@ sap.ui.define([
 
 	/**
 	 * Moves this node to the given parent (in case of a recursive hierarchy, see
-	 * {@link #setAggregation}, where <code>oAggregation.expandTo</code> must be one). No other
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}, where
+	 * <code>oAggregation.expandTo</code> must be one). No other
 	 * {@link sap.ui.model.odata.v4.ODataListBinding#create creation}, {@link #delete deletion}, or
 	 * move must be pending, and no other modification (including collapse of some ancestor node)
 	 * must happen while this move is pending!
@@ -1344,6 +1390,34 @@ sap.ui.define([
 		this.oBinding.checkSuspended();
 
 		return Promise.resolve(this.fetchValue(sPath)).then(_Helper.publicClone);
+	};
+
+	/**
+	 * Requests the parent node (in case of a recursive hierarchy, see {@link #setAggregation},
+	 * where <code>oAggregation.expandTo</code> must be equal to one).
+	 *
+	 * @returns {Promise<sap.ui.model.odata.v4.Context|null>} A promise which:
+	 *   <ul>
+	 *     <li> Resolves if successful with either the parent node or <code>null</code> for a root
+	 *       node that has no parent</li>
+	 *     <li> Rejects with an <code>Error</code> instance otherwise</li>
+	 *   </ul>
+	 * @throws {Error} If
+	 *   <ul>
+	 *     <li> this context is not a list binding's context,
+	 *     <li> this context is not part of a recursive hierarchy,
+	 *     <li> <code>oAggregation.expandTo</code> is greater than one.
+	 *    </ul>
+	 *
+	 * @experimental As of version 1.120.0
+	 * @public
+	 * @see #getParent
+	 */
+	Context.prototype.requestParent = function () {
+		if (!this.oBinding.requestParent) {
+			throw new Error("Not a list binding's context: " + this);
+		}
+		return this.oBinding.requestParent(this);
 	};
 
 	/**
@@ -1883,7 +1957,7 @@ sap.ui.define([
 		var that = this;
 
 		if (this.isTransient() || bKeepAlive && this.isDeleted()) {
-			throw new Error("Unsupported context " + this);
+			throw new Error("Unsupported context: " + this);
 		}
 		_Helper.getPredicateIndex(this.sPath);
 		this.oBinding.checkKeepAlive(this, bKeepAlive);

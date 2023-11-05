@@ -13,7 +13,6 @@ sap.ui.define([
 	'./Targets',
 	'./History',
 	'sap/ui/thirdparty/crossroads',
-	"sap/base/util/UriParameters",
 	"sap/base/util/each",
 	"sap/base/util/deepEqual",
 	"sap/base/util/isEmptyObject",
@@ -31,7 +30,6 @@ sap.ui.define([
 		Targets,
 		History,
 		crossroads,
-		UriParameters,
 		each,
 		deepEqual,
 		isEmptyObject,
@@ -233,7 +231,7 @@ sap.ui.define([
 
 				// temporarily: for checking the url param
 				function checkUrl() {
-					if (UriParameters.fromQuery(window.location.search).get("sap-ui-xx-asyncRouting") === "true") {
+					if (new URLSearchParams(window.location.search).get("sap-ui-xx-asyncRouting") === "true") {
 						Log.warning("Activation of async view loading in routing via url parameter is only temporarily supported and may be removed soon", "Router");
 						return true;
 					}
@@ -666,7 +664,7 @@ sap.ui.define([
 			/**
 			 * @typedef {object} sap.ui.core.routing.RouteInfo
 			 * @property {string} name The route name
-			 * @property {Object.<string, string>} arguments The route data
+			 * @property {Object.<string, string|Object.<string, string>>} arguments The route data
 			 * @public
 			 */
 

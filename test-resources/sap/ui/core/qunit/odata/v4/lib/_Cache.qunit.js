@@ -475,7 +475,7 @@ sap.ui.define([
 				return oDeleted;
 			});
 		this.mock(oCache).expects("removeElement")
-			.withExactArgs(sinon.match.same(aCacheData), 1, "('1')", sPath)
+			.withExactArgs(1, "('1')", sinon.match.same(aCacheData), sPath)
 			.callsFake(function () {
 				assert.ok(bAddDeleted, "removeElement called after addDeleted");
 			});
@@ -616,7 +616,8 @@ sap.ui.define([
 				}
 				bDeleted = true;
 			}));
-		this.mock(oCache).expects("removeElement").withExactArgs(aCacheData, undefined, "('1')", "")
+		this.mock(oCache).expects("removeElement")
+			.withExactArgs(undefined, "('1')", sinon.match.same(aCacheData), "")
 			// symbolic value would lead to a stronger test, but the value is checked internally
 			.returns(undefined);
 
@@ -661,7 +662,7 @@ sap.ui.define([
 		this.oRequestorMock.expects("request").never();
 		this.mock(oCache).expects("requestCount").never();
 		this.mock(oCache).expects("removeElement")
-			.withExactArgs(sinon.match.same(aCacheData), 1, "('1')", "EMPLOYEE_2_EQUIPMENTS")
+			.withExactArgs(1, "('1')", sinon.match.same(aCacheData), "EMPLOYEE_2_EQUIPMENTS")
 			.returns(1);
 		this.oModelInterfaceMock.expects("getMessagesByPath")
 			.withExactArgs("/EMPLOYEES('42')/EMPLOYEE_2_EQUIPMENTS('1')", true)
@@ -713,7 +714,7 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(oElement), "transientPredicate").returns("($uid=1)");
 		this.mock(this.oRequestor).expects("removePost").never();
 		oRemoveElementExpectation = this.mock(oCache).expects("removeElement")
-			.withExactArgs(sinon.match.same(aElements), 1, "($uid=1)", "SO_2_SOITEM");
+			.withExactArgs(1, "($uid=1)", sinon.match.same(aElements), "SO_2_SOITEM");
 		oHelperMock.expects("getPrivateAnnotation")
 			.withExactArgs(sinon.match.same(oElement), "reject").returns(fnReject);
 		oHelperMock.expects("cancelNestedCreates")
@@ -860,7 +861,7 @@ sap.ui.define([
 					.withExactArgs(sPath, sinon.match.same(aCacheData), 1, -1);
 
 				// code under test
-				iIndex = oCache.removeElement(aCacheData, 2, "('1')", sPath);
+				iIndex = oCache.removeElement(2, "('1')", aCacheData, sPath);
 
 				assert.strictEqual(aCacheData.$created, bCreated ? 1 : 0);
 				assert.strictEqual(oCache.iActiveElements, 0);
@@ -916,7 +917,7 @@ sap.ui.define([
 		this.mock(oCache).expects("adjustIndexes").never();
 
 		// code under test
-		iIndex = oCache.removeElement(aCacheData, bJustDropped ? 2 : undefined, "('1')", "");
+		iIndex = oCache.removeElement(bJustDropped ? 2 : undefined, "('1')", aCacheData, "");
 
 		assert.strictEqual(iIndex, bJustDropped ? -1 : undefined);
 		assert.strictEqual(aCacheData.$count, 42);
@@ -965,7 +966,7 @@ sap.ui.define([
 			.withExactArgs("", sinon.match.same(aElements), 1, -1);
 
 		// code under test
-		iIndex = oCache.removeElement(undefined, 2, "('1')", "");
+		iIndex = oCache.removeElement(2, "('1')");
 
 		assert.strictEqual(iIndex, 1);
 		assert.strictEqual(aElements.$created, 22);
@@ -978,6 +979,67 @@ sap.ui.define([
 			"@odata.etag" : "after"
 		}]);
 		assert.deepEqual(aElements.$byPredicate, {"('2')" : aElements[0]});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("_Cache#removeElement: index only", function (assert) {
+		const oCache = new _Cache(this.oRequestor, "EMPLOYEES");
+		const oElement = {"@$ui5._" : {predicate : "('1')"}};
+		const oTransientElement = {
+			"@$ui5._" : {predicate : "('2')", transientPredicate : "($uid=id-1-23)"}
+		};
+		const aCacheData = [oTransientElement, "0", undefined, "2", undefined, oElement, "5"];
+		oCache.iLimit = 6;
+		oCache.iActiveElements = 1;
+		aCacheData.$byPredicate = {
+			"('1')" : oElement,
+			"('2')" : oTransientElement,
+			"($uid=id-1-23)" : oTransientElement,
+			"('5')" : "5"
+		};
+		aCacheData.$created = 1;
+
+		this.mock(_Cache).expects("getElementIndex").never();
+		this.mock(_Helper).expects("addToCount").thrice()
+			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "",
+				sinon.match.same(aCacheData), -1);
+		const oCacheMock = this.mock(oCache);
+		oCacheMock.expects("adjustIndexes").withExactArgs("", sinon.match.same(aCacheData), 5, -1);
+
+		// code under test
+		oCache.removeElement(5, undefined, aCacheData);
+
+		assert.deepEqual(aCacheData, [oTransientElement, "0", undefined, "2", undefined, "5"]);
+		assert.deepEqual(aCacheData.$byPredicate, {
+			"('2')" : oTransientElement,
+			"($uid=id-1-23)" : oTransientElement,
+			"('5')" : "5"
+		});
+		assert.deepEqual(aCacheData.$created, 1);
+		assert.strictEqual(oCache.iLimit, 5);
+		assert.strictEqual(oCache.iActiveElements, 1);
+
+		oCacheMock.expects("adjustIndexes").withExactArgs("", sinon.match.same(aCacheData), 0, -1);
+
+		// code under test
+		oCache.removeElement(0, undefined, aCacheData);
+
+		assert.deepEqual(aCacheData, ["0", undefined, "2", undefined, "5"]);
+		assert.deepEqual(aCacheData.$byPredicate, {"('5')" : "5"});
+		assert.deepEqual(aCacheData.$created, 0);
+		assert.strictEqual(oCache.iLimit, 5);
+		assert.strictEqual(oCache.iActiveElements, 0);
+
+		oCacheMock.expects("adjustIndexes").withExactArgs("", sinon.match.same(aCacheData), 3, -1);
+
+		// code under test
+		oCache.removeElement(3, undefined, aCacheData);
+
+		assert.deepEqual(aCacheData, ["0", undefined, "2", "5"]);
+		assert.deepEqual(aCacheData.$byPredicate, {"('5')" : "5"});
+		assert.deepEqual(aCacheData.$created, 0);
+		assert.strictEqual(oCache.iLimit, 4);
+		assert.strictEqual(oCache.iActiveElements, 0);
 	});
 
 	//*********************************************************************************************
@@ -1000,7 +1062,7 @@ sap.ui.define([
 		this.mock(oCache).expects("adjustIndexes")
 			.withExactArgs(sPath, sinon.match.same(aElements), 42, 1, "~iDeletedIndex~");
 		const oHelperMock = this.mock(_Helper);
-		oHelperMock.expects("getPrivateAnnotation")
+		oHelperMock.expects("getPrivateAnnotation").exactly(bDefault && bTransient ? 0 : 1)
 			.withExactArgs("~oElement~", "transientPredicate")
 			.returns(bTransient ? "($uid=id-1-23)" : undefined);
 		oHelperMock.expects("addToCount")
@@ -1012,7 +1074,7 @@ sap.ui.define([
 
 		// code under test
 		oCache.restoreElement(bDefault ? undefined : aElements, 42, "~oElement~", sPath,
-			"~iDeletedIndex~");
+			"~iDeletedIndex~", bDefault && bTransient ? "($uid=id-1-23)" : undefined);
 
 		assert.strictEqual(oCache.iLimit, bTransient || sPath ? 234 : 235);
 		assert.strictEqual(aElements.$created, bTransient ? 3 : 2);
@@ -4068,7 +4130,8 @@ sap.ui.define([
 	{index : 1, keepAlive : false, lateQueryOptions : false},
 	{index : 1, keepAlive : false, lateQueryOptions : true},
 	{index : 1, keepAlive : true, lateQueryOptions : false},
-	{index : 1, keepAlive : true, lateQueryOptions : true}
+	{index : 1, keepAlive : true, lateQueryOptions : true},
+	{index : -1, keepAlive : false, lateQueryOptions : false}
 ].forEach(function (oFixture) {
 	["", "EMPLOYEE_2_EQUIPMENTS"].forEach(function (sPath) {
 		// undefined => no $select at all ;-)
@@ -4180,7 +4243,9 @@ sap.ui.define([
 					sinon.match.same(oResponse), sinon.match.same(mTypeForMetaPath), sPath,
 					bMessagesAlreadySelected === false && bMessagesAnnotated);
 
-			return oPromise;
+			return oPromise.then(function (oResult) {
+				assert.strictEqual(oResult, oResponse);
+			});
 		});
 	});
 		});
@@ -4316,7 +4381,7 @@ sap.ui.define([
 				assert.strictEqual(oCache.bSentRequest, true);
 
 				oCacheMock.expects("removeElement").exactly(bRemoved ? 1 : 0)
-					.withExactArgs(sinon.match.same(aElements), 1, sKeyPredicate,
+					.withExactArgs(1, sKeyPredicate, sinon.match.same(aElements),
 						"EMPLOYEE_2_EQUIPMENTS");
 				that.oModelInterfaceMock.expects("reportStateMessages")
 					.exactly(bRemoved ? 1 : 0)
@@ -4443,7 +4508,7 @@ sap.ui.define([
 				sinon.match.same(mTypeForMetaPath), "~");
 		oRemoveExpectation = oCacheMock.expects("removeElement")
 			.exactly(oFixture.inCollection ? 0 : 1)
-			.withExactArgs(sinon.match.same(aElements), 0, "('13')", "~");
+			.withExactArgs(0, "('13')", sinon.match.same(aElements), "~");
 
 		// code under test
 		return oCache.refreshSingleWithRemove(oGroupLock, "~", 0, "('13')", true,
@@ -5693,8 +5758,8 @@ sap.ui.define([
 				.withExactArgs(sinon.match.same(oParent), "postBody")
 				.returns(oPostBody);
 			oHelperMock.expects("getPrivateAnnotation")
-				.withExactArgs(sinon.match.same(oRoot), "select")
-				.returns(undefined);
+				.withExactArgs(sinon.match.same(oRoot), "select", {})
+				.returns({});
 			oCacheMock.expects("checkSharedRequest").withExactArgs();
 			oHelperMock.expects("getMetaPath").withExactArgs("to/collection").returns("meta/path");
 			oHelperMock.expects("setPrivateAnnotation")
@@ -6062,8 +6127,9 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [false, true].forEach(function (bSideEffectsRefresh) {
-	var sTitle = "CollectionCache#read: persisted inline creation rows; side-effects refresh = "
-			+ bSideEffectsRefresh;
+	[false, true].forEach(function (bIndexIsSkip) {
+		var sTitle = "CollectionCache#read: persisted inline creation rows; side-effects refresh = "
+				+ bSideEffectsRefresh + "; 'index' is $skip = " + bIndexIsSkip;
 
 	QUnit.test(sTitle, function (assert) {
 		var oCache = this.createCache("Employees"),
@@ -6093,19 +6159,22 @@ sap.ui.define([
 			oCache.oBackup = {};
 		}
 		this.mock(ODataUtils).expects("_getReadIntervals")
-			.withExactArgs(sinon.match.same(aElements), 0, 100, iExpectedPrefetch, 5 + 0)
+			.withExactArgs(sinon.match.same(aElements), bIndexIsSkip ? 5 : 0, 100,
+				iExpectedPrefetch, 5 + 0)
 			.returns([]); // test is all about iExpectedPrefetch, skip the rest...
 		this.oRequestorMock.expects("waitForBatchResponseReceived").never();
 		this.mock(oCache).expects("requestElements").never();
 		this.mock(oGroupLock).expects("unlock").withExactArgs();
 
 		// code under test
-		return oCache.read(0, 100, 0, oGroupLock).then(function (oResult) {
-			assert.deepEqual(oResult, {
-				"@odata.context" : undefined,
-				value : aElements
+		return oCache.read(0, 100, 0, oGroupLock, null, bIndexIsSkip)
+			.then(function (oResult) {
+				assert.deepEqual(oResult, {
+					"@odata.context" : undefined,
+					value : bIndexIsSkip ? [] : aElements
+				});
 			});
-		});
+	});
 	});
 });
 
@@ -6202,13 +6271,13 @@ sap.ui.define([
 		this.mock(oCache).expects("requestElements").never();
 
 		// code under test
-		oPromise = oCache.read(10, 20, 30, oGroupLock, fnDataRequested);
+		oPromise = oCache.read(10, 20, 30, oGroupLock, fnDataRequested, "~bIndexIsSkip~");
 
 		assert.strictEqual(oPromise.isPending(), true);
 
 		this.mock(oCache).expects("read")
 			.withExactArgs(10, 20, 30, sinon.match.same(oGroupLock),
-				sinon.match.same(fnDataRequested))
+				sinon.match.same(fnDataRequested), "~bIndexIsSkip~")
 			.returns(42);
 		fnResolve();
 
@@ -6339,7 +6408,7 @@ sap.ui.define([
 
 			// code under test
 			oReadPromise = oCache.read(3, 3, 0, oReadGroupLock);
-			oCache.removeElement(oCache.aElements, 1, "('b')", "");
+			oCache.removeElement(1, "('b')");
 
 			return oReadPromise;
 		}).then(function () {
@@ -6389,11 +6458,11 @@ sap.ui.define([
 			// code under test
 			oReadPromise1 = oCache.read(6, 3, 0, oReadGroupLock);
 			oReadPromise2 = that.mockRequestAndRead(oCache, 0, "Employees", 1, 2);
-			oCache.removeElement(oCache.aElements, 4, "('e')", "");
+			oCache.removeElement(4, "('e')");
 
 			return oReadPromise2;
 		}).then(function () {
-			oCache.removeElement(oCache.aElements, 4, "('f')", "");
+			oCache.removeElement(4, "('f')");
 			fnResolve(createResult(6, 3));
 			return oReadPromise1;
 		}).then(function () {
@@ -7692,11 +7761,11 @@ sap.ui.define([
 		this.mock(oCache).expects("requestElements").never(); // not yet
 
 		// code under test
-		oPromise = oCache.read(0, 10, 42, "group", fnDataRequested);
+		oPromise = oCache.read(0, 10, 42, "group", fnDataRequested, "~bIndexIsSkip~");
 
 		// expect "back to start" in order to repeat check for $tail
 		this.mock(oCache).expects("read")
-			.withExactArgs(0, 10, 42, "group", sinon.match.same(fnDataRequested))
+			.withExactArgs(0, 10, 42, "group", sinon.match.same(fnDataRequested), "~bIndexIsSkip~")
 			.returns(oNewPromise);
 		fnResolve();
 
@@ -12565,7 +12634,8 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [undefined, "($uid=id-1-23)"].forEach((sTransientPredicate) => {
-	QUnit.test(`CollectionCache#drop, ${sTransientPredicate}`, function (assert) {
+	[undefined, true].forEach((bIndexIsSkip) => {
+	QUnit.test(`CollectionCache#drop, ${sTransientPredicate}, ${bIndexIsSkip}`, function (assert) {
 		const oCache = this.createCache("Employees");
 		oCache.aElements[23] = "~b~";
 		oCache.aElements.$byPredicate = {
@@ -12583,7 +12653,7 @@ sap.ui.define([
 			.withExactArgs("~b~", "transientPredicate").returns(sTransientPredicate);
 
 		// code under test
-		oCache.drop(23, "('b')");
+		oCache.drop(bIndexIsSkip ? 23 - 7 : 23, "('b')", bIndexIsSkip);
 
 		assert.strictEqual(23 in oCache.aElements, false);
 		assert.strictEqual("('b')" in oCache.aElements.$byPredicate, false);
@@ -12594,6 +12664,7 @@ sap.ui.define([
 		assert.strictEqual(oCache.aElements.$created, sTransientPredicate ? 6 : 7);
 		assert.strictEqual(oCache.iActiveElements, sTransientPredicate ? 4 : 5);
 		assert.strictEqual(oCache.iLimit, sTransientPredicate ? 43 : 42);
+	});
 	});
 });
 
@@ -12896,7 +12967,7 @@ sap.ui.define([
 			}
 			if (oElement.bDeleted && "transientPredicate" in oElement["@$ui5._"]) {
 				oCacheMock.expects("removeElement")
-					.withExactArgs(sinon.match.same(oCache.aElements), -1, sPredicate, "")
+					.withExactArgs(-1, sPredicate)
 					.returns(42);
 			}
 		});

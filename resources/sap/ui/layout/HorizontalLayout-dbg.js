@@ -22,7 +22,7 @@ sap.ui.define(['sap/ui/core/Control', './library', "./HorizontalLayoutRenderer"]
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public

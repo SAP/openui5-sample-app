@@ -25,10 +25,19 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/ui/core/Core", "sap/base/str
 	 * the <code>MultiSelectionPlugin</code>.<br>
 	 * <b>Note:</b> This plugin requires a secure origin, either HTTPS or localhost, in order to access the browser's clipboard API.
 	 * For more information, see {@link https://w3c.github.io/webappsec-secure-contexts/}.
+	 * It is recommended to check whether the application executes in a secure context before adding the <code>CopyProvider</code> plugin and
+	 * related functionality, such as the {@link #sap.m.plugins.CellSelector}.
+	 *
+	 * @example <caption>Check secure context</caption>
+	 * <pre>
+	 *   if (window.isSecureContext) {
+	 *     oTable.addDependent(new CopyProvider());
+	 *   }
+	 * </pre>
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -137,7 +146,11 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/ui/core/Core", "sap/base/str
 		}
 	}
 
-	function copyMatrixForSpreadSheet(aMatrix) {
+	function copyMatrixForSpreadSheet(oCopyProvider, aMatrix) {
+		if (!navigator.clipboard) {
+			throw new Error(oCopyProvider + " requires a secure context in order to access the clipboard API.");
+		}
+
 		var sClipboardText = aMatrix.map(function(aRows) {
 			return aRows.map(stringifyForSpreadSheet).join("\t");
 		}).join("\n");
@@ -152,9 +165,6 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/ui/core/Core", "sap/base/str
 	};
 
 	CopyProvider.prototype.isApplicable = function() {
-		if (!navigator.clipboard) {
-			throw new Error(this + " requires a secure context in order to access the clipboard API.");
-		}
 		if (this._shouldManageExtractData()){
 			if (this.getExtractData()) {
 				throw new Error("extractData property must not be defined for " + this);
@@ -239,7 +249,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/ui/core/Core", "sap/base/str
 	CopyProvider.prototype.getSelectionData = function() {
 		var oControl = this.getControl();
 		var fnExtractData = this.getExtractData();
-		if (!oControl || !fnExtractData || !navigator.clipboard) {
+		if (!oControl || !fnExtractData) {
 			return [];
 		}
 
@@ -259,7 +269,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/ui/core/Core", "sap/base/str
 		var aAllSelectedRowContexts = [];
 		var bCopySparse = this.getCopySparse();
 		var fnExludeContext = this.getExcludeContext();
-		var oCellSelectorPlugin = PluginBase.getPlugin(this.getParent(), "sap.m.plugins.CellSelector");
+		var oCellSelectorPlugin = PluginBase.getPlugin(this.getParent(), "sap.m.plugins.CellSelector") ?? PluginBase.getPlugin(oControl, "sap.m.plugins.CellSelector");
 		var mCellSelectionRange = oCellSelectorPlugin && oCellSelectorPlugin.getSelectionRange();
 		var aCellSelectorRowContexts = mCellSelectionRange ? oCellSelectorPlugin.getSelectedRowContexts() : [];
 		var bCellSelectorRowContextsMustBeMerged = Boolean(aCellSelectorRowContexts.length);
@@ -307,10 +317,11 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/ui/core/Core", "sap/base/str
 	/**
 	 * Writes the selection data to the system clipboard and returns a <code>Promise</code> which resolves once the clipboard's content has been updated.
 	 *
-	 * <b>Note: </b> The user has to interact with the page or a UI element when this API gets called.
-	 *
+	 * <b>Note:</b> The user has to interact with the page or a UI element when this API gets called.
+	 * <b>Note:</b> This plugin requires a secure context in order to access the browser's clipboard API.
 	 * @param {boolean} [bFireCopyEvent=false] Whether the <code>copy</code> event should be triggered or not
 	 * @returns {Promise} A <code>Promise</code> that is resolved after the selection data has been written to the clipboard
+	 * @throws {Error} If the <code>CopyProvider</code> is used in a non-secure context.
 	 * @public
 	 */
 	CopyProvider.prototype.copySelectionData = function(bFireCopyEvent) {
@@ -319,7 +330,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/ui/core/Core", "sap/base/str
 			return Promise.resolve();
 		}
 
-		return copyMatrixForSpreadSheet(aSelectionData);
+		return copyMatrixForSpreadSheet(this, aSelectionData);
 	};
 
 	CopyProvider.prototype.onkeydown = function(oEvent) {

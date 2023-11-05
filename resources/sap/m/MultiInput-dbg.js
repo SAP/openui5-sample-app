@@ -107,7 +107,7 @@ function(
 	* @implements sap.ui.core.ISemanticFormContent
 	*
 	* @author SAP SE
-	* @version 1.119.1
+	* @version 1.120.0
 	*
 	* @constructor
 	* @public
@@ -1072,7 +1072,7 @@ function(
 			bNewFocusIsInSuggestionPopup = false,
 			bNewFocusIsInTokenizer = false,
 			bNewFocusIsInMultiInput = this.getDomRef() && containsOrEquals(this.getDomRef(), document.activeElement),
-			bFocusedOut = !bNewFocusIsInSuggestionPopup && oEvent.relatedControlId !== this.getId() && !bNewFocusIsInTokenizer,
+			bFocusedOut,
 			oRelatedControlDomRef,
 			bFocusIsInSelectedItemPopup;
 
@@ -1096,6 +1096,8 @@ function(
 		if (this._bIsValidating || this._bValueHelpOpen) {
 			return;
 		}
+
+		bFocusedOut = !bNewFocusIsInSuggestionPopup && oEvent.relatedControlId !== this.getId() && !bNewFocusIsInTokenizer;
 
 		if (bFocusedOut && ((this.isMobileDevice() && !this.getShowSuggestion()) || !this.isMobileDevice())) {
 			this._validateCurrentText(true);

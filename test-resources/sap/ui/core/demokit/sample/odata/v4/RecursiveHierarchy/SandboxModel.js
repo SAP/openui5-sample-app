@@ -18,11 +18,17 @@ sap.ui.define([
 					sFilterBase : "/sap/opu/odata4/IWBEP/TEA/default/IWBEP/TEA_BUSI/0001/",
 					mFixture : {},
 					aRegExps : [{
+						regExp : /^DELETE \/sap\/opu\/odata4\/IWBEP\/TEA\/default\/IWBEP\/TEA_BUSI\/0001\/EMPLOYEES\('([^']*)'\)$/,
+						response : {buildResponse : buildDeleteResponse, code : 204}
+					}, {
 						regExp : /^GET [\w\/.]+\$metadata[\w?&\-=]+sap-language=..$/,
 						response : {source : "metadata.xml"}
 					}, {
 						regExp : /^GET \/sap\/opu\/odata4\/IWBEP\/TEA\/default\/IWBEP\/TEA_BUSI\/0001\/EMPLOYEES\?(.*)$/,
-						response : {buildResponse : buildGetResponse}
+						response : {buildResponse : buildGetCollectionResponse}
+					}, {
+						regExp : /^GET \/sap\/opu\/odata4\/IWBEP\/TEA\/default\/IWBEP\/TEA_BUSI\/0001\/EMPLOYEES\('([^']*)'\)\?(.*)$/,
+						response : {buildResponse : buildGetSingleResponse}
 					}, {
 						regExp : /^PATCH \/sap\/opu\/odata4\/IWBEP\/TEA\/default\/IWBEP\/TEA_BUSI\/0001\/EMPLOYEES\('([^']*)'\)$/,
 						response : {buildResponse : buildPatchResponse, code : 204}
@@ -161,8 +167,8 @@ sap.ui.define([
 		Name : "Omega"
 	}];
 
-	let aAllNodes;
-	let mChildrenByParentId;
+	let aAllNodes; // in preorder
+	let mChildrenByParentId; // no entry for leaves!
 	let mNodeById;
 	let iRevision;
 	let mRevisionOfAgeById;
@@ -212,24 +218,68 @@ sap.ui.define([
 	reset();
 
 	/**
+	 * Adjust the DescendantCount of the node with given ID (and all of its ancestors) by the
+	 * given difference.
+	 *
+	 * @param {string} sId - A node ID
+	 * @param {number} iDiff - Some difference
+	 */
+	function adjustDescendantCount(sId, iDiff) {
+		mNodeById[sId].DescendantCount += iDiff;
+		sId = mNodeById[sId].MANAGER_ID;
+		if (sId) {
+			adjustDescendantCount(sId, iDiff);
+		}
+	}
+
+	/**
+	 * Builds a response for any DELETE request on a specific "EMPLOYEE" instance.
+	 *
+	 * @param {string[]} aMatches - The matches against the RegExp
+	 * @param {object} _oResponse - Response object to fill
+	 */
+	function buildDeleteResponse(aMatches, _oResponse) {
+		/**
+		 * Recursively visits all of the given node's descendants, deleting them in post order.
+		 *
+		 * @param {object} oNode - A node
+		 */
+		function visit(oNode) {
+			const sId = oNode.ID;
+			mChildrenByParentId[sId]?.forEach(visit);
+			delete mChildrenByParentId[sId];
+			delete mNodeById[sId];
+			delete mRevisionOfAgeById[sId];
+			aAllNodes.splice(aAllNodes.indexOf(oNode), 1);
+		}
+
+		const oNode = mNodeById[aMatches[1]];
+		visit(oNode);
+		if (oNode.MANAGER_ID) {
+			const aChildren = mChildrenByParentId[oNode.MANAGER_ID];
+			aChildren.splice(aChildren.indexOf(oNode), 1);
+			adjustDescendantCount(oNode.MANAGER_ID, -(oNode.DescendantCount + 1));
+		}
+	}
+
+	/**
 	 * Builds a response for any GET query on the "EMPLOYEES" collection.
 	 *
 	 * @param {string[]} aMatches - The matches against the RegExp
 	 * @param {object} oResponse - Response object to fill
 	 */
-	function buildGetResponse(aMatches, oResponse) {
-		const mQueryOptions = {};
-		for (const sName_Value of aMatches[1].split("&")) {
-			const [sName, ...aValues] = sName_Value.split("=");
-			mQueryOptions[sName] = aValues.join("=");
-		}
+	function buildGetCollectionResponse(aMatches, oResponse) {
+		const mQueryOptions = getQueryOptions(aMatches[1]);
 
 		if ("$apply" in mQueryOptions) {
 			if (mQueryOptions.$apply.includes("TopLevels")) {
 				// "EMPLOYEES?$apply=orderby(AGE)"
 				// + "/com.sap.vocabularies.Hierarchy.v1.TopLevels(HierarchyNodes=$root/EMPLOYEES"
 				// + ",HierarchyQualifier='OrgChart',NodeProperty='ID',Levels=" + iLevels + ")"
-				const iLevels = parseInt(mQueryOptions.$apply.match(/,Levels=(\d+)/)[1]);
+				// Note: "Levels" is optional!
+				const iLevels = mQueryOptions.$apply.includes(",Levels=")
+					? parseInt(mQueryOptions.$apply.match(/,Levels=(\d+)/)[1])
+					: Infinity;
 				selectCountSkipTop(topLevels(iLevels - 1), mQueryOptions, oResponse);
 				return;
 			}
@@ -253,20 +303,45 @@ sap.ui.define([
 			// ID%20eq%20'0'%20or%20ID%20eq%20'1'%20or%20ID%20eq%20'1.1'
 			const aIDs = mQueryOptions.$filter.split("%20or%20")
 				.map((sID_Predicate) => sID_Predicate.split("%20eq%20")[1].slice(1, -1));
-			if (mQueryOptions.$select.includes("MANAGER_ID")) {
+			if (mQueryOptions.$select.includes("MANAGER_ID")) { // side effect for all rows
 				iRevision += 1;
-			} else {
+			} else { // side effect for single row (after PATCH of Name)
 				if (aIDs.length !== 1) {
 					throw new Error("Unexpected ID filter length");
 				}
 				mRevisionOfAgeById[aIDs[0]] += 1;
 			}
-			const aRows = aIDs.map((sID) => mNodeById[sID]);
+			const aRows = aIDs.map((sId) => mNodeById[sId]);
 			selectCountSkipTop(aRows, mQueryOptions, oResponse);
 			return;
 		}
 
 		selectCountSkipTop(aAllNodes, mQueryOptions, oResponse);
+	}
+
+	/**
+	 * Builds a response for any GET request on a specific "EMPLOYEE" instance.
+	 *
+	 * @param {string[]} aMatches - The matches against the RegExp
+	 * @param {object} oResponse - Response object to fill
+	 */
+	function buildGetSingleResponse(aMatches, oResponse) {
+		// EMPLOYEES('B')?$select=AGE,DescendantCount,DistanceFromRoot,DrillState,ID,MANAGER_ID,Name
+		const aSelect = getQueryOptions(aMatches[2]).$select.split(",");
+		const select = (oNode) => { //TODO share w/ selectCountSkipTop?
+			const oResult = {};
+			for (const sSelect of aSelect) {
+				oResult[sSelect] = oNode[sSelect];
+			}
+			return oResult;
+		};
+		const oNode = select(mNodeById[aMatches[1]]);
+		// RAP would not respond w/ DescendantCount,DistanceFromRoot,DrillState!
+		delete oNode.DescendantCount;
+		delete oNode.DistanceFromRoot;
+		delete oNode.DrillState;
+		// Note: bSkipCopy due to select
+		oResponse.message = JSON.stringify(SandboxModel.update([oNode], true)[0]);
 	}
 
 	/**
@@ -277,6 +352,19 @@ sap.ui.define([
 	 * @param {object} oRequest - Request object to get PATCH body from
 	 */
 	function buildPatchResponse(aMatches, _oResponse, oRequest) {
+		/**
+		 * Adjust the DistanceFromRoot of the given node (and all of its descendants) by the given
+		 * difference.
+		 *
+		 * @param {object} oNode - A node
+		 * @param {number} iDiff - Some difference
+		 */
+		function adjustDistanceFromRoot(oNode, iDiff) {
+			oNode.DistanceFromRoot += iDiff;
+			(mChildrenByParentId[oNode.ID] || [])
+				.forEach((oChild) => adjustDistanceFromRoot(oChild, iDiff));
+		}
+
 		if (oRequest.requestHeaders.Prefer !== "return=minimal") {
 			throw new Error("Unsupported Prefer header: " + oRequest.requestHeaders.Prefer);
 		}
@@ -286,19 +374,40 @@ sap.ui.define([
 		switch (Object.keys(oBody).length === 1 && Object.keys(oBody)[0]) {
 			case "EMPLOYEE_2_MANAGER@odata.bind": {
 				const oChild = mNodeById[aMatches[1]];
+				if (oChild.Name.includes("ERROR")) {
+					throw new Error("This request intentionally failed!");
+				}
+
 				const sParentId = oBody["EMPLOYEE_2_MANAGER@odata.bind"]
 					.slice("EMPLOYEES('".length, -"')".length);
-				//TODO prevent cycles!
+				for (let sId = sParentId; sId; sId = mNodeById[sId].MANAGER_ID) {
+					if (sId === oChild.ID) { // cycle detected
+						throw new Error("Parent must not be a descendant of moved node");
+					}
+				}
 
 				if (oChild.MANAGER_ID) {
 					const aChildren = mChildrenByParentId[oChild.MANAGER_ID];
 					aChildren.splice(aChildren.indexOf(oChild), 1);
+					if (!aChildren.length) { // last child has gone
+						delete mChildrenByParentId[oChild.MANAGER_ID];
+						mNodeById[oChild.MANAGER_ID].DrillState = "leaf";
+					}
+					adjustDescendantCount(oChild.MANAGER_ID, -(oChild.DescendantCount + 1));
+				} // else: cannot really happen w/ a single root and no cycles!
+
+				if (!(sParentId in mChildrenByParentId)) { // new parent not a leaf anymore
+					mNodeById[sParentId].DrillState = "collapsed"; // @see #reset
 				}
 				//TODO Note: "AGE determines sibling order (ascending)"
 				(mChildrenByParentId[sParentId] ??= []).push(oChild);
-
 				oChild.MANAGER_ID = sParentId;
-				//TODO update position in aAllNodes!
+				adjustDescendantCount(sParentId, oChild.DescendantCount + 1);
+				adjustDistanceFromRoot(oChild,
+					mNodeById[sParentId].DistanceFromRoot + 1 - oChild.DistanceFromRoot);
+				const aSpliced
+					= aAllNodes.splice(aAllNodes.indexOf(oChild), oChild.DescendantCount + 1);
+				aAllNodes.splice(aAllNodes.indexOf(mNodeById[sParentId]) + 1, 0, ...aSpliced);
 				break;
 			}
 
@@ -324,15 +433,15 @@ sap.ui.define([
 		// {"EMPLOYEE_2_MANAGER@odata.bind" : "EMPLOYEES('0')"}
 		const oBody = JSON.parse(oRequest.requestBody);
 		const sParentId = oBody["EMPLOYEE_2_MANAGER@odata.bind"]
-			.slice("EMPLOYEES('".length, -"')".length);
+			?.slice("EMPLOYEES('".length, -"')".length);
 		const oParent = mNodeById[sParentId];
 		const oNewChild = { // same order of keys than for "old" nodes ;-)
 			AGE : 0, // see below
 			ID : "", // see below
 			Name : "", // Q: Derive default from parent's Name? A: No, it's editable!
-			DistanceFromRoot : oParent.DistanceFromRoot + 1,
+			DistanceFromRoot : oParent ? oParent.DistanceFromRoot + 1 : 0,
 			DrillState : "leaf",
-			MANAGER_ID : sParentId,
+			MANAGER_ID : sParentId ?? null,
 			DescendantCount : 0
 		};
 
@@ -348,11 +457,15 @@ sap.ui.define([
 			} else { // sParentId === "0"
 				oNewChild.ID = "" + (parseInt(sLastChildID) + 1);
 			}
-		} else { // parent not a leaf anymore
-			oParent.DrillState = "expanded";
+		} else if (sParentId) { // parent not a leaf anymore
+			oParent.DrillState = "collapsed"; // @see #reset
 			mChildrenByParentId[sParentId] = [];
 			oNewChild.AGE = oParent.AGE - 1;
 			oNewChild.ID = sParentId + ".1";
+		} else { // new root
+			const iRootCount = aAllNodes.filter((oNode) => oNode.MANAGER_ID === null).length;
+			oNewChild.AGE = 60 + iRootCount;
+			oNewChild.ID = "0ABCDEFGHIJKLMNOPQRSTUVWXYZ"[iRootCount];
 		}
 
 		if (oNewChild.ID in mNodeById) {
@@ -361,10 +474,29 @@ sap.ui.define([
 		aAllNodes.push(oNewChild); //TODO not good enough once we need "refresh"
 		mNodeById[oNewChild.ID] = oNewChild;
 		mRevisionOfAgeById[oNewChild.ID] = 0;
-		// Note: server's insert position must not affect UI (until refresh!)
-		mChildrenByParentId[sParentId].push(oNewChild);
+		if (sParentId) {
+			// Note: server's insert position must not affect UI (until refresh!)
+			mChildrenByParentId[sParentId].push(oNewChild);
+			adjustDescendantCount(sParentId, +1);
+		}
 
 		oResponse.message = JSON.stringify(SandboxModel.update([oNewChild])[0]);
+	}
+
+	/**
+	 * Gets the query options as a map from the given URL query part.
+	 *
+	 * @param {string} sQuery - Query part of a URL
+	 * @returns {Object<string,string>} Map of query options
+	 */
+	function getQueryOptions(sQuery) {
+		const mQueryOptions = {};
+		for (const sName_Value of sQuery.split("&")) {
+			const [sName, ...aValues] = sName_Value.split("=");
+			mQueryOptions[sName] = aValues.join("=");
+		}
+
+		return mQueryOptions;
 	}
 
 	/**
@@ -392,6 +524,7 @@ sap.ui.define([
 		}
 		const iSkip = "$skip" in mQueryOptions ? parseInt(mQueryOptions.$skip) : 0;
 		const iTop = "$top" in mQueryOptions ? parseInt(mQueryOptions.$top) : Infinity;
+		// Note: bSkipCopy due to select
 		oMessage.value = SandboxModel.update(aRows.slice(iSkip, iSkip + iTop).map(select), true);
 		oResponse.message = JSON.stringify(oMessage);
 	}

@@ -16,12 +16,13 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Type for <code>columnsItems</code> aggregation in <code>P13nDimMeasurePanel</code> control.
 	 * @extends sap.ui.core.Item
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @constructor
 	 * @author SAP SE
 	 * @public
 	 * @since 1.34.0
 	 * @alias sap.m.P13nDimMeasureItem
+     * @deprecated since 1.120
 	 */
 	var P13nDimMeasureItem = Item.extend("sap.m.P13nDimMeasureItem", /** @lends sap.m.P13nDimMeasureItem.prototype */
 	{

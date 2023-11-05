@@ -39,6 +39,7 @@ sap.ui.define([
 	"sap/ui/core/library",
 	"sap/ui/core/Messaging",
 	"sap/ui/core/Rendering",
+	"sap/ui/core/Supportability",
 	"sap/ui/core/cache/CacheManager",
 	"sap/ui/core/message/Message",
 	"sap/ui/model/BindingMode",
@@ -48,8 +49,8 @@ sap.ui.define([
 	"sap/ui/thirdparty/URI"
 ], function (ODataContextBinding, ODataListBinding, ODataMetaModel, ODataPropertyBinding,
 		SubmitMode, _GroupLock, _Helper, _MetadataRequestor, _Parser, _Requestor, assert, Log,
-		SyncPromise, Configuration, coreLibrary, Messaging, Rendering, CacheManager, Message,
-		BindingMode, BaseContext, Model, OperationMode, URI) {
+		SyncPromise, Configuration, coreLibrary, Messaging, Rendering, Supportability,
+		CacheManager, Message, BindingMode, BaseContext, Model, OperationMode, URI) {
 	"use strict";
 
 	var sClassName = "sap.ui.model.odata.v4.ODataModel",
@@ -184,8 +185,7 @@ sap.ui.define([
 		 *   <code>undefined</code>, '$auto', '$direct' or an application group ID.
 		 * @param {boolean} [mParameters.withCredentials]
 		 *   Whether the XMLHttpRequest is called with <code>withCredentials</code>, so that user
-		 *   credentials are included in cross-origin requests by the browser (@experimental as of
-		 *   Version 1.117.0)
+		 *   credentials are included in cross-origin requests by the browser (since 1.120.0)
 		 * @throws {Error} If an unsupported synchronization mode is given, if the given service
 		 *   root URL does not end with a forward slash, if an unsupported parameter is given, if
 		 *   OData system query options or parameter aliases are specified as parameters, if an
@@ -234,7 +234,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.119.1
+		 * @version 1.120.0
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
@@ -303,7 +303,7 @@ sap.ui.define([
 		mUriParameters = this.buildQueryOptions(oUri.query(true), false, true);
 		// BEWARE: these are shared across all bindings!
 		this.mUriParameters = mUriParameters;
-		if (Configuration.getStatisticsEnabled()) {
+		if (Supportability.isStatisticsEnabled()) {
 			// Note: this way, "sap-statistics" is not sent within $batch
 			mUriParameters = Object.assign({"sap-statistics" : true}, mUriParameters);
 		}

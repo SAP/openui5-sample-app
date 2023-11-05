@@ -4,18 +4,18 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"jquery.sap.global",
 	"sap/base/Log",
 	"sap/ui/base/SyncPromise",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/cache/CacheManager",
 	"sap/ui/model/odata/v4/lib/_Batch",
 	"sap/ui/model/odata/v4/lib/_GroupLock",
 	"sap/ui/model/odata/v4/lib/_Helper",
 	"sap/ui/model/odata/v4/lib/_Requestor",
-	"sap/ui/test/TestUtils"
-], function (jQuery, Log, SyncPromise, Configuration, CacheManager, _Batch, _GroupLock, _Helper,
-		_Requestor, TestUtils) {
+	"sap/ui/security/Security",
+	"sap/ui/test/TestUtils",
+	"sap/ui/thirdparty/jquery"
+], function (Log, SyncPromise, CacheManager, _Batch, _GroupLock, _Helper, _Requestor, Security,
+	TestUtils, jQuery) {
 	"use strict";
 
 	var sClassName = "sap.ui.model.odata.v4.lib._Requestor",
@@ -1540,7 +1540,7 @@ sap.ui.define([
 			return Promise.resolve({"This should change" : "nothing!"});
 		}
 
-		this.mock(Configuration).expects("getSecurityTokenHandlers")
+		this.mock(Security).expects("getSecurityTokenHandlers")
 			.withExactArgs()
 			.returns([securityTokenHandler0, securityTokenHandler1, securityTokenHandler2]);
 		this.mock(_Requestor.prototype).expects("checkHeaderNames")
@@ -1567,7 +1567,7 @@ sap.ui.define([
 			return Promise.reject("foo");
 		}
 
-		this.mock(Configuration).expects("getSecurityTokenHandlers")
+		this.mock(Security).expects("getSecurityTokenHandlers")
 			.withExactArgs()
 			.returns([securityTokenHandler]);
 		this.oLogMock.expects("error")
@@ -1595,7 +1595,7 @@ sap.ui.define([
 			return Promise.resolve(mNotAllowedHeaders);
 		}
 
-		this.mock(Configuration).expects("getSecurityTokenHandlers")
+		this.mock(Security).expects("getSecurityTokenHandlers")
 			.withExactArgs()
 			.returns([securityTokenHandler]);
 
@@ -5469,7 +5469,7 @@ sap.ui.define([
 	//*****************************************************************************************
 [false, true, undefined].forEach((bEnabled) => { // undefined -> no enabler assigned
 	[false, true].forEach((bCacheManagerRejects) => {
-	const sTitle = `processOptimisticBatch: n+1 start, optimistic batch matches, 
+	const sTitle = `processOptimisticBatch: n+1 start, optimistic batch matches,
 		enabler=${bEnabled}, del rejects=${bCacheManagerRejects}`;
 	QUnit.test(sTitle, function (assert) {
 		var done = assert.async(),

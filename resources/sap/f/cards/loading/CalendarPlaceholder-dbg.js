@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @extends sap.f.cards.loading.ListPlaceholder
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @private
@@ -40,6 +40,13 @@ sap.ui.define([
 
 				/**
 				 * Item template form the list.
+				 */
+				item: {
+					type: "any"
+				},
+
+				/**
+				 * Legend item template form the list.
 				 */
 				legendItem: {
 					type: "any"

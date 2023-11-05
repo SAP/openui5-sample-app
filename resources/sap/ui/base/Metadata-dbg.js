@@ -31,7 +31,7 @@ sap.ui.define([
 	 *
 	 * @class Metadata for a class.
 	 * @author Frank Weigel
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @since 0.8.6
 	 * @public
 	 * @alias sap.ui.base.Metadata
@@ -183,9 +183,9 @@ sap.ui.define([
 
 	/**
 	 * Returns the metadata object of the base class of the described class
-	 * or null if the class has no (documented) base class.
+	 * or undefined if the class has no (documented) base class.
 	 *
-	 * @return {sap.ui.base.Metadata} metadata of the base class
+	 * @return {sap.ui.base.Metadata | undefined} metadata of the base class
 	 * @public
 	 */
 	Metadata.prototype.getParent = function() {

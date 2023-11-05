@@ -132,7 +132,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @public
 	 * @alias sap.ui.core.Element
 	 */
@@ -218,13 +218,16 @@ sap.ui.define([
 				oldElement.destroy();
 			} else {
 				var sMsg = "adding element with duplicate id '" + sId + "'";
-				// duplicate ID detected => fail or at least log a warning
-				if (Configuration.getNoDuplicateIds()) {
-					Log.error(sMsg);
-					throw new Error("Error: " + sMsg);
-				} else {
+				/**
+				 * duplicate ID detected => fail or at least log a warning
+				 * @deprecated As of Version 1.120.
+				 */
+				if (!Configuration.getNoDuplicateIds()) {
 					Log.warning(sMsg);
+					return;
 				}
+				Log.error(sMsg);
+				throw new Error("Error: " + sMsg);
 			}
 		}
 	});
@@ -1072,11 +1075,11 @@ sap.ui.define([
 	Element.prototype._refreshTooltipBaseDelegate = function (oTooltip) {
 		var oOldTooltip = this.getTooltip();
 		// if the old tooltip was a Tooltip object, remove it as a delegate
-		if (BaseObject.isA(oOldTooltip, "sap.ui.core.TooltipBase")) {
+		if (BaseObject.isObjectA(oOldTooltip, "sap.ui.core.TooltipBase")) {
 			this.removeDelegate(oOldTooltip);
 		}
 		// if the new tooltip is a Tooltip object, add it as a delegate
-		if (BaseObject.isA(oTooltip, "sap.ui.core.TooltipBase")) {
+		if (BaseObject.isObjectA(oTooltip, "sap.ui.core.TooltipBase")) {
 			oTooltip._currentControl = this;
 			this.addDelegate(oTooltip);
 		}
@@ -1461,6 +1464,13 @@ sap.ui.define([
 	 * @private
 	 */
 	Element._CustomData = CustomData;
+
+	/**
+	 * Define CustomData class as the default for the built-in "customData" aggregation.
+	 * We need to do this here via the aggregation itself, since the CustomData class is
+	 * an Element subclass and thus cannot be directly referenced in Element's metadata definition.
+	 */
+	Element.getMetadata().getAggregation("customData").defaultClass = CustomData;
 
 	/*
 	 * Alternative implementation of <code>Element#data</code> which is applied after an element has been

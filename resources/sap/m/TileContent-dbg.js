@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['./library', 'sap/ui/core/library', 'sap/ui/core/Control', './TileContentRenderer', 'sap/ui/core/Configuration'],
-	function(library, Core, Control, TileContentRenderer, Configuration) {
+sap.ui.define(['./library', 'sap/ui/core/library', 'sap/ui/core/Control', './TileContentRenderer', 'sap/ui/core/Configuration', 'sap/ui/core/Lib'],
+	function(library, Core, Control, TileContentRenderer, Configuration, CoreLib) {
 	"use strict";
 
 	var Priority = library.Priority;
@@ -24,7 +24,7 @@ sap.ui.define(['./library', 'sap/ui/core/library', 'sap/ui/core/Control', './Til
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @since 1.34.0
 	 *
 	 * @public
@@ -201,7 +201,7 @@ sap.ui.define(['./library', 'sap/ui/core/library', 'sap/ui/core/Control', './Til
 	 * @returns {string} The Footer text
 	 */
 	TileContent.prototype._getFooterText = function() {
-		var resourceBundle = sap.ui.getCore().getLibraryResourceBundle('sap.m');
+		var resourceBundle = CoreLib.getResourceBundleFor('sap.m');
 		var sFooter = this.getFooter();
 		var sUnit = this.getUnit();
 		if (sUnit) {

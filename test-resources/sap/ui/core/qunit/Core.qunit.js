@@ -11,13 +11,14 @@ sap.ui.define([
 	'sap/ui/core/UIArea',
 	'sap/ui/core/Element',
 	'sap/ui/core/Configuration',
+	'sap/ui/core/Lib',
 	'sap/ui/core/Rendering',
 	'sap/ui/core/RenderManager',
 	'sap/ui/core/Theming',
 	'sap/ui/core/theming/ThemeManager',
 	'sap/ui/qunit/utils/createAndAppendDiv',
 	"sap/ui/qunit/utils/nextUIUpdate"
-], function(ResourceBundle, Log, LoaderExtensions, ObjectPath, Device, Interface, VersionInfo, oCore, UIArea, Element, Configuration, Rendering, RenderManager, Theming, ThemeManager, createAndAppendDiv, nextUIUpdate) {
+], function(ResourceBundle, Log, LoaderExtensions, ObjectPath, Device, Interface, VersionInfo, oCore, UIArea, Element, Configuration, Library, Rendering, RenderManager, Theming, ThemeManager, createAndAppendDiv, nextUIUpdate) {
 	"use strict";
 
 	var privateLoaderAPI = sap.ui.loader._;
@@ -598,10 +599,10 @@ sap.ui.define([
 	QUnit.module("loadLibrary", {
 		beforeEach: function(assert) {
 			assert.notOk(Configuration.getDebug(), "debug mode must be deactivated to properly test library loading");
-			this.oConfigurationGetPreloadStub = this.stub(Configuration, "getPreload").returns("sync");
+			this.oLibraryGetPreloadStub = this.stub(Library, "getPreloadMode").returns("sync");
 		},
 		afterEach: function(assert) {
-			this.oConfigurationGetPreloadStub.restore();
+			this.oLibraryGetPreloadStub.restore();
 			delete window.testlibs;
 		}
 	});
@@ -667,15 +668,7 @@ sap.ui.define([
 		this.stub(privateLoaderAPI, "loadJSResourceAsync").callsFake(function() {
 			return Promise.reject(new Error());
 		});
-		this.stub(sap.ui, "require").callsFake(function(name, callback) {
-			oCore.initLibrary({
-				name: 'testlibs.scenario11.lib1',
-				noLibraryCSS: true
-			});
-			setTimeout(function() {
-				callback({});
-			}, 0);
-		});
+		this.spy(sap.ui, "require");
 
 		var loaded = oCore.loadLibrary("testlibs.scenario11.lib1", true);
 		assert.ok(loaded instanceof Promise, "loadLibrary should return a promise when called with async:true");
@@ -761,8 +754,6 @@ sap.ui.define([
 
 		return VersionInfo.load().then(function(versioninfo) {
 			this.spy(privateLoaderAPI, 'loadJSResourceAsync');
-			this.spy(sap.ui, 'require');
-			this.spy(sap.ui, 'requireSync');
 
 			var vLib8 = oCore.loadLibraries(['testlibs.scenario14.lib8']);
 			assert.ok(vLib8 instanceof Promise, "async call to loadLibraries should return a promise");

@@ -82,7 +82,7 @@ function(
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -2104,7 +2104,9 @@ function(
 	 * @since 1.91
 	 */
 	SplitContainer.prototype.showPlaceholder = function(mSettings) {
-		if (!Configuration.getPlaceholder()) {
+		var Placeholder = sap.ui.require("sap/ui/core/Placeholder");
+
+		if (!Placeholder || !Placeholder.isEnabled()) {
 			return;
 		}
 

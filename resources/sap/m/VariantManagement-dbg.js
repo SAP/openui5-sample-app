@@ -122,13 +122,13 @@ sap.ui.define([
 	 * Constructor for a new <code>VariantManagement</code>.
 	 * @param {string} [sId] - ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] - Initial settings for the new control
-	 * @class Can be used to manage variants. You can use this control in most controls that are enabled for <i>key user adaptation</i>.<br>
-	 * <b>Note: </b>On the user interface, variants are generally referred to as "views".
+	 * @class Can be used to manage variants. You can use this control to create and maintain personalization changes.
+	 * The persistency and retrieval of such changes has to be handled by the hosting application.<br>
+	 * <b>Note:</b>
+	 * On the user interface, variants are generally referred to as "views".
 	 * @extends sap.ui.core.Control
 	 * @constructor
-	 * @experimental As of version 1.103
-	 * @private
-	 * @ui5-restricted sap.ui.fl, sap.ui.rta, sap.ui.comp
+	 * @public
 	 * @since 1.103
 	 * @alias sap.m.VariantManagement
 	 */
@@ -179,7 +179,9 @@ sap.ui.define([
 				},
 
 				/**
-				 *  Indicates that contexts functionality is supported
+				 *  Indicates that contexts functionality is supported.
+				 * <b>Note:</b>
+				 * This property is used internally for SAPUI5 Adaptation scenario.
 				 */
 				supportContexts: {
 					type: "boolean",
@@ -224,7 +226,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Indicates that the control is in edit state. If set to <code>false</code>, the footer of the <i>Views</i> list will be hidden.
+				 * Indicates if the buttons and the complete footer in the <i>My Views</i> dialog are visible.
 				 */
 				showFooter: {
 					type: "boolean",
@@ -233,7 +235,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Indicates the visible and selected item.
+				 * Indicates if the current variant is modified.
 				 */
 				modified: {
 					type: "boolean",
@@ -242,7 +244,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Indicates the title in the 'My Views' popover.
+				 * The title in the 'My Views' popover.
 				 */
 				popoverTitle: {
 					type: "string",
@@ -258,25 +260,6 @@ sap.ui.define([
 					type: "boolean",
 					group: "Misc",
 					defaultValue: false
-				},
-
-				/**
-				 * Determines the behavior for Apply Automatically if the standard variant is marked as the default variant.
-				 *
-				 */
-				executeOnSelectionForStandardDefault: {
-					type: "boolean",
-					group: "Misc",
-					defaultValue: false
-				},
-
-				/**
-				 * Defines the Apply Automatically text for the standard variant in the Manage Views dialog if the application controls this behavior.
-				 */
-				displayTextForExecuteOnSelectionForStandardVariant: {
-					type: "string",
-					group: "Misc",
-					defaultValue: ""
 				},
 
 				/**
@@ -313,11 +296,21 @@ sap.ui.define([
 				},
 
 				/**
+				 * Defines the Apply Automatically text for the standard variant in the <i>Manage Views</i> dialog if the application controls this behavior.
+				 */
+				_displayTextForExecuteOnSelectionForStandardVariant: {
+					type: "string",
+					group: "Misc",
+					defaultValue: "",
+					visibility: "hidden"
+				},
+
+				/**
 				 * Renders the name of the variant as a text.
 				 * The name of the variant is usually rendered as {@link sap.m.Title}
 				 * but there are use cases - related to accessibility requirements - where the
 				 * rendering should be done using {@link sap.m.Text} instead.
-				 * <b>Note:</b>:<br>
+				 * <b>Note:</b>
 				 * If the name of the variant is rendered as <code>sap.m.Text</code>, all the <code>sap.m.Title</code>-
 				 * specific information (<code>headerLevel</code> and <code>titleStyle</code>) is ignored.
 				 *
@@ -339,6 +332,16 @@ sap.ui.define([
 					group: "Misc",
 					defaultValue: true,
 					visibility: "hidden"
+				},
+
+				/**
+				 * Defines the standard variant key.
+				 */
+				_standardKey: {
+					type: "string",
+					group: "Misc",
+					defaultValue: "",
+					visibility: "hidden"
 				}
 			},
 			defaultAggregation: "items",
@@ -356,7 +359,7 @@ sap.ui.define([
 			events: {
 
 				/**
-				 * This event is fired when the <i>Save View</i> dialog or the <i>Save As</i> dialog is closed with the save button.
+				 * This event is fired when either <i>Save As</i> is triggered from the <i>Save View</i> dialog, or <i>Save</i> from <i>My Views</i>.
 				 */
 				save: {
 					parameters: {
@@ -368,14 +371,15 @@ sap.ui.define([
 						},
 
 						/**
-						 * Indicates if an existing variant is overwritten or if a new variant is created.
+						 * Indicates if an existing variant is updated or if a new variant is created.
+						 * Basically 'Save' operation leads to overwrite <code>true</code>, while 'Save As' leads to overwrite <code>false</code>.
 						 */
 						overwrite: {
 							type: "boolean"
 						},
 
 						/**
-						 * Variant key
+						 * Variant key. This property is only set, when <code>overwrite</code> is set to <code>true</code>.
 						 */
 						key: {
 							type: "string"
@@ -403,8 +407,16 @@ sap.ui.define([
 						},
 
 						/**
+						 * Array describing the contexts.
+						 */
+						contexts: {
+							type: "object[]"
+						},
+
+						/**
 						 * Indicates the check box state for 'Create Tile'.
-						 * <br>Note:</br>This event parameter is used only internally.
+						 * <b>Note:</b>
+						 * This event parameter is used only internally.
 						 */
 						tile: {
 							type: "boolean"
@@ -423,9 +435,9 @@ sap.ui.define([
 				manageCancel: {},
 
 				/**
-				 * This event is fired when users apply changes to variants in the <i>Manage Views</i> dialog.
+				 * This event is fired when users apply changes variant information in the <i>Manage Views</i> dialog.
+				 * Some of the parameters may be ommitted, depending on user selection.
 				 */
-
 				manage: {
 					parameters: {
 						/**
@@ -443,14 +455,14 @@ sap.ui.define([
 						},
 
 						/**
-						 * List of variant keys and the associated Execute on Selection indicator
+						 * List of variant keys and the associated Execute on Selection indicator. Each entry contains a 'key' - the variant key and a 'exe' - flag describing the intention
 						 */
 						exe: {
 							type: "object[]"
 						},
 
 						/**
-						 * List of variant keys and the associated favorite indicator
+						 * List of variant keys and the associated favorite indicator. Each entry contains a 'key' - the variant key and a 'visible' - flag describing the intention
 						 */
 						fav: {
 							type: "object[]"
@@ -461,6 +473,13 @@ sap.ui.define([
 						 */
 						def: {
 							type: "string"
+						},
+
+						/**
+						 * List of variant keys and the associated contexts array. Each entry contains a 'key' - the variant key and a 'contexts' - array describing the contexts
+						 */
+						contexts: {
+							type: "object[]"
 						}
 					}
 				},
@@ -510,6 +529,7 @@ sap.ui.define([
 	 * Constructs and initializes the <code>VariantManagement</code> control.
 	 */
 	VariantManagement.prototype.init = function() {
+		Control.prototype.init.apply(this, arguments);
 
 		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
@@ -536,8 +556,8 @@ sap.ui.define([
 
 				switch (oChanges.mutation) {
 					case "insert":
-						if (!this._oObserver.isObserved(oVariantItem, {properties: ["title"]})) {
-							this._oObserver.observe(oVariantItem, {properties: ["title"]});
+						if (!this._oObserver.isObserved(oVariantItem, {properties: ["title", "favorite", "executeOnSelect", "contexts"]})) {
+							this._oObserver.observe(oVariantItem, {properties: ["title", "favorite", "executeOnSelect", "contexts"]});
 						}
 
 						if (this.getSelectedKey() === oVariantItem.getKey()) {
@@ -545,8 +565,8 @@ sap.ui.define([
 						}
 						break;
 					case "remove":
-						if (this._oObserver.isObserved(oVariantItem, {properties: ["title"]})) {
-							this._oObserver.unobserve(oVariantItem, {properties: ["title"]});
+						if (this._oObserver.isObserved(oVariantItem, {properties: ["title", "favorite", "executeOnSelect", "contexts"]})) {
+							this._oObserver.unobserve(oVariantItem, {properties: ["title", "favorite", "executeOnSelect", "contexts"]});
 						}
 						break;
 					default:
@@ -561,6 +581,18 @@ sap.ui.define([
 					if (this.getSelectedKey() === oVariantItem.getKey()) {
 						this.refreshTitle();
 					}
+
+					if (!this.oManagementTable || (this.oManagementTable.getItems && this.oManagementTable.getItems().length === 0)) {
+						if (oChanges.name === "title") {
+							oVariantItem._setOriginalTitle(oChanges.current);
+						} else if (oChanges.name === "favorite") {
+							oVariantItem._setOriginalFavorite(oChanges.current);
+						} else if (oChanges.name === "executeOnSelect") {
+							oVariantItem._setOriginalExecuteOnSelect(oChanges.current);
+						} else if (oChanges.name === "contexts") {
+							oVariantItem._setOriginalContexts(oChanges.current);
+						}
+					}
 				}
 			}
 		}
@@ -573,6 +605,26 @@ sap.ui.define([
 		this._initializeControl();
 	};
 
+	/**
+ 	 * Special handling of the rendering the apply automatically control in <i>Manage Views</i>
+	 * @returns {string} Value of the private property
+	 * @private
+	 * @restricted sap.ui.mdc, sap.ui.comp
+ 	 */
+	VariantManagement.prototype.getDisplayTextForExecuteOnSelectionForStandardVariant = function() {
+		return this.getProperty("_displayTextForExecuteOnSelectionForStandardVariant");
+	};
+	/**
+ 	 * Special handling of the rendering the apply automatically control in <i>Manage Views</i>
+	 * @param {string} sValue to be displayed
+	 * @returns {string} the current instance
+	 * @private
+	 * @restricted sap.ui.mdc, sap.ui.comp
+ 	 */
+	VariantManagement.prototype.setDisplayTextForExecuteOnSelectionForStandardVariant = function(sValue) {
+		this.setProperty("_displayTextForExecuteOnSelectionForStandardVariant", sValue);
+		return this;
+	};
 	/**
  	 * Special handling of the rendering of this control.
 	 * @param {boolean} bValue defines the intended rendering
@@ -821,7 +873,6 @@ sap.ui.define([
 		return this.getItems();
 	};
 
-
 	VariantManagement.prototype.getSelectedVariantText = function(sKey) {
 		var oItem = this._getItemByKey(sKey);
 
@@ -832,10 +883,44 @@ sap.ui.define([
 		return "";
 	};
 
+	/**
+	 * Retrieves for the controls {@link sap.ui.comp.SmartVariantManagement} and {@link sap.ui.fl.variants.VariantManagement} the <i>Standard</i> variant.
+	 * For all other scenarios the first visible variant will be returned, or <code>null</code> if there are none.
+	 * @public
+	 * @returns {(string | null)} The key of either the standard variant or the first visible variant or <code>null</code>.
+	 */
 	VariantManagement.prototype.getStandardVariantKey = function() {
+		var sKey = this.getProperty("_standardKey");
+		if (!sKey) {
+			return this._getFirstVisibleVariant();
+		}
+
+		return sKey;
+	};
+
+	/**
+	 * Assignes the key of the <i>Standard</i> variant.
+	 *
+	 * @private
+	 * @restricted sap.ui.mdc, sap.ui.comp
+	 * @param {string} sValue describing the key of the standard variant
+	 */
+	VariantManagement.prototype.setStandardVariantKey = function(sValue) {
+		this.setProperty("_standardKey", sValue);
+	};
+
+	VariantManagement.prototype._getFirstVisibleVariant = function() {
 		var aItems = this._getItems();
-		if (aItems && aItems[0]) {
-			return aItems[0].getKey();
+		for (var i = 0; i < aItems.length; i++) {
+			if (aItems[i].getVisible()) {
+				if (this.getSupportFavorites()) {
+					if (aItems[i].getFavorite()) {
+						return aItems[i].getKey();
+					}
+				} else {
+					return aItems[i].getKey();
+				}
+			}
 		}
 
 		return null;
@@ -880,6 +965,15 @@ sap.ui.define([
 		return this._aRenamedItems;
 	};
 
+	/**
+	 * Retrieves a variant item by its key.
+	 * @public
+	 * @param {string} sKey of the item
+	 * @returns {(sap.m.VariantItem|null)} For a specific key; <code>null</code> if no matching item was found
+	 */
+	VariantManagement.prototype.getItemByKey = function(sKey) {
+		return this._getItemByKey(sKey);
+	};
 
 	VariantManagement.prototype._getItemByKey = function(sKey) {
 		var oItem = null;
@@ -1630,7 +1724,6 @@ sap.ui.define([
 			return false;
 		}
 
-
 		var mContexts = this._getContextInfoChanges();
 		var bIsRestricted = this._isRestricted(mContexts);
 		if (bIsRestricted && this.oDefault.getSelected()) {
@@ -1666,6 +1759,8 @@ sap.ui.define([
 		if (this._getShowCreateTile() && this.oCreateTile) {
 			oObj.tile = this.oCreateTile.getSelected();
 		}
+
+		this.destroyManageDialog();
 
 		this.fireSave(oObj);
 
@@ -1796,7 +1891,7 @@ sap.ui.define([
 
 		oManagementTable.getBinding("items").filter(aFilters);
 
-		this._bDeleteOccured = true;
+		this._bRebindRequired = true;
 	};
 
 	VariantManagement.prototype.getManageDialog = function() {
@@ -1902,7 +1997,9 @@ sap.ui.define([
 				type: ButtonType.Emphasized,
 				press: function() {
 					this._handleManageSavePressed();
-					//this.oManagementDialog.close();
+					if (this.oManagementDialog) {
+						this.oManagementDialog.close();
+					}
 				}.bind(this)
 			});
 
@@ -1973,7 +2070,7 @@ sap.ui.define([
 				filters: this._getVisibleFilter()
 			});
 
-			this._bDeleteOccured = false;
+			this._bRebindRequired = false;
 		}
 	};
 
@@ -2057,7 +2154,7 @@ sap.ui.define([
 				value: '{' + sModelName + ">title}"
 			});
 
-			if (oItem.getTitle() !== oItem.getOriginalTitle()) {
+			if (oItem.getTitle() !== oItem._getOriginalTitle()) {
 				this._verifyVariantNameConstraints(oNameControl, oItem.getKey(), oItem.getTitle());
 			}
 
@@ -2108,7 +2205,7 @@ sap.ui.define([
 		if (this.getDisplayTextForExecuteOnSelectionForStandardVariant() && (this.getStandardVariantKey() === oItem.getKey())) {
 			oExecuteOnSelectCtrl = new CheckBox(sIdPrefix + "-exe-" + nPos, {
 				wrapping: true,
-				text: '{' + sModelName + ">/displayTextForExecuteOnSelectionForStandardVariant}",
+				text: '{' + sModelName + ">/_displayTextForExecuteOnSelectionForStandardVariant}",
 				selected: '{' + sModelName + ">executeOnSelect}"
 			});
 		} else {
@@ -2215,10 +2312,19 @@ sap.ui.define([
 		// Since the filtered items and the result after the real deletion are identical, no change is detected. Based on this, the context on the table is
 		// not invalidated....
 		// WA: Always do the binding while opening the dialog.
-		if (this._bDeleteOccured) {
-			this._bDeleteOccured = false;
+		if (this._bRebindRequired) {
+			this._bRebindRequired = false;
 
-			this.oManagementTable.getBinding("items").filter(this._getVisibleFilter());
+			if (!this.oManagementTable.getBinding("items")) {
+				this.oManagementTable.bindAggregation("items", {
+					path: "/items",
+					model: "$mVariants",
+					factory: this._templateFactoryManagementDialog.bind(this),
+					filters: this._getVisibleFilter()
+				});
+			} else {
+				this.oManagementTable.getBinding("items").filter(this._getVisibleFilter());
+			}
 		}
 
 		this.oManagementDialog.open();
@@ -2287,8 +2393,6 @@ sap.ui.define([
 	VariantManagement.prototype._handleManageCancelPressed = function() {
 
 		if (this._getDeletedItems().length > 0) {
-			this._bDeleteOccured = true;
-
 			this._getDeletedItems().forEach(function(sKey) {
 				var oListItem = this._getRowForKey(sKey);
 				if (oListItem && !oListItem.getVisible()) {
@@ -2299,12 +2403,7 @@ sap.ui.define([
 			this._clearDeletedItems();
 		}
 
-		this.getItems().forEach(function(oItem) {
-			oItem.setTitle(oItem.getOriginalTitle());
-			oItem.setFavorite(oItem.getOriginalFavorite());
-			oItem.setExecuteOnSelect(oItem.getOriginalExecuteOnSelect());
-			oItem.setContexts(oItem.getOriginalContexts());
-		});
+		this._resetToOriginal();
 
 		if (this._sOriginalDefaultKey !== this.getDefaultKey()) {
 			var sPrevDefaultKey = this.getDefaultKey();
@@ -2320,6 +2419,10 @@ sap.ui.define([
 		}
 
 		this._clearRenamedItems();
+
+		this._bRebindRequired = true;
+		this.oManagementTable.unbindItems();
+
 
 		if (this._oManagedObjectModel) {
 			this._oManagedObjectModel.checkUpdate();
@@ -2397,25 +2500,28 @@ sap.ui.define([
 				oVariantInfo.deleted.push(oItem.getKey());
 			}
 
-			if (oItem.getVisible() && (oItem.getFavorite() !== oItem.getOriginalFavorite())) {
+			if (oItem.getVisible() && (oItem.getFavorite() !== oItem._getOriginalFavorite())) {
 				if (!oVariantInfo.fav) {
 					oVariantInfo.fav = [];
 				}
 				oVariantInfo.fav.push({ key: oItem.getKey(), visible: oItem.getFavorite()});
+				oItem._setOriginalFavorite(oItem.getFavorite());
 			}
 
-			if (oItem.getVisible() && (oItem.getTitle() !== oItem.getOriginalTitle())) {
+			if (oItem.getVisible() && (oItem.getTitle() !== oItem._getOriginalTitle())) {
 				if (!oVariantInfo.renamed) {
 					oVariantInfo.renamed = [];
 				}
 				oVariantInfo.renamed.push({ key: oItem.getKey(), name: oItem.getTitle()});
+				oItem._setOriginalTitle(oItem.getTitle());
 			}
 
-			if (oItem.getVisible()  && (oItem.getExecuteOnSelect() !== oItem.getOriginalExecuteOnSelect())) {
+			if (oItem.getVisible()  && (oItem.getExecuteOnSelect() !== oItem._getOriginalExecuteOnSelect())) {
 				if (!oVariantInfo.exe) {
 					oVariantInfo.exe = [];
 				}
 				oVariantInfo.exe.push({ key: oItem.getKey(), exe: oItem.getExecuteOnSelect()});
+				oItem._setOriginalExecuteOnSelect(oItem.getExecuteOnSelect());
 			}
 
 			if (oItem.getVisible() && this._hasContextsChanged(oItem)) {
@@ -2423,6 +2529,7 @@ sap.ui.define([
 					oVariantInfo.contexts = [];
 				}
 				oVariantInfo.contexts.push({ key: oItem.getKey(), contexts: oItem.getContexts()});
+				oItem._setOriginalContexts(oItem.getContexts());
 			}
 
 		}.bind(this));
@@ -2430,8 +2537,17 @@ sap.ui.define([
 		return oVariantInfo;
 	};
 
+	VariantManagement.prototype._resetToOriginal = function() {
+		this.getItems().forEach(function(oItem) {
+			oItem.setTitle(oItem._getOriginalTitle());
+			oItem.setFavorite(oItem._getOriginalFavorite());
+			oItem.setExecuteOnSelect(oItem._getOriginalExecuteOnSelect());
+			oItem.setContexts(oItem._getOriginalContexts());
+		});
+	};
+
 	VariantManagement.prototype._hasContextsChanged = function(oItem) {
-		return (JSON.stringify(oItem.getContexts()) !== JSON.stringify(oItem.getOriginalContexts()));
+		return (JSON.stringify(oItem.getContexts()) !== JSON.stringify(oItem._getOriginalContexts()));
 	};
 
 	VariantManagement.prototype._handleManageSavePressed = function() {
@@ -2439,39 +2555,28 @@ sap.ui.define([
 			return;
 		}
 
-		this.oManagementDialog.close();
 		if (this._getDeletedItems().length > 0) {
-			this._bDeleteOccured = true;
-
+			this._bRebindRequired = true;
 			this._getDeletedItems().forEach(function(sKey) {
 				var oItem = this._getItemByKey(sKey);
 				if (oItem) {
 					oItem.setVisible(false);
 				}
 			}.bind(this));
-
-			// this._getDeletedItems().some(function(sItemKey) {
-			// 	if (sItemKey === this.getSelectedKey()) {
-			// 		var sKey = this.getStandardVariantKey();
-
-			// 		this.setModified(false);
-			// 		this.setSelectedKey(sKey);
-
-			// 		this.fireSelect({
-			// 			key: sKey
-			// 		});
-			// 		return true;
-			// 	}
-
-			// 	return false;
-			// }.bind(this));
 		}
 
-		if (this._getRenamedItems().indexOf(this.getSelectedKey()) >= 0) {
-			var oBinding = this.oVariantText.getBinding("text");
-			if (oBinding) {
-				oBinding.checkUpdate(true);
+		if (this._getRenamedItems().length > 0) {
+			this._bRebindRequired = true;
+			if (this._getRenamedItems().indexOf(this.getSelectedKey()) >= 0) {
+				var oBinding = this.oVariantText.getBinding("text");
+				if (oBinding) {
+					oBinding.checkUpdate(true);
+				}
 			}
+		}
+
+		if (this._bRebindRequired) {
+			this.oManagementTable.unbindItems();
 		}
 
 		this.fireManage(this._collectManageData());
@@ -2542,7 +2647,7 @@ sap.ui.define([
 		for (var i = aRenamedKeys.length - 1; i >= 0; i--) {
 			var oItem = this._getItemByKey(aRenamedKeys[i]);
 			if (oItem) {
-				if (oItem.getTitle() === oItem.getOriginalTitle()) {
+				if (oItem.getTitle() === oItem._getOriginalTitle()) {
 					this._removeRenamedItem(oItem);
 				}
 			}
@@ -2820,6 +2925,7 @@ sap.ui.define([
 		this._oSearchField = undefined;
 		this._oSearchFieldOnMgmtDialog = undefined;
 		this._sDefaultKey = undefined;
+		this._oCtrlRef = undefined;
 
 		oModel = this.getModel(VariantManagement.INNER_MODEL_NAME);
 		if (oModel) {

@@ -82,6 +82,9 @@ sap.ui.define([
 
 	//*****************************************************************************************************************
 	QUnit.module("sap.ui.model.type.Date", {
+		before() {
+			this.__ignoreIsolatedCoverage__ = true;
+		},
 		beforeEach : function() {
 			Configuration.setLanguage("en-US");
 		},

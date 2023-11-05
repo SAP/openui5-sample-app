@@ -19,6 +19,7 @@ sap.ui.define([
 	"sap/ui/Device",
 	"sap/ui/core/library",
 	"./ColorPickerRenderer",
+	"./ColorPickerHelper",
 	"sap/base/Log",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/Configuration",
@@ -37,6 +38,7 @@ sap.ui.define([
 	Device,
 	coreLibrary,
 	ColorPickerRenderer,
+	ColorPickerHelper,
 	Log,
 	jQuery,
 	Configuration
@@ -65,7 +67,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -529,6 +531,7 @@ sap.ui.define([
 	 * Initialization hook creating composite parts.
 	 */
 	ColorPicker.prototype.init = function() {
+		this.oColorPickerHelper = ColorPickerHelper.getHelper();
 		// set gradient prefix depending of the browser
 		if (Device.browser.firefox) {
 			sBrowserPrefix = "-moz-linear-gradient";
@@ -565,7 +568,7 @@ sap.ui.define([
 		this.data("sap-ui-fastnavgroup", "true", true); // Define group for F6 handling
 
 		// Get if control should be in responsive mode
-		this.bResponsive = Library.ColorPickerHelper.isResponsive();
+		this.bResponsive = this.oColorPickerHelper.isResponsive();
 
 		// Color picker cursor size in px obtained from less parameter. Keep in mind width and height are the same.
 		var sCircleSizeCSSParameterName = this.bResponsive ? "_sap_ui_unified_ColorPicker_CircleSize" : "_sap_ui_unified_ColorPicker_commonsCircleSize";
@@ -790,7 +793,7 @@ sap.ui.define([
 		oHL = new HLayout({
 			content: [
 				// Label
-				Library.ColorPickerHelper.factory.createLabel({
+				this.oColorPickerHelper.factory.createLabel({
 					text: sLabelText,
 					tooltip: sTooltip,
 					labelFor: oInput
@@ -802,7 +805,7 @@ sap.ui.define([
 
 		// Manage unit label
 		if (sUnit) {
-			oHL.addContent(Library.ColorPickerHelper.factory.createLabel({text: sUnit, labelFor: oInput})
+			oHL.addContent(this.oColorPickerHelper.factory.createLabel({text: sUnit, labelFor: oInput})
 				.addStyleClass(CONSTANTS.UnitLabelClass)
 				.addStyleClass(CONSTANTS.LabelClass)
 			);
@@ -912,21 +915,21 @@ sap.ui.define([
 			ontouchend: this._handleCPBoxTouchEndEvent.bind(this)
 		});
 
-		this.oHexField = Library.ColorPickerHelper.factory.createInput(sId + "-hxF", {
+		this.oHexField = this.oColorPickerHelper.factory.createInput(sId + "-hxF", {
 			value: this.Color.hex.substr(1),
 			change: this._handleHexValueChange.bind(this),
 			ariaLabelledBy: InvisibleText.getStaticId("sap.ui.unified", "COLORPICKER_HEX")
 		}).addStyleClass(CONSTANTS.HEXClass);
 
 
-		this.oRedField = Library.ColorPickerHelper.factory.createInput(sId + "-rF", {
+		this.oRedField = this.oColorPickerHelper.factory.createInput(sId + "-rF", {
 			value: this.Color.r,
 			change: this._handleRedValueChange.bind(this),
 			ariaLabelledBy: InvisibleText.getStaticId("sap.ui.unified", "COLORPICKER_RED")
 		}).addStyleClass(CONSTANTS.LeftColumnInputClass);
 
 
-		this.oGreenField = Library.ColorPickerHelper.factory.createInput(sId + "-gF", {
+		this.oGreenField = this.oColorPickerHelper.factory.createInput(sId + "-gF", {
 			value: this.Color.g,
 			change: this._handleGreenValueChange.bind(this),
 			ariaLabelledBy: InvisibleText.getStaticId("sap.ui.unified", "COLORPICKER_GREEN")
@@ -934,21 +937,21 @@ sap.ui.define([
 
 
 
-		this.oBlueField = Library.ColorPickerHelper.factory.createInput(sId + "-bF", {
+		this.oBlueField = this.oColorPickerHelper.factory.createInput(sId + "-bF", {
 			value: this.Color.b,
 			change: this._handleBlueValueChange.bind(this),
 			ariaLabelledBy: InvisibleText.getStaticId("sap.ui.unified", "COLORPICKER_BLUE")
 		}).addStyleClass(CONSTANTS.LeftColumnInputClass);
 
 
-		this.oHueField = Library.ColorPickerHelper.factory.createInput(sId + "-hF", {
+		this.oHueField = this.oColorPickerHelper.factory.createInput(sId + "-hF", {
 			value: this.Color.h,
 			change: this._handleHueValueChange.bind(this),
 			ariaLabelledBy: InvisibleText.getStaticId("sap.ui.unified", "COLORPICKER_HUE")
 		}).addStyleClass(CONSTANTS.RightColumnInputClass);
 
 
-		this.oSatField = Library.ColorPickerHelper.factory.createInput(sId + "-sF", {
+		this.oSatField = this.oColorPickerHelper.factory.createInput(sId + "-sF", {
 			value: this.Color.s,
 			change: this._handleSatValueChange.bind(this),
 			ariaLabelledBy: InvisibleText.getStaticId("sap.ui.unified", "COLORPICKER_SAT") +
@@ -956,7 +959,7 @@ sap.ui.define([
 		}).addStyleClass(CONSTANTS.RightColumnInputClass);
 
 
-		this.oLitField = Library.ColorPickerHelper.factory.createInput(sId + "-lF", {
+		this.oLitField = this.oColorPickerHelper.factory.createInput(sId + "-lF", {
 			value: this.Color.l,
 			change: this._handleLitValueChange.bind(this),
 			ariaLabelledBy: InvisibleText.getStaticId("sap.ui.unified", "COLORPICKER_LIGHTNESS") +
@@ -964,21 +967,21 @@ sap.ui.define([
 		}).addStyleClass(CONSTANTS.RightColumnInputClass).addStyleClass(CONSTANTS.HideForHSVClass);
 
 		// this alpha field is rendered along with R, G, B fields
-		this.oAlphaField = Library.ColorPickerHelper.factory.createInput(sId + "-aF", {
+		this.oAlphaField = this.oColorPickerHelper.factory.createInput(sId + "-aF", {
 			value: this.Color.a,
 			change: this._handleAlphaValueChange.bind(this),
 			ariaLabelledBy: InvisibleText.getStaticId("sap.ui.unified", "COLORPICKER_ALPHA")
 		}).addStyleClass(CONSTANTS.RightColumnInputClass).addStyleClass(CONSTANTS.HideForHSVClass).addStyleClass("sapUnifiedA");
 
 		// this alpha field is rendered along with H, S, L fields
-		this.oAlphaField2 = Library.ColorPickerHelper.factory.createInput(sId + "-aF2", {
+		this.oAlphaField2 = this.oColorPickerHelper.factory.createInput(sId + "-aF2", {
 			value: this.Color.a,
 			change: this._handleAlphaValueChange.bind(this),
 			ariaLabelledBy: InvisibleText.getStaticId("sap.ui.unified", "COLORPICKER_ALPHA")
 		}).addStyleClass(CONSTANTS.RightColumnInputClass).addStyleClass(CONSTANTS.HideForHSVClass).addStyleClass("sapUnifiedA");
 
 
-		this.oValField = Library.ColorPickerHelper.factory.createInput(sId + "-vF", {
+		this.oValField = this.oColorPickerHelper.factory.createInput(sId + "-vF", {
 			value: this.Color.v,
 			change: this._handleValValueChange.bind(this),
 			ariaLabelledBy: InvisibleText.getStaticId("sap.ui.unified", "COLORPICKER_VALUE")
@@ -986,11 +989,11 @@ sap.ui.define([
 
 
 		//Commons RGB|HSL output
-		this.oRGBorHSLRBGroup = Library.ColorPickerHelper.factory.createRadioButtonGroup({
+		this.oRGBorHSLRBGroup = this.oColorPickerHelper.factory.createRadioButtonGroup({
 			columns: 2,
 			buttons: [
-				Library.ColorPickerHelper.factory.createRadioButtonItem({text: CONSTANTS.RGB}),
-				Library.ColorPickerHelper.factory.createRadioButtonItem({text: Library.ColorPickerMode.HSL})
+				this.oColorPickerHelper.factory.createRadioButtonItem({text: CONSTANTS.RGB}),
+				this.oColorPickerHelper.factory.createRadioButtonItem({text: Library.ColorPickerMode.HSL})
 			],
 			select: this._handleRGBorHSLValueChange.bind(this),
 			selectedIndex: (this.Color.formatHSL ? 1 : 0 )
@@ -999,7 +1002,7 @@ sap.ui.define([
 		// Slider
 		this.oHueInvisibleText = new InvisibleText({text: oRb.getText("COLORPICKER_HUE_SLIDER")}).toStatic();
 		this.addAggregation("_invisibleTexts", this.oHueInvisibleText, true);
-		this.oSlider = Library.ColorPickerHelper.factory.createSlider(sId + "-hSLD", {
+		this.oSlider = this.oColorPickerHelper.factory.createSlider(sId + "-hSLD", {
 			max: 360,
 			step: 1,
 			tooltip: oRb.getText("COLORPICKER_HUE"),
@@ -1015,7 +1018,7 @@ sap.ui.define([
 		this.oAlphaInvisibleText = new InvisibleText({text: oRb.getText("COLORPICKER_ALPHA_SLIDER")}).toStatic();
 		this.addAggregation("_invisibleTexts", this.oAlphaInvisibleText, true);
 
-		this.oAlphaSlider = Library.ColorPickerHelper.factory.createSlider(sId + "-aSLD", {
+		this.oAlphaSlider = this.oColorPickerHelper.factory.createSlider(sId + "-aSLD", {
 			max: 1,
 			value: 1,
 			step: 0.01,
@@ -2492,7 +2495,7 @@ sap.ui.define([
 				// RGB|HSL output selector
 				new HLayout({
 					content: [
-						Library.ColorPickerHelper.factory.createLabel({ text: "Output:", labelFor: this.oRGBorHSLRBGroup}),
+						this.oColorPickerHelper.factory.createLabel({ text: "Output:", labelFor: this.oRGBorHSLRBGroup}),
 						this.oRGBorHSLRBGroup
 					],
 					layoutData: this.rbg
@@ -2515,11 +2518,11 @@ sap.ui.define([
 	ColorPicker.prototype._createUnifiedColorPicker = function(sId) {
 		var that = this;
 
-		this.oRbRGB = Library.ColorPickerHelper.factory.createRadioButtonItem({tooltip: oRb.getText("COLORPICKER_SELECT_RGB_TOOLTIP")});
+		this.oRbRGB = this.oColorPickerHelper.factory.createRadioButtonItem({tooltip: oRb.getText("COLORPICKER_SELECT_RGB_TOOLTIP")});
 		this.oRbRGB.addStyleClass("sapUiCPRB");
-		this.oRbHSLV = Library.ColorPickerHelper.factory.createRadioButtonItem({tooltip: oRb.getText("COLORPICKER_SELECT_HSL_TOOLTIP")});
+		this.oRbHSLV = this.oColorPickerHelper.factory.createRadioButtonItem({tooltip: oRb.getText("COLORPICKER_SELECT_HSL_TOOLTIP")});
 		this.oRbHSLV.addStyleClass("sapUiCPRB");
-		this.oButton = Library.ColorPickerHelper.factory.createButton(sId + "-toggleMode", {
+		this.oButton = this.oColorPickerHelper.factory.createButton(sId + "-toggleMode", {
 			type: Device.system.phone ? "Default" : "Transparent",
 			tooltip: oRb.getText("COLORPICKER_TOGGLE_BTN_TOOLTIP"),
 			icon: "sap-icon://source-code",
@@ -2530,7 +2533,7 @@ sap.ui.define([
 		this.setAggregation("_oButton", this.oButton, true);
 
 		// RGB|HSL output
-		this.oRGBorHSLRBUnifiedGroup = Library.ColorPickerHelper.factory.createRadioButtonGroup({
+		this.oRGBorHSLRBUnifiedGroup = this.oColorPickerHelper.factory.createRadioButtonGroup({
 			select: this._handleRGBorHSLValueChange.bind(this),
 			selectedIndex: (this.Color.formatHSL ? 1 : 0)
 		});

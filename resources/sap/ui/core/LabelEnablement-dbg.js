@@ -19,6 +19,7 @@ sap.ui.define(['../base/ManagedObject', "sap/base/assert"],
 		"sap.m.Link",
 		"sap.m.Label",
 		"sap.m.Text",
+		"sap.m.Select",
 		"sap.ui.webc.main.Label",
 		"sap.ui.webc.main.Link"
 	];
@@ -139,7 +140,7 @@ sap.ui.define(['../base/ManagedObject', "sap/base/assert"],
 	 * @see sap.ui.core.LabelEnablement#enrich
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @protected
 	 * @alias sap.ui.core.LabelEnablement
 	 * @namespace
@@ -317,6 +318,12 @@ sap.ui.define(['../base/ManagedObject', "sap/base/assert"],
 			}
 
 			return isLabelableControl(oControl) ? sId : "";
+		};
+
+		oControl.isLabelFor = function(oControl) {
+			var sId = oControl.getId();
+			var aLabels = CONTROL_TO_LABELS_MAPPING[sId];
+			return aLabels && aLabels.indexOf(this.getId()) > -1;
 		};
 
 		if (!oControl.getMetadata().getProperty("required")) {

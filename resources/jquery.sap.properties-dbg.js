@@ -57,6 +57,12 @@ sap.ui.define(['jquery.sap.global', 'sap/base/util/Properties'],
 	jQuery.sap.properties = Properties.create;
 
 	/**
+	 * @namespace jQuery.sap.util
+	 * @public
+	 * @deprecated as of version 1.120
+	 */
+
+	/**
 	 * @interface Represents a collection of string properties (key/value pairs).
 	 *
 	 * Each key and its corresponding value in the collection is a string, keys are case-sensitive.
@@ -67,7 +73,7 @@ sap.ui.define(['jquery.sap.global', 'sap/base/util/Properties'],
 	 * {@link #setProperty} to store or change a value for a key and {@link #getKeys}
 	 * can be used to retrieve an array of all keys that are currently stored in the collection.
 	 *
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @since 0.9.0
 	 * @name jQuery.sap.util.Properties
 	 * @public

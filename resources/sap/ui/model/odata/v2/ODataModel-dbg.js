@@ -38,6 +38,7 @@ sap.ui.define([
 	"sap/ui/core/Messaging",
 	"sap/ui/core/message/Message",
 	"sap/ui/core/message/MessageParser",
+	"sap/ui/core/Supportability",
 	"sap/ui/model/_Helper",
 	"sap/ui/model/BindingMode",
 	"sap/ui/model/Context",
@@ -58,9 +59,10 @@ sap.ui.define([
 ], function(_CreatedContextsCache, Context, ODataAnnotations, ODataContextBinding, ODataListBinding,
 		ODataTreeBinding, assert, Log, encodeURL, deepEqual, deepExtend, each, extend,
 		isEmptyObject, isPlainObject, merge, uid, UriParameters, SyncPromise, Configuration,
-		coreLibrary, Messaging, Message, MessageParser, _Helper, BindingMode, BaseContext, FilterProcessor,
-		Model, CountMode, MessageScope, ODataMetadata, ODataMetaModel, ODataMessageParser,
-		ODataPropertyBinding, ODataUtils, OperationMode, UpdateMethod, OData, URI, isCrossOriginURL
+		coreLibrary, Messaging, Message, MessageParser, Supportability,  _Helper, BindingMode,
+		BaseContext, FilterProcessor, Model, CountMode, MessageScope, ODataMetadata, ODataMetaModel,
+		ODataMessageParser,	ODataPropertyBinding, ODataUtils, OperationMode, UpdateMethod, OData,
+		URI, isCrossOriginURL
 ) {
 
 	"use strict";
@@ -216,7 +218,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -405,7 +407,7 @@ sap.ui.define([
 			this.sUser = sUser;
 			this.sPassword = sPassword;
 
-			if (Configuration.getStatisticsEnabled()) {
+			if (Supportability.isStatisticsEnabled()) {
 				// add statistics parameter to every request (supported only on Gateway servers)
 				this.aUrlParams.push("sap-statistics=true");
 			}
@@ -2068,6 +2070,9 @@ sap.ui.define([
 	 *   Deprecated since 1.102.0, as {@link sap.ui.model.odata.OperationMode.Auto} is deprecated;
 	 *   the threshold that defines how many entries should be fetched at least by the binding if
 	 *   <code>operationMode</code> is set to <code>Auto</code>.
+	 * @throws {Error} If one of the filters uses an operator that is not supported by the underlying model
+	 *   implementation or if the {@link sap.ui.model.Filter.NONE} filter instance is contained in
+	 *   <code>aFilters</code> together with other filters
 	 * @returns {sap.ui.model.odata.v2.ODataListBinding} The new list binding
 	 * @see sap.ui.model.Model.prototype.bindList
 	 * @public
@@ -2130,6 +2135,12 @@ sap.ui.define([
 	 *   restrictions for using filters, see above
 	 * @param {object} [mParameters]
 	 *   Map of binding parameters
+	 * @param {boolean} [mParameters.transitionMessagesOnly=false]
+	 *   Whether the tree binding only requests transition messages from the back end. If messages
+	 *   for entities of this collection need to be updated, use
+	 *   {@link sap.ui.model.odata.v2.ODataModel#read} on the parent entity corresponding to the
+	 *   tree binding's context, with the parameter <code>updateAggregatedMessages</code> set to
+	 *   <code>true</code>.
 	 * @param {object} [mParameters.treeAnnotationProperties]
 	 *   The mapping between data properties and the hierarchy used to visualize the tree, if not
 	 *   provided by the service's metadata. For the correct metadata annotations, check the
@@ -2212,6 +2223,9 @@ sap.ui.define([
 	 *   instead.
 	 * @param {sap.ui.model.Sorter | sap.ui.model.Sorter[]} [vSorters]
 	 *   The dynamic sorters to be used initially
+	 * @throws {Error} If one of the filters uses an operator that is not supported by the underlying model
+	 *   implementation or if the {@link sap.ui.model.Filter.NONE} filter instance is contained in
+	 *   <code>vFilters</code> together with other filters
 	 *
 	 * @returns {sap.ui.model.odata.v2.ODataTreeBinding}
 	 *   The new tree binding
@@ -4286,7 +4300,7 @@ sap.ui.define([
 			that = this;
 
 		if (!bBatch) {
-			bContent = !(oResponse.statusCode === 204 || oResponse.statusCode === '204');
+			bContent = !["204", "205"].includes(String(oResponse.statusCode));
 
 			sUri = oRequest.requestUri;
 			sPath = sUri.replace(this.sServiceUrl,"");
@@ -6432,8 +6446,7 @@ sap.ui.define([
 		} else {
 			delete this.mChangedEntities[sKey];
 		}
-		Messaging.removeMessages(this.getMessagesByEntity(sKey,
-			/*bExcludePersistent*/!bDeleteEntity));
+		Messaging.removeMessages(this.getMessagesByEntity(sKey, /*bExcludePersistent*/true));
 
 		return pMetaDataLoaded;
 	};

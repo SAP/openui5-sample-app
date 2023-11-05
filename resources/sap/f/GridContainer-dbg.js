@@ -171,7 +171,7 @@ sap.ui.define([
 	 * @see {@link sap.f.dnd.GridDropInfo}
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @extends sap.ui.core.Control
 	 *
@@ -1135,9 +1135,7 @@ sap.ui.define([
 		aItemDomRefs = oItemNavigation.getItemDomRefs();
 
 		if (aItemDomRefs[iIndex]) {
-			oItemNavigation.setFocusedIndex(iIndex);
-
-			aItemDomRefs[iIndex].focus();
+			oItemNavigation.focusItem(iIndex);
 		}
 	};
 

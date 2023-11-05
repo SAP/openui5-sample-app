@@ -52,7 +52,7 @@ sap.ui.define([
 	 * @alias sap.m.SuggestionsPopover
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 */
 	var SuggestionsPopover = EventProvider.extend("sap.m.SuggestionsPopover", /** @lends sap.m.SuggestionsPopover.prototype */ {
 
@@ -243,7 +243,7 @@ sap.ui.define([
 
 		var oList = this.getItemsContainer(),
 			oValueStateHeader = this._getValueStateHeader(),
-			bHasValueStateHeader = oValueStateHeader && oValueStateHeader.getVisible(),
+			bHasValueStateHeader = oValueStateHeader && (oValueStateHeader.getValueState() !== ValueState.None),
 			bFocusInInput = oParent.hasStyleClass("sapMFocus"),
 			aSelectableItems = oList && oList.getItems().filter(function (oItem) {
 				return oItem.getVisible && oItem.getVisible();
@@ -419,7 +419,7 @@ sap.ui.define([
 		var oList = this.getItemsContainer(),
 			oPreviousFocusedItem = this.getFocusedListItem(),
 			oValueStateHeader = this._getValueStateHeader(),
-			bHasValueStateHeader = oValueStateHeader && oValueStateHeader.getVisible();
+			bHasValueStateHeader = oValueStateHeader && (oValueStateHeader.getValueState() !== ValueState.None);
 
 		// remove focus from everywhere
 		oList && oList.removeStyleClass("sapMListFocus");
@@ -582,8 +582,8 @@ sap.ui.define([
 	 * @private
 	 */
 	SuggestionsPopover.prototype.updateValueState = function(sValueState, vValueStateText, bShowValueStateMessage) {
-		var bShow = bShowValueStateMessage && sValueState !== ValueState.None;
 		vValueStateText = vValueStateText || ValueStateSupport.getAdditionalText(sValueState);
+
 		if (!this.getPopover()) {
 			return this;
 		}
@@ -605,7 +605,7 @@ sap.ui.define([
 
 		// adjust ValueStateHeader visibility
 		if (oValueStateHeader) {
-			oValueStateHeader.setVisible(bShow);
+			oValueStateHeader.setValueState(bShowValueStateMessage ? sValueState : ValueState.None);
 		}
 
 		this._alignValueStateStyles(sValueState);

@@ -7,12 +7,11 @@
 sap.ui.define([
 	"sap/base/Log",
 	"sap/base/util/merge",
-	"sap/base/util/UriParameters",
 	"sap/ui/base/SyncPromise",
 	"sap/ui/core/Lib",
 	"sap/ui/core/Rendering",
 	"sap/ui/thirdparty/jquery"
-], function (Log, merge, UriParameters, SyncPromise, Library, Rendering, jQuery) {
+], function (Log, merge, SyncPromise, Library, Rendering, jQuery) {
 	"use strict";
 	/*global QUnit, sinon */
 	// Note: The dependency to Sinon.JS has been omitted deliberately. Most test files load it via
@@ -26,7 +25,7 @@ sap.ui.define([
 		sMimeHeaders = "\r\nContent-Type: application/http\r\n"
 			+ "Content-Transfer-Encoding: binary\r\n",
 		rMultipartHeader = /^Content-Type:\s*multipart\/mixed;\s*boundary=/i,
-		oUriParameters = UriParameters.fromQuery(window.location.search),
+		oUriParameters = new URLSearchParams(window.location.search),
 		sAutoRespondAfter = oUriParameters.get("autoRespondAfter"),
 		sRealOData = oUriParameters.get("realOData"),
 		rRequestKey = /^(\S+) (\S+)$/,
@@ -587,7 +586,11 @@ sap.ui.define([
 					oResponse = aResponses[0];
 					if (typeof oResponse.buildResponse === "function") {
 						oResponse = merge({}, oResponse);
-						oResponse.buildResponse(oMatch.match, oResponse, oRequest);
+						try {
+							oResponse.buildResponse(oMatch.match, oResponse, oRequest);
+						} catch (oError) {
+							oResponse = error(500, oRequest, oError.stack);
+						}
 					}
 					if (oMatch.responses.length > 1) {
 						iAlternative = oMatch.responses.indexOf(oResponse);

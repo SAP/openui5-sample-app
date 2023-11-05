@@ -1,0 +1,5 @@
+/*!
+ * copyright
+ */
+sap.ui.define(["sap/base/config"],function(e){"use strict";const t=e.getWritableInstance();const i=()=>{let e=true;let i=t.get({name:"sapUiAllowlistService",type:t.Type.String,defaultValue:t.get({name:"sapUiWhitelistService",type:t.Type.String,defaultValue:undefined})});if(!i){i=t.get({name:"sapAllowlistService",type:t.Type.String,defaultValue:t.get({name:"sapWhitelistService",type:t.Type.String})});e=false}return{allowlistService:i,globalProvider:e}};const r={getAllowlistService:()=>i().allowlistService,getFrameOptions(){var e=t.get({name:"sapUiFrameOptions",type:t.Type.String,defaultValue:"default"});if(e==="default"){const t=i();e=t.allowlistService&&!t.globalProvider?"trusted":"allow"}return e},getSecurityTokenHandlers(){return t.get({name:"sapUiSecurityTokenHandlers",type:t.Type.FunctionArray})},setSecurityTokenHandlers(e){e.forEach(function(e){if(typeof e!=="function"){throw new Error("Not a function: "+e)}});t.set("sapUiSecurityTokenHandlers",e.slice())}};return r});
+//# sourceMappingURL=Security.js.map

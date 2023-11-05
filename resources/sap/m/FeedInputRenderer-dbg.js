@@ -4,11 +4,11 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define([],
-	function() {
+sap.ui.define(["sap/ui/core/Lib"],
+	function(CoreLib) {
 	"use strict";
 
-	var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+	var oRb = CoreLib.getResourceBundleFor("sap.m");
 
 	var FeedInputRenderer = {
 		apiVersion: 2

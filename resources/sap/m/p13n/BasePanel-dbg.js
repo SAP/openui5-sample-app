@@ -23,9 +23,8 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/ui/Device",
 	"sap/m/library",
-	"sap/base/util/UriParameters",
 	"sap/ui/core/InvisibleText"
-], function(JSONModel, VBox, Control, Column, Text, Filter, Table, OverflowToolbar, SearchField, ToolbarSpacer, OverflowToolbarButton, OverflowToolbarLayoutData, DragDropInfo, ShortcutHintsMixin, KeyCodes, Log, Device, library, UriParameters, InvisibleText) {
+], function(JSONModel, VBox, Control, Column, Text, Filter, Table, OverflowToolbar, SearchField, ToolbarSpacer, OverflowToolbarButton, OverflowToolbarLayoutData, DragDropInfo, ShortcutHintsMixin, KeyCodes, Log, Device, library, InvisibleText) {
 	"use strict";
 
 	/**
@@ -53,7 +52,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @abstract
@@ -324,6 +323,17 @@ sap.ui.define([
 		this._updateMovement(bEnableReorder);
 
 		return this;
+	};
+
+	/**
+	 * Trigger to update the panel after outer influences (e.g. sap.m.p13n.Popup) trigger a reset on the panel
+	 *
+	 * @private
+	 * @ui5-restricted
+	 */
+	BasePanel.prototype.onReset = function() {
+		this._getSearchField()?.setValue("");//Reset the searchfield string
+		this._oListControl.getBinding("items")?.filter([]);//Reset the filtering
 	};
 
 	BasePanel.prototype._getDragDropConfig = function() {

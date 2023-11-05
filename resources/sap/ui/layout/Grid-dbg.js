@@ -59,7 +59,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -147,11 +147,16 @@ sap.ui.define([
 	(function() {
 
 		Grid.prototype.init = function() {
-			// Library specific class
-			var sClass = library.GridHelper.getLibrarySpecificClass();
-			if (sClass) {
-				this.addStyleClass(sClass);
-			}
+			/**
+			 * @deprecated As of version 1.120
+			 */
+			(() => {
+				// Library specific class
+				var sClass = library.GridHelper.getLibrarySpecificClass();
+				if (sClass) {
+					this.addStyleClass(sClass);
+				}
+			})();
 
 			this._iBreakPointTablet = Device.media._predefinedRangeSets[Device.media.RANGESETS.SAP_STANDARD_EXTENDED].points[0];
 			this._iBreakPointDesktop = Device.media._predefinedRangeSets[Device.media.RANGESETS.SAP_STANDARD_EXTENDED].points[1];

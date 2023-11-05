@@ -43,6 +43,11 @@ sap.ui.define([
 		}),
         removeGroup: xConfigHandler.createHandler({
 			property: "groupConditions"
+		}),
+		setColumnWidth: xConfigHandler.createHandler({
+			aggregationBased: true,
+			aggregation: "columns",
+			property: "width"
 		})
 	};
 }, /* bExport= */ true);

@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"jquery.sap.global",
 	"sap/base/Log",
 	"sap/ui/base/ManagedObject",
 	"sap/ui/model/odata/type/String",
@@ -14,9 +13,10 @@ sap.ui.define([
 	"sap/ui/model/odata/v4/lib/_Batch",
 	"sap/ui/model/odata/v4/lib/_Helper",
 	"sap/ui/model/odata/v4/lib/_Requestor",
-	"sap/ui/test/TestUtils"
-], function (jQuery, Log, ManagedObject, TypeString, ODataMetaModel, ODataModel, ValueListType,
-		_Batch, _Helper, _Requestor, TestUtils) {
+	"sap/ui/test/TestUtils",
+	"sap/ui/thirdparty/jquery"
+], function (Log, ManagedObject, TypeString, ODataMetaModel, ODataModel, ValueListType, _Batch,
+		_Helper, _Requestor, TestUtils, jQuery) {
 	"use strict";
 
 	var oDepartmentsBody = {

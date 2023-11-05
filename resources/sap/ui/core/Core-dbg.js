@@ -6,77 +6,129 @@
 
 // Provides the real core class sap.ui.core.Core of SAPUI5
 sap.ui.define([
-	'jquery.sap.global',
-	'sap/ui/Device',
-	'sap/ui/base/EventProvider',
-	'sap/ui/base/Interface',
-	'sap/ui/base/Object',
-	'sap/ui/base/ManagedObject',
-	'./AnimationMode',
-	'./Component',
-	'./Configuration',
-	'./Element',
-	'./ElementMetadata',
-	'./Lib',
-	'./Rendering',
-	'./RenderManager',
-	'./ControlBehavior',
-	'./UIArea',
-	'./Messaging',
-	'./StaticArea',
-	"sap/ui/core/Theming",
-	"sap/base/Log",
-	"sap/ui/performance/Measurement",
-	"sap/ui/security/FrameOptions",
+	"./AnimationMode",
+	"./Component",
+	"./Configuration",
+	"./ControlBehavior",
+	"./Element",
+	"./ElementMetadata",
+	"./Lib",
+	"./Rendering",
+	"./RenderManager",
+	"./UIArea",
+	"./Messaging",
+	"./StaticArea",
+	"./Supportability",
+	"./Theming",
 	"sap/base/assert",
+	"sap/base/config",
+	"sap/base/Event",
+	"sap/base/Log",
 	"sap/base/util/Deferred",
+	"sap/base/util/each",
+	"sap/base/util/isEmptyObject",
 	"sap/base/util/ObjectPath",
-	'sap/ui/performance/trace/initTraces',
-	'sap/base/util/isEmptyObject',
-	'sap/base/util/each',
-	'sap/ui/VersionInfo',
-	'sap/base/config',
-	'sap/base/Event',
-	'sap/ui/events/jquery/EventSimulation'
+	"sap/base/util/Version",
+	"sap/ui/Device",
+	"sap/ui/VersionInfo",
+	"sap/ui/base/EventProvider",
+	"sap/ui/base/Interface",
+	"sap/ui/base/ManagedObject",
+	"sap/ui/base/Object",
+	"sap/ui/base/syncXHRFix",
+	"sap/ui/core/support/Hotkeys",
+	"sap/ui/dom/getComputedStyleFix",
+	"sap/ui/performance/Measurement",
+	"sap/ui/performance/trace/initTraces",
+	"sap/ui/security/FrameOptions",
+	"sap/ui/security/Security",
+	"sap/ui/test/RecorderHotkeyListener",
+	"sap/ui/thirdparty/jquery",
+	"jquery.sap.global",
+	"sap/ui/events/PasteEventFix", // side effect: activates paste event fix
+	"sap/ui/events/jquery/EventSimulation", // side effect: install event simulation
+	"sap/ui/thirdparty/URI", // side effect: make global URI available
+	"sap/ui/thirdparty/jqueryui/jquery-ui-position" // side effect: jQuery.fn.position
 ],
 	function(
-		jQuery,
-		Device,
-		EventProvider,
-		Interface,
-		BaseObject,
-		ManagedObject,
 		AnimationMode,
 		Component,
 		Configuration,
+		ControlBehavior,
 		Element,
 		ElementMetadata,
 		Library,
 		Rendering,
 		RenderManager,
-		ControlBehavior,
 		UIArea,
 		Messaging,
 		StaticArea,
+		Supportability,
 		Theming,
-		Log,
-		Measurement,
-		FrameOptions,
 		assert,
-		Deferred,
-		ObjectPath,
-		initTraces,
-		isEmptyObject,
-		each,
-		VersionInfo,
 		BaseConfig,
-		BaseEvent
-		/* ,EventSimulation */
+		BaseEvent,
+		Log,
+		Deferred,
+		each,
+		isEmptyObject,
+		ObjectPath,
+		Version,
+		Device,
+		VersionInfo,
+		EventProvider,
+		Interface,
+		ManagedObject,
+		BaseObject,
+		syncXHRFix,
+		Hotkeys,
+		getComputedStyleFix,
+		Measurement,
+		initTraces,
+		FrameOptions,
+		Security,
+		RecorderHotkeyListener,
+		jQuery
+		/* jQuery.sap, PasteEventFix, EventSimulation, URI, jquery-ui-position */
 	) {
 
 	"use strict";
 
 	var oCore;
+
+	// getComputedStyle polyfill + syncXHR fix for firefox
+	if ( Device.browser.firefox ) {
+		getComputedStyleFix();
+		syncXHRFix();
+	}
+
+	if (BaseConfig.get({
+		name: "sapUiNoConflict",
+		type: BaseConfig.Type.Boolean,
+		freeze: true
+	})){
+		jQuery.noConflict();
+	}
+
+
+	const oJQVersion = Version(jQuery.fn.jquery);
+	if ( oJQVersion.compareTo("3.6.0") != 0 ) {
+		// if the loaded jQuery version isn't SAPUI5's default version -> notify
+		// the application
+		Log.warning("SAPUI5's default jQuery version is 3.6.0; current version is " + jQuery.fn.jquery + ". Please note that we only support version 3.6.0.");
+	}
+
+	sap.ui.loader._.logger = Log.getLogger("sap.ui.ModuleSystem",
+		BaseConfig.get({
+			name: "sapUiXxDebugModuleLoading",
+			type: BaseConfig.Type.Boolean,
+			external: true,
+			freeze: true
+		}) ? Log.Level.DEBUG : Math.min(Log.getLevel(), Log.Level.INFO));
+
+	//init Hotkeys for support tools
+	Hotkeys.init();
+	RecorderHotkeyListener.init();
 
 	/**
 	 * when the Core module has been executed before, don't execute it again
@@ -94,6 +146,70 @@ sap.ui.define([
 	 * @private
 	 */
 	var _oEventProvider;
+
+	/**
+	 * Execute configured init module
+	 */
+	var _executeInitModule = function() {
+		var sOnInit = BaseConfig.get({
+			name: "sapUiOnInit",
+			type: BaseConfig.Type.String
+		});
+		if (sOnInit) {
+			// determine onInit being a module name prefixed via module or a global name
+			var aResult = /^module\:((?:[_$.\-a-zA-Z0-9]+\/)*[_$.\-a-zA-Z0-9]+)$/.exec(sOnInit);
+			if (aResult && aResult[1]) {
+				// ensure that the require is done async and the Core is finally booted!
+				setTimeout(sap.ui.require.bind(null, [aResult[1]]), 0);
+			} else {
+				throw Error("Invalid init module " + sOnInit + " provided via config option 'sapUiOnInit'");
+			}
+		}
+	};
+
+	/**
+	 * @deprecated As of Version 1.120
+	 */
+	function _executeOnInit() {
+		var vOnInit = BaseConfig.get({
+			name: "sapUiOnInit",
+			type: BaseConfig.Type.Code,
+			defaultValue: BaseConfig.get({
+				name: "sapUiEvtOninit",
+				type: BaseConfig.Type.Code
+			})
+		});
+
+		// execute a configured init hook
+		if ( vOnInit ) {
+			if ( typeof vOnInit === "function" ) {
+				vOnInit();
+			} else if (typeof vOnInit === "string") {
+				// determine onInit being a module name prefixed via module or a global name
+				var aResult = /^module\:((?:[_$.\-a-zA-Z0-9]+\/)*[_$.\-a-zA-Z0-9]+)$/.exec(vOnInit);
+				if (aResult && aResult[1]) {
+					// ensure that the require is done async and the Core is finally booted!
+					setTimeout(sap.ui.require.bind(sap.ui, [aResult[1]]), 0);
+				} else {
+					// lookup the name specified in onInit and try to call the function directly
+					var fn = ObjectPath.get(vOnInit);
+					if (typeof fn === "function") {
+						fn();
+					} else {
+						Log.warning("[Deprecated] Do not use inline JavaScript code with the oninit attribute."
+							+ " Use the module:... syntax or the name of a global function");
+						/*
+						 * In contrast to eval(), window.eval() executes the given string
+						 * in the global context, without closure variables.
+						 * See http://www.ecma-international.org/ecma-262/5.1/#sec-10.4.2
+						 */
+						// eslint-disable-next-line no-eval
+						window.eval(vOnInit);  // csp-ignore-legacy-api
+					}
+				}
+			}
+		}
+	}
 
 	/**
 	 * Returns the waiting behavior for the initial theme loading.
@@ -130,6 +246,13 @@ sap.ui.define([
 		}
 
 		return sWaitForTheme;
+	}
+
+	function ui5ToRJS(sName) {
+		if ( /^jquery\.sap\./.test(sName) ) {
+			return sName;
+		}
+		return sName.replace(/\./g, "/");
 	}
 
 	/*
@@ -235,13 +358,15 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 * @final
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @alias sap.ui.core.Core
 	 * @public
 	 * @hideconstructor
 	 */
 	var Core = BaseObject.extend("sap.ui.core.Core", /** @lends sap.ui.core.Core.prototype */ {
 		constructor : function() {
+
+			BaseObject.call(this);
 
 			var that = this,
 				METHOD = "sap.ui.core.Core";
@@ -253,8 +378,6 @@ sap.ui.define([
 						  " and use the module export directly without using 'new'.");
 				return oCore;
 			}
-
-			BaseObject.call(this);
 
 			_oEventProvider = new EventProvider();
 
@@ -351,6 +474,37 @@ sap.ui.define([
 			// freeze Config
 			var GlobalConfigurationProvider = sap.ui.require("sap/base/config/GlobalConfigurationProvider");
 			GlobalConfigurationProvider.freeze();
+
+			/**
+			 * Legacy normalization of config parameters
+			 * @deprecated As of Version 1.120.0
+			 */
+			(() => {
+				const o = globalThis["sap-ui-config"];
+				for (const i in o) {
+					const v = o[i];
+					const il = i.toLowerCase();
+					if ( !Object.hasOwn(o, il) ) {
+						o[il] = v;
+						delete o[i];
+					}
+				}
+			})();
+
+			// register resourceRoots
+			const paths = {};
+			const oResourceRoots = BaseConfig.get({
+				name: "sapUiResourceRoots",
+				type: BaseConfig.Type.Object
+			}) ?? {};
+			for (const n in oResourceRoots) {
+				paths[ui5ToRJS(n)] = oResourceRoots[n] || ".";
+			}
+			sap.ui.loader.config({paths: paths});
+
+			/**
+			 * @deprecated As of Version 1.120
+			 */
 			Configuration.setCore(this);
 
 			/**
@@ -368,36 +522,90 @@ sap.ui.define([
 			}.bind(this))();
 
 			// initialize frameOptions script (anti-clickjacking, etc.)
-			var oFrameOptionsConfig = Configuration.getValue("frameOptionsConfig") || {};
-			oFrameOptionsConfig.mode = Configuration.getFrameOptions();
-			oFrameOptionsConfig.allowlistService = Configuration.getAllowlistService();
+			var oFrameOptionsConfig = BaseConfig.get({
+				name: "sapUiFrameOptionsConfig",
+				type: BaseConfig.Type.Object
+			});
+			oFrameOptionsConfig.mode = Security.getFrameOptions();
+			oFrameOptionsConfig.allowlistService = Security.getAllowlistService();
 			this.oFrameOptions = new FrameOptions(oFrameOptionsConfig);
 
 			// let Element and Component get friend access to the respective register/deregister methods
 			this._grantFriendAccess();
 
-			// handle modules
-			var aModules = this.aModules = Configuration.getValue("modules");
-			if ( Configuration.getDebug() ) {
+			// handle libraries & modules
+			this.aModules = BaseConfig.get({
+				name: "sapUiModules",
+				type: BaseConfig.Type.StringArray
+			}) ?? [];
+			this.aLibs = BaseConfig.get({
+				name: "sapUiLibs",
+				type: BaseConfig.Type.StringArray
+			}) ?? [];
+
+			// as modules could also contain libraries move it to aLibs!
+			this.aModules = this.aModules.filter((module) => {
+				const m = module.match(/^(.*)\.library$/);
+				if (m) {
+					this.aLibs.push(m[1]);
+				} else {
+					return module;
+				}
+			});
+
+			/**
+			 * in case the flexibilityServices configuration was set to a non-empty,
+			 * non-default value, sap.ui.fl becomes mandatoryif not overruled by
+			 * 'xx-skipAutomaticFlLibLoading'.
+			 * @deprecated As of Version 1.120.0
+			 */
+			(() => {
+				const sFlexDefault = "/sap/bc/lrep";
+				const vFlexibilityServices = BaseConfig.get({
+					name: "sapUiFlexibilityServices",
+					type: (value) => {
+						return value;
+					},
+					external: true,
+					defaultValue: sFlexDefault
+				});
+				const bXxSkipAutomaticFlLibLoading =  BaseConfig.get({
+					name: "sapUiXxSkipAutomaticFlLibLoading",
+					type: BaseConfig.Type.Boolean,
+					external: true
+				});
+				if (vFlexibilityServices
+					&& vFlexibilityServices !== sFlexDefault
+					&& !bXxSkipAutomaticFlLibLoading
+					&& !this.aLibs.includes("sap.ui.fl")) {
+
+					this.aLibs.push("sap.ui.fl");
+				}
+			})();
+
+			if (Supportability.isDebugModeEnabled()) {
 				// add debug module if configured
-				aModules.unshift("sap.ui.debug.DebugEnv");
+				this.aModules.unshift("sap.ui.debug.DebugEnv");
 			}
 			// enforce the core library as the first loaded module
-			var i = aModules.indexOf("sap.ui.core.library");
+			var i = this.aLibs.indexOf("sap.ui.core");
 			if ( i != 0 ) {
 				if ( i > 0 ) {
-					aModules.splice(i,1);
+					this.aLibs.splice(i,1);
 				}
-				aModules.unshift("sap.ui.core.library");
+				this.aLibs.unshift("sap.ui.core");
 			}
 
-			// enable LessSupport if specified in configuration
-			if (BaseConfig.get({name: "sapUiXxLesssupport", type: BaseConfig.Type.Boolean}) && aModules.indexOf("sap.ui.core.plugin.LessSupport") == -1) {
+			/**
+			 * enable LessSupport if specified in configuration
+			 * @deprecated As of Version 1.120
+			 */
+			if (BaseConfig.get({name: "sapUiXxLesssupport", type: BaseConfig.Type.Boolean}) && !this.aModules.includes("sap.ui.core.plugin.LessSupport")) {
 				Log.info("Including LessSupport into declared modules");
-				aModules.push("sap.ui.core.plugin.LessSupport");
+				this.aModules.push("sap.ui.core.plugin.LessSupport");
 			}
 
-			var sPreloadMode = Configuration.getPreload();
+			var sPreloadMode = Library.getPreloadMode();
 			// This flag controls the core initialization flow.
 			// We can switch to async when an async preload is used or the ui5loader
 			// is in async mode. The latter might also happen for debug scenarios
@@ -408,7 +616,9 @@ sap.ui.define([
 			document.documentElement.classList.add("sapUiTheme-" + Theming.getTheme());
 			Log.info("Declared theme " + Theming.getTheme(), null, METHOD);
 
-			Log.info("Declared modules: " + aModules, METHOD);
+			Log.info("Declared modules: " + this.aModules, METHOD);
+
+			Log.info("Declared libraries: " + this.aLibs, METHOD);
 
 			this._setupContentDirection();
 
@@ -519,16 +729,7 @@ sap.ui.define([
 				}
 
 				if ( sPreloadMode === "sync" || sPreloadMode === "async" ) {
-					// determine set of libraries
-					var aLibs = that.aModules.reduce(function(aResult, sModule) {
-						var iPos = sModule.search(/\.library$/);
-						if ( iPos >= 0 ) {
-							aResult.push(sModule.slice(0, iPos));
-						}
-						return aResult;
-					}, []);
-
-					var pLibraryPreloaded = Library._load(aLibs, {
+					var pLibraryPreloaded = Library._load(that.aLibs, {
 						sync: !bAsync,
 						preloadOnly: true
 					});
@@ -544,29 +745,40 @@ sap.ui.define([
 				}
 
 				// initializes the application cachebuster mechanism if configured
-				var aACBConfig = Configuration.getAppCacheBuster();
+				var aACBConfig = BaseConfig.get({
+					name: "sapUiAppCacheBuster",
+					type: BaseConfig.Type.StringArray,
+					external: true,
+					freeze: true
+				});
 				if (aACBConfig && aACBConfig.length > 0) {
 					if ( bAsync ) {
 						var iLoadACBTask = oSyncPoint2.startTask("require AppCachebuster");
 						sap.ui.require(["sap/ui/core/AppCacheBuster"], function(AppCacheBuster) {
-							AppCacheBuster.boot(oSyncPoint2);
+							AppCacheBuster.boot(oSyncPoint2, aACBConfig);
 							// finish the task only after ACB had a chance to create its own task(s)
 							oSyncPoint2.finishTask(iLoadACBTask);
 						});
-					} else {
+					}
+					/**
+					 * Sync path is deprecated
+					 *
+					 * @deprecated as of 1.120.0
+					 */
+					if (!bAsync) {
 						var AppCacheBuster = sap.ui.requireSync('sap/ui/core/AppCacheBuster'); // legacy-relevant: Synchronous path
-						AppCacheBuster.boot(oSyncPoint2);
+						AppCacheBuster.boot(oSyncPoint2, aACBConfig);
 					}
 				}
 
 				// Initialize support info stack
-				if (Configuration.getSupportMode() !== null) {
+				if (Supportability.getSupportSettings() !== null) {
 					var iSupportInfoTask = oSyncPoint2.startTask("support info script");
 
 					var fnCallbackSupportBootstrapInfo = function(Support, Bootstrap) {
-						Support.initializeSupportMode(Configuration.getSupportMode(), bAsync);
+						Support.initializeSupportMode(Supportability.getSupportSettings(), bAsync);
 
-						Bootstrap.initSupportRules(Configuration.getSupportMode());
+						Bootstrap.initSupportRules(Supportability.getSupportSettings());
 
 						oSyncPoint2.finishTask(iSupportInfoTask);
 					};
@@ -590,11 +802,11 @@ sap.ui.define([
 				}
 
 				// Initialize test tools
-				if (Configuration.getTestRecorderMode() !== null) {
+				if (Supportability.getTestRecorderSettings() !== null) {
 					var iTestRecorderTask = oSyncPoint2.startTask("test recorder script");
 
 					var fnCallbackTestRecorder = function (Bootstrap) {
-						Bootstrap.init(Configuration.getTestRecorderMode());
+						Bootstrap.init(Supportability.getTestRecorderSettings());
 						oSyncPoint2.finishTask(iTestRecorderTask);
 					};
 
@@ -626,16 +838,15 @@ sap.ui.define([
 			// a set of private API is exposed for sap.ui.core restricted usage
 			publicMethods: [
 				// @public
-				//  - Init
-				"getConfiguration",
+				//  - Ready Promise
+				"ready",
 
 				// @private, @ui5-restricted sap.ui.core
 				//  - Init
 				"boot",
-				//  - Ready Promise
-				"ready",
 
 				// @deprecated
+				"getConfiguration",
 				"isMobile",
 				//  - Init & Plugins
 				"isInitialized","attachInit",
@@ -856,38 +1067,30 @@ sap.ui.define([
 			};
 		});
 
+		this.aLibs.forEach( function(lib) {
+			Library._load(lib, {
+				sync: true
+			});
+		});
 		this.aModules.forEach( function(mod) {
-			var m = mod.match(/^(.*)\.library$/);
-			if ( m ) {
-				Library._load(m[1], {
-					sync: true
-				});
-			} else {
-				// data-sap-ui-modules might contain legacy jquery.sap.* modules
-				sap.ui.requireSync( /^jquery\.sap\./.test(mod) ?  mod : mod.replace(/\./g, "/")); // legacy-relevant: Sync loading of modules and libraries
-			}
+			// data-sap-ui-modules might contain legacy jquery.sap.* modules
+			sap.ui.requireSync( /^jquery\.sap\./.test(mod) ?  mod : mod.replace(/\./g, "/")); // legacy-relevant: Sync loading of modules and libraries
 		});
 
 		fnCallback();
 	};
 
 	Core.prototype._requireModulesAsync = function() {
-		var aLibs = [],
-			aModules = [];
+		var aModules = [];
 
 		this.aModules.forEach(function(sModule) {
-			var m = sModule.match(/^(.*)\.library$/);
-			if (m) {
-				aLibs.push(m[1]);
-			} else {
-				// data-sap-ui-modules might contain legacy jquery.sap.* modules
-				aModules.push(/^jquery\.sap\./.test(sModule) ? sModule : sModule.replace(/\./g, "/"));
-			}
+			// data-sap-ui-modules might contain legacy jquery.sap.* modules
+			aModules.push(/^jquery\.sap\./.test(sModule) ? sModule : sModule.replace(/\./g, "/"));
 		});
 
 		// TODO: require libs and modules in parallel or define a sequence?
 		return Promise.all([
-			Library._load(aLibs),
+			Library._load(this.aLibs),
 			new Promise(function(resolve) {
 				sap.ui.require(aModules, function() {
 					resolve(Array.prototype.slice.call(arguments));
@@ -1007,6 +1210,9 @@ sap.ui.define([
 
 		Measurement.end("coreInit");
 
+		/**
+		 * @deprecated As of Version 1.120.
+		 */
 		this._setBodyAccessibilityRole();
 
 		var sWaitForTheme = getWaitForTheme();
@@ -1032,47 +1238,6 @@ sap.ui.define([
 					this._executeInitialization();
 					Rendering.resume("after theme has been loaded");
 				}.bind(this));
-			}
-		}
-	};
-
-	Core.prototype._executeOnInit = function() {
-		var vOnInit = BaseConfig.get({
-			name: "sapUiOnInit",
-			type: BaseConfig.Type.Code,
-			defaultValue: BaseConfig.get({
-				name: "sapUiEvtOninit",
-				type: BaseConfig.Type.Code
-			})
-		});
-
-		// execute a configured init hook
-		if ( vOnInit ) {
-			if ( typeof vOnInit === "function" ) {
-				vOnInit();
-			} else if (typeof vOnInit === "string") {
-				// determine onInit being a module name prefixed via module or a global name
-				var aResult = /^module\:((?:[_$.\-a-zA-Z0-9]+\/)*[_$.\-a-zA-Z0-9]+)$/.exec(vOnInit);
-				if (aResult && aResult[1]) {
-					// ensure that the require is done async and the Core is finally booted!
-					setTimeout(sap.ui.require.bind(sap.ui, [aResult[1]]), 0);
-				} else {
-					// lookup the name specified in onInit and try to call the function directly
-					var fn = ObjectPath.get(vOnInit);
-					if (typeof fn === "function") {
-						fn();
-					} else {
-						Log.warning("[Deprecated] Do not use inline JavaScript code with the oninit attribute."
-							+ " Use the module:... syntax or the name of a global function");
-						/*
-						 * In contrast to eval(), window.eval() executes the given string
-						 * in the global context, without closure variables.
-						 * See http://www.ecma-international.org/ecma-262/5.1/#sec-10.4.2
-						 */
-						// eslint-disable-next-line no-eval
-						window.eval(vOnInit);  // csp-ignore-legacy-api
-					}
-				}
 			}
 		}
 	};
@@ -1134,18 +1299,21 @@ sap.ui.define([
 				var oClass = ObjectPath.get(sApplication);
 				assert(oClass !== undefined, "The specified application \"" + sApplication + "\" could not be found!");
 				var oApplication = new oClass();
-				assert(BaseObject.isA(oApplication, 'sap.ui.app.Application'), "The specified application \"" + sApplication + "\" must be an instance of sap.ui.app.Application!");
+				assert(BaseObject.isObjectA(oApplication, 'sap.ui.app.Application'), "The specified application \"" + sApplication + "\" must be an instance of sap.ui.app.Application!");
 
 			}
 
 		}
 	};
 
+	/**
+	 * @deprecated As of Version 1.120.
+	 */
 	Core.prototype._setBodyAccessibilityRole = function() {
 		var body = document.body;
 
 		//Add ARIA role 'application'
-		if (Configuration.getAccessibility() && Configuration.getAutoAriaBodyRole() && !body.getAttribute("role")) {
+		if (ControlBehavior.isAccessibilityEnabled() && Configuration.getAutoAriaBodyRole() && !body.getAttribute("role")) {
 			body.setAttribute("role", "application");
 		}
 	};
@@ -1164,7 +1332,14 @@ sap.ui.define([
 		this.startPlugins();
 		Log.info("Plugins started",null,METHOD);
 
-		this._executeOnInit();
+		/**
+		 * @deprecated As ofVersion 1.120
+		 */
+		_executeInitModule = _executeOnInit;
+		_executeInitModule();
+		/**
+		 * @deprecated As of Version 1.120.
+		 */
 		this._setupRootComponent(); // @legacy-relevant: private API for 2 deprecated concepts "rootComponent" & "sap.ui.app.Application"
 		this.pReady.resolve();
 		this.bReady = true;
@@ -1293,6 +1468,7 @@ sap.ui.define([
 	 *
 	 * @return {sap.ui.core.Configuration} the Configuration of the current Core.
 	 * @public
+	 * @deprecated As of Version 1.120. Please see {@link sap.ui.core.Configuration Configuration} for the corrsponding replacements.
 	 */
 	Core.prototype.getConfiguration = function () {
 		return Configuration;
@@ -1783,7 +1959,7 @@ sap.ui.define([
 
 	function placeControlAt(oDomRef, oControl) {
 		assert(typeof oDomRef === "string" || typeof oDomRef === "object", "oDomRef must be a string or object");
-		assert(oControl instanceof Interface || BaseObject.isA(oControl, "sap.ui.core.Control"), "oControl must be a Control or Interface");
+		assert(oControl instanceof Interface || BaseObject.isObjectA(oControl, "sap.ui.core.Control"), "oControl must be a Control or Interface");
 
 		if (oControl) {
 			oControl.placeAt(oDomRef, "only");
@@ -2559,7 +2735,7 @@ sap.ui.define([
 	 * @deprecated since 1.118. Please use {@link sap.ui.base.ManagedObject#setModel ManagedObject#setModel} instead.
 	 */
 	Core.prototype.setModel = function(oModel, sName) {
-		assert(oModel == null || BaseObject.isA(oModel, 'sap.ui.model.Model'), "oModel must be an instance of sap.ui.model.Model, null or undefined");
+		assert(oModel == null || BaseObject.isObjectA(oModel, 'sap.ui.model.Model'), "oModel must be an instance of sap.ui.model.Model, null or undefined");
 		assert(sName === undefined || (typeof sName === "string" && !/^(undefined|null)?$/.test(sName)), "sName must be a string or omitted");
 		var that = this,
 			oProperties;

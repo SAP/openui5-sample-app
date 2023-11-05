@@ -3,8 +3,8 @@
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-/*global globalThis, QUnit */
-sap.ui.define([
+/*global QUnit */
+sap.ui.require([
 	"sap/base/config",
 	"sap/base/Log",
 	"sap/base/config/GlobalConfigurationProvider",

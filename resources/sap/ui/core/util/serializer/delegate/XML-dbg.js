@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @class XML serializer delegate class.
 	 * @extends sap.ui.core.util.serializer.delegate.Delegate
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @alias sap.ui.core.util.serializer.delegate.XML
 	 * @private
 	 * @ui5-restricted sap.watt, com.sap.webide

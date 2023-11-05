@@ -148,7 +148,7 @@ sap.ui.predefine("sap/m/designtime/IconTabBar.designtime", ["sap/ui/model/json/J
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/IconTabFilter.designtime", [],function(){"use strict";return{palette:{group:"CONTAINER",icons:{svg:"sap/m/designtime/IconTabFilter.icon.svg"}},actions:{rename:function(){return{changeType:"rename",domRef:function(e){return e.$().find(".sapMITBText")[0]}}}},aggregations:{content:{propagateMetadata:function(e){if(e.getParent().isA("sap.m.IconTabFilter")){return{actions:{remove:null,reveal:null}}}return undefined}}}}});
+sap.ui.predefine("sap/m/designtime/IconTabFilter.designtime", [],function(){"use strict";return{palette:{group:"CONTAINER",icons:{svg:"sap/m/designtime/IconTabFilter.icon.svg"}},actions:{rename:function(){return{changeType:"rename",domRef:function(e){return e.$().find(".sapMITBText")[0]}}}},aggregations:{content:{propagateMetadata:function(e){if(e.getParent()?.isA("sap.m.IconTabFilter")){return{actions:{remove:null,reveal:null}}}return undefined}}}}});
 /*!
  * OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
@@ -496,7 +496,7 @@ sap.ui.predefine("sap/m/designtime/VBox.designtime", [],function(){"use strict";
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/VariantManagement.designtime", [],function(){"use strict";return{annotations:{},properties:{supportDefault:{ignore:false},supportFavorites:{ignore:false},supportApplyAutomatically:{ignore:false},supportPublic:{ignore:false},supportContexts:{ignore:false},selectedKey:{ignore:false},defaultKey:{ignore:false},showSaveAs:{ignore:false},creationAllowed:{ignore:false},showFooter:{ignore:false},modified:{ignore:false},popoverTitle:{ignore:false},inErrorState:{ignore:false},executeOnSelectionForStandardDefault:{ignore:false},displayTextForExecuteOnSelectionForStandardVariant:{ignore:false},level:{ignore:false},titleStyle:{ignore:false},maxWidth:{ignore:false}}}});
+sap.ui.predefine("sap/m/designtime/VariantManagement.designtime", [],function(){"use strict";return{annotations:{},properties:{supportDefault:{ignore:false},supportFavorites:{ignore:false},supportApplyAutomatically:{ignore:false},supportPublic:{ignore:false},supportContexts:{ignore:false},selectedKey:{ignore:false},defaultKey:{ignore:false},showSaveAs:{ignore:false},creationAllowed:{ignore:false},showFooter:{ignore:false},modified:{ignore:false},popoverTitle:{ignore:false},inErrorState:{ignore:false},level:{ignore:false},titleStyle:{ignore:false},maxWidth:{ignore:false}}}});
 /*!
  * OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.

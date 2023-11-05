@@ -37,10 +37,11 @@ sap.ui.define([
 	 * @param {string} [sIdPrefix] Prefix used for the Ids. If not set a default prefix is used.
 	 * @returns {jQuery.sap.storage.Storage}
 	 *
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @since 0.11.0
 	 * @namespace
 	 * @public
+	 * @deprecated as of version 1.120. Use {@link module:sap/ui/util/Storage sap/ui/util/Storage} instead.
 	 *
 	 * @borrows jQuery.sap.storage.Storage#get as get
 	 * @borrows jQuery.sap.storage.Storage#put as put
@@ -97,10 +98,11 @@ sap.ui.define([
 	 * should be deleted the method {@link #removeAll} should be used.
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @since 0.11.0
 	 * @public
 	 * @name jQuery.sap.storage.Storage
+	 * @deprecated as of version 1.120. Use {@link module:sap/ui/util/Storage sap/ui/util/Storage} instead.
 	 */
 	jQuery.sap.storage.Storage = Storage;
 
@@ -201,8 +203,9 @@ sap.ui.define([
 	 * Enumeration of the storage types supported by {@link jQuery.sap.storage.Storage}
 	 * @enum {string}
 	 * @public
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @since 0.11.0
+	 * @deprecated as of version 1.120. Use {@link module:sap/ui/util/Storage.Type sap/ui/util/Storage.Type} instead.
 	 */
 	jQuery.sap.storage.Type = Storage.Type;
 

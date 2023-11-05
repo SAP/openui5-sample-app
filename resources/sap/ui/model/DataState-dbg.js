@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.DataState
@@ -178,7 +178,7 @@ sap.ui.define([
 			aControlMessages = mProperties.controlMessages,
 			aModelMessages = mProperties.modelMessages;
 
-		if (aModelMessages || aControlMessages) {
+		if (aModelMessages.length || aControlMessages.length) {
 			aMessages = aMessages.concat(aControlMessages || [], aModelMessages || []);
 			aMessages.sort(Message.compare);
 		}

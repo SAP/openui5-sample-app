@@ -6,13 +6,15 @@
 
 // Provides class sap.ui.core.support.plugins.Selector (Selector support plugin)
 sap.ui.define([
-	"sap/ui/core/Core",
+	"sap/ui/core/Element",
 	"sap/ui/core/Popup",
+	"sap/ui/core/RenderManager",
+	"sap/ui/core/StaticArea",
 	"../Plugin",
 	"../Support",
 	"sap/ui/thirdparty/jquery",
 	"sap/base/util/uid"
-], function (Core, Popup, Plugin, Support, jQuery, uid) {
+], function (Element, Popup, RenderManager, StaticArea, Plugin, Support, jQuery, uid) {
 	"use strict";
 
 		/**
@@ -20,7 +22,7 @@ sap.ui.define([
 		 * @class This class represents the selector plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.119.1
+		 * @version 1.120.0
 		 * @private
 		 * @alias sap.ui.core.support.plugins.Selector
 		 */
@@ -53,14 +55,14 @@ sap.ui.define([
 
 			if (!this._sPopupId) {
 				this._sPopupId = this.getId() + "-" + uid();
-				var rm = Core.createRenderManager();
+				var rm = new RenderManager();
 				rm.openStart("div", this._sPopupId)
 					.style("border", "2px solid rgb(0, 128, 0)")
 					.style("background-color", "rgba(0, 128, 0, .55)")
 					.openEnd()
 					.close("div");
 
-				rm.flush(Core.getStaticAreaRef(), false, true);
+				rm.flush(StaticArea.getDomRef(), false, true);
 				rm.destroy();
 
 				jPopupRef = jQuery(document.getElementById(this._sPopupId));

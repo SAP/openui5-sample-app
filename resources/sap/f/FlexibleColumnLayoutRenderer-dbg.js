@@ -4,9 +4,11 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/Device", "sap/m/library"],
-	function (Device, mobileLibrary) {
+sap.ui.define(["sap/ui/Device", "sap/ui/core/Core", "sap/m/library"],
+	function (Device, Core, mobileLibrary) {
 		"use strict";
+
+		var oResourceBundle = Core.getLibraryResourceBundle("sap.f");
 
 		var FCLRenderer = {
 			apiVersion: 2
@@ -27,15 +29,17 @@ sap.ui.define(["sap/ui/Device", "sap/m/library"],
 			oRm.openEnd();
 
 			FCLRenderer.renderBeginColumn(oRm, oControl, oLandmarkInfo);
+			FCLRenderer.renderSeparator(oRm, oControl.getId() + "-separator-begin", "sapFFCLColumnSeparatorBegin");
 			FCLRenderer.renderMidColumn(oRm, oControl, oLandmarkInfo);
+			FCLRenderer.renderSeparator(oRm, oControl.getId() + "-separator-end", "sapFFCLColumnSeparatorEnd");
 			FCLRenderer.renderEndColumn(oRm, oControl, oLandmarkInfo);
+
+			FCLRenderer.renderOverlay(oRm, oControl);
 
 			oRm.close("div");
 		};
 
 		FCLRenderer.renderBeginColumn = function (oRm, oControl, oLandmarkInfo) {
-			var oBeginColumnBackArrow = oControl.getAggregation("_beginColumnBackArrow");
-
 			// Begin column
 			oRm.openStart("div", oControl.getId() + "-beginColumn");
 			oRm.accessibilityState(oControl, oControl._formatColumnLandmarkInfo(oLandmarkInfo, "FirstColumn"));
@@ -48,17 +52,9 @@ sap.ui.define(["sap/ui/Device", "sap/m/library"],
 			FCLRenderer.renderColumnContentWrapper(oRm);
 
 			oRm.close("div");
-
-			// Arrow - collapse begin
-			FCLRenderer.renderArrow(oRm, oBeginColumnBackArrow, oLandmarkInfo, oControl);
 		};
 
 		FCLRenderer.renderMidColumn = function (oRm, oControl, oLandmarkInfo) {
-			var oMidColumnForwardArrow = oControl.getAggregation("_midColumnForwardArrow"),
-				oMidColumnBackArrow = oControl.getAggregation("_midColumnBackArrow");
-
-			// Arrow - expand begin
-			FCLRenderer.renderArrow(oRm, oMidColumnForwardArrow, oLandmarkInfo, oControl);
 			// Mid column
 			oRm.openStart("div", oControl.getId() + "-midColumn");
 			oRm.accessibilityState(oControl, oControl._formatColumnLandmarkInfo(oLandmarkInfo, "MiddleColumn"));
@@ -69,16 +65,9 @@ sap.ui.define(["sap/ui/Device", "sap/m/library"],
 			// Mid column content
 			FCLRenderer.renderColumnContentWrapper(oRm);
 			oRm.close("div");
-			// Arrow - expand end
-			FCLRenderer.renderArrow(oRm, oMidColumnBackArrow, oLandmarkInfo, oControl);
-
 		};
 
 		FCLRenderer.renderEndColumn = function (oRm, oControl, oLandmarkInfo) {
-			var oEndColumnForwardArrow = oControl.getAggregation("_endColumnForwardArrow");
-
-			// Arrow - right
-			FCLRenderer.renderArrow(oRm, oEndColumnForwardArrow, oLandmarkInfo, oControl);
 			// End column
 			oRm.openStart("div", oControl.getId() + "-endColumn");
 			oRm.accessibilityState(oControl, oControl._formatColumnLandmarkInfo(oLandmarkInfo, "LastColumn"));
@@ -90,19 +79,55 @@ sap.ui.define(["sap/ui/Device", "sap/m/library"],
 			FCLRenderer.renderColumnContentWrapper(oRm);
 
 			oRm.close("div");
-
 		};
 
-		FCLRenderer.renderArrow = function (oRm, oArrow, oLandmarkInfo, oFCL) {
+		/**
+		 * Renders a single bar.
+		 *
+		 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer
+		 * @param {string} sBarId The ID of the bar
+		 * @param {string} sClass The CSS class of the bar
+		 */
+		FCLRenderer.renderSeparator = function (oRm, sBarId, sClass) {
 			if (!Device.system.phone) {
-				oRm.openStart("div");
-				oRm.accessibilityState(oArrow, oFCL._formatArrowLandmarkInfo(oLandmarkInfo, oArrow.sParentAggregationName));
-				oRm.class("sapFFCLArrow");
-				oRm.class("sapContrastPlus");
-				oRm.openEnd();
-				oRm.renderControl(oArrow);
+				oRm.openStart("div", sBarId)
+					.attr("role", "separator")
+					.attr("title", oResourceBundle.getText("FCL_SEPARATOR_MOVE"))
+					.attr("aria-orientation", "vertical")
+					.attr("tabindex", 0)
+					.class("sapFFCLColumnSeparator")
+					.class("sapContrastPlus")
+					.class(sClass)
+					.openEnd();
+
+				FCLRenderer.renderSeparatorGripAndDecorations(oRm);
+
 				oRm.close("div");
 			}
+		};
+
+		/**
+		 * Renders the grip and the decorations for a bar.
+		 *
+		 * @param {sap.ui.core.RenderManager} oRm RenderManager that can is used for writing to the render output buffer
+		 * @param {boolean} bHorizontal Whether the orientation of the Splitter is horizontal
+		 */
+		FCLRenderer.renderSeparatorGripAndDecorations = function(oRm) {
+			oRm.openStart("div")
+				.class("sapFFCLColumnSeparatorDecorationBefore") // TODO class name
+				.openEnd()
+				.close("div");
+
+			oRm.openStart("div")
+				.class("sapFFCLColumnSeparatorGrip") // TODO class name
+				.openEnd()
+					.icon("sap-icon://vertical-grip", ["sapFFCLColumnSeparatorGripIcon"])
+				.close("div");
+
+			oRm.openStart("div")
+				.class("sapFFCLColumnSeparatorDecorationAfter") // TODO class name
+				.openEnd()
+				.close("div");
 		};
 
 		FCLRenderer.renderColumnContentWrapper = function (oRm) {
@@ -110,6 +135,18 @@ sap.ui.define(["sap/ui/Device", "sap/m/library"],
 			oRm.class("sapFFCLColumnContent");
 			oRm.openEnd();
 			oRm.close("div");
+		};
+
+		FCLRenderer.renderOverlay = function (oRm, oControl) {
+			if (!Device.system.phone) {
+				oRm.openStart("div", oControl.getId() + "-overlay")
+				.class("sapFFCLOverlay")
+				.openEnd();
+
+				FCLRenderer.renderSeparator(oRm, oControl.getId() + "-overlaySeparator", "sapFFCLOverlaySeparator");
+
+				oRm.close("div");
+			}
 		};
 
 		return FCLRenderer;

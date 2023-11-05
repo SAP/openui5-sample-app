@@ -16,8 +16,8 @@ sap.ui.define([
 	"./WizardRenderer",
 	"sap/ui/core/CustomData",
 	"sap/base/Log",
+	"sap/ui/base/DesignTime",
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Configuration",
 	"sap/ui/dom/jquery/Focusable"
 ], function(
 	library,
@@ -31,8 +31,8 @@ sap.ui.define([
 	WizardRenderer,
 	CustomData,
 	Log,
-	jQuery,
-	Configuration
+	DesignTime,
+	jQuery
 ) {
 		"use strict";
 
@@ -100,7 +100,7 @@ sap.ui.define([
 		 *
 		 * @extends sap.ui.core.Control
 		 * @author SAP SE
-		 * @version 1.119.1
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @public
@@ -643,7 +643,7 @@ sap.ui.define([
 		 * @private
 		 */
 		Wizard.prototype.insertStep = function (oWizardStep, iIndex) {
-			if (Configuration.getDesignMode()) {
+			if (DesignTime.isDesignModeEnabled()) {
 				return this.insertAggregation("steps", oWizardStep, iIndex);
 			}
 
@@ -657,7 +657,7 @@ sap.ui.define([
 		 * @private
 		 */
 		Wizard.prototype.removeStep = function (oWizardStep) {
-			if (Configuration.getDesignMode()) {
+			if (DesignTime.isDesignModeEnabled()) {
 				return this.removeAggregation("steps", oWizardStep);
 			}
 

@@ -133,8 +133,9 @@ sap.ui.define([
 		 * @param {object} oElement - Any node or leaf element
 		 * @param {sap.ui.model.odata.v4.lib._CollectionCache} oCache
 		 *   The group level cache which the given element has been read from
-		 * @param {number} iIndex
-		 *   The index of the given element within the cache's collection
+		 * @param {number|undefined} [iIndex]
+		 *   The $skip index of the given element within the cache's collectionn, or
+		 *   <code>undefined</code> for created elements (where it is always unknown)
 		 * @param {string} [sNodeProperty]
 		 *   Optional property path to the hierarchy node value
 		 * @throws {Error}
@@ -169,6 +170,7 @@ sap.ui.define([
 				_AggregationHelper.checkNodeProperty(oPlaceholder, oElement, sNodeProperty);
 			}
 
+			_Helper.copyPrivateAnnotation(oPlaceholder, "cache", oElement);
 			_Helper.copyPrivateAnnotation(oPlaceholder, "spliced", oElement);
 			if (_Helper.getPrivateAnnotation(oPlaceholder, "placeholder") === 1) {
 				if ((oPlaceholder["@$ui5.node.isExpanded"] === undefined)
@@ -516,9 +518,10 @@ sap.ui.define([
 				sApply += "com.sap.vocabularies.Hierarchy.v1.TopLevels(HierarchyNodes=$root"
 					+ (oAggregation.$path || "")
 					+ ",HierarchyQualifier='" + oAggregation.hierarchyQualifier
-					+ "',NodeProperty='" + sNodeProperty
-					+ "',Levels=" + (bAllLevels ? 999 : oAggregation.expandTo || 1)
-					+ ")";
+					+ "',NodeProperty='" + sNodeProperty + "'"
+					+ (bAllLevels || oAggregation.expandTo >= Number.MAX_SAFE_INTEGER
+						? ")" // "all levels"
+						: ",Levels=" + (oAggregation.expandTo || 1) + ")");
 				if (bAllLevels) {
 					select("DistanceFromRootProperty");
 				} else if (oAggregation.expandTo > 1) {
@@ -612,7 +615,9 @@ sap.ui.define([
 		 * Creates a placeholder.
 		 *
 		 * @param {number} iLevel - The level
-		 * @param {number} iIndex - The index within the parent cache
+		 * @param {number|undefined} [iIndex]
+		 *   The $skip index within the parent cache's collection, or <code>undefined</code> for
+		 *   created elements (where it is always unknown)
 		 * @param {sap.ui.model.odata.v4.lib._CollectionCache} oParentCache - The parent cache
 		 * @returns {object} A placeholder object
 		 *
@@ -758,7 +763,7 @@ sap.ui.define([
 		 * @see .getOrCreateExpandedObject
 		 */
 		getCollapsedObject : function (oGroupNode) {
-			return _Helper.getPrivateAnnotation(oGroupNode, "collapsed") || oFrozenCollapsed;
+			return _Helper.getPrivateAnnotation(oGroupNode, "collapsed", oFrozenCollapsed);
 		},
 
 		/**

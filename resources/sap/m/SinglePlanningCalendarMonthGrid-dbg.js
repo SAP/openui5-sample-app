@@ -97,7 +97,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.119.1
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @private
@@ -1082,7 +1082,8 @@ sap.ui.define([
 		SinglePlanningCalendarMonthGrid.prototype._isCompact = function() {
 			var oDomRef = this.getDomRef()
 				|| (this.getParent() && this.getParent().getDomRef && this.getParent().getDomRef()
-				|| (this.getParent() && this.getParent().getRootNode && this.getParent().getRootNode()));
+				|| (this.getParent() && this.getParent().getRootNode && this.getParent().getRootNode())
+				|| document.body);
 
 			while (oDomRef && oDomRef.classList) {
 				if (oDomRef.classList.contains("sapUiSizeCompact")) {

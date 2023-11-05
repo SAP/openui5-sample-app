@@ -18,7 +18,7 @@ sap.ui.define([
 	 *
 	 * @alias sap.m.changeHandler.CombineButtons
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @experimental Since 1.48
 	 */
 	var CombineButtons = {};

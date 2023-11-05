@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR",
 		"applicationVersion" : {
-			"version" : "1.119.1"
+			"version" : "1.120.0"
 		},
 		"description" : "Example for OData V4 music artists service with draft handling",
 		"dataSources" : {

@@ -19,6 +19,7 @@ sap.ui.define([
 	'sap/base/util/LoaderExtensions',
 	'sap/base/config',
 	'sap/ui/core/Configuration',
+	'sap/ui/core/Supportability',
 	'sap/ui/core/Lib',
 	'./_UrlResolver'
 ],
@@ -36,6 +37,7 @@ sap.ui.define([
 		LoaderExtensions,
 		BaseConfig,
 		Configuration,
+		Supportability,
 		Library,
 		_UrlResolver
 	) {
@@ -145,7 +147,7 @@ sap.ui.define([
 	 * @class The Manifest class.
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @alias sap.ui.core.Manifest
 	 * @since 1.33.0
 	 */
@@ -390,7 +392,7 @@ sap.ui.define([
 			var sMinUI5Version = this.getEntry("/sap.ui5/dependencies/minUI5Version");
 			if (sMinUI5Version &&
 				Log.isLoggable(Log.Level.WARNING) &&
-				Configuration.getDebug()) {
+				Supportability.isDebugModeEnabled()) {
 				VersionInfo.load().then(function(oVersionInfo) {
 					var oMinVersion = getVersionWithoutSuffix(sMinUI5Version);
 					var oVersion = getVersionWithoutSuffix(oVersionInfo && oVersionInfo.version);

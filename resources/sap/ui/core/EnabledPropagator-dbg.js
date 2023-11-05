@@ -43,7 +43,7 @@ sap.ui.define([
 	 *
 	 * @param {boolean} [bDefault=true] Value that should be used as default value for the enhancement of the control.
 	 * @param {boolean} [bLegacy=false] Whether the introduced property should use the old name <code>Enabled</code>.
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @public
 	 * @class
 	 * @alias sap.ui.core.EnabledPropagator
@@ -128,7 +128,8 @@ sap.ui.define([
 	 * @private
 	 */
 	function hasDisabledAncestor(oControl) {
-		for (var oParent = oControl.getParent(); oParent && !oParent.getEnabled && oParent.getParent; oParent = oParent.getParent()) {/* empty */}
+		let oParent;
+		for (oParent = oControl.getParent(); oParent && !oParent.getEnabled && oParent.getParent; oParent = oParent.getParent()) {/* empty */}
 		return oParent && oParent.getEnabled && !oParent.getEnabled();
 	}
 

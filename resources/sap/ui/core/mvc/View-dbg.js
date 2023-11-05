@@ -12,8 +12,8 @@ sap.ui.define([
 	"sap/base/util/isEmptyObject",
 	"sap/base/util/merge",
 	"sap/ui/base/ManagedObject",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/Control",
+	"sap/ui/base/DesignTime",
 	"sap/ui/core/Element",
 	"./Controller",
 	"./ViewRenderer",
@@ -26,8 +26,8 @@ sap.ui.define([
 		isEmptyObject,
 		merge,
 		ManagedObject,
-		Configuration,
 		Control,
+		DesignTime,
 		Element,
 		Controller,
 		ViewRenderer,
@@ -142,7 +142,7 @@ sap.ui.define([
 	 * The default implementation of this method returns <code>false</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.View
@@ -442,7 +442,7 @@ sap.ui.define([
 			oController.oView = oThis;
 		};
 
-		if (!Configuration.getControllerCodeDeactivated()) {
+		if (!DesignTime.isControllerCodeDeactivated()) {
 			// only set when used internally
 			var oController = mSettings.controller,
 				sName = oController && typeof oController.getMetadata === "function" && oController.getMetadata().getName();
@@ -492,10 +492,8 @@ sap.ui.define([
 				}
 			}
 		} else if (bAsync) {
-			Controller.extend("sap.ui.core.mvc.EmptyControllerImpl", { "_sap.ui.core.mvc.EmptyControllerImpl": true });
-			return Controller.create({
-				name: "sap.ui.core.mvc.EmptyControllerImpl"
-			}).then(connectToView);
+			const oController = Object.assign(new Controller(), { "_sap.ui.core.mvc.EmptyControllerImpl": true });
+			return Promise.resolve(oController).then(connectToView);
 		} else {
 			sap.ui.controller("sap.ui.core.mvc.EmptyControllerImpl", {"_sap.ui.core.mvc.EmptyControllerImpl":true}); // legacy-relevant: Sync path
 			oThis.oController = sap.ui.controller("sap.ui.core.mvc.EmptyControllerImpl"); // legacy-relevant: Sync path
@@ -1017,7 +1015,7 @@ sap.ui.define([
 	 * See also the API references for the specific view factories:
 	 * <ul>
 	 * <li>{@link sap.ui.core.mvc.XMLView.create}</li>
-	 * <li>{@link sap.ui.core.mvc.JSONView.create}</li>
+	 * <li>{@link sap.ui.core.mvc.JSONView.create} (deprecated)</li>
 	 * <li>{@link sap.ui.core.mvc.HTMLView.create} (deprecated)</li>
 	 * </ul>
 	 *
@@ -1262,17 +1260,29 @@ sap.ui.define([
 		}
 		if (!oViewSettings.type) {
 			throw new Error("No view type specified.");
-		} else if (oViewSettings.type === ViewType.JS) {
+		}
+
+		if (oViewSettings.type === ViewType.XML) {
+			return 'sap/ui/core/mvc/XMLView';
+		}
+
+		/**
+		 * The different ViewTypes have been deprecated with different UI5 versions.
+		 * Please see the public "sap/ui/core/mvc/ViewType" enum for the specific versions.
+		 * @deprecated
+		 */
+		if (oViewSettings.type === ViewType.JS) {
 			sViewClass = 'sap/ui/core/mvc/JSView';
 		} else if (oViewSettings.type === ViewType.JSON) {
 			sViewClass = 'sap/ui/core/mvc/JSONView';
-		} else if (oViewSettings.type === ViewType.XML) {
-			sViewClass = 'sap/ui/core/mvc/XMLView';
 		} else if (oViewSettings.type === ViewType.HTML) {
 			sViewClass = 'sap/ui/core/mvc/HTMLView';
 		} else if (oViewSettings.type === ViewType.Template) {
 			sViewClass = 'sap/ui/core/mvc/TemplateView';
-		} else { // unknown view type
+		}
+
+		// unknown view type
+		if (!sViewClass) {
 			throw new Error("Unknown view type " + oViewSettings.type + " specified.");
 		}
 
@@ -1398,7 +1408,7 @@ sap.ui.define([
 	/**
 	 * A method to be implemented by typed <code>View</code>s, returning the view UI.
 	 *
-	 * While for declarative view types like <code>XMLView</code> or <code>JSONView</code> the user interface definition
+	 * While for declarative view types like <code>XMLView</code> or <code>JSONView</code> (deprecated) the user interface definition
 	 * is declared in a separate file, <code>View</code>s programmatically constructs the UI. This happens in the
 	 * <code>createContent</code> method, which every <code>View</code> needs to implement. The view implementation
 	 * can construct the complete UI in this method, or only return the root control and create the remainder of the UI

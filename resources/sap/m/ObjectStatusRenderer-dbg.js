@@ -99,7 +99,9 @@ sap.ui.define(['sap/ui/core/library', './library', 'sap/ui/core/Core'],
 				}
 			}
 
-			oRm.accessibilityState(oObjStatus, oAccAttributes);
+			if (oObjStatus._isActive()) {
+				oRm.accessibilityState(oObjStatus, oAccAttributes);
+			}
 
 			oRm.openEnd();
 

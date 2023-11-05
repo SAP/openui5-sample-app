@@ -168,7 +168,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @param {object} [oRootNode] reference to the DOM element that should be 'hosting' the UI Area.
 	 * @public
 	 * @alias sap.ui.core.UIArea
@@ -330,9 +330,6 @@ sap.ui.define([
 	 * relationship to this UIArea will be cut off). Then the parent relationship for the new
 	 * content control (if not empty) will be set to this UIArea and finally, the UIArea will
 	 * be marked for re-rendering.
-	 *
-	 * The real re-rendering happens whenever the re-rendering is called. Either implicitly
-	 * at the end of any control event or by calling sap.ui.getCore().applyChanges().
 	 *
 	 * @param {sap.ui.base.Interface | sap.ui.core.Control} oRootControl
 	 *            the Control that should be the Root for this <code>UIArea</code>.

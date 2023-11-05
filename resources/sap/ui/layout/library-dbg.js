@@ -20,13 +20,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.layout
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @since 1.15
 	 * @public
 	 */
 	var thisLib = sap.ui.getCore().initLibrary({
 		name : "sap.ui.layout",
-		version: "1.119.1",
+		version: "1.120.0",
 		dependencies: ["sap.ui.core"],
 		designtime: "sap/ui/layout/designtime/library.designtime",
 		types: [
@@ -509,6 +509,9 @@ sap.ui.define([
 	 *
 	 * @namespace
 	 * @public
+	 * @deprecated Since version 1.67.0.
+	 * as <code>sap.ui.commons</code> library is deprecated and the <code>GridLayout</code> must not be used in responsive applications.
+	 * Please use <code>ResponsiveGridLayout</code> or <code>ColumnLayout</code> instead.
 	 */
 	thisLib.form.GridElementCells = DataType.createType('sap.ui.layout.form.GridElementCells', {
 		isValid : function(vValue) {
@@ -770,25 +773,9 @@ sap.ui.define([
 	DataType.getType('int')
 	);
 
-	// factory for Form to create labels and buttons to be overwritten by commons and mobile library
-	if (!thisLib.form.FormHelper) {
-		thisLib.form.FormHelper = {
-			init: function() {return null;}, /* must return a Promise if modules still needs to be loaded. The promise must be fulfilled if everything is loaded. */
-			createLabel: function(sText){ throw new Error("no Label control available!"); }, /* must return a Label control */
-			createButton: function(sId, fPressFunction, oListener){ throw new Error("no Button control available!"); }, /* must return a button control */
-			setButtonContent: function(oButton, sText, sTooltip, sIcon, sIconHovered){ throw new Error("no Button control available!"); },
-			addFormClass: function(){ return null; },
-			setToolbar: function(oToolbar){ return oToolbar; }, /* allow to overwrite toolbar settings */
-			getToolbarTitle: function(oToolbar) { return oToolbar && oToolbar.getId(); }, /* To determine title ID in toolbar for aria-label */
-			createDelimiter: function(sDelimiter, sId){ throw new Error("no delimiter control available!"); }, /* must return a kind of text control */
-			createSemanticDisplayControl: function(sText, sId){ throw new Error("no display control available!"); }, /* must return a kind of text control */
-			updateDelimiter: function(oDelimiter, sDelimiter){ throw new Error("no delimiter control available!"); },
-			updateSemanticDisplayControl: function(oControl, sText){ throw new Error("no display control available!"); },
-			bArrowKeySupport: true, /* enables the keyboard support for arrow keys */
-			bFinal: false /* if true, the helper must not be overwritten by an other library */
-		};
-	}
-
+	/**
+	 * @deprecated As of version 1.120
+	 */
 	if (!thisLib.GridHelper) {
 		thisLib.GridHelper = {
 			getLibrarySpecificClass: function () {

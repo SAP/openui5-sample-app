@@ -66,7 +66,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.119.1
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @public
@@ -468,6 +468,7 @@ sap.ui.define([
 		 *
 		 * @param {sap.m.TabContainerItem} oItem The new <code>TabContainerItem</code> to be added
 		 * @returns {this} Reference to <code>this</code> for method chaining
+		 * @public
 		 * @override
 		 */
 		TabContainer.prototype.addItem = function(oItem) {
@@ -493,6 +494,7 @@ sap.ui.define([
 		 * Destroys all <code>TabContainerItem</code> entities from the <code>items</code> aggregation.
 		 *
 		 * @returns {this} Reference to <code>this</code> for method chaining
+		 * @public
 		 * @override
 		 */
 		TabContainer.prototype.destroyItems = function() {
@@ -508,6 +510,7 @@ sap.ui.define([
 		 * @param {sap.m.TabContainerItem} oItem The new <code>TabContainerItem</code> to be inserted
 		 * @param {int} iIndex The index where the passed <code>TabContainerItem</code> to be inserted
 		 * @returns {this} Reference to <code>this</code> for method chaining
+		 * @public
 		 * @override
 		 */
 		TabContainer.prototype.insertItem = function(oItem, iIndex) {
@@ -532,6 +535,7 @@ sap.ui.define([
 		 * Removes all <code>TabContainerItem</code> entities from the <code>items</code> aggregation.
 		 *
 		 * @returns {sap.m.TabContainerItem[]} The removed items
+		 * @public
 		 * @override
 		 */
 		TabContainer.prototype.removeAllItems = function() {
@@ -545,8 +549,9 @@ sap.ui.define([
 		/**
 		 * Overrides the <code>addButton</code> property setter to proxy to the <code>TabStrip</code>.
 		 *
-		 * @param {sap.ui.core.Control} oButton The new control to be set as <code>TabStrip</code> <code>addButton</code> aggregation
-		 * @returns {this} This instance for chaining
+		 * @param {sap.m.Button} oButton The <code>Add New Tab</code> button displayed in the <code>TabStrip</code>
+		 * @returns {this} Reference to <code>this</code> for method chaining
+		 * @public
 		 * @override
 		 */
 		TabContainer.prototype.setAddButton = function (oButton) {
@@ -556,7 +561,8 @@ sap.ui.define([
 		/**
 		 * Overrides the addButton property getter to proxy to the <code>TabStrip</code>.
 		 *
-		 * @returns {sap.ui.core.Control} The control assigned as a <code>TabStrip</code> addButton aggregation
+		 * @returns {sap.m.Button} The <code>Add New Tab</code> button displayed in the <code>TabStrip</code>
+		 * @public
 		 * @override
 		 */
 		TabContainer.prototype.getAddButton = function () {

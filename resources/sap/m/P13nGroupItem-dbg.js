@@ -17,11 +17,12 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Type for <code>groupItems</code> aggregation in P13nGroupPanel control.
 	 * @extends sap.ui.core.Item
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @constructor
 	 * @public
 	 * @since 1.28.0
 	 * @alias sap.m.P13nGroupItem
+     * @deprecated since 1.120
 	 */
 	var P13nGroupItem = Item.extend("sap.m.P13nGroupItem", /** @lends sap.m.P13nGroupItem.prototype */
 	{

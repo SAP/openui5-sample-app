@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSerializer', "sap/base/assert", "sap/ui/core/Configuration"],
-	function(EventProvider, HTMLViewSerializer, XMLViewSerializer, assert, Configuration) {
+sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSerializer', "sap/base/assert", "sap/ui/base/DesignTime"],
+	function(EventProvider, HTMLViewSerializer, XMLViewSerializer, assert, DesignTime) {
 	"use strict";
 
 
@@ -21,7 +21,7 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 	 * @class ViewSerializer class.
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @alias sap.ui.core.util.serializer.ViewSerializer
 	 * @private
 	 * @ui5-restricted sap.watt, com.sap.webide
@@ -161,7 +161,7 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 
 				// double check that the function is on the controller
 				var oController = oView.getController();
-				if (oController[sHandlerName] || Configuration.getControllerCodeDeactivated()) {
+				if (oController[sHandlerName] || DesignTime.isControllerCodeDeactivated()) {
 					return sHandlerName;
 				}
 			}

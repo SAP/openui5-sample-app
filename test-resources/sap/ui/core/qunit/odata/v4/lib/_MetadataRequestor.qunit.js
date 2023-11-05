@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"jquery.sap.global",
 	"sap/base/Log",
 	"sap/ui/model/odata/v4/lib/_Helper",
 	"sap/ui/model/odata/v4/lib/_MetadataConverter",
 	"sap/ui/model/odata/v4/lib/_MetadataRequestor",
 	"sap/ui/model/odata/v4/lib/_V2MetadataConverter",
 	"sap/ui/model/odata/v4/lib/_V4MetadataConverter",
-	"sap/ui/test/TestUtils"
-], function (jQuery, Log, _Helper, _MetadataConverter, _MetadataRequestor, _V2MetadataConverter,
-		_V4MetadataConverter, TestUtils) {
+	"sap/ui/test/TestUtils",
+	"sap/ui/thirdparty/jquery"
+], function (Log, _Helper, _MetadataConverter, _MetadataRequestor, _V2MetadataConverter,
+		_V4MetadataConverter, TestUtils, jQuery) {
 	"use strict";
 
 	var mFixture = {

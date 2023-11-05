@@ -8,8 +8,9 @@ sap.ui.define([
 	'sap/ui/core/library',
 	'sap/ui/layout/library',
 	'sap/ui/layout/form/Form',
+	'./FormHelper',
 	'sap/ui/core/IconPool' // as RenderManager.icon needs it
-	], function(coreLibrary, library, Form) {
+	], function(coreLibrary, library, Form, FormHelper, IconPool) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TitleLevel
@@ -288,7 +289,7 @@ sap.ui.define([
 		if (oToolbar) {
 			if (!oContainer.getAriaLabelledBy() || oContainer.getAriaLabelledBy().length == 0) {
 				// no aria-label -> use Title of Toolbar
-				var sToolbarTitleID = library.form.FormHelper.getToolbarTitle(oToolbar);
+				var sToolbarTitleID = FormHelper.getToolbarTitle(oToolbar); // FormHelper must already be initialized by FormLayout
 				mAriaProps["labelledby"] = {value: sToolbarTitleID, append: true};
 			}
 		} else if (oTitle) {

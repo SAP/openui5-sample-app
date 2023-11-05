@@ -9,6 +9,7 @@
 // Provides helper class sap.ui.core.Popup
 sap.ui.define([
 	'sap/ui/Device',
+	'sap/ui/base/DataType',
 	'sap/ui/base/Event',
 	'sap/ui/base/ManagedObject',
 	'sap/ui/base/Object',
@@ -40,6 +41,7 @@ sap.ui.define([
 	"sap/ui/dom/jquery/rect" // jQuery Plugin "rect"
 ], function(
 	Device,
+	DataType,
 	Event,
 	ManagedObject,
 	BaseObject,
@@ -498,6 +500,8 @@ sap.ui.define([
 		EndBottom  : "end bottom"
 	};
 
+	DataType.registerEnum("sap.ui.core.Popup.Dock", Popup.Dock);
+
 	/**
 	 * This property changes how the autoClose behaves on the Popup.
 	 *
@@ -541,6 +545,7 @@ sap.ui.define([
 	*/
 	var Layer = BaseObject.extend("sap.ui.core.Popup.Layer", {
 		constructor: function() {
+			BaseObject.call(this);
 			var sDomString = this.getDomString();
 			this._$Ref = jQuery(sDomString).appendTo(StaticArea.getDomRef());
 		}

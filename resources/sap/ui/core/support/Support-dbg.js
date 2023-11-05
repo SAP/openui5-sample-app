@@ -8,7 +8,6 @@
 sap.ui.define([
 	"sap/ui/base/EventProvider",
 	"./Plugin",
-	"sap/base/util/UriParameters",
 	"sap/ui/thirdparty/jquery",
 	"sap/base/Log",
 	"sap/base/security/encodeURL",
@@ -17,7 +16,6 @@ sap.ui.define([
 ], function (
 	EventProvider,
 	Plugin,
-	UriParameters,
 	jQuery,
 	Log,
 	encodeURL,
@@ -33,7 +31,7 @@ sap.ui.define([
 	 * @class This class provides the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 	 *
 	 * @extends sap.ui.base.EventProvider
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 * @private
 	 * @alias sap.ui.core.support.Support
 	 */
@@ -88,8 +86,8 @@ sap.ui.define([
 					break;
 				case mTypes.TOOL:
 					this._oRemoteWindow = window.opener;
-					this._sRemoteOrigin = UriParameters.fromQuery(window.location.search).get("sap-ui-xx-support-origin");
-					jQuery(window).on("unload", function(oEvent){
+					this._sRemoteOrigin = new URLSearchParams(window.location.search).get("sap-ui-xx-support-origin");
+					window.addEventListener("pagehide", () => {
 						that.sendEvent(mEvents.TEAR_DOWN);
 						Support.exitPlugins(that, true);
 					});

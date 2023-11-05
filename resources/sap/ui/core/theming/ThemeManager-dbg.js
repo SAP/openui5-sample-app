@@ -36,6 +36,7 @@ sap.ui.define([
 ) {
 	"use strict";
 
+	const oEventing = new Eventing();
 	var maxThemeCheckCycles = 150;
 	var mAllLoadedLibraries = {};
 	var CUSTOMCSSCHECK = /\.sapUiThemeDesignerCustomCss/i;
@@ -64,7 +65,7 @@ sap.ui.define([
 		/**
 		 * Wether theme is already loaded or not
 		 * @private
-		 * @ui-restricted sap.ui.core
+		 * @ui5-restricted sap.ui.core
 		 */
 		themeLoaded: true,
 
@@ -251,6 +252,26 @@ sap.ui.define([
 			});
 		},
 		/**
+		 * Attach to the theme applied event
+		 *
+		 * @param {function(module:sap/ui/core/Theming.$appliedEvent)} fnCallback The event handler
+		 * @private
+		 * @ui5-restricted sap.ui.core
+		 */
+		_attachThemeApplied: function (fnCallback) {
+			oEventing.attachEvent("applied", fnCallback);
+		},
+		/**
+		 * Detach from the theme applied event
+		 *
+		 * @param {function(module:sap/ui/core/Theming.$appliedEvent)} fnCallback The event handler
+		 * @private
+		 * @ui5-restricted sap.ui.core
+		 */
+		_detachThemeApplied: function (fnCallback) {
+			oEventing.detachEvent("applied", fnCallback);
+		},
+		/**
 		 * Notify theme change
 		 *
 		 * @private
@@ -265,7 +286,7 @@ sap.ui.define([
 				ThemeParameters._reset(/* bOnlyWhenNecessary= */ true);
 			}
 
-			ThemeManager.fireEvent("applied", {
+			oEventing.fireEvent("applied", {
 				theme: Theming.getTheme()
 			});
 		}
@@ -653,8 +674,6 @@ sap.ui.define([
 		}
 		return sQuery;
 	}
-
-	Eventing.apply(ThemeManager);
 
 	// set CSS class for the theme name
 	document.documentElement.classList.add("sapUiTheme-" + Theming.getTheme());

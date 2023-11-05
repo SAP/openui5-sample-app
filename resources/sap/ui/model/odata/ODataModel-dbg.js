@@ -31,6 +31,7 @@ sap.ui.define([
 	"sap/base/util/merge",
 	"sap/base/util/uid",
 	"sap/ui/core/Configuration",
+	"sap/ui/core/Supportability",
 	"sap/ui/model/BindingMode",
 	"sap/ui/model/Context",
 	"sap/ui/model/FilterProcessor",
@@ -41,8 +42,8 @@ sap.ui.define([
 	"sap/ui/thirdparty/URI"
 ], function(CountMode, ODataContextBinding, ODataListBinding, ODataMetadata, ODataPropertyBinding,
 		ODataTreeBinding, ODataUtils, assert, Log, encodeURL, each, extend, isEmptyObject,
-		isPlainObject, merge, uid, Configuration, BindingMode, Context, FilterProcessor, Model,
-		ODataAnnotations, ODataMetaModel, OData, URI) {
+		isPlainObject, merge, uid, Configuration, Supportability, BindingMode, Context,
+		FilterProcessor, Model, ODataAnnotations, ODataMetaModel, OData, URI) {
 	"use strict";
 
 	/**
@@ -77,7 +78,7 @@ sap.ui.define([
 	 *
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @deprecated As of version 1.48, please use {@link sap.ui.model.odata.v2.ODataModel} instead.
@@ -169,7 +170,7 @@ sap.ui.define([
 				}
 			}
 
-			if (Configuration.getStatisticsEnabled()) {
+			if (Supportability.isStatisticsEnabled()) {
 				// add statistics parameter to every request (supported only on Gateway servers)
 				this.aUrlParams.push("sap-statistics=true");
 			}
@@ -655,7 +656,7 @@ sap.ui.define([
 	 */
 	ODataModel.prototype.refreshMetadata = function(){
 		if (this.oMetadata && this.oMetadata.refresh){
-			this.oMetadata.refresh();
+			this.oMetadata.refresh().catch((oError) => { Log.fatal(oError); });
 		}
 	};
 
@@ -1163,6 +1164,9 @@ sap.ui.define([
 	 * @param {sap.ui.model.odata.CountMode} [mParameters.countMode]
 	 *   Defines the count mode of the new binding; if not specified, the default count mode of this
 	 *   model will be applied
+	 * @throws {Error} If one of the filters uses an operator that is not supported by the underlying model
+	 *   implementation or if the {@link sap.ui.model.Filter.NONE} filter instance is contained in
+	 *   <code>aFilters</code> together with other filters
 	 *
 	 * @returns {sap.ui.model.ListBinding} A new list binding object
 	 *

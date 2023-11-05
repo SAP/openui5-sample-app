@@ -41,7 +41,7 @@ function(
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -369,6 +369,18 @@ function(
 		return aIndices;
 	};
 
+	Tree.prototype._getDeepestLevelFromIndexArray = function(aIndex) {
+		var oDeepestLevel;
+
+		aIndex.forEach((iIndex) => {
+			if (oDeepestLevel == undefined || this.getItems()[iIndex].getLevel() > oDeepestLevel.getLevel()) {
+				oDeepestLevel = this.getItems()[iIndex];
+			}
+		});
+
+		return oDeepestLevel;
+	};
+
 	/**
 	 *
 	 * Expands one or multiple items. Note that items that are hidden at the time of calling this API can't be expanded.
@@ -379,6 +391,10 @@ function(
 	 * @since 1.56.0
 	 */
 	Tree.prototype.expand = function(vParam) {
+		// make sure when rendering is called, the padding calc uses the correct deepest level
+		var oDeepestItem = (vParam.constructor == Array ? this._getDeepestLevelFromIndexArray(vParam) : this.getItems()[vParam]);
+		this._updateDeepestLevel(oDeepestItem);
+
 		this._oProxy.expand(vParam);
 		return this;
 	};

@@ -767,6 +767,50 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+	QUnit.test("getParent: throws error if not a list binding's context", function (assert) {
+		const oNode = Context.create({/*oModel*/}, {/*oBinding*/}, "/foo");
+
+		assert.throws(function () {
+			// code under test
+			oNode.getParent();
+		}, new Error("Not a list binding's context: " + oNode));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("getParent", function (assert) {
+		const oBinding = {getParent : mustBeMocked};
+		const oNode = Context.create({/*oModel*/}, oBinding, "/foo");
+
+		this.mock(oBinding).expects("getParent").withExactArgs(sinon.match.same(oNode))
+			.returns("~oParentNode~");
+
+		// code under test
+		assert.strictEqual(oNode.getParent(), "~oParentNode~");
+	});
+
+	//*********************************************************************************************
+	QUnit.test("requestParent: throws error if not a list binding's context", function (assert) {
+		const oNode = Context.create({/*oModel*/}, {/*oBinding*/}, "/foo");
+
+		assert.throws(function () {
+			// code under test
+			oNode.requestParent();
+		}, new Error("Not a list binding's context: " + oNode));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("requestParent", function (assert) {
+		const oBinding = {requestParent : mustBeMocked};
+		const oNode = Context.create({/*oModel*/}, oBinding, "/foo");
+
+		this.mock(oBinding).expects("requestParent").withExactArgs(sinon.match.same(oNode))
+			.returns("~oParentNodePromise~");
+
+		// code under test
+		assert.strictEqual(oNode.requestParent(), "~oParentNodePromise~");
+	});
+
+	//*********************************************************************************************
 	QUnit.test("getProperty", function (assert) {
 		var oBinding = {
 				checkSuspended : function () {}
@@ -2010,6 +2054,29 @@ sap.ui.define([
 
 		assert.strictEqual(oResult.isFulfilled(), true);
 		assert.strictEqual(oResult.getResult(), undefined);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("isAncestorOf", function (assert) {
+		const oBinding = {
+			isAncestorOf : mustBeMocked
+		};
+		const oContext = Context.create({/*oModel*/}, oBinding, "/EMPLOYEES('42')");
+		this.mock(oBinding).expects("isAncestorOf")
+			.withExactArgs(sinon.match.same(oContext), "~oNode~").returns("~result~");
+
+		// code under test
+		assert.strictEqual(oContext.isAncestorOf("~oNode~"), "~result~");
+	});
+
+	//*********************************************************************************************
+	QUnit.test("isAncestorOf: wrong binding", function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('42')");
+
+		assert.throws(function () {
+			// code under test
+			oContext.isAncestorOf();
+		}, new Error("Missing recursive hierarchy"));
 	});
 
 	//*********************************************************************************************
@@ -4080,7 +4147,7 @@ sap.ui.define([
 		assert.throws(function () {
 			// code under test
 			oContext.setKeepAlive(true);
-		}, new Error("Unsupported context " + oContext));
+		}, new Error("Unsupported context: " + oContext));
 
 		assert.strictEqual(oContext.isKeepAlive(), false);
 	});
@@ -4095,7 +4162,7 @@ sap.ui.define([
 		assert.throws(function () {
 			// code under test
 			oContext.setKeepAlive(true);
-		}, new Error("Unsupported context " + oContext));
+		}, new Error("Unsupported context: " + oContext));
 
 		assert.strictEqual(oContext.isKeepAlive(), false);
 	});

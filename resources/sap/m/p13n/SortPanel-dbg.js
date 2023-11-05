@@ -21,7 +21,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.QueryPanel
 	 *
 	 * @author SAP SE
-	 * @version 1.119.1
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @since 1.96
@@ -99,8 +99,9 @@ sap.ui.define([
 					icon: "sap-icon://sort-descending"
 				})
 			],
-			select: function (oEvt) {
-				var sSortOrder = oEvt.getParameter("key");
+			selectionChange: function (oEvt) {
+				var oItem = oEvt.getParameter("item");
+				var sSortOrder = oItem.getKey();
 				var oText = oEvt.getSource().getParent().getContent()[2];
 				oText.setText(this._getSortOrderText(sSortOrder === "desc"));
 				var sKey = oEvt.oSource.getParent().getContent()[0].getSelectedItem().getKey();

@@ -3,5 +3,5 @@
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(["sap/base/assert"],function(t){"use strict";var e=Symbol("parameters");var r=function(t,r,a){if(arguments.length>0){this.type=t;this.target=r;this.bStopPropagation=false;this.bPreventDefault=false;for(var i in a){this[i]=a[i];Object.defineProperty(this,i,{configurable:false,writable:false})}this[e]=a;Object.defineProperty(this,"type",{configurable:false,writable:false});Object.defineProperty(this,"target",{configurable:false,writable:false})}};r.prototype.preventDefault=function(){this.bPreventDefault=true};r.prototype.stopPropagation=function(){this.bStopPropagation=true};r.getParameters=function(t){return t[e]};return r});
+sap.ui.define(()=>{"use strict";const t=Symbol("parameters");class e{#t;constructor(e,s){for(const t in s){this[t]=s[t];Object.defineProperty(this,t,{configurable:false,writable:false})}this[t]=s;this.#t=e}get type(){return this.#t}static getParameters(e){return Object.assign(Object.create(null),e[t])}}return e});
 //# sourceMappingURL=Event.js.map

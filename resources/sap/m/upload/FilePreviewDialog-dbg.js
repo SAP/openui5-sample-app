@@ -46,13 +46,29 @@ sap.ui.define([
 	 * Constructor for a new FilePreviewDialog.
 	 *
    * @class
+   * <h3>Overview</h3>
+   *
    * Dialog with a carousel to preview files uploaded using the UploadSetwithTable control.
    * This Element should only be used within the {@link sap.m.upload.UploadSetwithTable UploadSetwithTable} control as an association.
+   *
+   * <h3>Supported File Types for Preview</h3>
+   *
+   * Following are the supported file types that can be previewed:
+   *
+   * <ul><li>Image (PNG, JPEG, BMP, GIF)</li>
+   * <li>PDF </li>
+   * <li>Text (Txt)</li>
+   * <li>Video (MP4, MPEG, Quicktime, MsVideo)</li>
+   * <li>SAP 3D Visual models (VDS)</li></ul>
+   *
    * @author SAP SE
-   * @param {string} [sId] id for the new control, generated automatically if no id is given.
+   * @param {string} [sId] Id for the new control, it is generated automatically if no id is provided.
    * @param {object} [mSettings] Initial settings for the new control.
    * @constructor
-   * @private
+   * @public
+   * @experimental since 1.120
+   * @since 1.120
+   * @version 1.120.0
    * @extends sap.ui.core.Element
    * @name sap.m.upload.FilePreviewDialog
    */
@@ -108,6 +124,8 @@ sap.ui.define([
 					this._oDialog.removeAllContent();
 					this._oDialog.insertContent(this._oCarousel);
 				}
+				this.fireEvent("beforePreviewDialogOpen", {oDialog: this._oDialog});
+
 				this._oDialog.open();
 			}
 		},
@@ -244,8 +262,9 @@ sap.ui.define([
      	*/
 		_createCarousel: async function () {
 			const oPreviewItem = this._previewItem;
-			const aItems = !this.getShowCarouselArrows() ? [this._previewItem] : this._items;
+			let aItems = !this.getShowCarouselArrows() ? [this._previewItem] : this._items;
 			let sActivePageId = "";
+			aItems = aItems?.filter((oItem) => oItem?.isA("sap.m.upload.UploadSetwithTableItem"));
 			const aPagePromises = aItems.map(async (oItem) => {
 				const sMediaType = oItem.getMediaType();
 
