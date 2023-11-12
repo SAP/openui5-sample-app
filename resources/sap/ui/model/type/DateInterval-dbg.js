@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.CompositeType
 	 *
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 *
 	 * @alias sap.ui.model.type.DateInterval
 	 * @param {object} [oFormatOptions]

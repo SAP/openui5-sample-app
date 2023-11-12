@@ -13,7 +13,7 @@ sap.ui.define([
 	 * Static collection of utility functions to handle time zone related conversions
 	 *
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 * @namespace
 	 * @name module:sap/ui/core/format/TimezoneUtils
 	 * @private

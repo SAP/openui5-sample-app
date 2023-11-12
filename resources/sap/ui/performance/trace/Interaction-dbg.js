@@ -23,7 +23,7 @@ sap.ui.define([
 		INTERACTION = "INTERACTION",
 		isNavigation = false,
 		aInteractions = [],
-		oPendingInteraction = createMeasurement(),
+		oPendingInteraction,
 		mCompressedMimeTypes = {
 			"application/zip": true,
 			"application/vnd.rar": true,
@@ -34,6 +34,8 @@ sap.ui.define([
 			"application/pdf": true
 		},
 		sCompressedExtensions = "zip,rar,arj,z,gz,tar,lzh,cab,hqx,ace,jar,ear,war,jpg,jpeg,pdf,gzip";
+	let bInitialized = false,
+		iResetCurrentBrowserEventTimer;
 
 	function isCORSRequest(sUrl) {
 		var sHost = new URI(sUrl).host();
@@ -242,6 +244,7 @@ sap.ui.define([
 			isNavigation = false;
 			bMatched = false;
 			bPerfectMatch = false;
+			clearTimeout(iResetCurrentBrowserEventTimer);
 		}
 	}
 
@@ -272,7 +275,6 @@ sap.ui.define([
 	}
 
 	var bInteractionActive = false,
-		bInteractionProcessed = false,
 		oCurrentBrowserEvent,
 		oBrowserElement,
 		bMatched = false,
@@ -535,11 +537,10 @@ sap.ui.define([
 			var oComponentInfo = createOwnerComponentInfo(oSrcElement);
 
 			// setup new pending interaction
-			oPendingInteraction = createMeasurement(iTime);
+			oPendingInteraction = createMeasurement(bInitialized ? iTime : undefined);
 			oPendingInteraction.event = sType;
 			oPendingInteraction.component = oComponentInfo.id;
 			oPendingInteraction.appVersion = oComponentInfo.version;
-			oPendingInteraction.start = iTime;
 			if (oSrcElement && oSrcElement.getId) {
 				oPendingInteraction.trigger = oSrcElement.getId();
 				oPendingInteraction.semanticStepName = FESRHelper.getSemanticStepname(oSrcElement, sType);
@@ -602,14 +603,20 @@ sap.ui.define([
 		 * @since 1.76
 		 */
 		setActive : function(bActive) {
-			if (bActive && !bInteractionActive) {
-				registerXHROverrides();
-				interceptScripts();
-				//intercept resource loading from preloads
-				LoaderExtensions.notifyResourceLoading = Interaction.notifyAsyncStep;
-			}
 			bInteractionActive = bActive;
-			Interaction.notifyStepStart("startup", "startup", true);
+			if (bActive) {
+				if (!bInitialized) {
+					registerXHROverrides();
+					interceptScripts();
+					//intercept resource loading from preloads
+					LoaderExtensions.notifyResourceLoading = Interaction.notifyAsyncStep;
+				}
+				Interaction.notifyStepStart("startup", "startup", true);
+				// The following line must happen after 'notifyStepStart' because we determine
+				// if we should intially use the performance timing API or afterwords the
+				// current timestamp
+				bInitialized = true;
+			}
 		},
 
 		/**
@@ -661,7 +668,7 @@ sap.ui.define([
 					elem,
 					sClosestSemanticStepName;
 
-				if ((!oPendingInteraction && oCurrentBrowserEvent && !bInteractionProcessed) || bForce) {
+				if ((!oPendingInteraction && oCurrentBrowserEvent) || bForce) {
 					if (bForce) {
 						sType = "startup";
 					} else {
@@ -708,13 +715,10 @@ sap.ui.define([
 						}
 					}
 					oCurrentBrowserEvent = null;
-					//only handle the first browser event within a call stack. Ignore virtual/harmonization events.
-					bInteractionProcessed = true;
 					isNavigation = false;
-					setTimeout(function() {
+					iResetCurrentBrowserEventTimer = setTimeout(function() {
 						//cleanup internal registry after actual call stack.
 						oCurrentBrowserEvent = null;
-						bInteractionProcessed = false;
 					}, 0);
 					bIdle = false;
 					Interaction.notifyStepEnd(true); // Start timer to end Interaction in case there is no timing relevant action e.g. rendering, request

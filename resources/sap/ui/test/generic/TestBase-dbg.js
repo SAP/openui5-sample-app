@@ -26,7 +26,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 * @since 1.100
 	 */
 	return BaseObject.extend("sap.ui.test.generic.TestBase", {

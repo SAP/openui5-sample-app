@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/Element', './library', 'sap/ui/core/IconPool'],
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 * @since 1.21.0
 	 *
 	 * @constructor

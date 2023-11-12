@@ -51,7 +51,7 @@ sap.ui.define(["sap/ui/core/Configuration"],
 		 * style class support on existing elements by calling this function.
 		 *
 		 * @author SAP SE
-		 * @version 1.120.0
+		 * @version 1.120.1
 		 *
 		 * @param {string} sAggregationName the name of the aggregation which should be affected
 		 * @param {object} fnGetTitleID function that would return the ID of the title

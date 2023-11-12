@@ -42,7 +42,7 @@ sap.ui.define([
 		var oBinding, oRemoveExpectation, oResetDataExpectation,
 			oContext = {},
 			oModel = {
-				checkFilterOperation : function () {},
+				checkFilter : function () {},
 				createCustomParams : function () {},
 				read : function () {},
 				resolveDeep : function () {}
@@ -53,7 +53,7 @@ sap.ui.define([
 		this.mock(oModel).expects("resolveDeep")
 			.withExactArgs("path", sinon.match.same(oContext))
 			.returns("~deep");
-		this.mock(oModel).expects("checkFilterOperation").withExactArgs([]);
+		this.mock(oModel).expects("checkFilter").withExactArgs([]);
 		this.mock(ODataListBinding.prototype).expects("checkExpandedList")
 			.withExactArgs()
 			.returns(false);
@@ -710,7 +710,7 @@ sap.ui.define([
 		var oBinding,
 			oModel = {
 				read : function () {},
-				checkFilterOperation : function () {},
+				checkFilter : function () {},
 				createCustomParams : function () {},
 				resolve : function () {},
 				resolveDeep : function () {}
@@ -720,7 +720,7 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(oFixture.parameters))
 			.returns("~custom");
 		this.mock(oModel).expects("resolveDeep").withExactArgs("path", "context").returns("~deep");
-		this.mock(oModel).expects("checkFilterOperation").withExactArgs([]);
+		this.mock(oModel).expects("checkFilter").withExactArgs([]);
 		this.mock(ODataListBinding.prototype).expects("checkExpandedList").withExactArgs()
 			.returns(true);
 		this.mock(ODataListBinding.prototype).expects("_reassignCreateActivate").withExactArgs();
@@ -737,14 +737,14 @@ sap.ui.define([
 	QUnit.test("constructor: remove persisted created contexts without expanded list",
 			function (assert) {
 		var oModel = {
-				checkFilterOperation : function () {},
+				checkFilter : function () {},
 				createCustomParams : function () {},
 				resolveDeep : function () {}
 			};
 
 		this.mock(oModel).expects("createCustomParams").withExactArgs(undefined).returns("~custom");
 		this.mock(oModel).expects("resolveDeep").withExactArgs("path", "context").returns("~deep");
-		this.mock(oModel).expects("checkFilterOperation").withExactArgs([]);
+		this.mock(oModel).expects("checkFilter").withExactArgs([]);
 		this.mock(ODataListBinding.prototype).expects("checkExpandedList")
 			.withExactArgs()
 			.returns(false);
@@ -768,7 +768,7 @@ sap.ui.define([
 		var oBinding,
 			oModel = {
 				read : function () {},
-				checkFilterOperation : function () {},
+				checkFilter : function () {},
 				createCustomParams : function () {},
 				resolve : function () {},
 				resolveDeep : function () {}
@@ -778,7 +778,7 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(oFixture.parameters))
 			.returns("~custom");
 		this.mock(oModel).expects("resolveDeep").withExactArgs("path", "context").returns("~deep");
-		this.mock(oModel).expects("checkFilterOperation").withExactArgs([]);
+		this.mock(oModel).expects("checkFilter").withExactArgs([]);
 		this.mock(ODataListBinding.prototype).expects("checkExpandedList").withExactArgs()
 			.returns(true);
 		this.mock(ODataListBinding.prototype).expects("_reassignCreateActivate").withExactArgs();
@@ -798,7 +798,7 @@ sap.ui.define([
 				sDefaultCountMode : "~sDefaultCountMode",
 				sDefaultOperationMode : "~sDefaultOperationMode",
 				bPreliminaryContext : "~bPreliminaryContext",
-				checkFilterOperation : function () {},
+				checkFilter : function () {},
 				createCustomParams : function () {},
 				resolveDeep : function () {}
 			};
@@ -807,7 +807,7 @@ sap.ui.define([
 		this.mock(oModel).expects("resolveDeep")
 			.withExactArgs("~sPath", "~oContext")
 			.returns("~sDeepPath");
-		this.mock(oModel).expects("checkFilterOperation").withExactArgs([]);
+		this.mock(oModel).expects("checkFilter").withExactArgs([]);
 		this.mock(ODataListBinding.prototype).expects("checkExpandedList")
 			.withExactArgs()
 			.returns(true);
@@ -866,7 +866,7 @@ sap.ui.define([
 				isPreliminary : function () {}
 			},
 			oModel = {
-				checkFilterOperation : function () {},
+				checkFilter : function () {},
 				createCustomParams : function () {},
 				resolve : function () {},
 				resolveDeep : function () {}
@@ -878,7 +878,7 @@ sap.ui.define([
 		this.mock(oModel).expects("resolveDeep")
 			.withExactArgs("relativePath", bUsePreliminary ? sinon.match.same(oContext) : undefined)
 			.returns("~deepPath"); // resolveDeep returns undefined for oContext === undefined
-		this.mock(oModel).expects("checkFilterOperation").withExactArgs([]);
+		this.mock(oModel).expects("checkFilter").withExactArgs([]);
 		this.mock(ODataListBinding.prototype).expects("checkExpandedList").withExactArgs().returns(true);
 		this.mock(ODataListBinding.prototype).expects("_reassignCreateActivate").withExactArgs();
 
@@ -3366,7 +3366,7 @@ sap.ui.define([
 			oBinding = {
 				aApplicationFilters : aApplicationFilters,
 				bInitial : false,
-				oModel : {checkFilterOperation : function () {}},
+				oModel : {checkFilter : function () {}},
 				_fireRefresh : function () {},
 				_removePersistedCreatedContexts : function () {},
 				addComparators : function () {},
@@ -3378,7 +3378,7 @@ sap.ui.define([
 			oBindingMock = this.mock(oBinding),
 			aFilters = bFilterNone ? [Filter.NONE] : [];
 
-		this.mock(oBinding.oModel).expects("checkFilterOperation")
+		this.mock(oBinding.oModel).expects("checkFilter")
 			.withExactArgs(sinon.match.same(aFilters));
 		/** @deprecated As of version 1.22.0, reason sap.ui.model.odata.Filter.js */
 		(function() {
@@ -3418,7 +3418,7 @@ sap.ui.define([
 		var oBinding = {
 				aAllKeys : [],
 				bInitial : false,
-				oModel : {checkFilterOperation : function () {}},
+				oModel : {checkFilter : function () {}},
 				_moveCreatedPersistedToAllKeys : function () {},
 				_fireChange : function () {},
 				addComparators : function () {},
@@ -3427,7 +3427,7 @@ sap.ui.define([
 				useClientMode : function () {}
 			};
 
-		this.mock(oBinding.oModel).expects("checkFilterOperation").withExactArgs([]);
+		this.mock(oBinding.oModel).expects("checkFilter").withExactArgs([]);
 		/** @deprecated As of version 1.22.0, reason sap.ui.model.odata.Filter.js */
 		(function() {
 			oBinding.convertFilters = function () {};

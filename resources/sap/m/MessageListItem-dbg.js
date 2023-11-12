@@ -33,7 +33,7 @@ sap.ui.define([
 		 * @extends sap.m.StandardListItem
 		 *
 		 * @author SAP SE
-		 * @version 1.120.0
+		 * @version 1.120.1
 		 *
 		 * @constructor
 		 * @private

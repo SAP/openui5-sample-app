@@ -142,7 +142,7 @@ sap.ui.define([
 	 * The default implementation of this method returns <code>false</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.View
@@ -1070,7 +1070,7 @@ sap.ui.define([
 		var Component = sap.ui.require("sap/ui/core/Component");
 		var oOwnerComponent;
 		if (Component && ManagedObject._sOwnerId) {
-			oOwnerComponent = Component.get(ManagedObject._sOwnerId);
+			oOwnerComponent = Component.getComponentById(ManagedObject._sOwnerId);
 		}
 
 		function createView() {

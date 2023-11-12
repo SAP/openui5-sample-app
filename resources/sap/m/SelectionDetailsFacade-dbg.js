@@ -10,7 +10,7 @@
  * @since 1.48.0
  * @public
  * @author SAP SE
- * @version 1.120.0
+ * @version 1.120.1
  * @borrows sap.ui.core.Element#addCustomData as #addCustomData
  * @borrows sap.ui.core.Element#getCustomData as #getCustomData
  * @borrows sap.ui.core.Element#indexOfCustomData as #indexOfCustomData
@@ -45,7 +45,7 @@
  * @since 1.48.0
  * @public
  * @author SAP SE
- * @version 1.120.0
+ * @version 1.120.1
  * @borrows sap.ui.core.Element#addCustomData as #addCustomData
  * @borrows sap.ui.core.Element#getCustomData as #getCustomData
  * @borrows sap.ui.core.Element#indexOfCustomData as #indexOfCustomData

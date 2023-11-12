@@ -129,7 +129,7 @@ sap.ui.define([
 
 	QUnit.test("Factory Function", function(assert){
 		var oComp = this.oComp;
-		var oComponent = Component.get(oComp.getId());
+		var oComponent = Component.getComponentById(oComp.getId());
 		assert.equal(oComponent, oComp, "Factory function returns the same instance!");
 
 		return Component.create({
@@ -434,7 +434,7 @@ sap.ui.define([
 		// check the nested component having the ID of the parent component
 		var oNestedComponentContainer = this.oComp.byId("ContButton");
 		var sNestedComponentId = oNestedComponentContainer.getComponent();
-		var oNestedComponent = Component.get(sNestedComponentId);
+		var oNestedComponent = Component.getComponentById(sNestedComponentId);
 		assert.equal(sRefComponentId, Component.getOwnerIdFor(oNestedComponent), "The nested component has the correct component context");
 		// check the control in the nested component to have the correct component context
 		var oNestedControl = oNestedComponent.byId("mybutn");
@@ -739,7 +739,7 @@ sap.ui.define([
 			manifest: "anylocation/manifest.json"
 		}).then(function(oComponent) {
 			assert.ok(true, "Component is loaded properly!");
-			assert.equal(oComponent, Component.get("myTestComp"), "Component.get returns right component");
+			assert.equal(oComponent, Component.getComponentById("myTestComp"), "Component.get returns right component");
 		}, function(oError) {
 			assert.ok(false, "Component should be loaded!");
 		});
@@ -1540,6 +1540,29 @@ sap.ui.define([
 
 	});
 
+	QUnit.test("Component.create with loaded manifest content", function(assert) {
+		var oProcessI18nSpy = this.spy(Manifest.prototype, "_processI18n");
+		// there's still one sync path where the i18n file is processed synchronously
+		// it's documented in BLI CPOUI5FRAMEWORK-286
+		var iExpectedSyncCallCount = 1;
+		return LoaderExtensions.loadResource(
+			"sap/ui/test/mixed/manifest.json",
+			{async: true}
+		).then(function(oManifest) {
+			return Component.create({
+				manifest: oManifest
+			});
+		}).then(function(oComponent) {
+			assert.ok(oComponent, "Component instance is created");
+			var iSyncCall = oProcessI18nSpy.getCalls().reduce(function(acc, oCall) {
+				if (oCall.args.length === 0 || !oCall.args[0]) {
+					acc++;
+				}
+				return acc;
+			}, 0);
+			assert.equal(iSyncCall, iExpectedSyncCallCount, "The number of sync loading of i18n file is the same as expectation");
+		});
+	});
 
 	QUnit.module("Models", {
 		beforeEach : function() {

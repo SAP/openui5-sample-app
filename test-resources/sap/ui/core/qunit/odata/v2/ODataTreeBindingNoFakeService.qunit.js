@@ -34,7 +34,7 @@ sap.ui.define([
 			oBinding,
 			oContext = {},
 			oModel = {
-				checkFilterOperation : function () {},
+				checkFilter : function () {},
 				bPreliminaryContext : "bPreliminaryContextFromModel"
 			},
 			mParameters = {
@@ -50,7 +50,7 @@ sap.ui.define([
 			},
 			aSorters = [new Sorter("propertyPath")];
 
-		this.mock(oModel).expects("checkFilterOperation")
+		this.mock(oModel).expects("checkFilter")
 			.withExactArgs(sinon.match.same(aApplicationFilters));
 
 		// code under test
@@ -104,19 +104,19 @@ sap.ui.define([
 			oBinding,
 			oContext = {},
 			oModel = {
-				checkFilterOperation : function () {}
+				checkFilter : function () {}
 			},
 			oModelMock = this.mock(oModel),
 			oNotAFilter = {/*not a Filter*/};
 
-		oModelMock.expects("checkFilterOperation").withExactArgs([oApplicationFilter]);
+		oModelMock.expects("checkFilter").withExactArgs([oApplicationFilter]);
 
 		// code under test
 		oBinding = new ODataTreeBinding(oModel, "path", oContext, oApplicationFilter);
 
 		assert.deepEqual(oBinding.aApplicationFilters, [oApplicationFilter]);
 
-		oModelMock.expects("checkFilterOperation").withExactArgs(sinon.match.same(oNotAFilter));
+		oModelMock.expects("checkFilter").withExactArgs(sinon.match.same(oNotAFilter));
 
 		// code under test
 		oBinding = new ODataTreeBinding(oModel, "path", oContext, oNotAFilter);
@@ -128,12 +128,12 @@ sap.ui.define([
 	QUnit.test("constructor: multiple Application filters are grouped", function (assert) {
 		var oBinding,
 			aFilters = ["~filter0", "~filter1"],
-			oModel = {checkFilterOperation: function () {}};
+			oModel = {checkFilter: function () {}};
 
 		this.mock(FilterProcessor).expects("groupFilters")
 			.withExactArgs(sinon.match.same(aFilters))
 			.returns("~groupedFilters");
-		this.mock(oModel).expects("checkFilterOperation").withExactArgs(["~groupedFilters"]);
+		this.mock(oModel).expects("checkFilter").withExactArgs(["~groupedFilters"]);
 
 		// code under test
 		oBinding = new ODataTreeBinding(oModel, "path", /*oContext*/{}, aFilters);
@@ -146,14 +146,14 @@ sap.ui.define([
 		var oBinding,
 			oContext = {},
 			oModel = {
-				checkFilterOperation : function () {},
+				checkFilter : function () {},
 				sDefaultCountMode : "ModelDefaultCountMode",
 				sDefaultOperationMode : OperationMode.Default,
 				bPreliminaryContext : "bPreliminaryContext"
 			},
 			oModelMock = this.mock(oModel);
 
-		oModelMock.expects("checkFilterOperation").withExactArgs([]);
+		oModelMock.expects("checkFilter").withExactArgs([]);
 
 		// code under test
 		oBinding = new ODataTreeBinding(oModel, "path", oContext);
@@ -173,7 +173,7 @@ sap.ui.define([
 		assert.strictEqual(oBinding.bUsePreliminaryContext, "bPreliminaryContext");
 		assert.strictEqual(oBinding.bTransitionMessagesOnly, false);
 
-		oModelMock.expects("checkFilterOperation").withExactArgs([]);
+		oModelMock.expects("checkFilter").withExactArgs([]);
 
 		// code under test
 		oBinding = new ODataTreeBinding(oModel, "path", oContext, undefined,
@@ -181,7 +181,7 @@ sap.ui.define([
 
 		assert.strictEqual(oBinding.sGroupId, "group");
 
-		oModelMock.expects("checkFilterOperation").withExactArgs([]);
+		oModelMock.expects("checkFilter").withExactArgs([]);
 		this.oLogMock.expects("fatal").withExactArgs("To use an ODataTreeBinding at least "
 			+ "one CountMode must be supported by the service!");
 
@@ -1181,12 +1181,12 @@ sap.ui.define([
 	QUnit.test("filter: group filters of type Application #" + i, function (assert) {
 		var oBinding = {
 				aApplicationFilters: "~oldFilters",
-				oModel: {checkFilterOperation: function () {}},
+				oModel: {checkFilter: function () {}},
 				_fireRefresh: function () {},
 				resetData: function () {}
 			};
 
-		this.mock(oBinding.oModel).expects("checkFilterOperation").withExactArgs(oFixture.filter);
+		this.mock(oBinding.oModel).expects("checkFilter").withExactArgs(oFixture.filter);
 		this.mock(FilterProcessor).expects("groupFilters")
 			.withExactArgs(sinon.match.same(oFixture.filter))
 			.exactly(oFixture.groupFilter ? 1 : 0)
@@ -1229,11 +1229,11 @@ sap.ui.define([
 			oBinding,
 			oContext = {},
 			oModel = {
-				checkFilterOperation : function () {}
+				checkFilter : function () {}
 			},
 			oModelMock = this.mock(oModel);
 
-		oModelMock.expects("checkFilterOperation").withExactArgs([oApplicationFilter]);
+		oModelMock.expects("checkFilter").withExactArgs([oApplicationFilter]);
 
 		oBinding = new ODataTreeBinding(oModel, "path", oContext, oApplicationFilter);
 
@@ -1247,7 +1247,7 @@ sap.ui.define([
 		assert.deepEqual(oBinding.aApplicationFilters, [oApplicationFilter]);
 
 		oApplicationFilter = new Filter("propertyPath", "LE", "bar");
-		oModelMock.expects("checkFilterOperation").withExactArgs(oApplicationFilter);
+		oModelMock.expects("checkFilter").withExactArgs(oApplicationFilter);
 
 		oBinding.filter(oApplicationFilter, FilterType.Application);
 
@@ -1260,7 +1260,7 @@ sap.ui.define([
 		});
 		assert.deepEqual(oBinding.aApplicationFilters, [oApplicationFilter]);
 
-		oModelMock.expects("checkFilterOperation").withExactArgs(undefined);
+		oModelMock.expects("checkFilter").withExactArgs(undefined);
 
 		oBinding.filter(undefined, FilterType.Application);
 

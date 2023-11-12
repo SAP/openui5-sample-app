@@ -79,7 +79,7 @@ function(
 	 *
 	 *
 	 * @author Frank Weigel
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 * @since 0.8.6
 	 * @alias sap.ui.base.ManagedObjectMetadata
 	 * @extends sap.ui.base.Metadata
@@ -126,6 +126,29 @@ function(
 		}
 
 		return result;
+	}
+
+	/**
+	 * Validates the given default class against its aggregation type.
+	 */
+	function validateDefaultClass(oAggregation, oOriginalAggregationInfo, fnClass) {
+		const fnDefaultClass = oOriginalAggregationInfo.defaultClass;
+
+		// we check if:
+		//    1. the defaultClass matches the aggregation type
+		//    2. the defaultClass matches the altTypes ('object' must not be included)
+		//    3. the defaultClass defined with a nullish value
+		if (fnDefaultClass) {
+			if (!BaseObject.isObjectA(fnDefaultClass.prototype, oAggregation.type)) {
+				throw new TypeError(`The 'defaultClass' of the aggregation '${oAggregation.name}' in '${fnClass.getName()}' is not of type '${oAggregation.type}'.`);
+			} else if (oAggregation.altTypes?.includes("object")) {
+				throw new TypeError(`The aggregation '${oAggregation.name}' in '${fnClass.getName()}' must not defined a 'defaultClass' together with the altType 'object'.`);
+			}
+		} else if (oOriginalAggregationInfo.hasOwnProperty("defaultClass")) {
+			throw new TypeError(`The 'defaultClass' of the aggregation '${oAggregation.name}' in '${fnClass.getName()}' is defined with a nullish value (${fnDefaultClass}).`);
+		}
+
+		return fnDefaultClass;
 	}
 
 	var Kind = {
@@ -259,6 +282,7 @@ function(
 		this.name = name;
 		this.type = info.type || 'sap.ui.core.Control';
 		this.altTypes = Array.isArray(info.altTypes) ? info.altTypes : undefined;
+		this.defaultClass = validateDefaultClass(this, info, oClass) || null;
 		this.multiple = typeof info.multiple === 'boolean' ? info.multiple : true;
 		this.singularName = this.multiple ? info.singularName || guessSingularName(name) : undefined;
 		this.bindable = !!info.bindable;

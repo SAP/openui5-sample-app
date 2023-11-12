@@ -4798,7 +4798,7 @@ sap.ui.define([
 					}
 				},
 				bFunctionHasParameter
-					? {"~name0" : "~defaultValue0", "~name1" : "foo"}
+					? {"~name0" : undefined, "~name1" : "foo"}
 					: undefined),
 			oMetadata = {
 				_getCanonicalPathOfFunctionImport : function () {},
@@ -4812,7 +4812,6 @@ sap.ui.define([
 				bUseBatch : "~bUseBatch",
 				sServiceUrl : "/service/url",
 				_addEntity : function () {},
-				_createPropertyValue : function () {},
 				_createRequest : function () {},
 				_createRequestUrlWithNormalizedPath : function () {},
 				_getHeaders : function () {},
@@ -4869,20 +4868,12 @@ sap.ui.define([
 			.returns(oFunctionMetadataFixture.oFunctionMetadata);
 
 		if (bFunctionHasParameter) {
-			oModelMock.expects("_createPropertyValue")
-				.withExactArgs("~type0")
-				.returns("~defaultValue0");
-			oModelMock.expects("_createPropertyValue")
-				.withExactArgs("~type1")
-				.returns("~defaultValue1");
 			this.oLogMock.expects("warning")
 				.withExactArgs("No value given for parameter '~name0' of function import"
 					+ " '/~sFunctionName'", sinon.match.same(oModel), sClassName);
 			this.mock(ODataUtils).expects("formatValue")
 				.withExactArgs("foo", "~type1")
 				.returns("~value1");
-		} else {
-			oModelMock.expects("_createPropertyValue").never();
 		}
 
 		oModelMock.expects("_addEntity").withExactArgs(oExpectedOData)
@@ -5292,7 +5283,7 @@ sap.ui.define([
 			oModel = {
 				// used by ODataListBinding and ODataTreeBinding
 				_getCreatedContextsCache : function () {},
-				checkFilterOperation : function () {},
+				checkFilter : function () {},
 				createCustomParams : function () { return {}; }, // used by ODataListBinding
 				resolveDeep : function () {},
 				resolveFromCache : function () {}

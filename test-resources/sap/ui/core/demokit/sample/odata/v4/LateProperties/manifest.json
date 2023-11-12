@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR-OD4",
 		"applicationVersion" : {
-			"version" : "1.120.0"
+			"version" : "1.120.1"
 		},
 		"description" : "Test OData V4 late properties",
 		"dataSources" : {

@@ -102,7 +102,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.TreeBinding
 	 * @hideconstructor
 	 * @public
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 */
 	var ODataTreeBinding = TreeBinding.extend("sap.ui.model.odata.v2.ODataTreeBinding", /** @lends sap.ui.model.odata.v2.ODataTreeBinding.prototype */ {
 
@@ -141,7 +141,7 @@ sap.ui.define([
 			this.aApplicationFilters = vFilters;
 
 			// check filter integrity
-			this.oModel.checkFilterOperation(this.aApplicationFilters);
+			this.oModel.checkFilter(this.aApplicationFilters);
 
 			// a queue containing all parallel running requests
 			// a request is identified by (node id, startindex, length)
@@ -1633,6 +1633,9 @@ sap.ui.define([
 	 *   depending on whether the filtering has been done
 	 * @return {this}
 	 *   Returns <code>this</code> to facilitate method chaining
+	 * @throws {Error} If one of the filters uses an operator that is not supported by the underlying model
+	 *   implementation or if the {@link sap.ui.model.Filter.NONE} filter instance is contained in
+	 *   <code>aFilters</code> together with other filters
 	 *
 	 * @see sap.ui.model.TreeBinding.prototype.filter
 	 * @public
@@ -1642,7 +1645,7 @@ sap.ui.define([
 		sFilterType = sFilterType || FilterType.Control;
 
 		// check filter integrity
-		this.oModel.checkFilterOperation(aFilters);
+		this.oModel.checkFilter(aFilters);
 
 		// check if filtering is supported for the current binding configuration
 		if (sFilterType == FilterType.Control && (!this.bClientOperation || this.sOperationMode == OperationMode.Server)) {

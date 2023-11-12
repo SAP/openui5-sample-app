@@ -57,7 +57,7 @@ sap.ui.define([
 	 * @alias sap.m.p13n.Engine
 	 * @extends sap.m.p13n.modules.AdaptationProvider
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 * @public
 	 * @since 1.104
 	 */

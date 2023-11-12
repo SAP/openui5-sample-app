@@ -60,7 +60,7 @@ function(
 	 * @class
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 * @public
 	 * @alias sap.ui.core.Fragment
 	 */
@@ -179,7 +179,7 @@ function(
 		this.fnScopedRunWithOwner = mSettings.containingView && mSettings.containingView.fnScopedRunWithOwner;
 
 		if (!this.fnScopedRunWithOwner && this._sOwnerId) {
-			var oOwnerComponent = Component.get(this._sOwnerId);
+			var oOwnerComponent = Component.getComponentById(this._sOwnerId);
 			this.fnScopedRunWithOwner = function(fnCallbackToBeScoped) {
 				return oOwnerComponent.runAsOwner(fnCallbackToBeScoped);
 			};
@@ -386,7 +386,7 @@ function(
 					// owner-id is either available because the async factory was called in a sync block
 					// or: the containing view carries the owner id for us
 					var sOwnerId = mSettings.sOwnerId || mSettings.containingView && mSettings.containingView._sOwnerId;
-					var oOwnerComponent = Component.get(sOwnerId);
+					var oOwnerComponent = Component.getComponentById(sOwnerId);
 					if (oOwnerComponent) {
 						return oOwnerComponent.runAsOwner(function () {
 							return new Fragment(mSettings);

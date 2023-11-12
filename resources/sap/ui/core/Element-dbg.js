@@ -20,7 +20,8 @@ sap.ui.define([
 	"./RenderManager",
 	"./Configuration",
 	"./EnabledPropagator",
-	"./Theming"
+	"./Theming",
+	"sap/ui/core/util/_LocalizationHelper"
 ],
 	function(
 		DataType,
@@ -37,7 +38,8 @@ sap.ui.define([
 		RenderManager,
 		Configuration,
 		EnabledPropagator,
-		Theming
+		Theming,
+		_LocalizationHelper
 	) {
 	"use strict";
 
@@ -132,7 +134,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 * @public
 	 * @alias sap.ui.core.Element
 	 */
@@ -2077,6 +2079,8 @@ sap.ui.define([
 			oElement._handleEvent(oJQueryEvent);
 		});
 	});
+
+	_LocalizationHelper.registerForUpdate("Elements", Element.registry.all);
 
 	return Element;
 

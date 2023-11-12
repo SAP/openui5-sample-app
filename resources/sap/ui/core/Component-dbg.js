@@ -30,7 +30,8 @@ sap.ui.define([
 	'sap/ui/core/_UrlResolver',
 	'sap/ui/VersionInfo',
 	'sap/ui/core/mvc/ViewType',
-	'sap/ui/core/Configuration'
+	'sap/ui/core/Configuration',
+	'sap/ui/core/util/_LocalizationHelper'
 ], function(
 	Manifest,
 	ComponentMetadata,
@@ -56,7 +57,8 @@ sap.ui.define([
 	_UrlResolver,
 	VersionInfo,
 	ViewType,
-	Configuration
+	Configuration,
+	_LocalizationHelper
 ) {
 	"use strict";
 
@@ -234,7 +236,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -473,7 +475,7 @@ sap.ui.define([
 		}
 
 		if (sComponentId) {
-			oComponent = Component.get(sComponentId);
+			oComponent = Component.getComponentById(sComponentId);
 		}
 
 		if (oComponent) {
@@ -744,7 +746,7 @@ sap.ui.define([
 	 * @since 1.25.1
 	 */
 	Component.getOwnerComponentFor = function(oObject) {
-		return Component.get(Component.getOwnerIdFor(oObject));
+		return Component.getComponentById(Component.getOwnerIdFor(oObject));
 	};
 
 	/**
@@ -2531,7 +2533,7 @@ sap.ui.define([
 				"Use 'Component.get' instead", "sap.ui.component", null, fnLogProperties.bind(null, vConfig));
 			// when only a string is given, then this function behaves like a
 			// getter and returns an existing component instance
-			return Component.get(vConfig);
+			return Component.getComponentById(vConfig);
 		}
 
 		if (vConfig.async) {
@@ -2624,7 +2626,7 @@ sap.ui.define([
 	 * Part of the old sap.ui.component implementation than can be re-used by the new factory
 	 */
 	function componentFactory(vConfig, bLegacy) {
-		var oOwnerComponent = Component.get(ManagedObject._sOwnerId);
+		var oOwnerComponent = Component.getComponentById(ManagedObject._sOwnerId);
 
 		if (Array.isArray(vConfig.activeTerminologies) && vConfig.activeTerminologies.length &&
 			Array.isArray(Localization.getActiveTerminologies()) && Localization.getActiveTerminologies().length) {
@@ -2869,9 +2871,24 @@ sap.ui.define([
 	 * @since 1.56.0
 	 * @static
 	 * @public
+	 * @deprecated As of version 1.120, please use the static {@link sap.ui.core.Component.getComponentById getComponentById} instead.
 	 */
 	Component.get = function (sId) {
 		// lookup and return the component
+		return Component.getComponentById(sId);
+	};
+
+	/**
+	 * Returns an existing component instance, identified by its ID.
+	 *
+	 * @param {string} sId ID of the component.
+	 * @returns {sap.ui.core.Component|undefined} Component instance or <code>undefined</code> when no component
+	 *     with the given ID exists.
+	 * @since 1.120
+	 * @static
+	 * @public
+	 */
+	Component.getComponentById = function(sId) {
 		return Component.registry.get(sId);
 	};
 
@@ -3029,7 +3046,7 @@ sap.ui.define([
 			// determine the semantic of the manifest property
 			bManifestFirst = !!vManifest;
 			sManifestUrl = vManifest && typeof vManifest === 'string' ? vManifest : undefined;
-			oManifest = vManifest && typeof vManifest === 'object' ? createSanitizedManifest(vManifest, {url: oConfig && oConfig.altManifestUrl, activeTerminologies: aActiveTerminologies}) : undefined;
+			oManifest = vManifest && typeof vManifest === 'object' ? createSanitizedManifest(vManifest, {url: oConfig && oConfig.altManifestUrl, activeTerminologies: aActiveTerminologies, process: !oConfig.async}) : undefined;
 		}
 
 		// if we find a manifest URL in the configuration
@@ -4090,6 +4107,8 @@ sap.ui.define([
 	 * @since 1.88
 	 * @protected
 	 */
+
+	_LocalizationHelper.registerForUpdate("Components", Component.registry.all);
 
 	return Component;
 });

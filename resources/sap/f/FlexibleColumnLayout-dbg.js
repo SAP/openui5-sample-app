@@ -97,7 +97,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 *
 	 * @constructor
 	 * @public
@@ -903,6 +903,12 @@ sap.ui.define([
 
 		this._deregisterResizeHandler();
 		this._oAnimationEndListener.cancelAll();
+
+		if (this.$().length) {
+			FlexibleColumnLayout.COLUMN_ORDER.slice().forEach(function (sColumn) {
+				this._$columns[sColumn].removeClass(FlexibleColumnLayout.ANIMATED_COLUMN_CLASS_NAME);
+			}.bind(this));
+		}
 	};
 
 	FlexibleColumnLayout.prototype.onAfterRendering = function () {
@@ -1219,6 +1225,11 @@ sap.ui.define([
 			// detach all listeners to any previous unfinished animation
 			this._oAnimationEndListener.cancelAll();
 		}
+
+		aColumns.slice().forEach(function (sColumn) {
+			this._$columns[sColumn].removeClass(FlexibleColumnLayout.ANIMATED_COLUMN_CLASS_NAME);
+		}.bind(this));
+
 		// update separator visibility only after pinning the columns
 		// to prevent unnecessary resize in the concealed column due to
 		// change of its width upon hiding its preceding separator
@@ -3196,6 +3207,7 @@ sap.ui.define([
 		this._aPendingPromises = [];
 		this._oCancelPromises = {};
 		this._oPendingPromiseAll = null;
+		this._oListeners = {};
 		if (this.iTimer) {
 			clearTimeout(this.iTimer);
 			this.iTimer = null;

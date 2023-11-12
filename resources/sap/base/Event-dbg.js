@@ -11,7 +11,7 @@ sap.ui.define(() => {
 
 	/**
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.1
 	 *
 	 * Creates an event with the given <code>sType</code>,
 	 * linked to the provided <code>oTarget</code> and enriched with the <code>oParameters</code>.
@@ -52,7 +52,7 @@ sap.ui.define(() => {
 		 * @ui5-restricted sap/base/i18n sap.ui.core
 		 */
 		static getParameters(oEvent) {
-			return Object.assign(Object.create(null), oEvent[EVENT_PARAMETERS_SYMBOL]);
+			return Object.assign({}, oEvent[EVENT_PARAMETERS_SYMBOL]);
 		}
 	}
 

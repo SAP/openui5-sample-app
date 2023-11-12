@@ -156,7 +156,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.120.0
+		 * @version 1.120.1
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
@@ -724,7 +724,7 @@ sap.ui.define([
 		this.mSchema2MetadataUrl = {};
 		this.mSupportedBindingModes = {OneTime : true, OneWay : true};
 		this.bSupportReferences = bSupportReferences !== false; // default is true
-		// ClientListBinding#filter calls checkFilterOperation on the model; ClientModel does
+		// ClientListBinding#filter calls checkFilter on the model; ClientModel does
 		// not support "All" and "Any" filters
 		this.mUnsupportedFilterOperators = {All : true, Any : true};
 		this.sUrl = sUrl;
