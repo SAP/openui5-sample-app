@@ -1,11 +1,14 @@
 {
-	"newTodo": "",
-	"todos": [{
+	"newTodo": { "title": "", "dueDate": null },
+	"todos": [
+		{
 			"title": "Start this app",
+			"dueDate": "2023-12-11",
 			"completed": true
 		},
 		{
 			"title": "Learn OpenUI5",
+			"dueDate": "2030-01-01",
 			"completed": false
 		}
 	],
