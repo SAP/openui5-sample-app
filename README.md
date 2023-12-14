@@ -1,24 +1,31 @@
+My super cool fork!
+
 ![OpenUI5 logo](http://openui5.org/images/OpenUI5_new_big_side.png)
 
 # openui5-sample-app
+
 > [OpenUI5](https://github.com/SAP/openui5) sample app using the [UI5 Tooling](https://github.com/SAP/ui5-tooling).
 
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP/openui5-sample-app)](https://api.reuse.software/info/github.com/SAP/openui5-sample-app)
 
 ## Live Demo
+
 A deployed version of the [openui5-sample-app](http://sap.github.io/openui5-sample-app/index.html) is hosted on GitHub Pages.
 
 ## Prerequisites
-- The **UI5 CLI** of the [UI5 Tooling](https://github.com/SAP/ui5-tooling#installing-the-ui5-cli).
-    - For installation instructions please see: [Installing the UI5 CLI](https://github.com/SAP/ui5-tooling#installing-the-ui5-cli).
+
+-   The **UI5 CLI** of the [UI5 Tooling](https://github.com/SAP/ui5-tooling#installing-the-ui5-cli).
+    -   For installation instructions please see: [Installing the UI5 CLI](https://github.com/SAP/ui5-tooling#installing-the-ui5-cli).
 
 ## Getting started
+
 1. Clone this repository and navigate into it
     ```sh
     git clone https://github.com/SAP/openui5-sample-app.git
     cd openui5-sample-app
     ```
 1. Install all dependencies
+
     ```sh
     npm install
     ```
@@ -29,47 +36,52 @@ A deployed version of the [openui5-sample-app](http://sap.github.io/openui5-samp
     ```
 
 ## Testing
-* Run [ESLint](https://eslint.org/) code validation
+
+-   Run [ESLint](https://eslint.org/) code validation
     ```sh
     npm run lint
     ```
-* Start the [Karma Test Runner](https://karma-runner.github.io/latest/index.html) with the [UI5 Plugin](https://github.com/SAP/karma-ui5) and execute the tests automatically after every change
+-   Start the [Karma Test Runner](https://karma-runner.github.io/latest/index.html) with the [UI5 Plugin](https://github.com/SAP/karma-ui5) and execute the tests automatically after every change
     ```sh
     npm run watch
     ```
-* Run both ESLint and Karma in CI mode
+-   Run both ESLint and Karma in CI mode
     ```sh
     npm test
     ```
+
 ## Building
+
 ### Option 1: Standard preload build
+
 1. Execute the build
     ```sh
     ui5 build -a
     ```
 1. Run the result
     1. Run a local HTTP server on the build results (`/dist` directory)  
-	(**Note:** This script is using the [local-web-server](https://www.npmjs.com/package/local-web-server) npm module, but you can use any HTTP server for that)
-        ```sh
-        npm run serve-dist
-        ```
+       (**Note:** This script is using the [local-web-server](https://www.npmjs.com/package/local-web-server) npm module, but you can use any HTTP server for that)
+       `sh
+    npm run serve-dist
+    `
     1. Open the app at http://localhost:8000
 
 ### Option 2: Self-contained build
+
 1. (Optional) Remove previous build results
-   ```sh
-   rm -rf ./dist
-   ```
+    ```sh
+    rm -rf ./dist
+    ```
 1. Execute the `self-contained` build to create a bundle with all of your applications runtime dependencies
     ```sh
     ui5 build self-contained -a
     ```
 1. Run the result
     1. Run a local HTTP server on the build results (`/dist` directory)  
-	(**Note:** This script is using the [local-web-server](https://www.npmjs.com/package/local-web-server) npm module, but you can use any HTTP server for that)
-        ```sh
-        npm run serve-dist
-        ```
+       (**Note:** This script is using the [local-web-server](https://www.npmjs.com/package/local-web-server) npm module, but you can use any HTTP server for that)
+       `sh
+    npm run serve-dist
+    `
     1. Open the app at http://localhost:8000
 
 ## Working with local dependencies
@@ -77,10 +89,11 @@ A deployed version of the [openui5-sample-app](http://sap.github.io/openui5-samp
 For local development of your applications' dependencies (like OpenUI5 libraries) you can use [UI5 Workspaces](https://sap.github.io/ui5-tooling/stable/pages/Workspace/). This will allow you to make changes to those dependencies locally and see the impact in your application immediately.
 
 ### Preparation
+
 The following needs to be done just once per setup.
 
 1. Clone the OpenUI5 repository and navigate into it
-    **Note:** The UI5 version must be 1.65.0 or higher, you can check that in the root `package.json` file
+   **Note:** The UI5 version must be 1.65.0 or higher, you can check that in the root `package.json` file
     ```sh
     git clone https://github.com/SAP/openui5.git
     cd openui5
