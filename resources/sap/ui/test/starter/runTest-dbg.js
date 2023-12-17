@@ -1167,7 +1167,7 @@
 		return error;
 	}
 
-	function declareModule(sModuleName) {
+	function declareModule(sModuleName, sDeprecationMessage) {
 		// sModuleName must be a unified resource name of type .js
 		assert(/\.js$/.test(sModuleName), "must be a Javascript module");
 
@@ -1183,6 +1183,7 @@
 
 		// avoid cycles
 		oModule.state = READY;
+		oModule.deprecation = sDeprecationMessage || undefined;
 
 		return oModule;
 	}
@@ -1513,6 +1514,10 @@
 
 		const oModule = Module.get(sModuleName);
 		const oShim = mShims[sModuleName];
+
+		if (oModule.deprecation) {
+			log.error((oRequestingModule ? "(dependency of '" + oRequestingModule.name + "') " : "") + oModule.deprecation);
+		}
 
 		// when there's a shim with dependencies for the module
 		// resolve them first before requiring the module again with bSkipShimDeps = true
@@ -2006,7 +2011,7 @@
 			queue.push(sResourceName, aDependencies, vFactory, bExport);
 			if ( sResourceName != null ) {
 				const oModule = Module.get(sResourceName);
-				if ( oModule.state === INITIAL ) {
+				if ( oModule.state <= INITIAL ) {
 					oModule.state = EXECUTING;
 					oModule.async = true;
 				}
@@ -2551,8 +2556,8 @@
 		amdDefine,
 		amdRequire,
 		config: ui5Config,
-		declareModule(sResourceName) {
-			/* void */ declareModule( normalize(sResourceName) );
+		declareModule(sResourceName, sDeprecationMessage) {
+			/* void */ declareModule(normalize(sResourceName), sDeprecationMessage);
 		},
 		defineModuleSync,
 		dump: dumpInternals,
@@ -3680,7 +3685,8 @@
 			"string[]": [],
 			"function[]": [],
 			"function": undefined,
-			"object": {}
+			"object": {},
+			"mergedObject": {}
 		};
 
 		/**
@@ -3740,7 +3746,13 @@
 			 * @private
 			 * @ui5-restricted sap.ui.core, sap.fl, sap.ui.intergration, sap.ui.export
 			 */
-			"Object":  "object"
+			"Object":  "object",
+			/**
+			 * defaultValue: {}
+			 * @private
+			 * @ui5-restricted sap.ui.core, sap.fl, sap.ui.intergration, sap.ui.export
+			 */
+			"MergedObject":  "mergedObject"
 		};
 
 		var bGlobalIgnoreExternal = get(mUrlParamOptions);
@@ -3864,6 +3876,7 @@
 						}
 						break;
 					case TypeEnum.Object:
+					case TypeEnum.MergedObject:
 						if (typeof vValue === "string") {
 							vValue = JSON.parse(vValue);
 						}
@@ -3946,22 +3959,22 @@
 				var vMatch = sName.match(rXXAlias);
 				var vDefaultValue = mOptions.hasOwnProperty("defaultValue") ? mOptions.defaultValue : mInternalDefaultValues[mOptions.type];
 
-				if (mOptions.provider) {
-					vValue = mOptions.provider.get(sName, mOptions.freeze);
-				}
-				if (vValue === undefined) {
-					for (var i = aProvider.length - 1; i >= 0; i--) {
-						if (!aProvider[i].external || !bIgnoreExternal) {
-							vValue = aProvider[i].get(sName, mOptions.freeze);
-							if (vValue !== undefined) {
+				const aAllProvider = [...aProvider, ...(mOptions.provider ? [mOptions.provider] : [])];
+
+				for (var i = aAllProvider.length - 1; i >= 0; i--) {
+					if (!aAllProvider[i].external || !bIgnoreExternal) {
+						const vProviderValue = convertToType(aAllProvider[i].get(sName, mOptions.freeze), mOptions.type, mOptions.name);
+						if (vProviderValue !== undefined) {
+							if (mOptions.type === TypeEnum.MergedObject) {
+								vValue = Object.assign({}, vProviderValue, vValue);
+							} else {
+								vValue = vProviderValue;
 								break;
 							}
 						}
 					}
 				}
-				if (vValue !== undefined) {
-					vValue = convertToType(vValue, mOptions.type, mOptions.name);
-				} else if (vMatch && vMatch[1] === "sapUi") {
+				if (vValue === undefined && (vMatch && vMatch[1] === "sapUi")) {
 					mOptions.name = vMatch[1] + "Xx" + vMatch[2];
 					vValue = get(mOptions);
 				}
@@ -3974,7 +3987,7 @@
 				mCache[sCacheKey] = vValue;
 			}
 			var vCachedValue = mCache[sCacheKey];
-			if (typeof mOptions.type !== 'function' && (mOptions.type === TypeEnum.StringArray || mOptions.type === TypeEnum.Object)) {
+			if (typeof mOptions.type !== 'function' && (mOptions.type === TypeEnum.StringArray || mOptions.type === TypeEnum.Object || mOptions.type === TypeEnum.MergedObject)) {
 				vCachedValue = deepClone(vCachedValue);
 			}
 			return vCachedValue;
@@ -4079,7 +4092,7 @@
 	// configuration via window['sap-ui-config'] always overrides an auto detected base URL
 	var mResourceRoots = BaseConfig.get({
 		name: "sapUiResourceRoots",
-		type: BaseConfig.Type.Object
+		type: BaseConfig.Type.MergedObject
 	});
 	if (typeof mResourceRoots[''] === 'string' ) {
 		sBaseUrl = mResourceRoots[''];

@@ -118,10 +118,6 @@ sap.ui.define([
 				this.oLogger.debug("Cannot enter text in control " + oControl + ": control is not enabled!");
 				return;
 			}
-			if (this.getText().length && oActionDomRef.selectionStart === undefined && oActionDomRef.selectionEnd === undefined) {
-				this.oLogger.debug("Cannot enter text in control " + oControl + ": The control's DOM element does not have the expected API of the html elements that accept text input: selectionStart and selectionEnd properties undefined.");
-				return;
-			}
 
 			var oUtils = this.getUtils();
 
@@ -156,7 +152,7 @@ sap.ui.define([
 			var iCursorPosition = oActionDomRef.selectionStart;
 			this.getText().split("").forEach(function (sChar) {
 
-				if (iCursorPosition === 0 || iCursorPosition === null) {
+				if (iCursorPosition === 0 || typeof iCursorPosition !== 'number') {
 					sValueBuffer += sChar;
 				} else {
 					var sLeftPart = sValueBuffer.slice(0, iCursorPosition);

@@ -51,6 +51,9 @@ sap.ui.define(function() {
 					libs: "sap.m"
 				}
 			},
+			/**
+			 * @deprecated since 1.120
+			 */
 			ControlRenderer: {
 				title: "sap.ui.core.Control (ControlRenderer)"
 			},
@@ -75,6 +78,7 @@ sap.ui.define(function() {
 				},
 				module: [
 					"testdata/core/Element_base.qunit",
+					"testdata/core/Element_base_legacyAPIs.qunit",
 					"testdata/core/Element_contextualSettings.qunit",
 					"testdata/core/Element_data.qunit",
 					"testdata/core/Element_delegates.qunit",

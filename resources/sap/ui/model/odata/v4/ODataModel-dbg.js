@@ -234,7 +234,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.120.1
+		 * @version 1.120.2
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
@@ -965,9 +965,14 @@ sap.ui.define([
 	 *   For valid values, see parameter "$$groupId".
 	 * @returns {sap.ui.model.odata.v4.ODataListBinding}
 	 *   The list binding
-	 * @throws {Error}
-	 *   If disallowed binding parameters are provided or an unsupported operation mode is used
-	 *
+	 * @throws {Error} If
+	 *   <ul>
+	 *     <li> disallowed binding parameters are provided,
+	 *     <li> an unsupported operation mode is used,
+	 *     <li> the {@link sap.ui.model.Filter.NONE} filter instance is contained in
+	 *       <code>vFilters</code> together with other filters,
+	 *     <li> {@link sap.ui.model.Filter.NONE} is combined with <code>$$aggregation</code>
+	 *   </ul>
 	 * @public
 	 * @see sap.ui.model.Model#bindList
 	 * @since 1.37.0

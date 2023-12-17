@@ -174,7 +174,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IShrinkable
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 *
 	 * @constructor
 	 * @public
@@ -1226,6 +1226,8 @@ sap.ui.define([
 
 			bIsListOpenDefaultPrevented = !oList.fireListOpen({});
 
+			oList.attachUpdateFinished(_listItemsChangeHandler.bind(this));
+
 			this._moveListToDisplayContainer(oList, oPopover);
 			oPopover.openBy(oControl);
 			//Display remove facet icon only if ShowRemoveFacetIcon property is set to true
@@ -1862,6 +1864,8 @@ sap.ui.define([
 			//oFilterItemsPage.destroyAggregation("content", true);
 
 			oFacetFilterList.fireListOpen({});
+			oFacetFilterList.attachUpdateFinished(_listItemsChangeHandler.bind(this));
+
 			// Add the facet filter list
 			this._moveListToDisplayContainer(oFacetFilterList, oFilterItemsPage);
 

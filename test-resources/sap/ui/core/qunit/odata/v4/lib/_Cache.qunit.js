@@ -231,6 +231,23 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+	QUnit.test("_Cache#setQueryOptions defaulting", function (assert) {
+		const oCache = new _Cache(this.oRequestor);
+
+		// code under test
+		oCache.setQueryOptions();
+
+		assert.deepEqual(oCache.mQueryOptions, {});
+
+		oCache.bSentRequest = true;
+
+		assert.throws(() => {
+			// code under test
+			oCache.setQueryOptions();
+		}, new Error("Cannot set query options: Cache has already sent a request"));
+	});
+
+	//*********************************************************************************************
 	QUnit.test("_Cache#setResourcePath", function (assert) {
 		var oCache = new _Cache(this.oRequestor, "TEAMS('42')/name.space.Operation");
 
@@ -426,8 +443,8 @@ sap.ui.define([
 				.withExactArgs(undefined, oFixture.iStatus < 0
 					? [oMessage1, oMessage2] : [oMessage1]);
 			oRestoreExpectation = that.mock(oCache).expects("restoreElement").exactly(iOnFailure)
-				.withExactArgs(sinon.match.same(aCacheData), "~insert~",
-					sinon.match.same(aCacheData[1]), sPath, 2)
+				.withExactArgs("~insert~", sinon.match.same(aCacheData[1]), 2, undefined,
+					sinon.match.same(aCacheData), sPath)
 				.callsFake(() => {
 					assert.deepEqual(aCacheData.$deleted.length, 4);
 				});
@@ -1043,7 +1060,7 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-["", "~path~"].forEach(function (sPath) {
+[undefined, "~path~"].forEach(function (sPath) {
 	[false, true].forEach(function (bTransient) {
 		[false, true].forEach(function (bDefault) {
 			const sTitle = `_Cache#restoreElement, path=${sPath}, transient=${bTransient},
@@ -1059,22 +1076,24 @@ sap.ui.define([
 		if (bDefault) {
 			oCache.aElements = aElements;
 		}
+		const sPath0 = sPath || ""; // to test defaulting
 		this.mock(oCache).expects("adjustIndexes")
-			.withExactArgs(sPath, sinon.match.same(aElements), 42, 1, "~iDeletedIndex~");
+			.withExactArgs(sPath0, sinon.match.same(aElements), 42, 1, "~iDeletedIndex~");
 		const oHelperMock = this.mock(_Helper);
 		oHelperMock.expects("getPrivateAnnotation").exactly(bDefault && bTransient ? 0 : 1)
 			.withExactArgs("~oElement~", "transientPredicate")
 			.returns(bTransient ? "($uid=id-1-23)" : undefined);
 		oHelperMock.expects("addToCount")
-			.withExactArgs(sinon.match.same(oCache.mChangeListeners), sPath,
+			.withExactArgs(sinon.match.same(oCache.mChangeListeners), sPath0,
 				sinon.match.same(aElements), 1);
 		this.mock(aElements).expects("splice").withExactArgs(42, 0, "~oElement~");
 		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~oElement~", "predicate")
 			.returns("~predicate~");
 
 		// code under test
-		oCache.restoreElement(bDefault ? undefined : aElements, 42, "~oElement~", sPath,
-			"~iDeletedIndex~", bDefault && bTransient ? "($uid=id-1-23)" : undefined);
+		oCache.restoreElement(42, "~oElement~", "~iDeletedIndex~",
+			bDefault && bTransient ? "($uid=id-1-23)" : undefined, bDefault ? undefined : aElements,
+			sPath);
 
 		assert.strictEqual(oCache.iLimit, bTransient || sPath ? 234 : 235);
 		assert.strictEqual(aElements.$created, bTransient ? 3 : 2);
@@ -2142,7 +2161,7 @@ sap.ui.define([
 			.withExactArgs("/Products/PostAddress")
 			.returns(SyncPromise.resolve({}));
 		this.mock(_Helper).expects("isSelected")
-			.withExactArgs("PostAddress", undefined)
+			.withExactArgs("PostAddress", {})
 			.returns(false);
 		this.mock(oCache).expects("fetchLateProperty")
 			.withExactArgs("~oGroupLock~", sinon.match.same(oData), "",
@@ -7617,6 +7636,48 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
+	QUnit.test("CollectionCache#requestElements: $filter=false", function (assert) {
+		var oCache = this.createCache("Employees", {$filter : "false"}),
+			oCacheMock = this.mock(oCache),
+			oCheckRangeExpectation,
+			iEnd = 10,
+			oFillExpectation,
+			iStart = 0,
+			oHandleResponseExpectation,
+			oPromise,
+			oResult = {"@odata.count" : "0", value : []};
+
+		oCache.bSentRequest = false;
+
+		oCacheMock.expects("getResourcePathWithQuery").never();
+		this.oRequestorMock.expects("request").never();
+		oCacheMock.expects("fetchTypes").withExactArgs().returns(SyncPromise.resolve("~mTypes~"));
+		oFillExpectation = oCacheMock.expects("fill")
+			.withExactArgs(sinon.match.instanceOf(SyncPromise), iStart, iEnd);
+		Promise.resolve().then(function () { // must be called asynchronously
+			oCheckRangeExpectation = oCacheMock.expects("checkRange")
+				.withExactArgs(sinon.match.same(oPromise), iStart, iEnd);
+			oHandleResponseExpectation = oCacheMock.expects("handleResponse")
+				.withExactArgs(oResult, iStart, "~mTypes~")
+				.returns("~iFiltered~");
+			oCacheMock.expects("handleCount")
+				.withExactArgs("~oGroupLock~", 0, iStart, iEnd, oResult, "~iFiltered~");
+		});
+
+		// code under test
+		oPromise = oCache.requestElements(iStart, iEnd, "~oGroupLock~", 0, "~fnDataRequested~");
+
+		assert.deepEqual(oCache.aReadRequests, [{iStart, iEnd}]);
+
+		assert.strictEqual(oCache.bSentRequest, true);
+		assert.strictEqual(oFillExpectation.args[0][0], oPromise);
+
+		return oPromise.then(function () {
+			assert.ok(oCheckRangeExpectation.calledBefore(oHandleResponseExpectation));
+		});
+	});
+
+	//*********************************************************************************************
 	QUnit.test("CollectionCache#checkRange", function (assert) {
 		var oCache = this.createCache("Employees");
 
@@ -10283,6 +10344,99 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+	QUnit.test("CollectionCache#move", function (assert) {
+		const oCache = this.createCache("n/a");
+
+		const aElements = oCache.aElements = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+		function deepEqual(aExpected) {
+			assert.strictEqual(oCache.aElements, aElements, "same ref");
+			assert.deepEqual(oCache.aElements, aExpected);
+		}
+
+		// code under test (nothing to do)
+		oCache.move(4, 4, 3);
+
+		deepEqual(["a", "b", "c", "d", "e", "f", "g", "h"]);
+
+		// code under test (nothing to do)
+		oCache.move(1, 4, 0);
+
+		deepEqual(["a", "b", "c", "d", "e", "f", "g", "h"]);
+
+		// code under test
+		oCache.move(1, 4, 3);
+
+		deepEqual(["a", "e", "f", "g", /**/"b", "c", "d"/**/, "h"]);
+
+		// code under test (undo)
+		oCache.move(4, 1, 3);
+
+		deepEqual(["a", "b", "c", "d", "e", "f", "g", "h"]);
+
+		// code under test
+		oCache.move(1, 5, 2);
+
+		deepEqual(["a", "d", "e", "f", "g", /**/"b", "c"/**/, "h"]);
+
+		// code under test (undo)
+		oCache.move(5, 1, 2);
+
+		deepEqual(["a", "b", "c", "d", "e", "f", "g", "h"]);
+
+		// code under test
+		oCache.move(1, 3, 4);
+
+		deepEqual(["a", "f", "g", /**/"b", "c", "d", "e"/**/, "h"]);
+
+		// code under test (undo)
+		oCache.move(3, 1, 4);
+
+		deepEqual(["a", "b", "c", "d", "e", "f", "g", "h"]);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("CollectionCache#move: no RangeError", function (assert) {
+		const oCache = this.createCache("n/a");
+
+		for (let i = 0; i < 1_000_000; i += 1) {
+			oCache.aElements[i] = i;
+		}
+
+		// code under test (no "RangeError: Maximum call stack size exceeded")
+		oCache.move(5_000, 10_000, 990_000);
+
+		for (let i = 0; i < 5_000; i += 1) {
+			if (oCache.aElements[i] !== i) {
+				assert.ok(false);
+				break;
+			}
+		}
+		for (let i = 0; i < 990_000; i += 1) {
+			if (oCache.aElements[10_000 + i] !== 5_000 + i) {
+				assert.ok(false);
+				break;
+			}
+		}
+		for (let i = 0; i < 5_000; i += 1) {
+			if (oCache.aElements[5_000 + i] !== 995_000 + i) {
+				assert.ok(false);
+				break;
+			}
+		}
+
+		// code under test (undo)
+		oCache.move(10_000, 5_000, 990_000);
+
+		for (let i = 0; i < 1_000_000; i += 1) {
+			if (oCache.aElements[i] !== i) {
+				assert.ok(false);
+				break;
+			}
+		}
+	});
+
+	//*********************************************************************************************
 [
 	{error : false, path : "EMPLOYEE_2_TEAM"},
 	{error : false, path : "EMPLOYEE_2_TEAM/TEAM_2_MANAGER"},
@@ -12513,6 +12667,100 @@ sap.ui.define([
 			assert.strictEqual(oCache.aElements[1], oValue1);
 		});
 	});
+
+	//*********************************************************************************************
+	QUnit.test("CollectionCache#read waits for prefetch 'after'", async function (assert) {
+		const oCache = this.createCache("Employees");
+		const oGroupLock = {
+			getUnlockedCopy : mustBeMocked,
+			unlock : mustBeMocked
+		};
+		this.mock(_Helper).expects("getPrivateAnnotation").never();
+		this.mock(this.oRequestor).expects("waitForBatchResponseReceived").never();
+		oCache.aElements.push(...aTestData.slice(0, 5));
+		this.mock(ODataUtils).expects("_getReadIntervals")
+			.withExactArgs(sinon.match.same(oCache.aElements), 0, 5, 10, Infinity)
+			.returns([{
+				end : 15,
+				start : 5 // [0..5[ already available, see above
+			}]);
+		const oGetUnlockedCopyExpectation = this.mock(oGroupLock).expects("getUnlockedCopy")
+			.withExactArgs().returns("~unlockedCopy~");
+		this.mock(oCache).expects("requestElements")
+			.withExactArgs(5, 15, "~unlockedCopy~", 0, "~fnDataRequested~")
+			.callsFake(() => {
+				// just at the edge, there is a promise we need to wait for
+				oCache.aElements[14] = Promise.resolve();
+				// just beyond, there is a promise which never resolves and MUST be ignored
+				oCache.aElements[15] = new Promise(() => {});
+			});
+		const oUnlockExpectation = this.mock(oGroupLock).expects("unlock").withExactArgs();
+
+		// code under test
+		const oSyncPromise = oCache.read(0, 5, 10, oGroupLock, "~fnDataRequested~");
+
+		assert.ok(oSyncPromise.isPending());
+		assert.ok(oUnlockExpectation.calledAfter(oGetUnlockedCopyExpectation));
+
+		await oSyncPromise; // no need to check result, it's defined by aElements way above
+	});
+
+	//*********************************************************************************************
+[10, 30].forEach((iPrefetchLength) => {
+	const sTitle = `CollectionCache#read waits for prefetch 'before', ${iPrefetchLength}`;
+
+	QUnit.test(sTitle, async function (assert) {
+		const oCache = this.createCache("Employees");
+		const oGroupLock = {
+			getUnlockedCopy : mustBeMocked,
+			unlock : mustBeMocked
+		};
+		this.mock(_Helper).expects("getPrivateAnnotation").never();
+		this.mock(this.oRequestor).expects("waitForBatchResponseReceived").never();
+		oCache.aElements.splice(20, 0, ...aTestData.slice(20, 25));
+		oCache.iLimit = 25; // simulate a known $count
+		const iStart = iPrefetchLength === 10 ? 10 : 0; // Math.max(0, 20 - iPrefetchLength)
+		this.mock(ODataUtils).expects("_getReadIntervals")
+			.withExactArgs(sinon.match.same(oCache.aElements), 20, 5, iPrefetchLength, 25)
+			.returns([{
+				end : 20,
+				start : iStart // [20..25[ already available, see above
+			}]);
+		const oGetUnlockedCopyExpectation = this.mock(oGroupLock).expects("getUnlockedCopy")
+			.withExactArgs().returns("~unlockedCopy~");
+		this.mock(oCache).expects("requestElements")
+			.withExactArgs(iStart, 20, "~unlockedCopy~", 0, "~fnDataRequested~")
+			.callsFake(() => {
+				switch (iPrefetchLength) {
+					case 10:
+						// just at the edge, there is a promise we need to wait for
+						oCache.aElements[10] = Promise.resolve();
+						// just beyond, there is a promise which never resolves and MUST be ignored
+						oCache.aElements[9] = new Promise(() => {});
+						break;
+
+					case 30:
+						// just at the edge, there is a promise we need to wait for
+						oCache.aElements[0] = Promise.resolve();
+						// just beyond, there is a promise which never resolves and MUST be ignored
+						oCache.aElements[55] = new Promise(() => {});
+						break;
+
+					default:
+						throw iPrefetchLength;
+				}
+			});
+		const oUnlockExpectation = this.mock(oGroupLock).expects("unlock").withExactArgs();
+
+		// code under test
+		const oSyncPromise = oCache.read(20, 5, iPrefetchLength, oGroupLock, "~fnDataRequested~");
+
+		assert.ok(oSyncPromise.isPending());
+		assert.ok(oUnlockExpectation.calledAfter(oGetUnlockedCopyExpectation));
+
+		await oSyncPromise; // no need to check result, it's defined by aElements way above
+	});
+});
 
 	//*********************************************************************************************
 	QUnit.test("CollectionCache#addKeptElement", function (assert) {

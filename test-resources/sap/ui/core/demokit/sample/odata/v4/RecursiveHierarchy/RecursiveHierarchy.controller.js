@@ -73,52 +73,79 @@ sap.ui.define([
 				|| oUriParameters.get("expandTo");
 			this._oAggregation = {
 				expandTo : sExpandTo === "*"
-					? Number.MAX_SAFE_INTEGER
-					: parseInt(sExpandTo || "3"),
+					? 999
+					: parseFloat(sExpandTo || "3"), // Note: parseInt("1E16") === 1
 				hierarchyQualifier : "OrgChart"
 			};
+			const sTreeTable = oUriParameters.get("TreeTable");
 			const sVisibleRowCount = TestUtils.retrieveData( // controlled by OPA
 					"sap.ui.core.sample.odata.v4.RecursiveHierarchy.visibleRowCount")
 				|| oUriParameters.get("visibleRowCount");
 
 			const oTable = this.byId("table");
-			if (sVisibleRowCount) {
-				oTable.getRowMode().setRowCount(parseInt(sVisibleRowCount));
+			if (sTreeTable === "Y") {
+				oTable.unbindRows();
+				oTable.setVisible(false);
+			} else {
+				if (sVisibleRowCount) {
+					oTable.getRowMode().setRowCount(parseInt(sVisibleRowCount));
+				}
+				const oRowsBinding = oTable.getBinding("rows");
+				oRowsBinding.setAggregation(this._oAggregation);
+				oRowsBinding.resume();
+				oRowsBinding.attachCreateSent(() => {
+					oTable.setBusy(true);
+				});
+				oRowsBinding.attachCreateCompleted(() => {
+					oTable.setBusy(false);
+				});
 			}
-			const oRowsBinding = oTable.getBinding("rows");
-			oRowsBinding.setAggregation(this._oAggregation);
-			oRowsBinding.resume();
-			oRowsBinding.attachCreateSent(() => {
-				oTable.setBusy(true);
-			});
-			oRowsBinding.attachCreateCompleted(() => {
-				oTable.setBusy(false);
-			});
 
 			const oTreeTable = this.byId("treeTable");
-			// enable V4 tree table flag
-			oTreeTable._oProxy._bEnableV4 = true;
-			if (sVisibleRowCount) {
-				oTreeTable.getRowMode().setRowCount(parseInt(sVisibleRowCount));
+			if (sTreeTable === "N") {
+				oTreeTable.unbindRows();
+				oTreeTable.setVisible(false);
+			} else {
+				// enable V4 tree table flag
+				oTreeTable._oProxy._bEnableV4 = true;
+				if (sVisibleRowCount) {
+					oTreeTable.getRowMode().setRowCount(parseInt(sVisibleRowCount));
+				}
+				const oTreeRowsBinding = oTreeTable.getBinding("rows");
+				oTreeRowsBinding.setAggregation(this._oAggregation);
+				oTreeRowsBinding.resume();
+				oTreeRowsBinding.attachCreateSent(() => {
+					oTreeTable.setBusy(true);
+				});
+				oTreeRowsBinding.attachCreateCompleted(() => {
+					oTreeTable.setBusy(false);
+				});
 			}
-			const oTreeRowsBinding = oTreeTable.getBinding("rows");
-			oTreeRowsBinding.setAggregation(this._oAggregation);
-			oTreeRowsBinding.resume();
-			oTreeRowsBinding.attachCreateSent(() => {
-				oTreeTable.setBusy(true);
-			});
-			oTreeRowsBinding.attachCreateCompleted(() => {
-				oTreeTable.setBusy(false);
-			});
+
+			this.initMessagePopover(sTreeTable === "N" ? "table" : "treeTable");
+		},
+
+		onMakeRoot : async function (oEvent) {
+			try {
+				this.getView().setBusy(true);
+				await oEvent.getSource().getBindingContext().move();
+			} catch (oError) {
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
+			} finally {
+				this.getView().setBusy(false);
+			}
 		},
 
 		onMove : function (oEvent) {
-			this.oNode = oEvent.getSource().getBindingContext();
+			this._bInTreeTable = false;
+			this._oNode = oEvent.getSource().getBindingContext();
 			const oSelectDialog = this.byId("moveDialog");
-			oSelectDialog.setBindingContext(this.oNode);
+			oSelectDialog.setBindingContext(this._oNode);
 			const oListBinding = oSelectDialog.getBinding("items");
 			if (oListBinding.isSuspended()) {
 				oListBinding.resume();
+			} else {
+				oListBinding.refresh();
 			}
 			oSelectDialog.open();
 		},
@@ -128,14 +155,32 @@ sap.ui.define([
 				this.getView().setBusy(true);
 				const sParentId = oEvent.getParameter("selectedItem").getBindingContext()
 					.getProperty("ID");
-				const oParent = this.oNode.getBinding().getAllCurrentContexts()
+				const oParent = this._oNode.getBinding().getAllCurrentContexts()
 					.find((oNode) => oNode.getProperty("ID") === sParentId);
-				await this.oNode.move({parent : oParent});
+				if (!oParent) {
+					throw new Error(`Parent ${sParentId} not yet loaded`);
+				}
+
+				await this._oNode.move({parent : oParent});
+
+				const oTable = this.byId(this._bInTreeTable ? "treeTable" : "table");
+				const iParentIndex = oParent.getIndex();
+				if (iParentIndex < oTable.getFirstVisibleRow()
+					|| iParentIndex + 1
+						>= oTable.getFirstVisibleRow() + oTable.getRowMode().getRowCount()) {
+					// make sure parent & child are visible
+					oTable.setFirstVisibleRow(iParentIndex);
+				}
 			} catch (oError) {
 				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
 			} finally {
 				this.getView().setBusy(false);
 			}
+		},
+
+		onMoveInTreeTable : function (oEvent) {
+			this.onMove(oEvent);
+			this._bInTreeTable = true;
 		},
 
 		onNameChanged : function (oEvent) {

@@ -86,7 +86,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 *
 	 * @constructor
 	 * @public
@@ -408,9 +408,9 @@ sap.ui.define([
 		// first we try to access the "original" text
 		// then try to fallback to "original" text without appended version (_v*** after the original type key)
 		// then try to fallback to "original" text from the IllustratedMessage.FALLBACK_TEXTS map
-		return oBundle.getText(sPrepend + this._sIllustrationType, null, true) ||
-			oBundle.getText(sPrepend + this._sIllustrationType.substr(0, this._sIllustrationType.indexOf('_v')) , null, true) ||
-			oBundle.getText(sPrepend + IllustratedMessage.FALLBACK_TEXTS[this._sIllustrationType], null, true);
+		return oBundle.getText(sPrepend + this._sIllustrationType, undefined, true) ||
+			oBundle.getText(sPrepend + this._sIllustrationType.substr(0, this._sIllustrationType.indexOf('_v')) , undefined, true) ||
+			oBundle.getText(sPrepend + IllustratedMessage.FALLBACK_TEXTS[this._sIllustrationType], undefined, true);
 	};
 
 	/**

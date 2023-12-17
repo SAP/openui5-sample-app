@@ -55,7 +55,7 @@ sap.ui.define([
 	 * and requests, unified behavior of instant and deferred uploads, as well as improved progress indication.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 * @constructor
 	 * @public
 	 * @since 1.63

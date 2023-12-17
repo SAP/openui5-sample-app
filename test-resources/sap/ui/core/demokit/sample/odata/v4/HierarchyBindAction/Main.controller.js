@@ -76,7 +76,7 @@ sap.ui.define([
 			this._oAggregation = {
 				expandTo : sExpandTo === "*"
 					? Number.MAX_SAFE_INTEGER
-					: parseInt(sExpandTo || "1"),
+					: parseFloat(sExpandTo || "1"), // Note: parseInt("1E16") === 1
 				hierarchyQualifier : "I_SADL_BHV_BIND_DIR_HIERVIEW"
 			};
 			oRowsBinding.setAggregation(this._oAggregation);
@@ -86,12 +86,25 @@ sap.ui.define([
 			oView.setBindingContext(oRowsBinding.getHeaderContext(), "header");
 		},
 
+		onMakeRoot : async function (oEvent) {
+			try {
+				this.getView().setBusy(true);
+				await oEvent.getSource().getBindingContext().move();
+			} catch (oError) {
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
+			} finally {
+				this.getView().setBusy(false);
+			}
+		},
+
 		onMove : function (oEvent) {
 			this.oNode = oEvent.getSource().getBindingContext();
 			const oSelectDialog = this.byId("moveDialog");
 			const oListBinding = oSelectDialog.getBinding("items");
 			if (oListBinding.isSuspended()) {
 				oListBinding.resume();
+			} else {
+				oListBinding.refresh();
 			}
 			oSelectDialog.setBindingContext(this.oNode);
 			oSelectDialog.open();

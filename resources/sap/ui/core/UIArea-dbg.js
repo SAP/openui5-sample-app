@@ -7,9 +7,9 @@
 // Provides class sap.ui.core.UIArea
 sap.ui.define([
 	'sap/ui/base/ManagedObject',
-	'sap/ui/base/ManagedObjectRegistry',
 	'./Element',
 	'./RenderManager',
+	'./UIAreaRegistry',
 	'./FocusHandler',
 	'sap/ui/performance/trace/Interaction',
 	"sap/ui/util/ActivityDetection",
@@ -29,9 +29,9 @@ sap.ui.define([
 ],
 	function(
 		ManagedObject,
-		ManagedObjectRegistry,
 		Element,
 		RenderManager,
+		UIAreaRegistry,
 		FocusHandler,
 		Interaction,
 		ActivityDetection,
@@ -170,7 +170,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 * @param {object} [oRootNode] reference to the DOM element that should be 'hosting' the UI Area.
 	 * @public
 	 * @alias sap.ui.core.UIArea
@@ -1317,14 +1317,7 @@ sap.ui.define([
 		return null;
 	};
 
-	// apply the registry mixin
-	ManagedObjectRegistry.apply(UIArea, {
-		onDuplicate: function(sId, oldUIArea, newUIArea) {
-			var sMsg = "adding UIArea with duplicate id '" + sId + "'";
-			Log.error(sMsg);
-			throw new Error("Error: " + sMsg);
-		}
-	});
+	UIAreaRegistry.init(UIArea);
 
 	// field group static members
 
@@ -1390,7 +1383,7 @@ sap.ui.define([
 
 		// create a new or fetch an existing UIArea
 		var sId = oDomRef.id;
-		var oUIArea = UIArea.registry.get(sId);
+		var oUIArea = UIAreaRegistry.get(sId);
 		if (!oUIArea) {
 			oUIArea = new UIArea(oDomRef);
 			if (oCore && !isEmptyObject(oCore.oModels)) {
@@ -1437,7 +1430,9 @@ sap.ui.define([
 	 * @namespace sap.ui.core.UIArea.registry
 	 * @public
 	 * @since 1.107
+	 * @deprecated As of version 1.120
 	 */
+	UIArea.registry = UIAreaRegistry;
 
 	/**
 	 * Number of existing UIAreas.
@@ -1446,6 +1441,7 @@ sap.ui.define([
 	 * @readonly
 	 * @name sap.ui.core.UIArea.registry.size
 	 * @public
+	 * @deprecated As of version 1.120
 	 */
 
 	/**
@@ -1464,6 +1460,45 @@ sap.ui.define([
 	 * @name sap.ui.core.UIArea.registry.all
 	 * @function
 	 * @public
+	 * @deprecated As of version 1.120
+	 */
+
+	/**
+	 * Return an object with all instances of <code>sap.ui.core.UIArea</code>,
+	 * keyed by their ID.
+	 *
+	 * Each call creates a new snapshot object. Depending on the size of the UI,
+	 * this operation therefore might be expensive. Consider to use the <code>forEach</code>
+	 * or <code>filter</code> method instead of executing similar operations on the returned
+	 * object.
+	 *
+	 * <b>Note</b>: The returned object is created by a call to <code>Object.create(null)</code>,
+	 * and therefore lacks all methods of <code>Object.prototype</code>, e.g. <code>toString</code> etc.
+	 *
+	 * @returns {Object<sap.ui.core.ID,sap.ui.core.UIArea>} Object with all UIAreas, keyed by their ID
+	 * @name sap.ui.core.UIArea.registry.all
+	 * @function
+	 * @public
+	 * @deprecated As of version 1.120
+	 */
+
+	/**
+	 * Return an object with all instances of <code>sap.ui.core.UIArea</code>,
+	 * keyed by their ID.
+	 *
+	 * Each call creates a new snapshot object. Depending on the size of the UI,
+	 * this operation therefore might be expensive. Consider to use the <code>forEach</code>
+	 * or <code>filter</code> method instead of executing similar operations on the returned
+	 * object.
+	 *
+	 * <b>Note</b>: The returned object is created by a call to <code>Object.create(null)</code>,
+	 * and therefore lacks all methods of <code>Object.prototype</code>, e.g. <code>toString</code> etc.
+	 *
+	 * @returns {Object<sap.ui.core.ID,sap.ui.core.UIArea>} Object with all UIAreas, keyed by their ID
+	 * @name sap.ui.core.UIArea.registry.all
+	 * @function
+	 * @public
+	 * @deprecated As of version 1.120
 	 */
 
 	/**
@@ -1477,6 +1512,7 @@ sap.ui.define([
 	 * @name sap.ui.core.UIArea.registry.get
 	 * @function
 	 * @public
+	 * @deprecated As of version 1.120
 	 */
 
 	/**
@@ -1511,6 +1547,7 @@ sap.ui.define([
 	 * @name sap.ui.core.UIArea.registry.forEach
 	 * @function
 	 * @public
+	 * @deprecated As of version 1.120
 	 */
 
 	/**
@@ -1549,9 +1586,10 @@ sap.ui.define([
 	 * @name sap.ui.core.UIArea.registry.filter
 	 * @function
 	 * @public
+	 * @deprecated As of version 1.120
 	 */
 
-	_LocalizationHelper.registerForUpdate("UIAreas", UIArea.registry.all);
+	_LocalizationHelper.registerForUpdate("UIAreas", UIAreaRegistry.all);
 
 	return UIArea;
 });

@@ -33,7 +33,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 *
 	 * @public
 	 * @alias sap.m.p13n.SelectionController
@@ -281,17 +281,17 @@ sap.ui.define([
 					nIndex = aDiff[i].index;
 					// eslint-disable-next-line no-loop-func
 					aDeleted.forEach(function(oItem) {
-						var nDelIndex = this._indexOfByKeyName(aChangedItems, oItem.key || oItem.name);
-						if (nDelIndex <= aDiff[i].index) {
-							nIndex++;
+						if (sKey != oItem.key) {
+							var nDelIndex = this._indexOfByKeyName(aExistingItems, oItem.key || oItem.name);
+							if (nDelIndex < aDiff[i].index) {
+								nIndex++;
+							}
 						}
 					}.bind(this));
 					// eslint-enable-next-line no-loop-func
-
 					aChanges.push(this._createMoveChange(sKey, Math.min(nIndex, aChangedItems.length), sOperation, oControl));
 				}
 			}
-
 		}
 
 		return aChanges;

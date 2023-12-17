@@ -4,6 +4,10 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
+/**
+ * @fileOverview Helper code for branch tracking with Blanket.js and QUnit
+ * @deprecated since 1.120.2, use sap.ui.test.ModuleTracking instead.
+ */
 (function () {
 	"use strict";
 	/*global _$blanket, blanket, falafel, Map, QUnit */

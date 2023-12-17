@@ -10,7 +10,7 @@
  * @alias module:sap/base/util/restricted/_debounce
  * @author SAP SE
  * @since 1.71
- * @version 1.120.1
+ * @version 1.120.2
  * @private
  * @ui5-restricted
 */

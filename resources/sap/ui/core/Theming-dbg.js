@@ -130,7 +130,7 @@ sap.ui.define([
 		getThemeRoot: (sTheme, sLib) => {
 			const oThemeRoots = oWritableConfig.get({
 				name: "sapUiThemeRoots",
-				type: oWritableConfig.Type.Object
+				type: oWritableConfig.Type.MergedObject
 			});
 			let sThemeRoot;
 
@@ -202,7 +202,7 @@ sap.ui.define([
 
 			const oThemeRootConfigParam = {
 				name: "sapUiThemeRoots",
-				type: oWritableConfig.Type.Object
+				type: oWritableConfig.Type.MergedObject
 			};
 
 			// Use get twice, for a deep copy of themeRoots object
@@ -519,7 +519,7 @@ sap.ui.define([
 				sAllowedOrigin = bNoProtocol && !sAllowedOrigin.startsWith("//") ? "//" + sAllowedOrigin : sAllowedOrigin;
 				return sAllowedOrigin === "*" || sOrigin === new URL(sAllowedOrigin.trim(), globalThis.location.href).origin;
 			} catch (error) {
-				Log.error("sapAllowedThemeOrigin provides invalid theme origin: " + sAllowedOrigin);
+				Log.error("[FUTURE FATAL] sapAllowedThemeOrigin provides invalid theme origin: " + sAllowedOrigin);
 				return false;
 			}
 		});

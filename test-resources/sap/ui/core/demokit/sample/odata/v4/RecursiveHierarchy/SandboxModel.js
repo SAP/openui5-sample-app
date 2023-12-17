@@ -280,7 +280,22 @@ sap.ui.define([
 				const iLevels = mQueryOptions.$apply.includes(",Levels=")
 					? parseInt(mQueryOptions.$apply.match(/,Levels=(\d+)/)[1])
 					: Infinity;
-				selectCountSkipTop(topLevels(iLevels - 1), mQueryOptions, oResponse);
+				let aRows = topLevels(iLevels - 1); // Note: already cloned
+				if ("$filter" in mQueryOptions) {
+					// ID%20eq%20'1'
+					const aIDs = mQueryOptions.$filter.split("%20or%20")
+						.map((sID_Predicate) => sID_Predicate.split("%20eq%20")[1].slice(1, -1));
+					if (aIDs.length !== 1) {
+						throw new Error("Unexpected ID filter length");
+					}
+					aRows = aRows.filter((oNode, i) => {
+						if (oNode.ID === aIDs[0]) {
+							oNode.LimitedRank = "" + i; // Edm.Int64
+							return true;
+						}
+					});
+				}
+				selectCountSkipTop(aRows, mQueryOptions, oResponse);
 				return;
 			}
 			// "EMPLOYEES?$apply=descendants($root/EMPLOYEES,OrgChart,ID"
@@ -379,10 +394,12 @@ sap.ui.define([
 				}
 
 				const sParentId = oBody["EMPLOYEE_2_MANAGER@odata.bind"]
-					.slice("EMPLOYEES('".length, -"')".length);
-				for (let sId = sParentId; sId; sId = mNodeById[sId].MANAGER_ID) {
-					if (sId === oChild.ID) { // cycle detected
-						throw new Error("Parent must not be a descendant of moved node");
+					?.slice("EMPLOYEES('".length, -"')".length);
+				if (sParentId) {
+					for (let sId = sParentId; sId; sId = mNodeById[sId].MANAGER_ID) {
+						if (sId === oChild.ID) { // cycle detected
+							throw new Error("Parent must not be a descendant of moved node");
+						}
 					}
 				}
 
@@ -396,18 +413,27 @@ sap.ui.define([
 					adjustDescendantCount(oChild.MANAGER_ID, -(oChild.DescendantCount + 1));
 				} // else: cannot really happen w/ a single root and no cycles!
 
-				if (!(sParentId in mChildrenByParentId)) { // new parent not a leaf anymore
-					mNodeById[sParentId].DrillState = "collapsed"; // @see #reset
+				if (sParentId) {
+					if (!(sParentId in mChildrenByParentId)) {
+						// new parent not a leaf anymore
+						mNodeById[sParentId].DrillState = "collapsed"; // @see #reset
+					}
+					//TODO Note: "AGE determines sibling order (ascending)"
+					(mChildrenByParentId[sParentId] ??= []).push(oChild);
+					adjustDescendantCount(sParentId, oChild.DescendantCount + 1);
 				}
-				//TODO Note: "AGE determines sibling order (ascending)"
-				(mChildrenByParentId[sParentId] ??= []).push(oChild);
 				oChild.MANAGER_ID = sParentId;
-				adjustDescendantCount(sParentId, oChild.DescendantCount + 1);
+				const iParentDistanceFromRoot = sParentId
+					? mNodeById[sParentId].DistanceFromRoot
+					: 0;
 				adjustDistanceFromRoot(oChild,
-					mNodeById[sParentId].DistanceFromRoot + 1 - oChild.DistanceFromRoot);
+					iParentDistanceFromRoot + 1 - oChild.DistanceFromRoot);
 				const aSpliced
 					= aAllNodes.splice(aAllNodes.indexOf(oChild), oChild.DescendantCount + 1);
-				aAllNodes.splice(aAllNodes.indexOf(mNodeById[sParentId]) + 1, 0, ...aSpliced);
+				const iNewIndex = sParentId
+					? aAllNodes.indexOf(mNodeById[sParentId]) + 1
+					: 0;
+				aAllNodes.splice(iNewIndex, 0, ...aSpliced);
 				break;
 			}
 
@@ -430,11 +456,36 @@ sap.ui.define([
 	 * @param {object} oRequest - Request object to get POST body from
 	 */
 	function buildPostResponse(_aMatches, oResponse, oRequest) {
+		function parseLastSegment(sId) {
+			if (sId.includes(".")) {
+				sId = sId.slice(sId.lastIndexOf(".") + 1);
+			}
+
+			return parseInt(sId);
+		}
+
+		// compares two hierarchical IDs according to the last(!) segment (numerically, ascending)
+		function compareByID(oNodeA, oNodeB) {
+			return parseLastSegment(oNodeA.ID) - parseLastSegment(oNodeB.ID);
+		}
+
+		function isChildID(sChildID, sParentId) {
+			return sChildID !== sParentId
+				&& (sParentId === "0"
+					? !sChildID.includes(".")
+					: sChildID.startsWith(sParentId)
+						&& !sChildID.slice(sParentId.length + 1).includes("."));
+		}
+
 		// {"EMPLOYEE_2_MANAGER@odata.bind" : "EMPLOYEES('0')"}
 		const oBody = JSON.parse(oRequest.requestBody);
 		const sParentId = oBody["EMPLOYEE_2_MANAGER@odata.bind"]
 			?.slice("EMPLOYEES('".length, -"')".length);
 		const oParent = mNodeById[sParentId];
+		if (sParentId && !oParent) {
+			throw new Error("Invalid parent ID: " + sParentId);
+		}
+
 		const oNewChild = { // same order of keys than for "old" nodes ;-)
 			AGE : 0, // see below
 			ID : "", // see below
@@ -445,23 +496,28 @@ sap.ui.define([
 			DescendantCount : 0
 		};
 
-		if (sParentId in mChildrenByParentId) {
-			// Note: "AGE determines sibling order (ascending)"
-			oNewChild.AGE = mChildrenByParentId[sParentId][0].AGE - 1;
-			//TODO use "largest" child ID which is hierarchical to parent? cf. move!
-			// .../c/openui5/+/5940246/6/src/sap.ui.core/test/sap/ui/core/demokit/sample/odata/v4/RecursiveHierarchy/SandboxModel.js#b302
-			const sLastChildID = mChildrenByParentId[sParentId].at(-1).ID;
-			if (sLastChildID.includes(".")) {
-				oNewChild.ID = sParentId + "."
-					+ (parseInt(sLastChildID.slice(sLastChildID.lastIndexOf(".") + 1)) + 1);
-			} else { // sParentId === "0"
-				oNewChild.ID = "" + (parseInt(sLastChildID) + 1);
+		if (sParentId) {
+			if (sParentId in mChildrenByParentId) {
+				// Note: "AGE determines sibling order (ascending)"
+				oNewChild.AGE = mChildrenByParentId[sParentId][0].AGE - 1;
+			} else { // parent not a leaf anymore
+				oParent.DrillState = "collapsed"; // @see #reset
+				mChildrenByParentId[sParentId] = [];
+				oNewChild.AGE = oParent.AGE - 1;
 			}
-		} else if (sParentId) { // parent not a leaf anymore
-			oParent.DrillState = "collapsed"; // @see #reset
-			mChildrenByParentId[sParentId] = [];
-			oNewChild.AGE = oParent.AGE - 1;
-			oNewChild.ID = sParentId + ".1";
+
+			// use "largest" child ID which is hierarchical to parent
+			const sLastChildID = aAllNodes
+				.filter((oChild) => isChildID(oChild.ID, sParentId))
+				.sort(compareByID)
+				.at(-1)?.ID;
+			if (sLastChildID === undefined) {
+				oNewChild.ID = sParentId + ".1";
+			} else if (sParentId === "0") {
+				oNewChild.ID = "" + (parseLastSegment(sLastChildID) + 1);
+			} else {
+				oNewChild.ID = sParentId + "." + (parseLastSegment(sLastChildID) + 1);
+			}
 		} else { // new root
 			const iRootCount = aAllNodes.filter((oNode) => oNode.MANAGER_ID === null).length;
 			oNewChild.AGE = 60 + iRootCount;

@@ -411,7 +411,7 @@ sap.ui.define([
 						vValueToSet = vValue;
 					} else if ( sKey != "name" ) {
 						// ignore other values (silently ignore "name")
-						Log.warning("library info setting ignored: " + sKey + "=" + vValue);
+						Log.warning("[FUTURE FATAL] library info setting ignored: " + sKey + "=" + vValue);
 					}
 
 					if (vValueToSet !== undefined) {
@@ -479,10 +479,10 @@ sap.ui.define([
 		 */
 		preload: function(mOptions) {
 			if (mOptions && (mOptions.hasOwnProperty("async") || mOptions.hasOwnProperty("sync"))) {
-				Log.error("The 'preload' function of class sap/ui/core/Lib only support preloading a library asynchronously. The given 'async' or 'sync' setting is ignored.");
+				Log.error("[FUTURE FATAL] The 'preload' function of class sap/ui/core/Lib only support preloading a library asynchronously. The given 'async' or 'sync' setting is ignored.");
 			}
 			if (mOptions && mOptions.hasOwnProperty("json")) {
-				Log.error("The 'preload' function of class sap/ui/core/Lib only support preloading in JS Format. The given 'json' setting is ignored.");
+				Log.error("[FUTURE FATAL] The 'preload' function of class sap/ui/core/Lib only support preloading in JS Format. The given 'json' setting is ignored.");
 			}
 
 			return this._preload(["url", "lazy"].reduce(function(acc, sProperty) {
@@ -1229,6 +1229,8 @@ sap.ui.define([
 							// note: namespace already contains a trailing dot '.'
 							const sNamespacePrefix = mSubNamespaces.get(target);
 							DataType.registerEnum(`${sNamespacePrefix}${prop}`, value);
+
+							Log.debug(`[Library API-Version 2] If you intend to use API-Version 2 in your library, make sure to call 'sap/ui/base/DataType.registerEnum' for ${sNamespacePrefix}${prop}.`);
 						} else {
 							const firstChar = prop.charAt(0);
 							if (firstChar === firstChar.toLowerCase() && firstChar !== firstChar.toUpperCase()) {
@@ -1422,10 +1424,8 @@ sap.ui.define([
 			if ( !/^(any|boolean|float|int|string|object|void)$/.test(oLib.types[i]) ) {
 				// register a wrapper module that logs a deprecation warning
 				const sTypeName = oLib.types[i];
-				sap.ui.predefine(sTypeName.replace(/\./g, "/"), [], function(sTypeName) {
-					Log.error(`Deprecation: Import the type '${sTypeName}' as a module is deprecated. Please require the corresponding 'library.js' containing the type directly. You can then reference the type via the library's module export.`);
-					return ObjectPath.get(sTypeName);
-				}.bind(null, sTypeName));
+				sap.ui.loader._.declareModule(sTypeName.replace(/\./g, "/") + ".js",
+					`Deprecation: Importing the type '${sTypeName}' as a module is deprecated. Please require the corresponding 'library.js' containing the type directly. You can then reference the type via the library's module export.`);
 
 				// ensure parent namespace of the type
 				var sNamespacePrefix = sTypeName.substring(0, sTypeName.lastIndexOf("."));

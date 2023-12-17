@@ -75,7 +75,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 *
 	 * @constructor
 	 * @public
@@ -1134,6 +1134,7 @@ function(
 
 			// support old bug and mimic space key handling and
 			// do not fire item's press event when item is included into selection
+			oEvent.type = "sapspace";
 			this.onsapspace(oEvent);
 
 		} else if (this.hasActiveType()) {
@@ -1220,12 +1221,13 @@ function(
 	/**
 	 * Returns the tabbable DOM elements as a jQuery collection
 	 *
+	 * @param [bContentOnly] Whether only tabbables of the content area
 	 * @returns {jQuery} jQuery object
 	 * @protected
 	 * @since 1.26
 	 */
-	ListItemBase.prototype.getTabbables = function() {
-		return this.$().find(":sapTabbable");
+	ListItemBase.prototype.getTabbables = function(bContentOnly) {
+		return this.$(bContentOnly ? "content" : "").find(":sapTabbable");
 	};
 
 	// handle propagated focus to make the item row focusable

@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.120.1
+		 * @version 1.120.2
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -870,27 +870,28 @@ sap.ui.define([
 	};
 
 	/**
-	 * Returns the parent node (in case of a recursive hierarchy, see {@link #setAggregation}, where
-	 * <code>oAggregation.expandTo</code> must be equal to one).
+	 * Returns the parent node (in case of a recursive hierarchy; see
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}) or
+	 * <code>undefined</code> if the parent of this node hasn't been read yet; it can then be
+	 * requested via {@link #requestParent}.
 	 *
-	 * @returns {sap.ui.model.odata.v4.Context|null}
-	 *   The parent node, or <code>null</code> if this node is a root node and thus has no parent
+	 * @returns {sap.ui.model.odata.v4.Context|null|undefined}
+	 *   The parent node, or <code>null</code> if this node is a root node and thus has no parent,
+	 *   or <code>undefined</code> if the parent node hasn't been read yet
 	 * @throws {Error} If
 	 *   <ul>
 	 *     <li> this context is not a list binding's context,
-	 *     <li> this context is not part of a recursive hierarchy,
-	 *     <li> <code>oAggregation.expandTo</code> is greater than one.
-	 *    </ul>
+	 *     <li> this context is not part of a recursive hierarchy.
+	 *   </ul>
 	 *
 	 * @experimental As of version 1.120.0
 	 * @public
-	 * @see #requestParent
 	 */
 	Context.prototype.getParent = function () {
-		if (!this.oBinding.getParent) {
+		if (!this.oBinding.fetchOrGetParent) {
 			throw new Error("Not a list binding's context: " + this);
 		}
-		return this.oBinding.getParent(this);
+		return this.oBinding.fetchOrGetParent(this);
 	};
 
 	/**
@@ -1038,7 +1039,7 @@ sap.ui.define([
 	 * Tells whether this node is an ancestor of (or the same as) the given node (in case of a
 	 * recursive hierarchy, see {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}).
 	 *
-	 * @param {sap.ui.model.odata.v4.Context} oNode - Some node which may be a descendant
+	 * @param {sap.ui.model.odata.v4.Context} [oNode] - Some node which may be a descendant
 	 * @returns {boolean} Whether the assumed ancestor relation holds
 	 * @throws {Error} If either context does not represent a node in a recursive hierarchy
 	 *   according to the hierarchy's current {@link #isExpanded expanded state}
@@ -1187,27 +1188,30 @@ sap.ui.define([
 	/**
 	 * Moves this node to the given parent (in case of a recursive hierarchy, see
 	 * {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}, where
-	 * <code>oAggregation.expandTo</code> must be one). No other
+	 * <code>oAggregation.expandTo</code> must be either one or at least
+	 * <code>Number.MAX_SAFE_INTEGER</code>). No other
 	 * {@link sap.ui.model.odata.v4.ODataListBinding#create creation}, {@link #delete deletion}, or
 	 * move must be pending, and no other modification (including collapse of some ancestor node)
-	 * must happen while this move is pending!
+	 * must happen while this move is pending! Omitting a new parent turns this node into a root
+	 * node (since 1.121.0).
 	 *
 	 * This context's {@link #getIndex index} may change and it becomes "created persisted", with
 	 * {@link #isTransient} returning <code>false</code> etc.
 	 *
-	 * @param {object} oParameters - A parameter object
-	 * @param {sap.ui.model.odata.v4.Context} oParameters.parent - The new parent's context
+	 * @param {object} [oParameters] - A parameter object
+	 * @param {sap.ui.model.odata.v4.Context} [oParameters.parent=null] - The new parent's context
 	 * @returns {Promise<void>}
 	 *   A promise which is resolved without a defined result when the move is finished, or
 	 *   rejected in case of an error
-	 * @throws (Error)
-	 *   If the parent is missing or (a descendant of) this node.
+	 * @throws {Error}
+	 *   If the parent is (a descendant of) this node, or if <code>oAggregation.expandTo</code> is
+	 *   unsupported.
 	 *
 	 * @experimental As of version 1.119.0
 	 * @public
 	 */
-	Context.prototype.move = function ({parent : oParent}) {
-		if (!oParent || oParent === this) {
+	Context.prototype.move = function ({parent : oParent = null} = {}) {
+		if (this.isAncestorOf(oParent)) {
 			throw new Error("Unsupported parent context: " + oParent);
 		}
 
@@ -1393,8 +1397,10 @@ sap.ui.define([
 	};
 
 	/**
-	 * Requests the parent node (in case of a recursive hierarchy, see {@link #setAggregation},
-	 * where <code>oAggregation.expandTo</code> must be equal to one).
+	 * Requests the parent node (in case of a recursive hierarchy; see
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}).
+	 *
+	 * Note: <strong>DO NOT</strong> call {@link #setKeepAlive} on the resulting context!
 	 *
 	 * @returns {Promise<sap.ui.model.odata.v4.Context|null>} A promise which:
 	 *   <ul>
@@ -1405,8 +1411,7 @@ sap.ui.define([
 	 * @throws {Error} If
 	 *   <ul>
 	 *     <li> this context is not a list binding's context,
-	 *     <li> this context is not part of a recursive hierarchy,
-	 *     <li> <code>oAggregation.expandTo</code> is greater than one.
+	 *     <li> this context is not part of a recursive hierarchy.
 	 *    </ul>
 	 *
 	 * @experimental As of version 1.120.0
@@ -1414,10 +1419,10 @@ sap.ui.define([
 	 * @see #getParent
 	 */
 	Context.prototype.requestParent = function () {
-		if (!this.oBinding.requestParent) {
+		if (!this.oBinding.fetchOrGetParent) {
 			throw new Error("Not a list binding's context: " + this);
 		}
-		return this.oBinding.requestParent(this);
+		return Promise.resolve(this.oBinding.fetchOrGetParent(this, true));
 	};
 
 	/**

@@ -148,7 +148,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.1
+		 * @version 1.120.2
 		 * @since 1.56.0
 		 * @alias sap.ui.core.XMLComposite
 		 * @see {@link topic:b83a4dcb7d0e46969027345b8d32fd44 XML Composite Controls}

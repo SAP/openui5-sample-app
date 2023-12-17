@@ -1162,12 +1162,12 @@ sap.ui.predefine("sap/ui/core/rules/CoreHelper.support", ["sap/ui/core/Element",
  * Defines miscellaneous support rules.
  */
 sap.ui.predefine("sap/ui/core/rules/Misc.support", [
-	"sap/ui/core/Component",
+	"sap/ui/core/ComponentRegistry",
 	"sap/ui/support/library",
 	"./CoreHelper.support",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/dom/jquery/control" // jQuery Plugin "control"
-], function(Component, SupportLib, CoreHelper, jQuery) {
+], function(ComponentRegistry, SupportLib, CoreHelper, jQuery) {
 	"use strict";
 
 	// support rules can get loaded within a ui5 version which does not have module "sap/base/Log" yet
@@ -1308,7 +1308,7 @@ sap.ui.predefine("sap/ui/core/rules/Misc.support", [
 
 			for (sComponentName in oRegisteredComponents) {
 				if (Object.hasOwn(oRegisteredComponents, sComponentName)) {
-					var aComponents = Component.registry.filter(filterComponents(sComponentName));
+					var aComponents = ComponentRegistry.filter(filterComponents(sComponentName));
 					aComponents.forEach(createIssue(oRegisteredComponents[sComponentName]));
 				}
 			}

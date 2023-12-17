@@ -33,7 +33,7 @@ sap.ui
 			 * @extends sap.ui.base.ManagedObject
 			 * @abstract
 			 * @author SAP SE
-			 * @version 1.120.1
+			 * @version 1.120.2
 			 * @public
 			 * @alias sap.ui.core.util.MockServer
 			 */
@@ -1224,7 +1224,8 @@ sap.ui
 						"type": aEntityTypeParts[3],
 						"keys": [],
 						"keysType": {},
-						"navprops": {}
+						"navprops": {},
+						"props": {}
 					};
 				});
 
@@ -1269,6 +1270,15 @@ sap.ui
 						var sKeyName = jQuery(oPropRef).attr("Name");
 						oEntitySet.keys.push(sKeyName);
 						oEntitySet.keysType[sKeyName] = jQuery($EntityType).find("Property[Name='" + sKeyName + "']").attr("Type");
+					});
+					// find the props
+					var aProps = jQuery(oMetadata).find("EntityType[Name='" + oEntitySet.type + "'] Property");
+					jQuery.each(aProps, function(iIndex, oProp) {
+						var $Prop = jQuery(oProp);
+						oEntitySet.props[$Prop.attr("Name")] = {
+							"name": $Prop.attr("Name"),
+							"type": $Prop.attr("Type")
+						};
 					});
 					// resolve the navigation properties
 					var aNavProps = jQuery(oMetadata).find("EntityType[Name='" + oEntitySet.type + "'] NavigationProperty");
@@ -1516,9 +1526,30 @@ sap.ui
 				});
 				//enhance the mock data with metadata
 				jQuery.each(mEntitySets, function(sEntitySetName, oEntitySet) {
-					// enhance with OData metadata if exists
 					if (that._oMockdata[sEntitySetName].length > 0) {
+						// enhance with OData metadata if exists
 						that._enhanceWithMetadata(oEntitySet, that._oMockdata[sEntitySetName]);
+						// allow to specify the Edm.DateTime as "2023-11-13T09:36" and the
+						// Edm.DateTimeOffset as "2023-11-13T09:36Z" to simplfy definition
+						// in mockdata - if format is already /Date(%timestamp%)/ it is not
+						// handled by this function as the mock data string must be a Date
+						that._oMockdata[sEntitySetName].forEach(function(oRecord) {
+							Object.keys(oEntitySet.props).forEach(function(sPropName) {
+								switch (oEntitySet.props[sPropName].type) {
+									case "Edm.DateTime":
+									case "Edm.DateTimeOffset":
+										if (oRecord[sPropName] != null) {
+											var oDate = new Date(oRecord[sPropName]);
+											if (oDate && !isNaN(oDate)) {
+												oRecord[sPropName] = "/Date(" + oDate.getTime() + ")/";
+											}
+										}
+										break;
+									default:
+										// do nothing
+								}
+							});
+						});
 					}
 				});
 				// return the new mockdata

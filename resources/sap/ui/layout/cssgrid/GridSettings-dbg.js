@@ -20,7 +20,7 @@ sap.ui.define([
 	 * Holds a set of CSS display:grid properties
 	 *
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 *

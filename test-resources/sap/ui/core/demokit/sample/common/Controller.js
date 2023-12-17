@@ -91,7 +91,6 @@ sap.ui.define([
 						type : "{messages>type}",
 						link : new Link({
 							customData : {
-								Type : "sap.ui.core.CustomData",
 								key : "technicalDetails",
 								value : "{messages>technicalDetails}" // bind custom data
 							},

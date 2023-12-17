@@ -72,13 +72,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		name : "sap.m",
-		version: "1.120.1",
+		version: "1.120.2",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -603,6 +603,10 @@ sap.ui.define([
 				"sap.m.ScrollContainer": {
 					"hideControl": "default",
 					"moveControls": "default",
+					"unhideControl": "default"
+				},
+				"sap.m.SearchField": {
+					"hideControl": "default",
 					"unhideControl": "default"
 				},
 				"sap.m.Slider": {
@@ -5774,6 +5778,8 @@ sap.ui.define([
 	 * @namespace
 	 * @since 1.21.2
 	 * @public
+	 * @deprecated as of version 1.120. In case of SAPUI5, see demokit sample 'Smart Field with ValueList Annotation'.
+	 * In case of OpenUI5, see demokit sample 'Input - Suggestions - Dynamic'.
 	 */
 	thisLib.InputODataSuggestProvider = (function(){
 		var _fnSuggestionItemSelected = function(oEvent) {

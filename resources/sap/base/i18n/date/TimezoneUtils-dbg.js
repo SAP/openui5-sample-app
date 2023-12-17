@@ -10,7 +10,7 @@ sap.ui.define([], function() {
 	 * Static collection of utility functions to handle time zone related conversions
 	 *
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 * @namespace
 	 * @alias module:sap/base/i18n/date/TimezoneUtils
 	 * @private

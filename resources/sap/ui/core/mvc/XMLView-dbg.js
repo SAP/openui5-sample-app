@@ -110,7 +110,7 @@ sap.ui.define([
 	 * bound content aggregation. An error will be thrown when the above combination is detected.
 	 *
 	 * @extends sap.ui.core.mvc.View
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.XMLView
@@ -518,7 +518,13 @@ sap.ui.define([
 						vAdditionalData.setAdditionalCacheData(mCacheOutput.additionalData);
 					} else {
 						// extend the additionalData which was passed into cache configuration dynamically
+						/**
+						 * @deprecated
+						 */
 						Log.error("Deprecated: Don't use an object reference for caching additional Data! Use a CacheDataProvider instead!");
+						/**
+						 * @deprecated
+						 */
 						merge(mCacheInput.additionalData, mCacheOutput.additionalData);
 					}
 				}
@@ -821,7 +827,7 @@ sap.ui.define([
 		if (XMLView.PreprocessorType[sType]) {
 			View.registerPreprocessor(XMLView.PreprocessorType[sType], vPreprocessor, sOwnViewType, bSyncSupport, bOnDemand, mSettings);
 		} else {
-			Log.error("Preprocessor could not be registered due to unknown sType \"" + sType + "\"", this.getMetadata().getName());
+			Log.error("[FUTURE FATAL] Preprocessor could not be registered due to unknown sType \"" + sType + "\"", this.getMetadata().getName());
 		}
 	};
 

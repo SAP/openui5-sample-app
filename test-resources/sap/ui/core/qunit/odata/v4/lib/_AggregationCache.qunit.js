@@ -861,7 +861,7 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [undefined, 0, 7].forEach(function (iDistanceFromRoot) {
-	// Note: null means no $LimitedDescendantCountProperty, undefined means not $select'ed
+	// Note: null means no $LimitedDescendantCount, undefined means not $select'ed
 	[null, undefined, 0, 42].forEach(function (iLimitedDescendantCount) {
 		["collapsed", "expanded", "leaf"].forEach(function (sDrillState) {
 			[undefined, {"@$ui5.node.level" : 41}].forEach(function (oGroupNode) {
@@ -879,9 +879,9 @@ sap.ui.define([
 
 	QUnit.test(sTitle, function (assert) {
 		var oAggregation = {
-				$DistanceFromRootProperty : "A/DistFromRoot",
-				$DrillStateProperty : "B/myDrillState",
-				$LimitedDescendantCountProperty : "C/LtdDescendant_Count",
+				$DistanceFromRoot : "A/DistFromRoot",
+				$DrillState : "B/myDrillState",
+				$LimitedDescendantCount : "C/LtdDescendant_Count",
 				$metaPath : "/meta/path",
 				$path : "n/a"
 			},
@@ -907,7 +907,7 @@ sap.ui.define([
 			// oElement.A = {DistFromRoot : sDistanceFromRoot};
 		}
 		if (iLimitedDescendantCount === null) {
-			delete oAggregation.$LimitedDescendantCountProperty;
+			delete oAggregation.$LimitedDescendantCount;
 		} else {
 			sLimitedDescendantCount = iLimitedDescendantCount === undefined
 				? undefined
@@ -998,9 +998,9 @@ sap.ui.define([
 	//*********************************************************************************************
 	QUnit.test("calculateKeyPredicateRH: related entity", function (assert) {
 		var oAggregation = {
-				$DistanceFromRootProperty : "DistFromRoot",
-				$DrillStateProperty : "myDrillState",
-				$LimitedDescendantCountProperty : "LtdDescendant_Count",
+				$DistanceFromRoot : "DistFromRoot",
+				$DrillState : "myDrillState",
+				$LimitedDescendantCount : "LtdDescendant_Count",
 				$metaPath : "/Artists",
 				$path : "n/a"
 			},
@@ -1036,6 +1036,48 @@ sap.ui.define([
 				myDrillState : "leaf",
 				LtdDescendant_Count : "42"
 			}, "unchanged");
+	});
+
+	//*********************************************************************************************
+	QUnit.test("fetchParent", async function (assert) {
+		const oAggregation = {
+			$metaPath : "~metaPath~",
+			$NodeProperty : "NodeID",
+			$path : "/path",
+			aggregate : {},
+			group : {},
+			groupLevels : ["BillToParty"],
+			hierarchyQualifier : "X"
+		};
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, oAggregation);
+		const sQueryOptions = JSON.stringify(oCache.mQueryOptions);
+
+		this.mock(oCache).expects("getTypes").returns("~Type~");
+		const oNode = {};
+		oCache.aElements[23] = oNode;
+		this.mock(_Helper).expects("getKeyFilter").withExactArgs(oNode, "~metaPath~", "~Type~")
+			.returns("~Key~");
+		this.mock(this.oRequestor).expects("buildQueryString")
+			.withExactArgs(null, {$apply : "ancestors($root/path,X,NodeID,filter(~Key~),1)"})
+			.returns("/~QueryString~");
+		this.mock(this.oRequestor).expects("request")
+			.withExactArgs("GET", "Foo/~QueryString~", "~GroupLock~")
+			.resolves({value : ["~Result~"]});
+		this.mock(oCache).expects("fetchTypes").withExactArgs().resolves("~Types~");
+
+		this.mock(_Helper).expects("buildPath").withExactArgs("/Foo", "").returns("~Path~");
+		this.mock(_Helper).expects("getMetaPath").withExactArgs("~Path~").returns("~MetaPath~");
+		this.mock(oCache).expects("visitResponse")
+			.withExactArgs("~Result~", "~Types~", "~MetaPath~");
+		this.mock(_Helper).expects("getPrivateAnnotation").withExactArgs("~Result~", "predicate")
+			.returns("~predicate~");
+
+		// code under test
+		const oParent = await oCache.fetchParent(23, "~GroupLock~");
+
+		assert.strictEqual(JSON.stringify(oCache.mQueryOptions), sQueryOptions, "unchanged");
+		assert.deepEqual(oCache.aElements.$byPredicate, {"~predicate~" : "~Result~"});
+		assert.strictEqual(oParent, "~Result~");
 	});
 
 	//*********************************************************************************************
@@ -1825,9 +1867,9 @@ sap.ui.define([
 			assert.strictEqual(oCache.aElements[2], aReadResult0[0]);
 			assert.strictEqual(oCache.aElements[3], oReadSameNode);
 			assert.strictEqual(oCache.aElements[4], aReadResult0[2]);
-			assert.strictEqual(_Helper.getPrivateAnnotation(oCache.aElements[5], "index"), 4);
-			assert.strictEqual(_Helper.getPrivateAnnotation(oCache.aElements[6], "index"), 5);
-			assert.strictEqual(_Helper.getPrivateAnnotation(oCache.aElements[7], "index"), 6);
+			assert.strictEqual(_Helper.getPrivateAnnotation(oCache.aElements[5], "rank"), 4);
+			assert.strictEqual(_Helper.getPrivateAnnotation(oCache.aElements[6], "rank"), 5);
+			assert.strictEqual(_Helper.getPrivateAnnotation(oCache.aElements[7], "rank"), 6);
 		});
 	});
 
@@ -2063,7 +2105,7 @@ sap.ui.define([
 		oCache.aElements.$byPredicate = {};
 		const oHelperMock = this.mock(_Helper);
 		oHelperMock.expects("getPrivateAnnotation")
-			.withExactArgs("~oStartElement~", "index").returns(undefined); // created
+			.withExactArgs("~oStartElement~", "rank").returns(undefined); // created
 		oHelperMock.expects("getPrivateAnnotation")
 			.withExactArgs("~oStartElement~", "predicate").returns("~sPredicate~");
 		const oGroupLevelCache = {refreshSingle : mustBeMocked};
@@ -2091,7 +2133,7 @@ sap.ui.define([
 			= _AggregationCache.create(this.oRequestor, "~", "", {}, {hierarchyQualifier : "X"});
 		oCache.aElements = [,, "~oStartElement~"];
 		this.mock(_Helper).expects("getPrivateAnnotation")
-			.withExactArgs("~oStartElement~", "index").returns(undefined); // created
+			.withExactArgs("~oStartElement~", "rank").returns(undefined); // created
 
 		assert.throws(function () {
 			// code under test
@@ -2507,24 +2549,23 @@ sap.ui.define([
 			oGroupNode = {
 				"@$ui5._" : {
 					cache : oGroupLevelCache,
-					index : 42,
 					groupLevelCount : 7,
 					spliced : [{
 						"@$ui5._" : {
-							index : 23,
 							parent : oCache.oFirstLevel, // unrealistic!
-							predicate : "('A')"
+							predicate : "('A')",
+							rank : 23
 						},
 						"@$ui5.node.level" : 10
 					}, {
-						"@$ui5._" : {index : 24, placeholder : true, predicate : "n/a"},
+						"@$ui5._" : {placeholder : true, predicate : "n/a", rank : 24},
 						"@$ui5.node.level" : 11
 					}, {
 						"@$ui5._" : {
-							index : 25,
 							expanding : true,
 							parent : oCache.oFirstLevel, // unrealistic!
-							predicate : "('C')"
+							predicate : "('C')",
+							rank : 25
 						},
 						"@$ui5.node.level" : 12
 					}, {
@@ -2534,7 +2575,11 @@ sap.ui.define([
 							transientPredicate : "($uid=1-23)"
 						},
 						"@$ui5.node.level" : 12
-					}]
+					}, {
+						"@$ui5._" : {placeholder : true},
+						"@$ui5.node.level" : 0
+					}],
+					rank : 42
 				},
 				"@$ui5.node.isExpanded" : false,
 				"@$ui5.node.level" : 5
@@ -2544,14 +2589,14 @@ sap.ui.define([
 			oUpdateAllExpectation;
 
 		oGroupNode["@$ui5._"].spliced[200000] = {
-			"@$ui5._" : {index : 200023, predicate : "('D')"},
+			"@$ui5._" : {predicate : "('D')", rank : 200023},
 			"@$ui5.node.level" : 10
 		};
 		aSpliced = oGroupNode["@$ui5._"].spliced.slice();
 		if (bStale) {
 			oGroupNode["@$ui5._"].spliced.$stale = true;
 		}
-		oGroupNode["@$ui5._"].spliced.$index = 12;
+		oGroupNode["@$ui5._"].spliced.$rank = 12;
 		aElements = [{}, oGroupNode, {}, {}];
 		oCache.aElements = aElements.slice();
 		oCache.aElements.$byPredicate = {};
@@ -2597,23 +2642,24 @@ sap.ui.define([
 
 			// check expanded nodes
 			assert.deepEqual(Object.keys(oCache.aElements),
-				["0", "1", "2", "3", "4", "5", "200002", "200003", "200004", "$byPredicate",
+				["0", "1", "2", "3", "4", "5", "6", "200002", "200003", "200004", "$byPredicate",
 					"$count"]);
 			assert.strictEqual(oCache.aElements[2], aSpliced[0]);
 			assert.strictEqual(aSpliced[0]["@$ui5.node.level"], 6);
-			assert.strictEqual(aSpliced[0]["@$ui5._"].index, 53);
+			assert.strictEqual(aSpliced[0]["@$ui5._"].rank, 53);
 			assert.strictEqual(oCache.aElements[3], aSpliced[1]);
 			assert.strictEqual(aSpliced[1]["@$ui5.node.level"], 7);
-			assert.strictEqual(aSpliced[1]["@$ui5._"].index, 24);
+			assert.strictEqual(aSpliced[1]["@$ui5._"].rank, 24);
 			assert.strictEqual(oCache.aElements[4], aSpliced[2]);
 			assert.strictEqual(aSpliced[2]["@$ui5.node.level"], 8);
-			assert.strictEqual(aSpliced[2]["@$ui5._"].index, 55);
+			assert.strictEqual(aSpliced[2]["@$ui5._"].rank, 55);
 			assert.strictEqual(_Helper.hasPrivateAnnotation(aSpliced[2], "expanding"), bStale,
 				"deleted only if not stale");
-			assert.notOk("index" in aSpliced[3]["@$ui5._"]);
+			assert.notOk("rank" in aSpliced[3]["@$ui5._"]);
+			assert.strictEqual(aSpliced[4]["@$ui5.node.level"], 0, "unchanged");
 			assert.strictEqual(oCache.aElements[200002], aSpliced[200000]);
 			assert.strictEqual(aSpliced[200000]["@$ui5.node.level"], 6);
-			assert.strictEqual(aSpliced[200000]["@$ui5._"].index, 200023);
+			assert.strictEqual(aSpliced[200000]["@$ui5._"].rank, 200023);
 
 			// check moved nodes
 			assert.strictEqual(oCache.aElements[200003], aElements[2]);
@@ -2808,8 +2854,8 @@ sap.ui.define([
 			}, {
 				"@$ui5._" : {
 					collapsed : oCollapsed,
-					index : "~index~",
-					predicate : "('1')"
+					predicate : "('1')",
+					rank : "~rank~"
 				}
 			}, {
 				"@$ui5._" : {predicate : "('2')", transientPredicate : "($uid=1-23)"}
@@ -2824,9 +2870,9 @@ sap.ui.define([
 			}, {
 				"@$ui5._" : {
 					collapsed : oCollapsed,
-					index : "~index~",
 					predicate : "('1')",
-					spliced : [aElements[2], aElements[3], aElements[4]]
+					spliced : [aElements[2], aElements[3], aElements[4]],
+					rank : "~rank~"
 				},
 				"@$ui5.node.isExpanded" : false,
 				A : "10" // placeholder for an aggregate with subtotals
@@ -2883,7 +2929,7 @@ sap.ui.define([
 				"('1')" : aElements[1],
 				"('4')" : aElements[4]
 			});
-		assert.strictEqual(aElements[1]["@$ui5._"].spliced.$index, "~index~");
+		assert.strictEqual(aElements[1]["@$ui5._"].spliced.$rank, "~rank~");
 	});
 	});
 });
@@ -3031,18 +3077,18 @@ sap.ui.define([
 		assert.deepEqual(oCache.aElements, [
 			{},
 			{},
-			{"@$ui5._" : {index : 42, parent : "~parent~", predicate : "(1)"}},
-			{"@$ui5._" // no index!
+			{"@$ui5._" : {parent : "~parent~", predicate : "(1)", rank : 42}},
+			{"@$ui5._" // no rank!
 				: {parent : "~parent~", predicate : "(2)", transientPredicate : "$uid=id-1-23"}},
-			{"@$ui5._" : {index : 43, parent : "~parent~", predicate : "(3)"}},
-			{"@$ui5._" : {index : 44, parent : "~parent~", predicate : "(4)"}},
+			{"@$ui5._" : {parent : "~parent~", predicate : "(3)", rank : 43}},
+			{"@$ui5._" : {parent : "~parent~", predicate : "(4)", rank : 44}},
 			{},
 			{}
 		]);
 	});
 
 	//*********************************************************************************************
-	QUnit.test("addElements: no index for single created element", function (assert) {
+	QUnit.test("addElements: no rank for single created element", function (assert) {
 		var oCache = _AggregationCache.create(this.oRequestor, "~", "", {}, {
 				hierarchyQualifier : "X",
 				$NodeProperty : "SomeNodeID"
@@ -3076,7 +3122,7 @@ sap.ui.define([
 		assert.deepEqual(oCache.aElements, [
 			{},
 			{},
-			{"@$ui5._" // no index!
+			{"@$ui5._" // no rank!
 				: {parent : "~parent~", predicate : "(2)", transientPredicate : "$uid=id-1-23"}},
 			{}
 		]);
@@ -3117,8 +3163,8 @@ sap.ui.define([
 		assert.deepEqual(oCache.aElements.$byPredicate, {"(1)" : oReadElement});
 		assert.deepEqual(oReadElement, {
 			"@$ui5._" : bWithParentCache
-			? {index : 42, parent : oGroupLevelCache, predicate : "(1)"}
-			: {index : 42, predicate : "(1)"}
+			? {parent : oGroupLevelCache, predicate : "(1)", rank : 42}
+			: {predicate : "(1)", rank : 42}
 		});
 	});
 });
@@ -3218,7 +3264,7 @@ sap.ui.define([
 		assert.strictEqual(oCache.aElements.$byPredicate["(1)"], oElement, "right reference");
 		assert.deepEqual(oElement, {
 			"@odata.etag" : "X",
-			"@$ui5._" : {index : 42, parent : "~parent~", predicate : "(1)"}
+			"@$ui5._" : {parent : "~parent~", predicate : "(1)", rank : 42}
 		});
 	});
 });
@@ -3329,7 +3375,9 @@ sap.ui.define([
 			"@$ui5.node.level" : 2
 		};
 
-		//code under test
+		this.mock(oCache).expects("isAncestorOf").never();
+
+		// code under test
 		assert.strictEqual(oCache.getParentIndex(0), -1);
 		assert.strictEqual(oCache.getParentIndex(1), -1);
 		assert.strictEqual(oCache.getParentIndex(2), 1);
@@ -3338,21 +3386,61 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("getParentIndex: error state", function (assert) {
+	QUnit.test("getParentIndex: with gaps", function (assert) {
 		const oCache = _AggregationCache.create(this.oRequestor, "~", "", {},
 			{hierarchyQualifier : "X"});
+		const oCacheMock = this.mock(oCache);
 
 		oCache.aElements[0] = {
-			"@$ui5.node.level" : 3
+			"@$ui5.node.level" : 1
 		};
 		oCache.aElements[1] = {
+			// parent of 3
 			"@$ui5.node.level" : 2
 		};
+		oCache.aElements[2] = {
+			"@$ui5.node.level" : 0
+		};
+		oCache.aElements[3] = {
+			"@$ui5.node.level" : 3
+		};
+		oCache.aElements[4] = {
+			"@$ui5.node.level" : 2
+		};
+		oCache.aElements[5] = {
+			// parent of 6 not yet loaded
+			"@$ui5.node.level" : 0
+		};
+		oCache.aElements[6] = {
+			"@$ui5.node.level" : 3
+		};
+		oCache.aElements[7] = {
+			// parent of 8 not yet loaded
+			"@$ui5.node.level" : 0
+		};
+		oCache.aElements[8] = {
+			"@$ui5.node.level" : 5
+		};
 
-		assert.throws(function () {
-			// code under test
-			oCache.getParentIndex(1);
-		}, new Error("Unexpected error"));
+		oCacheMock.expects("isAncestorOf").withExactArgs(1, 3).returns(true);
+
+		// code under test
+		assert.strictEqual(oCache.getParentIndex(3), 1);
+
+		oCacheMock.expects("isAncestorOf").withExactArgs(0, 4).returns(true);
+
+		// code under test
+		assert.strictEqual(oCache.getParentIndex(4), 0);
+
+		oCacheMock.expects("isAncestorOf").withExactArgs(4, 6).returns(false);
+
+		// code under test
+		assert.strictEqual(oCache.getParentIndex(6), undefined);
+
+		// no addt'l call of #isAncestorOf
+
+		// code under test
+		assert.strictEqual(oCache.getParentIndex(8), undefined);
 	});
 
 	//*********************************************************************************************
@@ -3717,7 +3805,7 @@ sap.ui.define([
 			.withExactArgs("~oElementB~", "placeholder").returns(false);
 		oHelperMock.expects("setPrivateAnnotation").withExactArgs("~oElementB~", "placeholder", 1);
 		oAggregationHelperMock.expects("markSplicedStale").withExactArgs("~oElementB~");
-		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~oElementB~", "index")
+		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~oElementB~", "rank")
 			.returns(42);
 		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~oElementB~", "parent")
 			.returns(oParentCache);
@@ -3735,7 +3823,7 @@ sap.ui.define([
 			.withExactArgs("~oElementC~", "placeholder").returns(false);
 		oHelperMock.expects("setPrivateAnnotation").withExactArgs("~oElementC~", "placeholder", 1);
 		oAggregationHelperMock.expects("markSplicedStale").withExactArgs("~oElementC~");
-		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~oElementC~", "index")
+		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~oElementC~", "rank")
 			.returns(undefined); // simulate a created element
 		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~oElementC~", "parent").never();
 		// no drop!
@@ -3864,13 +3952,14 @@ sap.ui.define([
 	[0, 1].forEach((iOldSiblingCount) => {
 		[false, true].forEach((bParentIsLeaf) => {
 			[false, true].forEach((bSpliced) => {
-				const sTitle = `move: already transient = ${bTransient},
- old sibling count = ${iOldSiblingCount}, new parent is leaf = ${bParentIsLeaf},
- new parent was expanded before = ${bSpliced}`;
+				[false, true].forEach((bMakeRoot) => {
+	const sTitle = `move: already transient = ${bTransient},
+old sibling count = ${iOldSiblingCount}, new parent is leaf = ${bParentIsLeaf},
+new parent was expanded before = ${bSpliced}, make root = ${bMakeRoot}`;
 
-				if (bParentIsLeaf && bSpliced) {
-					return;
-				}
+	if (bParentIsLeaf && bSpliced || bMakeRoot && (!bParentIsLeaf || bSpliced)) {
+		return;
+	}
 
 	QUnit.test(sTitle, function (assert) {
 		const oHelperMock = this.mock(_Helper);
@@ -3881,7 +3970,7 @@ sap.ui.define([
 			});
 		oCache.iReadLength = "~iReadLength~";
 		const oChildNode = {ID : "child"};
-		const oParentNode = {"@$ui5.node.level" : 9, ID : "parent"};
+		const oParentNode = bMakeRoot ? undefined : {"@$ui5.node.level" : 9, ID : "parent"};
 		if (!bParentIsLeaf) {
 			oParentNode["@$ui5.node.isExpanded"] = false;
 		}
@@ -3896,19 +3985,19 @@ sap.ui.define([
 			restoreElement : mustBeMocked,
 			setEmpty : mustBeMocked
 		};
-		oHelperMock.expects("getPrivateAnnotation")
+		oHelperMock.expects("getPrivateAnnotation").exactly(oParentNode ? 1 : 0)
 			.withExactArgs(sinon.match.same(oParentNode), "cache")
 			.returns(bParentIsLeaf || !bSpliced ? undefined : oParentCache);
+		this.mock(oCache).expects("requestRank").never();
 		this.mock(oCache).expects("createGroupLevelCache")
-			.exactly(bParentIsLeaf || !bSpliced ? 1 : 0)
+			.exactly(oParentNode && (bParentIsLeaf || !bSpliced) ? 1 : 0)
 			.withExactArgs(sinon.match.same(oParentNode)).returns(oParentCache);
 		const oGroupLock = {
 			getUnlockedCopy : mustBeMocked
 		};
 		if (!bParentIsLeaf && !bSpliced) {
 			this.mock(oParentCache).expects("restoreElement")
-				.withExactArgs(undefined, 0, sinon.match.same(oChildNode), "", undefined,
-					"($uid=1-23)");
+				.withExactArgs(0, sinon.match.same(oChildNode), undefined, "($uid=1-23)");
 			this.mock(oGroupLock).expects("getUnlockedCopy").withExactArgs()
 				.returns("~unlockedCopy~");
 			this.mock(oParentCache).expects("read")
@@ -3919,12 +4008,14 @@ sap.ui.define([
 			.withExactArgs("PATCH", "Foo('23')", sinon.match.same(oGroupLock), {
 					"If-Match" : oChildNode,
 					Prefer : "return=minimal"
-				}, {"myParent@odata.bind" : "Foo('42')"},
+				}, {"myParent@odata.bind" : bMakeRoot ? null : "Foo('42')"},
 				/*fnSubmit*/null, /*fnCancel*/sinon.match.func)
 			.resolves({"@odata.etag" : "etag"});
+		this.mock(oCache).expects("adjustDescendantCount").never();
 		oHelperMock.expects("updateExisting")
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "('23')",
-				sinon.match.same(oChildNode), {"@odata.etag" : "etag", "@$ui5.node.level" : 10});
+				sinon.match.same(oChildNode),
+				{"@odata.etag" : "etag", "@$ui5.node.level" : bMakeRoot ? 1 : 10});
 		const oOldParentCache = {
 			getValue : mustBeMocked,
 			removeElement : mustBeMocked,
@@ -3933,8 +4024,8 @@ sap.ui.define([
 		oHelperMock.expects("getPrivateAnnotation")
 			.withExactArgs(sinon.match.same(oChildNode), "parent").returns(oOldParentCache);
 		oHelperMock.expects("getPrivateAnnotation")
-			.withExactArgs(sinon.match.same(oChildNode), "index", 0).returns("~index~");
-		this.mock(oOldParentCache).expects("removeElement").withExactArgs("~index~", "('23')");
+			.withExactArgs(sinon.match.same(oChildNode), "rank", 0).returns("~rank~");
+		this.mock(oOldParentCache).expects("removeElement").withExactArgs("~rank~", "('23')");
 		this.mock(oOldParentCache).expects("getValue").withExactArgs("$count")
 			.returns(iOldSiblingCount);
 		this.mock(oCache).expects("makeLeaf").exactly(iOldSiblingCount ? 0 : 1)
@@ -3943,8 +4034,8 @@ sap.ui.define([
 			.withExactArgs("~oOldParent~", "cache");
 		this.mock(oOldParentCache).expects("setActive").exactly(iOldSiblingCount ? 0 : 1)
 			.withExactArgs(false);
-		oHelperMock.expects("deletePrivateAnnotation")
-			.withExactArgs(sinon.match.same(oChildNode), "index");
+		const oDeleteIndexExpectation = oHelperMock.expects("deletePrivateAnnotation")
+			.withExactArgs(sinon.match.same(oChildNode), "rank");
 		oHelperMock.expects("hasPrivateAnnotation")
 			.withExactArgs(sinon.match.same(oChildNode), "transientPredicate").returns(bTransient);
 		oHelperMock.expects("setPrivateAnnotation").exactly(bTransient ? 0 : 1)
@@ -3952,27 +4043,33 @@ sap.ui.define([
 		oHelperMock.expects("updateAll").exactly(bTransient ? 0 : 1)
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "('23')",
 				sinon.match.same(oChildNode), {"@$ui5.context.isTransient" : false});
-		this.mock(oCache).expects("shiftIndex").exactly(bTransient ? 0 : 1)
+		this.mock(oCache).expects("shiftRank").exactly(bTransient ? 0 : 1)
 			.withExactArgs(2, -1).callsFake(function () {
+				assert.notOk(oDeleteIndexExpectation.called);
 				assert.deepEqual(oCache.aElements,
 					["a", "~oOldParent~", oChildNode, "d", "e", "f", "g", oParentNode, "i"]);
 			});
-		this.mock(oParentCache).expects("setEmpty").exactly(bParentIsLeaf ? 1 : 0)
+		this.mock(oParentCache).expects("setEmpty").exactly(bParentIsLeaf && !bMakeRoot ? 1 : 0)
 			.withExactArgs();
 		const oCacheExpectation = oHelperMock.expects("setPrivateAnnotation")
-			.exactly(bParentIsLeaf || !bSpliced ? 1 : 0)
+			.exactly(oParentNode && (bParentIsLeaf || !bSpliced) ? 1 : 0)
 			.withExactArgs(sinon.match.same(oParentNode), "cache", sinon.match.same(oParentCache));
-		oHelperMock.expects("updateAll").exactly(bParentIsLeaf ? 1 : 0)
+		oHelperMock.expects("updateAll").exactly(oParentNode && bParentIsLeaf ? 1 : 0)
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "('42')",
 				sinon.match.same(oParentNode), {"@$ui5.node.isExpanded" : true});
 		const oParentExpectation = oHelperMock.expects("setPrivateAnnotation")
-			.withExactArgs(sinon.match.same(oChildNode), "parent", sinon.match.same(oParentCache));
-		if (bParentIsLeaf || bSpliced) {
+			.withExactArgs(sinon.match.same(oChildNode), "parent",
+				sinon.match.same(bMakeRoot ? oCache.oFirstLevel : oParentCache));
+		if (bMakeRoot) {
+			this.mock(oCache.oFirstLevel).expects("restoreElement")
+				.withExactArgs(0, sinon.match.same(oChildNode));
+		} else if (bParentIsLeaf || bSpliced) {
 			this.mock(oParentCache).expects("restoreElement")
-				.withExactArgs(undefined, 0, sinon.match.same(oChildNode), "");
+				.withExactArgs(0, sinon.match.same(oChildNode));
 		}
 		const aSpliced = bSpliced ? [{"@$ui5.node.level" : 7}, "X", "Y", "Z"] : undefined;
-		oHelperMock.expects("getPrivateAnnotation").exactly(bParentIsLeaf || bSpliced ? 1 : 0)
+		oHelperMock.expects("getPrivateAnnotation")
+			.exactly(oParentNode && (bParentIsLeaf || bSpliced) ? 1 : 0)
 			.withExactArgs(sinon.match.same(oParentNode), "spliced").returns(aSpliced);
 		this.mock(oCache).expects("expand").exactly(!bParentIsLeaf ? 1 : 0)
 			.withExactArgs(sinon.match.same(_GroupLock.$cached), "('42')")
@@ -3991,7 +4088,8 @@ sap.ui.define([
 			});
 
 		// code under test
-		const oSyncPromise = oCache.move(oGroupLock, "Foo('23')", "Foo('42')");
+		const oSyncPromise
+			= oCache.move(oGroupLock, "Foo('23')", bMakeRoot ? undefined : "Foo('42')");
 
 		assert.strictEqual(oSyncPromise.isPending(), true);
 
@@ -4014,6 +4112,7 @@ sap.ui.define([
 				oRequestExpectation.args[0][6]();
 			});
 	});
+				});
 			});
 		});
 	});
@@ -4029,6 +4128,7 @@ sap.ui.define([
 		oCache.aElements.$byPredicate["('42')"] = "~oParentNode~";
 		this.mock(_Helper).expects("getPrivateAnnotation").withExactArgs("~oParentNode~", "cache")
 			.returns("n/a");
+		this.mock(oCache).expects("requestRank").never();
 		const oError = new Error("This call intentionally failed");
 		this.mock(this.oRequestor).expects("request")
 			.withExactArgs("PATCH", "Foo('23')", "~oGroupLock~", {
@@ -4065,11 +4165,12 @@ sap.ui.define([
 			restoreElement : mustBeMocked,
 			setEmpty : mustBeMocked
 		};
+		this.mock(oCache).expects("requestRank").never();
 		this.mock(oCache).expects("createGroupLevelCache")
 			.withExactArgs(sinon.match.same(oParentNode)).returns(oParentCache);
 		this.mock(_Helper).expects("uid").withExactArgs().returns("1-23");
 		this.mock(oParentCache).expects("restoreElement")
-			.withExactArgs(undefined, 0, "~oChildNode~", "", undefined, "($uid=1-23)");
+			.withExactArgs(0, "~oChildNode~", undefined, "($uid=1-23)");
 		const oGroupLock = {
 			getUnlockedCopy : mustBeMocked
 		};
@@ -4085,6 +4186,7 @@ sap.ui.define([
 				}, {"myParent@odata.bind" : "Foo('42')"},
 				/*fnSubmit*/null, /*fnCancel*/sinon.match.func)
 			.resolves();
+		this.mock(oCache).expects("adjustDescendantCount").never();
 
 		// code under test
 		const oSyncPromise = oCache.move(oGroupLock, "Foo('23')", "Foo('42')");
@@ -4099,21 +4201,132 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+[undefined, false, true].forEach((bNewParentExpanded) => {
+	[false, true].forEach((bMakeRoot) => {
+	const sTitle = `move: expand all, new parent's @$ui5.node.isExpanded = ${bNewParentExpanded},
+make root = ${bMakeRoot}`;
+
+	if (bMakeRoot && bNewParentExpanded !== undefined) {
+		return;
+	}
+
+	QUnit.test(sTitle, async function (assert) {
+		const oCache = _AggregationCache.create(this.oRequestor, "n/a", "", {}, {
+				$ParentNavigationProperty : "myParent",
+				expandTo : 999,
+				hierarchyQualifier : "X"
+			});
+		const oParentNode = bMakeRoot ? undefined : {
+			"@$ui5.node.isExpanded" : bNewParentExpanded,
+			"@$ui5.node.level" : 9
+		};
+		oCache.aElements
+			= ["a", "~oOldParent~", "~oChildNode~", "d", "e", "f", "g", oParentNode, "i"];
+		oCache.aElements.$byPredicate = {
+			"('23')" : "~oChildNode~",
+			"('42')" : oParentNode
+		};
+		const oHelperMock = this.mock(_Helper);
+		oHelperMock.expects("getPrivateAnnotation").exactly(oParentNode ? 1 : 0)
+			.withExactArgs(sinon.match.same(oParentNode), "cache").returns("n/a");
+		const oGroupLock = {
+			getUnlockedCopy : mustBeMocked
+		};
+		this.mock(oGroupLock).expects("getUnlockedCopy").withExactArgs().returns("~unlockedCopy~");
+		const oCacheMock = this.mock(oCache);
+		oCacheMock.expects("requestRank").withExactArgs("~oChildNode~", "~unlockedCopy~")
+			.resolves(17);
+		oCacheMock.expects("createGroupLevelCache").never();
+		oCacheMock.expects("restoreElement").never();
+		oCacheMock.expects("read").never();
+		this.mock(this.oRequestor).expects("request")
+			.withExactArgs("PATCH", "Foo('23')", sinon.match.same(oGroupLock), {
+					"If-Match" : "~oChildNode~",
+					Prefer : "return=minimal"
+				}, {"myParent@odata.bind" : bMakeRoot ? null : "Foo('42')"},
+				/*fnSubmit*/null, /*fnCancel*/sinon.match.func)
+			.resolves({"@odata.etag" : "etag"});
+		const oUpdateExistingExpectation = oHelperMock.expects("updateExisting")
+			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "('23')", "~oChildNode~",
+				{"@odata.etag" : "etag", "@$ui5.node.level" : bMakeRoot ? 1 : 10});
+		oHelperMock.expects("getPrivateAnnotation")
+			.withExactArgs("~oChildNode~", "descendants", 0).returns(4);
+		oCacheMock.expects("adjustDescendantCount")
+			.withExactArgs("~oChildNode~", 2, -(4 + 1))
+			.callsFake(function () {
+				assert.notOk(oUpdateExistingExpectation.called, "old level needed!");
+				assert.deepEqual(oCache.aElements,
+					["a", "~oOldParent~", "~oChildNode~", "d", "e", "f", "g", oParentNode, "i"],
+					"not spliced yet");
+			});
+		oCacheMock.expects("shiftRank").withExactArgs(2, -(4 + 1))
+			.callsFake(function () {
+				assert.deepEqual(oCache.aElements,
+					["a", "~oOldParent~", "~oChildNode~", "d", "e", "f", "g", oParentNode, "i"],
+					"not spliced yet");
+			});
+		oHelperMock.expects("getPrivateAnnotation")
+			.withExactArgs("~oChildNode~", "rank").returns("~rank~");
+		this.mock(oCache.oFirstLevel).expects("move").withExactArgs("~rank~", 17, 4 + 1);
+		const oSetRankExpectation = oHelperMock.expects("setPrivateAnnotation")
+			.withExactArgs("~oChildNode~", "rank", 17);
+		oCacheMock.expects("expand").exactly(bNewParentExpanded === false ? 1 : 0)
+			.withExactArgs(_GroupLock.$cached, "('42')").returns(SyncPromise.resolve(47));
+		oCacheMock.expects("shiftRank").withExactArgs(7, +(4 + 1))
+			.callsFake(function () {
+				assert.ok(oSetRankExpectation.called, "new rank needed");
+				assert.deepEqual(oCache.aElements,
+					["a", "~oOldParent~", "d", "e", "f", "g", oParentNode, "~oChildNode~", "i"],
+					"already moved");
+			});
+		oCacheMock.expects("adjustDescendantCount")
+			.withExactArgs("~oChildNode~", 7, +(4 + 1))
+			.callsFake(function () {
+				assert.deepEqual(oCache.aElements,
+					["a", "~oOldParent~", "d", "e", "f", "g", oParentNode, "~oChildNode~", "i"],
+					"already moved");
+			});
+		oHelperMock.expects("updateAll")
+			.exactly(oParentNode && bNewParentExpanded === undefined ? 1 : 0)
+			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "('42')",
+				sinon.match.same(oParentNode), {"@$ui5.node.isExpanded" : true});
+
+		// code under test
+		const iResult
+			= await oCache.move(oGroupLock, "Foo('23')", bMakeRoot ? undefined : "Foo('42')");
+
+		assert.strictEqual(iResult, bNewParentExpanded === false ? 47 + 1 : 1);
+		assert.deepEqual(oCache.aElements,
+			["a", "~oOldParent~", "d", "e", "f", "g", oParentNode, "~oChildNode~", "i"]);
+	});
+	});
+});
+
+	//*********************************************************************************************
 [false, true].forEach(function (bHasGroupLevelCache) {
 	[false, true].forEach(function (bInFirstLevel) {
-		var sTitle = "create: already has group level cache: " + bHasGroupLevelCache
-				+ ", create inside oFirstLevel: " + bInFirstLevel;
+		[false, true].forEach(function (bExpandAll) {
+			[undefined, true].forEach(function (bParentExpanded) {
+				var sTitle = "create: already has group level cache: " + bHasGroupLevelCache
+						+ ", create inside oFirstLevel: " + bInFirstLevel
+						+ ", expand all: " + bExpandAll
+						+ ", parent's @$ui5.node.isExpanded: " + bParentExpanded;
 
-		if (bHasGroupLevelCache && bInFirstLevel) {
-			return;
-		}
+				if (bHasGroupLevelCache && bInFirstLevel || bExpandAll && !bInFirstLevel) {
+					return;
+				}
 
 	QUnit.test(sTitle, function (assert) {
-		var fnCancelCallback;
+		var fnCancelCallback,
+			that = this;
 
+		let iExpandTo; // Note: undefined is important to test defaulting!
+		if (bInFirstLevel) {
+			iExpandTo = bExpandAll ? 999 : 25;
+		}
 		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
 				$ParentNavigationProperty : "myParent",
-				expandTo : bInFirstLevel ? 25 : /*test defaulting!*/undefined,
+				expandTo : iExpandTo,
 				hierarchyQualifier : "X"
 			});
 		const oGroupLevelCache = {
@@ -4124,6 +4337,9 @@ sap.ui.define([
 				"@$ui5._" : {cache : bHasGroupLevelCache ? oGroupLevelCache : undefined},
 				"@$ui5.node.level" : 23
 			};
+		if (bParentExpanded !== undefined) {
+			oParentNode["@$ui5.node.isExpanded"] = bParentExpanded;
+		}
 		oCache.aElements = ["0", "1", oParentNode, "3", "4"];
 		oCache.aElements.$byPredicate = {"('42')" : oParentNode};
 		oCache.aElements.$count = 5;
@@ -4135,7 +4351,7 @@ sap.ui.define([
 			.exactly(bHasGroupLevelCache || bInFirstLevel ? 0 : 1)
 			.withExactArgs();
 		this.mock(_Helper).expects("updateAll")
-			.exactly(bHasGroupLevelCache || bInFirstLevel ? 0 : 1)
+			.exactly(bParentExpanded ? 0 : 1)
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "('42')",
 				sinon.match.same(oParentNode), {"@$ui5.node.isExpanded" : true});
 		const oEntityData = {
@@ -4143,12 +4359,13 @@ sap.ui.define([
 				bar : "~bar~",
 				foo : "~foo~"
 			};
+		const oGroupLock = {getUnlockedCopy : mustBeMocked};
 		const oPostBody = {};
 		const oCollectionCache = bInFirstLevel ? oCache.oFirstLevel : oGroupLevelCache;
 		this.mock(oCollectionCache).expects("create")
-			.withExactArgs("~oGroupLock~", "~oPostPathPromise~", "~sPath~", "~sTransientPredicate~",
-				{bar : "~bar~", foo : "~foo~"},
-				false, "~fnErrorCallback~", "~fnSubmitCallback~", sinon.match.func)
+			.withExactArgs(sinon.match.same(oGroupLock), "~oPostPathPromise~", "~sPath~",
+				"~sTransientPredicate~", {bar : "~bar~", foo : "~foo~"}, false, "~fnErrorCallback~",
+				"~fnSubmitCallback~", sinon.match.func)
 			.callsFake(function () {
 				fnCancelCallback = arguments[8];
 				assert.strictEqual(_Helper.getPrivateAnnotation(oParentNode, "cache"),
@@ -4161,6 +4378,36 @@ sap.ui.define([
 							// Note: #calculateKeyPredicateRH doesn't know better :-(
 							oEntityData["@$ui5.node.level"] = 1;
 						}
+						that.mock(oGroupLock).expects("getUnlockedCopy").exactly(bExpandAll ? 1 : 0)
+							.withExactArgs().returns("~oGroupLockCopy~");
+						that.mock(oCache).expects("requestRank").exactly(bExpandAll ? 1 : 0)
+							.withExactArgs(sinon.match.same(oEntityData), "~oGroupLockCopy~")
+							.resolves("~iRank~");
+						that.mock(oCache.oFirstLevel).expects("removeElement")
+							.exactly(bExpandAll ? 1 : 0).withExactArgs(0, "~sTransientPredicate~");
+						if (bExpandAll) {
+							// always done by #addElements, but needs to be undone in this case only
+							oCache.aElements.$byPredicate["~sTransientPredicate~"] = "n/a";
+						}
+						const oDeleteTransientPredicateExpectation
+							= that.mock(_Helper).expects("deletePrivateAnnotation")
+							.exactly(bExpandAll ? 1 : 0)
+							.withExactArgs(sinon.match.same(oEntityData), "transientPredicate");
+						const oSetIndexExpectation
+							= that.mock(_Helper).expects("setPrivateAnnotation")
+							.exactly(bExpandAll ? 1 : 0)
+							.withExactArgs(sinon.match.same(oEntityData), "rank", "~iRank~");
+						that.mock(oCache.oFirstLevel).expects("restoreElement")
+							.exactly(bExpandAll ? 1 : 0)
+							.withExactArgs("~iRank~", sinon.match.same(oEntityData))
+							.callsFake(function () {
+								assert.ok(oDeleteTransientPredicateExpectation.called);
+							});
+						that.mock(oCache).expects("shiftRank").exactly(bExpandAll ? 1 : 0)
+							.withExactArgs(3, +1)
+							.callsFake(function () {
+								assert.ok(oSetIndexExpectation.called);
+							});
 						resolve();
 					});
 				});
@@ -4176,7 +4423,7 @@ sap.ui.define([
 			.exactly(bInFirstLevel ? 1 : 0).withExactArgs(sinon.match.same(oEntityData), 3, +1);
 
 		// code under test
-		const oResult = oCache.create("~oGroupLock~", "~oPostPathPromise~", "~sPath~",
+		const oResult = oCache.create(oGroupLock, "~oPostPathPromise~", "~sPath~",
 			"~sTransientPredicate~", oEntityData, /*bAtEndOfCreated*/false, "~fnErrorCallback~",
 			"~fnSubmitCallback~");
 
@@ -4206,9 +4453,7 @@ sap.ui.define([
 			assert.strictEqual(oCache.aElements.$count, 6);
 
 			oCache.aElements[3] = oEntityData;
-			this.mock(_Helper).expects("getPrivateAnnotation")
-				.withExactArgs(sinon.match.same(oEntityData), "transientPredicate")
-				.returns("('42')"); // just testing ;-)
+			oCache.aElements.$byPredicate["~sTransientPredicate~"] = "n/a";
 			oCacheMock.expects("adjustDescendantCount").exactly(bInFirstLevel ? 1 : 0)
 				.withExactArgs(sinon.match.same(oEntityData), 3, -1);
 
@@ -4217,11 +4462,14 @@ sap.ui.define([
 
 			assert.strictEqual(oCache.aElements.$count, 5);
 			assert.deepEqual(oCache.aElements.$byPredicate, {
+				"('42')" : oParentNode,
 				"('ABC')" : oEntityData
 			});
 			assert.deepEqual(oCache.aElements, ["0", "1", oParentNode, "3", "4"]);
-		}.bind(this));
+		});
 	});
+			});
+		});
 	});
 });
 
@@ -4288,9 +4536,6 @@ sap.ui.define([
 			assert.strictEqual(oCache.aElements.$count, 4);
 
 			oCache.aElements[0] = oEntityData;
-			this.mock(_Helper).expects("getPrivateAnnotation")
-				.withExactArgs(sinon.match.same(oEntityData), "transientPredicate")
-				.returns("('42')"); // just testing ;-)
 
 			// code under test
 			fnCancelCallback();
@@ -4325,17 +4570,17 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [false, true].forEach(function (bBreak) {
-	QUnit.test(`shiftIndex: group level cache, break = ${bBreak}`, function (assert) {
+	QUnit.test(`shiftRank: group level cache, break = ${bBreak}`, function (assert) {
 		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
 				hierarchyQualifier : "X"
 			});
 		const oNode = {
-				"@$ui5._" : {parent : "~oGroupLevelCache~"},
+				"@$ui5._" : {parent : "~oGroupLevelCache~", rank : 2},
 				"@$ui5.node.level" : 24,
 				ID : "node"
 			};
 		const oElementSkip = {
-				"@$ui5._" : {index : -3, parent : "not oGroupLevelCache"},
+				"@$ui5._" : {parent : "not oGroupLevelCache", rank : -3},
 				"@$ui5.node.level" : 25,
 				ID : "skip"
 			};
@@ -4344,7 +4589,7 @@ sap.ui.define([
 				ID : "no break"
 			};
 		const oElementChange = {
-				"@$ui5._" : {index : 4, parent : "~oGroupLevelCache~"},
+				"@$ui5._" : {parent : "~oGroupLevelCache~", rank : 4},
 				"@$ui5.node.level" : 24,
 				ID : "change"
 			};
@@ -4360,7 +4605,7 @@ sap.ui.define([
 				ID : "break"
 			};
 		const oElementTrap = { // this is unrealistic and acts as a trap to prove that loop ends
-				"@$ui5._" : {index : 7, parent : "~oGroupLevelCache~", placeholder : true},
+				"@$ui5._" : {parent : "~oGroupLevelCache~", placeholder : true, rank : 7},
 				"@$ui5.node.level" : 0, // must be ignored
 				ID : "trap"
 			};
@@ -4368,21 +4613,21 @@ sap.ui.define([
 			oElementCreated, oElementBreak, oElementTrap];
 
 		// code under test
-		oCache.shiftIndex(2, 47);
+		oCache.shiftRank(2, 47);
 
 		assert.deepEqual(oCache.aElements, ["0", "1", {
-			"@$ui5._" : {parent : "~oGroupLevelCache~"},
+			"@$ui5._" : {parent : "~oGroupLevelCache~", rank : 2},
 			"@$ui5.node.level" : 24,
 			ID : "node"
 		}, {
-			"@$ui5._" : {index : -3, parent : "not oGroupLevelCache"},
+			"@$ui5._" : {parent : "not oGroupLevelCache", rank : -3},
 			"@$ui5.node.level" : 25,
 			ID : "skip"
 		}, {
 			"@$ui5.node.level" : 24,
 			ID : "no break"
 		}, {
-			"@$ui5._" : {index : 4 + 47, parent : "~oGroupLevelCache~"},
+			"@$ui5._" : {parent : "~oGroupLevelCache~", rank : 4 + 47},
 			"@$ui5.node.level" : 24,
 			ID : "change"
 		}, {
@@ -4394,9 +4639,9 @@ sap.ui.define([
 			ID : "break"
 		}, {
 			"@$ui5._" : {
-				index : bBreak ? /*unchanged!*/7 : 7 + 47,
 				parent : "~oGroupLevelCache~",
-				placeholder : true
+				placeholder : true,
+				rank : bBreak ? /*unchanged!*/7 : 7 + 47
 			},
 			"@$ui5.node.level" : 0,
 			ID : "trap"
@@ -4405,36 +4650,116 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
-	QUnit.test("shiftIndex: oFirstLevel", function (assert) {
+[2, 4, 5].forEach((iMinRank) => {
+	QUnit.test(`shiftRank: oFirstLevel, iMinRank = ${iMinRank}`, function (assert) {
 		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
 			hierarchyQualifier : "X"
 		});
 		oCache.aElements = [{
-			"@$ui5._" : {index : 0, parent : oCache.oFirstLevel}
+			"@$ui5._" : {parent : oCache.oFirstLevel, rank : 0}
 		}, {
-			"@$ui5._" : {index : 1, parent : oCache.oFirstLevel}
+			"@$ui5._" : {parent : oCache.oFirstLevel, rank : 1}
 		}, {
-			"@$ui5._" : {index : 2, parent : oCache.oFirstLevel}
+			"@$ui5._" : {parent : oCache.oFirstLevel, rank : iMinRank}
 		}, {
-			"@$ui5._" : {index : 3, parent : oCache.oFirstLevel}
+			"@$ui5._" : {parent : oCache.oFirstLevel, rank : 3}
 		}, {
-			"@$ui5._" : {/*index : undefined,*/parent : oCache.oFirstLevel}
+			"@$ui5._" : {parent : oCache.oFirstLevel/*, rank : undefined*/}
 		}, {
-			"@$ui5._" : {index : 0, parent : "~oGroupLevelCache~"}
+			"@$ui5._" : {parent : "~oGroupLevelCache~", rank : 0}
 		}, {
-			"@$ui5._" : {index : 1, parent : "~oGroupLevelCache~"}
+			"@$ui5._" : {parent : "~oGroupLevelCache~", rank : 1}
 		}, {
-			"@$ui5._" : {index : 4, parent : oCache.oFirstLevel}
+			"@$ui5._" : {parent : oCache.oFirstLevel, rank : 4}
 		}, {
-			"@$ui5._" : {index : 5, parent : oCache.oFirstLevel}
+			"@$ui5._" : {parent : oCache.oFirstLevel, rank : 5}
 		}];
 
-		// code under test
-		oCache.shiftIndex(2, 23);
+		function check() {
+			let aExpectedRanks;
+			switch (iMinRank) {
+				case 2:
+					aExpectedRanks = [0, 1, iMinRank, 3 + 23, undefined, 0, 1, 4 + 23, 5 + 23];
+					break;
 
-		assert.deepEqual(oCache.aElements.map((oElement) => oElement["@$ui5._"].index),
-			[0, 1, 2, 3 + 23, undefined, 0, 1, 4 + 23, 5 + 23]);
+				case 4:
+					aExpectedRanks = [0, 1, iMinRank, 3, undefined, 0, 1, 4 + 23, 5 + 23];
+					break;
+
+				case 5:
+					aExpectedRanks = [0, 1, iMinRank, 3, undefined, 0, 1, 4, 5 + 23];
+					break;
+				// no default
+			}
+
+			assert.deepEqual(oCache.aElements.map((oElement) => oElement["@$ui5._"].rank),
+				aExpectedRanks);
+		}
+
+		// code under test
+		oCache.shiftRank(2, 23);
+
+		check();
+
+		// code under test ("nothing is shifted")
+		oCache.shiftRank(4, -23);
+
+		check(); // unchanged
 	});
+});
+
+	//*********************************************************************************************
+["TEAM_ID desc", undefined].forEach((sOrderBy) => {
+	QUnit.test(`requestRank: ${sOrderBy}`, async function (assert) {
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
+			hierarchyQualifier : "X",
+			$LimitedRank : "~LimitedRank~",
+			$metaPath : "/meta/path"
+		});
+		this.mock(oCache.oFirstLevel).expects("getQueryOptions").withExactArgs()
+			.returns({
+				$$filterBeforeAggregate : "n/a",
+				$apply : "A.P.P.L.E.",
+				$count : "n/a",
+				$expand : "n/a",
+				$filter : "n/a",
+				$orderby : sOrderBy,
+				$search : "n/a",
+				$select : ["n/a"],
+				foo : "bar",
+				"sap-client" : "123"
+			});
+		this.mock(oCache).expects("getTypes").withExactArgs().returns("~getTypes~");
+		this.mock(_Helper).expects("getKeyFilter")
+			.withExactArgs("~oElement~", "/meta/path", "~getTypes~").returns("~filter~");
+		this.mock(oCache.oRequestor).expects("buildQueryString")
+			.withExactArgs("/meta/path", sOrderBy ? {
+				$apply : "A.P.P.L.E.",
+				$filter : "~filter~",
+				$orderby : sOrderBy,
+				$select : "~LimitedRank~"
+			} : {
+				$apply : "A.P.P.L.E.",
+				$filter : "~filter~",
+				$select : "~LimitedRank~"
+			}, false, true)
+			.returns("~queryString~");
+		this.mock(oCache.oRequestor).expects("request")
+			.withExactArgs("GET", "Foo~queryString~", "~oGroupLock~")
+			.resolves({
+				"@odata.context" : "n/a",
+				"@odata.metadataEtag" : "W/...",
+				value : ["~oResult~"]
+			});
+		this.mock(_Helper).expects("drillDown").withExactArgs("~oResult~", "~LimitedRank~")
+			.returns("42");
+
+		assert.strictEqual(
+			// code under test
+			await oCache.requestRank("~oElement~", "~oGroupLock~"),
+			42);
+	});
+});
 
 	//*********************************************************************************************
 [
@@ -4481,10 +4806,10 @@ sap.ui.define([
 					.withExactArgs(sinon.match.same(oCache.aElements), "~predicate~", 2)
 					.returns(4);
 				oHelperMock.expects("getPrivateAnnotation")
-					.withExactArgs(sinon.match.same(oElement), "index", 0).returns("~index~");
+					.withExactArgs(sinon.match.same(oElement), "rank", 0).returns("~rank~");
 				const oParentCacheMock = this.mock(oParentCache);
 				oRemoveExpectation = oParentCacheMock.expects("removeElement")
-					.withExactArgs("~index~", "~predicate~").returns("~iIndexInParentCache~");
+					.withExactArgs("~rank~", "~predicate~").returns("~iIndexInParentCache~");
 				oHelperMock.expects("getPrivateAnnotation")
 					.withExactArgs(sinon.match.same(oElement), "descendants", 0)
 					.returns(oFixture.firstLevel ? 3 : 0);
@@ -4498,7 +4823,7 @@ sap.ui.define([
 					.withExactArgs("$count").returns(oFixture.parentLeaf ? 0 : 5);
 				this.mock(oCache).expects("makeLeaf").exactly(oFixture.parentLeaf ? 1 : 0)
 					.withExactArgs("~oParent~");
-				this.mock(oCache).expects("shiftIndex").exactly(bCreated ? 0 : 1)
+				this.mock(oCache).expects("shiftRank")
 					.withExactArgs(4, oFixture.firstLevel ? -4 : -1);
 				this.mock(oCache).expects("removeElement")
 					.withExactArgs(4, "~predicate~");
@@ -4658,6 +4983,9 @@ sap.ui.define([
 	in : [[1, 24], [2, 23], [3, 0]],
 	leaf : 1,
 	out : [1, 0, 0]
+}, { // parent not a leaf anymore
+	in : [[1, undefined], [2, /*unrealistic*/17]],
+	out : [-23, 17]
 }].forEach(function (oFixture, i) {
 	QUnit.test("adjustDescendantCount #" + i, function (assert) {
 		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {

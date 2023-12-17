@@ -142,7 +142,7 @@ sap.ui.define([
 	 * The default implementation of this method returns <code>false</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.View
@@ -561,7 +561,7 @@ sap.ui.define([
 							// only 'visible' property can be customized
 							for (var sProperty in oCustomSetting) {
 								if (sProperty !== "visible") {
-									Log.warning("Customizing: custom value for property '" + sProperty + "' of control '" + sId + "' in View '" + that.sViewName + "' ignored: only the 'visible' property can be customized.");
+									Log.warning("[FUTURE FATAL] Customizing: custom value for property '" + sProperty + "' of control '" + sId + "' in View '" + that.sViewName + "' ignored: only the 'visible' property can be customized.");
 									delete oCustomSetting[sProperty];
 								}
 							}
@@ -772,8 +772,11 @@ sap.ui.define([
 	 * @param {string[]} [aLocalIds] Array of local IDs within the cloned hierarchy (internally used)
 	 * @returns {this} Reference to the newly created clone
 	 * @public
+	 * @deprecated As of version 1.120, please call the corresponding View factory instead, e.g. {@link sap.ui.core.mvc.XMLView.create}
 	 */
 	View.prototype.clone = function(sIdSuffix, aLocalIds) {
+		Log.error("[FUTURE FATAL] Cloning a View and/or using a View as a binding template is deprecated. Please call the corresponding View factory instead, e.g. XMLView.create()");
+
 		var mSettings = {}, sKey, oClone;
 		//Clone properties (only those with non-default value)
 		for (sKey in this.mProperties  && !(this.isBound && this.isBound(sKey))) {
@@ -953,7 +956,7 @@ sap.ui.define([
 		if (vPreprocessor) {
 			initGlobalPreprocessorsRegistry(sType, sViewType);
 			if (bOnDemand && onDemandPreprocessorExists(sViewType, sType)) {
-				Log.error("Registration for \"" + sType + "\" failed, only one on-demand-preprocessor allowed", this.getMetadata().getName());
+				Log.error("[FUTURE FATAL] Registration for \"" + sType + "\" failed, only one on-demand-preprocessor allowed", this.getMetadata().getName());
 				return;
 			}
 			View._mPreprocessors[sViewType][sType].push({
@@ -965,7 +968,7 @@ sap.ui.define([
 			Log.debug("Registered " + (bOnDemand ? "on-demand-" : "") + "preprocessor for \"" + sType + "\"" +
 			(bSyncSupport ? " with syncSupport" : ""), this.getMetadata().getName());
 		} else {
-			Log.error("Registration for \"" + sType + "\" failed, no preprocessor specified",  this.getMetadata().getName());
+			Log.error("[FUTURE FATAL] Registration for \"" + sType + "\" failed, no preprocessor specified",  this.getMetadata().getName());
 		}
 	};
 
@@ -1078,7 +1081,7 @@ sap.ui.define([
 		}
 
 		return new Promise(function(resolve, reject) {
-			 var sViewClass = getViewClassName(mParameters);
+			 var sViewClass = View._getViewClassName(mParameters);
 			 sap.ui.require([sViewClass], function(ViewClass){
 				 resolve(ViewClass);
 			 }, reject);
@@ -1243,17 +1246,25 @@ sap.ui.define([
 			}
 		}
 
-		var sViewClass = getViewClassName(oView);
+		var sViewClass = View._getViewClassName(oView);
 		view = createView(sViewClass, oView);
 		return view;
 	}
 
-	function getViewClassName(oViewSettings) {
+	/**
+	 * Extract the class name from the given view settings object
+	 *
+	 * @param {object} oViewSettings Settings object as given to the view factory
+	 * @param {boolean} [bSkipLog=false] Whether to skip the logging
+	 * @returns {string|undefined} Name of the view class (in sap.ui.define syntax)
+	 * @private
+	 */
+	View._getViewClassName = function(oViewSettings, bSkipLog) {
 		var sViewClass = View._getModuleName(oViewSettings);
 
 		// view creation
 		if (sViewClass) {
-			if (oViewSettings.type) {
+			if (oViewSettings.type && !bSkipLog) {
 				Log.error("When using the view factory, the 'type' setting must be omitted for typed views. When embedding typed views in XML, don't use the <JSView> tag, use the <View> tag instead.");
 			}
 			return sViewClass;
@@ -1287,7 +1298,7 @@ sap.ui.define([
 		}
 
 		return sViewClass;
-	}
+	};
 
 	function createView(sViewClass, oViewSettings) {
 		var ViewClass = sap.ui.require(sViewClass);

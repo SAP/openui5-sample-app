@@ -87,7 +87,7 @@ function(
 
 				// if the parsed value is not valid, we don't fail but only log an error
 				if (!oType.isValid(vValue)) {
-					Log.error("Value '" + sValue + "' is not valid for type '" + oType.getName() + "'.");
+					Log.error("[FUTURE FATAL] Value '" + sValue + "' is not valid for type '" + oType.getName() + "'.");
 				}
 			}
 			// else keep original sValue (e.g. for enums)
@@ -741,7 +741,7 @@ function(
 			sNodeName = localName(node);
 			if (oView.isA("sap.ui.core.mvc.XMLView")) {
 				if ((sNodeName !== "View" && sNodeName !== "XMLView") || node.namespaceURI !== CORE_MVC_NAMESPACE) {
-					Log.error("XMLView's root node must be 'View' or 'XMLView' and have the namespace 'sap.ui.core.mvc'" + (sCurrentName ? " (View name: " + sCurrentName + ")" : ""));
+					Log.error("[FUTURE FATAL] XMLView's root node must be 'View' or 'XMLView' and have the namespace 'sap.ui.core.mvc'" + (sCurrentName ? " (View name: " + sCurrentName + ")" : ""));
 				}
 				// createRegularControls
 				pResultChain = pChain.then(function() {
@@ -764,6 +764,16 @@ function(
 			return bWrapped;
 		}
 
+		function scopedRunWithOwner(fnCreation) {
+			if (oView.fnScopedRunWithOwner) {
+				// We need to use the already created scoped runWithOwner function from the outer view instance.
+				// This way, the nested views are receiving the correct Owner component, across asynchronous calls.
+				return oView.fnScopedRunWithOwner(fnCreation);
+			} else {
+				return fnCreation();
+			}
+		}
+
 		/**
 		 * Requests the control class if not loaded yet.
 		 * If the View is set to async=true, an async XHR is sent, otherwise a sync XHR.
@@ -783,34 +793,49 @@ function(
 			// TODO guess library from sNamespaceURI and load corresponding lib!?
 			sClassName = sClassName || sNamespaceURI + "." + sLocalName;
 
-			// ensure that control and library are loaded
-			function getObjectFallback(oClassObject) {
-				// some modules might not return a class definition, so we fallback to the global
-				// this is against the AMD definition, but is required for backward compatibility
-				if (!oClassObject) {
-					Log.error("Control '" + sClassName + "' did not return a class definition from sap.ui.define.", "", "XMLTemplateProcessor");
-					oClassObject = ObjectPath.get(sClassName);
+			/**
+			 * Validates if a control class is available and provides error feedback otherwise.
+			 * @param {sap.ui.core.Control|undefined} fnClass control class or undefined if not returned as module content for its sap.ui.define factory
+			 * @return {sap.ui.core.Control|undefined} the resolved class.
+			 */
+			function validateClass(fnClass) {
+				if (!fnClass) {
+					let sErrorLogMessage = `[FUTURE FATAL] Control '${sClassName}' did not return a class definition from sap.ui.define.`;
+					/**
+					 * Some modules might not return a class definition, so we fallback to the global namespace.
+					 * This is against the AMD definition, but is required for backward compatibility.
+					 * @deprecated
+					 */
+					(() => {
+						fnClass = ObjectPath.get(sClassName);
+						if (fnClass) {
+							sErrorLogMessage += " The control class was instead retrieved via a deprecated access to the global namespace. This fallback behavior will be removed in the next major version (2.0).";
+						}
+					})();
+
+					Log.error(sErrorLogMessage, "", "XMLTemplateProcessor");
 				}
-				if (!oClassObject) {
-					Log.error("Can't find object class '" + sClassName + "' for XML-view", "", "XMLTemplateProcessor");
-				}
-				return oClassObject;
+				return fnClass;
 			}
 
 			var sResourceName = sClassName.replace(/\./g, "/");
 			var oClassObject = sap.ui.require(sResourceName);
 			if (!oClassObject) {
-				if (bAsync) {
-					return new Promise(function(resolve, reject) {
-						sap.ui.require([sResourceName], function(oClassObject) {
-							oClassObject = getObjectFallback(oClassObject);
-							resolve(oClassObject);
-						}, reject);
-					});
-				} else {
+				/**
+				 * Synchronous loading of control class
+				 * @deprecated since 1.120
+				 */
+				if (!bAsync) {
 					oClassObject = sap.ui.requireSync(sResourceName); // legacy-relevant: Sync path
-					oClassObject = getObjectFallback(oClassObject);
+					oClassObject = validateClass(oClassObject);
+					return oClassObject;
 				}
+				return new Promise(function(resolve, reject) {
+					sap.ui.require([sResourceName], function(oClassObject) {
+						oClassObject = validateClass(oClassObject);
+						resolve(oClassObject);
+					}, reject);
+				});
 			}
 			return oClassObject;
 		}
@@ -980,15 +1005,11 @@ function(
 									containingView: oView._oContainingView,
 									processingMode: oView._sProcessingMode // add processing mode, so it can be propagated to subviews inside the HTML block
 								};
+
 								// running with owner component
-								if (oView.fnScopedRunWithOwner) {
-									return oView.fnScopedRunWithOwner(function () {
-										return new oViewClass(mViewParameters);
-									});
-								}
-								// no owner component
-								// (or fully sync path, which handles the owner propagation on a higher level)
-								return new oViewClass(mViewParameters);
+								return scopedRunWithOwner(function() {
+									return new oViewClass(mViewParameters);
+								});
 							};
 
 							return pRequireContext.then(function(oRequireContext) {
@@ -1079,7 +1100,7 @@ function(
 						});
 					}, undefined /* [targetControl] */, undefined /* [aggregationName] */, bAsync);
 
-					return SyncPromise.resolve(oView.fnScopedRunWithOwner ? oView.fnScopedRunWithOwner(fnExtensionPointFactory) : fnExtensionPointFactory());
+					return SyncPromise.resolve(scopedRunWithOwner(fnExtensionPointFactory));
 				}
 
 			} else {
@@ -1241,7 +1262,7 @@ function(
 								try {
 									mMetaContextsInfo = XMLTemplateProcessor._calculatedModelMapping(sValue, oView._oContainingView.oController, true);
 								} catch (e) {
-									Log.error(oView + ":" + e.message);
+									Log.error("[FUTURE FATAL] " + oView + ":" + e.message);
 								}
 
 								if (mMetaContextsInfo) {
@@ -1303,8 +1324,7 @@ function(
 								if ( oBindingInfo ) {
 									mSettings[sName] = oBindingInfo;
 								} else {
-									// TODO we now in theory allow more than just a binding path. Update message?
-									Log.error(oView + ": aggregations with cardinality 0..n only allow binding paths as attribute value (wrong value: " + sName + "='" + sValue + "')");
+									Log.error("[FUTURE FATAL] " + oView + ": aggregations with cardinality 0..n specifies a non valid BindingInfo (wrong value: " + sName + "='" + sValue + "')");
 								}
 							}
 
@@ -1330,7 +1350,7 @@ function(
 									if (vEventHandler) {
 										aEventHandlers.push(vEventHandler);
 									} else  {
-										Log.warning(oView + ": event handler function \"" + sEventHandler + "\" is not a function or does not exist in the controller.");
+										Log.warning("[FUTURE FATAL] " + oView + ": event handler function \"" + sEventHandler + "\" is not a function or does not exist in the controller.");
 									}
 								});
 
@@ -1344,10 +1364,10 @@ function(
 							if (oMetadata.isA("sap.ui.core.mvc.View") && sName == "async") {
 								mSettings[sName] = parseScalarType(oInfo.type, sValue, sName, oView._oContainingView.oController, oRequireModules);
 							} else {
-								Log.warning(oView + ": setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "') is not supported");
+								Log.warning("[FUTURE FATAL] " + oView + ": setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "') is not supported");
 							}
 						} else {
-							assert(sName === 'xmlns', oView + ": encountered unknown setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "')");
+							assert(sName === 'xmlns', "[FUTURE FATAL] " + oView + ": encountered unknown setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "')");
 							if (XMLTemplateProcessor._supportInfo) {
 								XMLTemplateProcessor._supportInfo({
 									context : node,
@@ -1479,11 +1499,7 @@ function(
 								});
 							};
 
-							if (oView.fnScopedRunWithOwner) {
-								oView.fnScopedRunWithOwner(fnCreateStashedControl);
-							} else {
-								fnCreateStashedControl();
-							}
+							scopedRunWithOwner(fnCreateStashedControl);
 
 							// ...and mark the stashed node as invisible.
 							// The original visibility value is still scoped in the clone (visible could be bound, yet stashed controls are never visible)
@@ -1598,42 +1614,47 @@ function(
 						setId(oView, node);
 					}
 				} else if (!bViewRootNode && oClass.getMetadata().isA("sap.ui.core.mvc.View")) {
-					var fnCreateViewInstance = function () {
-						if (!oClass._sType && !mSettings.viewName) {
-							// Add module view name
-							mSettings.viewName = "module:" + oClass.getMetadata().getName().replace(/\./g, "/");
-						}
-
-						// If the view is owned by an async-component we can propagate the asynchronous creation behavior to the nested views
-						if (bIsAsyncComponent && bAsync) {
-							// legacy check: async=false is not supported with an async-component
-							if (mSettings.async === false) {
-								throw new Error(
-									"A nested view contained in a Component implementing 'sap.ui.core.IAsyncContentCreation' is processed asynchronously by default and cannot be processed synchronously.\n" +
-									"Affected Component '" + oOwnerComponent.getMetadata().getComponentName() + "' and View '" + mSettings.viewName + "'."
-								);
-							}
-
-							mSettings.type = oClass._sType || sType;
-							pInstanceCreated = View.create(mSettings);
-						} else {
-							// Pass processingMode to nested XMLViews
-							if (oClass.getMetadata().isA("sap.ui.core.mvc.XMLView") && oView._sProcessingMode) {
-								mSettings.processingMode = oView._sProcessingMode;
-							}
-							return View._create(mSettings, undefined, oClass._sType || sType);
-						}
-					};
-
-					// for views having a factory function defined we use the factory function!
-					if (oView.fnScopedRunWithOwner) {
-						// We need to use the already created scoped runWithOwner function from the outer view instance.
-						// This way, the nested views are receiving the correct Owner component, across asynchronous calls.
-						vNewControlInstance = oView.fnScopedRunWithOwner(fnCreateViewInstance);
-					} else {
-						vNewControlInstance = fnCreateViewInstance();
+					if (!oClass._sType && !mSettings.viewName) {
+						// Add module view name
+						mSettings.viewName = "module:" + oClass.getMetadata().getName().replace(/\./g, "/");
 					}
 
+					mSettings.type = oClass._sType || sType;
+
+					// If the view is owned by an async-component we can propagate the asynchronous creation behavior to the nested views
+					if (bIsAsyncComponent && bAsync) {
+						// legacy check: async=false is not supported with an async-component
+						if (mSettings.async === false) {
+							throw new Error(
+								"A nested view contained in a Component implementing 'sap.ui.core.IAsyncContentCreation' is processed asynchronously by default and cannot be processed synchronously.\n" +
+								"Affected Component '" + oOwnerComponent.getMetadata().getComponentName() + "' and View '" + mSettings.viewName + "'."
+							);
+						}
+
+						pInstanceCreated = scopedRunWithOwner(function() {
+							return View.create(mSettings);
+						});
+					} else {
+						// Pass processingMode to nested XMLViews
+						if (oClass.getMetadata().isA("sap.ui.core.mvc.XMLView") && oView._sProcessingMode) {
+							mSettings.processingMode = oView._sProcessingMode;
+						}
+
+						var sViewClass = View._getViewClassName(mSettings, true /* skip error log*/);
+						if (bAsync && sViewClass) {
+							pInstanceCreated = new Promise(function(resolve, reject) {
+								sap.ui.require([sViewClass], resolve, reject);
+							}).then(function() {
+								return scopedRunWithOwner(function() {
+									return View._create(mSettings);
+								});
+							});
+						} else {
+							vNewControlInstance = scopedRunWithOwner(function() {
+								return View._create(mSettings);
+							});
+						}
+					}
 				} else if (oClass.getMetadata().isA("sap.ui.core.Fragment") && bAsync) {
 
 					// Pass processingMode to any fragments except JS
@@ -1687,14 +1708,12 @@ function(
 								}
 							}
 							oView.applySettings(mSettings);
-						} else if (oView.fnScopedRunWithOwner) {
+						} else {
 							// the scoped runWithOwner function is only during ASYNC processing!
-							oInstance = oView.fnScopedRunWithOwner(function () {
+							oInstance = scopedRunWithOwner(function () {
 								var oInstance = new oClass(mSettings);
 								return oInstance;
 							});
-						} else {
-							oInstance = new oClass(mSettings);
 						}
 
 						// check if we need to hand the ExtensionPoint info to the ExtensionProvider

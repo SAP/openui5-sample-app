@@ -11,6 +11,7 @@ sap.ui.define([
 	"./Configuration",
 	"./ControlBehavior",
 	"./Element",
+	"./ElementRegistry",
 	"./ElementMetadata",
 	"./Lib",
 	"./Rendering",
@@ -56,6 +57,7 @@ sap.ui.define([
 		Configuration,
 		ControlBehavior,
 		Element,
+		ElementRegistry,
 		ElementMetadata,
 		Library,
 		Rendering,
@@ -358,7 +360,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 * @final
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 * @alias sap.ui.core.Core
 	 * @public
 	 * @hideconstructor
@@ -427,8 +429,8 @@ sap.ui.define([
 
 			Object.defineProperty(this, "mElements", {
 				get: function() {
-					Log.error("oCore.mElements was a private member and has been removed. Use one of the methods in sap.ui.core.Element.registry instead");
-					return Element.registry.all(); // this is a very costly snapshot!
+					Log.error("oCore.mElements was a private member and has been removed. Use one of the methods in sap.ui.core.ElementRegistry instead");
+					return ElementRegistry.all(); // this is a very costly snapshot!
 				},
 				configurable: false
 			});
@@ -495,7 +497,7 @@ sap.ui.define([
 			const paths = {};
 			const oResourceRoots = BaseConfig.get({
 				name: "sapUiResourceRoots",
-				type: BaseConfig.Type.Object
+				type: BaseConfig.Type.MergedObject
 			}) ?? {};
 			for (const n in oResourceRoots) {
 				paths[ui5ToRJS(n)] = oResourceRoots[n] || ".";

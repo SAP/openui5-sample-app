@@ -97,7 +97,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 *
 	 * @constructor
 	 * @public
@@ -897,6 +897,7 @@ sap.ui.define([
 	};
 
 	FlexibleColumnLayout.prototype.onBeforeRendering = function () {
+		var oColumns = this._$columns;
 		if (!this._oInvisibleMessage) {
 			this._oInvisibleMessage = InvisibleMessage.getInstance();
 		}
@@ -906,8 +907,8 @@ sap.ui.define([
 
 		if (this.$().length) {
 			FlexibleColumnLayout.COLUMN_ORDER.slice().forEach(function (sColumn) {
-				this._$columns[sColumn].removeClass(FlexibleColumnLayout.ANIMATED_COLUMN_CLASS_NAME);
-			}.bind(this));
+				oColumns && oColumns[sColumn] && oColumns[sColumn].removeClass(FlexibleColumnLayout.ANIMATED_COLUMN_CLASS_NAME);
+			});
 		}
 	};
 

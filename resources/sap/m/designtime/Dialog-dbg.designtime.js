@@ -46,7 +46,9 @@ sap.ui.define([],
 					}
 				},
 				subHeader: {
-					domRef: ":sap-domref > .sapMDialogSubHeader"
+					domRef: function(oControl) {
+						return oControl.getAggregation("subHeader").getDomRef();
+					}
 				},
 				beginButton: {
 					domRef: function(oControl) {

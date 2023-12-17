@@ -8,9 +8,10 @@
 sap.ui.define([
 	"sap/base/util/ObjectPath",
 	"sap/ui/base/DataType",
+	"sap/ui/core/Lib",
 	"sap/ui/test/generic/GenericTestCollection",
 	"require"
- ], function(ObjectPath, DataType, GenericTestCollection, require) {
+ ], function(ObjectPath, DataType, Lib, GenericTestCollection, require) {
 	"use strict";
 
 	/**
@@ -78,7 +79,7 @@ sap.ui.define([
 			var aLoadClassPromises = [];
 
 			var loadControls = function () {
-				return sap.ui.getCore().loadLibrary(sLibName, true).then(function (library) {
+				return Lib.load(sLibName).then(function (library) {
 					var aClasses = library ? library.controls : [];
 
 					if (mOptions.includeElements) {

@@ -60,7 +60,7 @@ function(
 	 * @class
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 * @public
 	 * @alias sap.ui.core.Fragment
 	 */
@@ -145,7 +145,7 @@ function(
 	 */
 	Fragment.registerType = function(sType, oFragmentImpl) {
 		if (typeof (sType) !== "string") {
-			Log.error("Ignoring non-string Fragment type: " + sType);
+			Log.error("[FUTURE FATAL] Ignoring non-string Fragment type: " + sType);
 			return;
 		}
 
@@ -230,7 +230,7 @@ function(
 	 */
 	Fragment.byId = function(sFragmentId, sId) {
 		if (!(typeof (sFragmentId) === "string" && typeof (sId) === "string")) {
-			Log.error("sap.ui.core.Fragment.byId: two strings must be given as parameters, but are: " + sFragmentId + " and " + sId);
+			Log.error("[FUTURE FATAL] sap.ui.core.Fragment.byId: two strings must be given as parameters, but are: " + sFragmentId + " and " + sId);
 			return undefined;
 		}
 		return Element.getElementById(sFragmentId + "--" + sId);
@@ -248,7 +248,7 @@ function(
 	 */
 	Fragment.createId = function(sFragmentId, sId) {
 		if (!(typeof (sFragmentId) === "string" && typeof (sId) === "string")) {
-			Log.error("sap.ui.core.Fragment.createId: two strings must be given as parameters, but are: " + sFragmentId + " and " + sId);
+			Log.error("[FUTURE FATAL] sap.ui.core.Fragment.createId: two strings must be given as parameters, but are: " + sFragmentId + " and " + sId);
 			return undefined;
 		}
 		return sFragmentId + "--" + sId;
@@ -832,7 +832,7 @@ function(
 				try {
 					pContentPromise.unwrap();
 				} catch (e) {
-					Log.error("An Error occured during XML processing of '" +
+					Log.error("[FUTURE FATAL] An Error occured during XML processing of '" +
 							this.getMetadata().getName() +
 							"' with id '" +
 							this.getId() +

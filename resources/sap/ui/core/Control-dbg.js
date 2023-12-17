@@ -9,6 +9,7 @@ sap.ui.define([
 	'./CustomStyleClassSupport',
 	'./Core',
 	'./Element',
+	'./ElementRegistry',
 	'./UIArea',
 	'./StaticArea',
 	'./RenderManager',
@@ -22,6 +23,7 @@ sap.ui.define([
 		CustomStyleClassSupport,
 		Core,
 		Element,
+		ElementRegistry,
 		UIArea,
 		StaticArea,
 		RenderManager,
@@ -81,7 +83,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 * @alias sap.ui.core.Control
 	 */
 	var Control = Element.extend("sap.ui.core.Control", /** @lends sap.ui.core.Control.prototype */ {
@@ -662,7 +664,7 @@ sap.ui.define([
 
 			if (oContainer instanceof Element) {
 				if (!isSuitableAsContainer(oContainer)) {
-					Log.warning("placeAt cannot be processed because container " + oContainer + " does not have an aggregation 'content'.");
+					Log.warning("[FUTURE FATAL] placeAt cannot be processed because container " + oContainer + " does not have an aggregation 'content'.");
 					return this;
 				}
 			} else {
@@ -691,7 +693,7 @@ sap.ui.define([
 						oContainer.addContent(this);
 						break;
 					default:
-						Log.warning("Position " + vPosition + " is not supported for function placeAt.");
+						Log.warning("[FUTURE FATAL] Position " + vPosition + " is not supported for function placeAt.");
 				}
 			}
 		}.bind(this));
@@ -1269,7 +1271,7 @@ sap.ui.define([
 	 * @public
 	 */
 	Control.getControlsByFieldGroupId = function(vFieldGroupIds) {
-		return Element.registry.filter((oElement) => {
+		return ElementRegistry.filter((oElement) => {
 			return oElement.isA("sap.ui.core.Control") && oElement.checkFieldGroupIds(vFieldGroupIds);
 		});
 	};

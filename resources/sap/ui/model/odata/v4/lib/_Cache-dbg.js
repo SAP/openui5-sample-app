@@ -162,8 +162,8 @@ sap.ui.define([
 					iIndex = oDeleted.index;
 					const iDeletedIndex = vCacheData.$deleted.indexOf(oDeleted);
 					if (iIndex !== undefined) {
-						that.restoreElement(vCacheData, iIndex, oEntity, sParentPath,
-							iDeletedIndex);
+						that.restoreElement(iIndex, oEntity, iDeletedIndex, undefined, vCacheData,
+							sParentPath);
 					}
 					vCacheData.$deleted.splice(iDeletedIndex, 1);
 				}
@@ -420,6 +420,7 @@ sap.ui.define([
 	 *   The meta path for the entity
 	 * @returns {string|undefined}
 	 *   The key predicate or <code>undefined</code>, if key predicate cannot be determined
+	 *
 	 * @protected
 	 */
 	// Note: overridden by _AggregationCache.calculateKeyPredicate
@@ -1921,22 +1922,23 @@ sap.ui.define([
 	 * <code>$byPredicate</code>, <code>$created</code> and <code>$count</code>, and a collection
 	 * cache's limit and number of active elements (if applicable).
 	 *
-	 * @param {object[]} [aElements] - The array of elements
 	 * @param {number} iIndex - The index to restore at
 	 * @param {object} oElement - The element to restore
-	 * @param {string} sPath
-	 *   The element collection's path within this cache (as used by change listeners), may be
-	 *   <code>""</code> (only in a CollectionCache)
 	 * @param {int} [iDeletedIndex]
 	 *   The index of the entry in <code>aElements.$deleted</code> if any
 	 * @param {string} [sTransientPredicate]
-	 *  The element's (future) transient predicate
+	 *  The element's (future) transient predicate, defaults to its current one
+	 * @param {object[]} [aElements]
+	 *   The array of elements, defaults to a collection cache's own elements
+	 * @param {string} [sPath=""]
+	 *   The element collection's path within this cache (as used by change listeners), may be
+	 *   <code>""</code> (only in a CollectionCache)
+	 *
 	 * @protected
 	 */
-	// eslint-disable-next-line default-param-last
-	_Cache.prototype.restoreElement = function (aElements = this.aElements, iIndex, oElement, sPath,
-			iDeletedIndex,
-			sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate")) {
+	_Cache.prototype.restoreElement = function (iIndex, oElement, iDeletedIndex,
+			sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate"),
+			aElements = this.aElements, sPath = "") {
 		this.adjustIndexes(sPath, aElements, iIndex, 1, iDeletedIndex);
 		if (sTransientPredicate) {
 			aElements.$created += 1;
@@ -2032,7 +2034,7 @@ sap.ui.define([
 	/**
 	 * Updates this cache's query options if it has not yet sent a request.
 	 *
-	 * @param {object} [mQueryOptions]
+	 * @param {object} [mQueryOptions={}]
 	 *   The new query options
 	 * @param {boolean} [bForce]
 	 *   Forces an update even if a request has been already sent
@@ -2043,7 +2045,7 @@ sap.ui.define([
 	 * @see #getQueryOptions
 	 * @see #hasSentRequest
 	 */
-	_Cache.prototype.setQueryOptions = function (mQueryOptions, bForce) {
+	_Cache.prototype.setQueryOptions = function (mQueryOptions = {}, bForce = false) {
 		this.checkSharedRequest();
 		if (this.bSentRequest && !bForce) {
 			throw new Error("Cannot set query options: Cache has already sent a request");
@@ -3112,6 +3114,48 @@ sap.ui.define([
 	};
 
 	/**
+	 * Moves the given number of elements from the given old to the given new position within this
+	 * cache's collection.
+	 *
+	 * @param {number} iOldFrom - Old position before the move
+	 * @param {number} iNewTo - New position after the move
+	 * @param {number} iCount - Number of elements to move
+	 *
+	 * @protected
+	 */
+	_CollectionCache.prototype.move = function (iOldFrom, iNewTo, iCount) {
+		// Note: do not change reference to this.aElements! It's kept in closures :-(
+		// @see #restore
+		const aElements = this.aElements;
+
+		// reverse content of [iFirst, iLast]
+		function reverse(iFirst, iLast) {
+			while (iFirst < iLast) {
+				const vSwap = aElements[iFirst];
+				aElements[iFirst] = aElements[iLast];
+				aElements[iLast] = vSwap;
+				iFirst += 1;
+				iLast -= 1;
+			}
+		}
+
+		// inplace block swap of adjacent [iStart, iMiddle[ and [iMiddle, iEnd[
+		function swap(iStart, iMiddle, iEnd) {
+			reverse(iStart, iMiddle - 1);
+			reverse(iMiddle, iEnd - 1);
+			reverse(iStart, iEnd - 1);
+		}
+
+		if (iCount > 0) {
+			if (iOldFrom < iNewTo) {
+				swap(iOldFrom, iOldFrom + iCount, iNewTo + iCount);
+			} else if (iOldFrom > iNewTo) {
+				swap(iNewTo, iOldFrom, iOldFrom + iCount);
+			} // else: nothing to do
+		}
+	};
+
+	/**
 	 * Returns a promise to be resolved with an OData object for a range of the requested data.
 	 * Calculates the key predicates for all entities in the result before the promise is resolved.
 	 *
@@ -3216,8 +3260,8 @@ sap.ui.define([
 		oGroupLock.unlock();
 
 		iEnd = iIndex + iLength + iPrefetchLength;
-		aElementsRange = this.aElements.slice(iIndex, iEnd);
-		if (this.aElements.$tail && iEnd > this.aElements.length) {
+		aElementsRange = this.aElements.slice(Math.max(0, iIndex - iPrefetchLength), iEnd);
+		if (this.aElements.$tail) {
 			aElementsRange.push(this.aElements.$tail);
 		}
 		return SyncPromise.all(aElementsRange).then(function () {
@@ -3393,10 +3437,18 @@ sap.ui.define([
 
 		this.aReadRequests.push(oReadRequest);
 		this.bSentRequest = true;
+		// This must be a SyncPromise, but nevertheless asynchronous. Otherwise, the then/catch
+		// handler would be called synchronous and this.fill(oPromise, ...) would run afterwards and
+		// destroy the result.
 		oPromise = SyncPromise.all([
-			this.oRequestor.request("GET",
-				this.getResourcePathWithQuery(iStart, iEnd),
-				oGroupLock, undefined, undefined, fnDataRequested),
+			this.mQueryOptions.$filter === "false"
+				? Promise.resolve({
+					"@odata.count" : "0", // EDM.Int64
+					value : []
+				})
+				: this.oRequestor.request("GET",
+					this.getResourcePathWithQuery(iStart, iEnd),
+					oGroupLock, undefined, undefined, fnDataRequested),
 			this.fetchTypes()
 		]).then(function (aResult) {
 			var iFiltered;

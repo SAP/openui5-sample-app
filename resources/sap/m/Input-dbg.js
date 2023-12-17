@@ -161,7 +161,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 *
 	 * @constructor
 	 * @public
@@ -303,6 +303,7 @@ function(
 				/**
 				 * Specifies whether the suggestions highlighting is enabled.
 				 * <b>Note:</b> Due to performance constraints, the functionality will be disabled above 200 items.
+				 * <b>Note:</b> Highlighting in table suggestions will work only for cells containing sap.m.Label or sap.m.Text controls.
 				 *
 				 * @since 1.46
 				 */
@@ -2030,6 +2031,14 @@ function(
 		return this;
 	};
 
+	Input.prototype.updateSuggestionRows = function () {
+		this._bSuspendInvalidate = true;
+		this.updateAggregation("suggestionRows");
+		this._synchronizeSuggestions();
+		this._bSuspendInvalidate = false;
+		return this;
+	};
+
 	/**
 	 * Inserts suggestion item.
 	 *
@@ -2465,7 +2474,7 @@ function(
 					return;
 				}
 
-				aTableCellsDomRef = oSuggestionsTable.$().find('tbody .sapMLabel');
+				aTableCellsDomRef = oSuggestionsTable.$().find('tbody .sapMText, tbody .sapMLabel');
 
 				highlightDOMElements(aTableCellsDomRef, this._getTypedInValue());
 			}

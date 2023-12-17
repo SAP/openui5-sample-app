@@ -62,7 +62,7 @@ sap.ui.define(['./library',
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.1
+		 * @version 1.120.2
 		 *
 		 * @public
 		 * @alias sap.m.BusyDialog

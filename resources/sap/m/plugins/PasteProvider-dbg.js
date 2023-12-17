@@ -28,7 +28,7 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/core/util/PasteHelper
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.120.1
+	 * @version 1.120.2
 	 *
 	 * @public
 	 * @since 1.91
@@ -206,7 +206,11 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/core/util/PasteHelper
 			pressEvent: "press",
 			onActivate: function(oButton) {
 				if (!oButton.getText() && !oButton.getIcon() && !oButton.getTooltip_AsString()) {
-					oButton.setTooltip(Core.getLibraryResourceBundle("sap.m").getText("PASTEPROVIDER_PASTE"));
+					var sText = Core.getLibraryResourceBundle("sap.m").getText("PASTEPROVIDER_PASTE");
+					oButton.setTooltip(sText);
+					if (oButton.isA("sap.m.OverflowToolbarButton")) {
+						oButton.setText(sText);
+					}
 					oButton.setIcon("sap-icon://paste");
 				}
 			}

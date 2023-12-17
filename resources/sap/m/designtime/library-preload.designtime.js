@@ -100,7 +100,7 @@ sap.ui.predefine("sap/m/designtime/DateTimePicker.designtime", [],function(){"us
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/Dialog.designtime", [],function(){"use strict";return{name:{singular:"DIALOG_NAME",plural:"DIALOG_NAME_PLURAL"},palette:{group:"DIALOG"},actions:{rename:function(e){if(e.getCustomHeader()){return}return{changeType:"rename",domRef:function(e){return e.getDomRef("title")}}}},aggregations:{content:{domRef:"> .sapMDialogSection",actions:{move:"moveControls"}},customHeader:{domRef:function(e){if(e._getAnyHeader()){return e._getAnyHeader().getDomRef()}}},subHeader:{domRef:":sap-domref > .sapMDialogSubHeader"},beginButton:{domRef:function(e){return e.getBeginButton().getDomRef()},ignore:function(e){return!e.getBeginButton()||!!e.getButtons().length}},endButton:{domRef:function(e){return e.getEndButton().getDomRef()},ignore:function(e){return!e.getEndButton()||!!e.getButtons().length}},buttons:{domRef:function(e){if(e.getButtons().length){return e._oToolbar.getDomRef()}}}}}});
+sap.ui.predefine("sap/m/designtime/Dialog.designtime", [],function(){"use strict";return{name:{singular:"DIALOG_NAME",plural:"DIALOG_NAME_PLURAL"},palette:{group:"DIALOG"},actions:{rename:function(e){if(e.getCustomHeader()){return}return{changeType:"rename",domRef:function(e){return e.getDomRef("title")}}}},aggregations:{content:{domRef:"> .sapMDialogSection",actions:{move:"moveControls"}},customHeader:{domRef:function(e){if(e._getAnyHeader()){return e._getAnyHeader().getDomRef()}}},subHeader:{domRef:function(e){return e.getAggregation("subHeader").getDomRef()}},beginButton:{domRef:function(e){return e.getBeginButton().getDomRef()},ignore:function(e){return!e.getBeginButton()||!!e.getButtons().length}},endButton:{domRef:function(e){return e.getEndButton().getDomRef()},ignore:function(e){return!e.getEndButton()||!!e.getButtons().length}},buttons:{domRef:function(e){if(e.getButtons().length){return e._oToolbar.getDomRef()}}}}}});
 /*!
  * OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
@@ -388,7 +388,7 @@ sap.ui.predefine("sap/m/designtime/ScrollContainer.designtime", [],function(){"u
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/SearchField.designtime", [],function(){"use strict";return{name:{singular:"SEARCH_FIELD_NAME",plural:"SEARCH_FIELD_NAME_PLURAL"},palette:{group:"INPUT",icons:{svg:"sap/m/designtime/SearchField.icon.svg"}},templates:{create:"sap/m/designtime/SearchField.create.fragment.xml"}}});
+sap.ui.predefine("sap/m/designtime/SearchField.designtime", [],function(){"use strict";return{name:{singular:"SEARCH_FIELD_NAME",plural:"SEARCH_FIELD_NAME_PLURAL"},actions:{remove:{changeType:"hideControl"},reveal:{changeType:"unhideControl"}},palette:{group:"INPUT",icons:{svg:"sap/m/designtime/SearchField.icon.svg"}},templates:{create:"sap/m/designtime/SearchField.create.fragment.xml"}}});
 /*!
  * OpenUI5
  * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
