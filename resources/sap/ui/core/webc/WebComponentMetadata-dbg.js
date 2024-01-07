@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -23,7 +23,7 @@ function(ElementMetadata, WebComponentRenderer, camelize) {
 	 *
 	 * @class
 	 * @author SAP SE
-	 * @version 1.120.2
+	 * @version 1.120.3
 	 * @since 1.118.0
 	 * @experimental Since 1.118.0 The API might change. It is not intended for productive usage yet!
 	 * @alias sap.ui.core.webc.WebComponentMetadata

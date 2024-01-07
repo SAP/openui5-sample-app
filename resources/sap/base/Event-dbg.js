@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 // Provides class module:sap/base/Event
@@ -11,7 +11,7 @@ sap.ui.define(() => {
 
 	/**
 	 * @author SAP SE
-	 * @version 1.120.2
+	 * @version 1.120.3
 	 *
 	 * Creates an event with the given <code>sType</code>,
 	 * linked to the provided <code>oTarget</code> and enriched with the <code>oParameters</code>.

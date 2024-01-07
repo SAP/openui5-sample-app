@@ -2,7 +2,7 @@
 /* eslint-disable valid-jsdoc */
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -393,6 +393,17 @@ sap.ui.define([
 					oTargetParent[oTargetAggregation._sMutator](oObject);
 				}
 			}
+		},
+
+		/**
+		 * @inheritDoc
+		 */
+		replaceAllAggregation: async function(oControl, sAggregationName, aNewControls) {
+			const oAggregation = await this.findAggregation(oControl, sAggregationName);
+			oControl[oAggregation._sRemoveAllMutator]();
+			aNewControls.forEach((oNewControl, iIndex) => {
+				oControl[oAggregation._sInsertMutator](oNewControl, iIndex);
+			});
 		},
 
 		/**

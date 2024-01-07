@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 // Provides miscellaneous utility functions that might be useful for any script
@@ -267,7 +267,7 @@ sap.ui.define([
 	 * Use {@link jQuery.sap.getUriParameters} to create an instance of jQuery.sap.util.UriParameters.
 	 *
 	 * @author SAP SE
-	 * @version 1.120.2
+	 * @version 1.120.3
 	 * @since 0.9.0
 	 * @name jQuery.sap.util.UriParameters
 	 * @public

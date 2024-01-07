@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -19,7 +19,7 @@ sap.ui.define(['sap/ui/base/Object', "sap/base/Log"], function(BaseObject, Log) 
 	 * Constructor for an sap.m.semantic.Segment.
 	 *
 	 * @class Abstraction for a segment in a SegmentedContainer
-	 * @version 1.120.2
+	 * @version 1.120.3
 	 * @private
 	 * @since 1.30.0
 	 * @alias sap.m.semantic.Segment

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/base/assert","sap/ui/base/Object","sap/base/i18n/Localization","sap/base/i18n/LanguageTag"],function(t,n,e,a){"use strict";var i=Object.create(null);var s=n.extend("sap.ui.core.Locale",{constructor:function(t){n.apply(this);if(t instanceof a){this.oLanguageTag=t;this.sLocaleId=this.oLanguageTag.toString()}else{this.oLanguageTag=new a(t);this.sLocaleId=t}Object.assign(this,this.oLanguageTag);this.sLanguage=this.language},getLanguage:function(){return this.language},getScript:function(){return this.script},getRegion:function(){return this.region},getVariant:function(){return this.variant},getVariantSubtags:function(){return this.variantSubtags},getExtension:function(){return this.extension},getExtensionSubtags:function(){return this.extensionSubtags},getPrivateUse:function(){return this.privateUse},getPrivateUseSubtags:function(){return this.privateUseSubtags},hasPrivateUseSubtag:function(n){t(n&&n.match(/^[0-9A-Z]{1,8}$/i),"subtag must be a valid BCP47 private use tag");return this.privateUseSubtags.indexOf(n)>=0},toString:function(){return this.oLanguageTag.toString()},getSAPLogonLanguage:function(){return e._getSAPLogonLanguage(this)}});s._getCoreLocale=function(t){if(t instanceof a){t=i[t.toString()]||new s(t);i[t.toString()]=t}return t};return s});

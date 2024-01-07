@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -73,7 +73,7 @@ sap.ui.define(['jquery.sap.global', 'sap/base/util/Properties'],
 	 * {@link #setProperty} to store or change a value for a key and {@link #getKeys}
 	 * can be used to retrieve an array of all keys that are currently stored in the collection.
 	 *
-	 * @version 1.120.2
+	 * @version 1.120.3
 	 * @since 0.9.0
 	 * @name jQuery.sap.util.Properties
 	 * @public

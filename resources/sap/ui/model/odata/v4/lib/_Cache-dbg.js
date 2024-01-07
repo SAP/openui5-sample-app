@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -566,7 +566,7 @@ sap.ui.define([
 				_Helper.removeByPath(that.mPostRequests, sPath, oEntityData);
 				that.visitResponse(oCreatedEntity, aResult[1],
 					_Helper.getMetaPath(_Helper.buildPath(that.sMetaPath, sPath)),
-					sPath + sTransientPredicate);
+					sPath + sTransientPredicate, undefined, true);
 				sPredicate = _Helper.getPrivateAnnotation(oCreatedEntity, "predicate");
 				if (sPredicate) {
 					_Helper.setPrivateAnnotation(oEntityData, "predicate", sPredicate);

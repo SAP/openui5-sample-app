@@ -2,7 +2,7 @@
 /* eslint-disable valid-jsdoc */
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -490,6 +490,20 @@ sap.ui.define([
 
 			oSourceAggregationNode.removeChild(oObject);
 			await insertAggregation.call(this, oTargetParent, sTargetAggregationName, oObject, iIndex, oView, bSkipAdjustIndex, oTargetAggregationNode);
+		},
+
+		/**
+		 * @inheritDoc
+		 */
+		replaceAllAggregation: async function(oControl, sAggregationName, aNewControls) {
+			const oAggregationNode = await XmlTreeModifier._findAggregationNode(oControl, sAggregationName);
+			const aChildControls = await XmlTreeModifier._getControlsInAggregation(oControl, oAggregationNode);
+			aChildControls.forEach(function(oChildControl) {
+				oAggregationNode.removeChild(oChildControl);
+			});
+			aNewControls.forEach((oObject) => {
+				oAggregationNode.appendChild(oObject);
+			});
 		},
 
 		/**

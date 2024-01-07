@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -68,20 +68,6 @@ sap.ui.define([
 		return aContentClone;
 	}
 
-	function recreateContentAggregation(oSimpleForm, aContentClone, oModifier, mPropertyBag) {
-		return aContentClone.reduce(function(oPreviousPromise, oContentClone, iIndex) {
-			return oPreviousPromise
-				.then(function() {
-					return oModifier.insertAggregation(oSimpleForm,
-						"content",
-						oContentClone,
-						iIndex,
-						mPropertyBag.view
-					);
-				});
-		}, Promise.resolve());
-	}
-
 	/**
 	 * Change handler for adding a SmartField or Something from a Delegate to a SimpleForm
 	 *
@@ -91,7 +77,7 @@ sap.ui.define([
 	 *
 	 * @author SAP SE
 	 *
-	 * @version 1.120.2
+	 * @version 1.120.3
 	 *
 	 * @experimental Since 1.49.0 This class is experimental and provides only limited functionality. Also the API might be
 	 *               changed in future.
@@ -119,14 +105,7 @@ sap.ui.define([
 					aContent = aAggregationContent;
 					iNewIndex = getIndex(aContent, mPropertyBag);
 					aContentClone = insertLabelAndField(aContent, iNewIndex, mInnerControls);
-					// Remove each control from the "content" aggregation without leaving them orphan (would reset bindings)
-					return aContent.reduce(function(oPreviousPromise, oContent) {
-						return oPreviousPromise
-						.then(oModifier.insertAggregation.bind(oModifier, oSimpleForm, "dependents", oContent, 0, mPropertyBag.view));
-					}, Promise.resolve());
-				})
-				.then(function() {
-					return recreateContentAggregation(oSimpleForm, aContentClone, oModifier, mPropertyBag);
+					return oModifier.replaceAllAggregation(oSimpleForm, "content", aContentClone);
 				})
 				.then(function() {
 					if (mInnerControls.valueHelp) {

@@ -1,6 +1,6 @@
 /*!
 * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
 */
 
@@ -400,7 +400,7 @@ sap.ui.define([
 	 * @see {@link topic:6322164936f047de941ec522b95d7b70 Hyphenation for Text Controls}
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.120.2
+	 * @version 1.120.3
 	 * @hideconstructor
 	 * @public
 	 * @since 1.60

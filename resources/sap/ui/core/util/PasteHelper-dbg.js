@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 //Provides class sap.ui.core.util.PasteHelper - a utility for converting and validating data pasted from clipboard.
@@ -13,7 +13,7 @@ sap.ui.define([ "sap/ui/core/Core", "sap/ui/model/ParseException", "sap/ui/model
 	 *
 	 * @class Parses and validates data on the <code>paste</code> event of an SAPUI5 table.
 	 * @author SAP SE
-	 * @version 1.120.2
+	 * @version 1.120.3
 	 * @private
 	 * @ui5-restricted sap.ui.table.Table, sap.m.Table, sap.m.plugins.PasteProvider
 	 * @alias sap.ui.core.util.PasteHelper

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -126,7 +126,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.2
+	 * @version 1.120.3
 	 *
 	 * @constructor
 	 * @public
@@ -678,15 +678,14 @@ sap.ui.define([
 				activePages: this._aAllActivePagesIndexes
 			});
 		}
-
-		this._adjustArrowsVisibility();
-		this._updateItemsAttributes();
-		this._updatePageIndicator();
-
 		// focus the new page if the focus was in the carousel and is not on some of the page children
 		if (this.getDomRef().contains(document.activeElement) && !this.getFocusDomRef().contains(document.activeElement) || this._bPageIndicatorArrowPress) {
 			this.getFocusDomRef().focus({ preventScroll: true });
 		}
+
+		this._adjustArrowsVisibility();
+		this._updateItemsAttributes();
+		this._updatePageIndicator();
 	};
 
 	Carousel.prototype._updateItemsAttributes = function () {

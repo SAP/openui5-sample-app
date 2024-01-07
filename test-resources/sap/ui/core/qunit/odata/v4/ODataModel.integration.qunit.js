@@ -2029,7 +2029,42 @@ sap.ui.define([
 
 		/**
 		 * The following code (either {@link #createView} or anything before
-		 * {@link #waitForChanges}) is expected to report exactly the given messages. All expected
+		 * {@link #waitForChanges}) is expected to report at least the given message. All expected
+		 * messages should have a different message text.
+		 *
+		 * @param {object} oExpectedMessage The expected message with properties corresponding
+		 *   to the getters of sap.ui.core.message.Message: message and type are required; code,
+		 *   descriptionUrl, persistent (default false), target (default ""), technical (default
+		 *   false) are optional; technicalDetails is only compared if given
+		 * @param {boolean} [bHasMatcher] Whether the expected message has a Sinon.JS matcher
+		 * @returns {object} The test instance for chaining
+		 *
+		 * @see #expectMessages
+		 */
+		expectMessage : function (oExpectedMessage, bHasMatcher) {
+			const aTargets = oExpectedMessage.targets || [oExpectedMessage.target || ""];
+			const oClone = Object.assign({
+				code : undefined,
+				descriptionUrl : undefined,
+				persistent : false,
+				targets : aTargets,
+				technical : false
+			}, oExpectedMessage);
+
+			if (oExpectedMessage.target && oExpectedMessage.targets) {
+				throw new Error("Use either target or targets, not both!");
+			}
+			delete oClone.target;
+
+			this.aMessages.push(oClone);
+			this.aMessages.bHasMatcher ||= bHasMatcher;
+
+			return this;
+		},
+
+		/**
+		 * The following code (either {@link #createView} or anything before
+		 * {@link #waitForChanges}) is expected to report *exactly* the given messages. All expected
 		 * messages should have a different message text.
 		 *
 		 * @param {object[]} aExpectedMessages The expected messages with properties corresponding
@@ -2038,26 +2073,13 @@ sap.ui.define([
 		 *   false) are optional; technicalDetails is only compared if given
 		 * @param {boolean} [bHasMatcher] Whether the expected messages have a Sinon.JS matcher
 		 * @returns {object} The test instance for chaining
+		 *
+		 * @see #expectMessage
 		 */
 		expectMessages : function (aExpectedMessages, bHasMatcher) {
-			this.aMessages = aExpectedMessages.map(function (oMessage) {
-				var aTargets = oMessage.targets || [oMessage.target || ""],
-					oClone = Object.assign({
-						code : undefined,
-						descriptionUrl : undefined,
-						persistent : false,
-						targets : aTargets,
-						technical : false
-					}, oMessage);
-
-				if (oMessage.target && oMessage.targets) {
-					throw new Error("Use either target or targets, not both!");
-				}
-				delete oClone.target;
-
-				return oClone;
-			});
-			this.aMessages.bHasMatcher = bHasMatcher;
+			this.aMessages = [];
+			this.aMessages.bHasMatcher = false;
+			aExpectedMessages.forEach((oMessage) => this.expectMessage(oMessage, bHasMatcher));
 
 			return this;
 		},
@@ -8344,7 +8366,14 @@ sap.ui.define([
 	// check that no messages in the message model are touched.
 	//
 	// JIRA: CPOUI5ODATAV4-717
-	QUnit.test("requestFilterForMessages on a relative list binding", function (assert) {
+	//
+	// Optionally create a new item beforehand, with the POST response containing a (possibly empty)
+	// messages array. This must not confuse the following message handling.
+	// BCP: 2380140928
+[0, 1, 2].forEach((iCase) => { // 0: no POST // 1: POST w/o messages // 2: POST w/ messages
+	const sTitle = "requestFilterForMessages on a relative list binding #" + iCase;
+
+	QUnit.test(sTitle, function (assert) {
 		var oBinding,
 			oModel = this.createSalesOrdersModel({autoExpandSelect : true}),
 			sView = '\
@@ -8401,12 +8430,46 @@ sap.ui.define([
 		return this.createView(assert, sView, oModel).then(function () {
 			oBinding = that.oView.byId("table").getBinding("items");
 
+			if (iCase > 0) {
+				that.expectChange("quantity", [,, "5.000"])
+					.expectRequest({
+						method : "POST",
+						url : "SalesOrderList('42')/SO_2_SOITEM",
+						payload : {Quantity : "5"}
+					}, {
+						ItemPosition : "0030",
+						Messages : iCase > 1 ? [{
+							message : "Well done!",
+							numericSeverity : 1,
+							target : "Quantity"
+						}] : [],
+						SalesOrderID : "42",
+						Quantity : "5"
+					});
+				if (iCase > 1) {
+					that.expectMessage({
+						message : "Well done!",
+						target : "/SalesOrderList('42')"
+							+ "/SO_2_SOITEM(SalesOrderID='42',ItemPosition='0030')/Quantity",
+						type : "Success"
+					});
+				}
+
+				return Promise.all([
+					// code under test
+					oBinding.create({Quantity : "5"}, /*bSkipRefresh*/true, /*bAtEnd*/true)
+						.created(),
+					that.waitForChanges(assert, "create new item")
+				]);
+			}
+		}).then(function () {
 			// code under test
 			return oBinding.requestFilterForMessages();
 		}).then(function (oFilter) {
 			that.expectRequest("SalesOrderList('42')/SO_2_SOITEM"
 				+ "?$select=ItemPosition,Quantity,SalesOrderID"
 				+ "&$filter=SalesOrderID eq '42' and ItemPosition eq '0010'"
+				+ (iCase > 1 ? " or SalesOrderID eq '42' and ItemPosition eq '0030'" : "")
 				+ "&$skip=0&$top=100", {
 				value : [{
 					ItemPosition : "0010",
@@ -8421,6 +8484,7 @@ sap.ui.define([
 			return that.waitForChanges(assert);
 		});
 	});
+});
 
 	//*********************************************************************************************
 	// Scenario: Request Late property with navigation properties in entity with key aliases
@@ -13031,8 +13095,9 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	// Scenario: Avoid duplicate call to computed annotation
-	QUnit.test("Avoid duplicate call to computed annotation", function (assert) {
+	// Scenario: Avoid duplicate call to computed annotation (via global path)
+	/** @deprecated as of version 1.120 */
+	QUnit.test("Avoid duplicate call to computed annotation, global path", function (assert) {
 		var oModel = this.createTeaBusiModel().getMetaModel(),
 			sView = '\
 <Text id="text"\
@@ -13042,6 +13107,22 @@ sap.ui.define([
 		this.expectChange("text", "foo");
 
 		return this.createView(assert, sView, oModel);
+	});
+
+	//*********************************************************************************************
+	// Scenario: Computed annotation via ODMM#requestObject with scope
+	// JIRA: CPOUI5ODATAV4-2398
+	QUnit.test("Computed annotation via ODMM#requestObject with scope", async function (assert) {
+		const oModel = this.createTeaBusiModel().getMetaModel();
+
+		await this.createView(assert, "", oModel);
+
+		this.mock(AnnotationHelper).expects("getValueListType").returns("foo");
+
+		const sResult = await oModel.requestObject("/MANAGERS/TEAM_ID@@AH.getValueListType",
+			undefined, {scope : {AH : AnnotationHelper}}
+		);
+		assert.strictEqual(sResult, "foo");
 	});
 
 	//*********************************************************************************************
@@ -13549,56 +13630,74 @@ sap.ui.define([
 	//*********************************************************************************************
 	// Scenario: Call bound action on a context of a relative ListBinding.
 	//
-	// Ensure that a Return Value Context is created and the structure of the path is same like the
-	// binding parameter
-	// JIRA: CPOUI5ODATAV4-2096
-	QUnit.test("Read entity for a relative ListBinding, call bound action", function (assert) {
-		var oModel = this.createTeaBusiModel(),
-			that = this,
+	// Ensure that no Return Value Context is created, because the back end does not return the
+	// needed key properties.
+	// SNOW: DINC0010118
+[{ID : "2"}, {EMPLOYEE_2_TEAM : {Team_Id : "TEAM_02"}}].forEach(function (oPredicates, i) {
+	var sTitle = "Read entity for a relative ListBinding, call bound action, key for the "
+		+ (i ? "first" : "second") + " segment is missing";
+
+	QUnit.test(sTitle, function (assert) {
+		var that = this,
 			sView = '\
 <FlexBox id="form" binding="{path : \'/TEAMS(\\\'42\\\')\',\
-	parameters : {$expand : {TEAM_2_EMPLOYEES : {$select : \'ID\'}}}}">\
+	parameters : {\
+		$expand : {TEAM_2_EMPLOYEES : {$select : \'ID,__CT__FAKE__Message/__FAKE__Messages\'}}}}">\
 	<Table id="table" items="{TEAM_2_EMPLOYEES}">\
 		<Text id="id" text="{ID}"/>\
 	</Table>\
 </FlexBox>';
 
-		this.expectRequest("TEAMS('42')?$expand=TEAM_2_EMPLOYEES($select=ID)", {
+		this.expectRequest("TEAMS('42')"
+			+ "?$expand=TEAM_2_EMPLOYEES($select=ID,__CT__FAKE__Message/__FAKE__Messages)", {
 				TEAM_2_EMPLOYEES : [{ID : "2"}]
 			})
 			.expectChange("id", ["2"]);
 
-		return this.createView(assert, sView, oModel).then(function () {
+		return this.createView(assert, sView).then(function () {
 			var oEmployeeContext = that.oView.byId("table").getItems()[0].getBindingContext(),
-				oAction = that.oModel.bindContext(
-					"com.sap.gateway.default.iwbep.tea_busi.v0001.AcChangeTeamOfEmployee(...)",
-					oEmployeeContext);
+				sAction = "com.sap.gateway.default.iwbep.tea_busi.v0001.AcChangeTeamOfEmployee",
+				oAction = that.oModel.bindContext(sAction + "(...)",
+					oEmployeeContext, {$$inheritExpandSelect : true}),
+				oResponse = Object.assign({
+					__CT__FAKE__Message : {
+						__FAKE__Messages : [{
+							code : "1",
+							message : "Text",
+							numericSeverity : 3,
+							target : "Name",
+							transition : false
+						}]
+					}
+				}, oPredicates);
 
 			that.expectRequest({
 					method : "POST",
 					url : "TEAMS('42')/TEAM_2_EMPLOYEES('2')/"
 						+ "com.sap.gateway.default.iwbep.tea_busi.v0001.AcChangeTeamOfEmployee"
-						+ "?$expand=EMPLOYEE_2_TEAM($select=Team_Id)",
+						+ "?$select=ID,__CT__FAKE__Message/__FAKE__Messages"
+						+ "&$expand=EMPLOYEE_2_TEAM($select=Team_Id)",
 					payload : {TeamID : "TEAM_02"}
-				}, {
-					EMPLOYEE_2_TEAM : {
-						Team_Id : "TEAM_02"
-					},
-					ID : "2"
-				});
+				}, oResponse)
+				.expectMessages([{
+					code : "1",
+					message : "Text",
+					target : "/TEAMS('42')/TEAM_2_EMPLOYEES('2')/" + sAction + "(...)/Name",
+					type : "Warning"
+				}]);
 			oAction.setParameter("TeamID", "TEAM_02");
 
 			return Promise.all([
 				// code under test
-				oAction.execute().then(function (oReturnValueContext) {
-					assert.strictEqual(
-						oReturnValueContext.getPath(),
-						"/TEAMS('TEAM_02')/TEAM_2_EMPLOYEES('2')");
+				oAction.execute().then(function (oResult) {
+					assert.strictEqual(oResult, undefined,
+						"no R.V.C. because EMPLOYEE_2_TEAM is missing");
 				}),
 				that.waitForChanges(assert)
 			]);
 		});
 	});
+});
 
 	//*********************************************************************************************
 	// Scenario: Execute a bound action for an entity in a list binding and afterwards call refresh
@@ -26786,6 +26885,7 @@ sap.ui.define([
 	// BCP: 2370011296
 	//
 	// Use a filter with spaces (BCP: 2380032202).
+	// Check prefetch for expand (JIRA: CPOUI5ODATAV4-2432)
 	QUnit.test("Recursive Hierarchy: expand root, w/ filter, search & orderby", function (assert) {
 		var oModel = this.createTeaBusiModel123({autoExpandSelect : true, groupId : "$direct"}),
 			oTable,
@@ -26801,7 +26901,7 @@ sap.ui.define([
 			$count : true,\
 			$filter : \'Is_Manager\',\
 			$orderby : \'AGE desc\'\
-		}}">\
+		}}" threshold="4" visibleRowCount="2">\
 	<Text id="id" text="{ID}"/>\
 </t:Table>',
 			that = this;
@@ -26812,7 +26912,7 @@ sap.ui.define([
 				+ ",filter(AGE ge 0 and (Is_Manager))/search(covfefe),keep start)"
 				+ "/orderby(AGE desc)/com.sap.vocabularies.Hierarchy.v1.TopLevels("
 				+ "HierarchyNodes=$root/EMPLOYEES,HierarchyQualifier='OrgChart',NodeProperty='ID'"
-				+ ",Levels=1)&$select=DrillState,ID&$count=true&$skip=0&$top=110", {
+				+ ",Levels=1)&$select=DrillState,ID&$count=true&$skip=0&$top=6", {
 				"@odata.count" : "1",
 				value : [{
 					DrillState : "collapsed",
@@ -26854,12 +26954,12 @@ sap.ui.define([
 					+ ",filter(AGE ge 0 and (Is_Manager))/search(covfefe),keep start)"
 					+ "/descendants($root/EMPLOYEES,OrgChart,ID,filter(ID eq '0'),1)"
 					+ "/orderby(AGE desc)"
-					+ "&$select=DrillState,ID&$count=true&$skip=0&$top=110", {
-					"@odata.count" : "1",
-					value : [{
-						DrillState : "leaf",
-						ID : "1"
-					}]
+					+ "&$select=DrillState,ID&$count=true&$skip=0&$top=6", {
+					"@odata.count" : "2",
+					value : [
+						{DrillState : "leaf", ID : "1"},
+						{DrillState : "leaf", ID : "2"}
+					]
 				})
 				.expectChange("id", [, "1"]);
 
@@ -26867,6 +26967,12 @@ sap.ui.define([
 			oRoot.expand();
 
 			return that.waitForChanges(assert, "expand root");
+		}).then(function () {
+			that.expectChange("id", [, "1", "2"]);
+
+			oTable.setFirstVisibleRow(1);
+
+			return that.waitForChanges(assert, "scroll down");
 		});
 	});
 
@@ -32379,6 +32485,96 @@ make root = ${bMakeRoot}`;
 				[undefined, 2, "1", "Beta"]
 			]);
 		});
+	});
+});
+
+	//*********************************************************************************************
+	// Scenario: Paging with prefetch (threshold is 5, intentionally odd). Set first visible row to
+	// 30. Then consequetively increase resp. decrease it by one and see that requests only occur
+	// after threshold/2 has been surmounted.
+	// JIRA: CPOUI5ODATAV4-2432
+[false, true].forEach(function (bAggregation) {
+	const sTitle = "CPOUI5ODATAV4-2432: " + (bAggregation ? "Recursive Hierarchy: " : "")
+		+ "Paging w/ Prefetch";
+	QUnit.test(sTitle, async function (assert) {
+		var oTable;
+
+		const oModel = this.createTeaBusiModel({autoExpandSelect : true});
+		const sParameters = bAggregation
+			? "{$$aggregation : {hierarchyQualifier : 'OrgChart'}}"
+			: "{$count : true}";
+		const sBaseQuery = bAggregation
+			? "$apply=com.sap.vocabularies.Hierarchy.v1.TopLevels"
+				+ "(HierarchyNodes=$root/EMPLOYEES,HierarchyQualifier='OrgChart'"
+				+ ",NodeProperty='ID',Levels=1)&$select=DrillState,ID"
+			: "$count=true&$select=ID";
+		const sView = `
+<t:Table id="table" rows="{path : '/EMPLOYEES', parameters : ${sParameters}}"
+		threshold="5" visibleRowCount="3">
+	<Text id="id" text="{ID}"/>
+</t:Table>`;
+		let bCount = bAggregation;
+
+		/**
+		 * Expects request (if iSkip and iTop are given) and change events.
+		 *
+		 * @param {number} iRow - The first visible row
+		 * @param {number} [iSkip] - $skip for the request; no request if undefined
+		 * @param {number} [iTop] - $top for the request
+		 */
+		const expect = (iRow, iSkip, iTop) => {
+			if (iSkip !== undefined) {
+				const aElements = [];
+				for (let i = 0; i < iTop; i += 1) {
+					aElements.push({DrillState : "leaf", ID : `E${iSkip + i}`});
+				}
+
+				const sQuery = sBaseQuery + (bCount ? "&$count=true" : "");
+				bCount = false;
+				this.expectRequest(`EMPLOYEES?${sQuery}&$skip=${iSkip}&$top=${iTop}`, {
+					"@odata.count" : "1000",
+					value : aElements
+				});
+			}
+			for (let i = 0; i < 3; i += 1) {
+				this.expectChange("id", `E${iRow + i}`, iRow + i);
+			}
+		};
+
+		/**
+		 * Scrolls the table to the given row, expects request and change events and waits for them.
+		 *
+		 * @param {number} iRow - The new first visible row
+		 * @param {number} [iSkip] - $skip for the request; no request if undefined
+		 * @param {number} [iTop] - $top for the request
+		 */
+		const scroll = async (iRow, iSkip, iTop) => {
+			expect(iRow, iSkip, iTop);
+			oTable.setFirstVisibleRow(iRow);
+
+			await this.waitForChanges(assert, `scroll to ${iRow}`);
+		};
+
+		expect(0, 0, 8); // 3 visible, 5 after
+
+		await this.createView(assert, sView, oModel);
+
+		oTable = this.oView.byId("table");
+		await scroll(30, 25, 13); // 5 before, 3 visible, 5 after
+		// forward
+		await scroll(31);
+		await scroll(32);
+		await scroll(33, 38, 3); // 3 after (> threshold/2)
+		await scroll(34);
+		await scroll(35);
+		await scroll(36, 41, 3); // 3 after
+		// backward
+		await scroll(29);
+		await scroll(28);
+		await scroll(27, 22, 3); // 3 before
+		await scroll(26);
+		await scroll(25);
+		await scroll(24, 19, 3); // 3 before
 	});
 });
 

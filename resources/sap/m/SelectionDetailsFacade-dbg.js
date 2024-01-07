@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /**
@@ -10,7 +10,7 @@
  * @since 1.48.0
  * @public
  * @author SAP SE
- * @version 1.120.2
+ * @version 1.120.3
  * @borrows sap.ui.core.Element#addCustomData as #addCustomData
  * @borrows sap.ui.core.Element#getCustomData as #getCustomData
  * @borrows sap.ui.core.Element#indexOfCustomData as #indexOfCustomData
@@ -45,7 +45,7 @@
  * @since 1.48.0
  * @public
  * @author SAP SE
- * @version 1.120.2
+ * @version 1.120.3
  * @borrows sap.ui.core.Element#addCustomData as #addCustomData
  * @borrows sap.ui.core.Element#getCustomData as #getCustomData
  * @borrows sap.ui.core.Element#indexOfCustomData as #indexOfCustomData

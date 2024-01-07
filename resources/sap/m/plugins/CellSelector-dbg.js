@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -44,7 +44,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.120.2
+	 * @version 1.120.3
 	 * @author SAP SE
 	 *
 	 * @public
@@ -171,7 +171,7 @@ sap.ui.define([
 			}
 		},
 		onmousedown: function(oEvent) {
-			if (oEvent.isMarked && oEvent.isMarked()) {
+			if (oEvent.isMarked?.() || oEvent.button != 0) {
 				return;
 			}
 
@@ -179,9 +179,9 @@ sap.ui.define([
 				this._startSelection(oEvent);
 			}
 
-			this._bMouseDown = true;
 			var oSelectableCell = this._getSelectableCell(oEvent.target);
 			if (oSelectableCell) {
+				this._bMouseDown = true;
 				this._mClickedCell = this.getConfig("getCellInfo", this.getControl(), oSelectableCell);
 			}
 		},

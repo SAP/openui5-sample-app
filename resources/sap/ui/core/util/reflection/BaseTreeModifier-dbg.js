@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -754,6 +754,21 @@ sap.ui.define([
 		 * @public
 		 */
 		moveAggregation: function (vSourceParent, sSourceAggregationName, vTargetParent, sTargetAggregationName, oObject, iIndex, oView, bSkipAdjustIndex) {},
+
+		/**
+		 * Replaces the whole content of an (multiple) aggregation and adds the passed content to it.
+		 * Elements can lose their binding info if a 'removeAggregation' is followed by an 'insertAggregation'
+		 * (both asynchronous in the modifiers) as they are temporarily left without a parent.
+		 * This method calls the 'remove' and 'insert' operations synchronously and sequentially, ensuring that the elements always have a parent
+		 *
+		 * @abstract
+		 * @param {sap.ui.base.ManagedObject|Element} vControl - Control representation
+		 * @param {string} sAggregationName - Aggregation name
+		 * @param {sap.ui.base.ManagedObject|Element[]} aNewControls - Objects that will replace the current aggregation content
+		 * @returns {Promise<undefined>} Resolves when async processing is done
+		 * @public
+		 */
+		replaceAllAggregation: function (vControl, sAggregationName, aNewControls) {},
 
 		/**
 		 * Removes all objects from the aggregation of the given control.

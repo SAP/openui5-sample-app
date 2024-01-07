@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -39,7 +39,7 @@ sap.ui.define(['sap/ui/unified/calendar/CalendarUtils', 'sap/ui/unified/calendar
 		 * its start date to the first date of the same week as the date the user chose.
 		 *
 		 * @extends sap.ui.unified.CalendarDateInterval
-		 * @version 1.120.2
+		 * @version 1.120.3
 		 *
 		 * @constructor
 		 * @private
