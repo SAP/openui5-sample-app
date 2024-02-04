@@ -22,7 +22,7 @@ sap.ui.define(["sap/m/OverflowToolbarToggleButton", "sap/m/ToggleButtonRenderer"
 		 * @extends sap.m.OverflowToolbarToggleButton
 		 *
 		 * @author SAP SE
-		 * @version 1.120.3
+		 * @version 1.120.6
 		 *
 		 * @constructor
 		 * @private

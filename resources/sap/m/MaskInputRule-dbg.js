@@ -20,7 +20,7 @@ sap.ui.define(['sap/ui/core/Element', "sap/base/Log"], function(Element, Log) {
 	 *
 	 * @author SAP SE
 	 * @extends sap.ui.core.Element
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 * @public
 	 * @constructor
 	 * @since 1.34.0

@@ -23,7 +23,7 @@ sap.ui.define(['./Object', "sap/base/assert"],
 	 * @extends sap.ui.base.Object
 	 * @implements sap.ui.base.Poolable
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 * @alias sap.ui.base.Event
 	 * @public
 	 * @template {Object<string,any>} [ParamsType=object]

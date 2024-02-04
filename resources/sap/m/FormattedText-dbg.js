@@ -46,7 +46,7 @@ function(
 		 * @class
 		 * The FormattedText control allows the usage of a limited set of tags for inline display of formatted text in HTML format.
 		 * @extends sap.ui.core.Control
-		 * @version 1.120.3
+		 * @version 1.120.6
 		 *
 		 * @constructor
 		 * @public

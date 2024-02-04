@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR-MOD",
 		"applicationVersion" : {
-			"version" : "1.120.3"
+			"version" : "1.120.6"
 		},
 		"description" : "Example for OData V2 Tree Table (ZRH_ERHAORDERMANAGE)",
 		"dataSources" : {

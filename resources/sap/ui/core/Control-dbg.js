@@ -83,7 +83,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 * @alias sap.ui.core.Control
 	 */
 	var Control = Element.extend("sap.ui.core.Control", /** @lends sap.ui.core.Control.prototype */ {

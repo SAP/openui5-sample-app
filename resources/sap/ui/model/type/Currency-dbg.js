@@ -32,7 +32,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.CompositeType
 	 *
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 *
 	 * @public
 	 * @param {object} [oFormatOptions]

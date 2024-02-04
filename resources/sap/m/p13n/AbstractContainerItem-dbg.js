@@ -20,12 +20,12 @@ sap.ui.define(['sap/ui/core/Element'],
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.120.3
+		 * @version 1.120.6
 		 *
 		 * @constructor
 		 * @alias sap.m.p13n.AbstractContainerItem
 		 * @author SAP SE
-		 * @version 1.120.3
+		 * @version 1.120.6
 	 	 * @since 1.96
 	 	 * @private
 		 * @ui5-restricted

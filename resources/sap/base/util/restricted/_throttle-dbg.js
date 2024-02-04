@@ -10,7 +10,7 @@
  * @alias module:sap/base/util/restricted/_throttle
  * @author SAP SE
  * @since 1.71
- * @version 1.120.3
+ * @version 1.120.6
  * @private
  * @ui5-restricted
 */

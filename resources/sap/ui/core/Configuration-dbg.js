@@ -41,7 +41,7 @@ sap.ui.define([
 ) {
 	"use strict";
 
-	var oVersion = new Version("1.120.3");
+	var oVersion = new Version("1.120.6");
 	var oFormatSettings;
 
 	// Lazy dependency to core
@@ -269,7 +269,7 @@ sap.ui.define([
 		 * The return value of config method is especially useful for an HTTP <code>Accept-Language</code> header.
 		 *
 		 * Retrieves the modern locale,
-		 * e.g. sr-Latn (Serbian (Cyrillic)), he (Hebrew), yi (Yiddish)
+		 * e.g. sr-Latn (Serbian (Latin)), he (Hebrew), yi (Yiddish)
 		 *
 		 * @returns {string} The language tag for the current language, conforming to BCP47
 		 * @function

@@ -97,7 +97,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 *
 	 * @constructor
 	 * @public
@@ -1507,9 +1507,9 @@ sap.ui.define([
 
 	FlexibleColumnLayout.prototype._getDraggedSeparatorStartOffset = function (oSeparator, bRtl) {
 		if (bRtl) {
-			return window.innerWidth - oSeparator.getBoundingClientRect().right;
+			return this.getDomRef().clientWidth - oSeparator.offsetLeft - oSeparator.offsetWidth;
 		}
-		return oSeparator.getBoundingClientRect().left;
+		return oSeparator.offsetLeft;
 	};
 
 	FlexibleColumnLayout.prototype._onColumnSeparatorMove = function (oEvent) {

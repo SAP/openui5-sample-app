@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.120.3
+		 * @version 1.120.6
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -1088,7 +1088,9 @@ sap.ui.define([
 			|| !mParameters.$$sharedRequest
 			&& this.isSelected() && this !== this.oBinding.getHeaderContext()
 			&& !(this.oBinding.isRelative() && !mParameters.$$ownRequest)
-			&& !_Helper.isDataAggregation(mParameters);
+			&& !_Helper.isDataAggregation(mParameters)
+			// check for key predicate in the last path segment
+			&& this.sPath.indexOf("(", this.sPath.lastIndexOf("/")) > 0;
 	};
 
 	/**

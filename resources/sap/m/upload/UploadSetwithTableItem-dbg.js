@@ -29,7 +29,7 @@ sap.ui.define([
 	 * @public
 	 * @experimental since 1.120
 	 * @since 1.120
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 * @alias sap.m.upload.UploadSetwithTableItem
 	 */
     var UploadSetwithTableItem = ColumnListItem.extend("sap.m.upload.UploadSetwithTableItem", {

@@ -54,7 +54,7 @@ function(
 	 *
      * <b>Note:</b> This control should not be used with {@link sap.m.Label} or in Forms along with {@link sap.m.Label}.
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 *
 	 * @constructor
 	 * @public

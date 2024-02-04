@@ -45,7 +45,7 @@ sap.ui.define(["sap/m/semantic/SemanticPage", "sap/m/semantic/SemanticPageRender
 	 * @extends sap.m.semantic.SemanticPage
 	 *
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 *
 	 * @constructor
 	 * @public

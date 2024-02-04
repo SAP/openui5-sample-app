@@ -25,7 +25,7 @@ sap.ui.define(['sap/m/semantic/SemanticButton'], function(SemanticButton) {
 	 * @implements sap.m.semantic.ISort
 	 *
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 *
 	 * @constructor
 	 * @public

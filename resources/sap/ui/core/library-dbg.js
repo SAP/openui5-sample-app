@@ -26,13 +26,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.120.3",
+		 version: "1.120.6",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 // "apiVersion" is still WIP and in 1.120 restricted to the sap.ui.core library only!
 		 // TODO: Remove spread operator once UI5 Tooling can validate this new property
@@ -1608,7 +1608,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0

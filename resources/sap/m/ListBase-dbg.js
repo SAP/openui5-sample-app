@@ -105,7 +105,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 *
 	 * @constructor
 	 * @public
@@ -1050,7 +1050,7 @@ function(
 
 		var aChangedListItems = [];
 		this.getItems(true).forEach(function(oItem) {
-			if (!oItem.getSelected()) {
+			if (oItem.isSelectable() && !oItem.getSelected()) {
 				oItem.setSelected(true, true);
 				aChangedListItems.push(oItem);
 				this._updateSelectedPaths(oItem);

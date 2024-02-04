@@ -10,7 +10,7 @@
  * @alias module:sap/base/util/restricted/_isNil
  * @author SAP SE
  * @since 1.80
- * @version 1.120.3
+ * @version 1.120.6
  * @private
  * @ui5-restricted
 */

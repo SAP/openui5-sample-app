@@ -32,7 +32,7 @@ sap.ui.define(["sap/ui/core/library", "./library", "./ListItemBase", "./GroupHea
 	 * @implements sap.m.ITableItem
 
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 *
 	 * @constructor
 	 * @public

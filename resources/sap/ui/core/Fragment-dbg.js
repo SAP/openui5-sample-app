@@ -60,7 +60,7 @@ function(
 	 * @class
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 * @public
 	 * @alias sap.ui.core.Fragment
 	 */

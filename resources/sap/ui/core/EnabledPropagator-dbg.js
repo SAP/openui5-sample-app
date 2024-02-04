@@ -43,7 +43,7 @@ sap.ui.define([
 	 *
 	 * @param {boolean} [bDefault=true] Value that should be used as default value for the enhancement of the control.
 	 * @param {boolean} [bLegacy=false] Whether the introduced property should use the old name <code>Enabled</code>.
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 * @public
 	 * @class
 	 * @alias sap.ui.core.EnabledPropagator

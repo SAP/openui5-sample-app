@@ -32490,7 +32490,7 @@ make root = ${bMakeRoot}`;
 
 	//*********************************************************************************************
 	// Scenario: Paging with prefetch (threshold is 5, intentionally odd). Set first visible row to
-	// 30. Then consequetively increase resp. decrease it by one and see that requests only occur
+	// 30. Then consecutively increase resp. decrease it by one and see that requests only occur
 	// after threshold/2 has been surmounted.
 	// JIRA: CPOUI5ODATAV4-2432
 [false, true].forEach(function (bAggregation) {
@@ -32521,8 +32521,9 @@ make root = ${bMakeRoot}`;
 		 * @param {number} iRow - The first visible row
 		 * @param {number} [iSkip] - $skip for the request; no request if undefined
 		 * @param {number} [iTop] - $top for the request
+		 * @param {boolean} [bNoChangeEvents] - Whether no change events are to be expected
 		 */
-		const expect = (iRow, iSkip, iTop) => {
+		const expect = (iRow, iSkip, iTop, bNoChangeEvents) => {
 			if (iSkip !== undefined) {
 				const aElements = [];
 				for (let i = 0; i < iTop; i += 1) {
@@ -32531,13 +32532,17 @@ make root = ${bMakeRoot}`;
 
 				const sQuery = sBaseQuery + (bCount ? "&$count=true" : "");
 				bCount = false;
-				this.expectRequest(`EMPLOYEES?${sQuery}&$skip=${iSkip}&$top=${iTop}`, {
-					"@odata.count" : "1000",
-					value : aElements
-				});
+				this.expectRequest(`EMPLOYEES?${sQuery}&$skip=${iSkip}&$top=${iTop}`,
+						resolveLater({
+							"@odata.count" : "100",
+							value : aElements
+						})
+					);
 			}
-			for (let i = 0; i < 3; i += 1) {
-				this.expectChange("id", `E${iRow + i}`, iRow + i);
+			if (!bNoChangeEvents) {
+				for (let i = 0; i < 3; i += 1) {
+					this.expectChange("id", `E${iRow + i}`, iRow + i);
+				}
 			}
 		};
 
@@ -32547,12 +32552,15 @@ make root = ${bMakeRoot}`;
 		 * @param {number} iRow - The new first visible row
 		 * @param {number} [iSkip] - $skip for the request; no request if undefined
 		 * @param {number} [iTop] - $top for the request
+		 * @param {boolean} [bNoWait] - Whether to wait for request and changes
 		 */
-		const scroll = async (iRow, iSkip, iTop) => {
-			expect(iRow, iSkip, iTop);
+		const scroll = async (iRow, iSkip, iTop, bNoWait) => {
+			expect(iRow, iSkip, iTop, bNoWait);
 			oTable.setFirstVisibleRow(iRow);
 
-			await this.waitForChanges(assert, `scroll to ${iRow}`);
+			if (!bNoWait) {
+				await this.waitForChanges(assert, `scroll to ${iRow}`);
+			}
 		};
 
 		expect(0, 0, 8); // 3 visible, 5 after
@@ -32567,7 +32575,10 @@ make root = ${bMakeRoot}`;
 		await scroll(33, 38, 3); // 3 after (> threshold/2)
 		await scroll(34);
 		await scroll(35);
-		await scroll(36, 41, 3); // 3 after
+		scroll(36, 41, 3, true); // 3 after
+		await Promise.resolve();
+		// this scroll happens before the response arrived, because we did not wait for the changes
+		await scroll(37);
 		// backward
 		await scroll(29);
 		await scroll(28);
@@ -32577,6 +32588,133 @@ make root = ${bMakeRoot}`;
 		await scroll(24, 19, 3); // 3 before
 	});
 });
+
+	//*********************************************************************************************
+	// Scenario: Recursive Hierarchy, prefetch and nodes w/o "rank"
+	// (1) Initially the table only contains root nodes Alpha, Delta, Epsilon...
+	// (2) Create two children Beta, Gamma of Alpha
+	// (3) Collapse Alpha
+	// (4) Request side effects
+	// (5) Scroll to 5
+	// (6) Expand Alpha again; Beta and Gamma are now invisible placeholders w/o rank
+	// (7) Quickly scroll to 4 and 3; Gamma must not be requested twice
+	// JIRA: CPOUI5ODATAV4-2432
+	QUnit.test("CPOUI5ODATAV4-2432: Recursive Hierarchy, prefetch, rank", async function (assert) {
+		const oModel = this.createTeaBusiModel({autoExpandSelect : true});
+		const sView = `
+<t:Table id="table" rows="{path : '/EMPLOYEES',
+ 			parameters : {$$aggregation : {hierarchyQualifier : 'OrgChart'}}}"
+		threshold="4" visibleRowCount="2">
+	<Text id="name" text="{Name}"/>
+</t:Table>`;
+
+		this.expectRequest("EMPLOYEES?$apply=com.sap.vocabularies.Hierarchy.v1.TopLevels("
+					+ "HierarchyNodes=$root/EMPLOYEES,HierarchyQualifier='OrgChart'"
+					+ ",NodeProperty='ID',Levels=1)"
+					+ "&$select=DrillState,ID,Name&$count=true&$skip=0&$top=6", {
+				"@odata.count" : "20",
+				value : [
+					{DrillState : "leaf", ID : "0", Name : "Alpha"},
+					{DrillState : "leaf", ID : "1", Name : "Delta"},
+					{DrillState : "leaf", ID : "2", Name : "Epsilon"},
+					{DrillState : "leaf", ID : "3", Name : "Zeta"},
+					{DrillState : "leaf", ID : "4", Name : "Eta"},
+					{DrillState : "leaf", ID : "5", Name : "Theta"}
+				]
+			})
+			.expectChange("name", ["Alpha", "Delta"]);
+
+		await this.createView(assert, sView, oModel);
+
+		this.expectChange("name", [, "Beta"])
+			.expectRequest({
+				method : "POST",
+				url : "EMPLOYEES",
+				payload : {"EMPLOYEE_2_MANAGER@odata.bind" : "EMPLOYEES('0')", Name : "Gamma"}
+			}, {DrillState : "leaf", ID : "0.1", Name : "Gamma"})
+			.expectRequest({
+				method : "POST",
+				url : "EMPLOYEES",
+				payload : {"EMPLOYEE_2_MANAGER@odata.bind" : "EMPLOYEES('0')", Name : "Beta"}
+			}, {DrillState : "leaf", ID : "0.0", Name : "Beta"});
+
+		const oTable = this.oView.byId("table");
+		const oBinding = oTable.getBinding("rows");
+		const oAlpha = oBinding.getCurrentContexts()[0];
+		const oGamma = oBinding.create({
+			"@$ui5.node.parent" : oAlpha,
+			Name : "Gamma"
+		}, true);
+		const oBeta = oBinding.create({
+			"@$ui5.node.parent" : oAlpha,
+			Name : "Beta"
+		}, true);
+
+		await Promise.all([
+			oBeta.created(),
+			oGamma.created(),
+			this.waitForChanges(assert, "(2) create Beta & Gamma")
+		]);
+
+		this.expectChange("name", [, "Delta"]);
+
+		oAlpha.collapse();
+
+		await this.waitForChanges(assert, "(3) collapse Alpha");
+
+		this.expectRequest("EMPLOYEES?$select=ID,Name&$filter=ID eq '0' or ID eq '1'&$top=2", {
+				value : [
+					{ID : "0", Name : "Alpha*"},
+					{ID : "1", Name : "Delta*"}
+				]
+			})
+			.expectChange("name", ["Alpha*", "Delta*"]);
+
+		await Promise.all([
+			oBinding.getHeaderContext().requestSideEffects(["Name"]),
+			this.waitForChanges(assert, "(4) side effects")
+		]);
+
+		this.expectRequest("EMPLOYEES?$apply=com.sap.vocabularies.Hierarchy.v1.TopLevels("
+					+ "HierarchyNodes=$root/EMPLOYEES,HierarchyQualifier='OrgChart'"
+					+ ",NodeProperty='ID',Levels=1)"
+					+ "&$select=DrillState,ID,Name&$skip=2&$top=9", {
+				value : [
+					{DrillState : "leaf", ID : "2", Name : "Epsilon*"},
+					{DrillState : "leaf", ID : "3", Name : "Zeta*"},
+					{DrillState : "leaf", ID : "4", Name : "Eta*"},
+					{DrillState : "leaf", ID : "5", Name : "Theta*"},
+					{DrillState : "leaf", ID : "6", Name : "Iota*"},
+					{DrillState : "leaf", ID : "7", Name : "Kappa*"},
+					{DrillState : "leaf", ID : "8", Name : "Lambda*"},
+					{DrillState : "leaf", ID : "9", Name : "Mu*"},
+					{DrillState : "leaf", ID : "10", Name : "Nu*"}
+				]
+			})
+			.expectChange("name", [,,,,, "Theta*", "Iota*"]);
+
+		oTable.setFirstVisibleRow(5);
+
+		await this.waitForChanges(assert, "(5) scroll to 5");
+
+		this.expectChange("name", [,,,,, "Zeta*", "Eta*"]);
+
+		oAlpha.expand();
+
+		await this.waitForChanges(assert, "(6) expand Alpha");
+
+		this.expectRequest("EMPLOYEES('0.0')?$select=DrillState,ID,Name",
+				{DrillState : "leaf", ID : "0.0", Name : "Beta*"})
+			.expectRequest("EMPLOYEES('0.1')?$select=DrillState,ID,Name",
+				{DrillState : "leaf", ID : "0.1", Name : "Gamma*"})
+			.expectChange("name", [,,, "Delta*", "Epsilon*"]);
+
+		oTable.setFirstVisibleRow(4);
+		await Promise.resolve();
+		oTable.setFirstVisibleRow(3);
+
+		await this.waitForChanges(assert, "(7) quickly scroll to 4 and 3");
+	});
 
 	//*********************************************************************************************
 	// Scenario: Application tries to overwrite client-side instance annotations.
@@ -47530,6 +47668,41 @@ make root = ${bMakeRoot}`;
 });
 
 	//*********************************************************************************************
+	// A list binding for a complex type is refreshed, while a context (last segment of path without
+	// key predicate) is selected
+	// SNOW: DINC0029552
+	QUnit.test("DINC0029552", async function (assert) {
+		const oModel = this.createSalesOrdersModel();
+		const sView = `
+<Table id="list" items="{/SalesOrderList('0')/Messages}">
+	<Text id="code" text="{code}"/>
+</Table>`;
+
+		this.expectRequest("SalesOrderList('0')/Messages?$skip=0&$top=100", {
+				value : [{code : "42"}]
+			})
+			.expectChange("code", ["42"]);
+
+		await this.createView(assert, sView, oModel);
+
+		const oTableBinding = this.oView.byId("list").getBinding("items");
+		oTableBinding.getCurrentContexts()[0].setSelected(true);
+
+		assert.strictEqual(oTableBinding.getCurrentContexts()[0].getPath(),
+			"/SalesOrderList('0')/Messages/0");
+
+		this.expectRequest("SalesOrderList('0')/Messages?$skip=0&$top=100", {
+				value : [{code : "23"}]
+			})
+			.expectChange("code", ["23"]);
+
+		// code under test
+		oModel.refresh();
+
+		await this.waitForChanges(assert);
+	});
+
+	//*********************************************************************************************
 	// Scenario: Multiple creation rows, grid table
 	//
 	// Create contexts at different insert positions (CPOUI5ODATAV4-1379):
@@ -48958,6 +49131,58 @@ make root = ${bMakeRoot}`;
 				}
 			});
 		});
+	});
+});
+
+	//*********************************************************************************************
+	// Scenario: Evaluate "ValueListRelevantQualifiers" annotation with Partner NavigationProperty.
+	// BCP: 2380132332
+[0, 1].forEach(function (iValue) {
+	QUnit.test("BCP: 2380132332, value=" + iValue, async function (assert) {
+		const oModel = this.createSpecialCasesModel({autoExpandSelect : true});
+		const sView = `
+<FlexBox id="outer" binding="{/As(0)}">
+	<Text id="aid" text="{AID}"/>
+	<Text id="avalue" text="{AValue}"/>
+	<FlexBox id="inner" binding="{AtoCs(1)}">
+		<Text id="cid" text="{CID}"/>
+		<Text id="cvalue" text="{CValue}"/>
+	</FlexBox>
+</FlexBox>`;
+
+		//TODO why is all of AtoCs expanded here?
+		this.expectRequest("As(0)?$select=AID,AValue&$expand=AtoCs($select=CID,CValue)", {
+				AID : 0,
+				AValue : iValue,
+				AtoCs : [{
+					CID : 1,
+					CValue : 1
+				}]
+			})
+			.expectChange("aid", "0")
+			.expectChange("avalue", "" + iValue)
+			.expectChange("cid", "1")
+			.expectChange("cvalue", "1");
+
+		await this.createView(assert, sView, oModel);
+
+		const oContext = this.oView.byId("inner").getBindingContext();
+		assert.strictEqual(oContext.getPath(), "/As(0)/AtoCs(1)");
+
+		// code under test
+		const mQualifier2ValueListType = await oModel.getMetaModel()
+			.requestValueListInfo("/As/AtoCs/CtoEs/EValue", true, oContext);
+
+		if (iValue === 1) {
+			delete mQualifier2ValueListType["same"]?.$model;
+			assert.deepEqual(mQualifier2ValueListType, {
+				same : {
+					Label : "Same label ;-)"
+				}
+			});
+		} else {
+			assert.deepEqual(mQualifier2ValueListType, {}, "empty");
+		}
 	});
 });
 

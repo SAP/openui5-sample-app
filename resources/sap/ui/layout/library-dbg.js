@@ -20,13 +20,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.layout
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 * @since 1.15
 	 * @public
 	 */
 	var thisLib = sap.ui.getCore().initLibrary({
 		name : "sap.ui.layout",
-		version: "1.120.3",
+		version: "1.120.6",
 		dependencies: ["sap.ui.core"],
 		designtime: "sap/ui/layout/designtime/library.designtime",
 		types: [

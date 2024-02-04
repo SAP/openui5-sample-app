@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.m.InputBase
 	 *
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 *
 	 * @constructor
 	 * @public
@@ -605,7 +605,7 @@ sap.ui.define([
 			return oBindingType.getOutputPattern();
 		}
 
-		if (oBindingType instanceof ODataType) {
+		if (oBindingType instanceof ODataType && oBindingType.getFormat) {
 			return oBindingType.getFormat().oFormatOptions.pattern;
 		}
 

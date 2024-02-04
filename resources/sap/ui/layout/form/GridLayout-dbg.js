@@ -28,7 +28,7 @@ sap.ui.define(['sap/ui/layout/library', './FormLayout', './GridLayoutRenderer'],
 	 * @extends sap.ui.layout.form.FormLayout
 	 *
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 *
 	 * @constructor
 	 * @public

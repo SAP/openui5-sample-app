@@ -21,7 +21,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 * @public
 	 * @since 1.104
 	 * @alias sap.m.p13n.GroupController
@@ -89,27 +89,7 @@ sap.ui.define([
         return oAddRemoveChange;
     };
 
-    GroupController.prototype._createMoveChange = function(sId, sPropertykey, iNewIndex, sMoveOperation, oControl, bPersistId){
-        var oMoveChange =  {
-            selectorElement: oControl,
-            changeSpecificData: {
-                changeType: sMoveOperation,
-                content: {
-                    id: sId,
-                    key: sPropertykey,
-                    index: iNewIndex
-                }
-            }
-        };
-
-        if (!bPersistId) {
-            delete oMoveChange.changeSpecificData.content.id;
-        }
-
-        return oMoveChange;
-    };
-
-    GroupController.prototype.mixInfoAndState = function(oPropertyHelper) {
+	GroupController.prototype.mixInfoAndState = function(oPropertyHelper) {
 
         var aItemState = this.getCurrentState();
         var mItemState = this.arrayToMap(aItemState);

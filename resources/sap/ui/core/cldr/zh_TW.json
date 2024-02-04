@@ -112,6 +112,7 @@
 		"ckb_alt-menu": "中庫德文",
 		"ckb_alt-variant": "庫德文（索拉尼）",
 		"clc": "齊爾柯廷語",
+		"cnr": "蒙特內哥羅語",
 		"co": "科西嘉文",
 		"cop": "科普特文",
 		"cps": "卡皮茲文",
@@ -1155,10 +1156,10 @@
 			"short": "y/M/d"
 		},
 		"timeFormats": {
-			"full": "Bh:mm:ss [zzzz]",
-			"long": "Bh:mm:ss [z]",
-			"medium": "Bh:mm:ss",
-			"short": "Bh:mm"
+			"full": "ah:mm:ss [zzzz]",
+			"long": "ah:mm:ss [z]",
+			"medium": "ah:mm:ss",
+			"short": "ah:mm"
 		},
 		"dateTimeFormats": {
 			"full": "{1} {0}",
@@ -1701,10 +1702,10 @@
 			"short": "Gy/M/d"
 		},
 		"timeFormats": {
-			"full": "Bh:mm:ss [zzzz]",
-			"long": "Bh:mm:ss [z]",
-			"medium": "Bh:mm:ss",
-			"short": "Bh:mm"
+			"full": "ah:mm:ss [zzzz]",
+			"long": "ah:mm:ss [z]",
+			"medium": "ah:mm:ss",
+			"short": "ah:mm"
 		},
 		"dateTimeFormats": {
 			"full": "{1}{0}",
@@ -2236,10 +2237,10 @@
 			"short": "Gy/M/d"
 		},
 		"timeFormats": {
-			"full": "Bh:mm:ss [zzzz]",
-			"long": "Bh:mm:ss [z]",
-			"medium": "Bh:mm:ss",
-			"short": "Bh:mm"
+			"full": "ah:mm:ss [zzzz]",
+			"long": "ah:mm:ss [z]",
+			"medium": "ah:mm:ss",
+			"short": "ah:mm"
 		},
 		"dateTimeFormats": {
 			"full": "{1}{0}",
@@ -2791,10 +2792,10 @@
 			"short": "G y/M/d"
 		},
 		"timeFormats": {
-			"full": "Bh:mm:ss [zzzz]",
-			"long": "Bh:mm:ss [z]",
-			"medium": "Bh:mm:ss",
-			"short": "Bh:mm"
+			"full": "ah:mm:ss [zzzz]",
+			"long": "ah:mm:ss [z]",
+			"medium": "ah:mm:ss",
+			"short": "ah:mm"
 		},
 		"dateTimeFormats": {
 			"full": "{1}{0}",
@@ -3326,10 +3327,10 @@
 			"short": "Gy/M/d"
 		},
 		"timeFormats": {
-			"full": "Bh:mm:ss [zzzz]",
-			"long": "Bh:mm:ss [z]",
-			"medium": "Bh:mm:ss",
-			"short": "Bh:mm"
+			"full": "ah:mm:ss [zzzz]",
+			"long": "ah:mm:ss [z]",
+			"medium": "ah:mm:ss",
+			"short": "ah:mm"
 		},
 		"dateTimeFormats": {
 			"full": "{1}{0}",

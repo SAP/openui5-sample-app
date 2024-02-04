@@ -27,7 +27,7 @@ sap.ui.define([ 'sap/ui/core/ElementRegistry', 'sap/ui/core/Control', "sap/ui/qu
 	 * @namespace
 	 *
 	 * @author SAP SE
-	 * @version 1.120.3
+	 * @version 1.120.6
 	 *
 	 * @public
 	 * @since 1.48.0
