@@ -37,7 +37,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 *
 	 * @public
 	 * @since 1.110
@@ -456,6 +456,11 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 			!(oEvent.ctrlKey || oEvent.metaKey) ||
 			!oEvent.target.matches(this.getConfig("allowForCopySelector")) ||
 			!this._isControlSelectable()) {
+			return;
+		}
+
+		const oSelection = window.getSelection();
+		if (oSelection.toString() && oSelection.containsNode(oEvent.target, true)) {
 			return;
 		}
 

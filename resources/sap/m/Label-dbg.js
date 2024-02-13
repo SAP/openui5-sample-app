@@ -78,7 +78,7 @@ function(
 	 * @implements sap.ui.core.Label, sap.ui.core.IShrinkable, sap.ui.core.IAccessKeySupport
 	 *
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 *
 	 * @constructor
 	 * @public

@@ -25,7 +25,7 @@ sap.ui.define([
 	 * @extends sap.m.table.columnmenu.Entry
 	 *
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 *
 	 * @public
 	 * @since 1.110

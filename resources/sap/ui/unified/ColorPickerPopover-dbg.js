@@ -47,7 +47,7 @@ sap.ui.define([
 		 * A thin wrapper over {@link sap.ui.unified.ColorPicker} allowing the latter to be used in a popover.
 		 *
 		 * @extends sap.ui.core.Control
-		 * @version 1.120.6
+		 * @version 1.120.7
 		 *
 		 * @constructor
 		 * @public

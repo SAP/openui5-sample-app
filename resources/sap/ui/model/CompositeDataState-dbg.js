@@ -14,7 +14,7 @@ sap.ui.define(['./DataState', "sap/base/util/deepEqual", "sap/base/util/each"], 
 	 * @extends sap.ui.model.DataState
 	 *
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 *
 	 * @public
 	 * @alias sap.ui.model.CompositeDataState

@@ -10,7 +10,7 @@
  * @alias module:sap/base/util/restricted/_pick
  * @author SAP SE
  * @since 1.71
- * @version 1.120.6
+ * @version 1.120.7
  * @private
  * @ui5-restricted
 */

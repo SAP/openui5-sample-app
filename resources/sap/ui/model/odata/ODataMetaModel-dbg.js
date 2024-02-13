@@ -881,7 +881,7 @@ sap.ui.define([
 	 * {@link #loaded loaded} has been resolved!
 	 *
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 * @alias sap.ui.model.odata.ODataMetaModel
 	 * @extends sap.ui.model.MetaModel
 	 * @public
@@ -1746,7 +1746,9 @@ sap.ui.define([
 				sQualifiedTypeName,
 				mValueLists = Utils.getValueLists(oProperty);
 
-			if (!("" in mValueLists) && oProperty["sap:value-list"]) {
+			const bValueListLoaded = "" in mValueLists
+				&& that.getODataEntitySet(mValueLists[""].CollectionPath.String); // SNOW: DINC0054202
+			if (!bValueListLoaded && oProperty["sap:value-list"]) {
 				// property with value list which is not yet (fully) loaded
 				bCachePromise = true;
 				sQualifiedTypeName = that.oModel.getObject(aMatches[2]).namespace

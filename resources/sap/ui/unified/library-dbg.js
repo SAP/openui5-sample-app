@@ -28,13 +28,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.unified
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 * @since 1.28
 	 * @public
 	 */
 	var thisLib = sap.ui.getCore().initLibrary({
 		name : "sap.ui.unified",
-		version: "1.120.6",
+		version: "1.120.7",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/ui/unified/designtime/library.designtime",
 		types: [

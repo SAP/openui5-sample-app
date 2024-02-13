@@ -29,7 +29,7 @@ sap.ui.define([
 	 * Holds layout data for a grid item.
 	 *
 	 * @extends sap.ui.core.LayoutData
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 *
 	 * @constructor
 	 * @public

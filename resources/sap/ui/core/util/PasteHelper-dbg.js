@@ -13,7 +13,7 @@ sap.ui.define([ "sap/ui/core/Core", "sap/ui/model/ParseException", "sap/ui/model
 	 *
 	 * @class Parses and validates data on the <code>paste</code> event of an SAPUI5 table.
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 * @private
 	 * @ui5-restricted sap.ui.table.Table, sap.m.Table, sap.m.plugins.PasteProvider
 	 * @alias sap.ui.core.util.PasteHelper

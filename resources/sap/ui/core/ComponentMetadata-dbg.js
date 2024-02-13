@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @public
 	 * @class
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 * @since 1.9.2
 	 * @alias sap.ui.core.ComponentMetadata
 	 * @extends sap.ui.base.ManagedObjectMetadata

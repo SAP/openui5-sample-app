@@ -26,7 +26,7 @@
  * @alias module:sap/base/util/restricted/_CancelablePromise
  * @author SAP SE
  * @since 1.79
- * @version 1.120.6
+ * @version 1.120.7
  * @private
  * @ui5-restricted
 */

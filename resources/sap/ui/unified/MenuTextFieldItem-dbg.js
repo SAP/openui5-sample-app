@@ -52,7 +52,7 @@ sap.ui.define([
 	 * @extends sap.ui.unified.MenuItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 * @since 1.21.0
 	 *
 	 * @constructor

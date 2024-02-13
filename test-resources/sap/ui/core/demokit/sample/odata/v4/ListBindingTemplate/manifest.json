@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR",
 		"applicationVersion" : {
-			"version" : "1.120.6"
+			"version" : "1.120.7"
 		},
 		"description" : "Example for OData V4 List Binding",
 		"dataSources" : {

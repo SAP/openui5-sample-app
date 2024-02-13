@@ -13,7 +13,7 @@ sap.ui.define([
 	 * Change handler for hiding of a control.
 	 * @alias sap.ui.fl.changeHandler.HideControl
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 * @experimental Since 1.27.0
 	 */
 	var UnhideForm = { };
@@ -143,8 +143,9 @@ sap.ui.define([
 								|| (oModifier.getControlType(oField) === "sap.ui.core.Title")
 								|| (oModifier.getControlType(oField) === "sap.m.Title")
 								|| (oModifier.getControlType(oField) === "sap.m.Toolbar")
-								|| (oModifier.getControlType(oField) === "sap.m.OverflowToolbar")) {
-								return undefined;
+								|| (oModifier.getControlType(oField) === "sap.m.OverflowToolbar")
+							) {
+								return true;
 							}
 							oModifier.setVisible(oField, false);
 						}

@@ -35,7 +35,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 *
 	 * @param {object} [mParameters] a map which contains the following parameter properties:
 	 * @param {string} [mParameters.id] The message id: will be generated if no id is set

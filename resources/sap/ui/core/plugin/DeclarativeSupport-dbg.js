@@ -21,7 +21,7 @@ sap.ui.define([
 	 * @see sap.ui.core.DeclarativeSupport
 	 * @public
 	 * @since 1.7.0
-	 * @version 1.120.6
+	 * @version 1.120.7
 	 * @alias sap.ui.core.plugin.DeclarativeSupport
 	 * @deprecated since 1.120
 	 */
