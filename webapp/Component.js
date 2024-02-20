@@ -2,6 +2,7 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/core/ComponentSupport"], (UICo
 	"use strict";
 	return UIComponent.extend("sap.ui.demo.todo.Component", {
 		metadata: {
+			interfaces: ["sap.ui.core.IAsyncContentCreation"],
 			manifest: "json"
 		}
 	});

@@ -6,20 +6,16 @@
 	<title>OpenUI5 Todo App</title>
 
 	<script id="sap-ui-bootstrap"
-		src="resources/sap-ui-core.js"
-		data-sap-ui-libs="sap.m"
+		src="resources/sap-ui-boot.js"
 		data-sap-ui-xx-waitForTheme="true"
-		data-sap-ui-theme="sap_horizon"
-		data-sap-ui-resourceRoots='{
-			"sap.ui.demo.todo": "./"
-		}'
-		data-sap-ui-onInit="module:sap/ui/core/ComponentSupport"
+		data-sap-ui-libs="sap.ui.core"
+		data-sap-ui-on-init="sap/ui/demo/todo/App@./"
 		data-sap-ui-compatVersion="edge"
 		data-sap-ui-async="true">
 	</script>
 </head>
 
 <body class="sapUiBody">
-	<div data-sap-ui-component data-name="sap.ui.demo.todo" data-id="container" data-settings='{"id" : "todo"}'></div>
+	<div id="content"></div>
 </body>
 </html>

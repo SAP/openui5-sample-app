@@ -14,3 +14,25 @@ server:
   customMiddleware:
     - name: "@ui5/middleware-code-coverage"
       afterMiddleware: compression
+builder:
+  bundles:
+  - bundleDefinition:
+      name: my-custom.js
+      defaultFileTypes:
+      - ".js"
+      - ".json"
+      - ".xml"
+      - ".properties"
+      - ".css"
+      sections:
+      - mode: preload
+        name: my-custom
+        filters:
+        - "!sap/ui/demo/todo/test"
+        - sap/ui/demo/todo/
+        resolve: true
+        resolveConditional: true
+        sort: true
+    bundleOptions:
+      optimize: true
+      usePredefineCalls: true
