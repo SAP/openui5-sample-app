@@ -1,6 +1,7 @@
 /*global QUnit, sinon */
 sap.ui.define([
 	'sap/base/Log',
+	"sap/base/i18n/Localization",
 	'sap/base/i18n/ResourceBundle',
 	"sap/ui/core/Element",
 	'sap/ui/core/library',
@@ -16,9 +17,8 @@ sap.ui.define([
 	'sap/m/Panel',
 	'./AnyView.qunit',
 	'sap/ui/thirdparty/jquery',
-	"sap/ui/core/Configuration",
 	"sap/ui/qunit/utils/nextUIUpdate"
-], function(Log, ResourceBundle, Element, coreLibrary, Controller, View, XMLView, RenderManager, JSONModel, ResourceModel, VerticalLayout, XMLHelper, Button, Panel, testsuite, jQuery, Configuration, nextUIUpdate) {
+], function(Log, Localization, ResourceBundle, Element, coreLibrary, Controller, View, XMLView, RenderManager, JSONModel, ResourceModel, VerticalLayout, XMLHelper, Button, Panel, testsuite, jQuery, nextUIUpdate) {
 	"use strict";
 
 	// shortcut for sap.ui.core.mvc.ViewType
@@ -110,14 +110,14 @@ sap.ui.define([
 	}, /* bCheckViewData = */ true);
 
 
-	var sDefaultLanguage = Configuration.getLanguage();
+	var sDefaultLanguage = Localization.getLanguage();
 
 	QUnit.module("Apply settings", {
 		beforeEach : function () {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function () {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -330,7 +330,7 @@ sap.ui.define([
 
 			// simulate a rendering with a custom RenderManager
 			var oPanelContent = oPanel.getDomRef("content");
-			var rm = sap.ui.getCore().createRenderManager();
+			var rm = new RenderManager().getInterface();
 			rm.renderControl(oView);
 			rm.flush(oPanelContent);
 
@@ -539,7 +539,10 @@ sap.ui.define([
 		});
 	});
 
-	QUnit.test("Directly Nested XMLViews", function(assert) {
+	/**
+	 * @deprecated
+	 */
+	QUnit.test("Directly Nested XMLViews (sync)", function(assert) {
 		sap.ui.require.preload({
 			"nested/views/outer.view.xml":
 				"<View xmlns=\"sap.ui.core.mvc\">" +
@@ -624,8 +627,76 @@ sap.ui.define([
 				assert.notOk(document.getElementById(sId), "there should be no more DOM with id '" + sId + "'");
 			});
 		});
+	});
 
+	QUnit.test("Directly Nested XMLViews (async)", function(assert) {
+		var expectedControls = [
+			"outer",
+				"outer--before",
+				"outer--middle",
+					"outer--middle--before",
+					"outer--middle--vbox",
+						"outer--middle--indirect-inner",
+							"outer--middle--indirect-inner--inside",
+					"outer--middle--direct-inner",
+						"outer--middle--direct-inner--inside",
+					"outer--middle--after",
+				"outer--after"
+		];
 
+		// load and place view, force rendering
+		return XMLView.create({
+			id: "outer",
+			viewName: "example.mvc.outer"
+		}).then(async function(oView) {
+			const oMiddleView = await oView.byId("middle").loaded();
+			await oMiddleView.byId("indirect-inner").loaded();
+			await oMiddleView.byId("direct-inner").loaded();
+
+			oView.placeAt("content");
+			await nextUIUpdate();
+
+			expectedControls.forEach(function(sId) {
+				var oControl = Element.getElementById(sId);
+				assert.ok(oControl, "control with id '" + sId + "' should exist");
+				assert.ok(oControl.getDomRef(), "control with id '" + sId + "' should have DOM");
+			});
+
+			// install delegates on each control to assert later that all have been rendered
+			var count = 0;
+			expectedControls.forEach(function(sId) {
+				var oControl = Element.getElementById(sId);
+				oControl.addDelegate({
+					onBeforeRendering: function() {
+						count += 100;
+					},
+					onAfterRendering: function() {
+						count += 1;
+					}
+				});
+			});
+
+			// Act: force a re-rerendering of the outer view
+			oView.invalidate();
+			await nextUIUpdate();
+
+			// Assert: everythging has been rendered again
+			assert.equal(count, 101 * expectedControls.length, "all controls should have participated in the rendering");
+			expectedControls.forEach(function(sId) {
+				var oControl = Element.getElementById(sId);
+				assert.ok(oControl, "control with id '" + sId + "' should exist");
+				assert.ok(oControl.getDomRef(), "control with id '" + sId + "' should have DOM");
+				assert.notOk(document.getElementById(RenderManager.RenderPrefixes.Dummy + sId), "there should be no more Dummy-Element for id '" + sId + "'");
+				assert.notOk(document.getElementById(RenderManager.RenderPrefixes.Temporary + sId), "there should be no more Temporary-Element for id '" + sId + "'");
+			});
+
+			oView.destroy();
+			expectedControls.forEach(function(sId) {
+				var oControl = Element.getElementById(sId);
+				assert.notOk(oControl, "control with id '" + sId + "' should no longer exist");
+				assert.notOk(document.getElementById(sId), "there should be no more DOM with id '" + sId + "'");
+			});
+		});
 	});
 
 	QUnit.module("Rendering", {

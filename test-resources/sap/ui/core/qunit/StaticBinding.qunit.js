@@ -1,37 +1,35 @@
 /*global QUnit */
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	"sap/ui/base/ManagedObject",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/Control",
 	"sap/ui/model/CompositeBinding",
 	"sap/ui/model/StaticBinding",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/model/type/Float"
-], function(ManagedObject, Configuration, Control, CompositeBinding, StaticBinding, JSONModel, TypeFloat) {
+], function(Localization, ManagedObject, Control, CompositeBinding, StaticBinding, JSONModel, TypeFloat) {
 	"use strict";
 
-	var sDefaultLanguage = Configuration.getLanguage(),
+	var sDefaultLanguage = Localization.getLanguage(),
 		MyObject = ManagedObject.extend("MyObject", {
-		metadata: {
-			properties: {
-				value: {type: "string"},
-				objectValue: {type: "object"},
-				anyValue: {type: "any"}
-			},
-			aggregations: {
-				altString: {type: "sap.ui.core.Control", altTypes: ["string"], multiple: false},
-				altObject: {type: "sap.ui.core.Control", altTypes: ["object"], multiple: false},
-				altMulti: {type: "sap.ui.core.Control", altTypes: ["string", "object"], multiple: false}
+			metadata: {
+				properties: {
+					value: {type: "string"},
+					objectValue: {type: "object"},
+					anyValue: {type: "any"}
+				},
+				aggregations: {
+					altString: {type: "sap.ui.core.Control", altTypes: ["string"], multiple: false}
+				}
 			}
-		}
-	});
+		});
 
 	QUnit.module("sap.ui.model.StaticBinding", {
 		before() {
 			this.__ignoreIsolatedCoverage__ = true;
 		},
 		beforeEach: function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 			this.static = new StaticBinding("test");
 			this.staticWithFormatter = new StaticBinding("test");
 			this.staticWithFormatter.setFormatter(function(sValue) {
@@ -45,7 +43,7 @@ sap.ui.define([
 			this.staticWithFormatter = null;
 			this.staticWithType = null;
 			// reset the language
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -126,26 +124,6 @@ sap.ui.define([
 		assert.equal(object.getAltString(), "test", "object getter returns static value");
 	});
 
-	QUnit.test("Binding info as JS object, aggregation with altType object", function(assert) {
-		var object = new MyObject({
-			altObject: {
-				value: "test"
-			}
-		});
-		assert.notOk(object.getBindingInfo("altObject"), "binding info is not created");
-		assert.equal(typeof object.getAltObject(), "object", "object getter returns object for aggregation with altType object");
-	});
-
-	QUnit.test("Binding info as JS object, aggregation with altType string,object", function(assert) {
-		var object = new MyObject({
-			altMulti: {
-				value: "test"
-			}
-		});
-		assert.notOk(object.getBindingInfo("altMulti"), "binding info is not created");
-		assert.equal(typeof object.getAltMulti(), "object", "object getter returns object for aggregation with altType string,object");
-	});
-
 	QUnit.test("Binding info as string", function(assert) {
 		var object = new MyObject({
 			value: "{value:123}"
@@ -206,4 +184,38 @@ sap.ui.define([
 		// code under test
 		assert.strictEqual(new StaticBinding("~staticValue").getResolvedPath(), undefined);
 	});
+
+/** @deprecated since 1.120, reason ManagedObject does not support aggregations with altType "object" in 2.0 */
+(function() {
+	var MyTestObject = ManagedObject.extend("MyTestObject", {
+			metadata: {
+				aggregations: {
+					altObject: {type: "sap.ui.core.Control", altTypes: ["object"], multiple: false},
+					altMulti: {type: "sap.ui.core.Control", altTypes: ["string", "object"], multiple: false}
+				}
+			}
+		});
+
+	QUnit.test("Binding info as JS object, aggregation with altType object", function(assert) {
+		var object = new MyTestObject({
+				altObject: {
+					value: "test"
+				}
+			});
+		assert.notOk(object.getBindingInfo("altObject"), "binding info is not created");
+		assert.equal(typeof object.getAltObject(), "object",
+			"object getter returns object for aggregation with altType object");
+	});
+
+	QUnit.test("Binding info as JS object, aggregation with altType string,object", function(assert) {
+		var object = new MyTestObject({
+				altMulti: {
+					value: "test"
+				}
+			});
+		assert.notOk(object.getBindingInfo("altMulti"), "binding info is not created");
+		assert.equal(typeof object.getAltMulti(), "object",
+			"object getter returns object for aggregation with altType string,object");
+	});
+}());
 });

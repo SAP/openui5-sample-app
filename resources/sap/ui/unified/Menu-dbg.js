@@ -6,13 +6,16 @@
 
 // Provides control sap.ui.unified.Menu.
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Element',
 	'sap/ui/core/Control',
 	'sap/ui/Device',
 	'sap/ui/core/Popup',
 	'./MenuItemBase',
 	'./library',
+	"sap/ui/core/Core",
 	'sap/ui/core/library',
+	"sap/ui/core/RenderManager",
 	'sap/ui/unified/MenuRenderer',
 	"sap/ui/dom/containsOrEquals",
 	"sap/ui/thirdparty/jquery",
@@ -20,16 +23,18 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/ui/events/ControlEvents",
 	"sap/ui/events/PseudoEvents",
-	"sap/ui/events/checkMouseEnterOrLeave",
-	"sap/ui/core/Configuration"
+	"sap/ui/events/checkMouseEnterOrLeave"
 ], function(
+	Localization,
 	Element,
 	Control,
 	Device,
 	Popup,
 	MenuItemBase,
 	library,
+	oCore,
 	coreLibrary,
+	RenderManager,
 	MenuRenderer,
 	containsOrEquals,
 	jQuery,
@@ -37,8 +42,7 @@ sap.ui.define([
 	Log,
 	ControlEvents,
 	PseudoEvents,
-	checkMouseEnterOrLeave,
-	Configuration
+	checkMouseEnterOrLeave
 ) {
 	"use strict";
 
@@ -61,7 +65,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IContextMenu
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -359,7 +363,7 @@ sap.ui.define([
 		this._itemRerenderTimer = setTimeout(function(){
 			var oDomRef = this.getDomRef();
 			if (oDomRef) {
-				var oRm = sap.ui.getCore().createRenderManager();
+				var oRm = new RenderManager().getInterface();
 				MenuRenderer.renderItems(oRm, this);
 				oRm.flush(oDomRef);
 				oRm.destroy();
@@ -489,7 +493,7 @@ sap.ui.define([
 				this._iY = oEvent.top || 0;
 			}
 
-			bRTL = Configuration.getRTL();
+			bRTL = Localization.getRTL();
 			eDock = Dock;
 
 			if (bRTL) {
@@ -514,7 +518,7 @@ sap.ui.define([
 		iCalcedY = this._iY;
 		iRight = $Window.scrollLeft() + $Window.width();
 		iBottom = $Window.scrollTop() + $Window.height();
-		bRTL = Configuration.getRTL();
+		bRTL = Localization.getRTL();
 		bRecalculate = false;
 		iMenuWidth = $Menu.width();
 		iMenuHeight = $Menu.height();
@@ -871,6 +875,19 @@ sap.ui.define([
 		if (this.oOpenedSubMenu || !this.isOpen()) {
 			return;
 		}
+
+		// Button resets the focus manually to the button in Firefox
+		// but we need the focus to remain in the menu
+		if (Device.os.name == "mac" && Device.browser.firefox && this.isOpen()) {
+			var sControlId = oEvent.relatedControlId,
+				oRelatedControl = sControlId ? oCore.byId(sControlId) : null,
+				bMenuItem = oRelatedControl && oRelatedControl instanceof MenuItemBase;
+			if (oRelatedControl && !bMenuItem) {
+				this.getItems()[0].focus();
+				return;
+			}
+		}
+
 		this.getRootMenu().handleOuterEvent(this.getId(), oEvent); //TBD: standard popup autoclose
 	};
 
@@ -1161,7 +1178,6 @@ sap.ui.define([
 		}
 
 		oMenu.invalidate();
-		oMenu.rerender();
 	};
 
 	Menu.prototype.focus = function(){

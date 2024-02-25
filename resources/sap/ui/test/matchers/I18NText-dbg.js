@@ -3,7 +3,10 @@
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['sap/ui/test/matchers/Matcher', "sap/base/strings/capitalize"], function (Matcher, capitalize) {
+sap.ui.define([
+	"sap/ui/test/matchers/Matcher",
+	"sap/base/strings/capitalize"
+], function (Matcher, capitalize) {
 	"use strict";
 
 	/**
@@ -118,7 +121,8 @@ sap.ui.define(['sap/ui/test/matchers/Matcher', "sap/base/strings/capitalize"], f
 			if (bUseLibraryBundle) {
 				var sLibraryName = oControl.getMetadata().getLibraryName();
 
-				oBundle = sap.ui.getCore().getLibraryResourceBundle(sLibraryName);
+				oBundle = sap.ui.require("sap/ui/test/OpaPlugin")
+					.getLibraryResourceBundle(sLibraryName);
 			} else {
 				oBundle = oModel.getResourceBundle();
 

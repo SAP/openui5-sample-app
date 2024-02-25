@@ -1479,7 +1479,7 @@ sap.ui.define([
 					Promise.resolve(fnOptimisticBatchEnabler(sKey)).then(async (bEnabled) => {
 						if (!bEnabled) {
 							await CacheManager.del(sCachePrefix + sKey);
-							Log.info("optimistic batch: disabled, response deleted", sKey,
+							Log.info("optimistic batch: disabled, batch payload deleted", sKey,
 								sClassName);
 						}
 					}).catch(that.oModelInterface.getReporter());
@@ -1488,9 +1488,8 @@ sap.ui.define([
 				Log.info("optimistic batch: success, response consumed", sKey, sClassName);
 				return oOptimisticBatch.result;
 			}
-			CacheManager.del(sCachePrefix + sKey).then(() => {
-				Log.warning("optimistic batch: mismatch, response skipped", sKey, sClassName);
-			}, this.oModelInterface.getReporter());
+			Log.warning("optimistic batch: mismatch, response skipped", sKey, sClassName);
+			CacheManager.del(sCachePrefix + sKey).catch(this.oModelInterface.getReporter());
 		}
 
 		if (fnOptimisticBatchEnabler) { // 1st app start, or optimistic batch payload did not match
@@ -1748,7 +1747,8 @@ sap.ui.define([
 	 *   A resource path relative to the service URL for which this requestor has been created
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} [oGroupLock]
 	 *   A lock for the group to associate the request with; if no lock is given or its group ID has
-	 *   {@link sap.ui.model.odata.v4.SubmitMode.Direct}, the request is sent immediately; for all
+	 *   {@link sap.ui.model.odata.v4.SubmitMode.Direct}, the request is sent immediately; for group
+	 *   ID "$single" the request is added to the queue but also sent immediately; for all
 	 *   other group ID values, the request is added to the given group and you can use
 	 *   {@link #submitBatch} to send all requests in that group. This group lock will be unlocked
 	 *   immediately, even if the request itself is queued. The request is rejected if the lock is
@@ -1794,9 +1794,11 @@ sap.ui.define([
 	 *   A promise on the outcome of the HTTP request; it will be rejected with an error having the
 	 *   property <code>canceled = true</code> instead of sending a request if
 	 *   <code>oGroupLock</code> is already canceled.
-	 * @throws {Error}
-	 *   If group ID is '$cached'. The error has a property <code>$cached = true</code>
-	 *
+	 * @throws {Error} If
+	 *   <ul>
+	 *     <li>group ID is '$cached'. The error has a property <code>$cached = true</code>
+	 *     <li>group ID is '$single' and there is already an existing batch queue for this group
+	 *   </ul>
 	 * @public
 	 */
 	_Requestor.prototype.request = function (sMethod, sResourcePath, oGroupLock, mHeaders, oPayload,
@@ -1832,6 +1834,9 @@ sap.ui.define([
 		sResourcePath = this.convertResourcePath(sResourcePath);
 		sOriginalResourcePath = sOriginalResourcePath || sResourcePath;
 		if (this.getGroupSubmitMode(sGroupId) !== "Direct") {
+			if (sGroupId === "$single" && this.mBatchQueue[sGroupId]) {
+				throw new Error("Cannot add new request to already existing $single queue");
+			}
 			oPromise = new Promise(function (fnResolve, fnReject) {
 				var aRequests = that.getOrCreateBatchQueue(sGroupId);
 
@@ -1867,8 +1872,12 @@ sap.ui.define([
 
 					aRequests[iChangeSetNo].push(oRequest);
 				}
+				if (sGroupId === "$single") {
+					that.submitBatch("$single");
+				}
 			});
 			oRequest.$promise = oPromise;
+
 			return oPromise;
 		}
 
@@ -2280,9 +2289,9 @@ sap.ui.define([
 	 * @param {function} oModelInterface.reportTransitionMessages
 	 *   A function to report OData transition messages
 	 * @param {function(sap.ui.core.message.Message[],sap.ui.core.message.Message[]):void} oModelInterface.updateMessages
-	 *   A function to report messages to {@link sap.ui.core.Messaging}, expecting two arrays of
-	 *   {sap.ui.core.message.Message} as parameters. The first array should be the old messages and
-	 *   the second array the new messages.
+	 *   A function to report messages to {@link module:sap/ui/core/Messaging}, expecting two arrays
+	 *   of {@link sap.ui.core.message.Message} as parameters. The first array should be the old
+	 *   messages and the second array the new messages.
 	 * @param {object} [mHeaders={}]
 	 *   Map of default headers; may be overridden with request-specific headers; certain
 	 *   OData V4 headers are predefined, but may be overridden by the default or

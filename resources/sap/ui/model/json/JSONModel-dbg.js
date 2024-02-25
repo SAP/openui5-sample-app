@@ -48,7 +48,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.ClientModel
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @public
 	 * @alias sap.ui.model.json.JSONModel
 	 */
@@ -419,7 +419,11 @@ sap.ui.define([
 	 * @private
 	 */
 	JSONModel.prototype._getObject = function (sPath, oContext) {
-		var oNode = this.isLegacySyntax() ? this.oData : null;
+		let oNode = null;
+		/** @deprecated As of version 1.88.0 */
+		if (this.isLegacySyntax()) {
+			oNode = this.oData;
+		}
 		if (oContext instanceof Context) {
 			oNode = this._getObject(oContext.getPath());
 		} else if (oContext != null) {

@@ -5,12 +5,15 @@
  */
 
 // Provides class sap.ui.core.support.plugins.Breakpoint (Breakpoint support Plugin)
-sap.ui.define(['sap/ui/Device', "sap/ui/core/Element", 'sap/ui/core/ElementMetadata', '../Plugin', "sap/base/util/LoaderExtensions", "sap/base/util/ObjectPath"],
-	function(Device, Element, ElementMetadata, Plugin, LoaderExtensions, ObjectPath) {
+sap.ui.define(['sap/ui/Device', "sap/ui/core/Element", 'sap/ui/core/ElementMetadata', '../Plugin', "sap/base/util/LoaderExtensions"],
+	function(Device, Element, ElementMetadata, Plugin, LoaderExtensions) {
 	"use strict";
 
 	/*global alert */
 
+		function getClassObject(sClassName) {
+			return sap.ui.require(sClassName.replace(/\./g, "/"));
+		}
 
 		var Breakpoint = Plugin.extend("sap.ui.core.support.plugins.Breakpoint", {
 
@@ -212,7 +215,7 @@ sap.ui.define(['sap/ui/Device', "sap/ui/core/Element", 'sap/ui/core/ElementMetad
 		Breakpoint.prototype.getClassMethods = function(sClassName) {
 
 			// get class object
-			var oObj = ObjectPath.get(sClassName);
+			var oObj = getClassObject(sClassName);
 			var aMethods = [], sKey;
 
 			if (!oObj) {
@@ -280,7 +283,7 @@ sap.ui.define(['sap/ui/Device', "sap/ui/core/Element", 'sap/ui/core/ElementMetad
 						continue;
 					}
 
-					var oObj = ObjectPath.get(aModules[i]);
+					var oObj = getClassObject(aModules[i]);
 
 					if (typeof (oObj) === 'undefined' || oObj === null) {
 						continue;
@@ -325,7 +328,7 @@ sap.ui.define(['sap/ui/Device', "sap/ui/core/Element", 'sap/ui/core/ElementMetad
 
 		Breakpoint.prototype.changeClassBreakpoint = function(sClassName, sMethodName, bActive, type) {
 
-			var oClass = ObjectPath.get(sClassName);
+			var oClass = getClassObject(sClassName);
 
 			// check if control was found and a method was specified
 			if (!oClass || !sMethodName) {

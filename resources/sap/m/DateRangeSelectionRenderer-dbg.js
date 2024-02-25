@@ -3,8 +3,8 @@
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['sap/ui/core/Renderer', './DatePickerRenderer'],
-	function(Renderer, DatePickerRenderer) {
+sap.ui.define(["sap/ui/core/Lib", 'sap/ui/core/Renderer', './DatePickerRenderer'],
+	function(Library, Renderer, DatePickerRenderer) {
 	"use strict";
 
 
@@ -36,7 +36,7 @@ sap.ui.define(['sap/ui/core/Renderer', './DatePickerRenderer'],
 	DateRangeSelectionRenderer.getAccessibilityState = function(oDP) {
 		var mAccessibilityState = DatePickerRenderer.getAccessibilityState.apply(this, arguments);
 
-		mAccessibilityState["roledescription"] = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_DATERANGEINPUT");
+		mAccessibilityState["roledescription"] = Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_DATERANGEINPUT");
 
 		return mAccessibilityState;
 	};

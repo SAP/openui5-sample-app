@@ -30,7 +30,7 @@ sap.ui.define(
 		 * @extends sap.m.upload.p13n.mediator.BaseMediator
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 * @private
 		 * @experimental
 		 * @internal
@@ -188,7 +188,10 @@ sap.ui.define(
 		FilterMediator.prototype.applyStateToTable = function (oSorters = {}) {
 			const aState = this.getCurrentState(),
 				aFilters = aState.map((oEntry) => new Filter(oEntry.path, oEntry.operator, oEntry.value));
-			this.getControl().getBinding("items").filter(aFilters.length ? new Filter(aFilters, true) : null, FilterType.Control);
+
+			if (this.getControl().getBinding("items")){
+				this.getControl().getBinding("items").filter(aFilters.length ? new Filter(aFilters, true) : null, FilterType.Control);
+			}
 		};
 
 		return FilterMediator;

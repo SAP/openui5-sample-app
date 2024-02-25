@@ -8,61 +8,64 @@
  * Initialization Code and shared classes of library sap.m.
  */
 sap.ui.define([
-	"sap/ui/core/Lib",
-	"sap/ui/Device",
-	"sap/ui/base/DataType",
-	"sap/ui/base/EventProvider",
-	"sap/ui/core/Control",
-	"sap/base/util/ObjectPath",
-	"sap/ui/util/openWindow",
-	// library dependency
-	"sap/ui/core/library",
-	"sap/base/strings/capitalize",
-	"sap/ui/thirdparty/jquery",
-	"sap/base/assert",
-	"sap/base/Log",
-	"sap/base/util/defineLazyProperty",
-	"sap/base/security/encodeCSS",
-	"./AvatarShape",
-	"./AvatarSize",
-	"./AvatarType",
-	"./AvatarColor",
-	"./AvatarImageFitType",
-	"./IllustratedMessageSize",
-	"./IllustratedMessageType",
-	"./upload/UploaderHttpRequestMethod",
-	"sap/ui/core/theming/Parameters",
-	"sap/ui/core/LocaleData",
-	"sap/ui/core/Configuration",
-	"./Support" // referenced here to enable the Support feature
+ "sap/base/i18n/Formatting",
+ "sap/ui/core/Lib",
+ "sap/ui/Device",
+ "sap/ui/base/DataType",
+ "sap/ui/base/EventProvider",
+ "sap/ui/core/Control",
+ "sap/base/util/ObjectPath",
+ "sap/ui/core/Locale",
+ "sap/ui/util/openWindow",
+ // library dependency
+ "sap/ui/core/library",
+ "sap/base/strings/capitalize",
+ "sap/ui/thirdparty/jquery",
+ "sap/base/assert",
+ "sap/base/Log",
+ "sap/base/util/defineLazyProperty",
+ "sap/base/security/encodeCSS",
+ "./AvatarShape",
+ "./AvatarSize",
+ "./AvatarType",
+ "./AvatarColor",
+ "./AvatarImageFitType",
+ "./IllustratedMessageSize",
+ "./IllustratedMessageType",
+ "./upload/UploaderHttpRequestMethod",
+ "sap/ui/core/theming/Parameters",
+ "sap/ui/core/LocaleData",
+ // referenced here to enable the Support feature
+ "./Support"
 ],
 	function(
-	Library,
-	Device,
-	DataType,
-	EventProvider,
-	Control,
-	ObjectPath,
-	openWindow,
-	CoreLibrary,
-	capitalize,
-	jQuery,
-	assert,
-	Log,
-	defineLazyProperty,
-	encodeCSS,
-	AvatarShape,
-	AvatarSize,
-	AvatarType,
-	AvatarColor,
-	AvatarImageFitType,
-	IllustratedMessageSize,
-	IllustratedMessageType,
-	UploaderHttpRequestMethod,
-	Parameters,
-	LocaleData,
-	Configuration
-) {
+	 Formatting,
+	 Library,
+	 Device,
+	 DataType,
+	 EventProvider,
+	 Control,
+	 ObjectPath,
+	 Locale,
+	 openWindow,
+	 CoreLibrary,
+	 capitalize,
+	 jQuery,
+	 assert,
+	 Log,
+	 defineLazyProperty,
+	 encodeCSS,
+	 AvatarShape,
+	 AvatarSize,
+	 AvatarType,
+	 AvatarColor,
+	 AvatarImageFitType,
+	 IllustratedMessageSize,
+	 IllustratedMessageType,
+	 UploaderHttpRequestMethod,
+	 Parameters,
+	 LocaleData
+	) {
 
 	"use strict";
 
@@ -72,13 +75,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		name : "sap.m",
-		version: "1.120.7",
+		version: "1.121.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -123,6 +126,7 @@ sap.ui.define([
 			"sap.m.IBarHTMLTag",
 			"sap.m.IconTabDensityMode",
 			"sap.m.IconTabFilterDesign",
+			"sap.m.IconTabFilterInteractionMode",
 			"sap.m.IconTabHeaderMode",
 			"sap.m.IllustratedMessageSize",
 			"sap.m.IllustratedMessageType",
@@ -159,6 +163,7 @@ sap.ui.define([
 			"sap.m.QuickViewGroupElementType",
 			"sap.m.RatingIndicatorVisualMode",
 			"sap.m.ScreenSize",
+			"sap.m.CarouselScrollMode",
 			"sap.m.SelectColumnRatio",
 			"sap.m.SelectionDetailsActionLevel",
 			"sap.m.SelectListKeyboardNavigationMode",
@@ -174,6 +179,7 @@ sap.ui.define([
 			"sap.m.SwipeDirection",
 			"sap.m.SwitchType",
 			"sap.m.TabsOverflowMode",
+			"sap.m.ContentConfigType",
 			"sap.m.TileSizeBehavior",
 			"sap.m.TimePickerMaskMode",
 			"sap.m.TitleAlignment",
@@ -188,6 +194,7 @@ sap.ui.define([
 			"sap.m.WrappingType",
 			"sap.m.WizardRenderMode",
 			"sap.m.plugins.CopyPreference",
+			"sap.m.plugins.ContextMenuScope",
 			"sap.m.semantic.SemanticRuleSetType",
 			"sap.m.table.columnmenu.Category",
 			"sap.m.upload.UploaderHttpRequestMethod",
@@ -232,7 +239,7 @@ sap.ui.define([
 			"sap.m.ComboBox",
 			"sap.m.ComboBoxTextField",
 			"sap.m.ComboBoxBase",
-			"sap.m.CustomAttribute",
+			"sap.m.TileAttribute",
 			"sap.m.CustomListItem",
 			"sap.m.CustomTile",
 			"sap.m.CustomTreeItem",
@@ -417,6 +424,7 @@ sap.ui.define([
 			"sap.m.ColumnPopoverCustomItem",
 			"sap.m.ColumnPopoverItem",
 			"sap.m.ColumnPopoverSortItem",
+			"sap.m.ContentConfig",
 			"sap.m.DynamicDateOption",
 			"sap.m.DynamicDateValueHelpUIType",
 			"sap.m.FlexItemData",
@@ -2043,6 +2051,26 @@ sap.ui.define([
 	};
 
 	/**
+	 * Defines the rendering type of the TileAttribute
+	 *
+	 * @enum {string}
+	 * @since 1.121
+	 * @private
+	 */
+	thisLib.ContentConfigType = {
+		/**
+		 * Renders a text inside the TileAttribute
+		 * @private
+		 */
+		Text: "Text",
+		/**
+		 * Renders a link inside the TileAttribute
+		 * @private
+		 */
+		Link: "Link"
+	};
+
+	/**
 	 * Describes the behavior of tiles when displayed on a small-screened phone (374px wide and lower).
 	 *
 	 * @enum {string}
@@ -2443,6 +2471,36 @@ sap.ui.define([
 		Vertical : "Vertical"
 
 	};
+
+	/**
+	 * Available Interaction Modes.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @experimental Since 1.121. Behavior might change.
+	 */
+	thisLib.IconTabFilterInteractionMode = {
+
+		/**
+		 * The item is selectable if it has own content. Select event will not be fired if it has no own content.
+		 * Note: When IconTabHeader is placed in ToolHeader the items will act as selectable items even if they don’t explicitly have content.
+		 * @public
+		 */
+		Auto : "Auto",
+
+		/**
+		 * The item is selectable and select event will be fired.
+		 * @public
+		 */
+		Select : "Select",
+
+		/**
+		 * The item is selectable (and select event is fired) only if it doesn't have any sub items. Select event will not be fired if it has sub items.
+		 * @public
+		 */
+		SelectLeavesOnly : "SelectLeavesOnly"
+	};
+
 
 	/**
 	* Determines how the source image is used on the output DOM element.
@@ -4238,6 +4296,28 @@ sap.ui.define([
 	};
 
 	/**
+	 * Defines how pages will be scrolled, when clicking the arrow.
+	 *
+	 * @enum {string}
+	 * @public
+	 */
+	thisLib.CarouselScrollMode = {
+
+		/**
+		 * Pages will be scrolled one at a time
+		 * @public
+		 */
+		SinglePage : "SinglePage",
+
+		/**
+		 * Pages will be scrolled, depending on the value of <code>visiblePagesCount</code>
+		 * @public
+		 */
+		VisiblePages : "VisiblePages"
+
+	};
+
+	/**
 	 * Enumeration for different action levels in sap.m.SelectionDetails control.
 	 *
 	 * @enum {string}
@@ -5021,8 +5101,8 @@ sap.ui.define([
 		 * Wizard rendering mode.
 		 *
 		 * @enum {string}
+		 * @since 1.83
 		 * @public
-		 * @experimental since 1.83
 		 */
 		thisLib.WizardRenderMode = {
 
@@ -5040,7 +5120,7 @@ sap.ui.define([
 		};
 
 	/**
-	 * Enumeration of the <code>ResetAllMode>/code> that can be used in a <code>TablePersoController</code>.
+	 * Enumeration of the <code>ResetAllMode</code> that can be used in a <code>TablePersoController</code>.
 	 * @enum {string}
 	 * @public
 	 */
@@ -5063,6 +5143,26 @@ sap.ui.define([
 		 * @public
 		 */
 		ServiceReset: "ServiceReset"
+	};
+
+	/**
+	 * Enumeration of the <code>SharingMode</code> that can be used in a <code>VariantItem</code>.
+	 * @enum {string}
+	 * @public
+	 */
+	thisLib.SharingMode = {
+
+		/**
+		 * Public mode of the <code>VariantItem</code>.
+		 * @public
+		 */
+		Public: "public",
+
+		/**
+		 * Private mode of the <code>VariantItem</code>.
+		 * @public
+		 */
+		Private: "private"
 	};
 
 	/**
@@ -5123,6 +5223,28 @@ sap.ui.define([
 	};
 
 	/**
+	 * Defines the states of list items when the context menu is opened.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.121
+	 */
+	thisLib.plugins.ContextMenuScope = {
+
+		/**
+		 * The scope is set to the default value where the focus is unaffected by the opening of the context menu.
+		 * @public
+		 */
+		Default: "Default",
+
+		/**
+		 * The focus will be on the clicked item and also on other selected items, if the clicked item is selected.
+		 * @public
+		 */
+		Selection: "Selection"
+	};
+
+	/**
 	 * @deprecated since 1.56 as lazy loading implies sync loading
 	 */
 	(function() {
@@ -5179,7 +5301,7 @@ sap.ui.define([
 	 * @since 1.10
 	 */
 	thisLib.getLocale = function() {
-		var oLocale = Configuration.getFormatSettings().getFormatLocale();
+		var oLocale = new Locale(Formatting.getLanguageTag());
 
 		thisLib.getLocale = function() {
 			return oLocale;

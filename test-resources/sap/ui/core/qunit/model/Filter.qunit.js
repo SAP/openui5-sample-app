@@ -1,30 +1,29 @@
 /* global  QUnit */
 sap.ui.define([
-	"sap/ui/core/Configuration",
+	"sap/base/Log",
+	"sap/base/i18n/Localization",
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator"
-], function(Configuration, Filter, FilterOperator) {
+], function(Log, Localization, Filter, FilterOperator) {
 	"use strict";
 
-	var sDefaultLanguage = Configuration.getLanguage();
+	var sDefaultLanguage = Localization.getLanguage();
 
 	QUnit.module("sap.ui.model.Filter", {
-		before() {
-			this.__ignoreIsolatedCoverage__ = true;
-		},
 		beforeEach : function () {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
+			this.oLogMock = this.mock(Log);
+			this.oLogMock.expects("error").never();
+			this.oLogMock.expects("warning").never();
 		},
 
 		afterEach : function () {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
 	QUnit.test("Filter getters", function (assert) {
-		var bAnd = "~truthy~",
-			bCaseSensitive = "~bCaseSensitive~",
-			fnComparator = function () {},
+		var fnComparator = function () {},
 			sCondition = "condition",
 			aFilters = [new Filter("path2", "operator", "value1")],
 			sOperator = "operator",
@@ -32,27 +31,25 @@ sap.ui.define([
 			fnTest = function () {},
 			sValue1 = "value1",
 			sValue2 = "value2",
-			sVariable = "variable",
-			oFilterInfo = {
-				and : bAnd,
-				caseSensitive : bCaseSensitive,
-				comparator : fnComparator,
-				condition : sCondition,
-				filters : aFilters,
-				operator : sOperator,
-				path : sPath,
-				test : fnTest,
-				value1 : sValue1,
-				value2 : sValue2,
-				variable : sVariable
-			},
-			oFilter = new Filter(oFilterInfo);
+			sVariable = "variable";
 
 		// code under test (object notation of vFilterInfo used in constructor)
+		let oFilter = new Filter({
+			and : "~bAnd",
+			caseSensitive : "~bCaseSensitive~",
+			comparator : fnComparator,
+			condition : sCondition,
+			operator : sOperator,
+			path : sPath,
+			test : fnTest,
+			value1 : sValue1,
+			value2 : sValue2,
+			variable : sVariable
+		});
+
 		assert.strictEqual(oFilter.isAnd(), true);
-		assert.strictEqual(oFilter.isCaseSensitive(), bCaseSensitive);
-		assert.deepEqual(oFilter.getFilters(), aFilters);
-		assert.notStrictEqual(oFilter.getFilters(), aFilters);
+		assert.strictEqual(oFilter.isCaseSensitive(), "~bCaseSensitive~");
+		assert.deepEqual(oFilter.getFilters(), undefined);
 		assert.strictEqual(oFilter.getComparator(), fnComparator);
 		assert.strictEqual(oFilter.getCondition(), sCondition);
 		assert.strictEqual(oFilter.getOperator(), sOperator);
@@ -62,21 +59,52 @@ sap.ui.define([
 		assert.strictEqual(oFilter.getVariable(), sVariable);
 		assert.strictEqual(oFilter.getTest(), fnTest);
 
-		oFilter = new Filter(sPath, sOperator, sValue1, sValue2);
+		// code under test (object notation of vFilterInfo, but with multifilter)
+		oFilter = new Filter({
+			and : "~bAnd",
+			caseSensitive : "~bCaseSensitive~",
+			comparator : fnComparator,
+			condition : sCondition,
+			filters : aFilters,
+			test : fnTest,
+			variable : sVariable
+		});
+
+		assert.strictEqual(oFilter.isAnd(), true);
+		assert.strictEqual(oFilter.isCaseSensitive(), "~bCaseSensitive~");
+		assert.deepEqual(oFilter.getFilters(), aFilters);
+		assert.notStrictEqual(oFilter.getFilters(), aFilters);
+		assert.strictEqual(oFilter.getComparator(), fnComparator);
+		assert.strictEqual(oFilter.getCondition(), sCondition);
+		assert.strictEqual(oFilter.getOperator(), undefined);
+		assert.strictEqual(oFilter.getPath(), undefined);
+		assert.strictEqual(oFilter.getValue1(), undefined);
+		assert.strictEqual(oFilter.getValue2(), undefined);
+		assert.strictEqual(oFilter.getVariable(), sVariable);
+		assert.strictEqual(oFilter.getTest(), fnTest);
 
 		// code under test (non-object notation used in constructor)
+		oFilter = new Filter(sPath, sOperator, sValue1, sValue2);
+
 		assert.strictEqual(oFilter.getPath(), sPath);
 		assert.strictEqual(oFilter.getOperator(), sOperator);
 		assert.strictEqual(oFilter.getValue1(), sValue1);
 		assert.strictEqual(oFilter.getValue2(), sValue2);
 
-		delete oFilterInfo.filters;
-		delete oFilterInfo.and;
-		oFilterInfo.aFilters = aFilters;
-		oFilterInfo.bAnd = 0; // some falsy value
-		oFilter = new Filter(oFilterInfo);
+		// code under test (non-object notation, operator as function)
+		oFilter = new Filter(sPath, fnTest, sValue1, sValue2);
+		assert.strictEqual(oFilter.getOperator(), undefined);
+		assert.strictEqual(oFilter.getTest(), fnTest);
+		assert.strictEqual(oFilter.getPath(), sPath);
+		assert.strictEqual(oFilter.getValue1(), sValue1);
+		assert.strictEqual(oFilter.getValue2(), sValue2);
 
-		// code under test (legacy names used in constructor)
+		// code under test (legacy names bAnd and aFilters used in constructor)
+		oFilter = new Filter({
+			bAnd : 0, // some falsy value,
+			aFilters : aFilters
+		});
+
 		assert.strictEqual(oFilter.isAnd(), false);
 		assert.deepEqual(oFilter.getFilters(), aFilters);
 		assert.notStrictEqual(oFilter.getFilters(), aFilters);
@@ -90,10 +118,43 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("defaultComparator: localeCompare with language tag", function (assert) {
-		var oConfigurationMock = this.mock(Configuration);
+	QUnit.test("Filter construction results in console logs",  function (oFixture) {
+		this.oLogMock.expects("error").withExactArgs("Wrong parameters defined for filter.");
 
-		oConfigurationMock.expects("getLanguageTag").withExactArgs().returns("foo");
+		// code under test: missing path
+		new Filter("EQ", 1);
+
+		this.oLogMock.expects("error").withExactArgs("Filter in aggregation of multi filter has to "
+			+ "be instance of sap.ui.model.Filter");
+
+		// code under test: every multifilter has to be an instance of Filter
+		new Filter({filters : [new Filter("path", FilterOperator.EQ, 42), {/*no Filter*/}]});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("defaultComparator: basics", function (assert) {
+
+		// code under test (less)
+		assert.strictEqual(Filter.defaultComparator(42, 43), -1);
+
+		// code under test (equal)
+		assert.strictEqual(Filter.defaultComparator(42, 42), 0);
+
+		// code under test (greater)
+		assert.strictEqual(Filter.defaultComparator(43, 42), 1);
+
+		// code under test (NaN)
+		assert.ok(Number.isNaN(Filter.defaultComparator(42, null)));
+		assert.ok(Number.isNaN(Filter.defaultComparator(null, 43)));
+		assert.ok(Number.isNaN(Filter.defaultComparator(42, {})));
+		assert.ok(Number.isNaN(Filter.defaultComparator(42, NaN)));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("defaultComparator: localeCompare with language tag", function (assert) {
+		var oLocalizationMock = this.mock(Localization);
+
+		oLocalizationMock.expects("getLanguageTag").withExactArgs().returns("foo");
 		this.mock(String.prototype).expects("localeCompare")
 			.withExactArgs("~b", "foo")
 			.on("~a")
@@ -103,17 +164,17 @@ sap.ui.define([
 		assert.strictEqual(Filter.defaultComparator("~a", "~b"), "bar");
 
 		// Otherwise, the call in "afterEach" leads to an error.
-		oConfigurationMock.verify();
+		oLocalizationMock.verify();
 	});
 
 	//*********************************************************************************************
 	QUnit.test("defaultComparator: localeCompare for different locales", function (assert) {
-		Configuration.setLanguage("de");
+		Localization.setLanguage("de");
 
 		// code under test
 		assert.strictEqual(Filter.defaultComparator("ä", "z"), -1);
 
-		Configuration.setLanguage("sv");
+		Localization.setLanguage("sv");
 
 		// code under test
 		assert.strictEqual(Filter.defaultComparator("ä", "z"), 1);
@@ -125,7 +186,7 @@ sap.ui.define([
 			path: "Order_Details",
 			operator: FilterOperator.Any,
 			variable: "d",
-			condition: new Filter(FilterOperator.EQ, 200)
+			condition: new Filter("path", FilterOperator.EQ, 200)
 		});
 		assert.ok(oFilter.getMetadata().isA("sap.ui.model.Filter"), "Filter created");
 		assert.ok(true, "Filter 'Any' is created without an error");
@@ -145,14 +206,14 @@ sap.ui.define([
 		//"Any" and "All" with legacy syntax
 		assert.throws(
 			function() {
-				return new Filter("test", FilterOperator.Any, "notSupported", new Filter());
+				return new Filter("test", FilterOperator.Any, "notSupported");
 			},
 			new Error(sLegacyAnyAll),
 			"'Any' is not accepted with legacy syntax"
 		);
 		assert.throws(
 			function() {
-				return new Filter("test", FilterOperator.All, "notSupported", new Filter());
+				return new Filter("test", FilterOperator.All, "notSupported");
 			},
 			new Error(sLegacyAnyAll),
 			"'All' is not accepted with legacy syntax"
@@ -758,6 +819,9 @@ sap.ui.define([
 		assert.strictEqual(Filter.NONE.getPath(), "/");
 		assert.strictEqual(typeof Filter.NONE.getTest(), "function");
 		assert.strictEqual(Filter.NONE.getTest()(), false);
+		assert.throws(() => {
+			Filter.NONE.getAST();
+		}, new Error("Unknown operator: undefined"));
 	});
 
 	//*********************************************************************************************
@@ -796,5 +860,32 @@ sap.ui.define([
 		assert.throws(function () {
 			Filter.checkFilterNone([new Filter("path", FilterOperator.EQ, "value"), Filter.NONE]);
 		}, new Error("Filter.NONE cannot be used together with other filters"));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("constructor initializes members for fractional seconds", function (assert) {
+		// code under test
+		const oFilter = new Filter({path : "~path", operator : "~operator", value1 : "~value1"});
+
+		assert.strictEqual(oFilter.sPath, "~path");
+		assert.strictEqual(oFilter.sFractionalSeconds1, undefined);
+		assert.ok(oFilter.hasOwnProperty("sFractionalSeconds1"));
+		assert.strictEqual(oFilter.sFractionalSeconds2, undefined);
+		assert.ok(oFilter.hasOwnProperty("sFractionalSeconds2"));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("appendFractionalSeconds(1|2)", function (assert) {
+		const oFilter = new Filter({path : "~path", operator : "~operator", value1 : "~value1"});
+
+		// code under test
+		oFilter.appendFractionalSeconds1("~f1");
+
+		assert.strictEqual(oFilter.sFractionalSeconds1, "~f1");
+
+		// code under test
+		oFilter.appendFractionalSeconds2("~f2");
+
+		assert.strictEqual(oFilter.sFractionalSeconds2, "~f2");
 	});
 });

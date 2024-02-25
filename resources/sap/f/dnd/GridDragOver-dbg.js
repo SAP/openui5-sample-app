@@ -5,20 +5,20 @@
  */
 
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	"sap/ui/base/Object",
 	"sap/ui/thirdparty/jquery",
 	"sap/base/Log",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/Element"
 ],
-	function(BaseObject, jQuery, Log, Configuration, Element) {
+	function(Localization, BaseObject, jQuery, Log, Element) {
 	"use strict";
 
 	/**
 	 * Handles dragging of a control over a given grid container.
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @extends sap.ui.base.Object
 	 *
@@ -69,7 +69,7 @@ sap.ui.define([
 	 * @param {sap.ui.core.Control} oDragControl The control which is dragged
 	 * @param {sap.ui.core.Control} oDropContainer The drop container
 	 * @param {string} sTargetAggregation The name of the target aggregation inside the drop container
-	 * @param {sap.ui.core.DragSession} oCoreDragSession
+	 * @param {sap.ui.core.dnd.DragSession} oCoreDragSession
 	 * @returns {this} Self for method chaining
 	 */
 	GridDragOver.prototype.setCurrentContext = function (oDragControl, oDropContainer, sTargetAggregation, oCoreDragSession) {
@@ -605,7 +605,7 @@ sap.ui.define([
 		// note: this method can be improved, currently it handles most of the cases, but not all of them
 
 		// try around
-		var bIsRtl = Configuration.getRTL(),
+		var bIsRtl = Localization.getRTL(),
 			iIsRtlModifier = bIsRtl ? -1 : 1,
 			iStepX = 80 * iIsRtlModifier, // px
 			iStepY = 20, // px

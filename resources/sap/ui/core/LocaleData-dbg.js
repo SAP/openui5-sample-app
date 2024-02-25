@@ -7,17 +7,18 @@
 //Provides the locale object sap.ui.core.LocaleData
 sap.ui.define([
 	"./CalendarType",
+	"./Lib",
 	"./Locale",
 	"sap/base/assert",
+	"sap/base/i18n/Formatting",
 	"sap/base/i18n/LanguageTag",
 	"sap/base/i18n/Localization",
 	"sap/base/util/extend",
 	"sap/base/util/LoaderExtensions",
 	"sap/ui/base/Object",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/date/CalendarWeekNumbering"
-], function(CalendarType, Locale, assert, LanguageTag, Localization, extend, LoaderExtensions, BaseObject,
-		Configuration, CalendarWeekNumbering) {
+], function(CalendarType, Lib, Locale, assert, Formatting, LanguageTag, Localization, extend, LoaderExtensions,
+		BaseObject, CalendarWeekNumbering) {
 	"use strict";
 
 	var rCIgnoreCase = /c/i,
@@ -52,7 +53,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @public
 	 * @alias sap.ui.core.LocaleData
 	 */
@@ -1938,8 +1939,8 @@ sap.ui.define([
 		getCalendarWeek: function(sStyle, iWeekNumber) {
 			assert(sStyle == "wide" || sStyle == "narrow" , "sStyle must be wide or narrow");
 
-			var oMessageBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.core", this.oLocale.toString()),
-				sKey = "date.week.calendarweek." + sStyle;
+			const oMessageBundle = Lib.getResourceBundleFor("sap.ui.core", this.oLocale.toString());
+			const sKey = "date.week.calendarweek." + sStyle;
 
 			return oMessageBundle.getText(sKey, iWeekNumber ? [iWeekNumber] : undefined);
 		},
@@ -2470,7 +2471,7 @@ sap.ui.define([
 	 */
 	function getCLDRCalendarName(sCalendarType) {
 		if (!sCalendarType) {
-			sCalendarType = Configuration.getCalendarType();
+			sCalendarType = Formatting.getCalendarType();
 		}
 		return "ca-" + sCalendarType.toLowerCase();
 	}
@@ -2606,7 +2607,7 @@ sap.ui.define([
 	var CustomLocaleData = LocaleData.extend("sap.ui.core.CustomLocaleData", {
 		constructor: function(oLocale) {
 			LocaleData.apply(this, arguments);
-			this.mCustomData = Configuration.getFormatSettings().getCustomLocaleData();
+			this.mCustomData = Formatting.getCustomLocaleData();
 		},
 
 		/**
@@ -2658,10 +2659,10 @@ sap.ui.define([
 
 		/**
 		 * Returns the first day of the week defined by the calendar week numbering algorithm
-		 * set in the configuration, see {@link sap.ui.core.Configuration#setCalendarWeekNumbering}.
-		 * If no specific calendar week numbering algorithm is configured the value set by
-		 * {@link sap.ui.core.Configuration#setFirstDayOfWeek} is returned. Otherwise the first day
-		 * of the week is determined by the current locale, see {@link sap.ui.core.LocaleData#getFirstDayOfWeek}.
+		 * set in the configuration, or if no specific calendar week numbering algorithm is configured, see
+		 * {@link module:sap/base/i18n/Formatting.setCalendarWeekNumbering Formatting.setCalendarWeekNumbering}.
+		 * Otherwise, the first day of the week is determined by the current locale, see
+		 * {@link sap.ui.core.LocaleData#getFirstDayOfWeek}.
 		 *
 		 * Days are encoded as integer where Sunday=0, Monday=1 etc.
 		 *
@@ -2670,7 +2671,7 @@ sap.ui.define([
 		 * @since 1.113.0
 		 */
 		getFirstDayOfWeek: function() {
-			var sCalendarWeekNumbering = Configuration.getCalendarWeekNumbering();
+			var sCalendarWeekNumbering = Formatting.getCalendarWeekNumbering();
 
 			if (sCalendarWeekNumbering === CalendarWeekNumbering.Default) {
 				return LocaleData.prototype.getFirstDayOfWeek.call(this);
@@ -2682,7 +2683,7 @@ sap.ui.define([
 		/**
 		 * Returns the required minimal number of days for the first week of a year defined by the
 		 * calendar week numbering algorithm set in the configuration,
-		 * see {@link sap.ui.core.Configuration#setCalendarWeekNumbering}.
+		 * see {@link module:sap/base/i18n/Formatting.setCalendarWeekNumbering Formatting.setCalendarWeekNumbering}.
 		 * If no specific calendar week numbering algorithm is configured the required minimal number
 		 * of days for the first week of a year is determined by the current locale,
 		 * see {@link sap.ui.core.LocaleData#getMinimalDaysInFirstWeek}.
@@ -2692,7 +2693,7 @@ sap.ui.define([
 		 * @since 1.113.0
 		 */
 		getMinimalDaysInFirstWeek: function() {
-			var sCalendarWeekNumbering = Configuration.getCalendarWeekNumbering();
+			var sCalendarWeekNumbering = Formatting.getCalendarWeekNumbering();
 
 			if (sCalendarWeekNumbering === CalendarWeekNumbering.Default) {
 				return LocaleData.prototype.getMinimalDaysInFirstWeek.call(this);

@@ -12,6 +12,9 @@ sap.ui.define(function() {
 			qunit: {
 				version: 2
 			},
+			coverage: {
+				instrumenter: "istanbul"
+			},
 			sinon: {
 				version: 4,
 				qunitBridge: true,
@@ -23,12 +26,12 @@ sap.ui.define(function() {
 			/**
 			 * @deprecated As of version 1.120
 			 *
-			 * DebugMode.qunit.html is still an HTML page of its own as the debug mode code
+			 * DebugModeSync.qunit.html is still an HTML page of its own as the debug mode code
 			 * wouldn't recognize the bootstrap script in the (dynamically enriched) Test.qunit.html
 			 */
 			"DebugMode (off, sync)": {
 				group: "DebugMode",
-				page: "test-resources/sap/ui/core/qunit/bootstrap/DebugMode.qunit.html?sap-ui-debug=false",
+				page: "test-resources/sap/ui/core/qunit/bootstrap/DebugModeSync.qunit.html?sap-ui-debug=false",
 				title: "Test Page for Debug Mode ({{mode}}, sync)",
 				ui5: {
 					libs: "sap.m"
@@ -42,7 +45,7 @@ sap.ui.define(function() {
 			 */
 			"DebugMode (partial, sync)": {
 				group: "DebugMode",
-				page: "test-resources/sap/ui/core/qunit/bootstrap/DebugMode.qunit.html?sap-ui-debug=sap%2Fm%2FListBase,fixture%2Fdebug-mode%2F",
+				page: "test-resources/sap/ui/core/qunit/bootstrap/DebugModeSync.qunit.html?sap-ui-debug=sap%2Fm%2FListBase,fixture%2Fdebug-mode%2F",
 				title: "Test Page for Debug Mode ({{mode}}, sync)",
 				ui5: {
 					libs: "sap.m"
@@ -56,7 +59,7 @@ sap.ui.define(function() {
 			 */
 			"DebugMode (full, sync)": {
 				group: "DebugMode",
-				page: "test-resources/sap/ui/core/qunit/bootstrap/DebugMode.qunit.html?sap-ui-debug=true",
+				page: "test-resources/sap/ui/core/qunit/bootstrap/DebugModeSync.qunit.html?sap-ui-debug=true",
 				title: "Test Page for Debug Mode ({{mode}}, sync)",
 				ui5: {
 					libs: "sap.m"
@@ -338,6 +341,18 @@ sap.ui.define(function() {
 				},
 				beforeBootstrap: "./CalendarClassLoadingWithCustomBootTask.beforeBootstrap.qunit"
 			},
+			/**
+			 * @deprecated
+			 */
+			"CalendarClassLoadingWithCustomBootTask_legacyAPIs": {
+				group: "Calendar Class",
+				title: "Test Page for Bootstrap with a Custom Boot Task",
+				ui5: {
+					libs: "sap.ui.core"
+				},
+				beforeBootstrap: "./CalendarClassLoadingWithCustomBootTask.beforeBootstrap_legacy.qunit",
+				module: "./CalendarClassLoadingWithCustomBootTask.qunit"
+			},
 			"CalendarClassLoadingWithCustomBootTaskAndPreload": {
 				group: "Calendar Class",
 				title: "Test Page for Bootstrap with a Custom Boot Task",
@@ -347,10 +362,29 @@ sap.ui.define(function() {
 				},
 				beforeBootstrap: "./CalendarClassLoadingWithCustomBootTask.beforeBootstrap.qunit"
 			},
+			/**
+			 * @deprecated
+			 */
+			"CalendarClassLoadingWithCustomBootTaskAndPreload_legacyAPIs": {
+				group: "Calendar Class",
+				title: "Test Page for Bootstrap with a Custom Boot Task",
+				ui5: {
+					libs: "sap.ui.core",
+					preload: "async"
+				},
+				beforeBootstrap: "./CalendarClassLoadingWithCustomBootTask.beforeBootstrap_legacy.qunit",
+				module: "./CalendarClassLoadingWithCustomBootTaskAndPreload.qunit"
+			},
 			"ControlBehavior": {
 				title: "Test Page for ControlBehavior",
-				group: "Configuration"
+				group: "Configuration",
+				coverage: {
+					only: ["sap/ui/core/ControlBehavior"]
+				}
 			},
+			/**
+			 * @deprecated
+			 */
 			"Configuration": {
 				autostart: false,
 				group: "Configuration",
@@ -359,7 +393,10 @@ sap.ui.define(function() {
 					reorder: false
 				}
 			},
-			"ConfigurationFlexibility_LibLoaded": {
+			/**
+			 * @deprecated
+			 */
+			"ConfigurationFlexibility_LibLoaded_legacyAPIs": {
 				autostart: false,
 				group: "Configuration",
 				qunit: {
@@ -369,31 +406,43 @@ sap.ui.define(function() {
 					"flexibilityservices": '[{"connector": "KeyUser", "url": "/some/url", "laverFilters": []}]'
 				}
 			},
-			"ConfigurationFlexibility_LoadLibUrl": {
+			/**
+			 * @deprecated
+			 */
+			"ConfigurationFlexibility_LoadLibUrl_legacyAPIs": {
 				autostart: false,
 				group: "Configuration",
-				page: "test-resources/sap/ui/core/qunit/bootstrap/ConfigurationFlexibility_LibLoaded.qunit.html?sapUiFlexibilityServices=" + encodeURI('[{"connector":"KeyUser","url": "/some/url","laverFilters":[]}]'),
+				page: "test-resources/sap/ui/core/qunit/bootstrap/ConfigurationFlexibility_LibLoaded_legacyAPIs.qunit.html?sapUiFlexibilityServices=" + encodeURI('[{"connector":"KeyUser","url": "/some/url","laverFilters":[]}]'),
 				qunit: {
 					reorder: false
 				}
 			},
-			"ConfigurationFlexibility_LoadLibUrl_SkipAutomatic": {
+			/**
+			 * @deprecated
+			 */
+			"ConfigurationFlexibility_LoadLibUrl_SkipAutomatic_legacyAPIs": {
 				autostart: false,
 				group: "Configuration",
-				page: "test-resources/sap/ui/core/qunit/bootstrap/ConfigurationFlexibility_LibNotLoaded.qunit.html?sapUiXxSkipAutomaticFlLibLoading=true&sapUiFlexibilityServices=" + encodeURI('[{"connector":"KeyUser","url": "/some/url","laverFilters":[]}]'),
+				page: "test-resources/sap/ui/core/qunit/bootstrap/ConfigurationFlexibility_LibNotLoaded_legacyAPIs.qunit.html?sapUiXxSkipAutomaticFlLibLoading=true&sapUiFlexibilityServices=" + encodeURI('[{"connector":"KeyUser","url": "/some/url","laverFilters":[]}]'),
 				qunit: {
 					reorder: false
 				}
 			},
-			"ConfigurationFlexibility_DefaultDoesNotLoadLib": {
+			/**
+			 * @deprecated
+			 */
+			"ConfigurationFlexibility_DefaultDoesNotLoadLib_legacyAPIs": {
 				autostart: false,
 				group: "Configuration",
-				page: "test-resources/sap/ui/core/qunit/bootstrap/ConfigurationFlexibility_LibNotLoaded.qunit.html",
+				page: "test-resources/sap/ui/core/qunit/bootstrap/ConfigurationFlexibility_LibNotLoaded_legacyAPIs.qunit.html",
 				qunit: {
 					reorder: false
 				}
 			},
-			"ConfigurationFlexibility_LibConfigured": {
+			/**
+			 * @deprecated
+			 */
+			"ConfigurationFlexibility_LibConfigured_legacyAPIs": {
 				autostart: false,
 				group: "Configuration",
 				qunit: {
@@ -403,6 +452,9 @@ sap.ui.define(function() {
 					"libs": 'sap.ui.fl'
 				}
 			},
+			/**
+			 * @deprecated
+			 */
 			"Configuration_language_via_URL": {
 				group: "Configuration",
 				qunit: {
@@ -496,6 +548,9 @@ sap.ui.define(function() {
 				beforeBootstrap: "./ThemeVersion.beforeBootstrap.qunit",
 				module: "./ThemeVersion.qunit"
 			},
+			/**
+			 * @deprecated
+			 */
 			"ThemeVersion-off-sync": {
 				group: "Theme Versioning",
 				title: "QUnit Page for Theme Version Parameter - off - sync",

@@ -6,6 +6,7 @@
 
 // Provides control sap.ui.layout.DynamicSideContent.
 sap.ui.define([
+	"sap/ui/core/RenderManager",
 	'sap/ui/thirdparty/jquery',
 	'sap/ui/core/Control',
 	'sap/ui/core/ResizeHandler',
@@ -13,7 +14,7 @@ sap.ui.define([
 	'sap/ui/layout/library',
 	'./DynamicSideContentRenderer'
 ],
-	function(jQuery, Control, ResizeHandler, ScrollEnablement, library, DynamicSideContentRenderer) {
+	function(RenderManager, jQuery, Control, ResizeHandler, ScrollEnablement, library, DynamicSideContentRenderer) {
 		"use strict";
 
 		// shortcut for sap.ui.layout.SideContentPosition
@@ -87,14 +88,16 @@ sap.ui.define([
 		 * side content disappears on screen widths of less than 720 px and can only be
 		 * viewed by triggering it.
 		 *
-		 * <b>Note:</b> If the control that has property sticky inside the <code>DynamicSideContent</code> the stickiness of that control will not work.
-		 * <code>DynamicSideContent</code> has the overflow: auto style definition and this prevents the sticky elements of the control from becoming fixed at the top of the viewport.
+		 * <b>Note:</b> If there is a control that has property <code>sticky</code> inside the
+		 * <code>DynamicSideContent</code> the stickiness of that control will not work.
+		 * <code>DynamicSideContent</code> has the overflow: auto style definition and this prevents
+		 * the sticky elements of the inside controls from becoming fixed at the top of the viewport.
 		 * This applies for example to {@link sap.m.Table} and {@link sap.m.PlanningCalendar}.
 		 *
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -131,14 +134,50 @@ sap.ui.define([
 					sideContentFallDown : {type : "sap.ui.layout.SideContentFallDown", group : "Appearance", defaultValue : SideContentFallDown.OnMinimumWidth},
 
 					/**
-					 * Defines whether the control is in equal split mode. In this mode, the side and the main content
-					 * take 50:50 percent of the container on all screen sizes except for phone, where the main and
-					 * side contents are switching visibility using the toggle method.
+					 * Sets the width of the side content for M breakpoint (screen width <= 1024 px and > 720px).
+					 *
+					 * Setting value to this property overrides the default width of the side content container in M breakpoint,
+					 * except when an <code>equalSplit</code> property is set. The width of the main content container is calculated
+					 * respectively.
+					 *
+					 * @since 1.121
+					 */
+					sideContentWidthM : {type : "sap.ui.core.CSSSize", group : "Appearance", defaultValue : null},
+
+					/**
+					 * Sets the width of the side content for L breakpoint (screen width <= 1440 px and > 1024px).
+					 *
+					 * Setting value to this property overrides the default width of the side content container in L breakpoint,
+					 * except when an <code>equalSplit</code> property is set. The width of the main content container is calculated
+					 * respectively.
+					 *
+					 * @since 1.121
+					 */
+					sideContentWidthL : {type : "sap.ui.core.CSSSize", group : "Appearance", defaultValue : null},
+
+					/**
+					 * Sets the width of the side content for XL breakpoint (screen width > 1440 px).
+					 *
+					 * Setting value to this property overrides the default width of the side content container in XL breakpoint,
+					 * except when an <code>equalSplit</code> property is set. The width of the main content container is calculated
+					 * respectively.
+					 *
+					 * @since 1.121
+					 */
+					sideContentWidthXL : {type : "sap.ui.core.CSSSize", group : "Appearance", defaultValue : null},
+
+					/**
+					 * Defines whether the control is in equal split mode. In this mode, the side and the main content take 50:50 percent
+					 * of the container on all screen sizes except for phone, where the main and side contents are switching visibility
+					 * using the toggle method.
+					 *
+					 * <b>Note:</b> setting this property overrides values set in <code>sideContentWidthM, sideContentWidthL, sideContentWidthXL</code>.
 					 */
 					equalSplit : {type : "boolean", group : "Appearance", defaultValue : false},
 
 					/**
-					 * If set to TRUE, then not the media Query (device screen size) but the size of the container, surrounding the control, defines the current range.
+					 * If set to <code>true</code>, then not the media Query (device screen size) but the size of the container, surrounding the control,
+					 * defines the current range.
 					 */
 					containerQuery : {type : "boolean", group : "Behavior", defaultValue : false},
 
@@ -539,7 +578,7 @@ sap.ui.define([
 		 */
 		DynamicSideContent.prototype._rerenderControl = function (aControls, $domElement) {
 			if (this.getDomRef()) {
-				var oRm = sap.ui.getCore().createRenderManager();
+				var oRm = new RenderManager().getInterface();
 				this.getRenderer().renderControls(oRm, aControls);
 				oRm.flush($domElement[0]);
 				oRm.destroy();
@@ -609,6 +648,7 @@ sap.ui.define([
 			} else if (iWidth > L_XL_BREAKPOINT && this._currentBreakpoint !== XL) {
 				return XL;
 			}
+
 			return this._currentBreakpoint;
 		};
 
@@ -619,11 +659,14 @@ sap.ui.define([
 		 * @param {int} iWidth is the parent container width
 		 */
 		DynamicSideContent.prototype._setBreakpointFromWidth = function (iWidth) {
-			this._currentBreakpoint = this._getBreakPointFromWidth(iWidth);
+			var sNewBreakpoint = this._getBreakPointFromWidth(iWidth),
+				sCurrentBreakpoint = this._currentBreakpoint;
+
+			this._currentBreakpoint = sNewBreakpoint;
 			if (this._bSuppressInitialFireBreakPointChange) {
 				this._bSuppressInitialFireBreakPointChange = false;
 			} else {
-				this.fireBreakpointChanged({currentBreakpoint : this._currentBreakpoint});
+				sNewBreakpoint !== sCurrentBreakpoint && this.fireBreakpointChanged({currentBreakpoint : this._currentBreakpoint});
 			}
 		};
 
@@ -638,9 +681,7 @@ sap.ui.define([
 				this._iWindowWidth = jQuery(window).width();
 			}
 
-			this._currentBreakpoint = this._getBreakPointFromWidth(this._iWindowWidth);
-
-			this._setResizeData(this._currentBreakpoint, this.getEqualSplit());
+			this._setResizeData(this._getBreakPointFromWidth(this._iWindowWidth), this.getEqualSplit());
 			this._changeGridState();
 			this._setBreakpointFromWidth(this._iWindowWidth);
 		};
@@ -749,6 +790,31 @@ sap.ui.define([
 			return ((bSameLine && bBothVisible) || bOneVisible || bFixedSC || bSCNeverShow);
 		};
 
+		/** Gets the width (if any) for the current breakpoint
+		 * @private
+		 * @returns {string} width for the current breakpoint, or empty string if there is no such defined
+		 */
+		DynamicSideContent.prototype._getSideContentWidth = function() {
+			var sWidth,
+				sBreakpoint = this.getCurrentBreakpoint();
+
+			switch (sBreakpoint) {
+				case M:
+						sWidth = this.getSideContentWidthM();
+						break;
+				case L:
+						sWidth = this.getSideContentWidthL();
+						break;
+				case XL:
+						sWidth = this.getSideContentWidthXL();
+						break;
+				default:
+						sWidth = "";
+			}
+
+			return sWidth;
+		};
+
 		/**
 		 * Changes the state of the grid without re-rendering the control.
 		 * Shows and hides the main and side content.
@@ -758,9 +824,11 @@ sap.ui.define([
 			var $sideContent = this.$(SC_GRID_CELL_SELECTOR),
 				$mainContent = this.$(MC_GRID_CELL_SELECTOR),
 				bMainContentVisibleProperty = this.getProperty("showMainContent"),
-				bSideContentVisibleProperty = this.getProperty("showSideContent");
+				bSideContentVisibleProperty = this.getProperty("showSideContent"),
+				bFloat = this._shouldSetHeight(),
+				sSideContentWidth = this._getSideContentWidth();
 
-			if (this._bFixedSideContent) {
+			if (this._bFixedSideContent && !sSideContentWidth) {
 				$sideContent.removeClass().addClass(SC_FIXED_CLASS);
 				$mainContent.removeClass().addClass(MC_FIXED_CLASS);
 			} else {
@@ -769,33 +837,45 @@ sap.ui.define([
 			}
 
 			if (this._SCVisible && this._MCVisible && bSideContentVisibleProperty && bMainContentVisibleProperty) {
-				if (!this._bFixedSideContent) {
+				if (!this._bFixedSideContent && (!sSideContentWidth || this.getEqualSplit())) {
 					$mainContent.removeClass().addClass("sapUiDSCSpan" + this.getProperty("mcSpan"));
 					$sideContent.removeClass().addClass("sapUiDSCSpan" + this.getProperty("scSpan"));
 				}
-				if (this._shouldSetHeight()) {
-					$sideContent.css("height", "100%").css("float", "left");
-					$mainContent.css("height", "100%").css("float", "left");
-				} else {
-					$sideContent.css("height", "auto").css("float", "none");
-					$mainContent.css("height", "auto").css("float", "none");
-				}
+				$mainContent.removeClass(HIDDEN_CLASS);
+				$sideContent.removeClass(HIDDEN_CLASS);
+				$sideContent.css(this._getSideContentStyles(bFloat));
+				$mainContent.css(this._getMainContentStyles(bFloat));
 			} else if (!this._SCVisible && !this._MCVisible) {
 				$mainContent.addClass(HIDDEN_CLASS);
 				$sideContent.addClass(HIDDEN_CLASS);
-			} else if (this._MCVisible && bMainContentVisibleProperty) {
-				$mainContent.removeClass().addClass(SPAN_SIZE_12_CLASS);
+			} else if ((this._MCVisible && bMainContentVisibleProperty) || (!bMainContentVisibleProperty && !bSideContentVisibleProperty)) {
+				$mainContent.removeClass().addClass(SPAN_SIZE_12_CLASS).css("width", "");
 				$sideContent.addClass(HIDDEN_CLASS);
 			} else if (this._SCVisible && bSideContentVisibleProperty) {
-				$sideContent.removeClass().addClass(SPAN_SIZE_12_CLASS);
+				$sideContent.removeClass().addClass(SPAN_SIZE_12_CLASS).css("width", "");
 				$mainContent.addClass(HIDDEN_CLASS);
-			} else if (!bMainContentVisibleProperty && !bSideContentVisibleProperty) {
-				$mainContent.addClass(HIDDEN_CLASS);
-				$sideContent.addClass(HIDDEN_CLASS);
 			}
 
 			$mainContent.addClass("sapUiDSCM");
 			$sideContent.addClass("sapUiDSCS");
+		};
+
+		DynamicSideContent.prototype._getMainContentStyles = function(bFloat) {
+			var sSideContentWidth = this._getSideContentWidth();
+			return {
+				"width": sSideContentWidth && bFloat && !this.getEqualSplit() ? "calc(100% - " + sSideContentWidth + ")" : "",
+				"float": bFloat ? "left" : "none",
+				"height": bFloat ? "100%" : "auto"
+			};
+		};
+
+		DynamicSideContent.prototype._getSideContentStyles = function(bFloat) {
+			var sSideContentWidth = this._getSideContentWidth();
+			return {
+				"width": sSideContentWidth && bFloat && !this.getEqualSplit() ? sSideContentWidth : "",
+				"float": bFloat ? "left" : "none",
+				"height": bFloat ? "100%" : "auto"
+			};
 		};
 
 		/**

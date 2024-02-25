@@ -6,7 +6,6 @@
 
 // Provides control sap.m.MessagePopover.
 sap.ui.define([
-	'sap/ui/core/Core',
 	"./ResponsivePopover",
 	"./Button",
 	"./Toolbar",
@@ -21,10 +20,11 @@ sap.ui.define([
 	"./MessagePopoverRenderer",
 	"sap/base/Log",
 	"sap/ui/base/ManagedObjectObserver",
+	"sap/ui/core/Lib",
+	"sap/ui/core/Messaging",
 	"sap/ui/thirdparty/jquery"
 ],
 function(
-	Core,
 	ResponsivePopover,
 	Button,
 	Toolbar,
@@ -39,6 +39,8 @@ function(
 	MessagePopoverRenderer,
 	Log,
 	ManagedObjectObserver,
+	Library,
+	Messaging,
 	jQuery
 ) {
 		"use strict";
@@ -95,7 +97,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -350,7 +352,7 @@ function(
 			var oPopupControl;
 			this._oOpenByControl = null;
 
-			this._oResourceBundle = Core.getLibraryResourceBundle("sap.m");
+			this._oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 			this._oMessageView = this._initMessageView();
 
@@ -440,7 +442,7 @@ function(
 		MessagePopover.prototype._bindToMessageModel = function() {
 			var that = this;
 
-			this.setModel(Core.getMessageManager().getMessageModel(), "message");
+			this.setModel(Messaging.getMessageModel(), "message");
 
 			this._oMessageItemTemplate = new MessageItem({
 				type: "{message>type}",
@@ -808,7 +810,8 @@ function(
 		};
 
 		["invalidate", "addStyleClass", "removeStyleClass", "toggleStyleClass", "hasStyleClass", "getBusyIndicatorDelay",
-			"setBusyIndicatorDelay", "getVisible", "setVisible", "getBusy", "setBusy"].forEach(function(sName){
+			"setBusyIndicatorDelay", "getVisible", "setVisible", "getBusy", "setBusy", "addCustomData", "getCustomData",
+			"destroyCustomData", "indexOfCustomData", "insertCustomData", "removeAllCustomData", "removeCustomData"].forEach(function(sName){
 			MessagePopover.prototype[sName] = function() {
 				if (this._oPopover && this._oPopover[sName]) {
 					var oPopover = this._oPopover;

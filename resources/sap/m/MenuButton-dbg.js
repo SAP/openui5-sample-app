@@ -11,6 +11,7 @@ sap.ui.define([
 	'./Button',
 	'./SplitButton',
 	'sap/ui/Device',
+	"sap/ui/core/Element",
 	'sap/ui/core/EnabledPropagator',
 	'sap/ui/core/library',
 	'sap/ui/core/Popup',
@@ -23,6 +24,7 @@ sap.ui.define([
 	Button,
 	SplitButton,
 	Device,
+	Element,
 	EnabledPropagator,
 	coreLibrary,
 	Popup,
@@ -58,7 +60,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -293,13 +295,13 @@ sap.ui.define([
 			if (!this._isSplitButton() && this._sDefaultText) {
 				this.setText(this._sDefaultText);
 			} else if (!this.getUseDefaultActionOnly() && this._getLastSelectedItem()) {
-				this.setText(sap.ui.getCore().byId(this._getLastSelectedItem()).getText());
+				this.setText(Element.getElementById(this._getLastSelectedItem()).getText());
 			}
 
 			if (!this._isSplitButton() && this._sDefaultIcon) {
 				this.setIcon(this._sDefaultIcon);
 			} else if (!this.getUseDefaultActionOnly() && this._getLastSelectedItem()) {
-				this.setIcon(sap.ui.getCore().byId(this._getLastSelectedItem()).getIcon());
+				this.setIcon(Element.getElementById(this._getLastSelectedItem()).getIcon());
 			}
 
 			this.invalidate();
@@ -387,8 +389,8 @@ sap.ui.define([
 				return;
 			}
 
-			if (this._bPopupOpen && !oEvent.getParameter("keyboard")) {
-				this.getMenu().close();
+			if (oMenu.isOpen() && !oEvent.getParameter("keyboard")) {
+				oMenu.close();
 				this._bPopupOpen = false;
 				return;
 			}
@@ -465,7 +467,7 @@ sap.ui.define([
 			var sLastSelectedItemId = this._getLastSelectedItem(),
 				oLastSelectedItem;
 			if (!this.getUseDefaultActionOnly() && sLastSelectedItemId) {
-				oLastSelectedItem = sap.ui.getCore().byId(sLastSelectedItemId);
+				oLastSelectedItem = Element.getElementById(sLastSelectedItemId);
 				this.getMenu().fireItemSelected({ item: oLastSelectedItem });
 			} else {
 				this.fireDefaultAction();

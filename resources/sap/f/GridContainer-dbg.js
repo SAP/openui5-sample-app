@@ -11,18 +11,21 @@ sap.ui.define([
 	"./delegate/GridContainerItemNavigation",
 	"./library",
 	"./dnd/GridKeyboardDragAndDrop",
+	"sap/base/i18n/Localization",
 	"sap/base/strings/capitalize",
+	"sap/ui/core/Lib",
+	"sap/ui/core/RenderManager",
 	'sap/ui/core/delegate/ItemNavigation',
 	"sap/ui/base/ManagedObjectObserver",
 	"sap/ui/core/Control",
-	"sap/ui/core/Core",
 	"sap/ui/core/Element",
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/core/InvisibleMessage",
+	"sap/ui/core/Theming",
 	"sap/ui/Device",
 	"sap/ui/events/KeyCodes",
 	"sap/ui/thirdparty/jquery"
-], function (
+], function(
 	GridContainerRenderer,
 	GridContainerSettings,
 	GridContainerUtils,
@@ -30,14 +33,17 @@ sap.ui.define([
 	GridContainerItemNavigation,
 	library,
 	GridKeyboardDragAndDrop,
+	Localization,
 	capitalize,
+	Library,
+	RenderManager,
 	ItemNavigation,
 	ManagedObjectObserver,
 	Control,
-	Core,
 	Element,
 	ResizeHandler,
 	InvisibleMessage,
+	Theming,
 	Device,
 	KeyCodes,
 	jQuery
@@ -171,7 +177,7 @@ sap.ui.define([
 	 * @see {@link sap.f.dnd.GridDropInfo}
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @extends sap.ui.core.Control
 	 *
@@ -247,38 +253,38 @@ sap.ui.define([
 				 *
 				 * <b>Note:</b> It is not possible to reuse the same instance of <code>GridContainerSettings</code> for several layouts. New instance has to be created for each of them. This is caused by the fact that one object can exist in only a single aggregation.
 				 */
-				layout: { type: "sap.f.GridContainerSettings", multiple: false },
+				layout: { type: "sap.f.GridContainerSettings", defaultClass: GridContainerSettings, multiple: false },
 
 				/**
 				 * The sap.f.GridContainerSettings applied for size "XS". Range: up to 374px.
 				 * @experimental As of version 1.71 Disclaimer: this property is in a beta state - incompatible API changes may be done before its official public release. Use at your own discretion.
 				 */
-				layoutXS: { type: "sap.f.GridContainerSettings", multiple: false },
+				layoutXS: { type: "sap.f.GridContainerSettings", defaultClass: GridContainerSettings, multiple: false },
 
 				/**
 				 * The sap.f.GridContainerSettings applied for size "S". Range: 375px - 599px.
 				 */
-				layoutS: { type: "sap.f.GridContainerSettings", multiple: false },
+				layoutS: { type: "sap.f.GridContainerSettings", defaultClass: GridContainerSettings, multiple: false },
 
 				/**
 				 * The sap.f.GridContainerSettings applied for size "M". Range: 600px - 1023px.
 				 */
-				layoutM: { type: "sap.f.GridContainerSettings", multiple: false },
+				layoutM: { type: "sap.f.GridContainerSettings", defaultClass: GridContainerSettings, multiple: false },
 
 				/**
 				 * The sap.f.GridContainerSettings applied for size "L". Range: 1023px - 1439px.
 				 */
-				layoutL: { type: "sap.f.GridContainerSettings", multiple: false },
+				layoutL: { type: "sap.f.GridContainerSettings", defaultClass: GridContainerSettings, multiple: false },
 
 				/**
 				 * The sap.f.GridContainerSettings applied for size "XL". Range: from 1440px.
 				 */
-				layoutXL: { type: "sap.f.GridContainerSettings", multiple: false },
+				layoutXL: { type: "sap.f.GridContainerSettings", defaultClass: GridContainerSettings, multiple: false },
 
 				/**
 				 * Default sap.f.GridContainerSettings
 				 */
-				_defaultLayout: { type: "sap.f.GridContainerSettings", multiple: false, visibility: "hidden" }
+				_defaultLayout: { type: "sap.f.GridContainerSettings", defaultClass: GridContainerSettings, multiple: false, visibility: "hidden" }
 			},
 			associations : {
 
@@ -521,7 +527,7 @@ sap.ui.define([
 			that.addDelegate(this._oItemNavigation);
 		}
 
-		that.$().children().map(function (iIndex, oWrapperItem) {
+		that.$("listUl").children().map(function (iIndex, oWrapperItem) {
 			if (oWrapperItem.getAttribute("class").indexOf("sapFGridContainerItemWrapper") > -1) {
 				aWrapperItemsDomRef.push(oWrapperItem);
 			}
@@ -624,7 +630,7 @@ sap.ui.define([
 	 * @private
 	 */
 	GridContainer.prototype.init = function () {
-		this._oRb  = Core.getLibraryResourceBundle("sap.f");
+		this._oRb  = Library.getResourceBundleFor("sap.f");
 		this.setAggregation("_defaultLayout", new GridContainerSettings());
 
 		this._initRangeSet();
@@ -645,6 +651,10 @@ sap.ui.define([
 		Device.resize.attachHandler(this._resizeDeviceHandler);
 
 		this._resizeItemHandler = this._resizeItem.bind(this);
+
+		this._bThemeApplied = false;
+		this._handleThemeAppliedBound = this._handleThemeApplied.bind(this);
+		Theming.attachApplied(this._handleThemeAppliedBound);
 	};
 
 	/**
@@ -666,15 +676,17 @@ sap.ui.define([
 			return this;
 		}
 
-		var oRm = Core.createRenderManager(),
+		iIndex = Math.max(0, Math.min(iIndex, this.getItems().length - 1));
+
+		var oRm = new RenderManager().getInterface(),
 			oWrapper = this._createItemWrapper(oItem),
-			oNextItem = this._getItemAt(iIndex + 1),
-			oGridRef = this.getDomRef();
+			oGridRef = this.getDomRef("listUl"),
+			oNextItem = oGridRef.children[iIndex];
 
 		if (oNextItem) {
-			oGridRef.insertBefore(oWrapper, GridContainerUtils.getItemWrapper(oNextItem));
+			oGridRef.insertBefore(oWrapper, oNextItem);
 		} else {
-			oGridRef.insertBefore(oWrapper, oGridRef.lastChild);
+			oGridRef.appendChild(oWrapper);
 		}
 
 		oRm.render(oItem, oWrapper);
@@ -686,13 +698,13 @@ sap.ui.define([
 	/**
 	 * Removes an item from the aggregation named <code>items</code>.
 	 *
-	 * @param {int | string | sap.ui.core.Control} vItem The item to remove or its index or ID.
+	 * @param {int | sap.ui.core.ID | sap.ui.core.Control} vItem The item to remove or its index or ID.
 	 * @returns {sap.ui.core.Control|null} The removed item or <code>null</code>.
 	 * @public
 	 */
 	GridContainer.prototype.removeItem = function (vItem) {
 		var oRemovedItem = this.removeAggregation("items", vItem, true),
-			oGridRef = this.getDomRef(),
+			oGridRef = this.getDomRef("listUl"),
 			oItemRef = oRemovedItem.getDomRef();
 
 		if (!oGridRef || !oItemRef) {
@@ -770,6 +782,8 @@ sap.ui.define([
 			clearTimeout(this._checkColumnsTimeout);
 			this._checkColumnsTimeout = null;
 		}
+
+		Theming.detachApplied(this._handleThemeAppliedBound);
 	};
 
 	/**
@@ -856,7 +870,7 @@ sap.ui.define([
 		}
 
 		if (bSettingsAreChanged) {
-			this.$().css(this._getActiveGridStyles());
+			this.$("listUl").css(this._getActiveGridStyles());
 			this.getItems().forEach(this._applyItemAutoRows.bind(this));
 		}
 
@@ -923,7 +937,7 @@ sap.ui.define([
 			return;
 		}
 
-		iMaxColumns = oSettings.getComputedColumnsCount(this.$().innerWidth());
+		iMaxColumns = oSettings.getComputedColumnsCount(this.$("listUl").innerWidth());
 
 		if (!iMaxColumns) {
 			// if the max columns can not be calculated correctly, don't do anything
@@ -934,26 +948,6 @@ sap.ui.define([
 			// if item has more columns than total columns, it brakes the whole layout
 			oItem.$().parent().css("grid-column", "span " + Math.min(getItemColumnCount(oItem), iMaxColumns));
 		});
-	};
-
-	/**
-	 * Gets the item at specified index.
-	 * @param {int} iIndex Which item to get
-	 * @return {sap.ui.core.Control|null} The item at the specified index. <code>null</code> if index is out of range.
-	 */
-	GridContainer.prototype._getItemAt = function (iIndex) {
-		var aItems = this.getItems(),
-			oTarget;
-
-		if (iIndex < 0) {
-			iIndex = 0;
-		}
-
-		if (aItems.length && aItems[iIndex]) {
-			oTarget = aItems[iIndex];
-		}
-
-		return oTarget;
 	};
 
 	/**
@@ -1062,7 +1056,7 @@ sap.ui.define([
 
 		switch (oEvent.keyCode) {
 			case KeyCodes.ARROW_RIGHT:
-				iInsertAt = Core.getConfiguration().getRTL() ? iItemIndex - 1 : iItemIndex + 1;
+				iInsertAt = Localization.getRTL() ? iItemIndex - 1 : iItemIndex + 1;
 
 				if (iInsertAt >= 0 && iInsertAt < iLength) {
 					oCfg = GridContainerUtils.createConfig(this, this.getItems()[iInsertAt]);
@@ -1071,7 +1065,7 @@ sap.ui.define([
 				}
 				break;
 			case KeyCodes.ARROW_LEFT:
-				iInsertAt = Core.getConfiguration().getRTL() ? iItemIndex + 1 : iItemIndex - 1;
+				iInsertAt = Localization.getRTL() ? iItemIndex + 1 : iItemIndex - 1;
 
 				if (iInsertAt >= 0 && iInsertAt < iLength) {
 					oCfg = GridContainerUtils.createConfig(this, this.getItems()[iInsertAt]);
@@ -1166,7 +1160,7 @@ sap.ui.define([
 	 * @ui5-restricted
 	 */
 	GridContainer.prototype.getNavigationMatrix = function () {
-		if (!Core.isThemeApplied()) {
+		if (!this._bThemeApplied) {
 			return null;
 		}
 
@@ -1177,11 +1171,16 @@ sap.ui.define([
 			return aAcc;
 		}, []);
 
-		return GridNavigationMatrix.create(this.getDomRef(), aItemsDomRefs);
+		return GridNavigationMatrix.create(this.getDomRef("listUl"), aItemsDomRefs);
 	};
 
 	GridContainer.prototype._isItemWrapper = function (oElement) {
 		return oElement.classList.contains("sapFGridContainerItemWrapper");
+	};
+
+	GridContainer.prototype._handleThemeApplied = function () {
+		this._bThemeApplied = true;
+		Theming.detachApplied(this._handleThemeAppliedBound);
 	};
 
 	return GridContainer;

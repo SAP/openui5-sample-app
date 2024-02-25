@@ -7,6 +7,7 @@
 // Provides control sap.ui.core.mvc.View.
 sap.ui.define([
 	"sap/base/assert",
+	"sap/base/future",
 	"sap/base/Log",
 	"sap/base/util/extend",
 	"sap/base/util/isEmptyObject",
@@ -21,6 +22,7 @@ sap.ui.define([
 	"./XMLProcessingMode"
 ], function(
 		assert,
+		future,
 		Log,
 		extend,
 		isEmptyObject,
@@ -142,7 +144,7 @@ sap.ui.define([
 	 * The default implementation of this method returns <code>false</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.View
@@ -561,7 +563,7 @@ sap.ui.define([
 							// only 'visible' property can be customized
 							for (var sProperty in oCustomSetting) {
 								if (sProperty !== "visible") {
-									Log.warning("[FUTURE FATAL] Customizing: custom value for property '" + sProperty + "' of control '" + sId + "' in View '" + that.sViewName + "' ignored: only the 'visible' property can be customized.");
+									future.warningThrows("Customizing: custom value for property '" + sProperty + "' of control '" + sId + "' in View '" + that.sViewName + "' ignored: only the 'visible' property can be customized.");
 									delete oCustomSetting[sProperty];
 								}
 							}
@@ -775,7 +777,7 @@ sap.ui.define([
 	 * @deprecated As of version 1.120, please call the corresponding View factory instead, e.g. {@link sap.ui.core.mvc.XMLView.create}
 	 */
 	View.prototype.clone = function(sIdSuffix, aLocalIds) {
-		Log.error("[FUTURE FATAL] Cloning a View and/or using a View as a binding template is deprecated. Please call the corresponding View factory instead, e.g. XMLView.create()");
+		future.errorThrows("Cloning a View and/or using a View as a binding template is deprecated. Please call the corresponding View factory instead, e.g. XMLView.create()");
 
 		var mSettings = {}, sKey, oClone;
 		//Clone properties (only those with non-default value)
@@ -956,7 +958,7 @@ sap.ui.define([
 		if (vPreprocessor) {
 			initGlobalPreprocessorsRegistry(sType, sViewType);
 			if (bOnDemand && onDemandPreprocessorExists(sViewType, sType)) {
-				Log.error("[FUTURE FATAL] Registration for \"" + sType + "\" failed, only one on-demand-preprocessor allowed", this.getMetadata().getName());
+				future.errorThrows("Registration for \"" + sType + "\" failed, only one on-demand-preprocessor allowed", this.getMetadata().getName());
 				return;
 			}
 			View._mPreprocessors[sViewType][sType].push({
@@ -968,7 +970,7 @@ sap.ui.define([
 			Log.debug("Registered " + (bOnDemand ? "on-demand-" : "") + "preprocessor for \"" + sType + "\"" +
 			(bSyncSupport ? " with syncSupport" : ""), this.getMetadata().getName());
 		} else {
-			Log.error("[FUTURE FATAL] Registration for \"" + sType + "\" failed, no preprocessor specified",  this.getMetadata().getName());
+			future.errorThrows("Registration for \"" + sType + "\" failed, no preprocessor specified",  this.getMetadata().getName());
 		}
 	};
 
@@ -1425,6 +1427,7 @@ sap.ui.define([
 	 * can construct the complete UI in this method, or only return the root control and create the remainder of the UI
 	 * lazily later on.
 	 *
+	 * @param {sap.ui.core.mvc.Controller} oController The controller of the view
 	 * @returns {sap.ui.core.Control|sap.ui.core.Control[]|Promise<sap.ui.core.Control|sap.ui.core.Control[]>} A control or array of controls representing the view user interface or a Promise resolving with a control or an array of controls.
 	 * @public
 	 * @name sap.ui.core.mvc.View#createContent

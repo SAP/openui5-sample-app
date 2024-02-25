@@ -13,7 +13,8 @@ sap.ui.define([
 	"sap/m/Illustration",
 	"sap/base/Log",
 	"sap/ui/core/Control",
-	"sap/ui/core/Core",
+	"sap/ui/core/EventBus",
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/thirdparty/jquery",
@@ -26,7 +27,8 @@ sap.ui.define([
 	Illustration,
 	Log,
 	Control,
-	Core,
+	EventBus,
+	Library,
 	coreLibrary,
 	ResizeHandler,
 	jQuery,
@@ -86,7 +88,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -328,7 +330,7 @@ sap.ui.define([
 	IllustratedMessage.prototype.init = function () {
 		this._sLastKnownMedia = null;
 		this._updateInternalIllustrationSetAndType(this.getIllustrationType());
-		Core.getEventBus().subscribe("sapMIllusPool-assetLdgFailed", this._handleMissingAsset.bind(this));
+		EventBus.getInstance().subscribe("sapMIllusPool-assetLdgFailed", this._handleMissingAsset.bind(this));
 	};
 
 	IllustratedMessage.prototype.onBeforeRendering = function () {
@@ -347,7 +349,7 @@ sap.ui.define([
 		this._detachResizeHandlers();
 	};
 
-	/**
+	/*
 	 * GETTERS / SETTERS
 	 */
 
@@ -492,7 +494,7 @@ sap.ui.define([
 	};
 
 	IllustratedMessage.prototype._getResourceBundle = function () {
-		return Core.getLibraryResourceBundle("sap.m");
+		return Library.getResourceBundleFor("sap.m");
 	};
 
 	/**

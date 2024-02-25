@@ -1,114 +1,86 @@
 /*global QUnit, sinon */
 sap.ui.define([
+	"sap/base/i18n/Formatting",
+	"sap/base/i18n/LanguageTag",
+	"sap/base/i18n/Localization",
 	"sap/ui/core/Locale",
+	"sap/ui/core/date/Buddhist",
+	"sap/ui/core/date/_Calendars",
 	"sap/ui/core/date/UniversalDate",
 	"sap/ui/core/date/Gregorian",
 	"sap/ui/core/date/Islamic",
 	"sap/ui/core/date/Japanese",
+	"sap/ui/core/date/Persian",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/CalendarType",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/date/CalendarWeekNumbering"
-], function(Locale, UniversalDate, Gregorian, Islamic, Japanese, UI5Date, CalendarType,
-		Configuration, CalendarWeekNumbering) {
+], function(Formatting, LanguageTag, Localization, Locale, Buddhist, _Calendars, UniversalDate,
+		Gregorian, Islamic, Japanese, Persian, UI5Date, CalendarType, CalendarWeekNumbering) {
 	"use strict";
 
-	const sLanguage = Configuration.getLanguage();
+	const sLanguage = Localization.getLanguage();
 	//next values must not overlap each other!
-	var year = 1400,
-		month = 3,
-		date = 10,
-		hours = 13,
-		minutes = 10,
-		seconds = 1,
-		milliseconds = 110;
-	var testParameter1 = [year, month, date, hours, minutes, seconds, milliseconds], testParameter2 = {};
-	testParameter2[year] = "year";
-	testParameter2[month] = "month";
-	testParameter2[date] = "date";
-	testParameter2[hours] = "hours";
-	testParameter2[minutes] = "minutes";
-	testParameter2[seconds] = "seconds";
-	testParameter2[milliseconds] = "milliseconds";
 
 	QUnit.module("sap.ui.core.date.UniversalDate", {
 		before() {
 			this.__ignoreIsolatedCoverage__ = true;
 		},
 		beforeEach: function () {
-			Configuration.setLanguage("en-US");
-			this.oStubCalendarType = this.stub(Configuration, "getCalendarType");
+			Localization.setLanguage("en-US");
+			this.oStubCalendarType = this.stub(Formatting, "getCalendarType");
 			this.oStubCalendarType.returns(CalendarType.Gregorian);
 			this.dateSpy = this.spy(window, 'Date');
 		},
 		afterEach: function () {
 			this.dateSpy.restore();
-			Configuration.setLanguage(sLanguage);
+			Localization.setLanguage(sLanguage);
 		}
 	});
 
-	QUnit.test("with no arguments", function (assert) {
-		// eslint-disable-next-line no-new
-		new UniversalDate();
-		assert.ok(this.dateSpy.calledOnce, "InnerDate must be instantiated just ones");
-		assert.equal(this.dateSpy.firstCall.args.length, 0, "InnerDate must be instantiated with no arguments");
-	});
+	//*********************************************************************************************
+[
+	[],
+	[0],
+	[2010, 10],
+	[2011, 9, 6],
+	[2011, 9, 6, 14],
+	[2011, 9, 6, 16, 15],
+	[2011, 9, 6, 17, 23, 45],
+	[2011, 9, 6, 18, 45, 57, 931],
+	[2011, 9, 6, 18, 45, 57, 931, "pass", "also", "further", "arguments"],
+	["2011", "9", "6", "18", "45", "57", "931"]
+].forEach((aArguments) => {
+	QUnit.test("constuctor with arguments: " + aArguments, function (assert) {
+		this.mock(UniversalDate).expects("getClass").withExactArgs().returns("~clDate");
+		const oResult = {};
+		this.mock(UniversalDate.prototype)
+			.expects("createDate") // constructor properly forwards arguments to #createDate
+			.withExactArgs("~clDate", sinon.match((oArguments) => {
+				assert.deepEqual(Array.from(oArguments), aArguments);
+				return true;
+			}))
+			.returns(oResult);
 
-	QUnit.test("with value parameter (timestamp)", function (assert) {
-		// eslint-disable-next-line no-new
-		new UniversalDate(1000);
-		assert.ok(this.dateSpy.calledOnce, "InnerDate must be instantiated just ones");
-		assert.equal(this.dateSpy.firstCall.args.length, 1, "Wrapped date must be instantiated with just one argument");
-		assert.equal(this.dateSpy.firstCall.args[0], 1000, "Wrapped date must be instantiated with singe argument with particular value");
+		// code under test
+		assert.strictEqual(new UniversalDate(...aArguments), oResult);
 	});
+});
 
-	QUnit.test("with all 7 parameters", function (assert) {
-		// eslint-disable-next-line no-new
-		new UniversalDate(year, month, date, hours, minutes, seconds, milliseconds);
-		check.call(this, assert, 7);
-	});
-
-	QUnit.test("with 6 parameters", function (assert) {
-		// eslint-disable-next-line no-new
-		new UniversalDate(year, month, date, hours, minutes, seconds);
-		check.call(this, assert, 6);
-	});
-
-	QUnit.test("with 5 parameters", function (assert) {
-		// eslint-disable-next-line no-new
-		new UniversalDate(year, month, date, hours, minutes);
-		check.call(this, assert, 5);
-	});
-
-	QUnit.test("with 4 parameters", function (assert) {
-		// eslint-disable-next-line no-new
-		new UniversalDate(year, month, date, hours);
-		check.call(this, assert, 4);
-	});
-
-	QUnit.test("with 3 parameters", function (assert) {
-		// eslint-disable-next-line no-new
-		new UniversalDate(year, month, date);
-		check.call(this, assert, 3);
-	});
-
-	QUnit.test("with 2 parameters", function (assert) {
-		// eslint-disable-next-line no-new
-		new UniversalDate(year, month);
-		check.call(this, assert, 2);
-	});
-
+	//*********************************************************************************************
 	QUnit.test("getClass", function(assert) {
-		var oClass;
+		this.oStubCalendarType.restore(); // Formatting already stubed
 
-		oClass = UniversalDate.getClass(CalendarType.Gregorian);
-		assert.equal(oClass, Gregorian, "getClass returns correct class object");
+		this.mock(Formatting).expects("getCalendarType").withExactArgs().returns("defaultCalendar");
+		const oCalendarsMock = this.mock(_Calendars);
+		oCalendarsMock.expects("get").withExactArgs("defaultCalendar").returns("~defaultCalendarClass");
 
-		oClass = UniversalDate.getClass(CalendarType.Islamic);
-		assert.equal(oClass, Islamic, "getClass returns correct class object");
+		// code under test
+		assert.strictEqual(UniversalDate.getClass(), "~defaultCalendarClass");
 
-		oClass = UniversalDate.getClass(CalendarType.Japanese);
-		assert.equal(oClass, Japanese, "getClass returns correct class object");
+		oCalendarsMock.expects("get").withExactArgs("otherCalendar").returns("~otherCalendarClass");
+
+		// code under test
+		assert.strictEqual(UniversalDate.getClass("otherCalendar"), "~otherCalendarClass");
 	});
 
 	QUnit.test("getInstance creates UI5Date", function(assert) {
@@ -172,32 +144,23 @@ sap.ui.define([
 
 	});
 
-	QUnit.test("determineType with Gregorian calendar", function (assert) {
-		this.oStubCalendarType.returns(CalendarType.Gregorian);
-		const spy = this.spy(sap.ui.core.date, 'Gregorian');
-		const oUniversalDate = new UniversalDate();
-		assert.ok(1, spy.callCount, "sap.ui.core.date.Gregorian must be instantiated just ones");
-		assert.ok(oUniversalDate instanceof Gregorian, "Date object must be instance of Gregorian");
-		assert.equal(oUniversalDate.getCalendarType(), CalendarType.Gregorian, "Universal date must report correct calendarType");
-	});
+[
+	{sCalendarType : CalendarType.Buddhist, oTypeClass : Buddhist},
+	{sCalendarType : CalendarType.Gregorian, oTypeClass : Gregorian},
+	{sCalendarType : CalendarType.Islamic, oTypeClass : Islamic},
+	{sCalendarType : CalendarType.Japanese, oTypeClass : Japanese},
+	{sCalendarType : CalendarType.Persian, oTypeClass : Persian}
+].forEach((oFixture) => {
+	QUnit.test("determine type via calendar (integrative test): " + oFixture.sCalendarType, function (assert) {
+		this.oStubCalendarType.returns(oFixture.sCalendarType);
 
-	QUnit.test("determineType with Islamic calendar", function (assert) {
-		this.oStubCalendarType.returns(CalendarType.Islamic);
-		const spy = this.spy(sap.ui.core.date, 'Islamic');
+		// code under test
 		const oUniversalDate = new UniversalDate();
-		assert.ok(1, spy.callCount, "sap.ui.core.date.Islamic must be instantiated just ones");
-		assert.ok(oUniversalDate instanceof Islamic, "Date object must be instance of Islamic");
-		assert.equal(oUniversalDate.getCalendarType(), CalendarType.Islamic, "Universal date must report correct calendarType");
-	});
 
-	QUnit.test("determineType with Japanese calendar", function (assert) {
-		this.oStubCalendarType.returns(CalendarType.Japanese);
-		const spy = this.spy(sap.ui.core.date, 'Japanese');
-		const oUniversalDate = new UniversalDate();
-		assert.ok(1, spy.callCount, "sap.ui.core.date.Japanese must be instantiated just ones");
-		assert.ok(oUniversalDate instanceof Japanese, "Date object must be instance of Japanese");
-		assert.equal(oUniversalDate.getCalendarType(), CalendarType.Japanese, "Universal date must report correct calendarType");
+		assert.ok(oUniversalDate instanceof oFixture.oTypeClass, "is right class");
+		assert.strictEqual(oUniversalDate.getCalendarType(), oFixture.sCalendarType, "reports right type");
 	});
+});
 
 	//*********************************************************************************************
 [
@@ -309,7 +272,7 @@ sap.ui.define([
 	QUnit.test("setWeek/setUTCWeek", function (assert) {
 		this.dateSpy.restore();
 
-		Configuration.setLanguage("de-DE");
+		Localization.setLanguage("de-DE");
 		var oWeekObject = new UniversalDate(2023,0,1);
 		// ISO 8601 (de)
 		oWeekObject.setWeek({week: 0, year: 2021});
@@ -429,7 +392,6 @@ sap.ui.define([
 		this.dateSpy.restore();
 
 		let oWeekObject;
-		const oFormatSettings = Configuration.getFormatSettings();
 		const aFixtures = [
 			{
 				oInputDate: new UniversalDate(2020, 11, 21),
@@ -476,7 +438,7 @@ sap.ui.define([
 		// CW01 2020-12-27 - 2021-01-02 ({year:2021, week: 0})
 		// CW02 2021-01-03 - 2021-01-09 ({year:2021, week: 1})
 		// Note: function getWeek returns the calendar week index which starts at 0
-		const oGetFormatLocaleStub = this.stub(oFormatSettings, "getFormatLocale").returns(new Locale("en"));
+		const oGetFormatLocaleStub = this.stub(Formatting, "getLanguageTag").returns(new LanguageTag("en"));
 		aFixtures.forEach(function(oFixture) {
 			oWeekObject = oFixture.oInputDateUTC.getUTCWeek();
 			assert.equal(oWeekObject.year, oFixture.iExpectedYear, "Calendar 'week year' should be " + oFixture.iExpectedYear + ".");
@@ -527,7 +489,6 @@ sap.ui.define([
 		this.dateSpy.restore();
 
 		let oWeekObject;
-		const oFormatSettings = Configuration.getFormatSettings();
 		const aLocales = [
 			{ language: "de", region: null },
 			{ language: "en", region: "GB" }
@@ -580,7 +541,7 @@ sap.ui.define([
 		// Note: function getWeek returns the calendar week index which starts at 0
 		aLocales.forEach(function(oLocale) {
 			const sLocaleId = oLocale.region ? oLocale.language + "-" + oLocale.region : oLocale.language;
-			const oGetFormatLocaleStub = this.stub(oFormatSettings, "getFormatLocale").returns(new Locale(sLocaleId));
+			const oGetFormatLocaleStub = this.stub(Formatting, "getLanguageTag").returns(new LanguageTag(sLocaleId));
 
 
 			aFixtures.forEach(function(oFixture) {
@@ -671,17 +632,17 @@ sap.ui.define([
 });
 
 	QUnit.test("getWeekByDate/getFirstDateOfWeek", function (assert) {
-		var oConfigurationMock = this.mock(Configuration);
+		var oFormattingMock = this.mock(Formatting);
 
 		this.dateSpy.restore();
 
 		// de (ISO 8601 from Configuration)
-		oConfigurationMock.expects("getCalendarWeekNumbering").withExactArgs().returns(CalendarWeekNumbering.ISO_8601);
+		oFormattingMock.expects("getCalendarWeekNumbering").withExactArgs().returns(CalendarWeekNumbering.ISO_8601);
 		assert.deepEqual(UniversalDate.getWeekByDate("Gregorian", 2021, 11, 27, new Locale("de")), {
 			"week": 51,
 			"year": 2021
 		});
-		oConfigurationMock.expects("getCalendarWeekNumbering").withExactArgs().returns(CalendarWeekNumbering.ISO_8601);
+		oFormattingMock.expects("getCalendarWeekNumbering").withExactArgs().returns(CalendarWeekNumbering.ISO_8601);
 		assert.deepEqual(UniversalDate.getFirstDateOfWeek("Gregorian", 2021, 51, new Locale("de")), {
 			"day": 27,
 			"month": 11,
@@ -730,12 +691,52 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("createDate: Date class", function (assert) {
-		this.mock(UI5Date).expects("getInstance").withExactArgs("~param0", "~param1").returns("~ui5Date");
+[
+	[],
+	[0],
+	[2010, 10],
+	[2011, 9, 6],
+	[2011, 9, 6, 14],
+	[2011, 9, 6, 16, 15],
+	[2011, 9, 6, 17, 23, 45],
+	[2011, 9, 6, 18, 45, 57, 931],
+	[2011, 9, 6, 18, 45, 57, 931, "pass", "also", "further", "arguments"],
+	["2011", "9", "6", "18", "45", "57", "931"]
+].forEach((aArguments) => {
+	QUnit.test("createDate: passing " + aArguments + " to UIDate.getInstance", function (assert) {
+		this.mock(UI5Date).expects("getInstance").withExactArgs(...aArguments).returns("~ui5Date");
 
 		// code under test
-		assert.strictEqual(UniversalDate.prototype.createDate(Date, ["~param0", "~param1"]), "~ui5Date");
+		assert.strictEqual(UniversalDate.prototype.createDate(Date, aArguments), "~ui5Date");
 	});
+});
+
+	//*********************************************************************************************
+[
+	[],
+	[0],
+	[2010, 10],
+	[2011, 9, 6],
+	[2011, 9, 6, 14],
+	[2011, 9, 6, 16, 15],
+	[2011, 9, 6, 17, 23, 45],
+	[2011, 9, 6, 18, 45, 57, 931],
+	[2011, 9, 6, 18, 45, 57, 931, "pass", "also", "further", "arguments"],
+	["2011", "9", "6", "18", "45", "57", "931"]
+].forEach((aArguments) => {
+	QUnit.test("createDate: passing " + aArguments + " to given constructor", function (assert) {
+		let bSuccess = false;
+		function TestDateClass () {
+			assert.deepEqual(Array.from(arguments), aArguments);
+			bSuccess = true;
+		}
+
+		// code under test
+		UniversalDate.prototype.createDate(TestDateClass, aArguments);
+
+		assert.ok(bSuccess);
+	});
+});
 
 	//*********************************************************************************************
 	QUnit.test("getCurrentEra", function (assert) {
@@ -756,14 +757,5 @@ sap.ui.define([
 		// code under test
 		assert.strictEqual(UniversalDate.getCurrentEra("~sCalendarType"), "~era");
 	});
-
-	//--- helpers ----------------------------------------------------------------------------------------------
-	function check(assert, iArgsCount) {
-		assert.ok(this.dateSpy.callCount, 1, "InnerDate must be instantiated just ones");
-		assert.equal(this.dateSpy.firstCall.args.length, iArgsCount, "Wrapped date must be instantiated with certain amount of arguments");
-		for (var i = 0; i < iArgsCount; i++) {
-			assert.equal(this.dateSpy.firstCall.args[i], testParameter1[i], "Wrapped date arguments:" + testParameter2[testParameter1[i]]);
-		}
-	}
 
 });

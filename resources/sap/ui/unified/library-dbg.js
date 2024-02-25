@@ -8,16 +8,18 @@
  * Initialization Code and shared classes of library sap.ui.unified.
  */
 sap.ui.define([
-	'sap/ui/core/Core',
-	'sap/ui/base/Object',
-	"./ColorPickerDisplayMode",
-	"./FileUploaderHttpRequestMethod",
-	'sap/ui/core/library'
+ 'sap/ui/core/Core',
+ 'sap/ui/base/Object',
+ "./ColorPickerDisplayMode",
+ "./FileUploaderHttpRequestMethod",
+ "sap/ui/core/RenderManager",
+ 'sap/ui/core/library'
 ], function(
-	Core,
-	BaseObject,
-	ColorPickerDisplayMode,
-	FileUploaderHttpRequestMethod
+ Core,
+ BaseObject,
+ ColorPickerDisplayMode,
+ FileUploaderHttpRequestMethod,
+ RenderManager
 ) {
 
 	"use strict";
@@ -28,13 +30,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.unified
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.28
 	 * @public
 	 */
 	var thisLib = sap.ui.getCore().initLibrary({
 		name : "sap.ui.unified",
-		version: "1.120.7",
+		version: "1.121.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/ui/unified/designtime/library.designtime",
 		types: [
@@ -117,10 +119,17 @@ sap.ui.define([
 		None : "None",
 
 		/**
-		 * Non-working dates.
+		 * Non-working days.
 		 * @public
+		 * @since 1.121
 		 */
 		NonWorking : "NonWorking",
+
+		/**
+		 * Working days.
+		 * @public
+		 */
+		Working : "Working",
 
 		/**
 		 * The semantic meaning must be defined by the app. It can be displayed in a legend.
@@ -554,7 +563,7 @@ sap.ui.define([
 			this._id = sContentContainerId;
 			this._cntnt = oContent;
 			this._ctrl = oControl;
-			this._rm = sap.ui.getCore().createRenderManager();
+			this._rm = new RenderManager().getInterface();
 			this._cb = fAfterRenderCallback || function(){};
 		},
 

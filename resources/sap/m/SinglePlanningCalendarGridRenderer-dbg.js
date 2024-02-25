@@ -5,27 +5,29 @@
  */
 
 sap.ui.define([
+	"sap/base/i18n/Localization",
+	"sap/ui/core/Element",
 	'sap/ui/unified/calendar/CalendarDate',
 	'sap/ui/unified/calendar/CalendarUtils',
 	'sap/ui/core/date/UniversalDate',
-	'sap/ui/core/IconPool',
+	'sap/ui/core/IconPool', // side effect: required when calling RenderManager#icon
 	'sap/ui/core/InvisibleText',
 	'./PlanningCalendarLegend',
 	'sap/ui/unified/library',
-	'sap/ui/core/Configuration',
 	"sap/ui/core/date/UI5Date"
-	],
+],
 	function(
+		Localization,
+		Element,
 		CalendarDate,
 		CalendarUtils,
 		UniversalDate,
-		IconPool,
+		_IconPool,
 		InvisibleText,
 		PlanningCalendarLegend,
 		unifiedLibrary,
-		Configuration,
 		UI5Date
-		) {
+	) {
 		"use strict";
 
 		var iVerticalPaddingBetweenAppointments = 0.125;
@@ -93,7 +95,7 @@ sap.ui.define([
 				if (aDayTypes && aDayTypes[0]) {
 					oType = aDayTypes[0];
 					oRm.class("sapUiCalItem" + oType.type);
-					sLegendItemType = PlanningCalendarLegend.findLegendItemForItem(sap.ui.getCore().byId(oControl._sLegendId), oType);
+					sLegendItemType = PlanningCalendarLegend.findLegendItemForItem(Element.getElementById(oControl._sLegendId), oType);
 				}
 
 				oRm.class("sapMSpecialDaysInDayView");
@@ -208,7 +210,7 @@ sap.ui.define([
 				mAccProps = {
 					role: "listitem",
 					labelledby: {
-						value: InvisibleText.getStaticId("sap.ui.unified", "APPOINTMENT"),
+						value: InvisibleText.getStaticId("sap.ui.unified", "CALENDAR_ALL_DAY_PREFIX"),
 						append: true
 					},
 					// Prevents aria-selected from being added on the Blocker appointment
@@ -217,7 +219,7 @@ sap.ui.define([
 				aAriaLabels = oControl.getAriaLabelledBy(),
 				iLeftPosition = iStartDayDiff * (100 / iColumns),
 				iRightPosition = (iColumns - iEndDayDiff - 1) * (100 / iColumns),
-				bIsRTL = Configuration.getRTL(),
+				bIsRTL = Localization.getRTL(),
 				aClasses;
 
 			if (aAriaLabels.length > 0) {
@@ -258,7 +260,7 @@ sap.ui.define([
 				oRm.class("sapUiCalendarApp" + sType);
 			}
 			if (sColor) {
-				if (Configuration.getRTL()) {
+				if (Localization.getRTL()) {
 					oRm.style("border-right-color", sColor);
 				} else {
 					oRm.style("border-left-color", sColor);
@@ -325,7 +327,7 @@ sap.ui.define([
 				oRm.icon("sap-icon://arrow-right", aClasses, { title: null, role: "img" });
 			}
 
-			oRm.openStart("span", sId + "-Descr");
+			oRm.openStart("span", sId  + "-Descr");
 			oRm.class("sapUiInvisibleText");
 			oRm.openEnd(); // span element
 			oRm.text(oControl._getAppointmentAnnouncementInfo(oBlocker));
@@ -406,7 +408,7 @@ sap.ui.define([
 					oRm.class("sapMSinglePCColumnToday");
 				}
 
-				if (CalendarUtils._isWeekend(oColumnCalDate, oControl._getCoreLocaleData()) || oControl._isNonWorkingDay(oColumnCalDate)) {
+				if (oControl._isNonWorkingDay(oColumnCalDate)) {
 					oRm.class("sapMSinglePCColumnWeekend");
 				}
 
@@ -542,14 +544,14 @@ sap.ui.define([
 			}
 
 			if (sTitle) {
-				mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + sId + "-Title";
+				mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + sId + "-" + iColumn + "_" + iIndex + "-Title";
 			}
 
 			// Put start/end information after the title
-			mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + sId + "-Descr";
+			mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + sId + "-" + iColumn + "_" + iIndex + "-Descr";
 
 			if (sText) {
-				mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + sId + "-Text";
+				mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + sId + "-" + iColumn + "_" + iIndex + "-Text";
 			}
 
 			if (oAppointment.getTentative()) {
@@ -578,7 +580,7 @@ sap.ui.define([
 				oRm.class("sapUiCalendarApp" + sType);
 			}
 			if (sColor) {
-				if (Configuration.getRTL()) {
+				if (Localization.getRTL()) {
 					oRm.style("border-right-color", sColor);
 				} else {
 					oRm.style("border-left-color", sColor);
@@ -586,7 +588,7 @@ sap.ui.define([
 			}
 			oRm.style("top", iAppTop + "rem");
 			oRm.style("bottom", iAppBottom + "rem");
-			oRm.style(Configuration.getRTL() ? "right" : "left", iAppChunkWidth * iAppointmentLevel + "%");
+			oRm.style(Localization.getRTL() ? "right" : "left", iAppChunkWidth * iAppointmentLevel + "%");
 			oRm.style("width", iAppChunkWidth * iAppointmentWidth + "%"); // TODO: take into account the levels
 			oRm.openEnd();
 
@@ -661,7 +663,7 @@ sap.ui.define([
 			oRm.openEnd();
 
 			if (sTitle) {
-				oRm.openStart("span", sId + "-Title");
+				oRm.openStart("span", sId + "-" + iColumn + "_" + iIndex + "-Title");
 				oRm.class("sapUiCalendarAppTitle");
 				oRm.openEnd(); // span element
 				oRm.text(sTitle, true);
@@ -669,7 +671,7 @@ sap.ui.define([
 			}
 
 			if (sText) {
-				oRm.openStart("span", sId + "-Text");
+				oRm.openStart("span", sId + "-" + iColumn + "_" + iIndex + "-Text");
 				oRm.class("sapUiCalendarAppText");
 				oRm.openEnd(); // span element
 				oRm.text(sText, true);
@@ -695,7 +697,7 @@ sap.ui.define([
 			// 	sAriaText = sAriaText + "; " + this.getAriaTextForType(sType, aTypes);
 			// }
 
-			oRm.openStart("span", sId + "-Descr");
+			oRm.openStart("span", sId + "-" + iColumn + "_" + iIndex + "-Descr");
 			oRm.class("sapUiInvisibleText");
 			oRm.openEnd(); // span element
 			oRm.text(oControl._getAppointmentAnnouncementInfo(oAppointment));

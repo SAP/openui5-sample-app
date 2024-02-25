@@ -7,14 +7,16 @@
 sap.ui.define([
 	"./library",
 	"sap/ui/core/Control",
+	"sap/ui/core/Element",
 	"sap/ui/core/InvisibleText",
 	"./WizardStepRenderer",
 	"./Button",
 	"./TitlePropagationSupport",
 	"sap/base/Log",
+	"sap/ui/core/Lib",
 	"sap/ui/core/library"
 ],
-	function(library, Control, InvisibleText, WizardStepRenderer, Button, TitlePropagationSupport, Log, coreLibrary) {
+	function(library, Control, Element, InvisibleText, WizardStepRenderer, Button, TitlePropagationSupport, Log, Library, coreLibrary) {
 
 	"use strict";
 
@@ -40,7 +42,7 @@ sap.ui.define([
 	 * <li>If the execution needs to branch after a given step, you should set all possible next steps in the <code>subsequentSteps</code> aggregation.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -90,15 +92,11 @@ sap.ui.define([
 				 * This event is fired after the user presses the Next button in the Wizard,
 				 * or on <code>nextStep</code> method call from the app developer.
 				 */
-				complete: {
-					parameters: {}
-				},
+				complete: {},
 				/**
 				 * This event is fired on next step activation from the Wizard.
 				 */
-				activate: {
-					parameters: {}
-				}
+				activate: {}
 			},
 			defaultAggregation: "content",
 			aggregations: {
@@ -141,7 +139,7 @@ sap.ui.define([
 	TitlePropagationSupport.call(WizardStep.prototype, "content", function () {return this.getId() + "-title";});
 
 	WizardStep.prototype.init = function () {
-		this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oResourceBundle = Library.getResourceBundleFor("sap.m");
 		this._oNumberInvisibleText = new InvisibleText({id: this.getId() + "-NumberedTitle"}).toStatic();
 
 		this._createNextButton();
@@ -263,11 +261,11 @@ sap.ui.define([
 
 	WizardStep.prototype._getNextStepReference = function () {
 		if (this.getNextStep() !== null) {
-			return sap.ui.getCore().byId(this.getNextStep());
+			return Element.getElementById(this.getNextStep());
 		}
 
 		if (this.getSubsequentSteps().length === 1) {
-			return sap.ui.getCore().byId(this.getSubsequentSteps()[0]);
+			return Element.getElementById(this.getSubsequentSteps()[0]);
 		}
 
 		return null;

@@ -10,7 +10,7 @@
 		rows="{path : '/EMPLOYEES',
 			parameters : {$count : false, $orderby : 'AGE', $$patchWithoutSideEffects : true},
 			suspended : true}"
-		selectionMode="None" threshold="5">
+		selectionMode="None">
 		<extension>
 			<m:Toolbar design="Transparent" class="sapMTBHeader-CTX">
 				<m:Title id="title" level="H1" text="Organizational Chart"/>
@@ -18,6 +18,8 @@
 				<m:Button icon="sap-icon://create" press=".onCreateRoot" tooltip="Create New Root"/>
 				<m:Button icon="sap-icon://synchronize" id="synchronize" press="onSynchronize"
 					tooltip="Synchronize"/>
+				<m:Button icon="sap-icon://refresh" press="onRefresh"
+					tooltip="Refresh, while keeping tree state"/>
 			</m:Toolbar>
 		</extension>
 		<rowMode>
@@ -76,11 +78,6 @@
 		</Column>
 		<Column width="4em">
 			<template>
-				<m:Button id="cut" icon="sap-icon://scissors" press=".onCut" tooltip="Cut"/>
-			</template>
-		</Column>
-		<Column width="4em">
-			<template>
 				<m:Button icon="sap-icon://move" id="move" press=".onMove" tooltip="Move"/>
 			</template>
 		</Column>
@@ -101,7 +98,7 @@
 		rows="{path : '/EMPLOYEES',
 			parameters : {$count : false, $orderby : 'AGE', $$patchWithoutSideEffects : true},
 			suspended : true}"
-		selectionMode="None" threshold="5">
+		selectionMode="None">
 		<extension>
 			<m:Toolbar design="Transparent" class="sapMTBHeader-CTX">
 				<m:Title id="treeTitle" level="H1" text="Organizational Chart - TreeTable"/>
@@ -110,6 +107,8 @@
 					tooltip="Create New Root"/>
 				<m:Button icon="sap-icon://synchronize" id="synchronizeTreeTable"
 					press="onSynchronizeTreeTable" tooltip="SynchronizeTreeTable"/>
+				<m:Button icon="sap-icon://refresh" press="onRefreshTreeTable"
+					tooltip="Refresh, while keeping tree state"/>
 			</m:Toolbar>
 		</extension>
 		<rowMode>
@@ -153,12 +152,6 @@
 		</Column>
 		<Column width="4em">
 			<template>
-				<m:Button id="cutInTreeTable" icon="sap-icon://scissors" press=".onCut"
-					tooltip="Cut"/>
-			</template>
-		</Column>
-		<Column width="4em">
-			<template>
 				<m:Button icon="sap-icon://move" id="moveInTreeTable" press=".onMoveInTreeTable"
 					tooltip="Move"/>
 			</template>
@@ -189,5 +182,6 @@
 		&lt;ul>
 			&lt;li> &lt;code>expandTo&lt;/code> Either * for 'expand all' or a number; default 3
 			&lt;li> &lt;code>visibleRowCount&lt;/code> A number; default 5
-			&lt;li> &lt;code>TreeTable&lt;/code> 'Y' for yes, 'N' for no; default both tables"/>
+			&lt;li> &lt;code>TreeTable&lt;/code> 'Y' for yes, 'N' for no; default both tables
+			&lt;li> &lt;code>threshold&lt;/code> A number; default 0"/>
 </mvc:View>

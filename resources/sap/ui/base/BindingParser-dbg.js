@@ -10,18 +10,18 @@ sap.ui.define([
 	'sap/ui/model/BindingMode',
 	'sap/ui/model/Filter',
 	'sap/ui/model/Sorter',
-	"sap/base/Log",
+	"sap/base/future",
 	"sap/base/util/JSTokenizer",
 	"sap/base/util/resolveReference"
 ], function(
-		ExpressionParser,
-		BindingMode,
-		Filter,
-		Sorter,
-		Log,
-		JSTokenizer,
-		resolveReference
-	) {
+	ExpressionParser,
+	BindingMode,
+	Filter,
+	Sorter,
+	future,
+	JSTokenizer,
+	resolveReference
+) {
 	"use strict";
 
 	/**
@@ -137,16 +137,21 @@ sap.ui.define([
 	 *
 	 * @param {string} sPath
 	 *   the given path
+	 * @param {object} [oEnv]
+	 *   the "environment"
 	 * @returns {object}
 	 *   a binding info object
 	 */
-	function makeSimpleBindingInfo(sPath) {
+	function makeSimpleBindingInfo(sPath, oEnv) {
 		var iPos = sPath.indexOf(">"),
 			oBindingInfo = { path : sPath };
 
 		if ( iPos > 0 ) {
 			oBindingInfo.model = sPath.slice(0,iPos);
 			oBindingInfo.path = sPath.slice(iPos + 1);
+		}
+		if (oEnv?.mLocals && oBindingInfo.path.includes("@@")) {
+			oBindingInfo.parameters = {scope : oEnv.mLocals};
 		}
 
 		return oBindingInfo;
@@ -165,7 +170,7 @@ sap.ui.define([
 		try {
 			BindingParser.mergeParts(oBindingInfo);
 		} catch (e) {
-			Log.error("[FUTURE FATAL] Cannot merge parts: " + e.message, sBinding,
+			future.errorThrows("Cannot merge parts: " + e.message, sBinding,
 				"sap.ui.base.BindingParser");
 			// rely on error in ManagedObject
 		}
@@ -201,7 +206,7 @@ sap.ui.define([
 						oEnv.aFunctionsNotFound = oEnv.aFunctionsNotFound || [];
 						oEnv.aFunctionsNotFound.push(sName);
 					} else {
-						Log.error("[FUTURE FATAL] " + sProp + " function " + sName + " not found!");
+						future.errorThrows(sProp + " function " + sName + " not found!");
 					}
 				}
 			}
@@ -239,7 +244,7 @@ sap.ui.define([
 					}
 
 					if (!o.type) {
-						Log.error("[FUTURE FATAL] Failed to resolve type '" + sType + "'. Maybe not loaded or a typo?");
+						future.errorThrows("Failed to resolve type '" + sType + "'. Maybe not loaded or a typo?");
 					}
 
 					// TODO why are formatOptions and constraints also removed for an already instantiated type?
@@ -267,7 +272,7 @@ sap.ui.define([
 						}).catch(function(oError){
 							// [Compatibility]: We must not throw an error during type creation (except constructor failures!).
 							//                  We catch any require() rejection and log the error.
-							Log.error("[FUTURE FATAL]", oError);
+							future.errorThrows(oError);
 						}).then(fnInstantiateType);
 					}
 
@@ -363,6 +368,11 @@ sap.ui.define([
 			resolveRef(oBindingInfo,'formatter');
 			resolveRef(oBindingInfo,'factory'); // list binding
 			resolveRef(oBindingInfo,'groupHeaderFactory'); // list binding
+			if (oEnv.mLocals && oBindingInfo.path?.includes("@@")
+					&& oBindingInfo.parameters?.scope === undefined) {
+				oBindingInfo.parameters ??= {};
+				oBindingInfo.parameters.scope = oEnv.mLocals;
+			}
 		}
 
 		return oBindingInfo;
@@ -409,7 +419,7 @@ sap.ui.define([
 			throw new SyntaxError("no closing braces found in '" + sInput + "' after pos:" + iStart);
 		}
 		return {
-			result: makeSimpleBindingInfo(sInput.slice(iStart + 1, iEnd)),
+			result: makeSimpleBindingInfo(sInput.slice(iStart + 1, iEnd), oEnv),
 			at: iEnd + 1
 		};
 	}

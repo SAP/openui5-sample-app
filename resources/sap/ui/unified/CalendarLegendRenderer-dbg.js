@@ -4,8 +4,9 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/core/InvisibleText'],
-	function(InvisibleText) {
+sap.ui.define(['sap/ui/core/InvisibleText', "sap/ui/core/Lib", "sap/ui/unified/library"],
+
+	function(InvisibleText, Library, unifiedLibrary) {
 	"use strict";
 
 	/**
@@ -31,9 +32,11 @@ sap.ui.define(['sap/ui/core/InvisibleText'],
 			sOwnedItemIds = "",
 			aStandardItems = aStandardItems || [],
 			aCustomItems = aCustomItems || [],
+			iSliceIndex = 4,
 			i,
 			iIdLength,
 			sColumnWidth,
+			sCustomItemType,
 			iIndex = 1;
 
 		oRm.openStart("div", oLeg);
@@ -68,7 +71,13 @@ sap.ui.define(['sap/ui/core/InvisibleText'],
 			if (aCustomItems) {
 				// rendering special day and colors
 				for (i = 0; i < iCustomItemsLength; i++) {
-					this.renderLegendItem(oRm, "sapUiCalLegDayType" + oLeg._getItemType(aCustomItems[i], aCustomItems).slice(4), aCustomItems[i], ["sapUiUnifiedLegendSquareColor"], iIndex++, iCount);
+					sCustomItemType = oLeg._getItemType(aCustomItems[i], aCustomItems);
+
+					if (sCustomItemType === unifiedLibrary.CalendarDayType.NonWorking) {
+						iSliceIndex = 0;
+					}
+
+					this.renderLegendItem(oRm, "sapUiCalLegDayType" + sCustomItemType.slice(iSliceIndex), aCustomItems[i], ["sapUiUnifiedLegendSquareColor"], iIndex++, iCount);
 				}
 			}
 			this.renderAdditionalItems(oRm, oLeg); //like more sections with items
@@ -232,7 +241,7 @@ sap.ui.define(['sap/ui/core/InvisibleText'],
 		}
 
 		if (!CalendarLegendRenderer.typeARIATexts[sType]) {
-			rb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
+			rb = Library.getResourceBundleFor("sap.ui.unified");
 			sText = rb.getText("LEGEND_UNNAMED_TYPE", parseInt(sType.slice(4)).toString());
 			CalendarLegendRenderer.typeARIATexts[sType] = new InvisibleText({ text: sText });
 			CalendarLegendRenderer.typeARIATexts[sType].toStatic();

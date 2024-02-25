@@ -1202,7 +1202,7 @@ sap.ui.define([
 			.withExactArgs("~mParameters~").returns(false);
 		this.mock(oBinding).expects("checkSuspended").withExactArgs();
 		this.mock(_Helper).expects("checkGroupId").exactly(oFixture.transient ? 0 : 1)
-			.withExactArgs("myGroup");
+			.withExactArgs("myGroup", false, true);
 		this.mock(oContext).expects("fetchCanonicalPath").exactly(oFixture.transient ? 0 : 1)
 			.withExactArgs().returns(SyncPromise.resolve("/Bar('23')"));
 		this.mock(oBinding).expects("lockGroup").exactly(oFixture.transient ? 0 : 1)
@@ -1258,7 +1258,7 @@ sap.ui.define([
 		this.mock(oContext).expects("isKeepAlive").exactly(sGroupId ? 0 : 1)
 			.withExactArgs().returns(true);
 		this.mock(_Helper).expects("checkGroupId").exactly(sGroupId ? 1 : 0)
-			.withExactArgs("myGroup");
+			.withExactArgs("myGroup", false, true);
 		this.mock(oContext).expects("fetchCanonicalPath").exactly(sGroupId ? 1 : 0).withExactArgs()
 			.returns(SyncPromise.resolve("/EMPLOYEES('42')"));
 		this.mock(oBinding).expects("lockGroup").exactly(sGroupId ? 1 : 0)
@@ -1295,7 +1295,7 @@ sap.ui.define([
 		this.mock(_Helper).expects("isDataAggregation")
 			.withExactArgs("~mParameters~").returns(false);
 		this.mock(oBinding).expects("checkSuspended").withExactArgs();
-		this.mock(_Helper).expects("checkGroupId").withExactArgs("myGroup");
+		this.mock(_Helper).expects("checkGroupId").withExactArgs("myGroup", false, true);
 		this.mock(oContext).expects("fetchCanonicalPath").withExactArgs()
 			.returns(SyncPromise.reject("~oError~"));
 		this.mock(oBinding).expects("lockGroup").withExactArgs("myGroup", true, true)
@@ -1395,7 +1395,8 @@ sap.ui.define([
 		this.mock(_Helper).expects("isDataAggregation")
 			.withExactArgs("~mParameters~").returns(false);
 		this.mock(oBinding).expects("checkSuspended").withExactArgs();
-		this.mock(_Helper).expects("checkGroupId").withExactArgs("$invalid").throws(oError);
+		this.mock(_Helper).expects("checkGroupId")
+			.withExactArgs("$invalid", false, true).throws(oError);
 
 		assert.throws(function () {
 			oContext.delete("$invalid");
@@ -1559,7 +1560,7 @@ sap.ui.define([
 			.returns([oBinding1, oBinding2]);
 		this.mock(oBinding1).expects("setContext").withExactArgs(undefined);
 		this.mock(oBinding2).expects("setContext").withExactArgs(undefined);
-		this.mock(BaseContext.prototype).expects("destroy").on(oContext).withExactArgs();
+		this.mock(BaseContext.prototype).expects("destroy").on(oContext).twice().withExactArgs();
 
 		// code under test
 		oContext.destroy();
@@ -1579,6 +1580,9 @@ sap.ui.define([
 		if (bfnOnBeforeDestroy) {
 			assert.ok(bCallbackCalled);
 		}
+
+		// code under test
+		oContext.destroy();
 	});
 });
 
@@ -2865,6 +2869,26 @@ sap.ui.define([
 			// code under test
 			oContext.requestSideEffectsInternal(["ID"], "groupId");
 		}, new Error("Not a context binding: " + oListBinding));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("requestSideEffectsInternal without own cache: list binding refresh in progress",
+			function (assert) {
+		var oListBinding = {
+				oCache : undefined, // looks like a refresh in progress
+				// getBoundContext : function () {},
+				getContext : function () { return {}; },
+				getPath : function () { return "TEAM_2_EMPLOYEES"; },
+				toString : mustBeMocked
+			},
+			oMetaModel = {},
+			oModel = {
+				getMetaModel : function () { return oMetaModel; }
+			},
+			oContext = Context.create(oModel, oListBinding, "/TEAMS('1')/TEAM_2_EMPLOYEES('2')");
+
+		// code under test
+		assert.strictEqual(oContext.requestSideEffectsInternal(["ID"], "groupId"), undefined);
 	});
 
 	//*********************************************************************************************
@@ -4583,6 +4607,20 @@ sap.ui.define([
 
 		// code under test
 		assert.strictEqual(oExpectation.args[0][0](oCache, "cache/path"), "~value~");
+	});
+
+	//*********************************************************************************************
+	QUnit.test("getAndRemoveCollection: withCache fails", function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/path");
+
+		this.mock(oContext).expects("withCache")
+			.withExactArgs(sinon.match.func, "relative/path", true)
+			.returns(SyncPromise.reject("~oError~"));
+
+		// code under test
+		assert.throws(function () {
+			oContext.getAndRemoveCollection("relative/path");
+		}, "~oError~");
 	});
 
 	//*********************************************************************************************

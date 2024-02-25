@@ -107,8 +107,13 @@ function(
 		 * @extends sap.ui.core.Control
 		 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
 		 *
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
+		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -121,7 +126,8 @@ function(
 					"sap.m.IOverflowToolbarContent",
 					"sap.m.IToolbarInteractiveControl",
 					"sap.f.IShellBar",
-					"sap.ui.core.ISemanticFormContent"
+					"sap.ui.core.ISemanticFormContent",
+					"sap.ui.core.ILabelable"
 				],
 				library: "sap.m",
 				properties: {
@@ -2015,7 +2021,7 @@ function(
 				return;
 			}
 
-			var oControl = Element.registry.get(oEvent.relatedControlId),
+			var oControl = Element.getElementById(oEvent.relatedControlId),
 				oFocusDomRef = oControl && oControl.getFocusDomRef();
 
 			if (Device.system.desktop && containsOrEquals(oPicker.getFocusDomRef(), oFocusDomRef)) {
@@ -2074,7 +2080,7 @@ function(
 			this.setProperty("selectedItemId", (vItem instanceof Item) ? vItem.getId() : vItem, true);
 
 			if (typeof vItem === "string") {
-				vItem = Element.registry.get(vItem);
+				vItem = Element.getElementById(vItem);
 			}
 
 			sKey = vItem ? vItem.getKey() : "";
@@ -2419,6 +2425,14 @@ function(
 			return "selectedKey";
 		};
 
+		Select.prototype.getFormObservingProperties = function() {
+			return ["selectedKey"];
+		};
+
+		Select.prototype.getFormRenderAsControl = function () {
+			return false;
+		};
+
 		/**
 		 * Retrieves an item by searching for the given property/value from the aggregation named <code>items</code>.
 		 *
@@ -2627,7 +2641,9 @@ function(
 				}
 				oDelegate = {
 					ontap: function () {
-						that.focus();
+						if (window.getSelection().type !== "Range") {
+							that.focus();
+						}
 					}
 				};
 				that._referencingLabelsHandlers.push({
@@ -2641,7 +2657,7 @@ function(
         Select.prototype._clearReferencingLabelsHandlers = function () {
 			var oLabel;
             this._referencingLabelsHandlers.forEach(function (oHandler) {
-				oLabel = Element.registry.get(oHandler.sLabelId);
+				oLabel = Element.getElementById(oHandler.sLabelId);
 				if (oLabel) {
 					oLabel.removeEventDelegate(oHandler.oDelegate);
 				}
@@ -2664,7 +2680,7 @@ function(
 				return aLabelIDs.indexOf(sId) === iIndex;
 			})
 			.map(function(sLabelID) {
-				return Element.registry.get(sLabelID);
+				return Element.getElementById(sLabelID);
 			})
 			.filter(Boolean);
 
@@ -2829,7 +2845,7 @@ function(
 		 *
 		 * Default value is <code>null</code>.
 		 *
-		 * @param {string | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
+		 * @param {sap.ui.core.ID | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
 		 * If an ID of a <code>sap.ui.core.Item</code> is given, the item with this ID becomes the <code>selectedItem</code> association.
 		 * Alternatively, a <code>sap.ui.core.Item</code> instance may be given or <code>null</code>.
 		 * If the value of <code>null</code> is provided, the first enabled item will be selected (if any items exist).
@@ -2841,7 +2857,7 @@ function(
 
 			if (typeof vItem === "string") {
 				this.setAssociation("selectedItem", vItem, true);
-				vItem = Element.registry.get(vItem);
+				vItem = Element.getElementById(vItem);
 			}
 
 			if (!(vItem instanceof Item) && vItem !== null) {
@@ -3030,7 +3046,7 @@ function(
 		 */
 		Select.prototype.getSelectedItem = function() {
 			var vSelectedItem = this.getAssociation("selectedItem");
-			return (vSelectedItem === null) ? null : Element.registry.get(vSelectedItem) || null;
+			return (vSelectedItem === null) ? null : Element.getElementById(vSelectedItem) || null;
 		};
 
 		/**
@@ -3087,7 +3103,7 @@ function(
 		/**
 		 * Removes an item from the aggregation named <code>items</code>.
 		 *
-		 * @param {int | string | sap.ui.core.Item} vItem The item to be removed or its index or ID.
+		 * @param {int | sap.ui.core.ID | sap.ui.core.Item} vItem The item to be removed or its index or ID.
 		 * @returns {sap.ui.core.Item|null} The removed item or <code>null</code>.
 		 * @public
 		 */
@@ -3258,14 +3274,12 @@ function(
 		};
 
 		/**
-		 * Returns the DOMNode Id to be used for the "labelFor" attribute of the label.
+		 * Returns the DOMNode Id of the labelable HTML element for the <code>sap.m.Select</code>.
 		 *
-		 * By default, this is the Id of the control itself.
-		 *
-		 * @return {string} Id to be used for the <code>labelFor</code>
+		 * @return {string} Id of the labelable HTML element
 		 * @public
 		 */
-		Select.prototype.getIdForLabel = function () {
+		Select.prototype.hasLabelableHTMLElement = function () {
 			return this.getId() + "-hiddenSelect";
 		};
 

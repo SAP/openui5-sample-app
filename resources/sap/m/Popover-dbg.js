@@ -11,6 +11,7 @@ sap.ui.define([
 	'./InstanceManager',
 	'./library',
 	'./Title',
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/ui/core/Popup',
 	'sap/ui/core/delegate/ScrollEnablement',
@@ -27,7 +28,6 @@ sap.ui.define([
 	"sap/ui/dom/getScrollbarSize",
 	"sap/ui/events/KeyCodes",
 	"sap/base/Log",
-	"sap/ui/core/Configuration",
 	"sap/ui/dom/jquery/Focusable", // jQuery Plugin "firstFocusableDomRef", "lastFocusableDomRef"
 	"sap/ui/dom/jquery/rect" // jQuery Plugin "rect"
 ],
@@ -37,6 +37,7 @@ sap.ui.define([
 		InstanceManager,
 		library,
 		Title,
+		Localization,
 		Control,
 		Popup,
 		ScrollEnablement,
@@ -52,8 +53,7 @@ sap.ui.define([
 		jQuery,
 		getScrollbarSize,
 		KeyCodes,
-		Log,
-		Configuration
+		Log
 	) {
 		"use strict";
 
@@ -122,7 +122,7 @@ sap.ui.define([
 		* @extends sap.ui.core.Control
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.120.7
+		* @version 1.121.0
 		*
 		* @public
 		* @alias sap.m.Popover
@@ -226,10 +226,8 @@ sap.ui.define([
 
 					/**
 					 * Whether resize option is enabled.
-					 * *Note:* This property is effective only on Desktop
-					 * @experimental since 1.36.4 Do not use directly on Popover while in experimental mode!
+					 * NOTE: This property is effective only on Desktop
 					 * @since 1.36.4
-					 * @private
 					 */
 					resizable: {type: "boolean", group: "Dimension", defaultValue: false},
 
@@ -496,7 +494,7 @@ sap.ui.define([
 				},
 				onAfterRendering: function () {
 					if (this._sFocusControlId && !containsOrEquals(this.getDomRef(), document.activeElement)) {
-						Element.registry.get(this._sFocusControlId).focus();
+						Element.getElementById(this._sFocusControlId).focus();
 					}
 				}
 			};
@@ -960,7 +958,7 @@ sap.ui.define([
 			if (this._oPreviousFocus) {
 				oActiveElement = document.activeElement || {};
 				// if the current focused control/element is the same as the focused control/element before popover is open, no need to restore focus.
-				bSameFocusElement = (this._oPreviousFocus.sFocusId === sap.ui.getCore().getCurrentFocusedControlId()) ||
+				bSameFocusElement = (this._oPreviousFocus.sFocusId === Element.getActiveElement()?.getId()) ||
 					(this._oPreviousFocus.sFocusId === oActiveElement.id);
 
 				// restore previous focus, if the current control isn't the same control as
@@ -1133,7 +1131,7 @@ sap.ui.define([
 
 			// Set focus to the first visible focusable element
 			var sFocusId = this._getInitialFocusId(),
-			oControl = Element.registry.get(sFocusId),
+			oControl = Element.getElementById(sFocusId),
 			oDomById = (sFocusId ? window.document.getElementById(sFocusId) : null);
 			if (oControl && oControl.getFocusDomRef()){
 				oControl.getFocusDomRef().focus();
@@ -1243,7 +1241,7 @@ sap.ui.define([
 		 * @param {jQuery.Event} oEvent The event object
 		 */
 		Popover.prototype.onmousedown = function (oEvent) {
-			var bRTL = Configuration.getRTL();
+			var bRTL = Localization.getRTL();
 			if (!oEvent.target.classList || !oEvent.target.classList.contains("sapMPopoverResizeHandle")) {
 				return;
 			}
@@ -1388,7 +1386,7 @@ sap.ui.define([
 				iFlipOffset = oFlipPlacement === PlacementType.PreferredRightOrFlip ? Math.abs(iParentWidth) : -Math.abs(iParentWidth);
 			}
 
-			var bRtl = Configuration.getRTL();
+			var bRtl = Localization.getRTL();
 			var iOffsetX = iFlipOffset * (bRtl ? -1 : 1) + this.getOffsetX() * (bRtl ? -1 : 1);
 			return iOffsetX;
 		};
@@ -1523,7 +1521,7 @@ sap.ui.define([
 			var iPopoverWidth = this.$().outerWidth();
 			var bPreferredLeftOrFlip = this.getPlacement() === PlacementType.PreferredLeftOrFlip;
 			var bPreferredRightOrFlip = this.getPlacement() === PlacementType.PreferredRightOrFlip;
-			var bRtl = Configuration.getRTL();
+			var bRtl = Localization.getRTL();
 
 			if (bPreferredPlacementLeft && iLeftSpace > iPopoverWidth + this._arrowOffset) {
 					this._bHorizontalFlip = false;
@@ -1619,7 +1617,7 @@ sap.ui.define([
 			var $this = this.$();
 			var iHeight = $this.outerHeight();
 			var iWidth = $this.outerWidth();
-			var bRtl = Configuration.getRTL();
+			var bRtl = Localization.getRTL();
 
 			var $parent = jQuery(this._getOpenByDomRef());
 			var bHasParent = $parent[0] !== undefined;
@@ -1793,7 +1791,7 @@ sap.ui.define([
 		 */
 		Popover.prototype._recalculateMargins = function (sCalculatedPlacement, oPosParams) {
 			var fNewCalc;
-			var bRtl = Configuration.getRTL();
+			var bRtl = Localization.getRTL();
 
 			//make the popover never cover the control or dom node that opens the popover
 			switch (sCalculatedPlacement) {
@@ -1846,7 +1844,7 @@ sap.ui.define([
 				bOverRight = iPosToRightBorder < (oPosParams._fPopoverMarginRight + fScrollbarSize),
 				bOverTop = oPosParams._fPopoverOffset.top < oPosParams._fPopoverMarginTop,
 				bOverBottom = iPosToBottomBorder < oPosParams._fPopoverMarginBottom,
-				bRtl = Configuration.getRTL();
+				bRtl = Localization.getRTL();
 
 			if (bExceedHorizontal) {
 				iLeft = oPosParams._fPopoverMarginLeft;
@@ -1975,7 +1973,7 @@ sap.ui.define([
 		 */
 		Popover.prototype._getArrowOffsetCss = function (sCalculatedPlacement, oPosParams) {
 			var iPosArrow,
-				bRtl = Configuration.getRTL();
+				bRtl = Localization.getRTL();
 
 			// Recalculate Popover width and height because they can be changed after position adjustments
 			oPosParams._fPopoverWidth = oPosParams._$popover.outerWidth();
@@ -2330,7 +2328,7 @@ sap.ui.define([
 			if (this.isOpen()) {
 				//restore the focus after rendering when popover is already open
 				var sFocusId = this._getInitialFocusId(),
-				oControl = Element.registry.get(sFocusId),
+				oControl = Element.getElementById(sFocusId),
 				oDomById = (sFocusId ? window.document.getElementById(sFocusId) : null);
 				if (oControl && oControl.getFocusDomRef()){
 					oControl.getFocusDomRef().focus();
@@ -2562,7 +2560,7 @@ sap.ui.define([
 
 		Popover.prototype.setLeftButton = function (vButton) {
 			if (!(vButton instanceof Button)) {
-				vButton = Element.registry.get(vButton);
+				vButton = Element.getElementById(vButton);
 			}
 
 			//setting leftButton also sets the beginButton
@@ -2572,7 +2570,7 @@ sap.ui.define([
 
 		Popover.prototype.setRightButton = function (vButton) {
 			if (!(vButton instanceof Button)) {
-				vButton = Element.registry.get(vButton);
+				vButton = Element.getElementById(vButton);
 			}
 
 			//setting rightButton also sets the endButton
@@ -2678,7 +2676,7 @@ sap.ui.define([
 		};
 
 		Popover.prototype.invalidate = function (oOrigin) {
-			if (this.isOpen()) {
+			if (this.oPopup && this.isOpen() && this.oPopup.getOpenState() !== OpenState.CLOSING) {
 				Control.prototype.invalidate.apply(this, arguments);
 			}
 			return this;

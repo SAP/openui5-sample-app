@@ -9,7 +9,6 @@ sap.ui.define([
 	'./InputBase',
 	'sap/ui/core/Element',
 	'sap/ui/core/Item',
-	'sap/ui/core/Core',
 	'sap/ui/core/LabelEnablement',
 	'sap/ui/core/AccessKeysEnablement',
 	'./ColumnListItem',
@@ -40,13 +39,13 @@ sap.ui.define([
 	"sap/ui/base/ManagedObject",
 	"sap/ui/base/ManagedObjectObserver",
 	"sap/ui/core/Lib",
-	"sap/ui/dom/jquery/selectText" // provides jQuery.fn.selectText
+	// provides jQuery.fn.selectText
+	"sap/ui/dom/jquery/selectText"
 ],
 function(
 	InputBase,
 	Element,
 	Item,
-	Core,
 	LabelEnablement,
 	AccessKeysEnablement,
 	ColumnListItem,
@@ -161,7 +160,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -226,7 +225,10 @@ function(
 
 				/**
 				 * If set to true, direct text input is disabled and the control will trigger the event "valueHelpRequest" for all user interactions. The properties "showValueHelp", "editable", and "enabled" must be set to true, otherwise the property will have no effect.
-				 * In this scenario, the <code>showItems</code> API will not work.
+				 * In this scenario, the <code>showItems</code> API will not work.<br><br>
+				 * <strong>Note:</strong> The property is deprecated, as it creates unnecessary usability and accessibility restrictions. The decision to deprecate it is based on the fact that it serves no purpose to have an input field where the user cannot type.
+				 * This property restricts even the paste functionality, which can be useful, e.g. the needed info is already in the clipboard.
+				 * If the user's input needs to match specific predefined values, the application should validate the input against the set of values and provide feedback to the user or use other mechanism for selection, where freestyle input is not allowed by design (Select, SelectDialog, etc).
 				 * @since 1.21.0
 				 * @deprecated As of version 1.119 The property valueHelpOnly should not be used anymore
 				 */
@@ -318,7 +320,7 @@ function(
 				 * <code>minScreenWidth</code> properties of the <code>sap.m.Column</code> control by itself.
 				 * @since 1.89
 				 */
-				 enableTableAutoPopinMode: {type: "boolean", group: "Behavior", defaultValue: false},
+				enableTableAutoPopinMode: {type: "boolean", group: "Behavior", defaultValue: false},
 
 				/**
 				 * Specifies whether autocomplete is enabled.
@@ -635,7 +637,7 @@ function(
 		var aRefLabels = LabelEnablement.getReferencingLabels(this);
 
 		aRefLabels.forEach(function(sLabelId) {
-			Core.byId(sLabelId).setProperty("highlightAccKeysRef", bHighlightAccKeysRef);
+			Element.getElementById(sLabelId).setProperty("highlightAccKeysRef", bHighlightAccKeysRef);
 		}, this);
 	};
 
@@ -917,7 +919,7 @@ function(
 	 *
 	 *
 	 * @public
-	 * @param {sap.ui.core.Item} [oItem=null] New value for the <code>selectedItem</code> association.
+	 * @param {sap.ui.core.ID|sap.ui.core.Item|null} [oItem=null] New value for the <code>selectedItem</code> association.
 	 * If an ID of a <code>sap.ui.core.Item</code> is given, the item with this ID becomes the
 	 * <code>selectedItem</code> association.
 	 * Alternatively, a <code>sap.ui.core.Item</code> instance may be given or <code>null</code> to clear
@@ -928,7 +930,7 @@ function(
 	Input.prototype.setSelectedItem = function(oItem) {
 
 		if (typeof oItem === "string") {
-			oItem = Element.registry.get(oItem);
+			oItem = Element.getElementById(oItem);
 		}
 
 		if (oItem !== null && !(oItem instanceof Item)) {
@@ -1093,7 +1095,7 @@ function(
 	 * Default value is <code>null</code>.
 	 *
 	 * @public
-	 * @param {sap.m.ColumnListItem} oListItem New value for the <code>selectedRow</code> association.
+	 * @param {sap.ui.core.ID|sap.m.ColumnListItem|null} oListItem New value for the <code>selectedRow</code> association.
 	 * If an ID of a <code>sap.m.ColumnListItem</code> is given, the item with this ID becomes the
 	 * <code>selectedRow</code> association.
 	 * Alternatively, a <code>sap.m.ColumnListItem</code> instance may be given or <code>null</code> to clear
@@ -1104,7 +1106,7 @@ function(
 	Input.prototype.setSelectedRow = function(oListItem) {
 
 		if (typeof oListItem === "string") {
-			oListItem = Element.registry.get(oListItem);
+			oListItem = Element.getElementById(oListItem);
 		}
 
 		if (oListItem !== null && !(oListItem instanceof ColumnListItem)) {
@@ -1142,18 +1144,9 @@ function(
 						// if the property valueHelpOnly is set to true, the event is triggered in the ontap function
 						return;
 					 }
-					var oParent = this.getParent(),
-						$input;
+					var oParent = this.getParent();
 
-					if (Device.support.touch) {
-						// prevent opening the soft keyboard
-						$input = oParent.$('inner');
-						$input.attr('readonly', 'readonly');
-						oParent.focus();
-						$input.removeAttr('readonly');
-					} else {
-						oParent.focus();
-					}
+					oParent.focus();
 
 					that.bValueHelpRequested = true;
 
@@ -1452,19 +1445,27 @@ function(
 			bFocusInPopup = !this.hasStyleClass("sapMFocus") && bPopupOpened,
 			aItems = this._hasTabularSuggestions() ? this.getSuggestionRows() : this.getSuggestionItems(),
 			bFireSubmit = this.getEnabled() && this.getEditable(),
-			iValueLength, oSelectedItem;
+			iValueLength, oSuggestionsPopover, oSelectedItem, oFocusedItem;
 
 		// when enter is pressed before the timeout of suggestion delay, suggest event is cancelled
 		this.cancelPendingSuggest();
 
 		bFocusInPopup && this.setSelectionUpdatedFromList(true);
 
-		if (this.getShowSuggestion() && this._bDoTypeAhead && bPopupOpened) {
-			oSelectedItem = this._getSuggestionsPopover().getItemsContainer().getSelectedItem();
+		if (this.getShowSuggestion() && this._bDoTypeAhead && bPopupOpened && !this.isComposingCharacter()) {
+			oSuggestionsPopover = this._getSuggestionsPopover();
+			oSelectedItem = oSuggestionsPopover.getItemsContainer().getSelectedItem();
+			oFocusedItem = oSuggestionsPopover.getFocusedListItem();
+
 			if (this._hasTabularSuggestions()) {
 				oSelectedItem && this.setSelectionRow(oSelectedItem, true);
 			} else {
 				oSelectedItem && this.setSelectionItem(ListHelpers.getItemByListItem(aItems, oSelectedItem), true);
+			}
+
+			// prevent closing of popover, when Enter is pressed on a group header
+			if (oFocusedItem && oFocusedItem.isA("sap.m.GroupHeaderListItem")) {
+				return;
 			}
 		}
 
@@ -1500,7 +1501,7 @@ function(
 		var oSuggPopover = this._getSuggestionsPopover(),
 			oPopup = oSuggPopover && oSuggPopover.getPopover(),
 			bIsPopover = oPopup && oPopup.isA("sap.m.Popover"),
-			oFocusedControl = oEvent.relatedControlId && Element.registry.get(oEvent.relatedControlId),
+			oFocusedControl = oEvent.relatedControlId && Element.getElementById(oEvent.relatedControlId),
 			oFocusDomRef = oFocusedControl && oFocusedControl.getFocusDomRef(),
 			bFocusInPopup = oPopup
 				&& oFocusDomRef
@@ -1959,7 +1960,7 @@ function(
 			if (iNumItems === 1) {
 				sAriaText = oRb.getText("INPUT_SUGGESTIONS_ONE_HIT");
 			} else if (iNumItems > 1) {
-				sAriaText = oRb.getText("INPUT_SUGGESTIONS_MORE_HITS", iNumItems);
+				sAriaText = oRb.getText("INPUT_SUGGESTIONS_MORE_HITS", [iNumItems]);
 			} else {
 				sAriaText = oRb.getText("INPUT_SUGGESTIONS_NO_HIT");
 			}
@@ -2592,21 +2593,34 @@ function(
 	/**
 	 * Updates the inner input field.
 	 *
+	 * @param {string} sNewValue Dom value which will be set.
 	 * @protected
 	 */
 	Input.prototype.updateInputField = function(sNewValue) {
-		if (this._isSuggestionsPopoverOpen() && this.isMobileDevice()) {
-			this._getSuggestionsPopover().getInput()
-				.setValue(sNewValue)
-				._doSelect();
+		if (this.isMobileDevice() && this._isSuggestionsPopoverOpen()) {
+			this.updateInputFieldOnMobile(sNewValue);
 		} else {
-			// call _getInputValue to apply the maxLength to the typed value
-			sNewValue = this._getInputValue(sNewValue);
-			this.setDOMValue(sNewValue);
-			this.onChange(null, null, sNewValue);
+			this.updateInputFieldOnDesktop(sNewValue);
 		}
 	};
 
+	Input.prototype.updateInputFieldOnMobile = function(sNewValue) {
+		this._getSuggestionsPopover().getInput()
+			.setValue(sNewValue)
+			._doSelect();
+	};
+
+	Input.prototype.updateInputFieldOnDesktop = function(sNewValue) {
+		// call _getInputValue to apply the maxLength to the typed value
+		sNewValue = this._getInputValue(sNewValue);
+
+		if (sNewValue !== this.getValue() && sNewValue === this.getLastValue()) {
+			this.setProperty("value", sNewValue);
+		}
+
+		this.setDOMValue(sNewValue);
+		this.onChange(null, null, sNewValue);
+	};
 	/**
 	 * Gets accessibility information for the input.
 	 *
@@ -3555,6 +3569,21 @@ function(
 		return true;
 	};
 
+	// support for SemanticFormElement
+	Input.prototype.getFormFormattedValue = function() {
+		var sValue = this.getValue();
+		var sDescription = this.getDescription();
+
+		if (sValue && sDescription) {
+			return sValue + " " + sDescription;
+		} else {
+			return sDescription || sValue;
+		}
+	};
+
+	Input.prototype.getFormObservingProperties = function() {
+		return ["value", "description"];
+	};
 
 	return Input;
 

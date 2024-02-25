@@ -1174,6 +1174,7 @@ sap.ui.define([
 									new Press().executeOn(oNewItem);
 									return true;
 								}
+								return false;
 							});
 							Opa5.assert.ok(oNewItem, "Selected item: " + oNewItem.getText());
 						},

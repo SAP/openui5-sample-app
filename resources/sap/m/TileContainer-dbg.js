@@ -7,11 +7,12 @@
 // Provides control sap.m.TileContainer.
 sap.ui.define([
 	'./library',
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
-	'sap/ui/core/Core',
 	'sap/ui/core/Element',
 	'sap/ui/core/IconPool',
 	'sap/ui/Device',
+	"sap/ui/core/RenderManager",
 	'sap/ui/core/ResizeHandler',
 	'./TileContainerRenderer',
 	"sap/base/Log",
@@ -21,11 +22,12 @@ sap.ui.define([
 ],
 function(
 	library,
+	Localization,
 	Control,
-	oCore,
 	Element,
 	IconPool,
 	Device,
+	RenderManager,
 	ResizeHandler,
 	TileContainerRenderer,
 	Log,
@@ -46,7 +48,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -135,7 +137,7 @@ function(
 
 	IconPool.insertFontFaceStyle();
 
-	TileContainer.prototype._bRtl = oCore.getConfiguration().getRTL();
+	TileContainer.prototype._bRtl = Localization.getRTL();
 
 	/**
 	 * Initializes the control.
@@ -424,7 +426,7 @@ function(
 		}
 		this._oTileDimensionCalculator = new TileDimensionCalculator(this);
 
-		this._bRtl = oCore.getConfiguration().getRTL();
+		this._bRtl = Localization.getRTL();
 		//Keeps info about the current page and total page count. In addition the old(previous) values of the same are kept.
 		this._oPagesInfo = (function (bRightToLeftMode) {
 			var iCurrentPage, iCount,
@@ -1028,9 +1030,9 @@ function(
 		return this;
 	};
 
-	TileContainer.prototype.rerender = function() {
+	TileContainer.prototype.invalidate = function() {
 		if (!this._oDragSession || this._oDragSession.bDropped) {
-			Control.prototype.rerender.apply(this);
+			Control.prototype.invalidate.apply(this);
 		}
 	};
 
@@ -1990,7 +1992,7 @@ function(
 	 * @private
 	 */
 	TileContainer.prototype._renderTile = function(oTile, iIndex) {
-		var oRm = oCore.createRenderManager(),
+		var oRm = new RenderManager().getInterface(),
 			oContent = this.$("cnt")[0];
 
 		oRm.renderControl(oTile);

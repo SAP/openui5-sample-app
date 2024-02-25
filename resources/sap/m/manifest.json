@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.120.7"
+      "version": "1.121.0"
     },
     "title": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
     "description": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
@@ -29,17 +29,17 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.120",
+      "minUI5Version": "1.121",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.120.7"
+          "minVersion": "1.121.0"
         },
         "sap.ui.layout": {
-          "minVersion": "1.120.7",
+          "minVersion": "1.121.0",
           "lazy": true
         },
         "sap.ui.unified": {
-          "minVersion": "1.120.7",
+          "minVersion": "1.121.0",
           "lazy": true
         }
       }
@@ -125,7 +125,7 @@
           "sap.m.ComboBox",
           "sap.m.ComboBoxTextField",
           "sap.m.ComboBoxBase",
-          "sap.m.CustomAttribute",
+          "sap.m.TileAttribute",
           "sap.m.CustomListItem",
           "sap.m.CustomTile",
           "sap.m.CustomTreeItem",
@@ -310,6 +310,7 @@
           "sap.m.ColumnPopoverCustomItem",
           "sap.m.ColumnPopoverItem",
           "sap.m.ColumnPopoverSortItem",
+          "sap.m.ContentConfig",
           "sap.m.DynamicDateOption",
           "sap.m.DynamicDateValueHelpUIType",
           "sap.m.FlexItemData",
@@ -446,6 +447,7 @@
           "sap.m.IBarHTMLTag",
           "sap.m.IconTabDensityMode",
           "sap.m.IconTabFilterDesign",
+          "sap.m.IconTabFilterInteractionMode",
           "sap.m.IconTabHeaderMode",
           "sap.m.IllustratedMessageSize",
           "sap.m.IllustratedMessageType",
@@ -482,6 +484,7 @@
           "sap.m.QuickViewGroupElementType",
           "sap.m.RatingIndicatorVisualMode",
           "sap.m.ScreenSize",
+          "sap.m.CarouselScrollMode",
           "sap.m.SelectColumnRatio",
           "sap.m.SelectionDetailsActionLevel",
           "sap.m.SelectListKeyboardNavigationMode",
@@ -497,6 +500,7 @@
           "sap.m.SwipeDirection",
           "sap.m.SwitchType",
           "sap.m.TabsOverflowMode",
+          "sap.m.ContentConfigType",
           "sap.m.TileSizeBehavior",
           "sap.m.TimePickerMaskMode",
           "sap.m.TitleAlignment",
@@ -511,6 +515,7 @@
           "sap.m.WrappingType",
           "sap.m.WizardRenderMode",
           "sap.m.plugins.CopyPreference",
+          "sap.m.plugins.ContextMenuScope",
           "sap.m.semantic.SemanticRuleSetType",
           "sap.m.table.columnmenu.Category",
           "sap.m.upload.UploaderHttpRequestMethod",

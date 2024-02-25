@@ -14,6 +14,7 @@ sap.ui.define([
 	'sap/ui/core/mvc/ControllerExtension',
 	'sap/ui/core/mvc/ControllerExtensionProvider',
 	'sap/ui/core/mvc/OverrideExecution',
+	"sap/base/future",
 	"sap/base/Log"
 ], function(
 	ObjectPath,
@@ -24,6 +25,7 @@ sap.ui.define([
 	ControllerExtension,
 	ControllerExtensionProvider,
 	OverrideExecution,
+	future,
 	Log
 ) {
 	"use strict";
@@ -158,7 +160,7 @@ sap.ui.define([
 					if (!oOrigExtensionMetadata.isMethodFinal(sOverrideMember)) {
 						ControllerExtension.overrideMethod(sOverrideMember, oExtension, oStaticOverrides, oExtension, oOrigExtensionMetadata.getOverrideExecution(sOverrideMember));
 					}  else {
-						Log.error("[FUTURE FATAL] Method '" + sOverrideMember + "' of extension '" + sNamespace + "' is flagged final and cannot be overridden by calling 'override'");
+						future.errorThrows("Method '" + sOverrideMember + "' of extension '" + sNamespace + "' is flagged final and cannot be overridden by calling 'override'");
 					}
 				}
 				//handle 'normal' overrides
@@ -177,13 +179,13 @@ sap.ui.define([
 									if (!oOrigExtensionMetadata.isMethodFinal(sExtensionOverride)) {
 										ControllerExtension.overrideMethod(sExtensionOverride, fnOriginal, vMember, oExtension, oOrigExtensionMetadata.getOverrideExecution(sExtensionOverride));
 									}  else {
-										Log.error("[FUTURE FATAL] Method '" + sExtensionOverride + "' of extension '" + oOrigExtensionInfo.namespace + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
+										future.errorThrows("Method '" + sExtensionOverride + "' of extension '" + oOrigExtensionInfo.namespace + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
 									}
 								}
 							} else if (!oControllerMetadata.isMethodFinal(sOverrideMember)) {
 								ControllerExtension.overrideMethod(sOverrideMember, oController, oOverrides, oExtension, oControllerMetadata.getOverrideExecution(sOverrideMember));
 							} else {
-								Log.error("[FUTURE FATAL] Method '" + sOverrideMember + "' of controller '" + oController.getMetadata().getName() + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
+								future.errorThrows("Method '" + sOverrideMember + "' of controller '" + oController.getMetadata().getName() + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
 							}
 						} else if (sOverrideMember in mLifecycleConfig) {
 							//apply lifecycle hooks even if they don't exist on controller
@@ -194,7 +196,7 @@ sap.ui.define([
 						} else if (sOverrideMember.startsWith("extHook") && oController[sOverrideMember] === null) {
 							ControllerExtension.overrideMethod(sOverrideMember, oController, oOverrides, oExtension);
 						} else {
-							Log.error("[FUTURE FATAL] Method '" + sOverrideMember + "' does not exist in controller " + oController.getMetadata().getName() + " and cannot be overridden");
+							future.errorThrows("Method '" + sOverrideMember + "' does not exist in controller " + oController.getMetadata().getName() + " and cannot be overridden");
 						}
 					}
 					oExtensionInfo.reloadNeeded = true;
@@ -214,7 +216,7 @@ sap.ui.define([
 								//override Extension so 'this' is working for overrides
 								ControllerExtension.overrideMethod(sExtensionOverride, oOrigExtension, oExtensionOverrides, oExtension, oOrigExtensionMetadata.getOverrideExecution(sExtensionOverride));
 							} else {
-								Log.error("[FUTURE FATAL] Method '" + sExtensionOverride + "' of extension '" + sExtensionNamespace + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
+								future.errorThrows("Method '" + sExtensionOverride + "' of extension '" + sExtensionNamespace + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
 							}
 						}
 					}
@@ -263,21 +265,23 @@ sap.ui.define([
 			}
 		}
 
-		/* load controller class
+		/**
+		 * Loads a controller class or a controller-extension
 		 *
 		 * @param {string} sName the controller name
+		 * @param {string} sViewId the ID of the View to which the loaded controller/extensions should be connected
 		 * @param {boolean} bAsync Load async or not
 		 * @return {sap.ui.core.mvc.Controller | Promise} oController <code>Promise</code> in case of asynchronous loading
 		 *           or <code>undefined</code> in case of synchronous loading
 		 */
-		function loadControllerClass(sName, bAsync) {
+		function loadControllerClass(sName, sViewId, bAsync) {
 			if (!sName) {
 				throw new Error("Controller name ('sName' parameter) is required");
 			}
 
-			var sControllerName = sName.replace(/\./g, "/") + ".controller",
-				ControllerClass = resolveClass(sap.ui.require(sControllerName));
-
+			/**
+			 * @deprecated
+			 */
 			function resolveClass(ControllerClass) {
 				if (ControllerClass) {
 					return ControllerClass;
@@ -288,6 +292,30 @@ sap.ui.define([
 					return ObjectPath.get(sName);
 				}
 			}
+
+			const sControllerName = sName.replace(/\./g, "/") + ".controller";
+			let ControllerClass = sap.ui.require(sControllerName);
+			/** @deprecated */
+			ControllerClass ??= resolveClass(ControllerClass);
+
+			/**
+			 * @deprecated
+			 * Sanity check: If the assumed Controller is actually a View we encountered a specific edge case.
+			 *               A JSView that has been migrated to a Typed View can in theory have the same class name
+			 *               as the Controller. While the file names might differ (e.g. sap/typed/Main.view.js and sap/typed/Main.controller.js),
+			 *               the filename does not necessarily imply a class name. In this example the class names could both be "sap.typed.Main".
+			 *               When sync loading, the classes are exposed in the global namespace under this class name.
+			 *               At this time of loading the Controller class, the ObjectPath.get() call in resolveClass() might now retrieve the View class
+			 *               that was previously written into the global namespace instead.
+			 *               This causes a "Maximum call stack size exceeded" error. To prevent this we check specifically for a View class here.
+			 */
+			(() => {
+				if (ControllerClass?.getMetadata?.().isA?.("sap.ui.core.mvc.View")) {
+					throw new Error(`The controller '${sName}' define for the View with ID '${sViewId}' is not a valid Controller, but rather a View. ` +
+					`This happens when the View and Controller classes have the same fully qualified class name. Please make sure that the class names in` +
+					`Controller.extend("...") and the View.extend("...") call differ. If you migrated a 'JSView' to a 'Typed View' please refer to the documentation section under 'Typed View'`);
+				}
+			})();
 
 			/**
 			 * Sync class resolution
@@ -305,7 +333,9 @@ sap.ui.define([
 			return new Promise(function(resolve, reject) {
 				if (!ControllerClass) {
 					sap.ui.require([sControllerName], function (ControllerClass) {
-						resolve(resolveClass(ControllerClass));
+						/** @deprecated */
+						ControllerClass ??= resolveClass(ControllerClass);
+						resolve(ControllerClass);
 					}, reject);
 				} else {
 					resolve(ControllerClass);
@@ -391,13 +421,13 @@ sap.ui.define([
 			 */
 			function fnGetExtensionController(bAsync, sControllerName) {
 				if (bAsync) {
-					return loadControllerClass(sControllerName, true).then(function(oExtControllerDef) {
+					return loadControllerClass(sControllerName, sViewId, true).then(function(oExtControllerDef) {
 						// loadControllerClass resolves with the base sap/ui/core/mvc/Controller class,
 						// in case 'sControllerName' is not a module but was defined with sap.ui.controller("...", {})
 						oExtControllerDef = mRegistry[sControllerName] || oExtControllerDef;
 						if (oExtControllerDef !== undefined) {
 							if (oExtControllerDef.getMetadata && oExtControllerDef.getMetadata().isA("sap.ui.core.mvc.Controller")) {
-								Log.fatal("[FUTURE-FATAL] Attempt to load Extension Controller " + sControllerName + " was not successful", "Controller extension should be a plain object.", null, function() {
+								future.fatalThrows("Attempt to load Extension Controller " + sControllerName + " was not successful", "Controller extension should be a plain object.", null, function() {
 									return {
 										type: "ControllerExtension",
 										name: sControllerName
@@ -408,12 +438,12 @@ sap.ui.define([
 						}
 
 					}, function(err) {
-						Log.error("[FUTURE FATAL] Attempt to load Extension Controller " + sControllerName + " was not successful - is the Controller correctly defined in its file?");
+						future.errorThrows("Attempt to load Extension Controller " + sControllerName + " was not successful - is the Controller correctly defined in its file?");
 					});
 				} else {
 					// sync load Controller extension if necessary
 					if (!mRegistry[sControllerName] && !sap.ui.require(sControllerName)) {
-						loadControllerClass(sControllerName);
+						loadControllerClass(sControllerName, sViewId);
 					}
 
 					// retrieve legacy controller from registry
@@ -454,7 +484,7 @@ sap.ui.define([
 							return oController;
 						});
 					}, function(err){
-						Log.error("[FUTURE FATAL] Controller Extension Provider: Error '" + err + "' thrown in " + Controller._sExtensionProvider + "; extension provider ignored.");
+						future.errorThrows("Controller Extension Provider: Error '" + err + "' thrown in " + Controller._sExtensionProvider + "; extension provider ignored.");
 						return oController;
 					});
 			} else {
@@ -544,7 +574,7 @@ sap.ui.define([
 			if (!oControllerImpl) {
 				// controller *instantiation*
 				if (bAsync) {
-					return loadControllerClass(sName, bAsync)
+					return loadControllerClass(sName, sViewId, bAsync)
 						.then(function(ControllerClass) {
 							return instantiateController(ControllerClass, sName);
 						})
@@ -556,7 +586,7 @@ sap.ui.define([
 							return oController;
 						});
 				} else {
-					ControllerClass = loadControllerClass(sName, bAsync);
+					ControllerClass = loadControllerClass(sName, sViewId, bAsync);
 					oController = instantiateController(ControllerClass, sName);
 					oController = Controller.applyExtensions(oController, sName, sOwnerId, sViewId, bAsync);
 					//if controller is created via the factory all extensions are already mixed in
@@ -618,7 +648,7 @@ sap.ui.define([
 		 */
 		Controller.prototype._getDestroyables = function() {
 			if (!this._aDestroyables) {
-				Log.error("[FUTURE FATAL] Mandatory super constructor not called for Controller: '" + this.getMetadata().getName() + "'.",
+				future.errorThrows("Mandatory super constructor not called for Controller: '" + this.getMetadata().getName() + "'.",
 					null,
 					"sap.ui.support",
 					function() {

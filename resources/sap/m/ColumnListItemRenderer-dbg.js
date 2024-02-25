@@ -5,15 +5,16 @@
  */
 
 sap.ui.define([
+	"sap/ui/core/ControlBehavior",
+	"sap/ui/core/Lib",
 	"sap/ui/core/Renderer",
 	"sap/ui/core/library",
-	"sap/ui/core/Core",
 	"sap/ui/Device",
 	"sap/base/Log",
 	"./library",
 	"./ListItemBaseRenderer"
 ],
-	function(Renderer, coreLibrary, Core, Device, Log, library, ListItemBaseRenderer) {
+	function(ControlBehavior, Library, Renderer, coreLibrary, Device, Log, library, ListItemBaseRenderer) {
 	"use strict";
 
 	// shortcut for sap.m.PopinDisplay
@@ -210,7 +211,7 @@ sap.ui.define([
 
 					if (vLastColumnValue === vCellValue) {
 						// it is not necessary to render the cell content but screen readers need the content to announce it
-						bRenderCell = Core.getConfiguration().getAccessibility();
+						bRenderCell = ControlBehavior.isAccessibilityEnabled();
 						oCell.addStyleClass("sapMListTblCellDupCnt");
 						rm.class("sapMListTblCellDup");
 					} else {
@@ -224,7 +225,7 @@ sap.ui.define([
 			rm.openEnd();
 
 			if (oCell && bRenderCell) {
-				this.applyAriaLabelledBy(oColumn.getHeader(), oCell, true);
+				this.applyAriaLabelledBy(oColumn.getHeader(), oCell);
 				rm.renderControl(oCell);
 			}
 
@@ -240,14 +241,12 @@ sap.ui.define([
 		rm.close("td");
 	};
 
-	ColumnListItemRenderer.applyAriaLabelledBy = function(oHeader, oCell, bRemove) {
+	ColumnListItemRenderer.applyAriaLabelledBy = function(oHeader, oCell) {
 		if (!oHeader || !oHeader.getText || !oHeader.getVisible() || !oCell.getAriaLabelledBy) {
 			return;
 		}
 
-		if (bRemove) {
-			oCell.removeAriaLabelledBy(oHeader);
-		} else if (!oCell.getAriaLabelledBy().includes(oHeader.getId())) {
+		if (!oCell.getAriaLabelledBy().includes(oHeader.getId())) {
 			oCell.addAriaLabelledBy(oHeader);
 		}
 	};
@@ -324,7 +323,7 @@ sap.ui.define([
 				oLI._addClonedHeader(oHeader);
 				rm.renderControl(oHeader);
 				rm.openStart("span").class("sapMListTblSubCntSpr");
-				rm.attr("data-popin-colon", Core.getLibraryResourceBundle("sap.m").getText("TABLE_POPIN_LABEL_COLON"));
+				rm.attr("data-popin-colon", Library.getResourceBundleFor("sap.m").getText("TABLE_POPIN_LABEL_COLON"));
 				rm.openEnd().close("span");
 				rm.close("div");
 			}

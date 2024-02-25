@@ -3,8 +3,8 @@
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(["sap/ui/core/library", "sap/ui/core/Configuration"],
-	function(coreLibrary, Configuration) {
+sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/library", "sap/ui/core/Locale"],
+	function(Localization, coreLibrary, Locale) {
 	"use strict";
 
 
@@ -112,7 +112,7 @@ sap.ui.define(["sap/ui/core/library", "sap/ui/core/Configuration"],
 		oRm.openStart("span", oOA.getId() + "-colon");
 		oRm.class("sapMObjectAttributeColon");
 		oRm.openEnd();
-		if (Configuration.getLocale().getLanguage().toLowerCase() === "fr") {
+		if (new Locale(Localization.getLanguageTag()).getLanguage().toLowerCase() === "fr") {
 			sColon = " " + sColon;
 		}
 		oRm.text(sColon);

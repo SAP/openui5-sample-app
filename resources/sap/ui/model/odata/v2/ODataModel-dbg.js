@@ -22,6 +22,7 @@ sap.ui.define([
 	"./ODataTreeBinding",
 	"sap/base/assert",
 	"sap/base/Log",
+	"sap/base/i18n/Localization",
 	"sap/base/security/encodeURL",
 	"sap/base/util/deepEqual",
 	"sap/base/util/deepExtend",
@@ -33,7 +34,6 @@ sap.ui.define([
 	"sap/base/util/uid",
 	"sap/base/util/UriParameters",
 	"sap/ui/base/SyncPromise",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/library",
 	"sap/ui/core/Messaging",
 	"sap/ui/core/message/Message",
@@ -57,8 +57,8 @@ sap.ui.define([
 	"sap/ui/thirdparty/URI",
 	"sap/ui/util/isCrossOriginURL"
 ], function(_CreatedContextsCache, Context, ODataAnnotations, ODataContextBinding, ODataListBinding,
-		ODataTreeBinding, assert, Log, encodeURL, deepEqual, deepExtend, each, extend,
-		isEmptyObject, isPlainObject, merge, uid, UriParameters, SyncPromise, Configuration,
+		ODataTreeBinding, assert, Log, Localization, encodeURL, deepEqual, deepExtend, each,
+		extend, isEmptyObject, isPlainObject, merge, uid, UriParameters, SyncPromise,
 		coreLibrary, Messaging, Message, MessageParser, Supportability,  _Helper, BindingMode,
 		BaseContext, FilterProcessor, Model, CountMode, MessageScope, ODataMetadata, ODataMetaModel,
 		ODataMessageParser,	ODataPropertyBinding, ODataUtils, OperationMode, UpdateMethod, OData,
@@ -139,10 +139,9 @@ sap.ui.define([
 	 * @param {Object<string,string>} [mParameters.headers]
 	 *   Map of custom headers (name/value pairs) like {"myHeader":"myHeaderValue",...}
 	 * @param {boolean} [mParameters.ignoreAnnotationsFromMetadata]
-	 *   <b>Experimental</b> as of version 1.112.0; may change behavior or be removed in future versions.
 	 *   Whether to ignore all annotations from service metadata, so that they are not available as V4 annotations
 	 *   in this model's metamodel; see {@link #getMetaModel}. Only annotations from annotation files are loaded;
-	 *   see the <code>annotationURI</code> parameter.
+	 *   see the <code>annotationURI</code> parameter. Supported since 1.121.0
 	 * @param {boolean} [mParameters.json=true]
 	 *   If set to <code>true</code>, request payloads will be JSON, XML for <code>false</code>
 	 * @param {boolean} [mParameters.loadAnnotationsJoined]
@@ -218,7 +217,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -507,7 +506,7 @@ sap.ui.define([
 					this.securityTokenAvailable();
 				}
 			}
-			this.oHeaders["Accept-Language"] = Configuration.getLanguageTag();
+			this.oHeaders["Accept-Language"] = Localization.getLanguageTag().toString();
 
 			// set version to 2.0 because 1.0 does not support e.g. skip/top, inlinecount...
 			// states the version of the Open Data Protocol used by the client to generate the request.
@@ -3153,9 +3152,13 @@ sap.ui.define([
 			bUseUndefinedIfUnresolved) {
 		var oChangedNode, oCodeListPromise, sCodeListTerm, sDataPath, sKey, oMetaContext,
 			oMetaModel, sMetaPath, oOrigNode, sResolvedPath, iSeparator,
-			vUnresolvedDefault = bUseUndefinedIfUnresolved ? undefined : null,
-			oNode = this.isLegacySyntax() ? this.oData : vUnresolvedDefault;
+			vUnresolvedDefault = bUseUndefinedIfUnresolved ? undefined : null;
+		let oNode = vUnresolvedDefault;
 
+		/** @deprecated As of version 1.88.0 */
+		if (this.isLegacySyntax()) {
+			oNode = this.oData;
+		}
 		sResolvedPath = this.resolve(sPath, oContext, this.bCanonicalRequests);
 		if (!sResolvedPath && this.bCanonicalRequests) {
 			sResolvedPath = this.resolve(sPath, oContext);
@@ -3961,7 +3964,7 @@ sap.ui.define([
 	 * @param {map} mRequests Request queue
 	 * @param {string} sGroupId ID of a request group; requests belonging to the same group will be bundled in one batch request
 	 * @param {string} [sChangeSetId] The changeSet Id
-	 * @param {oRequest} oRequest The request
+	 * @param {object} oRequest The request
 	 * @param {function} fnSuccess The success callback function
 	 * @param {function} fnError The error callback function
 	 * @param {object} requestHandle Handle for the requests
@@ -5226,9 +5229,9 @@ sap.ui.define([
 	 */
 	ODataModel.prototype.create = function(sPath, oData, mParameters) {
 		var oRequest, sUrl, oEntityMetadata,
-		oContext, fnSuccess, fnError, mUrlParams, mRequests,
-		mHeaders, aUrlParams, sEtag, sGroupId, sMethod, sChangeSetId, bRefreshAfterChange,
-		bDeferred, that = this, sNormalizedPath, sDeepPath, bCanonical;
+			oContext, fnSuccess, fnError, mUrlParams, mRequests,
+			mHeaders, aUrlParams, sGroupId, sMethod, sChangeSetId, bRefreshAfterChange,
+			bDeferred, that = this, sNormalizedPath, sDeepPath, bCanonical;
 
 		// The object parameter syntax has been used.
 		if (mParameters) {
@@ -5238,7 +5241,6 @@ sap.ui.define([
 			fnError    = mParameters.error;
 			sGroupId	= mParameters.groupId || mParameters.batchGroupId;
 			sChangeSetId	= mParameters.changeSetId;
-			sEtag		= mParameters.eTag;
 			mHeaders	= mParameters.headers;
 			bRefreshAfterChange = mParameters.refreshAfterChange;
 			bCanonical = mParameters.canonicalRequest;
@@ -5259,7 +5261,7 @@ sap.ui.define([
 
 		return this._processRequest(function(requestHandle) {
 			sUrl = that._createRequestUrlWithNormalizedPath(sNormalizedPath, aUrlParams, that.bUseBatch);
-			oRequest = that._createRequest(sUrl, sDeepPath, sMethod, mHeaders, oData, sEtag);
+			oRequest = that._createRequest(sUrl, sDeepPath, sMethod, mHeaders, oData);
 			oRequest.created = true;
 
 			oEntityMetadata = that.oMetadata._getEntityTypeByPath(sNormalizedPath);
@@ -5815,7 +5817,7 @@ sap.ui.define([
 	 * @private
 	 */
 	 ODataModel.prototype._read = function(sPath, mParameters, bSideEffects) {
-		var bCanonical, oContext, fnError, sETag, aFilters, sGroupId, mHeaders, sMethod, oRequest,
+		var bCanonical, oContext, fnError, aFilters, sGroupId, mHeaders, sMethod, oRequest,
 			aSorters, fnSuccess, bUpdateAggregatedMessages, aUrlParams, mUrlParams,
 			that = this;
 
@@ -5847,7 +5849,6 @@ sap.ui.define([
 		mHeaders = this._getHeaders(mHeaders, true);
 
 		sMethod = "GET";
-		sETag = this._getETag(sPath, oContext);
 
 		var oRequestHandle = {
 			abort: function() {
@@ -5878,7 +5879,7 @@ sap.ui.define([
 
 			sUrl = that._createRequestUrlWithNormalizedPath(sResourcePath, aUrlParams,
 				that.bUseBatch);
-			oRequest = that._createRequest(sUrl, sDeepPath, sMethod, mHeaders, null, sETag,
+			oRequest = that._createRequest(sUrl, sDeepPath, sMethod, mHeaders, null, /*sETag*/undefined,
 				undefined, bUpdateAggregatedMessages, bSideEffects);
 
 			mRequests = that.mRequests;
@@ -7189,7 +7190,7 @@ sap.ui.define([
 	 */
 	ODataModel.prototype.createEntry = function (sPath, mParameters) {
 		var bCanonical, sChangeSetId, oContext, fnCreated, pCreate, fnCreatedPromiseResolve,
-			bDeepCreate, sDeepPath, oEntityMetadata, fnError, sETag, sExpand, sGroupId, mHeaders,
+			bDeepCreate, sDeepPath, oEntityMetadata, fnError, sExpand, sGroupId, mHeaders,
 			bInactive, bIsCollection, sKey, sNormalizedPath, vProperties, bRefreshAfterChange,
 			oRequest, mRequests, fnSuccess, sUrl, aUrlParams, mUrlParams,
 			oEntity = {},
@@ -7243,8 +7244,9 @@ sap.ui.define([
 				assert(oEntityMetadata, "No Metadata for collection " + sNormalizedPath + " found");
 				return undefined;
 			}
+			oEntity = bDeepCreate ? {} : that.getForeignKeysFromReferentialConstraints(sNormalizedPath);
 			if (typeof vProperties === "object" && !Array.isArray(vProperties)) {
-				oEntity = merge({}, vProperties);
+				oEntity = merge(oEntity, vProperties);
 			}
 			sEntityType = "" + oEntityMetadata.entityType;
 			oEntitySetMetadata = that.oMetadata._getEntitySetByType(oEntityMetadata);
@@ -7343,7 +7345,6 @@ sap.ui.define([
 				created : {
 					changeSetId : sChangeSetId,
 					error : fnError,
-					eTag : sETag,
 					groupId : sGroupId,
 					headers : mHeaders,
 					key : sNormalizedPath.substring(1), //store path for later POST
@@ -7379,7 +7380,7 @@ sap.ui.define([
 			});
 			oCreatedContext = addEntityToCacheAndCreateContext();
 			sUrl = that._createRequestUrlWithNormalizedPath(sNormalizedPath, aUrlParams, that.bUseBatch);
-			oRequest = that._createRequest(sUrl, sDeepPath, sMethod, mHeaders, oEntity, sETag);
+			oRequest = that._createRequest(sUrl, sDeepPath, sMethod, mHeaders, oEntity);
 
 			if (sExpand) {
 				mExpandHeaders = that._getHeaders(undefined, true);
@@ -7433,7 +7434,6 @@ sap.ui.define([
 			fnSuccess = mParameters.success;
 			fnError   = mParameters.error;
 			fnCreated = mParameters.created;
-			sETag     = mParameters.eTag;
 			mHeaders  = mParameters.headers;
 			mUrlParams = mParameters.urlParameters;
 			bRefreshAfterChange = mParameters.refreshAfterChange;
@@ -7472,6 +7472,36 @@ sap.ui.define([
 		return undefined;
 	};
 
+	/**
+	 * Gets an object with the values for the foreign keys defined by referential constraints for the given path.
+	 *
+	 * @param {string} sNormalizedPath
+	 *   The absolute normalized path to create an entity, see {@link #_normalizePath}
+	 * @returns {Object<string, any>}
+	 *   An object containing the values from the parent entity for the properties defined in the association's
+	 *   referential constraints; if there are no referential constraints defined an empty object is returned
+	 * @private
+	 */
+	ODataModel.prototype.getForeignKeysFromReferentialConstraints = function (sNormalizedPath) {
+		const mSplitPath = this.oMetadata._splitByLastNavigationProperty(sNormalizedPath);
+
+		if (mSplitPath.lastNavigationProperty) {
+			// check referential constraints
+			const oParentEntityType = this.oMetadata._getEntityTypeByName(mSplitPath.pathBeforeLastNavigationProperty);
+			const mSource2TargetProperty = this.oMetadata._getReferentialConstraintsMapping(oParentEntityType,
+				mSplitPath.lastNavigationProperty.slice(1));
+			const oData = this._getObject(mSplitPath.pathBeforeLastNavigationProperty);
+			if (oData) {
+				return Object.keys(mSource2TargetProperty).reduce((oResult, sSourcePropertyName) => {
+					if (oData[sSourcePropertyName]) {
+						oResult[mSource2TargetProperty[sSourcePropertyName]] = oData[sSourcePropertyName];
+					}
+					return oResult;
+				}, {});
+			}
+		}
+		return {};
+	};
 	/**
 	 * Returns whether the given entity has been created using createEntry.
 	 * @param {object} oEntity The entity to check
@@ -7827,9 +7857,9 @@ sap.ui.define([
 	/**
 	 * Sets the {@link sap.ui.core.message.MessageParser} that is invoked upon every back-end request.
 	 *
-	 * This message parser analyzes the response and notifies {@link sap.ui.core.Messaging} about added and deleted messages.
+	 * This message parser analyzes the response and notifies {@link module:sap/ui/core/Messaging} about added and deleted messages.
 	 *
-	 * @param {object|null} [oParser] The {@link sap.ui.core.message.MessageParser} instance that parses the responses and adds messages to {@link sap.ui.core.Messaging}
+	 * @param {object|null} [oParser] The {@link sap.ui.core.message.MessageParser} instance that parses the responses and adds messages to {@link module:sap/ui/core/Messaging}
 	 * @return {this} Model instance for method chaining
 	 */
 	ODataModel.prototype.setMessageParser = function(oParser) {

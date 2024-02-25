@@ -11,9 +11,10 @@ sap.ui.define([
 	'sap/ui/core/IconPool',
 	'sap/ui/core/Icon',
 	'./TreeItemBaseRenderer',
+	"sap/ui/core/Lib",
 	'sap/ui/events/KeyCodes'
 ],
-	function(ListItemBase, library, IconPool, Icon, TreeItemBaseRenderer, KeyCodes) {
+	function(ListItemBase, library, IconPool, Icon, TreeItemBaseRenderer, Library, KeyCodes) {
 	"use strict";
 
 	// shortcut for sap.m.ListMode
@@ -30,7 +31,7 @@ sap.ui.define([
 	 * @extends sap.m.ListItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -213,7 +214,7 @@ sap.ui.define([
 	 */
 	TreeItemBase.prototype._getExpanderControl = function() {
 		var sSrc = this.CollapsedIconURI,
-			oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m"),
+			oBundle = Library.getResourceBundleFor("sap.m"),
 			sIconTooltip = oBundle.getText("TREE_ITEM_EXPAND_NODE");
 
 		if (this.getExpanded()) {

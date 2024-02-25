@@ -7,6 +7,7 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
+	"sap/ui/core/Element",
 	'sap/ui/core/EnabledPropagator',
 	'sap/ui/core/IconPool',
 	'./delegate/ValueStateMessage',
@@ -19,7 +20,7 @@ sap.ui.define([
 	"sap/ui/events/KeyCodes",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/Lib",
-    // jQuery Plugin "cursorPos"
+	// jQuery Plugin "cursorPos"
 	"sap/ui/dom/jquery/cursorPos",
 	// jQuery Plugin "getSelectedText"
 	"sap/ui/dom/jquery/getSelectedText",
@@ -29,6 +30,7 @@ sap.ui.define([
 function(
 	library,
 	Control,
+	Element,
 	EnabledPropagator,
 	IconPool,
 	ValueStateMessage,
@@ -63,10 +65,15 @@ function(
 	 * The <code>sap.m.InputBase</code> control provides a basic functionality for input controls.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.core.IFormContent
+	 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
+	 *
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -76,7 +83,10 @@ function(
 	var InputBase = Control.extend("sap.m.InputBase", /** @lends sap.m.InputBase.prototype */ {
 		metadata: {
 
-			interfaces : ["sap.ui.core.IFormContent"],
+			interfaces : [
+				"sap.ui.core.IFormContent",
+				"sap.ui.core.ISemanticFormContent"
+			],
 			library: "sap.m",
 			properties: {
 
@@ -187,7 +197,6 @@ function(
 				 * Defines the formatted text that appears in the value state message pop-up.
 				 * It can include links. If both <code>valueStateText</code> and <code>formattedValueStateText</code>
 				 * are set - the latter is shown.
-				 * @experimental Since 1.78. This aggregation is experimental and provides only limited functionality. Also the API might be changed in future.
 				 * @since 1.78
 				 */
 				formattedValueStateText: { type: "sap.m.FormattedText", multiple: false },
@@ -195,7 +204,6 @@ function(
 				/**
 				 * Clone of the <code>formattedValueStateText</code> aggregation created for the accessibility elements used
 				 * by screen readers.
-				 * @experimental Since 1.84. This aggregation is experimental and provides only limited functionality. Also the API might be changed in future.
 				 * @since 1.84
 				 */
 				_invisibleFormattedValueStateText: { type: "sap.m.FormattedText", multiple: false, visibility: "hidden" },
@@ -1043,14 +1051,14 @@ function(
 	 */
 	InputBase.prototype.getLabels = function() {
 		var aLabelIDs = this.getAriaLabelledBy().map(function(sLabelID) {
-			return sap.ui.getCore().byId(sLabelID);
+			return Element.getElementById(sLabelID);
 		});
 
 		var oLabelEnablement = sap.ui.require("sap/ui/core/LabelEnablement");
 
 		if (oLabelEnablement) {
 			aLabelIDs = aLabelIDs.concat(oLabelEnablement.getReferencingLabels(this).map(function(sLabelID) {
-				return sap.ui.getCore().byId(sLabelID);
+				return Element.getElementById(sLabelID);
 			}));
 		}
 
@@ -1259,6 +1267,23 @@ function(
 	 */
 	InputBase.prototype.getLastValue = function () {
 		return this._lastValue;
+	};
+
+	// support for SemanticFormElement
+	InputBase.prototype.getFormFormattedValue = function() {
+		return this.getValue();
+	};
+
+	InputBase.prototype.getFormValueProperty = function () {
+		return "value";
+	};
+
+	InputBase.prototype.getFormObservingProperties = function() {
+		return ["value"];
+	};
+
+	InputBase.prototype.getFormRenderAsControl = function () {
+		return false;
 	};
 
 	return InputBase;

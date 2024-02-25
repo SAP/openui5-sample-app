@@ -6,6 +6,7 @@
 
 //Provides control sap.ui.unified.Calendar.
 sap.ui.define([
+	"sap/base/i18n/Formatting",
 	'sap/ui/core/Control',
 	'sap/ui/Device',
 	'sap/ui/core/LocaleData',
@@ -18,9 +19,9 @@ sap.ui.define([
 	"sap/ui/unified/DateRange",
 	'sap/ui/unified/calendar/CalendarUtils',
 	'sap/ui/unified/calendar/CalendarDate',
-	"sap/ui/core/Configuration",
 	"sap/ui/core/date/UI5Date"
 ], function(
+	Formatting,
 	Control,
 	Device,
 	LocaleData,
@@ -33,7 +34,6 @@ sap.ui.define([
 	DateRange,
 	CalendarUtils,
 	CalendarDate,
-	Configuration,
 	UI5Date
 ) {
 	"use strict";
@@ -55,7 +55,7 @@ sap.ui.define([
 	 * renders a MonthPicker with ItemNavigation
 	 * This is used inside the calendar. Not for stand alone usage
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -246,7 +246,7 @@ sap.ui.define([
 	};
 
 	MonthPicker.prototype._getPrimaryCalendarType = function(){
-		return this.getProperty("primaryCalendarType") || Configuration.getCalendarType();
+		return this.getProperty("primaryCalendarType") || Formatting.getCalendarType();
 	};
 
 	MonthPicker.prototype._getSelectedDates = function() {
@@ -325,7 +325,7 @@ sap.ui.define([
 		if (oParent && oParent._getLocale) {
 			return oParent._getLocale();
 		} else if (!this._sLocale) {
-			this._sLocale = Configuration.getFormatSettings().getFormatLocale().toString();
+			this._sLocale = new Locale(Formatting.getLanguageTag()).toString();
 		}
 
 		return this._sLocale;

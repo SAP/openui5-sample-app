@@ -78,7 +78,7 @@ function(
 	 * @implements sap.ui.core.Toolbar,sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -228,7 +228,7 @@ function(
 	 * @return {string} width
 	 */
 	Toolbar.getOrigWidth = function(sId) {
-		var oControl = Element.registry.get(sId);
+		var oControl = Element.getElementById(sId);
 		if (!oControl || !oControl.getWidth) {
 			return "";
 		}
@@ -341,7 +341,7 @@ function(
 	};
 
 	Toolbar.prototype.onLayoutDataChange = function() {
-		this.rerender();
+		this.invalidate();
 	};
 
 	Toolbar.prototype.addContent = function(oControl) {
@@ -391,7 +391,7 @@ function(
 
 	Toolbar.prototype.onsapspace = function(oEvent) {
 		// Prevent browser scrolling in case of SPACE key
-		if (oEvent.srcControl === this._getActiveButton()) {
+		if ((!this.getActive() && oEvent.isMarked()) || oEvent.srcControl === this._activeButton) {
 			oEvent.preventDefault();
 		}
 	};

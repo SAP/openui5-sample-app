@@ -16,28 +16,11 @@ sap.ui.define(function () {
 			}
 		},
 		tests: {
-			AlternativeTypes: {
-				title: "QUnit Page for AlternativeTypes",
-				loader: {
-					paths: {
-						"sap/ui/testlib": "test-resources/sap/ui/core/qunit/testdata/uilib/"
-					}
-				},
-				ui5: {
-					libs: "sap.ui.testlib"
-				}
-			},
 			CompositeType: {
 				coverage : {
 					only : "sap/ui/model/CompositeType"
 				},
 				title: "QUnit Page for sap/ui/model/CompositeType"
-			},
-			DataType: {
-				coverage : {
-					only : "sap/ui/base/DataType"
-				},
-				title: "QUnit Page for sap/ui/base/DataType"
 			},
 			Date: {
 				coverage : {
@@ -62,6 +45,13 @@ sap.ui.define(function () {
 					only : "sap/ui/model/type/DateInterval"
 				},
 				title: "QUnit Page for sap/ui/model/type/DateInterval"
+			},
+			FormatUtils : {
+				coverage : {
+					only : "sap/ui/core/format/FormatUtils"
+				},
+				module : "./../format/FormatUtils.qunit",
+				title : "QUnit Page for sap/ui/core/format/FormatUtils"
 			},
 			ListFormat: {
 				coverage : {

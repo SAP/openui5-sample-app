@@ -5,8 +5,8 @@
  */
 
 // Provides default renderer for control sap.ui.unified.ShellLayout
-sap.ui.define(["sap/ui/core/Configuration"],
-	function(Configuration) {
+sap.ui.define(["sap/ui/core/ControlBehavior"],
+	function(ControlBehavior) {
 	"use strict";
 
 
@@ -48,7 +48,7 @@ sap.ui.define(["sap/ui/core/Configuration"],
 		rm.write("<hr id='", id, "-brand' class='sapUiUfdShellBrand'>");
 
 		rm.write("<header id='", id, "-hdr'  class='sapUiUfdShellHead'");
-		if (Configuration.getAccessibility()) {
+		if (ControlBehavior.isAccessibilityEnabled()) {
 			rm.writeAttribute("role", "banner");
 		}
 		rm.write("><div><div id='", id, "-hdrcntnt' class='sapUiUfdShellCntnt'>");

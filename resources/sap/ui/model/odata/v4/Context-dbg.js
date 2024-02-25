@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -258,7 +258,9 @@ sap.ui.define([
 	 *   you can use <code>null</code> to prevent the DELETE request in case of a kept-alive context
 	 *   that is not in the collection and of which you know that it does not exist on the server
 	 *   anymore (for example, a draft after activation). Since 1.108.0 the usage of a group ID with
-	 *   {@link sap.ui.model.odata.v4.SubmitMode.API} is possible.
+	 *   {@link sap.ui.model.odata.v4.SubmitMode.API} is possible. Since 1.121.0, you can use the
+	 *   '$single' group ID to send a DELETE request as fast as possible; it will be wrapped in a
+	 *   batch request as for a '$auto' group.
 	 * @param {boolean} [bDoNotRequestCount]
 	 *   Whether not to request the new count from the server; useful in case of
 	 *   {@link #replaceWith} where it is known that the count remains unchanged (since 1.97.0).
@@ -323,7 +325,7 @@ sap.ui.define([
 			oEditUrlPromise = SyncPromise.resolve();
 			bDoNotRequestCount = true;
 		} else {
-			_Helper.checkGroupId(sGroupId);
+			_Helper.checkGroupId(sGroupId, false, true);
 			oEditUrlPromise = this.fetchCanonicalPath().then(function (sCanonicalPath) {
 				return sCanonicalPath.slice(1);
 			});
@@ -367,7 +369,7 @@ sap.ui.define([
 			this.fnOnBeforeDestroy = undefined;
 			fnOnBeforeDestroy();
 		}
-		this.oModel.getDependentBindings(this).forEach(function (oDependentBinding) {
+		this.oModel?.getDependentBindings(this).forEach(function (oDependentBinding) {
 			oDependentBinding.setContext(undefined);
 		});
 		this.oBinding = undefined;
@@ -710,7 +712,7 @@ sap.ui.define([
 	Context.prototype.getAndRemoveCollection = function (sPath) {
 		return this.withCache(function (oCache, sCachePath) {
 			return oCache.getAndRemoveCollection(sCachePath);
-		}, sPath, true).getResult();
+		}, sPath, true).unwrap();
 	};
 
 	/**
@@ -1197,7 +1199,8 @@ sap.ui.define([
 	 * must happen while this move is pending! Omitting a new parent turns this node into a root
 	 * node (since 1.121.0).
 	 *
-	 * This context's {@link #getIndex index} may change and it becomes "created persisted", with
+	 * This context's {@link #getIndex index} may change and, in case of
+	 * <code>oAggregation.expandTo : 1</code>, it becomes "created persisted", with
 	 * {@link #isTransient} returning <code>false</code> etc.
 	 *
 	 * @param {object} [oParameters] - A parameter object
@@ -1376,7 +1379,14 @@ sap.ui.define([
 	 * The header context of a list binding only delivers <code>$count</code> (wrapped in an object
 	 * if <code>sPath</code> is "").
 	 *
-	 * If you want {@link #requestObject} to read fresh data, call {@link #refresh} first.
+	 * In case of a {@link sap.ui.model.odata.v4.ODataContextBinding#getBoundContext context
+	 * binding's bound context} that hasn't requested its data yet, this method causes an initial
+	 * back-end request using the binding's $expand and $select. Once any binding has requested its
+	 * data, this method does <strong>not</strong> cause requests anymore. If you want to read fresh
+	 * data, call {@link #refresh} first. In contrast to {@link #requestProperty}, it is
+	 * <strong>not</strong> possible to cause additional property requests. Access is only to the
+	 * data the context points to (or any part thereof), as defined by the binding's $expand and
+	 * $select (unless this is a header context, see above).
 	 *
 	 * @param {string} [sPath=""]
 	 *   A path relative to this context
@@ -1772,6 +1782,9 @@ sap.ui.define([
 				break;
 			}
 			if (!oBinding.getBoundContext) {
+				if (oBinding.oCache === undefined) {
+					return undefined; // nothing to do - looks like a refresh in progress
+				}
 				throw new Error("Not a context binding: " + oBinding);
 			}
 			oCandidate = oParentContext;

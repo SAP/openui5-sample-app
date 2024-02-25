@@ -8,13 +8,13 @@
 
 // Provides class sap.ui.base.DataType
 sap.ui.define([
+	'sap/base/future',
 	'sap/base/util/ObjectPath',
 	"sap/base/assert",
 	"sap/base/Log",
 	"sap/base/util/isPlainObject",
 	'sap/base/util/resolveReference'
-],
-	function(ObjectPath, assert, Log, isPlainObject, resolveReference) {
+], function(future, ObjectPath, assert, Log, isPlainObject, resolveReference) {
 	"use strict";
 
 	/**
@@ -537,7 +537,10 @@ sap.ui.define([
 				if (oType == null) {
 					oType = ObjectPath.get(sTypeName);
 					if (oType != null) {
-						Log.error(`The type '${sTypeName}' was accessed via globals. Defining enums via globals is deprecated. Please require the module 'sap/ui/base/DataType' and call the static 'DataType.registerEnum' API.`);
+						Log.error(`[DEPRECATED] The type '${sTypeName}' was accessed via globals. Defining types via globals is deprecated. ` +
+						`In case the referenced type is an enum: require the module 'sap/ui/base/DataType' and call the static 'DataType.registerEnum' API. ` +
+						`In case the referenced type is non-primitive, please note that only primitive types (and those derived from them) are supported for ManagedObject properties. ` +
+						`If the given type is an interface or a subclass of ManagedObject, you can define a "0..1" aggregation instead of a property`);
 					}
 				}
 
@@ -547,10 +550,10 @@ sap.ui.define([
 					oType = mTypes[sTypeName] = createEnumType(sTypeName, oType);
 					delete mEnumRegistry[sTypeName];
 				} else if ( oType ) {
-					Log.warning("[FUTURE FATAL] '" + sTypeName + "' is not a valid data type. Falling back to type 'any'.");
+					future.warningThrows("'" + sTypeName + "' is not a valid data type. Falling back to type 'any'.");
 					oType = mTypes.any;
 				} else {
-					Log.error("[FUTURE FATAL] data type '" + sTypeName + "' could not be found.");
+					future.errorThrows("data type '" + sTypeName + "' could not be found.");
 					oType = undefined;
 				}
 			}
@@ -608,8 +611,8 @@ sap.ui.define([
 		assert(vBase == null || vBase instanceof DataType || typeof vBase === "string" && vBase,
 				"DataType.createType: base type must be empty or a DataType or a non-empty string");
 		if ( /[\[\]]/.test(sName) ) {
-			Log.error(
-				"[FUTURE FATAL] DataType.createType: array types ('something[]') must not be created with createType, " +
+			future.errorThrows(
+				"DataType.createType: array types ('something[]') must not be created with createType, " +
 				"they're created on-the-fly by DataType.getType");
 		}
 		if ( typeof vBase === "string" ) {
@@ -617,13 +620,13 @@ sap.ui.define([
 		}
 		vBase = vBase || mTypes.any;
 		if ( vBase.isArrayType() || vBase.isEnumType() ) {
-			Log.error("[FUTURE FATAL] DataType.createType: base type must not be an array- or enum-type");
+			future.errorThrows("DataType.createType: base type must not be an array- or enum-type");
 		}
 		if ( sName === 'array' || mTypes[sName] instanceof DataType ) {
 			if ( sName === 'array' || mTypes[sName].getBaseType() == null ) {
 				throw new Error("DataType.createType: primitive or hidden type " + sName + " can't be re-defined");
 			}
-			Log.warning("[FUTURE FATAL] DataTypes.createType: type " + sName + " is redefined. " +
+			future.warningThrows("DataTypes.createType: type " + sName + " is redefined. " +
 				"This is an unsupported usage of DataType and might cause issues." );
 		}
 		var oType = mTypes[sName] = createType(sName, mSettings, vBase);
@@ -646,10 +649,15 @@ sap.ui.define([
 		aTypes.forEach(function(sType) {
 			oInterfaces.add(sType);
 
-			// Defining the interface on global namespace for compatibility reasons.
-			// This has never been a public feature and it is strongly discouraged it be relied upon.
-			// An interface must always be referenced by a string literal, not via the global namespace.
-			ObjectPath.set(sType, sType);
+			/**
+			 * @deprecated
+			 */
+			(() => {
+				// Defining the interface on global namespace for compatibility reasons.
+				// This has never been a public feature and it is strongly discouraged it be relied upon.
+				// An interface must always be referenced by a string literal, not via the global namespace.
+				ObjectPath.set(sType, sType);
+			})();
 		});
 	};
 

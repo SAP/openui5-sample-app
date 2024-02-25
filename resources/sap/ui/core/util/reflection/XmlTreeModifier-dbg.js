@@ -109,6 +109,7 @@ sap.ui.define([
 				oControl.setAttribute("stashed", bStashed);
 			}
 			XmlTreeModifier.setVisible(oControl, !bStashed);
+			return Promise.resolve();
 		},
 
 		/**

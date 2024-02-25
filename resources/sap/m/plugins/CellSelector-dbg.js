@@ -5,11 +5,12 @@
  */
 sap.ui.define([
 	"./PluginBase",
+	"sap/base/i18n/Localization",
+	"sap/base/util/deepEqual",
 	"sap/ui/events/KeyCodes",
-	"sap/ui/core/Core",
 	"sap/ui/core/Element",
 	"sap/base/Log"
-], function (PluginBase, KeyCodes, Core, Element, Log) {
+], function (PluginBase, Localization, deepEqual, KeyCodes, Element, Log) {
 	"use strict";
 
 	var DIRECTION = {
@@ -44,13 +45,14 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @author SAP SE
 	 *
 	 * @public
 	 * @experimental Since 1.119. This class is experimental. The API might be changed in the future.
 	 * @since 1.119
 	 * @alias sap.m.plugins.CellSelector
+	 * @borrows sap.m.plugins.PluginBase.findOn as findOn
 	 */
 	var CellSelector = PluginBase.extend("sap.m.plugins.CellSelector", /** @lends sap.m.plugins.CellSelector.prototype */  {
 		metadata: {
@@ -79,6 +81,19 @@ sap.ui.define([
 		}
 	});
 
+	CellSelector.findOn = PluginBase.findOn;
+
+	/**
+	 * A selection object representing the selected cells.
+	 *
+	 * The selection object contains the selected cells separated into rows and columns.
+	 * Rows are represented by their context, while columns are the column instance, which may vary depending on the table type.
+	 * @public
+	 * @typedef {object} sap.m.plugins.CellSelector.Selection
+	 * @property {sap.ui.model.Context[]} rows The row contexts of the selected cells.
+	 * @property {sap.ui.core.Element[]} columns The column instances of the selected cells; the content is based on the owner control.
+	 */
+
 	/**
 	 * Event Delegate that containts events, that need to be executed after control events.
 	 */
@@ -103,11 +118,14 @@ sap.ui.define([
 	 */
 	const PriorityDelegate = {
 		onBeforeRendering: function() {
-			this._iRtl = Core.getConfiguration().getRTL() ? -1 : 1;
+			this._iRtl = Localization.getRTL() ? -1 : 1;
 			if (this._oResizer) {
 				// remove resizer, as due to rerendering table element may be gone
 				this._oResizer.remove();
 				this._oResizer = null;
+			}
+			if (this._bSelecting) {
+				this.removeSelection();
 			}
 		},
 		onAfterRendering: function() {
@@ -182,7 +200,7 @@ sap.ui.define([
 			var oSelectableCell = this._getSelectableCell(oEvent.target);
 			if (oSelectableCell) {
 				this._bMouseDown = true;
-				this._mClickedCell = this.getConfig("getCellInfo", this.getControl(), oSelectableCell);
+				this._mClickedCell = this._oPreviousCell = this.getConfig("getCellInfo", this.getControl(), oSelectableCell);
 			}
 		},
 		onmouseup: function(oEvent) {
@@ -190,6 +208,7 @@ sap.ui.define([
 			this._bBorderDown = false;
 			this._mClickedCell = undefined;
 			this._bScrolling = false;
+			this._oPreviousCell = undefined;
 			this._clearScroller();
 		}
 	};
@@ -204,7 +223,11 @@ sap.ui.define([
 			if (this._bScrolling) {
 				this._scrollSelect(this._oSession.scrollForward, this._oSession.isVertical, oEvent);
 			} else {
-				this._selectCells();
+				if (!this._oSession.mSource || !this._oSession.mTarget) {
+					return;
+				}
+				const mBounds = this._getNormalizedBounds(this._oSession.mSource, this._oSession.mTarget);
+				this._drawSelection(mBounds);
 			}
 		}.bind(this);
 		this._fnOnMouseEnter = this._onmouseenter.bind(this);
@@ -247,15 +270,31 @@ sap.ui.define([
 	 * Determines whether cells are selectable or not.
 	 *
 	 * @private
+	 * @returns {boolean} Whether cells are selectable or not
 	 * @ui5-restricted sap.m.plugins.CopyProvider
 	 */
 	CellSelector.prototype.isSelectable = function() {
 		return this.isActive() ? this.getConfig("isSupported", this.getControl()) : false;
 	};
 
+	/**
+	 * Determines whether there is a cell selection or not.
+	 *
+	 * @private
+	 * @returns {boolean} Whether there is a cell selection or not
+	 * @ui5-restricted sap.m.plugins.CopyProvider
+	 */
+	CellSelector.prototype.hasSelection = function() {
+		return Boolean(this._bSelecting && this._oSession?.mSource);
+	};
+
 	CellSelector.prototype._onSelectableChange = function() {
-		const oCopyProvider = this.getPlugin("sap.m.plugins.CopyProvider");
-		oCopyProvider?.onCellSelectorSelectableChange(this.isSelectable());
+		this.getPlugin("sap.m.plugins.CopyProvider")?.onCellSelectorSelectableChange(this);
+	};
+
+	CellSelector.prototype._onSelectionChange = function() {
+		/* @ui5-restricted sap.m.plugins.CopyProvider */
+		this.fireEvent("selectionChange");
 	};
 
 	CellSelector.prototype._registerEvents = function() {
@@ -290,15 +329,15 @@ sap.ui.define([
 
 	/**
 	 * Returns the cell selection range.
-	 * The value <code>Infinity</code> in <code>rowIndex</code> meant for until the limit is reached.
+	 * The value <code>Infinity</code> in <code>rowIndex</code> indicates that the limit is reached.
 	 *
-	 * Note: This method is subject to change.
+	 * <b>Note</b>: This method is subject to change.
+	 * @param {boolean} bIgnore Ignore group header rows within selection range
 	 * @returns {{from: {rowIndex: int, colIndex: int}, to: {rowIndex: int, colIndex: int}}  The range of the selection
-	 * @private
-	 * @experimental Since 1.110
 	 * @ui5-restricted sap.m.plugins.CopyProvider
+	 * @private
 	 */
-	CellSelector.prototype.getSelectionRange = function () {
+	CellSelector.prototype.getSelectionRange = function (bIgnore) {
 		if (!this._bSelecting) {
 			return null;
 		}
@@ -312,6 +351,18 @@ sap.ui.define([
 		mSelectionRange.from.colIndex = Math.max(mSelectionRange.from.colIndex, 0);
 		mSelectionRange.to.colIndex = Math.min(mSelectionRange.to.colIndex, iMaxColumnIndex);
 		mSelectionRange.from.rowIndex = Math.max(mSelectionRange.from.rowIndex, 0);
+
+		if (bIgnore) {
+			mSelectionRange.ignoredRows = [];
+			const aContexts = this.getSelectedRowContexts();
+			aContexts.forEach((oContext, iIndex) => {
+				const iRowIndex = mSelectionRange.from.rowIndex + iIndex;
+				if (isGroupRow(this._getBinding(), oContext, iRowIndex)) {
+					mSelectionRange.ignoredRows.push(iRowIndex);
+				}
+			});
+		}
+
 		return mSelectionRange;
 	};
 
@@ -321,7 +372,6 @@ sap.ui.define([
 	 * Note: This method is subject to change.
 	 * @returns {sap.ui.model.Context[]} The binding context of selected rows
 	 * @private
-	 * @experimental Since 1.110
 	 * @ui5-restricted sap.m.plugins.CopyProvider
 	 */
 	CellSelector.prototype.getSelectedRowContexts = function () {
@@ -330,7 +380,51 @@ sap.ui.define([
 			return [];
 		}
 
-		return this.getConfig("rowContexts", this.getControl(), mSelectionRange.from.rowIndex, mSelectionRange.to.rowIndex, this.getRangeLimit());
+		return this.getConfig("getSelectedRowContexts", this.getControl(), mSelectionRange.from.rowIndex, mSelectionRange.to.rowIndex, this.getRangeLimit());
+	};
+
+	/**
+	 * Returns the selected cells separated into the selected rows and columns.
+	 *
+	 * Example:
+	 * If the cells from (0, 0) to (2, 4) are selected, this method will return the following object:
+	 * <pre>
+	 * 	{
+	 * 		rows: [Row0_Context, Row1_Context, Row2_Context],
+	 * 		columns: [Column0, Column1, Column2, Column3, Column4]
+	 * 	}
+	 * </pre>
+	 *
+	 * <b>Note:</b> The content of the <code>rows</code> and <code>columns</code> depends on the owner control.
+	 * The type of the column that is returned depends on the table type for which the plugin is used (for example, <code>sap.ui.table.Column</code> for <code>sap.ui.table.Table</code>).
+	 *
+	 * @param {boolean} bIgnore Ignores group headers from selection
+	 * @returns {sap.m.plugins.CellSelector.Selection} An object containing the selected cells separated into rows and columns
+	 * @private
+	 * @ui5-restricted sap.fe, sap.suite.ui.generic.template
+	 */
+	CellSelector.prototype.getSelection = function(bIgnore) {
+		var mSelectionRange = this.getSelectionRange();
+		if (!mSelectionRange) {
+			return {rows: [], columns: []};
+		}
+
+		var aSelection = this.getConfig("getSelectedRowContexts", this.getControl(), mSelectionRange.from.rowIndex, mSelectionRange.to.rowIndex, this.getRangeLimit());
+		if (bIgnore) {
+			aSelection = aSelection.filter((oContext, iIndex) => !isGroupRow(this._getBinding(), oContext, iIndex + mSelectionRange.from.rowIndex));
+		}
+
+		var aSelectedColumns = this.getConfig("getVisibleColumns", this.getControl()).slice(mSelectionRange.from.colIndex, mSelectionRange.to.colIndex + 1);
+		if (this.getControl().getParent().isA("sap.ui.mdc.Table")) {
+			aSelectedColumns = aSelectedColumns.map(function(oSelectedColumn) {
+				return Element.getElementById(oSelectedColumn.getId().replace(/\-innerColumn$/, ""));
+			});
+		}
+
+		return {
+			rows: aSelection,
+			columns: aSelectedColumns
+		};
 	};
 
 	CellSelector.prototype._onsaparrowmodifiers = function(oEvent, sDirectionType, iRowDiff, iColDiff) {
@@ -392,11 +486,11 @@ sap.ui.define([
 
 		// If clicked cell (=starting cell) is equal to currently hovered cell, don't do anything
 		var oInfo = this.getConfig("getCellInfo", this.getControl(), oSelectableCell);
-		if (this._mClickedCell
-			&& oInfo.rowIndex == this._mClickedCell.rowIndex
-			&& oInfo.colIndex == this._mClickedCell.colIndex) {
+		if (oInfo.rowIndex == this._oPreviousCell?.rowIndex && oInfo.colIndex == this._oPreviousCell?.colIndex) {
+			// If currently hovered cell is the same as previous cell, nothing needs to be done.
 			return;
 		}
+		this._oPreviousCell = oInfo;
 
 		// Remove text selection during mouse cell selection
 		window.getSelection().removeAllRanges();
@@ -593,12 +687,10 @@ sap.ui.define([
 	 * @param {int} mTo.colIndex column index
 	 * @private
 	 */
-	CellSelector.prototype._selectCells = function (mFrom, mTo, mFocus) {
+	CellSelector.prototype._selectCells = function (mFrom, mTo) {
 		if (!this._bSelecting) {
 			return;
 		}
-
-		this._clearSelection();
 
 		mFrom = mFrom ? mFrom : this._oSession.mSource;
 		mTo = mTo ? mTo : this._oSession.mTarget;
@@ -610,8 +702,11 @@ sap.ui.define([
 
 		this._drawSelection(mBounds);
 
-		this._oSession.mSource = mFrom;
-		this._oSession.mTarget = mTo;
+		if (!deepEqual(this._oSession.mSource, mFrom) || !deepEqual(this._oSession.mTarget, mTo)) {
+			this._oSession.mSource = mFrom;
+			this._oSession.mTarget = mTo;
+			this._onSelectionChange();
+		}
 	};
 
 	/**
@@ -625,6 +720,8 @@ sap.ui.define([
 		if (!mBounds.from || !mBounds.to) {
 			return;
 		}
+
+		this._clearSelection();
 
 		this._oSession.cellRefs = [];
 		for (var iRow = mBounds.from.rowIndex; iRow <= mBounds.to.rowIndex; iRow++) {
@@ -761,8 +858,12 @@ sap.ui.define([
 	CellSelector.prototype.removeSelection = function () {
 		this._clearSelection();
 
+		const bSelectionChange = this._oSession?.mSource || this._oSession?.mTarget;
 		this._bSelecting = false;
 		this._oSession = { cellRefs: [] };
+		if (bSelectionChange) {
+			this._onSelectionChange();
+		}
 	};
 
 	/**
@@ -798,8 +899,20 @@ sap.ui.define([
 		return !oEvent.isMarked?.() && this.getConfig("isSupported", this.getControl());
 	};
 
+	CellSelector.prototype._getBinding = function() {
+		return this.getConfig("getBinding", this.getControl());
+	};
+
 	function isCell(oTarget, sCell) {
 		return oTarget.classList.contains(sCell);
+	}
+
+	function isGroupRow(oBinding, oContext, iIndex) {
+		const oRowContext = oBinding?.getNodeByIndex?.(iIndex) ?? oContext;
+		if (oBinding?.nodeHasChildren) {
+			return oBinding.nodeHasChildren(oRowContext);
+		}
+		return !(oRowContext.getProperty("@ui5.node.isExpanded") === undefined);
 	}
 
 	/**
@@ -872,7 +985,7 @@ sap.ui.define([
 				});
 				if (oRow) {
 					var oColumn = this.getVisibleColumns(oTable)[mPosition.colIndex];
-					var oCell = oColumn && oRow.getCells()[mPosition.colIndex];
+					var oCell = oColumn && oRow.getCells()[oColumn.getIndex()];
 					if (oCell) {
 						return oCell.$().closest(`.${this.selectableCells}`)[0];
 					}
@@ -903,7 +1016,7 @@ sap.ui.define([
 			getCellInfo: function (oTable, oTarget) {
 				return {
 					rowIndex: Element.closestTo(oTarget, true).getIndex(),
-					colIndex: this.getVisibleColumns(oTable).indexOf(Core.byId(oTarget.getAttribute("data-sap-ui-colid")))
+					colIndex: this.getVisibleColumns(oTable).indexOf(Element.getElementById(oTarget.getAttribute("data-sap-ui-colid")))
 				};
 			},
 			/**
@@ -929,7 +1042,7 @@ sap.ui.define([
 			 * @param {int} iLimit The range limit
 			 * @returns {sap.ui.model.Context[]} A portion of the row binding contexts
 			 */
-			rowContexts: function(oTable, iFromIndex, iToIndex, iLimit) {
+			getSelectedRowContexts: function(oTable, iFromIndex, iToIndex, iLimit) {
 				if (iToIndex == Infinity) {
 					var iMaxIndex = oTable.getBinding("rows").getAllCurrentContexts().length - 1;
 					iToIndex = Math.min(iToIndex, iFromIndex + iLimit - 1, iMaxIndex);
@@ -1026,6 +1139,9 @@ sap.ui.define([
 			},
 			_getSelectionOwner: function(oTable) {
 				return PluginBase.getPlugin(oTable, "sap.ui.table.plugins.SelectionPlugin") || oTable;
+			},
+			getBinding: function(oTable) {
+				return oTable.getBinding("rows");
 			}
 		}
 	}, CellSelector);

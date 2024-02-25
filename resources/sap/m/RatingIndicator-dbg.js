@@ -7,17 +7,18 @@
 // Provides control sap.m.RatingIndicator.
 sap.ui.define([
 	'./library',
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
+	"sap/ui/core/Lib",
 	'sap/ui/core/StaticArea',
 	'sap/ui/core/theming/Parameters',
 	'./RatingIndicatorRenderer',
 	"sap/ui/events/KeyCodes",
 	"sap/base/Log",
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Configuration",
 	'sap/ui/core/LabelEnablement'
 ],
-	function(library, Control, StaticArea, Parameters, RatingIndicatorRenderer, KeyCodes, Log, jQuery, Configuration, LabelEnablement) {
+	function(library, Localization, Control, Library, StaticArea, Parameters, RatingIndicatorRenderer, KeyCodes, Log, jQuery, LabelEnablement) {
 	"use strict";
 
 
@@ -54,7 +55,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -197,7 +198,7 @@ sap.ui.define([
 		this._iIconCounter = 0;
 		this._fHoverValue = 0;
 
-		this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle('sap.m');
+		this._oResourceBundle = Library.getResourceBundleFor('sap.m');
 	};
 
 	/**
@@ -552,7 +553,7 @@ sap.ui.define([
 			oControlRoot = this.$(),
 			fControlPadding = (oControlRoot.innerWidth() - oControlRoot.width()) / 2,
 			oEventPosition,
-			bRtl = Configuration.getRTL();
+			bRtl = Localization.getRTL();
 
 		if (oEvent.targetTouches) {
 			oEventPosition = oEvent.targetTouches[0];
@@ -962,7 +963,7 @@ sap.ui.define([
 	 * @protected
 	 */
 	RatingIndicator.prototype.getAccessibilityInfo = function () {
-		var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oBundle = Library.getResourceBundleFor("sap.m");
 		return {
 			role: "slider",
 			type: oBundle.getText("ACC_CTR_TYPE_RATING"),

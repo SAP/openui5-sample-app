@@ -6,20 +6,22 @@
 
 // Provides control sap.f.DynamicPageHeader.
 sap.ui.define([
-    "./library",
-    "sap/ui/Device",
-    "sap/ui/core/Control",
+	"./library",
+	"sap/ui/Device",
+	"sap/ui/core/Control",
+	"sap/ui/core/Lib",
 	"sap/ui/core/library",
 	"sap/ui/core/IconPool",
 	"sap/ui/core/theming/Parameters",
-    "sap/m/ToggleButton",
-    "sap/m/Button",
-    "./DynamicPageHeaderRenderer",
+	"sap/m/ToggleButton",
+	"sap/m/Button",
+	"./DynamicPageHeaderRenderer",
 	"sap/ui/core/InvisibleMessage"
 ], function(
-    library,
+	library,
 	Device,
 	Control,
+	Library,
 	CoreLibrary,
 	IconPool,
 	ThemeParameters,
@@ -62,7 +64,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -119,8 +121,10 @@ sap.ui.define([
 		 * @returns {Object} the resource bundle object
 		 */
 		DynamicPageHeader._getResourceBundle = function () {
-			return sap.ui.getCore().getLibraryResourceBundle("sap.f");
+			return Library.getResourceBundleFor("sap.f");
 		};
+
+		DynamicPageHeader.UNPRESSED_PIN_ICON = "sap-icon://pushpin-off";
 
 		DynamicPageHeader.ARIA = {
 			ARIA_CONTROLS: "aria-controls",
@@ -146,6 +150,11 @@ sap.ui.define([
 			if (!this._oInvisibleMessage) {
 				this._oInvisibleMessage = InvisibleMessage.getInstance();
 			}
+			// Required if the parent has "headerPinned" set to "true" initially.
+			// Without the explicit "_setPressedStatePinIcon" an empty button is rendered.
+			if (this.getPinnable()) {
+				this._setPressedStatePinIcon();
+			}
 		};
 
 		/*************************************** Private members ******************************************/
@@ -157,6 +166,7 @@ sap.ui.define([
 		 */
 		DynamicPageHeader.prototype._togglePinButton = function (bValue) {
 			this._getPinButton().setPressed(bValue);
+			this._getPinButton().setIcon(bValue ? this._sPressedStatePinIconURI : DynamicPageHeader.UNPRESSED_PIN_ICON);
 		};
 
 		/**
@@ -172,8 +182,9 @@ sap.ui.define([
 		 * Fires the pin/unpin press event.
 		 * @private
 		 */
-		DynamicPageHeader.prototype._pinUnpinFireEvent = function () {
+		DynamicPageHeader.prototype._pinUnpinFireEvent = function (oEvent) {
 			this.fireEvent("_pinUnpinPress");
+			this._togglePinButton(oEvent.getSource().getPressed());
 		};
 
 		/**
@@ -247,7 +258,7 @@ sap.ui.define([
 			if (!this.getAggregation("_pinButton")) {
 				var oPinButton = new ToggleButton({
 					id: this.getId() + "-pinBtn",
-					icon: "sap-icon://pushpin-off",
+					icon: DynamicPageHeader.UNPRESSED_PIN_ICON,
 					tooltip: DynamicPageHeader.ARIA.LABEL_PINNED,
 					press: this._pinUnpinFireEvent.bind(this)
 				}).addStyleClass("sapFDynamicPageHeaderPinButton");
@@ -359,15 +370,18 @@ sap.ui.define([
 			};
 		};
 
-		/**
-		 * Sets the icon of the pin button depending on the current theme
-		 */
 		DynamicPageHeader.prototype.onThemeChanged = function () {
-			var sIcon = IconPool.getIconURI(ThemeParameters.get({
+			this._setPressedStatePinIcon();
+		};
+
+		/**
+		 * Sets the icon URI for the pressed state of the pin button
+		 * @private
+		 */
+		DynamicPageHeader.prototype._setPressedStatePinIcon = function () {
+			this._sPressedStatePinIconURI = IconPool.getIconURI(ThemeParameters.get({
 				name: "_sap_f_DynamicPageHeader_PinButton_Icon"
 			}));
-
-			this._getPinButton().setIcon(sIcon);
 		};
 
 		return DynamicPageHeader;

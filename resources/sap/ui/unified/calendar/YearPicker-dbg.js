@@ -6,6 +6,7 @@
 
 //Provides control sap.ui.unified.Calendar.
 sap.ui.define([
+	"sap/base/i18n/Formatting",
 	'sap/ui/core/Control',
 	'sap/ui/Device',
 	'sap/ui/core/delegate/ItemNavigation',
@@ -20,9 +21,9 @@ sap.ui.define([
 	"sap/ui/core/date/UI5Date",
 	"./YearPickerRenderer",
 	"sap/ui/events/KeyCodes",
-	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Configuration"
+	"sap/ui/thirdparty/jquery"
 ], function(
+	Formatting,
 	Control,
 	Device,
 	ItemNavigation,
@@ -37,8 +38,7 @@ sap.ui.define([
 	UI5Date,
 	YearPickerRenderer,
 	KeyCodes,
-	jQuery,
-	Configuration
+	jQuery
 ) {
 	"use strict";
 
@@ -62,7 +62,7 @@ sap.ui.define([
 	 * As in all date-time controls, all pubic JS Date objects that are given (e.g. <code>setDate()</code>) or read
 	 * (e.g. <code>getFirstRenderedDate</code>) with values which are considered as date objects in browser(local) timezone.
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -279,7 +279,7 @@ sap.ui.define([
 	};
 
 	YearPicker.prototype._getPrimaryCalendarType = function(){
-		return this.getProperty("primaryCalendarType") || Configuration.getCalendarType();
+		return this.getProperty("primaryCalendarType") || Formatting.getCalendarType();
 	};
 
 	/**
@@ -572,7 +572,7 @@ sap.ui.define([
 		if (oParent && oParent._getLocale) {
 			return oParent._getLocale();
 		} else if (!this._sLocale) {
-			this._sLocale = Configuration.getFormatSettings().getFormatLocale().toString();
+			this._sLocale = new Locale(Formatting.getLanguageTag()).toString();
 		}
 
 		return this._sLocale;
@@ -791,9 +791,8 @@ sap.ui.define([
 
 	function _initItemNavigation(){
 
-		var oFocusedDate = this.getDate()
-			? CalendarDate.fromLocalJSDate(this.getDate(), this._getPrimaryCalendarType())
-			: this._getDate(),
+		var oFocusedDate = this.getProperty("_middleDate")
+		|| (this.getDate() ? CalendarDate.fromLocalJSDate(this.getDate(), this._getPrimaryCalendarType()) : this._getDate()),
 			oRootDomRef = this.getDomRef(),
 			aDomRefs = this.$().find(".sapUiCalItem"),
 			iIndex, sYyyymmdd, oCurrentDate, i;

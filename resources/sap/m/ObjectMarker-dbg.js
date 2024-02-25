@@ -7,6 +7,7 @@
 // Provides control sap.m.ObjectMarker.
 sap.ui.define([
 	"sap/ui/core/Control",
+	"sap/ui/core/Lib",
 	"sap/ui/core/Renderer",
 	"sap/ui/Device",
 	"sap/m/library",
@@ -19,6 +20,7 @@ sap.ui.define([
 	"./ObjectMarkerRenderer"
 ], function(
 	Control,
+	Library,
 	Renderer,
 	Device,
 	library,
@@ -62,7 +64,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -309,7 +311,7 @@ sap.ui.define([
 		this._cleanup();
 	};
 
-	/**
+	/*
 	 * Intercepts <code>attachPress</code> to be able to re-render.
 	 * If <code>press</code> event is attached and the control is rendered as text, than the control will be
 	 * re-rendered as link.
@@ -331,7 +333,7 @@ sap.ui.define([
 		return this;
 	};
 
-	/**
+	/*
 	 * Intercepts <code>detachPress</code> to be able to re-render.
 	 * If <code>press</code> event is detached and the control is rendered as a link, than the control will be
 	 * re-rendered as a text.
@@ -452,7 +454,7 @@ sap.ui.define([
 	 * @private
 	 */
 	ObjectMarker.prototype._getMarkerText = function (oType, sType, sAdditionalInfo) {
-		var oRB = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oRB = Library.getResourceBundleFor("sap.m");
 
 		switch (sType) {
 			case "LockedBy":

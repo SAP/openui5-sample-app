@@ -8,14 +8,16 @@
 sap.ui.define([
 	'sap/ui/core/Control',
 	'sap/ui/Device',
+	"sap/ui/core/Lib",
 	'sap/ui/unified/ColorPickerDisplayMode',
 	'./Button',
 	'./ResponsivePopover',
 	'./ColorPalette',
 	'./library'
-], function (
+], function(
 	Control,
 	Device,
+	Library,
 	ColorPickerDisplayMode,
 	Button,
 	ResponsivePopover,
@@ -37,7 +39,7 @@ sap.ui.define([
 		 * A thin wrapper over {@link sap.m.ColorPalette} allowing the latter to be used in a popover.
 		 *
 		 * @extends sap.ui.core.Control
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @public
 		 * @since 1.54
@@ -181,7 +183,7 @@ sap.ui.define([
 		});
 
 		// get resource translation bundle;
-		var oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oLibraryResourceBundle = Library.getResourceBundleFor("sap.m");
 
 		/**
 		 * Keeps reference to all API properties and/or methods that are about to be forwarded to either a

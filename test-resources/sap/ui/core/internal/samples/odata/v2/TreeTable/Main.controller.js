@@ -112,7 +112,8 @@ sap.ui.define([
 				oContext = oBinding.createEntry();
 
 			oBinding.getModel().setProperty("ErhaOrderItemName", sItemName, oContext);
-			oBinding.addContexts(oTable.getContextByIndex(oTable.getSelectedIndex()), [oContext]);
+			oBinding.addContexts(oTable.getContextByIndex(oTable.getSelectedIndices()[0]),
+				[oContext]);
 			oView.byId("createItem").close();
 		},
 
@@ -122,7 +123,7 @@ sap.ui.define([
 				oClipboardModel = oView.getModel("clipboard"),
 				oTable = oView.byId("treetable"),
 				oBinding = oTable.getBinding("rows"),
-				iSelectedIndex = oTable.getSelectedIndex();
+				iSelectedIndex = oTable.getSelectedIndices()[0];
 
 			oRemovedContext = oBinding.removeContext(oTable.getContextByIndex(iSelectedIndex));
 			// use a copy to force a change event
@@ -139,7 +140,7 @@ sap.ui.define([
 			var oTable = this.byId("treetable");
 
 			oTable.getBinding("rows")
-				.removeContext(oTable.getContextByIndex(oTable.getSelectedIndex()));
+				.removeContext(oTable.getContextByIndex(oTable.getSelectedIndices()[0]));
 			this.resetTableSelection();
 		},
 
@@ -195,7 +196,7 @@ sap.ui.define([
 				oTable = oView.byId("treetable");
 
 			//TODO: support inserting multiple entries from clipboard
-			oNewParentContext = oTable.getContextByIndex(oTable.getSelectedIndex());
+			oNewParentContext = oTable.getContextByIndex(oTable.getSelectedIndices()[0]);
 			oTable.getBinding("rows").addContexts(oNewParentContext, oClipboardEntry.context);
 			oClipboardModel.setProperty("/nodes",
 				oClipboardModel.getProperty("/nodes").filter(function(oEntry) {
@@ -237,7 +238,7 @@ sap.ui.define([
 
 			MessageToast.show("Submitting changes...");
 
-			oTable.getBinding("rows").submitChanges();
+			oTable.getBinding("rows").getModel().submitChanges();
 			oTable.setFirstVisibleRow(0); // scroll to top after submitting
 		},
 

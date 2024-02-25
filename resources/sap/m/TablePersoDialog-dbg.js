@@ -23,6 +23,8 @@ sap.ui.define([
 	'sap/base/util/deepExtend',
 	'sap/m/library',
 	'sap/ui/Device',
+	"sap/ui/core/Element",
+	"sap/ui/core/Lib",
 	'sap/ui/model/Sorter',
 	'sap/ui/model/Filter',
 	'sap/ui/model/FilterOperator',
@@ -48,6 +50,8 @@ sap.ui.define([
 		deepExtend,
 		library,
 		Device,
+		Element,
+		Library,
 		Sorter,
 		Filter,
 		FilterOperator,
@@ -92,7 +96,7 @@ sap.ui.define([
 	 * @class Table Personalization Dialog
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @alias sap.m.TablePersoDialog
 	 */
 	var TablePersoDialog = ManagedObject.extend("sap.m.TablePersoDialog", /** @lends sap.m.TablePersoDialog.prototype */
@@ -174,7 +178,7 @@ sap.ui.define([
 			iLiveChangeTimer = 0;
 
 		// Resource bundle, for texts
-		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oRb = Library.getResourceBundleFor("sap.m");
 
 		// To store the column settings
 		this._oP13nModel = new JSONModel();
@@ -224,7 +228,7 @@ sap.ui.define([
 				return;
 			}
 			// Initialisation of the enabled property
-			var aFields = this._oInnerTable.getModel("Personalization").getProperty("/aColumns");
+			var aItems = this._oInnerTable.getItems();
 			var bButtonUpEnabled,bButtonDownEnabled;
 
 			if (!this._oSelectedItem || this._oInnerTable.getItems().length == 0){
@@ -234,9 +238,9 @@ sap.ui.define([
 
 				this._oSelectedItem = null;
 			} else {
-				var iItemIndex = aFields.indexOf(this._oSelectedItem.getBindingContext("Personalization").getObject());
+				var iItemIndex = aItems.indexOf(this._oSelectedItem);
 				bButtonUpEnabled = iItemIndex > 0 ? true : false;
-				bButtonDownEnabled = iItemIndex < aFields.length - 1 ? true : false;
+				bButtonDownEnabled = iItemIndex < aItems.length - 1 ? true : false;
 			}
 			this._updateMarkedItem();
 			that._oButtonUp.setEnabled(bButtonUpEnabled);
@@ -535,27 +539,26 @@ sap.ui.define([
 		var aItems = this._oInnerTable.getItems();
 		var aFields = this._oInnerTable.getModel("Personalization").getProperty("/aColumns");
 
-		// index of the item in the model not the index in the aggregation
-		var iOldIndex = aFields.indexOf(oSelectedItem.getBindingContext("Personalization").getObject());
+		var iOldItemIndex = aItems.indexOf(oSelectedItem);
+		var iNewItemIndex = iOldItemIndex + iDirection;
 
-		// limit the minumum and maximum index
-		var iNewIndex = iOldIndex + iDirection;
-
-		// new index of the item in the model
-		iNewIndex = aFields.indexOf(aItems[iNewIndex].getBindingContext("Personalization").getObject());
-		if (iNewIndex == iOldIndex) {
+		iNewItemIndex = (iNewItemIndex <= 0) ? 0 : Math.min(iNewItemIndex, aItems.length - 1);
+		if (iOldItemIndex === iNewItemIndex) {
 			return;
 		}
 
+		var iOldFieldIndex = aFields.indexOf(aItems[iOldItemIndex].getBindingContext("Personalization").getObject());
+		var iNewFieldIndex = aFields.indexOf(aItems[iNewItemIndex].getBindingContext("Personalization").getObject());
+
 		// remove data from old position and insert it into new position
-		aFields.splice(iNewIndex, 0, aFields.splice(iOldIndex, 1)[0]);
+		aFields.splice(iNewFieldIndex, 0, aFields.splice(iOldFieldIndex, 1)[0]);
 		aFields.forEach(function(oItem, iIndex){
 			oItem.order = iIndex;
 		});
 		this._oInnerTable.getModel("Personalization").setProperty("/aColumns", aFields);
 
 		// store the moved item again due to binding
-		this._oSelectedItem = aItems[iNewIndex];
+		this._oSelectedItem = aItems[iNewItemIndex];
 		this._scrollToItem(this._oSelectedItem);
 
 		this._fnUpdateArrowButtons.call(this);
@@ -611,7 +614,7 @@ sap.ui.define([
 	 * @private
 	 */
 	TablePersoDialog.prototype._readCurrentSettingsFromTable = function() {
-		var oTable = sap.ui.getCore().byId(this.getPersoDialogFor()),
+		var oTable = Element.getElementById(this.getPersoDialogFor()),
 			that = this,
 			aCurrentColumns = this.getColumnInfoCallback().call(this, oTable, this.getPersoMap());
 		this._oP13nModel.setData({

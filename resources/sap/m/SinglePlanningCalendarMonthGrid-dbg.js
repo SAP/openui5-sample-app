@@ -6,6 +6,8 @@
 
 // Provides control sap.m.SinglePlanningCalendarMonthGrid.
 sap.ui.define([
+	'sap/base/i18n/Formatting',
+	'sap/ui/core/Element',
 	'sap/ui/core/Control',
 	'sap/ui/core/format/DateFormat',
 	'sap/ui/unified/calendar/CalendarDate',
@@ -27,13 +29,13 @@ sap.ui.define([
 	'sap/ui/thirdparty/jquery',
 	'sap/ui/core/InvisibleMessage',
 	'sap/ui/core/library',
-	"sap/ui/core/date/CalendarWeekNumbering",
-	"sap/ui/core/date/CalendarUtils",
-	"sap/ui/core/Configuration",
-	"sap/ui/core/date/UI5Date",
-	"sap/ui/unified/DateRange"
+	'sap/ui/core/date/CalendarUtils',
+	'sap/ui/core/date/UI5Date',
+	'sap/ui/unified/DateRange'
 	],
 	function (
+		Formatting,
+		Element,
 		Control,
 		DateFormat,
 		CalendarDate,
@@ -55,9 +57,7 @@ sap.ui.define([
 		jQuery,
 		InvisibleMessage,
 		coreLibrary,
-		CalendarWeekNumbering,
 		CalendarDateUtils,
-		Configuration,
 		UI5Date,
 		DateRange
 	) {
@@ -97,7 +97,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @private
@@ -155,9 +155,37 @@ sap.ui.define([
 					appointments: { type: "sap.ui.unified.CalendarAppointment", multiple: true, singularName: "appointment", dnd: { draggable: true }},
 
 					/**
-					 * The special days in the header visualized as a date range with type.
+					 * Special days in the header visualized as a date range with type.
 					 *
-					 * <b>Note:</b> If one day is assigned to more than one type, only the first type is used.
+					 * <b>Note:</b> In case there are multiple <code>sap.ui.unified.DateTypeRange</code> instances given for a single date,
+					 * only the first <code>sap.ui.unified.DateTypeRange</code> instance will be used.
+					 * For example, using the following sample, the 1st of November will be displayed as a working day of type "Type10":
+					 *
+					 *
+					 *	<pre>
+					 *	new DateTypeRange({
+					 *		startDate: UI5Date.getInstance(2023, 10, 1),
+					 *		type: CalendarDayType.Type10,
+					 *	}),
+					 *	new DateTypeRange({
+					 *		startDate: UI5Date.getInstance(2023, 10, 1),
+					 *		type: CalendarDayType.NonWorking
+					 *	})
+					 *	</pre>
+					 *
+					 * If you want the first of November to be displayed as a non-working day and also as "Type10," the following should be done:
+					 *	<pre>
+					 *	new DateTypeRange({
+					 *		startDate: UI5Date.getInstance(2023, 10, 1),
+					 *		type: CalendarDayType.Type10,
+					 *		secondaryType: CalendarDayType.NonWorking
+					 *	})
+					 *	</pre>
+					 *
+					 * You can use only one of the following types for a given date: <code>sap.ui.unified.CalendarDayType.NonWorking</code>,
+					 * <code>sap.ui.unified.CalendarDayType.Working</code> or <code>sap.ui.unified.CalendarDayType.None</code>.
+					 * Assigning more than one of these values in combination for the same date will lead to unpredictable results.
+					 *
 					 */
 					specialDates: { type: "sap.ui.unified.DateTypeRange", multiple: true, singularName: "specialDate" },
 
@@ -261,20 +289,75 @@ sap.ui.define([
 		});
 
 		SinglePlanningCalendarMonthGrid.prototype.init = function() {
+			const iCellsInView = 42;
+
 			this._aLinks = [];
 			this._handleMorePress = this._handleMorePress.bind(this);
 			this._oDateFormat = DateFormat.getDateTimeInstance({ pattern: "YYYYMMdd" });
 			this._oFormatAriaApp = DateFormat.getDateTimeInstance({
-				pattern: "EEEE dd/MM/YYYY 'at' " + this._getCoreLocaleData().getTimePattern("medium")
+				pattern: "EEEE, MMMM d, yyyy 'at' " + this._getCoreLocaleData().getTimePattern("medium")
 			});
 			this._oFormatAriaFullDayCell = DateFormat.getDateTimeInstance({
-				pattern: "EEEE dd/MM/YYYY"
+				pattern: "EEEE, MMMM d, yyyy"
 			});
 
 			this.setStartDate(UI5Date.getInstance());
 			this._configureAppointmentsDragAndDrop();
 
 			this._oUnifiedRB = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
+
+			this._aMoreCountPerDay = [];
+			this._aMoreCountPerDay.length = iCellsInView;
+			this._aMoreCountPerDay.fill(0);
+		};
+
+		SinglePlanningCalendarMonthGrid.prototype._getDateColumn = function(aCells, oNextDate, iColumns) {
+			let iCol = 0;
+
+			for (let i = 0; i < aCells.length; i++) {
+				if (aCells[i] && oNextDate.isSame(aCells[i])) {
+					break;
+				}
+				iCol++;
+
+				if (iCol === iColumns) {
+					iCol = 0;
+				}
+			}
+
+			return iCol;
+		};
+
+
+		SinglePlanningCalendarMonthGrid.prototype._getDateRow = function(aCells, oDate, iColumns) {
+			let iRow = 0;
+
+			for (let i = 0; i < aCells.length; i++) {
+				if (aCells[i] && oDate.isSame(aCells[i])) {
+					iRow = Math.floor(i / iColumns);
+					break;
+				}
+				iRow += 1;
+
+				if (iRow === iColumns - 1) {
+					iRow = 0;
+				}
+			}
+
+			return iRow;
+		};
+
+		SinglePlanningCalendarMonthGrid.prototype._getRowEndIndex = function (aDays, iCellIndex, iColumns) {
+			let iRowEndIndex = 0;
+
+			for (let i = 1; i < aDays.length; i++) {
+				if (iCellIndex <= i * iColumns - 1) {
+					iRowEndIndex = i * iColumns - 1;
+					break;
+				}
+			}
+
+			return iRowEndIndex;
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype.exit = function() {
@@ -293,8 +376,10 @@ sap.ui.define([
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype.onBeforeRendering = function() {
-			var oStartDate = this.getStartDate();
+			const oStartDate = this.getStartDate(),
+				aCells = this._getCells();
 
+			this._iStartDayOffset = aCells.indexOf(aCells.find((day) => day.getDate() === 1));
 			this._oAppointmentsToRender = this._calculateAppointmentsNodes(oStartDate);
 			this._createAppointmentsDndPlaceholders(oStartDate);
 			this._oInvisibleMessage = InvisibleMessage.getInstance();
@@ -329,6 +414,7 @@ sap.ui.define([
 
 		SinglePlanningCalendarMonthGrid.prototype.onAfterRendering = function() {
 			this._initItemNavigation();
+			this._aMoreCountPerDay.fill(0);
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype._getColumns = function() {
@@ -362,7 +448,8 @@ sap.ui.define([
 					end: app.end,
 					len: app.len,
 					level: app.level,
-					width: app.width
+					width: app.width,
+					_nextDay: app._nextDay
 				};
 
 				newApp.width -= CalendarUtils._daysBetween(oDate, app.start);
@@ -427,7 +514,8 @@ sap.ui.define([
 
 			if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER || oEvent.which === KeyCodes.ARROW_UP ||
 				oEvent.which === KeyCodes.ARROW_DOWN || oEvent.which === KeyCodes.ARROW_LEFT || oEvent.which === KeyCodes.ARROW_RIGHT) {
-				if (oEvent.which === KeyCodes.SPACE && !oEvent.shiftKey && bMultiDateSelection) {
+				if (oEvent.which === KeyCodes.SPACE && !oEvent.shiftKey) {
+					this.removeAllSelectedDates();
 					this._bMultiDateSelect = true;
 				} else if (oEvent.which === KeyCodes.SPACE && oEvent.shiftKey && bMultiDateSelection) {
 					this._bCurrentWeekSelection = true;
@@ -451,24 +539,50 @@ sap.ui.define([
 			}
 		};
 
-		SinglePlanningCalendarMonthGrid.prototype._findSrcControl = function (oEvent) {
+		SinglePlanningCalendarMonthGrid.prototype._isSelectAppointment = function (oEvent) {
+			return oEvent.target.classList.contains("sapUiCalendarRowApps") || (oEvent.target.parentElement && oEvent.target.parentElement.classList.contains("sapUiCalendarRowApps"));
+		};
+
+		SinglePlanningCalendarMonthGrid.prototype._findSelectedAppointment = function (oTarget) {
 			// data-sap-ui-related - This is a relation to appointment object.
 			// This is the connection between the DOM Element and the Object representing an appointment.
-			var oTargetElement = oEvent.target,
-				oTargetsParentElement = oTargetElement.parentElement,
+			var oParentElement = oTarget.parentElement,
 				sAppointmentId;
-			if (!oTargetsParentElement || oTargetsParentElement.classList.contains("sapMSPCMonthDays")) {
-				return oEvent.srcControl;
-			} else if (oTargetsParentElement.classList.contains("sapUiCalendarRowApps")) {
-				sAppointmentId = oTargetsParentElement.getAttribute("data-sap-ui-related") || oTargetsParentElement.id;
+
+			if (oParentElement.classList.contains("sapUiCalendarRowApps")) {
+				sAppointmentId = oParentElement.getAttribute("data-sap-ui-related") || oParentElement.id;
 			} else {
-				sAppointmentId = oTargetElement.getAttribute("data-sap-ui-related") || oTargetElement.id;
+				sAppointmentId = oTarget.getAttribute("data-sap-ui-related") || oTarget.id;
 			}
 
 			// finding the appointment
 			return this.getAppointments().find(function (oAppointment) {
 				return oAppointment.sId === sAppointmentId;
 			});
+		};
+
+		SinglePlanningCalendarMonthGrid.prototype._findSelectedRow = function (oEvent) {
+			var oSelectedCell = this._findSelectCell(oEvent.target),
+				oRow = oSelectedCell.parentElement;
+			if (!oRow || oRow.classList.contains("sapMSPCMonthDays")) {
+				return oEvent.srcControl;
+			}
+		};
+
+		SinglePlanningCalendarMonthGrid.prototype._findSelectCell = function (target) {
+			if (target.classList.contains("sapMSPCMonthDayNumber") || target.classList.contains("specialDateIndicator")){
+				return target.parentElement;
+			}
+			return target;
+		};
+
+		SinglePlanningCalendarMonthGrid.prototype._findSrcControl = function (oEvent) {
+			var oTarget = oEvent.target;
+
+			if (this._isSelectAppointment(oEvent)) {
+				return this._findSelectedAppointment(oTarget);
+			}
+			return this._findSelectedRow(oEvent);
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype._handelMultiDateSelection = function (oTarget, oStartDate,  oEndDate, oEvent) {
@@ -496,7 +610,7 @@ sap.ui.define([
 
 			} else if (this._bCurrentWeekSelection && SinglePlanningCalendarSelectionMode.MultiSelect === this.getDateSelectionMode()){
 				var iStartDate = oStartDate.getDate(),
-					oWeekConfigurationValues = CalendarDateUtils.getWeekConfigurationValues(this.getCalendarWeekNumbering(), new Locale(Configuration.getFormatSettings().getFormatLocale().toString())),
+				oWeekConfigurationValues = CalendarDateUtils.getWeekConfigurationValues(this.getCalendarWeekNumbering(), new Locale(new Locale(Formatting.getLanguageTag()).toString())),
 					iAPIFirstDayOfWeek = this.getFirstDayOfWeek(),
 					iFirstDayOfWeek,
 					iWeekStartDate;
@@ -531,7 +645,8 @@ sap.ui.define([
 		SinglePlanningCalendarMonthGrid.prototype._fireSelectionEvent = function (oEvent) {
 			var oSrcControl = this._findSrcControl(oEvent),
 				oTarget = oEvent.target,
-				bIsCell = oTarget && oTarget.classList.contains("sapMSPCMonthDay"),
+				oSelectedCell = this._findSelectCell(oEvent.target),
+				bIsCell = oTarget && !!oSelectedCell,
 				bIsLink = oTarget && oTarget.classList.contains("sapMLnk"),
 				bWeekNumberSelect = oTarget && oTarget.classList.contains("sapMSPCMonthWeekNumber"),
 				oFirstSiblingElement = bWeekNumberSelect && oEvent.originalEvent.target.nextSibling.children[0],
@@ -540,7 +655,7 @@ sap.ui.define([
 				oEndDate;
 
 			if (oSrcControl && oSrcControl.isA("sap.m.SinglePlanningCalendarMonthGrid") && bIsCell && !bIsLink) {
-				iTimestamp = parseInt(oTarget.getAttribute("sap-ui-date"));
+				iTimestamp = parseInt(oSelectedCell.getAttribute("sap-ui-date"));
 
 				oStartDate = UI5Date.getInstance(iTimestamp);
 				oStartDate = UI5Date.getInstance(oStartDate.getUTCFullYear(), oStartDate.getUTCMonth(), oStartDate.getUTCDate());
@@ -548,7 +663,7 @@ sap.ui.define([
 				oEndDate = UI5Date.getInstance(oStartDate);
 				oEndDate.setDate(oEndDate.getDate() + 1);
 				if (this._bMultiDateSelect || this._bCurrentWeekSelection || this._bMultiDateSelectWithArrow) {
-					this._handelMultiDateSelection(oTarget, oStartDate, oEndDate, oEvent);
+					this._handelMultiDateSelection(oSelectedCell, oStartDate, oEndDate, oEvent);
 					this.fireEvent("selectDate", {startDate: oStartDate, endDate: oEndDate});
 				}
 
@@ -567,7 +682,7 @@ sap.ui.define([
 
 				this._bCurrentWeekSelection = true;
 				this._bMultiDateSelect = false;
-				this._handelMultiDateSelection(oTarget, oStartDate, oEndDate, oEvent);
+				this._handelMultiDateSelection(oSelectedCell, oStartDate, oEndDate, oEvent);
 				this.fireEvent("selectDate", {startDate: oStartDate, endDate: oEndDate});
 
 			} else if (oSrcControl && oSrcControl.isA("sap.ui.unified.CalendarAppointment")) {
@@ -696,7 +811,7 @@ sap.ui.define([
 			var aDays = this._getVisibleDays(this.getStartDate()),
 				iColumns = this._getColumns(),
 				aResult = [],
-				sLocale = Core.getConfiguration().getFormatLocale().toString();
+				sLocale = new Locale(Formatting.getLanguageTag()).toString();
 
 			for (var i = 0; i < this._getRows(); i++) {
 				var oDateFormat = DateFormat.getInstance({pattern: "w", calendarType: "Gregorian", calendarWeekNumbering: this.getCalendarWeekNumbering()}, new Locale(sLocale));
@@ -754,7 +869,7 @@ sap.ui.define([
 			if (this.getFirstDayOfWeek() < 0 || this.getFirstDayOfWeek() > 6) {
 				oWeekConfigurationValues = CalendarDateUtils.getWeekConfigurationValues(
 					this.getCalendarWeekNumbering(),
-					new Locale(Configuration.getFormatSettings().getFormatLocale().toString())
+					new Locale(new Locale(Formatting.getLanguageTag()).toString())
 				);
 
 				if (oWeekConfigurationValues) {
@@ -801,27 +916,33 @@ sap.ui.define([
 							&& CalendarUtils._isBetween(oLastVisibleDay, oFirstVisibleDay, app.end,true)); // ...and ends after the view port
 					// Sort by start date
 				}).sort(function compare(a, b) {
-					return a.start.valueOf() - b.start.valueOf();
+					return a.data.getStartDate().getTime() - b.data.getStartDate().getTime();
 				}),
 				// Array of taken levels per visible day
 				aVisibleDaysLevels = [],
+				aDays = this._getVisibleDays(oStartDate),
+				iMaxAppointmentsRendered = this._getMaxAppointments(),
+				iNextFreeDayIndex,
+				iNextFreeLevelIndex,
+				aFreeDayAndLevelIndexes,
+				bNextLevelIsWithinBounds,
+				bHasSpaceToRender,
 				oApp,
 				iAppointmentStartIndex,
+				iAppStartIndex,
 				iAppointmentEndIndex,
-				iFirstFreeIndex,
-				i,
-				j,
-				k;
+				iFirstFreeIndex;
 
-			for (i = 0; i < aVisibleDays.length; i++) {
+			for (let i = 0; i < aVisibleDays.length; i++) {
 				aVisibleDaysLevels.push([]);
 			}
 
 			// Each appointment gets its width and level
-			for (i = 0; i < aApps.length; i++) {
+			for (let i = 0; i < aApps.length; i++) {
 				oApp = aApps[i];
 				iAppointmentStartIndex = CalendarUtils._daysBetween(oApp.start, aVisibleDays[0]);
 				iAppointmentEndIndex = iAppointmentStartIndex + oApp.len;
+				iAppStartIndex = this._findStartDateIndex(aDays, oApp, this._iStartDayOffset);
 
 				// If appointment is out of bounds, set it in bounds
 				iAppointmentStartIndex = iAppointmentStartIndex > 0 ? iAppointmentStartIndex : 0;
@@ -836,15 +957,55 @@ sap.ui.define([
 				}
 
 				// Rendered position of appointment in day
-				oApp.level = iFirstFreeIndex;
+				aFreeDayAndLevelIndexes = this._findNextFreeDayAndLevel(oApp, aVisibleDaysLevels, iAppointmentStartIndex, iFirstFreeIndex);
+				iNextFreeDayIndex = aFreeDayAndLevelIndexes.freeDayIndex;
+				iNextFreeLevelIndex = aFreeDayAndLevelIndexes.freeLevelIndex;
+				oApp.level = iNextFreeLevelIndex;
+				oApp._nextDay = iNextFreeDayIndex;
 
 				// Adjust the taken levels for all days of the current appointment
-				for (j = iAppointmentStartIndex; j <= iAppointmentEndIndex; j++) {
-					aVisibleDaysLevels[j][iFirstFreeIndex] = false;
+				if (oApp.len && iNextFreeDayIndex > iAppStartIndex) {
+					oApp._overflows = true;
+				} else {
+					oApp._overflows = false;
+					if (oApp._nextDay > -1) {
+						oApp._nextDay = iAppointmentStartIndex;
+					}
+				}
 
-					for (k = 0; k < iFirstFreeIndex; k++) {
-						if (aVisibleDaysLevels[j][k] === undefined) {
-							aVisibleDaysLevels[j][k] = true;
+				if (oApp._nextDay > -1) {
+					bHasSpaceToRender = true;
+				}
+
+				if (bHasSpaceToRender && oApp._overflows && oApp.len && oApp.level < iMaxAppointmentsRendered) {
+
+					oApp._nextDayLevel = iNextFreeLevelIndex;
+					oApp._nextDay = iNextFreeDayIndex;
+
+					if (bHasSpaceToRender) {
+						for (let q = 0; q <= oApp.width; q++) {
+							bNextLevelIsWithinBounds = iNextFreeDayIndex + q <= iAppointmentEndIndex;
+							if (bNextLevelIsWithinBounds) {
+								aVisibleDaysLevels[iNextFreeDayIndex + q][iNextFreeLevelIndex] = true;
+							}
+						}
+					}
+
+					for (let q = this._findStartDateIndex(aDays, oApp, this._iStartDayOffset); q < iNextFreeDayIndex; q++) {
+						if (q > -1) {
+							this._aMoreCountPerDay[q] += 1;
+						}
+					}
+				} else {
+					aFreeDayAndLevelIndexes = this._findNextFreeDayAndLevel(oApp, aVisibleDaysLevels, iAppointmentStartIndex, iFirstFreeIndex);
+					iFirstFreeIndex = aFreeDayAndLevelIndexes.freeLevelIndex;
+					oApp.level = iFirstFreeIndex;
+
+					for (let j = iAppointmentStartIndex; j <= iAppointmentEndIndex; j++) {
+						aVisibleDaysLevels[j][iFirstFreeIndex] = true;
+
+						if (!oApp._nextDay && oApp._nextDay !== 0 || iFirstFreeIndex >= iMaxAppointmentsRendered - 1) {
+							this._aMoreCountPerDay[j] += 1;
 						}
 					}
 				}
@@ -853,6 +1014,54 @@ sap.ui.define([
 			this._aAppsLevelsPerDay = aVisibleDaysLevels;
 
 			return aApps;
+		};
+
+		SinglePlanningCalendarMonthGrid.prototype._findStartDateIndex = function (aDays, oApp) {
+			const oDayInDays = aDays.find(
+				(oDay) => oDay.isSame(oApp.start)
+			);
+
+			return aDays.indexOf(oDayInDays);
+		};
+
+		SinglePlanningCalendarMonthGrid.prototype._findNextFreeDayAndLevel = function (oApp, aVisibleDaysLevels, iAppointmentStartIndex, iDefaultLevel) {
+			const iMaxAppointmentLevels = this._isCompact() ? 3 : 2;
+			let iNextFreeLevelIndex = iDefaultLevel,
+				iNextFreeDayIndex,
+				aDayLevels,
+				bHasFreeFirstOrSecondLevel,
+				bHasFreeThirdLevel,
+				bLevelIsFree;
+
+			for (let i = 0; i < oApp.width; i++) {
+				aDayLevels = aVisibleDaysLevels[iAppointmentStartIndex + i];
+				if (!aDayLevels) {
+					break;
+				}
+				bHasFreeFirstOrSecondLevel = aDayLevels && !aDayLevels[0] || !aDayLevels[1];
+				bHasFreeThirdLevel = aDayLevels && !aDayLevels[2] && this._isCompact();
+
+				if (bHasFreeFirstOrSecondLevel || bHasFreeThirdLevel) {
+					iNextFreeDayIndex = iAppointmentStartIndex + i;
+					for (let j = 0; j < iMaxAppointmentLevels; j++) {
+						bLevelIsFree = !aDayLevels[j];
+
+						if (bLevelIsFree) {
+							iNextFreeDayIndex = iAppointmentStartIndex + i;
+							iNextFreeLevelIndex = j;
+							break;
+						}
+					}
+					break;
+				} else {
+					iNextFreeLevelIndex = aDayLevels.length;
+				}
+			}
+
+			return {
+				freeDayIndex: iNextFreeDayIndex,
+				freeLevelIndex: iNextFreeLevelIndex
+			};
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype._getMoreCountPerCell = function(iCellIndex) {
@@ -870,8 +1079,10 @@ sap.ui.define([
 					iMoreCount++;
 				}
 			}
+
 			return iMoreCount;
 		};
+
 
 		SinglePlanningCalendarMonthGrid.prototype._configureAppointmentsDragAndDrop = function() {
 			this.addDragDropConfig(new DragDropInfo({
@@ -1055,14 +1266,52 @@ sap.ui.define([
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype._getAppointmentAnnouncementInfo = function(oAppointment) {
-			var oUnifiedRB = Core.getLibraryResourceBundle("sap.ui.unified"),
-				sStartTime = oUnifiedRB.getText("CALENDAR_START_TIME"),
-				sEndTime = oUnifiedRB.getText("CALENDAR_END_TIME"),
-				sFormattedStartDate = this._oFormatAriaApp.format(oAppointment.getStartDate()),
-				sFormattedEndDate = this._oFormatAriaApp.format(oAppointment.getEndDate()),
-				sAppInfo = sStartTime + ": " + sFormattedStartDate + "; " + sEndTime + ": " + sFormattedEndDate;
+			var oStartDate = oAppointment.getStartDate(),
+				oEndDate = oAppointment.getEndDate(),
+				bFullDay =  this._isAllDayAppointment(oStartDate, oEndDate),
+				bSingleDay =  this._isSingleDayAppointment(oStartDate, oEndDate),
+				sLegendInfo = PlanningCalendarLegend.findLegendItemForItem(Core.byId(this._sLegendId), oAppointment),
+				sFormattedDate;
 
-			return sAppInfo + "; " + PlanningCalendarLegend.findLegendItemForItem(Core.byId(this._sLegendId), oAppointment);
+			if (bFullDay && bSingleDay) {
+				sFormattedDate = this._oUnifiedRB.getText("CALENDAR_ALL_DAY_INFO", [this._oFormatAriaFullDayCell.format(oStartDate)]);
+			} else if (bFullDay) {
+				sFormattedDate = this._oUnifiedRB.getText( "CALENDAR_APPOINTMENT_INFO", [
+					this._oFormatAriaFullDayCell.format(oStartDate),
+					this._oFormatAriaFullDayCell.format(oEndDate)
+				]);
+			} else {
+				sFormattedDate = this._oUnifiedRB.getText( "CALENDAR_APPOINTMENT_INFO", [
+					this._oFormatAriaApp.format(oStartDate),
+					this._oFormatAriaApp.format(oEndDate)
+				]);
+			}
+
+			return sFormattedDate + ", " + sLegendInfo;
+		};
+
+		/**
+		 * Returns whether an appointment starts at 00:00 and ends in 00:00 on any day in the future.
+		 *
+		 * @param {Date|module:sap/ui/core/date/UI5Date} oAppStartDate - Start date of the appointment
+		 * @param {Date|module:sap/ui/core/date/UI5Date} oAppEndDate - End date of the appointment
+		 * @returns {boolean}
+		 * @private
+		 */
+		SinglePlanningCalendarMonthGrid.prototype._isAllDayAppointment = function(oAppStartDate, oAppEndDate) {
+			return CalendarUtils._isMidnight(oAppStartDate) && CalendarUtils._isMidnight(oAppEndDate);
+		};
+
+		/**
+		 * Returns whether an appointment starts and ends on the same day.
+		 *
+		 * @param {Date|module:sap/ui/core/date/UI5Date} oAppStartDate - Start date of the appointment
+		 * @param {Date|module:sap/ui/core/date/UI5Date} oAppEndDate - End date of the appointment
+		 * @returns {boolean}
+		 * @private
+		 */
+		SinglePlanningCalendarMonthGrid.prototype._isSingleDayAppointment = function(oAppStartDate, oAppEndDate) {
+			return !oAppEndDate || oAppStartDate.getDate() === oAppEndDate.getDate();
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype._getMaxAppointments = function() {
@@ -1114,19 +1363,24 @@ sap.ui.define([
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype._isNonWorkingDay = function(oCalendarDate) {
-			return this._getSpecialDates().filter(function(oDateRange) {
-				return oDateRange.getType() === unifiedLibrary.CalendarDayType.NonWorking;
-			}).map(function(oDateRange) {
-				return CalendarDate.fromLocalJSDate(oDateRange.getStartDate());
-			}).some(function(oDate) {
-				return oDate.isSame(oCalendarDate);
+			const aSpecialDates = this._getSpecialDates().filter((oDateRange) => {
+				return oDateRange.getStartDate() && CalendarDate.fromLocalJSDate(oDateRange.getStartDate()).isSame(oCalendarDate);
 			});
+			const sType = aSpecialDates.length > 0 && aSpecialDates[0].getType();
+			const sSecondaryType =  aSpecialDates.length > 0 && aSpecialDates[0].getSecondaryType();
+			const bNonWorkingWeekend = CalendarUtils._isWeekend(oCalendarDate, this._getCoreLocaleData())
+				&& sType !== unifiedLibrary.CalendarDayType.Working
+				&& sSecondaryType !== unifiedLibrary.CalendarDayType.Working;
+
+			return sType === unifiedLibrary.CalendarDayType.NonWorking
+				|| sSecondaryType === unifiedLibrary.CalendarDayType.NonWorking
+				|| bNonWorkingWeekend;
 		};
 
-		SinglePlanningCalendarMonthGrid.prototype.applyFocusInfo = function() {
-			// directly focus appointment part, if there is any selected
-			this._sSelectedAppointment && this._sSelectedAppointment.focus();
-			return this;
+		SinglePlanningCalendarMonthGrid.prototype.getFocusDomRef = function() {
+			return this._sSelectedAppointment
+				? this._sSelectedAppointment.getDomRef()
+				: Element.prototype.getFocusDomRef.apply(this, arguments);
 		};
 
 		return SinglePlanningCalendarMonthGrid;

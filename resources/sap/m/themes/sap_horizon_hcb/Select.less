@@ -11,6 +11,14 @@
 	border-radius: 0.365rem;
 }
 
+.sapMSlt {
+	height: @sapUiElementHeight;
+}
+
+.sapUiSizeCompact .sapMSlt {
+	height: @sapUiElementCompactHeight;
+}
+
 /* arrow styles*/
 
 .sapMSlt > .sapMSltArrow {
@@ -38,8 +46,8 @@
 }
 
 .sapMSlt.sapMSltDefault.sapMSltFocused:not(.sapMSltIconOnly):not(.sapMSltPressed) {
-	outline: 0.125rem dotted @sapUiContentFocusColor;
-	outline-offset: -0.25rem;
+	outline: @sapUiContentFocusWidth @sapUiContentFocusStyle @sapUiContentContrastFocusColor;
+	outline-offset:  calc(-2.5 * @sapUiContentFocusWidth);
 }
 
 html.sap-desktop .sapMSlt.sapMSltFocused:not(.sapMSltIconOnly):not(.sapMSltDisabled):not(.sapMSltInformation),

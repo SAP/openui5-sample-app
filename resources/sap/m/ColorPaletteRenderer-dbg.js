@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/Device'],
-	function (Device) {
+sap.ui.define(['sap/ui/Device', "sap/ui/core/Lib"],
+	function(Device, Library) {
 		"use strict";
 
 		/**
@@ -18,7 +18,7 @@ sap.ui.define(['sap/ui/Device'],
 
 
 		// reference to the message bundle
-		var oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oLibraryResourceBundle = Library.getResourceBundleFor("sap.m");
 
 		/**
 		 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.

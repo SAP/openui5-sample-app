@@ -5,7 +5,7 @@
  */
 sap.ui.define([
 	"sap/ui/base/Object"
-], function(BaseObject) {
+], (BaseObject) => {
 	"use strict";
 
 	/**
@@ -16,12 +16,12 @@ sap.ui.define([
 	 * @author SAP SE
 	 * @since 1.104
 	 * @private
-     *
+	 *
 	 * @ui5-restricted sap.m
 	 * @alias sap.m.p13n.modules.AdaptationProvider
 	 * @extends sap.ui.base.Object
 	 */
-	var AdaptationProvider = BaseObject.extend("sap.m.p13n.modules.AdaptationProvider");
+	const AdaptationProvider = BaseObject.extend("sap.m.p13n.modules.AdaptationProvider");
 
 	/**
 	 * Initialize adaptation for a provided control instance, set of keys and properties
@@ -32,7 +32,7 @@ sap.ui.define([
 	 *
 	 * @returns {Promise} A Promise resolving in the according property helper instance
 	 */
-	AdaptationProvider.prototype.initAdaptation = function(vControl, aKeys, aCustomInfo){
+	AdaptationProvider.prototype.initAdaptation = (vControl, aKeys, aCustomInfo) => {
 		throw new Error("Please implement 'initAdaptation'");
 	};
 
@@ -44,7 +44,7 @@ sap.ui.define([
 	 *
 	 * @returns {Promise} A Promise resolving after the reset has been processed
 	 */
-	AdaptationProvider.prototype.reset = function(oControl, sKey){
+	AdaptationProvider.prototype.reset = (oControl, sKey) => {
 		throw new Error("Please implement 'reset'");
 	};
 
@@ -56,7 +56,7 @@ sap.ui.define([
 	 *
 	 * @returns {Promise} A Promise resolving after all changes have been processed
 	 */
-	AdaptationProvider.prototype.handleP13n = function(oControl, aKeys){
+	AdaptationProvider.prototype.handleP13n = (oControl, aKeys) => {
 		throw new Error("Please implement 'handleP13n'");
 	};
 

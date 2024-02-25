@@ -7,10 +7,10 @@
 sap.ui.define([
 	'sap/ui/base/ManagedObject',
 	'sap/ui/core/IconPool',
-	'sap/ui/core/Core',
 	'sap/m/library',
 	'sap/m/Popover',
 	'sap/m/Text',
+	"sap/ui/core/RenderManager",
 	'sap/ui/layout/form/SimpleForm',
 	'sap/m/Button',
 	'sap/m/Label',
@@ -23,10 +23,10 @@ sap.ui.define([
     function(
 		ManagedObject,
 	   IconPool,
-	   Core,
 	   mobileLibrary,
 	   Popover,
 	   Text,
+	   RenderManager,
 	   SimpleForm,
 	   Button,
 	   Label,
@@ -103,7 +103,7 @@ sap.ui.define([
        InteractionTree.prototype.renderAt = function (parent) {
           this.parent = parent;
 
-          var rm = Core.createRenderManager();
+          var rm = new RenderManager().getInterface();
           this.render(rm);
           rm.flush(parent, true);
           rm.destroy();
@@ -179,7 +179,7 @@ sap.ui.define([
            var gridContainer = this.gridContainer,
                range = this.timeRange,
                width = this.gridContainer.width(),
-               rm = Core.createRenderManager();
+               rm = new RenderManager().getInterface();
 
            if (this.gridContainerWidth === width) {
                return;
@@ -265,7 +265,7 @@ sap.ui.define([
           var $parent = $icon.parent();
           $icon.remove();
 
-          var rm = Core.createRenderManager();
+          var rm = new RenderManager().getInterface();
           this.renderIcon(rm, !expanded);
 
           rm.flush($parent[0], false, true);
@@ -699,7 +699,7 @@ sap.ui.define([
 
           function initializePopOverClientServerProgressBar() {
 
-              var rm = Core.createRenderManager();
+              var rm = new RenderManager().getInterface();
               var request = that.getRequestFromElement(jQuery(this));
 
               var fetchStartOffset = request.fetchStartOffset;
@@ -758,7 +758,7 @@ sap.ui.define([
               var colorClass = that.getRequestColorClass(requestType);
               var colorClass70 = colorClass + '70';
 
-              rm = Core.createRenderManager();
+              rm = new RenderManager().getInterface();
 
               rm.openStart("div")
                   .class("sapUiSupportIntProgressBarParent")

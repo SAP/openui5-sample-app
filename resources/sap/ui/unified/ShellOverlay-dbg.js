@@ -8,6 +8,7 @@
 sap.ui.define([
 	'sap/ui/Device',
 	'sap/ui/core/Control',
+	"sap/ui/core/Element",
 	'sap/ui/core/Popup',
 	'./library',
 	'sap/ui/core/theming/Parameters',
@@ -17,10 +18,12 @@ sap.ui.define([
 	// jQuery Plugin "rect"
 	'sap/ui/dom/jquery/rect',
 	// jQuery custom selectors ":sapTabbable"
-	'sap/ui/dom/jquery/Selectors' ],
+	'sap/ui/dom/jquery/Selectors'
+],
 	function(
 		Device,
 		Control,
+		Element,
 		Popup,
 		library,
 		Parameters,
@@ -43,7 +46,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -341,7 +344,7 @@ sap.ui.define([
 		if (!sId) {
 			return;
 		}
-		var oShell = sap.ui.getCore().byId(sId);
+		var oShell = Element.getElementById(sId);
 		if (!oShell || !(oShell instanceof sap.ui.unified.ShellLayout)) {
 			return;
 		}

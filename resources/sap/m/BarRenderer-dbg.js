@@ -5,8 +5,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['./BarInPageEnabler', 'sap/ui/Device', "sap/base/Log", 'sap/m/HBox', "sap/ui/core/Configuration"],
-	function(BarInPageEnabler, Device, Log, HBox, Configuration) {
+sap.ui.define(['./BarInPageEnabler', "sap/base/i18n/Localization", 'sap/ui/Device', "sap/base/Log", 'sap/m/HBox'],
+	function(BarInPageEnabler, Localization, Device, Log, HBox) {
 	"use strict";
 
 
@@ -131,7 +131,7 @@ sap.ui.define(['./BarInPageEnabler', 'sap/ui/Device', "sap/base/Log", 'sap/m/HBo
 		oRM.openStart("div", oControl.getId() + "-BarRight");
 		oRM.class("sapMBarRight");
 		oRM.class("sapMBarContainer");
-		if (Configuration.getRTL()) {
+		if (Localization.getRTL()) {
 			oRM.class("sapMRTL");
 		}
 		writeWidthIfContentOccupiesWholeArea("right", oRM, oControl);

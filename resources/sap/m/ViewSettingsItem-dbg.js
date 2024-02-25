@@ -25,7 +25,7 @@ sap.ui.define(['./library', 'sap/ui/core/Item'],
 	 * @extends sap.ui.core.Item
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -40,7 +40,14 @@ sap.ui.define(['./library', 'sap/ui/core/Item'],
 			/**
 			 * Selected state of the item. If set to "true", the item will be displayed as selected in the view settings dialog.
 			 */
-			selected : {type : "boolean", group : "Behavior", defaultValue : false}
+			selected : {type : "boolean", group : "Behavior", defaultValue : false},
+
+			/**
+			 * Defines the wrapping behavior of the title text.
+			 *
+			 * @since 1.121.0
+			 */
+			wrapping : {type : "boolean", group : "Behavior", defaultValue : false}
 		},
 		events : {
 			/**

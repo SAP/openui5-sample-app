@@ -1904,6 +1904,35 @@ sap.ui.define([
 			}.bind(this));
 	});
 
+	QUnit.module("TitleChanged with 'homeRoute'", {
+		beforeEach: function() {
+			hasher.setHash("");
+		}
+	});
+
+	QUnit.test("App title should be inserted into the title history", async function(assert) {
+		const oComponent = await Component.create({
+			name: "qunit.router.component.titleChanged.homeRoute",
+			manifest: true
+		});
+
+		const oRouter = oComponent.getRouter();
+		const oHomeRoute = oRouter.getRoute("home");
+		const oRouteMatchedSpy = this.spy(oHomeRoute, "_routeMatched");
+
+		oRouter.initialize();
+
+		assert.equal(oRouteMatchedSpy.callCount, 1, "home route is matched");
+
+		await oRouteMatchedSpy.getCall(0).returnValue;
+
+		const aTitleHistory = oRouter.getTitleHistory();
+		assert.equal(aTitleHistory.length, 1, "Title of home route is inserted to history by default");
+		assert.equal(aTitleHistory[0].title, "App Title in homeRoute Component", "Title of home route is fetched from manifest.json");
+
+		oComponent.destroy();
+	});
+
 	/**
 	 * @deprecated As of version 1.28
 	 */
@@ -2389,6 +2418,25 @@ sap.ui.define([
 		oRouter.destroy();
 	});
 
+	QUnit.test("Interpolate mandatory parameter with empty string should throw meaningful error", function(assert) {
+		assert.expect(1);
+		var oRouter = fnCreateRouter([{
+			name: "route1",
+			pattern: "test/{p1}/{p2}"
+		}]);
+
+		try {
+			// Act
+			oRouter.getURL("route1", {
+				p1: 1,
+				p2: ""
+			});
+		} catch (error) {
+			assert.ok(error.message.match(/\{p2\}.+empty string/), "Error message contains meaningful information");
+			oRouter.destroy();
+		}
+	});
+
 	QUnit.module("Typed View", {
 		beforeEach: function() {
 			hasher.setHash("");
@@ -2397,9 +2445,14 @@ sap.ui.define([
 				name: "typed",
 				pattern: "typedView",
 				target: "typedView"
-			}], {async: true}, null, {
+			}], {
+				async: true,
+				/* simulate a typical usage that 'viewType' and 'path' are set */
+				viewType: "XML",
+				path: "abc",
+				type: "View"
+			}, null, {
 				typedView: {
-					type: "View",
 					name: "module:test/routing/target/TypedView",
 					id: "myView",
 					controlId: this.oShell.getId(),

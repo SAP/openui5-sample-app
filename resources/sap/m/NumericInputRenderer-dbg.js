@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/Renderer", "./InputRenderer", "sap/ui/Device", "sap/ui/core/LabelEnablement", "sap/ui/core/Configuration"],
-	function(Renderer, InputRenderer, Device, LabelEnablement, Configuration) {
+sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/Renderer", "./InputRenderer", "sap/ui/Device", "sap/ui/core/LabelEnablement"],
+	function(Localization, Renderer, InputRenderer, Device, LabelEnablement) {
 	"use strict";
 
 	/**
@@ -29,7 +29,7 @@ sap.ui.define(["sap/ui/core/Renderer", "./InputRenderer", "sap/ui/Device", "sap/
 		// so we have to overwrite it by leaving only the text direction
 		// and the textAlign will be controlled by textAlign property of the StepInput
 
-		if (Configuration.getRTL()) {
+		if (Localization.getRTL()) {
 			oRm.attr("dir", "ltr");
 		}
 		// prevent rendering of aria-disabled attribute to avoid having
@@ -49,7 +49,7 @@ sap.ui.define(["sap/ui/core/Renderer", "./InputRenderer", "sap/ui/Device", "sap/
 	 * @param {sap.m.Input} oControl An object representation of the control
 	 * @returns {string}
 	 */
-	 NumericInputRenderer.getAriaRole = function (oControl) {
+	NumericInputRenderer.getAriaRole = function (oControl) {
 		return "spinbutton";
 	};
 
@@ -57,8 +57,8 @@ sap.ui.define(["sap/ui/core/Renderer", "./InputRenderer", "sap/ui/Device", "sap/
 	/**
 	* Overwrites the accessibility state using the <code>getAccessibilityState</code> method of the <code>InputBaseRenderer</code>.
 	*
-	* @param {NumericInput} oNumericInput The numeric input instance
-	* @returns {Array} mAccessibilityState
+	* @param {sap.m.NumericInput} oNumericInput The numeric input instance
+	* @returns {object} mAccessibilityState
 	*/
 	NumericInputRenderer.getAccessibilityState = function(oNumericInput) {
 		var mAccessibilityState = InputRenderer.getAccessibilityState.apply(this, arguments),

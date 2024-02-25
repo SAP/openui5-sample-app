@@ -10,8 +10,8 @@ sap.ui.define([
 	"sap/ui/core/IconPool",
 	"sap/m/upload/UploadSetwithTableItemRenderer",
 	"sap/base/Log",
-	"sap/ui/core/Core"
-], function (ColumnListItem, IconPool, UploadSetwithTableItemRenderer, Log, Core) {
+	"sap/ui/core/Lib"
+], function (ColumnListItem, IconPool, UploadSetwithTableItemRenderer, Log, Library) {
     "use strict";
 
 	/**
@@ -29,7 +29,7 @@ sap.ui.define([
 	 * @public
 	 * @experimental since 1.120
 	 * @since 1.120
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @alias sap.m.upload.UploadSetwithTableItem
 	 */
     var UploadSetwithTableItem = ColumnListItem.extend("sap.m.upload.UploadSetwithTableItem", {
@@ -72,7 +72,7 @@ sap.ui.define([
 					headerFields: {type: "sap.ui.core.Item", multiple: true, singularName: "headerField"}
 				}
 			},
-			render: UploadSetwithTableItemRenderer
+			renderer: UploadSetwithTableItemRenderer
     });
 
 	/* ================== */
@@ -88,7 +88,7 @@ sap.ui.define([
 		this._bNameLengthRestricted = false;
 		this._bSizeRestricted = false;
 		this._bMediaTypeRestricted = false;
-		this._oRb = Core.getLibraryResourceBundle("sap.m");
+		this._oRb = Library.getResourceBundleFor("sap.m");
 		this._oCloudFileInfo = null;
     };
 

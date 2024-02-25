@@ -8,16 +8,16 @@
 sap.ui.define([
 		'./library',
 		'sap/ui/Device',
-		'sap/ui/core/Core',
 		'sap/ui/core/Control',
-		'sap/ui/core/InvisibleText'
+		'sap/ui/core/InvisibleText',
+		"sap/ui/core/Lib"
 ],
 function(
 	library,
 	Device,
-	Core,
 	Control,
-	InvisibleText
+	InvisibleText,
+	Library
 ) {
 	"use strict";
 
@@ -36,7 +36,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -151,7 +151,7 @@ function(
 	SelectDialogBase.getInvisibleText = function() {
 		if (!this.oInvisibleText) {
 			this.oInvisibleText = new InvisibleText({
-				text: Core.getLibraryResourceBundle("sap.m").getText("SELECTDIALOGBASE_LISTLABEL")
+				text: Library.getResourceBundleFor("sap.m").getText("SELECTDIALOGBASE_LISTLABEL")
 			}).toStatic();
 		}
 

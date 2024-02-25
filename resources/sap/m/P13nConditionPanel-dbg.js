@@ -8,6 +8,7 @@
 
 sap.ui.define([
 	'./library',
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/core/Control',
 	'sap/ui/core/IconPool',
@@ -47,6 +48,7 @@ sap.ui.define([
 	'sap/m/P13nConditionPanelRenderer'
 ], function(
 	library,
+	Library,
 	coreLibrary,
 	Control,
 	IconPool,
@@ -112,7 +114,7 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class The ConditionPanel Control will be used to implement the Sorting, Filtering and Grouping panel of the new Personalization dialog.
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @constructor
 	 * @public
 	 * @since 1.26.0
@@ -711,7 +713,7 @@ sap.ui.define([
 	 */
 	P13nConditionPanel.prototype.init = function() {
 		// init some resources
-		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oRb = Library.getResourceBundleFor("sap.m");
 		this._sFromLabelText = this._oRb.getText("CONDITIONPANEL_LABELFROM");
 		this._sToLabelText = this._oRb.getText("CONDITIONPANEL_LABELTO");
 		this._sValueLabelText = this._oRb.getText("CONDITIONPANEL_LABELVALUE");
@@ -2602,7 +2604,7 @@ sap.ui.define([
 	 * e.g. in the BT condition one or both of the values is/are empty of for other condition operations the value1 field is not filled.
 	 *
 	 * @private
-	 * @param {Grid} oConditionGrid which contains the fields of a single condition
+	 * @param {sap.ui.layout.Grid} oConditionGrid which contains the fields of a single condition
 	 * @param {boolean} isLast indicated if this is the last condition in the group
 	 * @returns {boolean} true, when the condition is filled correct, else false.
 	 */
@@ -2744,7 +2746,7 @@ sap.ui.define([
 
 	// Replase $r params in operation by resource bundle text
 	(function() {
-		var _oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var _oRb = Library.getResourceBundleFor("sap.m");
 		P13nConditionPanel._oConditionMap[P13nConditionOperation.Empty] = P13nConditionPanel._oConditionMap[P13nConditionOperation.Empty].replace("$r", _oRb.getText("CONDITIONPANEL_OPTIONEmpty"));
 	})();
 

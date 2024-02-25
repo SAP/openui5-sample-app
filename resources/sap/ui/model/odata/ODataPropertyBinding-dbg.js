@@ -10,8 +10,7 @@ sap.ui.define([
 	'sap/ui/model/Context',
 	'sap/ui/model/ChangeReason',
 	'sap/ui/model/PropertyBinding',
-	"sap/base/util/deepEqual",
-	'sap/ui/model/ChangeReason'
+	"sap/base/util/deepEqual"
 ],
 	function(ODataMetaModel, Context, ChangeReason, PropertyBinding, deepEqual) {
 	"use strict";

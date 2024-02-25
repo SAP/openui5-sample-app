@@ -6,23 +6,20 @@
 
 // Provides control sap.ui.core.ComponentContainer.
 sap.ui.define([
+	'sap/base/future',
 	'sap/ui/base/ManagedObject',
 	'./Control',
 	'./Component',
 	'./library',
-	"./ComponentContainerRenderer",
-	"sap/base/Log",
-	"sap/ui/core/Configuration"
-],
-	function(
-		ManagedObject,
-		Control,
-		Component,
-		library,
-		ComponentContainerRenderer,
-		Log,
-		Configuration
-	) {
+	"./ComponentContainerRenderer"
+], function(
+	future,
+	ManagedObject,
+	Control,
+	Component,
+	library,
+	ComponentContainerRenderer
+) {
 	"use strict";
 
 
@@ -61,7 +58,7 @@ sap.ui.define([
 	 * See also {@link module:sap/ui/core/ComponentSupport}.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.ComponentContainer
@@ -333,7 +330,7 @@ sap.ui.define([
 	 * to the component will be set and the models will be propagated if defined.
 	 * If the <code>usage</code> property is set the ComponentLifecycle is processed like a "Container" lifecycle.
 	 *
-	 * @param {string|sap.ui.core.UIComponent} vComponent ID of an element which becomes the new target of this component association. Alternatively, an element instance may be given.
+	 * @param {sap.ui.core.ID|sap.ui.core.UIComponent} vComponent ID of an element which becomes the new target of this component association. Alternatively, an element instance may be given.
 	 * @return {this} the reference to <code>this</code> in order to allow method chaining
 	 * @public
 	 */
@@ -406,7 +403,7 @@ sap.ui.define([
 			if (oOwnerComponent) {
 				mConfig = oOwnerComponent._enhanceWithUsageConfig(sUsageId, mConfig);
 			} else {
-				Log.error("[FUTURE FATAL] ComponentContainer \"" + this.getId() + "\" does have a \"usage\", but no owner component!");
+				future.errorThrows("ComponentContainer \"" + this.getId() + "\" does have a \"usage\", but no owner component!");
 			}
 		}
 
@@ -457,7 +454,7 @@ sap.ui.define([
 					delete this._oComponentPromise;
 					// listeners can prevent the default log entry
 					if ( this.fireComponentFailed({ reason: oReason }) ) {
-						Log.error("[FUTURE FATAL] Failed to load component for container " + this.getId(), oReason);
+						future.errorThrows("Failed to load component for container " + this.getId(), oReason);
 					}
 				}.bind(this));
 			} else if (oComponent) {

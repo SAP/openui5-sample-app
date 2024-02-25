@@ -1003,8 +1003,8 @@ sap.ui.define([
 				$select : this.mQueryOptions.$select,
 				$expand : this.mQueryOptions.$expand
 			};
-		// sRequestedPropertyPath is also a metapath because the binding does not accept a path with
-		// a collection-valued navigation property for a late property
+		// sRequestedPropertyPath is also a meta path because the binding does not accept a path
+		// with a collection-valued navigation property for a late property
 		mQueryOptions = _Helper.intersectQueryOptions(
 			_Helper.getQueryOptionsForPath(mQueryOptions, sResourcePath),
 			[sRequestedPropertyPath], this.oRequestor.getModelInterface().fetchMetadata,
@@ -1124,7 +1124,7 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
 	 *   A lock for the group to associate the request with;
-	 *   see {sap.ui.model.odata.v4.lib._Requestor#request} for details
+	 *   see {@link sap.ui.model.odata.v4.lib._Requestor#request} for details
 	 * @param {string} [sPath]
 	 *   Relative path to drill-down into
 	 * @param {function} [fnDataRequested]
@@ -1949,7 +1949,11 @@ sap.ui.define([
 			this.iLimit += 1; // this doesn't change Infinity
 		}
 		_Helper.addToCount(this.mChangeListeners, sPath, aElements, 1);
-		aElements.splice(iIndex, 0, oElement);
+		if (iIndex >= aElements.length) { // Note: #splice ignores iIndex then!
+			aElements[iIndex] = oElement;
+		} else {
+			aElements.splice(iIndex, 0, oElement);
+		}
 		aElements.$byPredicate[_Helper.getPrivateAnnotation(oElement, "predicate")] = oElement;
 	};
 
@@ -2585,6 +2589,7 @@ sap.ui.define([
 		this.aElements.$count = undefined; // see _Helper.setCount
 		// number of all (client-side) created elements (active or inactive)
 		this.aElements.$created = 0;
+		// this.aElements.$deleted = []; // only created on demand
 		this.aElements.$tail = undefined; // promise for a read w/o $top
 		// upper limit for @odata.count, maybe sharp; assumes #getQueryString can $filter out all
 		// created elements
@@ -2706,7 +2711,7 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
 	 *   A lock for the group to associate the request with
-	 *   see {sap.ui.model.odata.v4.lib._Requestor#request} for details
+	 *   see {@link sap.ui.model.odata.v4.lib._Requestor#request} for details
 	 * @param {string} [sPath]
 	 *   Relative path to drill-down into
 	 * @param {function} [_fnDataRequested]
@@ -3450,6 +3455,7 @@ sap.ui.define([
 		var oPromise,
 			oReadRequest = {
 				iEnd : iEnd,
+				bObsolete : false,
 				iStart : iStart
 			},
 			that = this;
@@ -3472,7 +3478,7 @@ sap.ui.define([
 		]).then(function (aResult) {
 			var iFiltered;
 
-			if (oReadRequest.obsolete) {
+			if (oReadRequest.bObsolete) {
 				const oError = new Error("Request is obsolete");
 				oError.canceled = true;
 				throw oError;
@@ -3507,7 +3513,7 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
 	 *   A lock for the ID of the group that is associated with the request;
-	 *   see {sap.ui.model.odata.v4.lib._Requestor#request} for details
+	 *   see {@link sap.ui.model.odata.v4.lib._Requestor#request} for details
 	 * @param {string[]} aPaths
 	 *   The "14.5.11 Expression edm:NavigationPropertyPath" or
 	 *   "14.5.13 Expression edm:PropertyPath" strings describing which properties need to be loaded
@@ -3695,6 +3701,7 @@ sap.ui.define([
 		this.aElements.length = this.aElements.$created = iCreated;
 		this.aElements.$byPredicate = {};
 		this.aElements.$count = undefined; // needed for _Helper.setCount
+		// Note: this.aElements.$deleted must remain unchanged
 		this.iLimit = Infinity;
 
 		Object.keys(mChangeListeners).forEach(function (sPath) {
@@ -3707,7 +3714,7 @@ sap.ui.define([
 		});
 		// Beware: fireChange can trigger a read which must not be obsoleted
 		this.aReadRequests?.forEach((oReadRequest) => {
-			oReadRequest.obsolete = true;
+			oReadRequest.bObsolete = true;
 		});
 		if (mChangeListeners[""]) {
 			this.mChangeListeners[""] = mChangeListeners[""];
@@ -3846,7 +3853,7 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
 	 *   A lock for the group to associate the request with
-	 *   see {sap.ui.model.odata.v4.lib._Requestor#request} for details
+	 *   see {@link sap.ui.model.odata.v4.lib._Requestor#request} for details
 	 * @param {string} [_sPath]
 	 *   ignored for property caches, should be empty
 	 * @param {function} [fnDataRequested]
@@ -3979,7 +3986,7 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
 	 *   A lock for the group to associate the request with
-	 *   see {sap.ui.model.odata.v4.lib._Requestor#request} for details
+	 *   see {@link sap.ui.model.odata.v4.lib._Requestor#request} for details
 	 * @param {string} [sPath]
 	 *   Relative path to drill-down into
 	 * @param {function} [fnDataRequested]
@@ -4057,7 +4064,7 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
 	 *   A lock for the ID of the group that is associated with the request;
-	 *   see {sap.ui.model.odata.v4.lib._Requestor#request} for details
+	 *   see {@link sap.ui.model.odata.v4.lib._Requestor#request} for details
 	 * @param {object} [oData]
 	 *   A copy of the data to be sent with the POST request; may be used to tunnel a different
 	 *   HTTP method via a property "X-HTTP-Method" (which is removed)
@@ -4100,7 +4107,7 @@ sap.ui.define([
 		 * until this request has returned.
 		 */
 		function onSubmit() {
-			oRequestLock = that.oRequestor.lockGroup(oGroupLock.getGroupId(), that, true);
+			oRequestLock = that.oRequestor.lockGroup(sGroupId, that, true);
 		}
 
 		function post(oGroupLock0) {
@@ -4110,7 +4117,7 @@ sap.ui.define([
 			return SyncPromise.all([
 				that.oRequestor.request(sHttpMethod,
 					that.sResourcePath + that.sQueryString, oGroupLock0, mHeaders, oData,
-					oEntity && onSubmit),
+					oEntity && sGroupId !== "$single" && onSubmit),
 				that.fetchTypes()
 			]).then(function (aResult) {
 				that.buildOriginalResourcePath(aResult[0], aResult[1], fnGetOriginalResourcePath);
@@ -4190,7 +4197,7 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
 	 *   A lock for the ID of the group that is associated with the request;
-	 *   see {sap.ui.model.odata.v4.lib._Requestor#request} for details
+	 *   see {@link sap.ui.model.odata.v4.lib._Requestor#request} for details
 	 * @param {string[]} aPaths
 	 *   The "14.5.11 Expression edm:NavigationPropertyPath" or
 	 *   "14.5.13 Expression edm:PropertyPath" strings describing which properties need to be loaded
@@ -4349,7 +4356,7 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
 	 *   A lock for the group to associate the request with
-	 *   see {sap.ui.model.odata.v4.lib._Requestor#request} for details
+	 *   see {@link sap.ui.model.odata.v4.lib._Requestor#request} for details
 	 * @param {string} [_sPath]
 	 *   ignored for property caches, should be empty
 	 * @param {function} [fnDataRequested]

@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"./Formatter", // make it available to the view
 	"sap/f/library",
 	"sap/m/MessageBox",
 	"sap/m/MessageToast",
@@ -16,7 +15,7 @@ sap.ui.define([
 	"sap/ui/model/Sorter",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/test/TestUtils"
-], function (_Formatter, library, MessageBox, MessageToast, Messaging, UI5Date, Controller, Filter,
+], function (library, MessageBox, MessageToast, Messaging, UI5Date, Controller, Filter,
 		FilterOperator, Sorter, JSONModel, TestUtils) {
 	"use strict";
 

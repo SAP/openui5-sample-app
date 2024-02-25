@@ -8,6 +8,7 @@
 sap.ui.define([
 	'./List',
 	'./library',
+	"sap/ui/core/Element",
 	'sap/ui/model/ChangeReason',
 	'sap/ui/model/Filter',
 	'./FacetFilterListRenderer',
@@ -16,7 +17,7 @@ sap.ui.define([
 	"sap/ui/model/FilterOperator",
 	"sap/ui/model/FilterType"
 ],
-	function(List, library, ChangeReason, Filter, FacetFilterListRenderer, FacetFilterItem, Log, FilterOperator, FilterType) {
+	function(List, library, Element, ChangeReason, Filter, FacetFilterListRenderer, FacetFilterItem, Log, FilterOperator, FilterType) {
 	"use strict";
 
 
@@ -52,7 +53,7 @@ sap.ui.define([
 	 * be closed.
 	 *
 	 * @extends sap.m.List
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -334,8 +335,7 @@ sap.ui.define([
 	 * Returns the keys of the selected elements as an associative array.
 	 * An empty object is returned if no items are selected.
 	 *
-	 * @returns {Object<string, string?>} Object with the selected keys
-
+	 * @returns {Object<string, string>} Object with the selected keys
 	 * @public
 	 * @since 1.20.3
 	 */
@@ -353,7 +353,7 @@ sap.ui.define([
 	 * If oKeys is <code>undefined</code>, <code>null</code>, or {} (empty object) then all items will be deselected.
 	 * After this method completes, only those items with matching keys will be selected. All other items in the list will be deselected.
 	 *
-	 * @param {Object<string, string?>} oKeys
+	 * @param {Object<string, string | undefined> | null} [oKeys]
 	 *         Associative array indicating which FacetFilterItems should be selected in the list. Each property must be set to the value of a FacetFilterItem.key property. Each property value should be set to the FacetFilterItem.text property value. The text value is used to display the FacetFilterItem text when the FacetFilterList button or FacetFilter summary bar is displayed. If no property value is set then the property key is used for the text.
 	 * @type {void}
 	 * @public
@@ -564,7 +564,7 @@ sap.ui.define([
 	 */
 	FacetFilterList.prototype._updateActiveState = function() {
 
-		var oCheckbox = sap.ui.getCore().byId(this.getAssociation("allcheckbox"));
+		var oCheckbox = Element.getElementById(this.getAssociation("allcheckbox"));
 		if (Object.getOwnPropertyNames(this._oSelectedKeys).length > 0 || (oCheckbox && oCheckbox.getSelected())) {
 			this.setActive(true);
 		}
@@ -708,7 +708,7 @@ sap.ui.define([
 		}
 
 		if (this.getMode() === ListMode.MultiSelect) {
-			oCheckbox = sap.ui.getCore().byId(this.getAssociation("allcheckbox"));
+			oCheckbox = Element.getElementById(this.getAssociation("allcheckbox"));
 			bAtLeastOneItemIsSelected = iItemsCount > 0 && iItemsCount === aItems.filter(isSelected).length;
 			bSelectAllSelected = this.getActive() && bAtLeastOneItemIsSelected;
 			oCheckbox && oCheckbox.setSelected(bSelectAllSelected);

@@ -3,8 +3,8 @@
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(["sap/ui/Device", "sap/ui/core/Configuration"],
-	function(Device, Configuration) {
+sap.ui.define(["sap/ui/Device", "sap/ui/core/ControlBehavior", "sap/ui/core/Lib"],
+	function(Device, ControlBehavior, Library) {
 	"use strict";
 
 
@@ -26,9 +26,9 @@ sap.ui.define(["sap/ui/Device", "sap/ui/core/Configuration"],
 	ActionSheetRenderer.render = function(oRm, oControl){
 		var aActionButtons = oControl._getAllButtons(),
 			aInvisibleTexts = oControl.getAggregation("_invisibleAriaTexts"),
-			oResourceBundle = sap.ui.getCore().getLibraryResourceBundle('sap.m'),
+			oResourceBundle = Library.getResourceBundleFor('sap.m'),
 			iButtonsCount = aActionButtons.length,
-			bAccessibilityOn = Configuration.getAccessibility(),
+			bAccessibilityOn = ControlBehavior.isAccessibilityEnabled(),
 			iVisibleButtonCount = aActionButtons.filter(function (oButton) { return oButton.getVisible(); }).length,
 			oCurInvisibleText, i, bMixedButtons, oButton, iVisibleButtonTempCount = 1,
 			fnGetRelatedInvisibleText = function (oBtn) {

@@ -1,0 +1,1 @@
+{"version":3,"file":"PersistenceMode.js","names":["sap","ui","define","DataType","PersistenceMode","Global","Auto","Transient","registerEnum"],"sources":["PersistenceMode-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,CAAC,wBAA0BC,IACxC,aAmBA,MAAMC,EAAkB,CAOvBC,OAAQ,SAURC,KAAM,OAQNC,UAAW,aAGZJ,EAASK,aAAa,mCAAoCJ,GAE1D,OAAOA,CAAe,EACL"}

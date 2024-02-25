@@ -6,8 +6,30 @@
 
 // Provides control sap.m.P13nColumnsPanel.
 sap.ui.define([
-	'sap/ui/core/library', 'sap/ui/model/ChangeReason', 'sap/ui/model/json/JSONModel', 'sap/ui/model/BindingMode', 'sap/ui/core/IconPool', './library', './Table', './Column', './ColumnListItem', './P13nPanel', './P13nColumnsItem', './SearchField', './Text', './Button', './OverflowToolbar', './OverflowToolbarLayoutData', './OverflowToolbarButton', './ToolbarSpacer', "sap/ui/thirdparty/jquery", "sap/ui/core/Configuration"
-], function(CoreLibrary, ChangeReason, JSONModel, BindingMode, IconPool, library, Table, Column, ColumnListItem, P13nPanel, P13nColumnsItem, SearchField, Text, Button, OverflowToolbar, OverflowToolbarLayoutData, OverflowToolbarButton, ToolbarSpacer, jQuery, Configuration) {
+	"sap/base/i18n/Localization",
+	"sap/ui/core/Element",
+	"sap/ui/core/Lib",
+	'sap/ui/core/library',
+	"sap/ui/core/Locale",
+	'sap/ui/model/ChangeReason',
+	'sap/ui/model/json/JSONModel',
+	'sap/ui/model/BindingMode',
+	'sap/ui/core/IconPool',
+	'./library',
+	'./Table',
+	'./Column',
+	'./ColumnListItem',
+	'./P13nPanel',
+	'./P13nColumnsItem',
+	'./SearchField',
+	'./Text',
+	'./Button',
+	'./OverflowToolbar',
+	'./OverflowToolbarLayoutData',
+	'./OverflowToolbarButton',
+	'./ToolbarSpacer',
+	"sap/ui/thirdparty/jquery"
+], function(Localization, Element, Library, CoreLibrary, Locale, ChangeReason, JSONModel, BindingMode, IconPool, library, Table, Column, ColumnListItem, P13nPanel, P13nColumnsItem, SearchField, Text, Button, OverflowToolbar, OverflowToolbarLayoutData, OverflowToolbarButton, ToolbarSpacer, jQuery) {
 	"use strict";
 
 	// shortcut for sap.m.OverflowToolbarPriority
@@ -38,7 +60,7 @@ sap.ui.define([
 	 * @class The <code>P13nColumnsPanel</code> control is used to define column-specific settings for table personalization.
 	 * @extends sap.m.P13nPanel
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @constructor
 	 * @deprecated as of version 1.98. Use the {@link sap.m.p13n.SelectionPanel} instead.
 	 * @public
@@ -228,7 +250,7 @@ sap.ui.define([
 		this.setModel(oModel, "$sapmP13nColumnsPanel");
 
 		this.setType(P13nPanelType.columns);
-		this.setTitle(sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("COLUMSPANEL_TITLE"));
+		this.setTitle(Library.getResourceBundleFor("sap.m").getText("COLUMSPANEL_TITLE"));
 
 		this._createTable();
 		this._oTable.setHeaderToolbar(this._createToolbar());
@@ -447,7 +469,7 @@ sap.ui.define([
 								}
 							],
 							formatter: function(iCountOfSelectedItems, iCountOfItems) {
-								return sap.ui.getCore().getLibraryResourceBundle("sap.m").getText('COLUMNSPANEL_SELECT_ALL_WITH_COUNTER', [
+								return Library.getResourceBundleFor("sap.m").getText('COLUMNSPANEL_SELECT_ALL_WITH_COUNTER', [
 									iCountOfSelectedItems, iCountOfItems
 								]);
 							}
@@ -476,7 +498,7 @@ sap.ui.define([
 
 	P13nColumnsPanel.prototype._createToolbar = function() {
 		var that = this;
-		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oRb = Library.getResourceBundleFor("sap.m");
 		var oToolbar = new OverflowToolbar(this.getId() + "-toolbar", {
 			design: ToolbarDesign.Auto,
 			content: [
@@ -654,7 +676,7 @@ sap.ui.define([
 		var iMaxIndex = this._oTable.getItems().length - 1;
 
 		if (iIndexTo === 0 || iIndexTo === iMaxIndex) {
-			sap.ui.getCore().byId(this.getId() + "-showSelected").focus();
+			Element.getElementById(this.getId() + "-showSelected").focus();
 		}
 	};
 
@@ -715,7 +737,7 @@ sap.ui.define([
 		var oCollator;
 		var sLanguage;
 		try {
-			sLanguage = Configuration.getLocale().toString();
+			sLanguage = new Locale(Localization.getLanguageTag()).toString();
 			if (typeof window.Intl !== 'undefined') {
 				oCollator = window.Intl.Collator(sLanguage, {
 					numeric: true
@@ -793,10 +815,10 @@ sap.ui.define([
 	};
 
 	P13nColumnsPanel.prototype._getToolbar = function() {
-		return sap.ui.getCore().byId(this.getId() + "-toolbar") || null;
+		return Element.getElementById(this.getId() + "-toolbar") || null;
 	};
 	P13nColumnsPanel.prototype._getSearchField = function() {
-		return sap.ui.getCore().byId(this.getId() + "-searchField") || null;
+		return Element.getElementById(this.getId() + "-searchField") || null;
 	};
 	P13nColumnsPanel.prototype._getSearchText = function() {
 		var oSearchField = this._getSearchField();
@@ -818,7 +840,7 @@ sap.ui.define([
 		this._getInternalModel().setProperty("/isMoveDownButtonEnabled", aVisibleTableItems.indexOf(this._getMarkedTableItem()) > -1 && aVisibleTableItems.indexOf(this._getMarkedTableItem()) < aVisibleTableItems.length - 1);
 
 		// Switch off the "Select all (n/m)" checkbox if search
-		var oTableCB = sap.ui.getCore().byId(this._oTable.getId() + '-sa');
+		var oTableCB = Element.getElementById(this._oTable.getId() + '-sa');
 		if (oTableCB) {
 			oTableCB.setEnabled(!bIsSearchActive && !bShowOnlySelectedItems);
 		}

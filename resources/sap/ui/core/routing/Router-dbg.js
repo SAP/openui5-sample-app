@@ -16,6 +16,7 @@ sap.ui.define([
 	"sap/base/util/each",
 	"sap/base/util/deepEqual",
 	"sap/base/util/isEmptyObject",
+	"sap/base/future",
 	"sap/base/Log",
 	"sap/ui/thirdparty/jquery",
 	"./RouterHashChanger",
@@ -33,6 +34,7 @@ sap.ui.define([
 		each,
 		deepEqual,
 		isEmptyObject,
+		future,
 		Log,
 		jQuery,
 		RouterHashChanger,
@@ -355,7 +357,7 @@ sap.ui.define([
 			 */
 			addRoute : function (oConfig, oParent) {
 				if (!oConfig.name) {
-					Log.error("[FUTURE FATAL] A name has to be specified for every route", this);
+					future.errorThrows("A name has to be specified for every route", this);
 				}
 
 				if (this._oRoutes[oConfig.name]) {
@@ -374,7 +376,7 @@ sap.ui.define([
 				if (this._oRouter) {
 					this._oRouter.parse(sNewHash);
 				} else {
-					Log.warning("[FUTURE FATAL] This router has been destroyed while the hash changed. No routing events where fired by the destroyed instance.", this);
+					future.warningThrows("This router has been destroyed while the hash changed. No routing events where fired by the destroyed instance.", this);
 				}
 			},
 
@@ -407,7 +409,7 @@ sap.ui.define([
 				};
 
 				if (!this.oHashChanger) {
-					Log.error("[FUTURE FATAL] navTo of the router is called before the router is initialized. If you want to replace the current hash before you initialize the router you may use getUrl and use replaceHash of the Hashchanger.", this);
+					future.errorThrows("navTo of the router is called before the router is initialized. If you want to replace the current hash before you initialize the router you may use getUrl and use replaceHash of the Hashchanger.", this);
 					return this;
 				}
 
@@ -618,13 +620,15 @@ sap.ui.define([
 			 * @param {object} [oParameters] Parameters for the route
 			 * @returns {string | undefined} The unencoded pattern with interpolated arguments or <code>undefined</code> if no matching route can be determined
 			 * @public
+			 * @throws {Error} Error will be thrown when any mandatory parameter in the route's pattern is missing from
+			 *  <code>oParameters</code> or assigned with empty string.
 			 */
 			getURL : function (sName, oParameters) {
 				var oRoute = this.getRoute(sName);
 				if (oRoute) {
 					return oRoute.getURL(oParameters);
 				} else {
-					Log.warning("[FUTURE FATAL] Route with name " + sName + " does not exist", this);
+					future.warningThrows("Route with name " + sName + " does not exist", this);
 				}
 			},
 
@@ -840,6 +844,8 @@ sap.ui.define([
 			 * @ui5-omissible-params oComponentTargetInfo
 			 * @public
 			 * @returns {this} this for chaining.
+			 * @throws {Error} Error will be thrown when any mandatory parameter in the route's pattern is missing from
+			 *  <code>oParameters</code> or assigned with empty string.
 			 */
 			navTo : function (sName, oParameters, oComponentTargetInfo, bReplace) {
 				var that = this,
@@ -852,7 +858,7 @@ sap.ui.define([
 				}
 
 				if (!oRoute) {
-					Log.warning("[FUTURE FATAL] Route with name " + sName + " does not exist", this);
+					future.warningThrows("Route with name " + sName + " does not exist", this);
 					return this;
 				}
 
@@ -1589,7 +1595,7 @@ sap.ui.define([
 
 		function getHomeEntry(oOwnerComponent, oHomeRoute) {
 			var sHomeRoutePattern = oHomeRoute.getPattern(),
-				sAppTitle = oOwnerComponent && oOwnerComponent.getManifestEntry("sap.app/title");
+				sAppTitle = oOwnerComponent && oOwnerComponent.getManifestEntry("/sap.app/title");
 
 			// check for placeholders - they are not allowed
 			if (sHomeRoutePattern === "" || (sHomeRoutePattern !== undefined && !/({.*})+/.test(sHomeRoutePattern))) {
@@ -1600,7 +1606,7 @@ sap.ui.define([
 					title: sAppTitle
 				};
 			} else {
-				Log.error("[FUTURE FATAL] Routes with dynamic parts cannot be resolved as home route.");
+				future.errorThrows("Routes with dynamic parts cannot be resolved as home route.");
 			}
 		}
 

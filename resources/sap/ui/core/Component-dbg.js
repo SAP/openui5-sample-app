@@ -10,6 +10,7 @@ sap.ui.define([
 	'./ComponentMetadata',
 	'./ElementRegistry',
 	'sap/base/config',
+	'sap/base/future',
 	'sap/base/i18n/Localization',
 	'sap/base/util/extend',
 	'sap/base/util/deepExtend',
@@ -29,7 +30,6 @@ sap.ui.define([
 	'sap/ui/core/_UrlResolver',
 	'sap/ui/VersionInfo',
 	'sap/ui/core/mvc/ViewType',
-	'sap/ui/core/Configuration',
 	'sap/ui/core/ComponentRegistry',
 	'sap/ui/core/util/_LocalizationHelper'
 ], function(
@@ -37,6 +37,7 @@ sap.ui.define([
 	ComponentMetadata,
 	ElementRegistry,
 	BaseConfig,
+	future,
 	Localization,
 	extend,
 	deepExtend,
@@ -56,7 +57,6 @@ sap.ui.define([
 	_UrlResolver,
 	VersionInfo,
 	ViewType,
-	Configuration,
 	ComponentRegistry,
 	_LocalizationHelper
 ) {
@@ -236,7 +236,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -282,17 +282,36 @@ sap.ui.define([
 
 			}
 
+			// --- Special settings (internal only) below ---
+
+			// cache tokens
 			if (mSettings && typeof mSettings._cacheTokens === "object") {
 				this._mCacheTokens = mSettings._cacheTokens;
 				delete mSettings._cacheTokens;
 			}
 
+			// active terminologies
 			if (mSettings && Array.isArray(mSettings._activeTerminologies)) {
 				this._aActiveTerminologies = mSettings._activeTerminologies;
 				delete mSettings._activeTerminologies;
 			}
 
-			// registry of models from manifest
+			/**
+			 * whether the component was created synchronously (e.g. via legacy-factory or constructor call)
+			 * @deprecated since 1.120
+			 */
+			(() => {
+				// Note: why is <true> the default?
+				//       Instantiating a Component via constructor is a sync creation, meaning in
+				//       UI5 1.x we must load manifest models sync. during the constructor, see _initComponentModels()
+				//       In UI5 2.x this code is not needed anymore, since only the async factory remains.
+				//       Creation via constructor does not allow for sync class loading anymore, meaning
+				//       consumers must provision the model classes before calling the constructor.
+				this._bSyncCreation = mSettings?._syncCreation ?? true;
+				delete mSettings?._syncCreation;
+			})();
+
+			// registry of preloaded models from manifest ('afterManifest' models)
 			if (mSettings && typeof mSettings._manifestModels === "object") {
 				// use already created models from sap.ui.component.load if available
 				this._mManifestModels = mSettings._manifestModels;
@@ -849,7 +868,7 @@ sap.ui.define([
 	 */
 	Component.prototype._getDestroyables = function() {
 		if (!this._aDestroyables) {
-			Log.error("[FUTURE FATAL] Mandatory super constructor not called for Component: '" + this.getManifestObject().getComponentName() + "'.",
+			future.errorThrows("Mandatory super constructor not called for Component: '" + this.getManifestObject().getComponentName() + "'.",
 				null,
 				"sap.ui.support",
 				function() {
@@ -1051,7 +1070,13 @@ sap.ui.define([
 			dataSources: mDataSources,
 			componentName: sComponentName
 		});
-		Component._loadManifestModelClasses(mAllModelConfigs, sComponentName);
+		/**
+		 * Sync provisioning of model classes.
+		 * @deprecated since 1.120
+		 */
+		if (this._bSyncCreation) {
+			Component._loadManifestModelClasses(mAllModelConfigs, sComponentName, this._bSyncCreation);
+		}
 
 		var mAllModelConfigurations = Component._createManifestModelConfigurations({
 			models: mAllModelConfigs,
@@ -1620,7 +1645,7 @@ sap.ui.define([
 									// 2.0 is the default in case no version is provided
 									oModelConfig.type = 'sap.ui.model.odata.v2.ODataModel';
 								} else {
-									Log.error('[FUTURE FATAL] Component Manifest: Provided OData version "' + sODataVersion + '" in ' +
+									future.errorThrows('Component Manifest: Provided OData version "' + sODataVersion + '" in ' +
 									'dataSource "' + oModelConfig.dataSource + '" for model "' + sModelName + '" is unknown. ' +
 									'Falling back to default model type "sap.ui.model.odata.v2.ODataModel".',
 									'["sap.app"]["dataSources"]["' + oModelConfig.dataSource + '"]', sLogComponentName);
@@ -1642,7 +1667,7 @@ sap.ui.define([
 
 			// model type is required!
 			if (!oModelConfig.type) {
-				Log.error("[FUTURE FATAL] Component Manifest: Missing \"type\" for model \"" + sModelName + "\"", "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
+				future.errorThrows("Component Manifest: Missing \"type\" for model \"" + sModelName + "\"", "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
 				continue;
 			}
 
@@ -1674,7 +1699,6 @@ sap.ui.define([
 		var bMergeParent = mOptions.mergeParent;
 		var mCacheTokens = mOptions.cacheTokens || {};
 		var sLogComponentName = oComponent ? oComponent.getMetadata().getComponentName() : oManifest.getComponentName();
-		var oConfig = Configuration;
 		var aActiveTerminologies = mOptions.activeTerminologies;
 
 		if (!mOptions.models) {
@@ -1720,12 +1744,14 @@ sap.ui.define([
 
 			var oModelConfig = mConfig.models[sModelName];
 			var fnClass = sap.ui.require(oModelConfig.type.replace(/\./g, "/"));
+			/** @deprecated since 1.120 */
 			if (!fnClass) {
 				fnClass =  ObjectPath.get(oModelConfig.type);
 			}
-			// class could not be loaded by _loadManifestModelClasses
-			if (!fnClass) {
-				Log.error("[FUTURE FATAL] Component Manifest: Class \"" + oModelConfig.type + "\" for model \"" + sModelName + "\" could not be found", "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
+			// class could not be loaded by _loadManifestModelClasses, or module export is not
+			// a valid UI5 class (no metadata available) -> a legacy testcases exist for this scenario!
+			if (!fnClass?.getMetadata) {
+				future.errorThrows("Component Manifest: Class \"" + oModelConfig.type + "\" for model \"" + sModelName + "\" could not be found", "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
 				continue;
 			}
 			var oClassMetadata = fnClass.getMetadata();
@@ -1793,26 +1819,26 @@ sap.ui.define([
 
 								// dataSource entry should be defined!
 								if (!oAnnotation) {
-									Log.error("[FUTURE FATAL] Component Manifest: ODataAnnotation \"" + sAnnotation + "\" for dataSource \"" + oModelConfig.dataSource + "\" could not be found in manifest", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
+									future.errorThrows("Component Manifest: ODataAnnotation \"" + sAnnotation + "\" for dataSource \"" + oModelConfig.dataSource + "\" could not be found in manifest", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
 									continue;
 								}
 
 								// type should be ODataAnnotation!
 								if (oAnnotation.type !== 'ODataAnnotation') {
-									Log.error("[FUTURE FATAL] Component Manifest: dataSource \"" + sAnnotation + "\" was expected to have type \"ODataAnnotation\" but was \"" + oAnnotation.type + "\"", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
+									future.errorThrows("Component Manifest: dataSource \"" + sAnnotation + "\" was expected to have type \"ODataAnnotation\" but was \"" + oAnnotation.type + "\"", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
 									continue;
 								}
 
 								// uri is required!
 								if (!oAnnotation.uri) {
-									Log.error("[FUTURE FATAL] Component Manifest: Missing \"uri\" for ODataAnnotation \"" + sAnnotation + "\"", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
+									future.errorThrows("Component Manifest: Missing \"uri\" for ODataAnnotation \"" + sAnnotation + "\"", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
 									continue;
 								}
 
 								var oAnnotationUri = new URI(oAnnotation.uri);
 
 								if (bIsV2Model || bIsV4Model) {
-									var sValueFromConfig = Configuration.getSAPLogonLanguage();
+									var sValueFromConfig = Localization.getSAPLogonLanguage();
 									if (!oAnnotationUri.hasQuery("sap-language") && sValueFromConfig) {
 										oAnnotationUri.setQuery("sap-language", sValueFromConfig);
 									}
@@ -1844,7 +1870,7 @@ sap.ui.define([
 					}
 
 				} else {
-					Log.error("[FUTURE FATAL] Component Manifest: dataSource \"" + oModelConfig.dataSource + "\" for model \"" + sModelName + "\" not found or invalid", "[\"sap.app\"][\"dataSources\"][\"" + oModelConfig.dataSource + "\"]", sLogComponentName);
+					future.errorThrows("Component Manifest: dataSource \"" + oModelConfig.dataSource + "\" for model \"" + sModelName + "\" not found or invalid", "[\"sap.app\"][\"dataSources\"][\"" + oModelConfig.dataSource + "\"]", sLogComponentName);
 					continue;
 				}
 			}
@@ -1895,7 +1921,7 @@ sap.ui.define([
 						mMetadataUrlParams = oModelConfig.settings && oModelConfig.settings.metadataUrlParams;
 						var bNeedsLanguage = (!mMetadataUrlParams || typeof mMetadataUrlParams['sap-language'] === 'undefined')
 							&& !oUri.hasQuery('sap-language')
-							&& oConfig.getSAPLogonLanguage();
+							&& Localization.getSAPLogonLanguage();
 
 						if (bNeedsLanguage || sCacheToken) {
 							// Lazy initialize settings and metadataUrlParams objects
@@ -1904,7 +1930,7 @@ sap.ui.define([
 
 							// Add sap-language only to $metadata URL params
 							if (bNeedsLanguage) {
-								mMetadataUrlParams['sap-language'] = oConfig.getSAPLogonLanguage();
+								mMetadataUrlParams['sap-language'] = Localization.getSAPLogonLanguage();
 							}
 						}
 
@@ -2043,18 +2069,35 @@ sap.ui.define([
 		return mModelConfigurations;
 	};
 
-	Component._loadManifestModelClasses = function(mModelConfigurations, sLogComponentName) {
-		for (var sModelName in mModelConfigurations) {
-			var oModelConfig = mModelConfigurations[sModelName];
-			// load model class and log error message if it couldn't be loaded.
-			// error gets caught to continue creating the other models and not breaking the execution here
-			try {
-				sap.ui.requireSync(oModelConfig.type.replace(/\./g, "/"));
-			} catch (oError) {
-				Log.error("[FUTURE FATAL] Component Manifest: Class \"" + oModelConfig.type + "\" for model \"" + sModelName + "\" could not be loaded. " + oError, "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
-				continue;
-			}
+	Component._loadManifestModelClasses = function(mModelConfigurations, sLogComponentName, bSync) {
+		const aLoadPromises = [];
+
+		function logLoadingError(sModelClassName, sModelName, oError) {
+			future.errorThrows("Component Manifest: Class \"" + sModelClassName + "\" for model \"" + sModelName + "\" could not be loaded. " + oError, "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
 		}
+
+		for (const sModelName in mModelConfigurations) {
+			const oModelConfig = mModelConfigurations[sModelName];
+			const sModelClass = oModelConfig.type.replace(/\./g, "/");
+
+			/** @deprecated since 1.120 */
+			if (bSync) {
+				// load model class and log error message if it couldn't be loaded.
+				// error gets caught to continue creating the other models and not breaking the execution here
+				try {
+					sap.ui.requireSync(sModelClass); // legacy-relevant
+				} catch (oError) {
+					logLoadingError(oModelConfig.type, sModelName, oError);
+				}
+				continue; // note: we want to skip the below async processing!
+			}
+
+			aLoadPromises.push(new Promise((resolve, reject) => {
+				sap.ui.require([sModelClass], resolve, reject);
+			}).catch(logLoadingError.bind(null, oModelConfig.type, sModelName)));
+		}
+
+		return Promise.all(aLoadPromises);
 	};
 
 	/**
@@ -2074,8 +2117,13 @@ sap.ui.define([
 			// and this only works from the global namespace export, not via probing require.
 			// To keep those tests working, the global name is checked first. Only in a context
 			// where global names don't exist or when the model is unknown, the fallback will be used.
-			var fnModelClass = ObjectPath.get(oModelConfig.type)
-				|| sap.ui.require(oModelConfig.type.replace(/\./g, "/"));
+			let fnModelClass;
+			/** @deprecated since 1.120 */
+			fnModelClass = ObjectPath.get(oModelConfig.type);
+
+			if (!fnModelClass) {
+				fnModelClass = sap.ui.require(oModelConfig.type.replace(/\./g, "/"));
+			}
 
 			// create arguments array with leading "null" value so that it can be passed to the apply function
 			var aArgs = [null].concat(oModelConfig.settings || []);
@@ -2193,7 +2241,6 @@ sap.ui.define([
 
 	function loadManifests(oRootMetadata) {
 		var aManifestsToLoad = [];
-		var aMetadataObjects = [];
 
 		/**
 		 * Collects the promises to load the manifest content and all of its parents manifest files.
@@ -2228,10 +2275,14 @@ sap.ui.define([
 
 					// If the request fails, ignoring the error would end up in a sync call, which would fail, too.
 					return {};
+				}).then(function(oManifestJson) {
+					if (oManifestJson) {
+						oMetadata._applyManifest(oManifestJson, true /* skip processing */);
+						return oMetadata.getManifestObject()._processI18n(true);
+					}
 				});
 
 				aManifestsToLoad.push(pLoadManifest);
-				aMetadataObjects.push(oMetadata);
 			}
 
 			var oParentMetadata = oMetadata.getParent();
@@ -2242,14 +2293,7 @@ sap.ui.define([
 
 		collectLoadManifestPromises(oRootMetadata);
 
-		return Promise.all(aManifestsToLoad).then(function(aManifestJson) {
-			// Inject the manifest into the metadata class
-			for (var i = 0; i < aManifestJson.length; i++) {
-				if (aManifestJson[i]) {
-					aMetadataObjects[i]._applyManifest(aManifestJson[i]);
-				}
-			}
-		});
+		return Promise.all(aManifestsToLoad);
 	}
 
 	/**
@@ -2600,7 +2644,7 @@ sap.ui.define([
 		const def = new Deferred();
 
 		sap.ui.require([sModuleName], def.resolve, (err) => {
-			Log.warning(`[FUTURE FATAL] Cannot load module '${sModuleName}'. ` +
+			future.warningThrows(`Cannot load module '${sModuleName}'. ` +
 				"This will most probably cause an error once the module is used later on.",
 				sComponentName, "sap.ui.core.Component");
 			Log.warning(err);
@@ -2679,7 +2723,11 @@ sap.ui.define([
 				id: sId,
 				componentData: oComponentData,
 				_cacheTokens: vConfig.asyncHints && vConfig.asyncHints.cacheTokens,
-				_activeTerminologies: aActiveTerminologies
+				_activeTerminologies: aActiveTerminologies,
+				/**
+				 * @deprecated since 1.120
+				 */
+				_syncCreation: !vConfig.async
 			}));
 			assert(oInstance instanceof Component, "The specified component \"" + sController + "\" must be an instance of sap.ui.core.Component!");
 			Log.info("Component instance Id = " + oInstance.getId());
@@ -2746,16 +2794,39 @@ sap.ui.define([
 					});
 				};
 				return loadDependenciesAndIncludes(oClass.getMetadata()).then(async function () {
-					const oManifest = oClass.getMetadata().getManifestObject();
+					const oClassMetadata = oClass.getMetadata();
+					const oManifest = oClassMetadata.getManifestObject();
 					const sComponentName = oManifest.getComponentName();
 
-					// after evaluating the manifest & loading the necessary dependencies,
-					// we make sure the routing related classes are required before instantiating the Component
+					// --- final class provisioning before instantiation ---
+
+					// [1] after evaluating the manifest & loading the necessary dependencies,
+					//     we make sure the routing related classes are required before instantiating the Component
 					const aRoutingClassNames = collectRoutingClasses(oManifest);
 					const aModuleLoadingPromises = aRoutingClassNames.map((sClassName) => {
 						return loadModuleAndLog(sClassName, sComponentName);
 					});
-					await Promise.all(aModuleLoadingPromises);
+
+					// [2] Async require for all(!) manifests models ("preload: true" models might be required already)
+					//     in v1 we prevent sync requests, in v2 we ensure all manifest models can be instantiated
+					//     The best practice is that all model classes are part of a Component dependency (e.g. lib, eager dep in Component.js, ...)
+
+					//     retrieve the merged sap.app and sap.ui5 sections of the manifest
+					const mManifestDataSources = getManifestEntry(oClassMetadata, oManifest, "/sap.app/dataSources", true) || {};
+					const mManifestModels = getManifestEntry(oClassMetadata, oManifest, "/sap.ui5/models", true) || {};
+
+					//     extract classes from manifest
+					const mAllModelConfigs = Component._findManifestModelClasses({
+						models: mManifestModels,
+						dataSources: mManifestDataSources,
+						componentName: sComponentName
+					});
+
+					//     load model classes async
+					const pModelClassLoading = Component._loadManifestModelClasses(mAllModelConfigs, sComponentName);
+
+					// load all classes in parallel
+					await Promise.all([...aModuleLoadingPromises, pModelClassLoading]);
 
 					return ManagedObject.runWithOwner(function() {
 						return createInstance(oClass);
@@ -3109,7 +3180,7 @@ sap.ui.define([
 				if (mOptions.failOnError) {
 					throw new Error(sMsg);
 				} else {
-					Log.warning("[FUTURE FATAL] " + sMsg);
+					future.warningThrows(sMsg);
 				}
 			}
 
@@ -3392,14 +3463,14 @@ sap.ui.define([
 
 				// create "afterPreload" models in parallel to loading the component preload (below)
 				if (mOptions.createModels) {
-					collect(oManifest.then(function(oManifest) {
+					collect(oManifest.then(async function(oManifest) {
 						var sComponentName = oManifest.getComponentName();
 						// Calculate configurations of preloaded models once the manifest is available
 						mPreloadModelConfigs = getPreloadModelConfigsFromManifest(oManifest);
 
 						// Create preloaded models directly after the manifest has been loaded
 						if (Object.keys(mPreloadModelConfigs.afterManifest).length > 0) {
-							Component._loadManifestModelClasses(mPreloadModelConfigs.afterManifest, sComponentName);
+							await Component._loadManifestModelClasses(mPreloadModelConfigs.afterManifest, sComponentName);
 
 							// deep clone is needed as manifest only returns a read-only copy (frozen object)
 							var oManifestDataSources = merge({}, oManifest.getEntry("/sap.app/dataSources"));
@@ -3545,7 +3616,7 @@ sap.ui.define([
 						try {
 							return Component._fnLoadComponentCallback(oConfigCopy, oLoadedManifest);
 						} catch (oError) {
-							Log.error("[FUTURE FATAL] Callback for loading the component \"" + oLoadedManifest.getComponentName() +
+							future.errorThrows("Callback for loading the component \"" + oLoadedManifest.getComponentName() +
 								"\" run into an error. The callback was skipped and the component loading resumed.",
 								oError, "sap.ui.core.Component");
 						}
@@ -3621,16 +3692,22 @@ sap.ui.define([
 					var oMetadata = oClass.getMetadata();
 					var sName = oMetadata.getComponentName();
 					var sDefaultManifestUrl = getManifestUrl(sName);
-					var pLoaded;
+					var aPromises = [];
 
 					// Check if we loaded the manifest.json from the default location
 					// In this case it can be directly passed to its metadata class to prevent an additional request
 					if (oManifest && typeof vManifest !== "object" && (typeof sManifestUrl === "undefined" || sManifestUrl === sDefaultManifestUrl)) {
-						oMetadata._applyManifest(JSON.parse(JSON.stringify(oManifest.getRawJson())));
+						// We could use oManifest.getJson() to avoid calling '_processI18n(true)' at the next line.
+						// However, we have to use oManifest.getRawJson() instead of oManifest.getJson() because the
+						//  urls start with "ui5://" are already resolved in the oManifest.getJson() and
+						//  ComponentMetadata needs to keep them unresolved until the resource roots are set.
+						oMetadata._applyManifest(JSON.parse(JSON.stringify(oManifest.getRawJson())), true /* skip processing */);
+						aPromises.push(oMetadata.getManifestObject()._processI18n(true));
 					}
-					pLoaded = loadManifests(oMetadata);
 
-					return pLoaded.then(function() {
+					aPromises.push(loadManifests(oMetadata));
+
+					return Promise.all(aPromises).then(function() {
 
 						// The following processing of the sap.app/i18n resources happens under two conditions:
 						//    1. The manifest is defined in the component metadata (no Manifest object yet)
@@ -3946,7 +4023,7 @@ sap.ui.define([
 		var bIsKeepAliveSupported = this._oKeepAliveConfig && this._oKeepAliveConfig.supported;
 
 		if (bIsKeepAliveSupported) {
-			bIsKeepAliveSupported = Component.registry
+			bIsKeepAliveSupported = ComponentRegistry
 				.filter(function (oComponent) {
 					var sOwnerId = Component.getOwnerIdFor(oComponent);
 					return sOwnerId === this.getId();

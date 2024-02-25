@@ -1,21 +1,30 @@
 /*global QUnit */
 sap.ui.define([
 	"sap/ui/Device",
-	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Configuration",
-	"sap/ui/core/Core"
-], function(Device, jQuery, Configuration, Core) {
+	"sap/ui/core/Lib"
+], function(Device, Lib) {
 	"use strict";
 
 	QUnit.test("Check Existance of Core", function(assert) {
-		assert.expect(7);
+		assert.expect(8);
+		/**
+		 * @deprecated As of version 1.118.
+		 */
+		assert.expect(assert.expect() + 1);
 
 		var aExpectedLibraries = ["sap.ui.core", "sap.m", "sap.ui.layout", "sap.ui.table"].sort();
-		var aLoadedLibraries = Object.keys(Core.getLoadedLibraries());
+		var aLoadedLibraries = Object.keys(Lib.all());
 		var sExpectedLibrary, aDependendLibraries = [];
 
 		/* check that SAPUI5 has been loaded */
+		/**
+		 * @deprecated As of version 1.118.
+		 */
 		assert.ok(sap.ui.getCore(), "sap.ui.getCore() returns a value");
+		assert.ok(sap.ui.require("sap/ui/core/Core"), "Core module has been required");
+		let isReady = false;
+		sap.ui.require("sap/ui/core/Core").ready(() => { isReady = true; });
+		assert.ok(isReady, "Core is ready");
 
 		var id = document.querySelector("html").getAttribute("data-sap-ui-browser");
 		if ( Device.browser.name ) {

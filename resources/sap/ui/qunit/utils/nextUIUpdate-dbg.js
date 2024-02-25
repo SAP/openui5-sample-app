@@ -19,17 +19,27 @@ sap.ui.define([
      * @namespace
      * @alias module:sap/ui/qunit/utils/nextUIUpdate
      * @public
-     * @returns {Promise<undefined>} A promise resolving when the next UI update is finished
+     * @param {sinon.clock} [clock] A sinon clock. When using sinon faketimers the clock must be ticked to ensure async rendering.
+     *  Async rendering is done with a setTimeout(0) so we tick a given clock by 1.
+     * @returns {Promise<undefined>} A promise resolving when the next UI update is finished or rejecting when the next update fails.
      */
-    function nextUIUpdate() {
-        return new Promise(function(resolve) {
-            function isUpdated() {
+    function nextUIUpdate(clock) {
+        return new Promise(function(resolve, reject) {
+            function isUpdated(oEvent) {
                 Rendering.detachUIUpdated(isUpdated);
-                resolve();
+                const error = oEvent.getParameter("failed");
+                if (error) {
+                    // prevent default: Rendering will not rethrow the error wich breaks a unit test even if the rejection is properly catched.
+                    oEvent.preventDefault();
+                    reject(error);
+                } else {
+                    resolve();
+                }
             }
 
             if (Rendering.isPending()) {
                 Rendering.attachUIUpdated(isUpdated);
+                clock?.tick?.();
             } else {
                 resolve();
             }

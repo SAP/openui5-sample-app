@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
@@ -874,8 +874,10 @@ sap.ui.define([
 	 *   used, see {@link sap.ui.model.odata.v4.ODataContextBinding#constructor} and
 	 *   {@link #getGroupId}. To use the update group ID, see {@link #getUpdateGroupId}, it needs to
 	 *   be specified explicitly.
-	 *   Valid values are <code>undefined</code>, '$auto', '$auto.*', '$direct' or application group
-	 *   IDs as specified in {@link sap.ui.model.odata.v4.ODataModel}.
+	 *   Valid values are <code>undefined</code>, '$auto', '$auto.*', '$direct', '$single', or
+	 *   application group IDs as specified in {@link sap.ui.model.odata.v4.ODataModel}. If
+	 *   '$single' is used, the request will be sent as fast as '$direct', but wrapped in a batch
+	 *   request like '$auto' (since 1.121.0).
 	 * @param {boolean} [bIgnoreETag]
 	 *   Whether the entity's ETag should be actively ignored (If-Match:*); supported for bound
 	 *   actions only, since 1.90.0. Ignored if there is no ETag (since 1.93.0).
@@ -963,6 +965,7 @@ sap.ui.define([
 	 *       a row context of a list binding which uses the <code>$$ownRequest</code> parameter (see
 	 *       {@link sap.ui.model.odata.v4.ODataModel#bindList}) and no data aggregation (see
 	 *       {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}).
+	 *   </ul>
 	 *
 	 * @public
 	 * @since 1.37.0
@@ -972,7 +975,7 @@ sap.ui.define([
 		var sResolvedPath = this.getResolvedPath();
 
 		this.checkSuspended();
-		_Helper.checkGroupId(sGroupId);
+		_Helper.checkGroupId(sGroupId, false, true);
 		if (!this.oOperation) {
 			throw new Error("The binding must be deferred: " + this.sPath);
 		}
@@ -1272,7 +1275,7 @@ sap.ui.define([
 	 * @returns {string|undefined} The path for the return value context or <code>undefined</code>
 	 *   if it is not possible to create one
 	 *
-	 * @privat
+	 * @private
 	 */
 	ODataContextBinding.prototype.getReturnValueContextPath = function (oResponseEntity) {
 		if (!this.hasReturnValueContext()) {

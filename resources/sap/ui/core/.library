@@ -6,7 +6,7 @@
   <copyright>OpenUI5
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.120.7</version>
+  <version>1.121.0</version>
 
   <documentation>The SAPUI5 Core Runtime.
 
@@ -179,13 +179,13 @@
             <copyright>2014 jQuery Foundation and other contributors</copyright>
             <pattern partial="true" otherContent="SAP" explanation="zIndex.js is overall written by SAP, but contains an implementation of the function 'fnzIndex' which is taken from jQuery UI Datepicker 1.11.1">sap/ui/dom/jquery/zIndex.js</pattern>
         </lib>
-        <lib name="qunit" displayName="QUnit" npmName="n/a" version="1.18.0" hash="2172c9592fe6e9d5ef3bdf665cf88ba9" homepage="https://qunitjs.com" id="73554900106100002636">
+        <lib name="qunit" displayName="QUnit" npmName="n/a" version="1.18.0" hash="f70425a06c2cd609605ee73331687a35" homepage="https://qunitjs.com" id="73554900106100002636">
             <license url="http://jQuery.org/license" type="MIT" />
             <copyright>jQuery Foundation and other contributors</copyright>
             <pattern>sap/ui/thirdparty/qunit.css</pattern>
             <pattern>sap/ui/thirdparty/qunit.js</pattern>
         </lib>
-        <lib name="qunit-2" displayName="QUnit 2" npmName="n/a" version="2.3.2" hash="38899a9d9321402ff815cff5682e8e5b" homepage="https://qunitjs.com" id="73555000106100006951">
+        <lib name="qunit-2" displayName="QUnit 2" npmName="n/a" version="2.3.2" hash="9353c076aec5cfaa6d39c867cdeef863" homepage="https://qunitjs.com" id="73555000106100006951">
             <license url="http://jQuery.org/license" type="MIT" />
             <copyright>jQuery Foundation and other contributors</copyright>
             <pattern>sap/ui/thirdparty/qunit-2.css</pattern>
@@ -219,10 +219,11 @@
             <pattern>sap/ui/thirdparty/qunit-composite.css</pattern>
             <pattern>sap/ui/thirdparty/qunit-composite.js</pattern>
         </lib>
-        <lib name="qunit-reporter-junit" displayName="JUnit Reporter for QUnit" npmName="qunit-reporter-junit" version="1.1.1" hash="494d573d58adc6a5fbfc539210bd9656" homepage="https://github.com/JamesMGreene/qunit-reporter-junit" id="73554900106100005540">
+        <lib name="qunit-reporter-junit" displayName="JUnit Reporter for QUnit" npmName="qunit-reporter-junit" version="1.1.1" hash="28e7f283bcba22f4959b9d2e91be6e7e" homepage="https://github.com/JamesMGreene/qunit-reporter-junit" id="73554900106100005540">
             <license url="https://raw.githubusercontent.com/JamesMGreene/qunit-reporter-junit/master/LICENSE.txt" type="MIT" />
             <copyright>jQuery Foundation and other contributors</copyright>
             <pattern>sap/ui/thirdparty/qunit-reporter-junit.js</pattern>
+            <pattern partial="true" otherContent="SAP" explanation="qunit-junit.js is overall written by SAP, but contains a modified copy of JUnit Reporter for QUnit (qunit-reporter-junit)">sap/ui/qunit/qunit-junit.js</pattern>
         </lib>
         <lib name="iscroll" displayName="cubiq.org - iScroll" npmName="n/a" version="4.2.5" hash="d65adf04b7325742c53082ee3e87d034" homepage="https://github.com/cubiq/iscroll" id="73554900106100001862">
             <license url="https://github.com/cubiq/iscroll/blob/master/LICENSE" type="MIT" />
@@ -273,7 +274,7 @@
             <copyright>Google Inc.</copyright>
             <pattern>sap/ui/thirdparty/caja-html-sanitizer.js</pattern>
         </lib>
-        <lib name="cldr" displayName="Unicode Common Locale Data Repository" npmName="cldr-core" version="43" hash="7943bd8920b96cb5af996113d27a55e2" homepage="http://cldr.unicode.org/" id="73555000106100020909">
+        <lib name="cldr" displayName="Unicode Common Locale Data Repository" npmName="cldr-core" version="44" hash="132467204ffa486e82a48a3a0e51f5b4" homepage="http://cldr.unicode.org/" id="73555000106100020909">
             <license url="http://www.unicode.org/copyright.html" type="Unicode-DFS-2015" />
             <copyright>1991-2023 Unicode, Inc.</copyright>
             <pattern>sap/ui/core/cldr/*</pattern>
@@ -327,7 +328,7 @@
             <copyright>2010-2012, The Dojo Foundation</copyright>
             <pattern>sap/ui/thirdparty/require.js</pattern>
         </lib>
-        <lib name="crossroadsjs" displayName="crossroads.js" npmName="crossroads" version="0.12.0" hash="7a65d229bbecf1e40455b3c1e88f0490" homepage="https://github.com/millermedeiros/crossroads.js" id="73554900106100005551">
+        <lib name="crossroadsjs" displayName="crossroads.js" npmName="crossroads" version="0.12.0" hash="d6e2c6bbbdbee19665b04802a3ea82f4" homepage="https://github.com/millermedeiros/crossroads.js" id="73554900106100005551">
             <license url="http://opensource.org/licenses/mit-license.php" type="MIT" />
             <copyright>Miller Medeiros</copyright>
             <pattern>sap/ui/thirdparty/crossroads.js</pattern>
@@ -406,7 +407,7 @@
             <copyright>Isaac Z. Schlueter and Contributors</copyright>
             <pattern partial="true" otherContent="SAP" explanation="LRUPersistentCache.js is overall written by SAP, but portions ('Least Recently Used' logic) are taken from the node-lru-cache project (see https://github.com/isaacs/node-lru-cache/blob/v2.7.3/README.md) and modified.">sap/ui/core/cache/LRUPersistentCache.js</pattern>
         </lib>
-        <lib name="tzdata" displayName="Time Zone Database" npmName="n/a" version="2023c" homepage="http://www.iana.org/time-zones" id="73554900106100123193">
+        <lib name="tzdata" displayName="Time Zone Database" npmName="n/a" version="2023d" homepage="http://www.iana.org/time-zones" id="73554900106100123193">
             <license url="https://github.com/eggert/tz/blob/main/LICENSE" type="LicenseRef-tzdata-PublicDomain" />
             <copyright>Arthur David Olson, Paul Eggert and other contributors</copyright>
             <pattern partial="true" otherContent="SAP" explanation="_timezones.js is overall written by SAP, but the list of IANA timezone IDs is taken from the Timezone Database">../test/sap/ui/core/qunit/i18n/helper/_timezones.js</pattern>

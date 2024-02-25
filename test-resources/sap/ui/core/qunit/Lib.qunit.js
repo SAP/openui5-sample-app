@@ -59,6 +59,9 @@ sap.ui.define([
 	 */
 	QUnit.test("Instance method 'preload' and 'getManifest'", function(assert) {
 		function checkLibNotInitialized(sName) {
+			/**
+			 * @deprecated
+			 */
 			assert.notOk(ObjectPath.get(sName), "namespace for " + sName + " should not exist");
 			assert.notOk(Library.all()[sName], "The library " + sName + "is only preloaded and should not initialize itself");
 		}
@@ -164,6 +167,130 @@ sap.ui.define([
 		});
 	});
 
+	QUnit.test("Instance method '_getI18nSettings': i18n missing in manifest.json", function(assert) {
+		const oLib1 = Library._get('testlibs.scenario1.lib1', true);
+		// no i18n property in manifest
+		this.stub(oLib1, 'getManifest').returns({
+			"_version": "1.9.0",
+			"name": "sap.test.i18ntrue",
+			"sap.ui5": {
+			}
+		});
+
+		// act
+		const i18nSettings = oLib1._getI18nSettings();
+
+		// assert
+		assert.deepEqual(
+			i18nSettings,
+			{
+				bundleUrl: "messagebundle.properties"
+			}, "a missing i18n section in the manifest should result in the default bundle URL to be returned");
+	});
+
+	QUnit.test("Instance method '_getI18nSettings': i18n set to false in manifest.json", function(assert) {
+		const oLib1 = Library._get('testlibs.scenario1.lib1', true);
+
+		this.stub(oLib1, 'getManifest').returns({
+			"_version": "1.9.0",
+			"name": "sap.test1",
+			"sap.ui5": {
+				"library": {
+					"i18n": false
+				}
+			}
+		});
+
+		// act
+		const i18nSettings = oLib1._getI18nSettings();
+
+		// assert
+		assert.notOk(i18nSettings, "a value of false for the i18n section should result in no bundle to be loaded");
+	});
+
+	QUnit.test("Instance method '_getI18nSettings': i18n set to true in manifest.json", function(assert) {
+		const oLib1 = Library._get('testlibs.scenario1.lib1', true);
+		this.stub(oLib1, 'getManifest').returns({
+			"_version": "1.9.0",
+			"name": "sap.test.i18ntrue",
+			"sap.ui5": {
+				"library": {
+					"i18n": true
+				}
+			}
+		});
+
+		// act
+		const i18nSettings = oLib1._getI18nSettings();
+
+		// assert
+		assert.deepEqual(
+			i18nSettings,
+			{
+				bundleUrl: "messagebundle.properties"
+			}, "a value of true for the i18n section should result in the default bundle URL to be returned");
+	});
+
+	QUnit.test("Instance method '_getI18nSettings': i18n seto to a string in manifest.json", function(assert) {
+		const oLib1 = Library._get('testlibs.scenario1.lib1', true);
+		// no i18n property in manifest
+		this.stub(oLib1, 'getManifest').returns({
+			"_version": "1.9.0",
+			"name": "sap.test.i18nstring",
+			"sap.ui5": {
+				"library": {
+					"i18n": "i18n.properties"
+				}
+			}
+		});
+
+		// act
+		const i18nSettings = oLib1._getI18nSettings();
+
+		// assert
+		assert.deepEqual(
+			i18nSettings,
+			{
+				bundleUrl: "i18n.properties"
+			}, "a string value for the i18n section should result in that string to be returned as bundle URL");
+	});
+
+	QUnit.test("Instance method '_getI18nSettings': i18n set to an object in manifest.json", function(assert) {
+		const oLib1 = Library._get('testlibs.scenario1.lib1', true);
+		// no i18n property in manifest
+		this.stub(oLib1, 'getManifest').returns({
+			"_version": "1.9.0",
+			"name": "sap.test.i18nobject",
+			"sap.ui5": {
+				"library": {
+					"i18n": {
+						"bundleUrl": "i18n.properties",
+						"supportedLocales": [
+							"en",
+							"de"
+						]
+					}
+				}
+			}
+		});
+
+		// act
+		const i18nSettings = oLib1._getI18nSettings();
+
+		// assert
+		assert.deepEqual(
+			i18nSettings,
+			{
+				bundleUrl: "i18n.properties",
+				supportedLocales: [
+					"en",
+					"de"
+				]
+			}, "an object as i18n section should be returned 1:1");
+	});
+
+
+
 	QUnit.module("Static methods");
 
 	QUnit.test("Static method '_get'", function(assert) {
@@ -186,8 +313,11 @@ sap.ui.define([
 
 	QUnit.test("Static method 'load', 'init', 'all'", function(assert) {
 		function checkLibInitialized(sName) {
+			/**
+			 * @deprecated
+			 */
 			assert.ok(ObjectPath.get(sName), "namespace for " + sName + " should exist");
-			assert.ok(Library.all()[sName], "The library " + sName + "is initialized");
+			assert.ok(Library.all()[sName], "The library " + sName + " is initialized");
 		}
 
 		this.spy(Library.prototype, '_preload');
@@ -198,42 +328,42 @@ sap.ui.define([
 		this.spy(sap.ui, 'requireSync');
 
 		// make lib3 already loaded
-		sap.ui.predefine('testlibs/scenario1/lib3/library', ["sap/ui/core/Lib"], function(Library) {
+		sap.ui.predefine('testlibs/scenario2/lib3/library', ["sap/ui/core/Lib"], function(Library) {
 			return Library.init({
-				name: 'testlibs.scenario1.lib3',
+				name: 'testlibs.scenario2.lib3',
 				noLibraryCSS: true
 			});
 		});
 
 		var vResult = Library.load({
-			name: 'testlibs.scenario1.lib1'
+			name: 'testlibs.scenario2.lib1'
 		});
 
 		assert.ok(vResult instanceof Promise, "async call to 'preload' should return a promise");
 
 		return vResult.then(function(oLib1) {
-			checkLibInitialized('testlibs.scenario1.lib1');
+			checkLibInitialized('testlibs.scenario2.lib1');
 			sinon.assert.calledOn(Library.prototype._preload, oLib1, "Library.prototype.preload is called");
 			/**
 			 * @deprecated As of version 1.120
 			 */
-			sinon.assert.neverCalledWith(sap.ui.requireSync, 'testlibs/scenario1/lib1/library');
-			sinon.assert.calledWith(sap.ui.require, ['testlibs/scenario1/lib1/library']);
+			sinon.assert.neverCalledWith(sap.ui.requireSync, 'testlibs/scenario2/lib1/library');
+			sinon.assert.calledWith(sap.ui.require, ['testlibs/scenario2/lib1/library']);
 
 			// lib3 should not be preloaded as its library.js has been (pre)loaded before
-			checkLibInitialized('testlibs.scenario1.lib3');
-			var oLib3 = Library._get('testlibs.scenario1.lib3');
+			checkLibInitialized('testlibs.scenario2.lib3');
+			var oLib3 = Library._get('testlibs.scenario2.lib3');
 			assert.ok(oLib3, "Library instance is created");
 			sinon.assert.calledOn(Library.prototype._preload, oLib3, "Library.prototype.preload is called");
 
 			// lib4 and lib5 should have been preloaded
-			checkLibInitialized('testlibs.scenario1.lib4');
-			var oLib4 = Library._get('testlibs.scenario1.lib4');
+			checkLibInitialized('testlibs.scenario2.lib4');
+			var oLib4 = Library._get('testlibs.scenario2.lib4');
 			sinon.assert.calledOn(Library.prototype._preload, oLib4, "Library.prototype.preload is called");
 
 			// lib5 should load the json format as fallback
-			checkLibInitialized('testlibs.scenario1.lib5');
-			var oLib5 = Library._get('testlibs.scenario1.lib5');
+			checkLibInitialized('testlibs.scenario2.lib5');
+			var oLib5 = Library._get('testlibs.scenario2.lib5');
 			sinon.assert.calledOn(Library.prototype._preload, oLib5, "Library.prototype.preload is called");
 		});
 	});
@@ -474,7 +604,7 @@ sap.ui.define([
 			name: "testing.pseudo.modules.deprecation"
 		});
 
-		const sExpectedErrorMessage = "Deprecation: Importing the type 'testing.pseudo.modules.deprecation.Type1' as a module is deprecated. Please require the corresponding 'library.js' containing the type directly. You can then reference the type via the library's module export.";
+		const sExpectedErrorMessage = "Deprecation: Importing the type 'testing.pseudo.modules.deprecation.Type1' as a pseudo module is deprecated. Please import the type from the module 'testing/pseudo/modules/deprecation/library'. You can then reference this type via the library's module export. For more information, see documentation under 'Best Practices for Loading Modules'.";
 
 		// Anonymous require: Log does not contain the requesting module
 		await new Promise((resolve, reject) => {
@@ -504,5 +634,16 @@ sap.ui.define([
 		}).finally(() => {
 			oErrorLogSpy.restore();
 		});
+	});
+
+	QUnit.module("Handling of 'apiVersion: 2'");
+
+	QUnit.test("Unknown apiVersion is rejected", function (assert) {
+		assert.throws(() => {
+			Library.init({
+				name: "bad.apiversion.library",
+				apiVersion: 3
+			});
+		}, /The library 'bad\.apiversion\.library' has defined 'apiVersion: 3', which is an unsupported value/);
 	});
 });

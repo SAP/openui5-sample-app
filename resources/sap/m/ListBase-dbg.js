@@ -8,9 +8,9 @@
 sap.ui.define([
 	"sap/base/i18n/Localization",
 	"sap/ui/core/ControlBehavior",
+	"sap/ui/core/RenderManager",
 	"sap/ui/events/KeyCodes",
 	"sap/ui/Device",
-	"sap/ui/core/Core",
 	"sap/ui/core/Control",
 	"sap/ui/core/Element",
 	"sap/ui/core/InvisibleText",
@@ -35,9 +35,9 @@ sap.ui.define([
 function(
 	Localization,
 	ControlBehavior,
+	RenderManager,
 	KeyCodes,
 	Device,
-	Core,
 	Control,
 	Element,
 	InvisibleText,
@@ -105,7 +105,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -905,22 +905,22 @@ function(
 	/**
 	 * Selects or deselects the given list item.
 	 *
-	 * @param {sap.m.ListItemBase} oListItem
-	 *         The list item whose selection to be changed. This parameter is mandatory.
-	 * @param {boolean} [bSelect=true]
-	 *         Sets selected status of the list item
-	 * @type this
+	 * @param {sap.m.ListItemBase} oListItem The list item whose selection is changed
+	 * @param {boolean} [bSelect=true] Sets selected status of the list item provided
+	 * @param {boolean} [bFireEvent=false] Determines whether the <code>selectionChange</code> event is fired by this method call (as of version 1.121)
+	 * @returns {this} Reference to <code>this</code> in order to allow method chaining
 	 * @public
 	 */
 	ListBase.prototype.setSelectedItem = function(oListItem, bSelect, bFireEvent) {
 		if (this.indexOfItem(oListItem) < 0) {
 			Log.warning("setSelectedItem is called without valid ListItem parameter on " + this);
-			return;
+			return this;
 		}
 		if (this._bSelectionMode) {
 			oListItem.setSelected((bSelect === undefined) ? true : !!bSelect);
 			bFireEvent && this._fireSelectionChangeEvent([oListItem]);
 		}
+		return this;
 	};
 
 
@@ -948,7 +948,7 @@ function(
 	 * @public
 	 */
 	ListBase.prototype.setSelectedItemById = function(sId, bSelect) {
-		var oListItem = Core.byId(sId);
+		var oListItem = Element.getElementById(sId);
 		return this.setSelectedItem(oListItem, bSelect);
 	};
 
@@ -995,17 +995,17 @@ function(
 	/**
 	 * Removes visible selections of the current selection mode.
 	 *
-	 * @param {boolean} bAll
-	 *         Since version 1.16.3. This control keeps old selections after filter or sorting. Set this parameter "true" to remove all selections.
-	 * @type this
+	 * @param {boolean} [bAll=false] If the <code>rememberSelection</code> property is set to <code>true</code>, this control preserves selections after filtering or sorting. Set this parameter to <code>true</code> to remove all selections (as of version 1.16)
+	 * @param {boolean} [bFireEvent=false] Determines whether the <code>selectionChange</code> event is fired by this method call (as of version 1.121)
+	 * @returns {this} Reference to <code>this</code> in order to allow method chaining
 	 * @public
 	 */
-	ListBase.prototype.removeSelections = function(bAll, bFireEvent, bDetectBinding) {
+	ListBase.prototype.removeSelections = function(bAll, bFireEvent, _bDetectBinding) {
 		var aChangedListItems = [];
 		this._oSelectedItem = null;
 		if (bAll) {
 			this._aSelectedPaths = [];
-			if (!bDetectBinding) {
+			if (!_bDetectBinding) {
 				const oBinding = this.getBinding("items");
 				const aContexts = oBinding?.getAllCurrentContexts?.() || [];
 				aContexts[0]?.setSelected && aContexts.forEach((oContext) => oContext.setSelected(false));
@@ -1017,7 +1017,7 @@ function(
 			}
 
 			// if the selected property is two-way bound then we do not need to update the selection
-			if (bDetectBinding && oItem.isSelectedBoundTwoWay()) {
+			if (_bDetectBinding && oItem.isSelectedBoundTwoWay()) {
 				return;
 			}
 
@@ -1039,7 +1039,8 @@ function(
 	 * <b>Note:</b> If <code>growing</code> is enabled, only the visible items in the list are selected.
 	 * Since version 1.93, the items are not selected if <code>getMultiSelectMode=ClearAll</code>.
 	 *
-	 * @type this
+	 * @param {boolean} [bFireEvent=false] Determines whether the <code>selectionChange</code> event is fired by this method call (as of version 1.121)
+	 * @returns {this} Reference to <code>this</code> in order to allow method chaining
 	 * @public
 	 * @since 1.16
 	 */
@@ -1262,6 +1263,14 @@ function(
 		this._updateSelectedPaths(oListItem, bSelected);
 	};
 
+	// this gets called after the selected property of the ListItem is changed
+	ListBase.prototype.onItemAfterSelectedChange = function(oListItem, bSelected) {
+		this.fireEvent("itemSelectedChange", {
+			listItem: oListItem,
+			selected: bSelected
+		});
+	};
+
 	/*
 	 * Returns items container DOM reference
 	 * @protected
@@ -1418,6 +1427,12 @@ function(
 			if (this.getEnableBusyIndicator()) {
 				// only call the setBusy method if enableBusyIndicator=true
 				this.setBusy(false, "listUl");
+
+				// while the control is busy the focus events are blocked by the BlockLayer
+				const oNavigationRoot = this.getNavigationRoot();
+				if (document.activeElement == oNavigationRoot) {
+					jQuery(oNavigationRoot).trigger("focus");
+				}
 			}
 		}
 	};
@@ -1757,7 +1772,7 @@ function(
 		// render swipe content into swipe container if needed
 		if (this._bRerenderSwipeContent) {
 			this._bRerenderSwipeContent = false;
-			var rm = Core.createRenderManager();
+			var rm = new RenderManager().getInterface();
 			rm.render(this.getSwipeContent(), $container.empty()[0]);
 			rm.destroy();
 		}
@@ -2098,11 +2113,11 @@ function(
 	};
 
 	// this gets called when the focus is on the item or its content
-	ListBase.prototype.onItemFocusIn = function(oItem, oFocusedControl) {
+	ListBase.prototype.onItemFocusIn = function(oItem, oFocusedControl, oEvent) {
 		// focus and scroll handling for sticky elements
 		this._handleStickyItemFocus(oItem.getDomRef());
 
-		if (oItem !== oFocusedControl ||
+		if (oItem !== oFocusedControl || oEvent.isMarked("contentAnnouncementGenerated") ||
 			!ControlBehavior.isAccessibilityEnabled()) {
 			return;
 		}
@@ -2130,9 +2145,13 @@ function(
 	};
 
 	ListBase.prototype.onItemFocusOut = function(oItem) {
-		var oInvisibleText = ListBase.getInvisibleText(),
-			$ItemDomRef = jQuery(oItem.getDomRef());
-		$ItemDomRef.removeAriaLabelledBy(oInvisibleText.getId());
+		this.removeInvisibleTextAssociation(oItem.getDomRef());
+	};
+
+	ListBase.prototype.removeInvisibleTextAssociation = function(oDomRef) {
+		const oInvisibleText = ListBase.getInvisibleText(),
+			$FocusedItem = jQuery(oDomRef || document.activeElement);
+		$FocusedItem.removeAriaLabelledBy(oInvisibleText.getId());
 	};
 
 	ListBase.prototype.updateInvisibleText = function(sText, oItemDomRef, bPrepend) {
@@ -2555,7 +2574,7 @@ function(
 
 		var bExecuteDefault = this.fireBeforeOpenContextMenu({
 			listItem: oLI,
-			column: Core.byId(jQuery(oEvent.target).closest(".sapMListTblCell", this.getNavigationRoot()).attr("data-sap-ui-column"))
+			column: Element.getElementById(jQuery(oEvent.target).closest(".sapMListTblCell", this.getNavigationRoot()).attr("data-sap-ui-column"))
 		});
 		if (bExecuteDefault) {
 			oEvent.setMarked();

@@ -6,9 +6,9 @@
 sap.ui.define([
 	'sap/ui/core/library',
 	'./HashChanger',
-	"sap/base/Log",
-	"sap/base/util/ObjectPath"
-], function(library, HashChanger, Log, ObjectPath) {
+	"sap/base/future",
+	"sap/base/Log"
+], function(library, HashChanger, future, Log) {
 	"use strict";
 
 	// shortcut for enum(s)
@@ -60,7 +60,7 @@ sap.ui.define([
 		}
 
 		if (!oHashChanger) {
-			Log.error("[FUTURE FATAL] sap.ui.core.routing.History constructor was called and it did not get a hashChanger as parameter");
+			future.errorThrows("sap.ui.core.routing.History constructor was called and it did not get a hashChanger as parameter");
 		}
 
 		this._setHashChanger(oHashChanger);
@@ -122,7 +122,7 @@ sap.ui.define([
 			return undefined;
 		}
 
-		var aStateHistory = ObjectPath.get("history.state.sap.history");
+		var aStateHistory = window.history.state?.sap?.history;
 
 		if (!Array.isArray(aStateHistory)) {
 			return undefined;

@@ -5,9 +5,11 @@
  */
 
 sap.ui.define([
+	"sap/ui/core/Element",
 	"sap/ui/core/util/reflection/JsControlTreeModifier",
 	"sap/base/Log"
 ], function(
+	Element,
 	JsControlTreeModifier,
 	Log
 ) {
@@ -18,7 +20,7 @@ sap.ui.define([
 	 *
 	 * @alias sap.ui.layout.changeHandler.RenameForm
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.40
 	 * @private
 	 * @experimental Since 1.40. This class is experimental and provides only limited functionality. Also the API might be changed in future.
@@ -107,7 +109,7 @@ sap.ui.define([
 		}
 
 		if (oSpecificChangeInfo.renamedElement && oSpecificChangeInfo.renamedElement.id) {
-			var oRenamedElement = sap.ui.getCore().byId(oSpecificChangeInfo.renamedElement.id);
+			var oRenamedElement = Element.getElementById(oSpecificChangeInfo.renamedElement.id);
 			var oStableRenamedElement;
 			if (oSpecificChangeInfo.changeType === "renameLabel") {
 				oStableRenamedElement = oRenamedElement.getLabel();

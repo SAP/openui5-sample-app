@@ -5,15 +5,17 @@
  */
 
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	"sap/m/library",
-	"sap/ui/core/Core",
+	"sap/ui/core/Lib",
+	"sap/ui/core/Locale",
 	"sap/ui/core/LocaleData",
 	"sap/ui/core/Theming",
 	"sap/ui/core/theming/Parameters",
 	"sap/m/IllustratedMessage",
 	"sap/m/Button",
 	"sap/ui/core/InvisibleMessage"
-], function(MLibrary, Core, LocaleData, Theming, ThemeParameters, IllustratedMessage, Button, InvisibleMessage) {
+], function(Localization, MLibrary, Library, Locale, LocaleData, Theming, ThemeParameters, IllustratedMessage, Button, InvisibleMessage) {
 	"use strict";
 	/*global Intl*/
 
@@ -21,9 +23,9 @@ sap.ui.define([
 	 * Provides utility functions for tables.
 	 *
 	 * @namespace
-	 * @alias module:sap/m/table/Util
+	 * @alias sap.m.table.Util
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.96.0
 	 * @private
 	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp
@@ -76,7 +78,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Util.calcTypeWidth = (function() {
-		const oTimezones = LocaleData.getInstance(Core.getConfiguration().getLocale()).getTimezoneTranslations();
+		const oTimezones = LocaleData.getInstance(new Locale(Localization.getLanguageTag())).getTimezoneTranslations();
 		let sLongestTimezone;
 		var fBooleanWidth = 0;
 		var aDateParameters = [2023, 9, 26, 22, 47, 58, 999];
@@ -105,7 +107,7 @@ sap.ui.define([
 
 			if (sType == "Boolean") {
 				if (!fBooleanWidth) {
-					var oResourceBundle = Core.getLibraryResourceBundle("sap.ui.core");
+					var oResourceBundle = Library.getResourceBundleFor("sap.ui.core");
 					var fYesWidth = Util.measureText(oResourceBundle.getText("YES"));
 					var fNoWidth = Util.measureText(oResourceBundle.getText("NO"));
 					fBooleanWidth = Math.max(fYesWidth, fNoWidth);
@@ -220,13 +222,9 @@ sap.ui.define([
 				return fHeaderWidth + fRequired;
 			}
 
-			fContentWidth = Math.max(fContentWidth, iMinWidth);
-			if (fContentWidth > iHeaderLength) {
-				return fContentWidth;
-			}
-
 			var fOrigHeaderWidth = Util.measureText(sHeader, fnGetHeaderFont());
 			fOrigHeaderWidth = Math.min(fOrigHeaderWidth, iMaxWidth * 0.7);
+			fContentWidth = Math.max(fContentWidth, iMinWidth);
 
 			var fContentHeaderRatio = Math.max(1, 1 - (Math.log(Math.max(fContentWidth - 1.7, 0.2)) / Math.log(iMaxWidth * 0.5)) + 1);
 			var fMaxHeaderWidth = fContentHeaderRatio * fContentWidth;
@@ -248,7 +246,7 @@ sap.ui.define([
 	 * @param {int} [mSettings.padding=1.0625] The sum of column padding(1rem) and border(1px) in rem
 	 * @param {float} [mSettings.gap=0] The additional content width in rem
 	 * @param {boolean} [mSettings.headerGap=false] Whether icons in the header should be taken into account
-	 * @param {boolean} [mSettings.truncateLabel=true] Whether the header of the column can be truncated or not
+	 * @param {boolean} [mSettings.truncateLabel=true] Whether the header of the column can be truncated in the boundaries of <code>minWidth</code> and <code>maxWidth</code>
 	 * @param {boolean} [mSettings.verticalArrangement=false] Whether the fields are arranged vertically
 	 * @param {boolean} [mSettings.required=false] Indicates the state of the column header as defined by the <code>required</code> property
 	 * @param {int} [mSettings.defaultWidth=8] The default column content width when type check fails
@@ -314,7 +312,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Util.getNoColumnsIllustratedMessage = function(fnAddColumn) {
-		var oResourceBundle = Core.getLibraryResourceBundle("sap.m");
+		var oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 		var oIllustratedMessage = new IllustratedMessage({
 			illustrationType: MLibrary.IllustratedMessageType.AddColumn,
@@ -345,32 +343,28 @@ sap.ui.define([
 			return pGetSelectAllPopover;
 		}
 
-		pGetSelectAllPopover = Promise.all(
-			[new Promise(function(fnResolve) {
-				sap.ui.require([
-					"sap/m/Popover",
-					"sap/m/Bar",
-					"sap/m/HBox",
-					"sap/m/Title",
-					"sap/ui/core/Icon",
-					"sap/ui/core/library",
-					"sap/m/Text"
-				], function(Popover, Bar, HBox, Title, Icon, coreLib, Text) {
-					fnResolve({
-						Popover: Popover,
-						Bar: Bar,
-						HBox: HBox,
-						Title: Title,
-						Icon: Icon,
-						coreLib: coreLib,
-						Text: Text
-					});
+		pGetSelectAllPopover = (new Promise(function(fnResolve) {
+			sap.ui.require([
+				"sap/m/Popover",
+				"sap/m/Bar",
+				"sap/m/HBox",
+				"sap/m/Title",
+				"sap/ui/core/Icon",
+				"sap/ui/core/library",
+				"sap/m/Text"
+			], function(Popover, Bar, HBox, Title, Icon, coreLib, Text) {
+				fnResolve({
+					Popover: Popover,
+					Bar: Bar,
+					HBox: HBox,
+					Title: Title,
+					Icon: Icon,
+					coreLib: coreLib,
+					Text: Text
 				});
-			}),
-			Core.getLibraryResourceBundle('sap.m', true)
-		]).then(function(aResult) {
-			var oModules = aResult[0];
-			var oResourceBundle = aResult[1];
+			});
+		})).then(function(oModules) {
+			var oResourceBundle = Library.getResourceBundleFor("sap.m");
 			var sIconColor = oModules.coreLib.IconColor.Critical,
 			sTitleLevel = oModules.coreLib.TitleLevel.H2;
 
@@ -445,7 +439,7 @@ sap.ui.define([
 		var oInvisibleMessage = InvisibleMessage.getInstance();
 
 		if (oInvisibleMessage) {
-			var oResourceBundle = Core.getLibraryResourceBundle("sap.m");
+			var oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 			if (iRowCount == undefined) {
 				oInvisibleMessage.announce(oResourceBundle.getText("table.ANNOUNCEMENT_TABLE_UPDATED", [sText]));
@@ -484,6 +478,39 @@ sap.ui.define([
 		return iRowCount <= 0;
 	};
 
-	return Util;
+	/**
+	 * Checks whether the binding supports exporting the table data.
+	 * This can be used to define the enabled property of the export
+	 * button.
+	 *
+	 * @param {sap.ui.model.Binding} oBinding The row binding
+	 * @returns {boolean} Whether the binding can be used for exporting
+	 * @private
+	 * @ui5-restricted sap.ui.mdc, sap.ui.comp
+	 * @since 1.121
+	 */
+	Util.isExportable = function(oBinding) {
+		return !Util.isEmpty(oBinding)
+			&& (!oBinding?.getDownloadUrl
+				|| (oBinding.isResolved() && oBinding.getDownloadUrl() !== null));
+	};
 
+	/**
+	 * Informs whether the current theme is fully applied already.
+	 * Replacement for Core#isThemeApplied
+	 *
+	 * @private
+	 * @since 1.121
+	 */
+	Util.isThemeApplied = function() {
+		var bIsApplied = false;
+		var fnOnThemeApplied = function() {
+			bIsApplied = true;
+		};
+		Theming.attachApplied(fnOnThemeApplied); // Will be called immediately when theme is applied
+		Theming.detachApplied(fnOnThemeApplied);
+		return bIsApplied;
+	};
+
+	return Util;
 });

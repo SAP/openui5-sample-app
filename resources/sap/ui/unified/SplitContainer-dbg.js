@@ -6,14 +6,14 @@
 
 // Provides control sap.ui.unified.SplitContainer.
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/ui/core/theming/Parameters',
 	'./library',
 	'sap/ui/core/library',
 	'./SplitContainerRenderer',
-	"sap/base/Log",
-	"sap/ui/core/Configuration"
-], function(Control, Parameters, library, coreLibrary, SplitContainerRenderer, Log, Configuration ) {
+	"sap/base/Log"
+], function(Localization, Control, Parameters, library, coreLibrary, SplitContainerRenderer, Log ) {
 	"use strict";
 
 
@@ -34,7 +34,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -95,7 +95,7 @@ sap.ui.define([
 	////////////////////////////////////////// Public Methods //////////////////////////////////////////
 
 	SplitContainer.prototype.init = function(){
-		this.bRtl  = Configuration.getRTL();
+		this.bRtl  = Localization.getRTL();
 
 		this._paneRenderer = new library._ContentRenderer(this, this.getId() + "-panecntnt", "secondaryContent");
 		this._canvasRenderer = new library._ContentRenderer(this, this.getId() + "-canvascntnt", "content");
@@ -129,7 +129,7 @@ sap.ui.define([
 
 	SplitContainer.prototype.onAfterRendering = function() {
 		//Refetch RTL setting (might have changed which leads to global rerendering, see Core.fireLocalizationChanged
-		this.bRtl  = Configuration.getRTL();
+		this.bRtl  = Localization.getRTL();
 
 		// Shortcuts to the main DOM containers
 		this._contentContainer 			= this.$("canvas");

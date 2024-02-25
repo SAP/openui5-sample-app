@@ -9,12 +9,12 @@ sap.ui.define('sap/ui/debug/ControlTree', [
 	'sap/ui/base/EventProvider',
 	'sap/ui/core/Element',
 	'sap/ui/core/Rendering',
-	'sap/ui/core/UIArea',
+	'sap/ui/core/UIAreaRegistry',
 	'./Highlighter',
 	"sap/ui/dom/getOwnerWindow",
 	"sap/base/Log"
 ],
-	function(EventProvider, Element, Rendering, UIArea, Highlighter, getOwnerWindow, Log) {
+	function(EventProvider, Element, Rendering, UIAreaRegistry, Highlighter, getOwnerWindow, Log) {
 	"use strict";
 
 
@@ -34,7 +34,7 @@ sap.ui.define('sap/ui/debug/ControlTree', [
 	 * @class Control Tree used for the Debug Environment
 	 * @extends sap.ui.base.EventProvider
 	 * @author Martin Schaus, Frank Weigel
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @alias sap.ui.debug.ControlTree
 	 * @private
 	 */
@@ -102,7 +102,7 @@ sap.ui.define('sap/ui/debug/ControlTree', [
 	ControlTree.prototype.render = function() {
 		var oDomRef = this.oParentDomRef;
 		var oUIArea = null,
-			oUIAreas = UIArea.registry.all();
+			oUIAreas = UIAreaRegistry.all();
 		oDomRef.innerHTML = "";
 		for (var i in oUIAreas) {
 			var oUIArea = oUIAreas[i],
@@ -362,7 +362,7 @@ sap.ui.define('sap/ui/debug/ControlTree', [
 	ControlTree.prototype.getTargetDomRef = function(oTreeNodeDomRef) {
 		var sType = oTreeNodeDomRef.getAttribute("sap-type"),
 			sId = oTreeNodeDomRef.getAttribute("sap-id"),
-			oSomething = sType === "UIArea" ? UIArea.registry.get(sId) : Element.getElementById(sId);
+			oSomething = sType === "UIArea" ? UIAreaRegistry.get(sId) : Element.getElementById(sId);
 
 		while (oSomething instanceof Element) {
 			var oDomRef = oSomething.getDomRef();
@@ -372,7 +372,7 @@ sap.ui.define('sap/ui/debug/ControlTree', [
 			oSomething = oSomething.getParent();
 		}
 
-		if ( oSomething instanceof UIArea ) {
+		if ( oSomething.isA && oSomething.isA("sap.ui.core.UIArea") ) {
 			return oSomething.getRootNode();
 		}
 	};

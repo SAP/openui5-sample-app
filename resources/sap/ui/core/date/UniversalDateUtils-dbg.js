@@ -5,13 +5,13 @@
  */
 
 sap.ui.define([
+	"sap/base/i18n/Formatting",
 	'sap/ui/core/date/UniversalDate',
 	'sap/ui/core/Locale',
 	'sap/ui/core/LocaleData',
-	'sap/base/assert',
-	'sap/ui/core/Configuration'
+	'sap/base/assert'
 ],
-	function (UniversalDate, Locale, LocaleData, assert, Configuration) {
+	function (Formatting, UniversalDate, Locale, LocaleData, assert) {
 		"use strict";
 
 		function clone(oUniversalDate) {
@@ -183,23 +183,23 @@ sap.ui.define([
 		/**
 		 * Returns the first day of the week of the given date.
 		 *
-		 * The interpretation of 'first day of the week' depends on the given locale or, if none is given,
-		 * on the current {@link sap.ui.core.Configuration.FormatSettings#getFormatLocale UI5 format locale}.
+		 * The interpretation of 'first day of the week' depends on the given locale.
 		 *
 		 * If no date is given, today is used, represented in the session's default calendar.
 		 * If a date is given, the returned date will use the same calendar.
 		 * The time portion of the returned date will be set to the beginning of the day (0:00:00:000).
 		 *
 		 * @param {sap.ui.core.date.UniversalDate} [oUniversalDate=now] Base date, defaults to now
-		 * @param {string} [sLocale=format locale] An optional locale identifier, as BCP language tag;
-		 *   defaults to the current format localе of UI5
+		 * @param {string} [sLocale]
+		 *   An optional locale identifier, as BCP language tag; defaults to the current format localе of UI5; see
+		 *   {@link module:sap/base/i18n/Formatting.getLanguageTag Formatting.getLanguageTag}
 		 * @returns {sap.ui.core.date.UniversalDate} First day of the week
 		 * @private
 		 * @ui5-restricted sap.ui.comp, sap.ui.mdc
 		 */
 		UniversalDateUtils.getWeekStartDate = function (oUniversalDate, sLocale) {
 			var oLocale = sLocale ? new Locale(sLocale)
-					: Configuration.getFormatSettings().getFormatLocale(),
+					: new Locale(Formatting.getLanguageTag()),
 				oLocaleData = LocaleData.getInstance(oLocale),
 				iFirstDayOfWeek = oLocaleData.getFirstDayOfWeek();
 			oUniversalDate = oUniversalDate ? clone(oUniversalDate) : clone(UniversalDateUtils.createNewUniversalDate());
@@ -210,16 +210,16 @@ sap.ui.define([
 		/**
 		 * Returns the last day of the week for the given date.
 		 *
-		 * The interpretation of 'last day of the week' depends on the given locale or, if none is given,
-		 * on the current {@link sap.ui.core.Configuration.FormatSettings#getFormatLocale UI5 format locale}.
+		 * The interpretation of 'last day of the week' depends on the given locale.
 		 *
 		 * If no date is given, today is used, represented in the session's default calendar.
 		 * If a date is given, the returned date will use the same calendar.
 		 * The time portion of the returned date will be set to the start of the day (00:00:00:000).
 		 *
 		 * @param {sap.ui.core.date.UniversalDate} [oUniversalDate=now] Base date, defaults to now
-		 * @param {string} [sLocale=format locale] An optional locale identifier, as BCP language tag;
-		 *   defaults to the current format localе of UI5
+		 * @param {string} [sLocale]
+		 *   An optional locale identifier, as BCP language tag; defaults to the current format localе of UI5; see
+		 *   {@link module:sap/base/i18n/Formatting.getLanguageTag Formatting.getLanguageTag}
 		 * @returns {sap.ui.core.date.UniversalDate} Last day of the week
 		 * @private
 		 * @ui5-restricted sap.ui.comp, sap.ui.mdc
@@ -390,8 +390,8 @@ sap.ui.define([
 		 * @private
 		 */
 		 UniversalDateUtils._getDateFromWeekStartByDayOffset = function (sCalendarWeekNumbering, iDaysToAdd) {
-			var sCalendarType = Configuration.getCalendarType(),
-				oLocale = Configuration.getFormatSettings().getFormatLocale(),
+			var sCalendarType = Formatting.getCalendarType(),
+				oLocale = Locale._getCoreLocale(Formatting.getLanguageTag()),
 				oUniversalDate = UniversalDateUtils.createNewUniversalDate(),
 				oWeekAndYear = oUniversalDate.getWeek(oLocale, sCalendarWeekNumbering),
 				oFirstDateOfWeek = UniversalDate.getFirstDateOfWeek(sCalendarType, oWeekAndYear.year, oWeekAndYear.week,

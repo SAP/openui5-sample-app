@@ -7,12 +7,14 @@
 // Provides class sap.ui.core.format.DateFormat
 sap.ui.define([
 	"sap/base/Log",
+	"sap/base/i18n/Formatting",
+	"sap/base/i18n/Localization",
+	"sap/base/i18n/date/TimezoneUtils",
 	"sap/base/strings/formatMessage",
 	"sap/base/util/deepEqual",
 	"sap/base/util/extend",
 	"sap/ui/core/CalendarType",
-	"sap/ui/core/Configuration",
-	"sap/ui/core/Core",
+	"sap/ui/core/Lib",
 	"sap/ui/core/Locale",
 	"sap/ui/core/LocaleData",
 	"sap/ui/core/Supportability",
@@ -20,9 +22,10 @@ sap.ui.define([
 	"sap/ui/core/date/CalendarWeekNumbering",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/date/UniversalDate",
-	"sap/ui/core/format/TimezoneUtil"
-], function(Log, formatMessage, deepEqual, extend, CalendarType, Configuration, Core, Locale,
-		LocaleData, Supportability, CalendarUtils, CalendarWeekNumbering, UI5Date, UniversalDate, TimezoneUtil) {
+	"sap/ui/core/format/FormatUtils"
+], function(Log, Formatting, Localization, TimezoneUtils, formatMessage, deepEqual, extend, CalendarType,
+		Library, Locale, LocaleData, Supportability, CalendarUtils, CalendarWeekNumbering, UI5Date,
+		UniversalDate, FormatUtils) {
 	"use strict";
 
 	/**
@@ -37,7 +40,8 @@ sap.ui.define([
 	 * to a set of format options.
 	 *
 	 * Important:
-	 * Every Date is converted with the timezone taken from {@link sap.ui.core.Configuration#getTimezone}.
+	 * Every Date is converted with the timezone taken from
+	 * {@link module:sap/base/i18n/Localization.getTimezone Localization.getTimezone}.
 	 * The timezone falls back to the browser's local timezone.
 	 *
 	 * Supported format options are pattern based on Unicode LDML Date Format notation. Please note that only a subset of the LDML date symbols
@@ -344,8 +348,9 @@ sap.ui.define([
 	 *
 	 * @param {Date} oJSDate The date to format
 	 * @param {string} [sTimezone] The IANA timezone ID in which the date will be calculated and
-	 *   formatted e.g. "America/New_York". If the parameter is omitted, <code>null</code> or an empty string, the timezone
-	 *   will be taken from {@link sap.ui.core.Configuration#getTimezone}. For an invalid IANA timezone ID, an empty string will be returned.
+	 *   formatted e.g. "America/New_York". If the parameter is omitted, <code>null</code> or an empty string, the
+	 *   timezone will be taken from {@link module:sap/base/i18n/Localization.getTimezone Localization.getTimezone}.
+	 *   For an invalid IANA time zone ID, an empty string will be returned.
 	 * @throws {TypeError} Thrown if the parameter <code>sTimezone</code> is provided and has the wrong type.
 	 * @return {string} the formatted output value. If an invalid date or timezone is given, an empty string is returned.
 	 * @name sap.ui.core.format.DateFormat.DateTimeWithTimezone.format
@@ -378,8 +383,9 @@ sap.ui.define([
 	 *
 	 * @param {string} sValue the string containing a formatted date/time value
 	 * @param {string} [sTimezone] The IANA timezone ID which should be used to convert the date
-	 *   e.g. "America/New_York". If the parameter is omitted, <code>null</code> or an empty string, the timezone will be taken
-	 *   from {@link sap.ui.core.Configuration#getTimezone}. For an invalid IANA timezone ID, <code>null</code> will be returned.
+	 *   e.g. "America/New_York". If the parameter is omitted, <code>null</code> or an empty string, the timezone will
+	 *   be taken from {@link module:sap/base/i18n/Localization.getTimezone Localization.getTimezone}. For an invalid
+	 *   IANA timezone ID, <code>null</code> will be returned.
 	 * @param {boolean} [bStrict] Whether to be strict with regards to the value ranges of date fields,
 	 * e.g. for a month pattern of <code>MM</code> and a value range of [1-12]
 	 * <code>strict</code> ensures that the value is within the range;
@@ -558,7 +564,7 @@ sap.ui.define([
 
 		// Get Locale and LocaleData to use
 		if (!oLocale) {
-			oLocale = Configuration.getFormatSettings().getFormatLocale();
+			oLocale = new Locale(Formatting.getLanguageTag());
 		}
 		oFormat.oLocale = oLocale;
 		oFormat.oLocaleData = LocaleData.getInstance(oLocale);
@@ -582,7 +588,7 @@ sap.ui.define([
 		oFormat.type = oInfo.type;
 
 		if (!oFormat.oFormatOptions.calendarType) {
-			oFormat.oFormatOptions.calendarType = Configuration.getCalendarType();
+			oFormat.oFormatOptions.calendarType = Formatting.getCalendarType();
 		}
 
 		if (oFormat.oFormatOptions.firstDayOfWeek === undefined && oFormat.oFormatOptions.minimalDaysInFirstWeek !== undefined
@@ -1084,7 +1090,7 @@ sap.ui.define([
 				// If the current letter in the pattern is " ", sValue is allowed to have no match, exact match
 				// or multiple " ". This makes the parsing more tolerant. Special spaces or RTL characters have
 				// to be normalized before comparison.
-				const sPartValue = DateFormat._normalize(oPart.value);
+				const sPartValue = FormatUtils.normalize(oPart.value);
 				for (; iPatternIndex < sPartValue.length; iPatternIndex++) {
 					sChar = sPartValue.charAt(iPatternIndex);
 
@@ -1754,7 +1760,7 @@ sap.ui.define([
 
 				for (i = 0; i < aDayPeriodsVariants.length; i += 1) {
 					aVariants = aDayPeriodsVariants[i].map((sDayPeriod) => {
-						return DateFormat._normalize(sDayPeriod);
+						return FormatUtils.normalize(sDayPeriod);
 					});
 					if (bAMPMAlternativeCase) {
 						// check normalized match for alternative case of am/pm
@@ -2094,7 +2100,7 @@ sap.ui.define([
 				}
 
 				// valid for zzzz (fallback to OOOO)
-				var iTimezoneOffset = TimezoneUtil.calculateOffset(oDate, sTimezone);
+				var iTimezoneOffset = TimezoneUtils.calculateOffset(oDate, sTimezone);
 				var sTimeZone = "GMT";
 				var iTZOffset = Math.abs(iTimezoneOffset / 60);
 				var bPositiveOffset = iTimezoneOffset > 0;
@@ -2146,7 +2152,7 @@ sap.ui.define([
 		"Z": DateFormat._createPatternSymbol({
 			name: "timezoneRFC822",
 			format: function(oField, oDate, bUTC, oFormat, sTimezone) {
-				var iTimezoneOffset = TimezoneUtil.calculateOffset(oDate, sTimezone);
+				var iTimezoneOffset = TimezoneUtils.calculateOffset(oDate, sTimezone);
 				var iTZOffset = Math.abs(iTimezoneOffset / 60);
 				var bPositiveOffset = iTimezoneOffset > 0;
 				var iHourOffset = Math.floor(iTZOffset / 60);
@@ -2203,7 +2209,7 @@ sap.ui.define([
 				 */
 
 				// @see http://www.unicode.org/reports/tr35/tr35-dates.html#Time_Zone_Goals
-				var iTimezoneOffset = TimezoneUtil.calculateOffset(oDate, sTimezone);
+				var iTimezoneOffset = TimezoneUtils.calculateOffset(oDate, sTimezone);
 				var iTZOffset = Math.abs(iTimezoneOffset / 60);
 				var bPositiveOffset = iTimezoneOffset > 0;
 				var iHourOffset = Math.floor(iTZOffset / 60);
@@ -2284,7 +2290,7 @@ sap.ui.define([
 					// find the longest valid time zone ID at the beginning of sValue
 					for (var i = sValue.length; i > 0; i -= 1) {
 						sCurrentValue = sValue.slice(0, i);
-						if (TimezoneUtil.isValidTimezone(sCurrentValue)) {
+						if (TimezoneUtils.isValidTimezone(sCurrentValue)) {
 							oTimezoneParsed.timezone = sCurrentValue;
 							oTimezoneParsed.length = sCurrentValue.length;
 							break;
@@ -2337,8 +2343,8 @@ sap.ui.define([
 	/**
 	 * Format a date according to the given format options.
 	 *
-	 * Uses the timezone from {@link sap.ui.core.Configuration#getTimezone}, which falls back to the
-	 * browser's local timezone to convert the given date.
+	 * Uses the timezone from {@link module:sap/base/i18n/Localization.getTimezone Localization.getTimezone}, which
+	 * falls back to the browser's local timezone to convert the given date.
 	 *
 	 * When using instances from getDateTimeWithTimezoneInstance, please see the corresponding documentation:
 	 * {@link sap.ui.core.format.DateFormat.DateTimeWithTimezone#format}.
@@ -2361,7 +2367,7 @@ sap.ui.define([
 			bUTC = false;
 
 			checkTimezoneParameterType(sTimezone);
-			if (sTimezone && !TimezoneUtil.isValidTimezone(sTimezone)) {
+			if (sTimezone && !TimezoneUtils.isValidTimezone(sTimezone)) {
 				Log.error("The given timezone isn't valid.");
 				return "";
 			}
@@ -2375,7 +2381,7 @@ sap.ui.define([
 		}
 
 		// default the timezone to the local timezone to always enforce the conversion
-		sTimezone = sTimezone || Configuration.getTimezone();
+		sTimezone = sTimezone || Localization.getTimezone();
 
 		if (Array.isArray(vJSDate)) {
 			if (!this.oFormatOptions.interval) {
@@ -2725,7 +2731,7 @@ sap.ui.define([
 		// Convert to timezone if provided and a valid date is supplied
 		if (!bUTC && isValidDateObject(oJSDate)) {
 			// convert given date to a date in the target timezone
-			return TimezoneUtil.convertToTimezone(oJSDate, sTimezone);
+			return TimezoneUtils.convertToTimezone(oJSDate, sTimezone);
 		}
 		return oJSDate;
 	};
@@ -2781,7 +2787,7 @@ sap.ui.define([
 			}
 
 			if (sTimezone) {
-				oDateValue.tzDiff = TimezoneUtil.calculateOffset(oDate, sTimezone);
+				oDateValue.tzDiff = TimezoneUtils.calculateOffset(oDate, sTimezone);
 			}
 		}
 		if (oDateValue.tzDiff) {
@@ -2834,8 +2840,8 @@ sap.ui.define([
 	/**
 	 * Parse a string which is formatted according to the given format options.
 	 *
-	 * Uses the timezone from {@link sap.ui.core.Configuration#getTimezone}, which falls back to the
-	 * browser's local timezone to convert the given date.
+	 * Uses the timezone from {@link module:sap/base/i18n/Localization.getTimezone Localization.getTimezone}, which
+	 * falls back to the browser's local timezone to convert the given date.
 	 *
 	 * When using instances from getDateTimeWithTimezoneInstance, please see the corresponding documentation:
 	 * {@link sap.ui.core.format.DateFormat.DateTimeWithTimezone#parse}.
@@ -2875,7 +2881,7 @@ sap.ui.define([
 			bUTC = false;
 
 			checkTimezoneParameterType(sTimezone);
-			if (sTimezone && !TimezoneUtil.isValidTimezone(sTimezone)) {
+			if (sTimezone && !TimezoneUtils.isValidTimezone(sTimezone)) {
 				Log.error("The given timezone isn't valid.");
 				return null;
 			}
@@ -2884,13 +2890,13 @@ sap.ui.define([
 		sValue = sValue == null ? "" : String(sValue).trim();
 		// normalize input by removing all RTL special characters and replacing all special spaces
 		// by a standard space (\u0020)
-		sValue = DateFormat._normalize(sValue);
+		sValue = FormatUtils.normalize(sValue);
 
 		var oDateValue;
 		var sCalendarType = this.oFormatOptions.calendarType;
 
 		// default the timezone to the local timezone to always enforce the conversion
-		sTimezone = sTimezone || Configuration.getTimezone();
+		sTimezone = sTimezone || Localization.getTimezone();
 
 		if (bStrict === undefined) {
 			bStrict = this.oFormatOptions.strictParsing;
@@ -3453,7 +3459,7 @@ sap.ui.define([
 	 * @ui5-restricted sap.m
 	 */
 	DateFormat.prototype.getPlaceholderText = function() {
-		var oResourceBundle = Core.getLibraryResourceBundle();
+		var oResourceBundle = Library.getResourceBundleFor("sap.ui.core");
 
 		return oResourceBundle.getText("date.placeholder", [this.format.apply(this, this.getSampleValue())]);
 	};
@@ -3480,7 +3486,7 @@ sap.ui.define([
 		oDate = getDate(iFullYear, 11, 31, 23, 59, 58, 123);
 
 		if (this.type === mDateFormatTypes.DATETIME_WITH_TIMEZONE) {
-			return [oDate, Configuration.getTimezone()];
+			return [oDate, Localization.getTimezone()];
 		}
 
 		if (this.oFormatOptions.interval) {
@@ -3488,20 +3494,6 @@ sap.ui.define([
 		}
 
 		return [oDate];
-	};
-
-	const rAllRTLCharacters = /[\u200e\u200f\u202a\u202b\u202c]/g;
-	const rAllSpaces = /\s/g;
-
-	/**
-	 * Normalizes the given string by removing RTL characters and replacing special space characters
-	 * by the standard ASCII space (\u0020).
-	 *
-	 * @param {string} sValue The value to be normalized
-	 * @return {string} The normalized value
-	 */
-	DateFormat._normalize = function (sValue) {
-		return sValue.replace(rAllRTLCharacters, "").replace(rAllSpaces, " ");
 	};
 
 	return DateFormat;

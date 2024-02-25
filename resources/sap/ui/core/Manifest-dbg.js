@@ -6,10 +6,12 @@
 
 // Provides base class sap.ui.core.Component for all components
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	'sap/ui/base/Object',
 	'sap/ui/thirdparty/URI',
 	'sap/ui/VersionInfo',
 	'sap/base/util/Version',
+	'sap/base/future',
 	'sap/base/Log',
 	'sap/ui/dom/includeStylesheet',
 	'sap/base/i18n/ResourceBundle',
@@ -18,29 +20,28 @@ sap.ui.define([
 	'sap/base/util/isPlainObject',
 	'sap/base/util/LoaderExtensions',
 	'sap/base/config',
-	'sap/ui/core/Configuration',
 	'sap/ui/core/Supportability',
 	'sap/ui/core/Lib',
 	'./_UrlResolver'
-],
-	function(
-		BaseObject,
-		URI,
-		VersionInfo,
-		Version,
-		Log,
-		includeStylesheet,
-		ResourceBundle,
-		uid,
-		merge,
-		isPlainObject,
-		LoaderExtensions,
-		BaseConfig,
-		Configuration,
-		Supportability,
-		Library,
-		_UrlResolver
-	) {
+], function(
+	Localization,
+	BaseObject,
+	URI,
+	VersionInfo,
+	Version,
+	future,
+	Log,
+	includeStylesheet,
+	ResourceBundle,
+	uid,
+	merge,
+	isPlainObject,
+	LoaderExtensions,
+	BaseConfig,
+	Supportability,
+	Library,
+	_UrlResolver
+) {
 	"use strict";
 
 	/*global Promise */
@@ -147,7 +148,7 @@ sap.ui.define([
 	 * @class The Manifest class.
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @alias sap.ui.core.Manifest
 	 * @since 1.33.0
 	 */
@@ -361,7 +362,7 @@ sap.ui.define([
 		 */
 		getEntry: function(sPath) {
 			if (!sPath || sPath.indexOf(".") <= 0) {
-				Log.warning("[FUTURE FATAL] Manifest entries with keys without namespace prefix can not be read via getEntry. Key: " + sPath + ", Component: " + this.getComponentName());
+				future.warningThrows("Manifest entries with keys without namespace prefix can not be read via getEntry. Key: " + sPath + ", Component: " + this.getComponentName());
 				return null;
 			}
 
@@ -369,11 +370,10 @@ sap.ui.define([
 			var oEntry = getObject(oManifest, sPath);
 
 			// top-level manifest section must be an object (e.g. sap.ui5)
-			if (sPath && sPath[0] !== "/" && !isPlainObject(oEntry)) {
-				Log.warning("[FUTURE FATAL] Manifest entry with key '" + sPath + "' must be an object. Component: " + this.getComponentName());
+			if (sPath && sPath[0] !== "/" && oEntry !== undefined && !isPlainObject(oEntry)) {
+				future.warningThrows("Manifest entry with key '" + sPath + "' must be an object. Component: " + this.getComponentName());
 				return null;
 			}
-
 			return oEntry;
 		},
 
@@ -609,7 +609,7 @@ sap.ui.define([
 					var sResourceRootPath = mResourceRoots[sResourceRoot];
 					var oResourceRootURI = new URI(sResourceRootPath);
 					if (oResourceRootURI.is("absolute") || (oResourceRootURI.path() && oResourceRootURI.path()[0] === "/")) {
-						Log.error("[FUTURE FATAL] Resource root for \"" + sResourceRoot + "\" is absolute and therefore won't be registered! \"" + sResourceRootPath + "\"", this.getComponentName());
+						future.errorThrows("Resource root for \"" + sResourceRoot + "\" is absolute and therefore won't be registered! \"" + sResourceRootPath + "\"", this.getComponentName());
 						continue;
 					}
 					sResourceRootPath = this.resolveUri(sResourceRootPath);
@@ -791,7 +791,7 @@ sap.ui.define([
 		// as this is expected to be only done by intension.
 		var oManifestUrl = new URI(sManifestUrl);
 		if (!oManifestUrl.hasQuery("sap-language")) {
-			var sValue = Configuration.getSAPLogonLanguage();
+			var sValue = Localization.getSAPLogonLanguage();
 			if (sValue) {
 				oManifestUrl.addQuery("sap-language", sValue);
 			}
@@ -818,7 +818,7 @@ sap.ui.define([
 			dataType: "json",
 			async: typeof bAsync !== "undefined" ? bAsync : false,
 			headers: {
-				"Accept-Language": Configuration.getLanguageTag()
+				"Accept-Language": Localization.getLanguageTag().toString()
 			},
 			failOnError: typeof bFailOnError !== "undefined" ? bFailOnError : true
 		});

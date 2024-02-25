@@ -5,14 +5,14 @@
  */
 sap.ui.define([
 	"sap/base/Log",
+	"sap/base/i18n/Localization",
 	"sap/base/util/merge",
 	"sap/base/util/uid",
 	"sap/m/Input",
 	"sap/ui/Device",
 	"sap/ui/base/ManagedObjectObserver",
 	"sap/ui/base/SyncPromise",
-	"sap/ui/core/Configuration",
-	"sap/ui/core/Core",
+	"sap/ui/core/Lib",
 	"sap/ui/core/library",
 	"sap/ui/core/Messaging",
 	"sap/ui/core/date/UI5Date",
@@ -38,16 +38,16 @@ sap.ui.define([
 	"sap/ui/util/XMLHelper"
 	// load Table resources upfront to avoid loading times > 1 second for the first test using Table
 	// "sap/ui/table/Table"
-], function (Log, merge, uid, Input, Device, ManagedObjectObserver, SyncPromise, Configuration,
-		Core, coreLibrary, Messaging, UI5Date, Message, Controller, View, Rendering, BindingMode, Filter,
+], function (Log, Localization, merge, uid, Input, Device, ManagedObjectObserver, SyncPromise,
+		Library, coreLibrary, Messaging, UI5Date, Message, Controller, View, Rendering, BindingMode, Filter,
 		FilterOperator, FilterType, Model, Sorter, JSONModel, MessageModel, CountMode, MessageScope, Context,
 		ODataModel, XMLModel, TestUtils, datajs, XMLHelper) {
 	/*global QUnit, sinon*/
 	/*eslint max-nested-callbacks: 0, no-warning-comments: 0, quote-props: 0*/
 	"use strict";
 
-	var sDefaultLanguage = Configuration.getLanguage(),
-		sDefaultTimezone = Configuration.getTimezone(),
+	var sDefaultLanguage = Localization.getLanguage(),
+		sDefaultTimezone = Localization.getTimezone(),
 		MessageType = coreLibrary.MessageType, // shortcut for sap.ui.core.MessageType
 		NO_CONTENT = {/*204 no content*/},
 		sODataListBindingClassName = "sap.ui.model.odata.v2.ODataListBinding",
@@ -483,7 +483,7 @@ sap.ui.define([
 			// We use a formatter to check for property changes. However before the formatter is
 			// called, the value is passed through the type's formatValue
 			// (see PropertyBinding#_toExternalValue). Ensure that this result is predictable.
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 
 			// These metadata files are _always_ faked, the query option "realOData" is ignored
 			TestUtils.useFakeServer(this._oSandbox, "sap/ui/core", {
@@ -554,9 +554,9 @@ sap.ui.define([
 				this.oModel.destroy();
 			}
 			// reset the language
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 			// reset the time zone
-			Configuration.setTimezone(sDefaultTimezone);
+			Localization.setTimezone(sDefaultTimezone);
 		},
 
 		/**
@@ -2397,7 +2397,7 @@ sap.ui.define([
 	<Text text="{SalesOrderID}" />\
 </Table>';
 
-		this.mock(Core.getLibraryResourceBundle()).expects("getText")
+		this.mock(Library.getResourceBundleFor("sap.ui.core")).expects("getText")
 			.atLeast(1)
 			.callsFake(function (sKey) {
 				return sKey;
@@ -2514,7 +2514,7 @@ sap.ui.define([
 	<Text text="{SalesOrderID}" />\
 </Table>';
 
-		this.mock(Core.getLibraryResourceBundle()).expects("getText")
+		this.mock(Library.getResourceBundleFor("sap.ui.core")).expects("getText")
 			.atLeast(1)
 			.callsFake(function (sKey, aArgs) {
 				return sKey;
@@ -5905,7 +5905,8 @@ usePreliminaryContext : false}}">\
 					data : {
 						__metadata : {
 							type : "GWSAMPLE_BASIC.SalesOrderLineItem"
-						}
+						},
+						SalesOrderID : "1"
 					},
 					method : "POST",
 					requestUri : "SalesOrderSet('1')/ToLineItems"
@@ -6143,7 +6144,8 @@ usePreliminaryContext : false}}">\
 						__metadata : {
 							type : "GWSAMPLE_BASIC.SalesOrderLineItem"
 						},
-						Note : "foo"
+						Note : "foo",
+						SalesOrderID : "1"
 					},
 					method : "POST",
 					requestUri : "SalesOrderSet('1')/ToLineItems"
@@ -8363,7 +8365,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 </FlexBox>',
 		that = this;
 
-		Configuration.setTimezone("Europe/London");
+		Localization.setTimezone("Europe/London");
 
 		this.expectHeadRequest()
 			.expectRequest("DateTimeWithTimezoneSet('1')", {
@@ -9778,6 +9780,279 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			});
 
 			return this.waitForChanges(assert);
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: Sequential mode: Order by properties that are additionally selected and that are
+	// neither a dimension, nor a measure, nor an associated property of a dimension or a measure.
+	// JIRA: CPOUI5MODELS-1384
+	QUnit.test("AnalyticalBinding: order by additional properties (Sequential)", function (assert) {
+		let oTable;
+		const oModel = createModel("/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS");
+		const sView = '\
+<t:AnalyticalTable id="table" threshold="10" visibleRowCount="4">\
+	<t:AnalyticalColumn grouped="true" leadingProperty="CompanyCode">\
+		<Label text="CompanyCode"/>\
+		<t:template><Text text="{CompanyCode}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn grouped="false" leadingProperty="Customer">\
+		<Label text="Customer"/>\
+		<t:template><Text text="{Customer}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn summed="true" leadingProperty="AmountInCompanyCodeCurrency">\
+		<Label text="AmountInCompanyCodeCurrency"/>\
+		<t:template><Text text="{AmountInCompanyCodeCurrency}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn leadingProperty="OrdinaryProperty">\
+		<Label text="OrdinaryProperty"/>\
+		<t:template><Text text="{OrdinaryProperty}"/></t:template>\
+	</t:AnalyticalColumn>\
+</t:AnalyticalTable>';
+
+		return this.createView(assert, sView, oModel).then(() => {
+			this.expectHeadRequest()
+				.expectRequest({ // count request
+					encodeRequestUri: false,
+					requestUri: "Items?$select=CompanyCode,Customer&$top=0&$inlinecount=allpages"
+				}, {__count: "20", results: []})
+				.expectRequest({ // first level request
+					encodeRequestUri: false,
+					requestUri: "Items?$select=CompanyCode,AmountInCompanyCodeCurrency,Currency"
+						+ "&$orderby=CompanyCode%20asc&$top=14&$inlinecount=allpages"
+				}, {
+					results : [
+						getFarCustomerLineItem("A0"),
+						getFarCustomerLineItem("A1"),
+						getFarCustomerLineItem("A2"),
+						getFarCustomerLineItem("A3")
+					]
+				})
+				.expectRequest({ // grand total request
+					encodeRequestUri: false,
+					requestUri: "Items?$select=AmountInCompanyCodeCurrency,Currency&$top=100&$inlinecount=allpages"
+				}, {
+					__count: "1",
+					results: [{
+						__metadata: {uri: "/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS/Items(grandTotal)"},
+						AmountInCompanyCodeCurrency: "140",
+						Currency: "USD"
+					}]
+				});
+
+			oTable = this.oView.byId("table");
+			// bind it lately, otherwise the binding is constructed without the analytical info and the select
+			// parameter is ignored
+			oTable.bindRows({
+				path: "/Items",
+				parameters: {
+					autoExpandMode: "Sequential",
+					numberOfExpandedLevels: 0,
+					provideGrandTotals: false,
+					select: "CompanyCode,AmountInCompanyCodeCurrency,Currency,Customer,OrdinaryProperty",
+					useBatchRequests: true
+				},
+				sorter: [new Sorter("OrdinaryProperty", true)]
+			});
+
+			return this.waitForChanges(assert, "bind table").then(() => {
+				assert.deepEqual(getTableContent(oTable), [
+					["A0", "", "1", ""],
+					["A1", "", "1", ""],
+					["A2", "", "1", ""],
+					["A3", "", "1", ""]
+				]);
+
+				this.expectRequest({ // leaf level request
+						encodeRequestUri: false,
+						requestUri: "Items?"
+							+ "$select=CompanyCode,Customer,AmountInCompanyCodeCurrency,Currency,OrdinaryProperty"
+							+ "&$filter=(CompanyCode%20eq%20%27A0%27)"
+							+ "&$orderby=CompanyCode%20asc,OrdinaryProperty%20desc&$top=14&$inlinecount=allpages"
+					}, {
+						results: [
+							Object.assign(getFarCustomerLineItem("A0", "C0"), {OrdinaryProperty: "P1"}),
+							Object.assign(getFarCustomerLineItem("A0", "C1"), {OrdinaryProperty: "P0"})
+						]
+					});
+
+				// code under test - expand leaf level -> sort by OrdinaryProperty
+				oTable.expand(0);
+
+				return this.waitForChanges(assert, "expand node 'A0'");
+			}).then(() => {
+				assert.deepEqual(getTableContent(oTable), [
+					["A0", "", "1", ""],
+					["A0", "C0", "1", "P1"],
+					["A0", "C1", "1", "P0"],
+					["A1", "", "1", ""]
+				]);
+			});
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: Bundled mode: Order by properties that are additionally selected and that are
+	// neither a dimension, nor a measure, nor an associated property of a dimension or a measure.
+	// JIRA: CPOUI5MODELS-1384
+	QUnit.test("AnalyticalBinding: order by additional properties (Bundled)", function (assert) {
+		let oTable;
+		const oModel = createModel("/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS");
+		const sView = '\
+<t:AnalyticalTable id="table" threshold="10" visibleRowCount="4">\
+	<t:AnalyticalColumn grouped="true" leadingProperty="CompanyCode">\
+		<Label text="CompanyCode"/>\
+		<t:template><Text text="{CompanyCode}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn grouped="false" leadingProperty="Customer">\
+		<Label text="Customer"/>\
+		<t:template><Text text="{Customer}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn summed="true" leadingProperty="AmountInCompanyCodeCurrency">\
+		<Label text="AmountInCompanyCodeCurrency"/>\
+		<t:template><Text text="{AmountInCompanyCodeCurrency}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn leadingProperty="OrdinaryProperty">\
+		<Label text="OrdinaryProperty"/>\
+		<t:template><Text text="{OrdinaryProperty}"/></t:template>\
+	</t:AnalyticalColumn>\
+</t:AnalyticalTable>';
+
+		return this.createView(assert, sView, oModel).then(() => {
+			this.expectHeadRequest()
+				.expectRequest({ // count request
+					encodeRequestUri: false,
+					requestUri: "Items?$select=CompanyCode,Customer&$top=0&$inlinecount=allpages"
+				}, {__count: "20", results: []})
+				.expectRequest({ // first level request
+					encodeRequestUri: false,
+					requestUri: "Items?$select=CompanyCode,AmountInCompanyCodeCurrency,Currency"
+						+ "&$orderby=CompanyCode%20asc&$top=7"
+				}, {
+					results: [
+						getFarCustomerLineItem("A0"),
+						getFarCustomerLineItem("A1"),
+						getFarCustomerLineItem("A2"),
+						getFarCustomerLineItem("A3")
+					]
+				})
+				.expectRequest({ // leaf level request
+					encodeRequestUri: false,
+					requestUri: "Items?"
+						+ "$select=CompanyCode,Customer,AmountInCompanyCodeCurrency,Currency,OrdinaryProperty"
+						+ "&$orderby=CompanyCode%20asc,OrdinaryProperty%20desc&$top=12"
+				}, {
+					results : [
+						Object.assign(getFarCustomerLineItem("A0", "C0"), {OrdinaryProperty: "P0"}),
+						Object.assign(getFarCustomerLineItem("A0", "C1"), {OrdinaryProperty: "P1"}),
+						Object.assign(getFarCustomerLineItem("A0", "C2"), {OrdinaryProperty: "P2"}),
+						Object.assign(getFarCustomerLineItem("A1", "C0"), {OrdinaryProperty: "P3"})
+					]
+				});
+
+			this.oLogMock.expects("warning")
+				.withExactArgs("Applying sorters to groups is only possible with auto expand mode 'Sequential';"
+					+ " current mode is: Bundled",
+					"/Items", "sap.ui.model.analytics.AnalyticalBinding", undefined)
+				.atLeast(1);
+
+			oTable = this.oView.byId("table");
+			// bind it lately, otherwise the binding is constructed without the analytical info and the select parameter
+			// is ignored
+			oTable.bindRows({
+				path: "/Items",
+				parameters: {
+					numberOfExpandedLevels: 1,
+					provideGrandTotals: false,
+					select: "CompanyCode,AmountInCompanyCodeCurrency,Currency,Customer,OrdinaryProperty",
+					useBatchRequests: true
+				},
+				sorter: [new Sorter("OrdinaryProperty", true)]
+			});
+
+			return this.waitForChanges(assert, "bind table");
+		}).then(() => {
+			assert.deepEqual(getTableContent(oTable), [
+				["A0", "", "1", ""],
+				["A0", "C0", "1", "P0"],
+				["A0", "C1", "1", "P1"],
+				["A0", "C2", "1", "P2"]
+			]);
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: Bundled mode: Order by properties that are additionally selected and that are
+	// neither a dimension, nor a measure, nor an associated property of a dimension or a measure.
+	// Data is not grouped.
+	// JIRA: CPOUI5MODELS-1384
+	QUnit.test("AnalyticalBinding: order by additional properties (ungrouped, Bundled)", function (assert) {
+		let oTable;
+		const oModel = createModel("/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS");
+		const sView = '\
+<t:AnalyticalTable id="table" threshold="10" visibleRowCount="4">\
+	<t:AnalyticalColumn grouped="false" leadingProperty="CompanyCode">\
+		<Label text="CompanyCode"/>\
+		<t:template><Text text="{CompanyCode}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn grouped="false" leadingProperty="Customer">\
+		<Label text="Customer"/>\
+		<t:template><Text text="{Customer}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn summed="true" leadingProperty="AmountInCompanyCodeCurrency">\
+		<Label text="AmountInCompanyCodeCurrency"/>\
+		<t:template><Text text="{AmountInCompanyCodeCurrency}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn leadingProperty="OrdinaryProperty">\
+		<Label text="OrdinaryProperty"/>\
+		<t:template><Text text="{OrdinaryProperty}"/></t:template>\
+	</t:AnalyticalColumn>\
+</t:AnalyticalTable>';
+
+		return this.createView(assert, sView, oModel).then(() => {
+			this.expectHeadRequest()
+				.expectRequest({ // leaf level request
+					encodeRequestUri: false,
+					requestUri: "Items?"
+						+ "$select=CompanyCode,Customer,AmountInCompanyCodeCurrency,Currency,OrdinaryProperty"
+						+ "&$orderby=OrdinaryProperty%20desc&$top=14&$inlinecount=allpages"
+				}, {
+					results: [
+						Object.assign(getFarCustomerLineItem("A1", "C0"), {OrdinaryProperty: "P3"}),
+						Object.assign(getFarCustomerLineItem("A0", "C2"), {OrdinaryProperty: "P2"}),
+						Object.assign(getFarCustomerLineItem("A0", "C1"), {OrdinaryProperty: "P1"}),
+						Object.assign(getFarCustomerLineItem("A0", "C0"), {OrdinaryProperty: "P0"})
+					]
+				});
+
+			this.oLogMock.expects("warning")
+				.withExactArgs("Applying sorters to groups is only possible with auto expand mode 'Sequential';"
+					+ " current mode is: Bundled",
+					"/Items", "sap.ui.model.analytics.AnalyticalBinding", undefined)
+				.atLeast(1);
+
+			oTable = this.oView.byId("table");
+			// bind it lately, otherwise the binding is constructed without the analytical info and the select parameter
+			// is ignored
+			oTable.bindRows({
+				path: "/Items",
+				parameters: {
+					numberOfExpandedLevels: 1,
+					provideGrandTotals: false,
+					select: "CompanyCode,AmountInCompanyCodeCurrency,Currency,Customer,OrdinaryProperty",
+					useBatchRequests: true
+				},
+				sorter: [new Sorter("OrdinaryProperty", true)]
+			});
+
+			return this.waitForChanges(assert, "bind table");
+		}).then(() => {
+			assert.deepEqual(getTableContent(oTable), [
+				["A1", "C0", "1", "P3"],
+				["A0", "C2", "1", "P2"],
+				["A0", "C1", "1", "P1"],
+				["A0", "C0", "1", "P0"]
+			]);
 		});
 	});
 
@@ -11315,18 +11590,19 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 	//*********************************************************************************************
 	// Scenario: All contexts created by ODataTreeBinding consider the deep path of the tree binding that the OData
 	// messages can be properly assigned.
-	// JIRA: CPOUI5MODELS-1529, SNOW: CS20230006644418
+	// JIRA: CPOUI5MODELS-1529, SNOW: CS20230006644418, CPOUI5MODELS-1531
 	QUnit.test("ODataTreeBinding: Message handling", function (assert) {
+		let oTable;
 		const oModel = createSpecialCasesModel();
-		const oResponseMessage = this.createResponseMessage("to_C_RSHMaintSchedSmltdOrdAndOp('id-0')/MaintenanceOrder",
-			"~errorMessage");
+		const oMessage0 = this.createResponseMessage("to_C_RSHMaintSchedSmltdOrdAndOp('id-0')/MaintenanceOrder");
+		const oMessage000 = this.createResponseMessage("to_C_RSHMaintSchedSmltdOrdAndOp('id-0.0.0')/MaintenanceOrder");
 		const sView = '\
 <VBox binding="{/DummySet(\'42\')}">\
 <t:TreeTable id="table"\
 		rows="{\
 			parameters: {\
 				countMode : \'Request\',\
-				numberOfExpandedLevels: 2,\
+				numberOfExpandedLevels: 1,\
 				transitionMessagesOnly: true,\
 				treeAnnotationProperties: {\
 					hierarchyDrillStateFor: \'OrderOperationIsExpanded\',\
@@ -11347,7 +11623,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			.expectRequest("DummySet('42')", {
 				__metadata: {uri: "/DummySet('42')"},
 				DummyID: "42"
-			}, {"sap-message" : getMessageHeader(oResponseMessage)})
+			}, {"sap-message" : getMessageHeader([oMessage0, oMessage000])})
 			// triggered by ODataTreeBinding#_getCountForNodeId
 			.expectRequest("DummySet('42')/to_C_RSHMaintSchedSmltdOrdAndOp/$count?$filter=OrderOperationRowLevel eq 0",
 				"273")
@@ -11382,7 +11658,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					results: [{
 						__metadata: {uri: "C_RSHMaintSchedSmltdOrdAndOp('id-0.0')"},
 						MaintenanceOrder: "0.0",
-						OrderOperationIsExpanded: "leaf",
+						OrderOperationIsExpanded: "collapsed",
 						OrderOperationParentRowID: "id-0",
 						OrderOperationRowID: "id-0.0",
 						OrderOperationRowLevel: 1
@@ -11396,25 +11672,85 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					}]
 				})
 			.expectMessages([{
-				code : oResponseMessage.code,
+				code : oMessage0.code,
 				fullTarget : "/DummySet('42')/to_C_RSHMaintSchedSmltdOrdAndOp('id-0')/MaintenanceOrder",
-				message : oResponseMessage.message,
+				message : oMessage0.message,
 				persistent : false,
 				target : "/C_RSHMaintSchedSmltdOrdAndOp('id-0')/MaintenanceOrder",
-				type : mSeverityMap[oResponseMessage.severity]
+				type : mSeverityMap[oMessage0.severity]
+			}, {
+				code : oMessage000.code,
+				fullTarget : "/DummySet('42')/to_C_RSHMaintSchedSmltdOrdAndOp('id-0.0.0')/MaintenanceOrder",
+				message : oMessage000.message,
+				persistent : false,
+				target : "/C_RSHMaintSchedSmltdOrdAndOp('id-0.0.0')/MaintenanceOrder",
+				type : mSeverityMap[oMessage000.severity]
 			}]);
 
 		return this.createView(assert, sView, oModel).then(() => {
-			const oTable = this.oView.byId("table");
+			oTable = this.oView.byId("table");
 			// don't use expectValue to avoid timing issues causing flaky tests
 			assert.deepEqual(getTableContent(oTable), [["0"], ["0.0"]]);
 
 			let aMessages = oTable.getBindingContext().getMessages();
+			assert.strictEqual(aMessages.length, 2);
+			assert.strictEqual(aMessages[0].code, oMessage0.code);
+			assert.strictEqual(aMessages[1].code, oMessage000.code);
+			aMessages = oTable.getRows()[0].getBindingContext().getMessages(); // messages for id-0
 			assert.strictEqual(aMessages.length, 1);
-			assert.strictEqual(aMessages[0].code, oResponseMessage.code);
-			aMessages = oTable.getRows()[0].getBindingContext().getMessages(); // binding context of first row
+			assert.strictEqual(aMessages[0].code, oMessage0.code);
+
+			this.expectRequest({
+					headers: {"sap-messages": "transientOnly"},
+					requestUri: "DummySet('42')/to_C_RSHMaintSchedSmltdOrdAndOp?"
+						+ "$filter=OrderOperationRowID eq 'id-0.0' and OrderOperationRowLevel le 3"
+				}, {
+					results: [{
+						__metadata: {uri: "C_RSHMaintSchedSmltdOrdAndOp('id-0.0')"},
+						MaintenanceOrder: "0.0",
+						OrderOperationIsExpanded: "expanded",
+						OrderOperationParentRowID: "id-0",
+						OrderOperationRowID: "id-0.0",
+						OrderOperationRowLevel: 1
+					}, {
+						__metadata: {uri: "C_RSHMaintSchedSmltdOrdAndOp('id-0.0.0')"},
+						MaintenanceOrder: "0.0.0",
+						OrderOperationIsExpanded: "expanded",
+						OrderOperationParentRowID: "id-0.0",
+						OrderOperationRowID: "id-0.0.0",
+						OrderOperationRowLevel: 2
+					}, {
+						__metadata: {uri: "C_RSHMaintSchedSmltdOrdAndOp('id-0.0.0.0')"},
+						MaintenanceOrder: "0.0.0.0",
+						OrderOperationIsExpanded: "leaf",
+						OrderOperationParentRowID: "id-0.0.0",
+						OrderOperationRowID: "id-0.0.0.0",
+						OrderOperationRowLevel: 3
+					}, {
+						__metadata: {uri: "C_RSHMaintSchedSmltdOrdAndOp('id-0.0.1')"},
+						MaintenanceOrder: "0.0.1",
+						OrderOperationIsExpanded: "leaf",
+						OrderOperationParentRowID: "id-0.0",
+						OrderOperationRowID: "id-0.0.1",
+						OrderOperationRowLevel: 2
+					}]
+				});
+
+			return Promise.all([
+				// code under test - context creation via ODataTreeBindingAdapter#expandNodeToLevel
+				oTable.getBinding("rows").expandNodeToLevel(1, 3),
+				this.waitForChanges(assert)
+			]);
+		}).then(() => {
+			// scroll to id-0-0-0
+			oTable.setFirstVisibleRow(2);
+
+			return this.waitForChanges(assert);
+		}).then(() => {
+			assert.deepEqual(getTableContent(oTable), [["0.0.0"], ["0.0.0.0"]]);
+			const aMessages = oTable.getRows()[0].getBindingContext().getMessages(); // messages for id-0-0-0
 			assert.strictEqual(aMessages.length, 1);
-			assert.strictEqual(aMessages[0].code, oResponseMessage.code);
+			assert.strictEqual(aMessages[0].code, oMessage000.code);
 		});
 	});
 
@@ -15878,6 +16214,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Sales Order New 1"
 					},
 					headers : {"sap-messages": "transientOnly"},
@@ -15886,6 +16223,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('2')"},
+						CustomerID : "42",
 						Note : "Sales Order New 1",
 						SalesOrderID : "2"
 					},
@@ -16083,6 +16421,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Sales Order New 1"
 					},
 					method : "POST",
@@ -16090,6 +16429,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('2')"},
+						CustomerID : "42",
 						Note : "Sales Order New 1",
 						SalesOrderID : "2"
 					},
@@ -16152,6 +16492,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Sales Order New 2"
 					},
 					method : "POST",
@@ -16159,6 +16500,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('3')"},
+						CustomerID : "42",
 						Note : "Sales Order New 2",
 						SalesOrderID : "3"
 					},
@@ -16168,6 +16510,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Foo - New 3"
 					},
 					method : "POST",
@@ -16175,6 +16518,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('4')"},
+						CustomerID : "42",
 						Note : "Foo - New 3",
 						SalesOrderID : "4"
 					},
@@ -16439,6 +16783,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Sales Order New 1"
 					},
 					method : "POST",
@@ -16446,6 +16791,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('2')"},
+						CustomerID : "42",
 						Note : "Sales Order New 1",
 						SalesOrderID : "2"
 					},
@@ -16575,6 +16921,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID: "42",
 						Note : "Sales Order New 1"
 					},
 					headers : {
@@ -16585,6 +16932,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('2')"},
+						CustomerID: "42",
 						Note : "Sales Order New 1",
 						SalesOrderID : "2"
 					},
@@ -16691,6 +17039,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Sales Order New 1"
 					},
 					method : "POST",
@@ -16698,6 +17047,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('2')"},
+						CustomerID : "42",
 						Note : "Sales Order New 1",
 						SalesOrderID : "2"
 					},
@@ -16772,6 +17122,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Sales Order New 1"
 					},
 					method : "POST",
@@ -16779,6 +17130,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('2')"},
+						CustomerID : "42",
 						SalesOrderID : "2",
 						Note : "Sales Order New 1"
 					},
@@ -16877,6 +17229,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Sales Order New 1"
 					},
 					method : "POST",
@@ -16884,6 +17237,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('42')"},
+						CustomerID : "42",
 						SalesOrderID : "42",
 						Note : "Sales Order New 1"
 					},
@@ -16979,6 +17333,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Sales Order New 1"
 					},
 					method : "POST",
@@ -16986,6 +17341,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('42')"},
+						CustomerID : "42",
 						SalesOrderID : "42",
 						Note : "Sales Order New 1"
 					},
@@ -17089,6 +17445,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Sales Order New 1"
 					},
 					method : "POST",
@@ -17096,6 +17453,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('2')"},
+						CustomerID : "42",
 						SalesOrderID : "2",
 						Note : "Sales Order New 1"
 					},
@@ -17208,6 +17566,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "Sales Order New: created persisted"
 					},
 					method : "POST",
@@ -17215,6 +17574,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('2')"},
+						CustomerID : "42",
 						SalesOrderID : "2",
 						Note : "Sales Order New: created persisted"
 					},
@@ -17933,6 +18293,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrder"},
+						CustomerID : "42",
 						Note : "transient"
 					},
 					method : "POST",
@@ -17940,6 +18301,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				}, {
 					data : {
 						__metadata : {uri : "SalesOrderSet('3')"},
+						CustomerID : "42",
 						SalesOrderID : "3",
 						Note : "persisted"
 					},
@@ -18561,6 +18923,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 						__metadata : {uri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"},
 						ErhaOrderItemName : "bar: renamed"
 					},
+					deepPath : "/ErhaOrder('1')/to_Item(ErhaOrder='1',ErhaOrderItem='200')",
 					key : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')",
 					method : "MERGE",
 					requestUri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"
@@ -18715,6 +19078,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 						__metadata : {uri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"},
 						ErhaOrderItemName : "bar: renamed"
 					},
+					deepPath : "/ErhaOrder('1')/to_Item(ErhaOrder='1',ErhaOrderItem='200')",
 					key : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')",
 					method : "MERGE",
 					requestUri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"
@@ -18889,6 +19253,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 						__metadata : {uri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"},
 						ErhaOrderItemName : "bar: renamed"
 					},
+					deepPath : "/ErhaOrder('1')/to_Item(ErhaOrder='1',ErhaOrderItem='200')",
 					key : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')",
 					method : "MERGE",
 					requestUri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"
@@ -19047,6 +19412,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 						__metadata : {uri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"},
 						ErhaOrderItemName : "bar: renamed"
 					},
+					deepPath : "/ErhaOrder('1')/to_Item(ErhaOrder='1',ErhaOrderItem='200')",
 					key : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')",
 					method : "MERGE",
 					requestUri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"
@@ -19189,6 +19555,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 						__metadata : {uri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='300')"},
 						HierarchyParentNode : "100"
 					},
+					deepPath : "/ErhaOrder('1')/to_Item(ErhaOrder='1',ErhaOrderItem='300')",
 					key : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='300')",
 					method : "MERGE",
 					requestUri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='300')"
@@ -19234,6 +19601,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 						__metadata : {uri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"},
 						ErhaOrderItemName : "bar: renamed"
 					},
+					deepPath : "/ErhaOrder('1')/to_Item(ErhaOrder='1',ErhaOrderItem='200')",
 					key : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')",
 					method : "MERGE",
 					requestUri : "ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='200')"
@@ -19845,23 +20213,33 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 
 	//*********************************************************************************************
 	// Scenario: All read requests of the ODataTreeBindingFlat, consider "transitionMessagesOnly" parameter.
-	// JIRA: CPOUI5MODELS-1437
-	QUnit.test("ODataTreeBindingFlat: transitionMessagesOnly", function (assert) {
+	// Contexts are created with deep path information that messages can be assigned properly to the rows.
+	// JIRA: CPOUI5MODELS-1437, CPOUI5MODELS-1453
+	QUnit.test("ODataTreeBindingFlat: transitionMessagesOnly and messages", function (assert) {
 		const oModel = createHierarchyMaintenanceModel();
+		const oMessageItem0 = this.createResponseMessage("to_Item(ErhaOrder='1',ErhaOrderItem='0')/ErhaOrderItem");
+		const oMessageItem100 = this.createResponseMessage("to_Item(ErhaOrder='1',ErhaOrderItem='1.0.0')"
+			+ "/ErhaOrderItem");
 		let oTable;
 		const sView = '\
+<VBox binding="{/ErhaOrder(\'1\')}">\
 <t:TreeTable id="table"\
 		rows="{\
 			parameters: {countMode: \'Inline\', numberOfExpandedLevels: 1, transitionMessagesOnly: true},\
-			path: \'/ErhaOrder(\\\'1\\\')/to_Item\'\
+			path: \'to_Item\'\
 		}"\
 		visibleRowCount="4">\
 	<Text id="itemName" text="{ErhaOrderItemName}" />\
-</t:TreeTable>';
+</t:TreeTable>\
+</VBox>';
 
 		this.expectHeadRequest()
+			.expectRequest("ErhaOrder('1')", {
+				__metadata: {uri: "/ErhaOrder('1')"},
+				ErhaOrder: "1"
+			}, {"sap-message" : getMessageHeader([oMessageItem0, oMessageItem100])})
 			.expectRequest({ // triggered by ODataTreeBindingFlat#_requestServerIndexNodes
-				batchNo: 1,
+				batchNo: 2,
 				headers: {"sap-messages": "transientOnly"},
 				requestUri: "ErhaOrder('1')/to_Item?$skip=0&$top=104&$inlinecount=allpages"
 					+ "&$filter=HierarchyDistanceFromRoot le 1"
@@ -19916,7 +20294,22 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					HierarchyPreorderRank: 3,
 					HierarchySiblingRank: 1
 				}]
-			});
+			})
+			.expectMessages([{
+				code : oMessageItem0.code,
+				fullTarget : "/ErhaOrder(\'1\')/to_Item(ErhaOrder='1',ErhaOrderItem='0')/ErhaOrderItem",
+				message : oMessageItem0.message,
+				persistent : false,
+				target : "/ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='0')/ErhaOrderItem",
+				type : mSeverityMap[oMessageItem0.severity]
+			}, {
+				code : oMessageItem100.code,
+				fullTarget : "/ErhaOrder(\'1\')/to_Item(ErhaOrder='1',ErhaOrderItem='1.0.0')/ErhaOrderItem",
+				message : oMessageItem100.message,
+				persistent : false,
+				target : "/ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='1.0.0')/ErhaOrderItem",
+				type : mSeverityMap[oMessageItem100.severity]
+			}]);
 
 		return this.createView(assert, sView, oModel).then(() => {
 			oTable = this.oView.byId("table");
@@ -19924,8 +20317,19 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			// don't use expectValue to avoid timing issues causing flaky tests
 			assert.deepEqual(getTableContent(oTable), [["0"], ["1"], ["1.0"], ["1.1"]]);
 
+			let aMessages = oTable.getBindingContext().getMessages();
+			assert.strictEqual(aMessages.length, 2);
+			assert.strictEqual(aMessages[0].code, oMessageItem0.code);
+			assert.strictEqual(aMessages[1].code, oMessageItem100.code);
+			// one message for ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='0')
+			aMessages = oTable.getRows()[0].getBindingContext().getMessages();
+			assert.strictEqual(aMessages.length, 1);
+			assert.strictEqual(aMessages[0].code, oMessageItem0.code);
+			// no messages for ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='1')
+			assert.deepEqual(oTable.getRows()[1].getBindingContext().getMessages(), []);
+
 			this.expectRequest({ // triggered by ODataTreeBindingFlat#_requestChildren
-					batchNo: 2,
+					batchNo: 3,
 					headers: {"sap-messages": "transientOnly"},
 					requestUri: "ErhaOrder('1')/to_Item?$skip=0&$top=104&$inlinecount=allpages"
 						+ "&$filter=HierarchyParentNode eq '1.0'"
@@ -19952,6 +20356,10 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			return this.waitForChanges(assert, "expand node '1.0'");
 		}).then(() => {
 			assert.deepEqual(getTableContent(oTable), [["0"], ["1"], ["1.0"], ["1.0.0"]]);
+			// one message for ErhaOrderItem(ErhaOrder='1',ErhaOrderItem='1.0.0')
+			const aMessages = oTable.getRows()[3].getBindingContext().getMessages();
+			assert.strictEqual(aMessages.length, 1);
+			assert.strictEqual(aMessages[0].code, oMessageItem100.code);
 
 			// code under test
 			oTable.collapse(1);
@@ -19961,7 +20369,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			assert.deepEqual(getTableContent(oTable), [["0"], ["1"], [""], [""]]);
 
 			this.expectRequest({ // triggered by ODataTreeBindingFlat#_requestSubTree
-				batchNo: 3,
+				batchNo: 4,
 				headers: {"sap-messages": "transientOnly"},
 				requestUri: "ErhaOrder('1')/to_Item?$filter=HierarchyNode eq '1' and HierarchyDistanceFromRoot le 2"
 			}, {
@@ -20291,7 +20699,8 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrderLineItem"},
-						Note : "Note 2"
+						Note : "Note 2",
+						SalesOrderID : "42"
 					},
 					method : "POST",
 					requestUri : "SalesOrderSet('42')/ToLineItems"
@@ -20429,7 +20838,8 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 					created : true,
 					data : {
 						__metadata : {type : "GWSAMPLE_BASIC.SalesOrderLineItem"},
-						Note : "Note 2"
+						Note : "Note 2",
+						SalesOrderID : "42"
 					},
 					method : "POST",
 					requestUri : "SalesOrderSet('42')/ToLineItems"
@@ -21312,7 +21722,8 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			that.expectRequest({
 					created: true,
 					data: {
-						__metadata: {type: "GWSAMPLE_BASIC.SalesOrderLineItem"}
+						__metadata: {type: "GWSAMPLE_BASIC.SalesOrderLineItem"},
+						SalesOrderID: "1"
 					},
 					headers: {"Content-ID": "~key~", "sap-messages": "transientOnly"},
 					method: "POST",
@@ -21880,108 +22291,44 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			return this.waitForChanges(assert);
 		});
 	});
-
 	//*********************************************************************************************
-	// Scenario: A table is filtered via a property of a complex type which is addressed via a navigation
-	// property. The binding is using the operation mode "Client".
-	// SNOW: CS20230006626867
-	QUnit.test("Filter via a complex type property addressed via navigation property (client)", function (assert) {
-		var oModel = createSalesOrdersModel({defaultOperationMode : "Client"}),
-			sView = '\
-<t:Table id="Table" rows="{\
-			path: \'/SalesOrderSet\',\
-			parameters: {\
-				expand: \'ToBusinessPartner\',\
-				select: \'SalesOrderID,ToBusinessPartner/BusinessPartnerID,ToBusinessPartner/Address\'\
-			}\
-		}" visibleRowCount="2">\
+	// Scenario: A filter with fractional seconds leads to a request where the fractional seconds are considered
+	// when applied to a list binding.
+	// JIRA: CPOUI5MODELS-1536
+	QUnit.test("ODataListBinding#filter considers additional fractional digits", function (assert) {
+		const oModel = createSalesOrdersModel();
+		const sView = '\
+<Table id="Table" growing="true" growingThreshold="2" items="{/SalesOrderSet}\">\
 	<Text id="SalesOrderID" text="{SalesOrderID}" />\
-	<Text id="City" text="{ToBusinessPartner/Address/City}" />\
-</t:Table>',
-			that = this;
+</Table>';
 
 		this.expectHeadRequest()
-			.expectRequest("SalesOrderSet?$expand=ToBusinessPartner"
-					+ "&$select=SalesOrderID,ToBusinessPartner/BusinessPartnerID,ToBusinessPartner/Address", {
-				results: [{
-					__metadata: {uri: "/SalesOrderSet('1')"},
-					SalesOrderID: "1",
-					ToBusinessPartner: {
-						__metadata: {uri: "/BusinessPartnerSet('42')"},
-						BusinessPartnerID: "42",
-						Address: {City: "Foo"}
-					}
-				}, {
-					__metadata: {uri: "/SalesOrderSet('2')"},
-					SalesOrderID: "2",
-					ToBusinessPartner: {
-						__metadata: {uri: "/BusinessPartnerSet('43')"},
-						BusinessPartnerID: "43",
-						Address: {City: "Bar"}
-					}
-				}]
+			.expectRequest("SalesOrderSet?$skip=0&$top=2", {
+				results : [ {SalesOrderID : "1"}, {SalesOrderID : "2"} ]
 			})
-			.expectValue("SalesOrderID", ["1", "2"])
-			.expectValue("City", ["Foo", "Bar"]);
+			.expectValue("SalesOrderID", ["1", "2"]);
 
-		return this.createView(assert, sView, oModel).then(function () {
-			that.expectValue("SalesOrderID", "", 1)
-				.expectValue("City", "", 1);
+		return this.createView(assert, sView, oModel).then(() => {
+			this.expectRequest({
+				encodeRequestUri : false,
+				requestUri :"SalesOrderSet?$skip=0&$top=2&$filter=" +
+					"(ChangedAt%20ge%20datetimeoffset%272024-01-06T14%3a00%3a01.000123Z%27%20and%20"
+					+ "ChangedAt%20le%20datetimeoffset%272024-01-08T23%3a59%3a59.4567899Z%27)"
+			}, {
+				results : [ {SalesOrderID : "42"}, {SalesOrderID : "77"} ]
+			})
+			.expectValue("SalesOrderID", ["42", "77"]);
+
+			const oFilter = new Filter({path : "ChangedAt", operator : FilterOperator.BT,
+				value1 : new Date("2024-01-06T14:00:01Z"), value2 : new Date("2024-01-08T23:59:59.456Z")});
+			oFilter.appendFractionalSeconds1("123");
+			oFilter.appendFractionalSeconds2("7899");
 
 			// code under test
-			that.oView.byId("Table").getBinding("rows").filter(
-				new Filter({
-					path: "ToBusinessPartner/Address/City",
-					operator: FilterOperator.EQ,
-					value1: "Foo"
-				})
-			);
+			this.oView.byId("Table").getBinding("items").filter(oFilter);
 
-			return that.waitForChanges(assert);
+			return this.waitForChanges(assert);
 		});
-	});
-
-	//*********************************************************************************************
-	// Scenario: A table is filtered via a property of a complex type which is addressed via a navigation
-	// property. The binding is using the operation mode "Server".
-	// SNOW: CS20230006626867
-	QUnit.test("Filter via a complex type property addressed via navigation property (server)", function (assert) {
-		var oModel = createSalesOrdersModel(),
-			sView = '\
-<t:Table id="Table" rows="{\
-			path: \'/SalesOrderSet\',\
-			parameters: {\
-				expand: \'ToBusinessPartner\',\
-				select: \'SalesOrderID,ToBusinessPartner/BusinessPartnerID,ToBusinessPartner/Address\'\
-			},\
-			filters : [{path: \'ToBusinessPartner/Address/City\', operator: \'EQ\', value1: \'Foo\'}]\
-		}" visibleRowCount="2">\
-	<Text id="SalesOrderID" text="{SalesOrderID}" />\
-	<Text id="City" text="{ToBusinessPartner/Address/City}" />\
-</t:Table>';
-
-		this.expectHeadRequest()
-			.expectRequest({
-				encodeRequestUri: false, // the / in the filter is not escaped
-				requestUri: "SalesOrderSet?$skip=0&$top=102"
-					+ "&$filter=ToBusinessPartner/Address/City%20eq%20%27Foo%27"
-					+ "&$expand=ToBusinessPartner"
-					+ "&$select=SalesOrderID%2cToBusinessPartner%2fBusinessPartnerID%2cToBusinessPartner%2fAddress"
-			}, {
-				results: [{
-					__metadata: {uri: "/SalesOrderSet('1')"},
-					SalesOrderID: "1",
-					ToBusinessPartner: {
-						__metadata: {uri: "/BusinessPartnerSet('42')"},
-						BusinessPartnerID: "42",
-						Address: {City: "Foo"}
-					}
-				}]
-			})
-			.expectValue("SalesOrderID", ["1", ""])
-			.expectValue("City", ["Foo", ""]);
-
-		return this.createView(assert, sView, oModel);
 	});
 
 	//*********************************************************************************************
@@ -22092,5 +22439,108 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 
 			return that.waitForChanges(assert);
 		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: A table is filtered via a property of a complex type which is addressed via a navigation
+	// property. The binding is using the operation mode "Client".
+	// SNOW: CS20230006626867
+	QUnit.test("Filter via a complex type property addressed via navigation property (client)", function (assert) {
+		var oModel = createSalesOrdersModel({defaultOperationMode : "Client"}),
+			sView = '\
+<t:Table id="Table" rows="{\
+			path: \'/SalesOrderSet\',\
+			parameters: {\
+				expand: \'ToBusinessPartner\',\
+				select: \'SalesOrderID,ToBusinessPartner/BusinessPartnerID,ToBusinessPartner/Address\'\
+			}\
+		}" visibleRowCount="2">\
+	<Text id="SalesOrderID" text="{SalesOrderID}" />\
+	<Text id="City" text="{ToBusinessPartner/Address/City}" />\
+</t:Table>',
+			that = this;
+
+		this.expectHeadRequest()
+			.expectRequest("SalesOrderSet?$expand=ToBusinessPartner"
+					+ "&$select=SalesOrderID,ToBusinessPartner/BusinessPartnerID,ToBusinessPartner/Address", {
+				results: [{
+					__metadata: {uri: "/SalesOrderSet('1')"},
+					SalesOrderID: "1",
+					ToBusinessPartner: {
+						__metadata: {uri: "/BusinessPartnerSet('42')"},
+						BusinessPartnerID: "42",
+						Address: {City: "Foo"}
+					}
+				}, {
+					__metadata: {uri: "/SalesOrderSet('2')"},
+					SalesOrderID: "2",
+					ToBusinessPartner: {
+						__metadata: {uri: "/BusinessPartnerSet('43')"},
+						BusinessPartnerID: "43",
+						Address: {City: "Bar"}
+					}
+				}]
+			})
+			.expectValue("SalesOrderID", ["1", "2"])
+			.expectValue("City", ["Foo", "Bar"]);
+
+		return this.createView(assert, sView, oModel).then(function () {
+			that.expectValue("SalesOrderID", "", 1)
+				.expectValue("City", "", 1);
+
+			// code under test
+			that.oView.byId("Table").getBinding("rows").filter(
+				new Filter({
+					path: "ToBusinessPartner/Address/City",
+					operator: FilterOperator.EQ,
+					value1: "Foo"
+				})
+			);
+
+			return that.waitForChanges(assert);
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: A table is filtered via a property of a complex type which is addressed via a navigation
+	// property. The binding is using the operation mode "Server".
+	// SNOW: CS20230006626867
+	QUnit.test("Filter via a complex type property addressed via navigation property (server)", function (assert) {
+		var oModel = createSalesOrdersModel(),
+			sView = '\
+<t:Table id="Table" rows="{\
+			path: \'/SalesOrderSet\',\
+			parameters: {\
+				expand: \'ToBusinessPartner\',\
+				select: \'SalesOrderID,ToBusinessPartner/BusinessPartnerID,ToBusinessPartner/Address\'\
+			},\
+			filters : [{path: \'ToBusinessPartner/Address/City\', operator: \'EQ\', value1: \'Foo\'}]\
+		}" visibleRowCount="2">\
+	<Text id="SalesOrderID" text="{SalesOrderID}" />\
+	<Text id="City" text="{ToBusinessPartner/Address/City}" />\
+</t:Table>';
+
+		this.expectHeadRequest()
+			.expectRequest({
+				encodeRequestUri: false, // the / in the filter is not escaped
+				requestUri: "SalesOrderSet?$skip=0&$top=102"
+					+ "&$filter=ToBusinessPartner/Address/City%20eq%20%27Foo%27"
+					+ "&$expand=ToBusinessPartner"
+					+ "&$select=SalesOrderID%2cToBusinessPartner%2fBusinessPartnerID%2cToBusinessPartner%2fAddress"
+			}, {
+				results: [{
+					__metadata: {uri: "/SalesOrderSet('1')"},
+					SalesOrderID: "1",
+					ToBusinessPartner: {
+						__metadata: {uri: "/BusinessPartnerSet('42')"},
+						BusinessPartnerID: "42",
+						Address: {City: "Foo"}
+					}
+				}]
+			})
+			.expectValue("SalesOrderID", ["1", ""])
+			.expectValue("City", ["Foo", ""]);
+
+		return this.createView(assert, sView, oModel);
 	});
 });

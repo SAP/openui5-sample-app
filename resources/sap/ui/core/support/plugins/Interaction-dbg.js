@@ -6,6 +6,7 @@
 
 // Provides class sap.ui.core.support.plugins.Performance
 sap.ui.define([
+	"sap/ui/core/RenderManager",
 	'sap/ui/core/Supportability',
 	'sap/ui/core/support/Plugin',
 	'sap/ui/core/support/controls/InteractionSlider',
@@ -17,8 +18,9 @@ sap.ui.define([
 	"sap/ui/performance/trace/Interaction",
 	"sap/ui/performance/Measurement",
 	"sap/ui/core/date/UI5Date"
-	],
+],
 	function(
+		RenderManager,
 		Supportability,
 		Plugin,
 		InteractionSlider,
@@ -40,7 +42,7 @@ sap.ui.define([
 		 * With this plugIn the performance measurements are displayed
 		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 * @private
 		 * @alias sap.ui.core.support.plugins.Interaction
 		 */
@@ -103,7 +105,7 @@ sap.ui.define([
 
 		function initInTools(oSupportStub) {
 
-			var rm = sap.ui.getCore().createRenderManager();
+			var rm = new RenderManager().getInterface();
 			rm.openStart("div").class("sapUiSupportToolbar").openEnd();
 				rm.openStart("button", this.getId() + "-record").class("sapUiSupportIntToggleRecordingBtn").openEnd().close("button");
 				rm.openStart("label").class("sapUiSupportIntODataLbl").openEnd();
@@ -135,13 +137,13 @@ sap.ui.define([
 			rm.destroy();
 
 			// render timeline
-			rm = sap.ui.getCore().createRenderManager();
+			rm = new RenderManager().getInterface();
 			this._oTimelineOverview.render(rm);
 			rm.flush(this.dom('.sapUiPerformanceStatsDiv .sapUiPerformanceTimeline'));
 			rm.destroy();
 
 			// render interaction slider
-			rm = sap.ui.getCore().createRenderManager();
+			rm = new RenderManager().getInterface();
 			this._oInteractionSlider.render(rm);
 			rm.flush(this.dom('.sapUiPerformanceStatsDiv .sapUiPerformanceTop'));
 			rm.destroy();
@@ -204,7 +206,7 @@ sap.ui.define([
 			if (bActive || jsonData) {
 				aMeasurements = jsonData || TraceInteraction.getAll(/*bFinalize=*/true);
 
-				var fetchStart = window.performance.timing.fetchStart;
+				var fetchStart = performance.getEntriesByType("navigation")?.[0]?.fetchStart;
 
 				for (var i = 0; i < aMeasurements.length; i++) {
 					var measurement = aMeasurements[i];
@@ -495,7 +497,7 @@ sap.ui.define([
 			}
 
 			var oTimelineDiv = this.dom('.sapUiPerformanceStatsDiv .sapUiPerformanceTimeline');
-			var rm = sap.ui.getCore().createRenderManager();
+			var rm = new RenderManager().getInterface();
 			this._oTimelineOverview.setInteractions(aMeasurements);
 			this._oTimelineOverview.render(rm);
 			rm.flush(oTimelineDiv);

@@ -6,6 +6,7 @@
 
 sap.ui.define([
 	'sap/m/DynamicDateUtil',
+	"sap/ui/core/Lib",
 	'sap/ui/core/date/UI5Date',
 	'sap/ui/model/SimpleType',
 	'sap/ui/model/FormatException',
@@ -15,6 +16,7 @@ sap.ui.define([
 ],
 	function(
 		DynamicDateUtil,
+		Library,
 		UI5Date,
 		SimpleType,
 		FormatException,
@@ -38,7 +40,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.SimpleType
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -141,8 +143,8 @@ sap.ui.define([
 
 		DynamicDate.prototype.validateValue = function(oValue) {
 			if (this.oConstraints) {
-				var oBundle = sap.ui.getCore().getLibraryResourceBundle(),
-					oMBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m"),
+				var oBundle = Library.getResourceBundleFor("sap.ui.core"),
+					oMBundle = Library.getResourceBundleFor("sap.m"),
 					aViolatedConstraints = [],
 					aMessages = [],
 					oOption = DynamicDateUtil.getOption(oValue.operator),

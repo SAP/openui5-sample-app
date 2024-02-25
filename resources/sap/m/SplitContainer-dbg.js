@@ -8,6 +8,8 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
+	"sap/ui/core/ControlBehavior",
+	"sap/ui/core/Element",
 	'sap/ui/core/IconPool',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/Device',
@@ -15,14 +17,17 @@ sap.ui.define([
 	'sap/m/Popover',
 	'sap/m/Button',
 	'./SplitContainerRenderer',
+	"sap/ui/core/Lib",
+	"sap/ui/core/RenderManager",
 	"sap/ui/dom/containsOrEquals",
 	"sap/base/Log",
-	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Configuration"
+	"sap/ui/thirdparty/jquery"
 ],
 function(
 	library,
 	Control,
+	ControlBehavior,
+	Element,
 	IconPool,
 	InvisibleText,
 	Device,
@@ -30,10 +35,11 @@ function(
 	Popover,
 	Button,
 	SplitContainerRenderer,
+	Library,
+	RenderManager,
 	containsOrEquals,
 	Log,
-	jQuery,
-	Configuration
+	jQuery
 ) {
 	"use strict";
 
@@ -82,7 +88,7 @@ function(
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -504,13 +510,13 @@ function(
 		var that = this;
 
 		// Init static hidden text for ARIA
-		if (Configuration.getAccessibility() && !SplitContainer._sAriaPopupLabelId) {
+		if (ControlBehavior.isAccessibilityEnabled() && !SplitContainer._sAriaPopupLabelId) {
 			SplitContainer._sAriaPopupLabelId = new InvisibleText({
 				text: '' // add empty string in order to prevent the redundant speech output
 			}).toStatic().getId();
 		}
 
-		this._rb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._rb = Library.getResourceBundleFor("sap.m");
 
 		// Pages arrays: As we delegate the pages to internal navigation container we have to remember the pages
 		// in private member variables. By doing this we can return the right pages for master /detail aggregations.
@@ -627,13 +633,13 @@ function(
 			this._bMasterisOpen = false;
 		}
 
-		this._oMasterNav.setInitialPage(sap.ui.getCore().byId(this.getInitialMaster()));
+		this._oMasterNav.setInitialPage(Element.getElementById(this.getInitialMaster()));
 		this._oMasterNav.setDefaultTransitionName(this.getDefaultTransitionNameMaster());
 
 		this._updateMasterButtonTooltip();
 
 		if (!Device.system.phone) {
-			this._oDetailNav.setInitialPage(sap.ui.getCore().byId(this.getInitialDetail()));
+			this._oDetailNav.setInitialPage(Element.getElementById(this.getInitialDetail()));
 			this._updateMasterButtonText();
 		}
 
@@ -1758,7 +1764,10 @@ function(
 					this._removeMasterButton(_currentPage);
 				}
 			}
-			// execute the code after SplitContainer has changed itself due to orientation change event
+
+			/**
+			 * @deprecated As of version 1.87
+			 */
 			if (this._onOrientationChange) {
 				this._onOrientationChange();
 			}
@@ -1813,7 +1822,7 @@ function(
 				//render only the master navContainer, to prevent the whole app from rerendering
 				var $master = that.$();
 				if ($master[0]) {
-					var rm = sap.ui.getCore().createRenderManager();
+					var rm = new RenderManager().getInterface();
 					rm.renderControl(that._oMasterNav.addStyleClass("sapMSplitContainerMaster"));
 					rm.flush($master[0], false, (that.$("BG")[0]) ? 1 : 0);
 					rm.destroy();

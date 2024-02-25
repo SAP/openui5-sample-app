@@ -8,12 +8,15 @@
 
 sap.ui.define([
 	'./library',
-	'sap/ui/core/Core',
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
+	"sap/ui/core/Element",
 	'sap/ui/core/EnabledPropagator',
+	"sap/ui/core/Lib",
 	'sap/ui/core/delegate/ItemNavigation',
 	"sap/ui/core/InvisibleText",
 	'sap/ui/core/ResizeHandler',
+	"sap/ui/core/Theming",
 	'sap/ui/Device',
 	'sap/m/Button',
 	'sap/m/IconTabFilter',
@@ -26,12 +29,15 @@ sap.ui.define([
 	"sap/ui/events/KeyCodes"
 ], function(
 	library,
-	Core,
+	Localization,
 	Control,
+	Element,
 	EnabledPropagator,
+	Library,
 	ItemNavigation,
 	InvisibleText,
 	ResizeHandler,
+	Theming,
 	Device,
 	Button,
 	IconTabFilter,
@@ -60,6 +66,8 @@ sap.ui.define([
 	// shortcut for sap.m.TabsOverflowMode
 	var TabsOverflowMode = library.TabsOverflowMode;
 
+	var IconTabFilterInteractionMode = library.IconTabFilterInteractionMode;
+
 	/**
 	 * Constructor for a new IconTabHeader.
 	 *
@@ -77,7 +85,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -270,7 +278,7 @@ sap.ui.define([
 	 *
 	 * @type {module:sap/base/i18n/ResourceBundle}
 	 */
-	var oResourceBundle = Core.getLibraryResourceBundle("sap.m");
+	var oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 	EnabledPropagator.apply(IconTabHeader.prototype, [true]);
 
@@ -281,6 +289,8 @@ sap.ui.define([
 		this._aTabKeys = [];
 		this._oAriaHeadText = null;
 		this._bIsRendered = false;
+		this._bThemeApplied = false;
+		this._handleThemeAppliedBound = this._handleThemeApplied.bind(this);
 	};
 
 	IconTabHeader.prototype.exit = function () {
@@ -322,7 +332,7 @@ sap.ui.define([
 
 		this._bIsRendered = false;
 
-		this._bRtl = Core.getConfiguration().getRTL();
+		this._bRtl = Localization.getRTL();
 
 		if (this._sResizeListenerId) {
 			ResizeHandler.deregister(this._sResizeListenerId);
@@ -342,10 +352,10 @@ sap.ui.define([
 			this.oSelectedItem._hideBadge();
 		}
 
-		if (Core.isThemeApplied()) {
+		if (this._bThemeApplied) {
 			this._setItemsForStrip();
 		} else {
-			Core.attachThemeChanged(this._handleThemeLoad, this);
+			Theming.attachApplied(this._handleThemeAppliedBound);
 		}
 
 		this._initItemNavigation();
@@ -548,7 +558,7 @@ sap.ui.define([
 			return this;
 		}
 
-		if (this._isUnselectable(oItem)) {
+		if (!this._isSelectable(oItem)) {
 			return this;
 		}
 
@@ -736,7 +746,7 @@ sap.ui.define([
 				this.$().addClass("sapUiSizeCompact");
 				break;
 			case  IconTabDensityMode.Inherit:
-				if (this.$().closest(".sapUiSizeCompact").length) {
+				if (this.getDomRef()?.closest(".sapUiSizeCompact")) {
 					this.$().addClass("sapUiSizeCompact");
 				}
 				break;
@@ -748,9 +758,10 @@ sap.ui.define([
 	 *
 	 * @private
 	 */
-	IconTabHeader.prototype._handleThemeLoad = function () {
-		setTimeout(this._setItemsForStrip.bind(this), 350);
-		Core.detachThemeChanged(this._handleThemeLoad, this);
+	IconTabHeader.prototype._handleThemeApplied = function () {
+		this._bThemeApplied = true;
+		this._setItemsForStrip(this);
+		Theming.detachApplied(this._handleThemeAppliedBound);
 	};
 
 	/*
@@ -990,7 +1001,7 @@ sap.ui.define([
 	IconTabHeader.prototype._setItemsForStrip = function () {
 		var aTabFilters = this.getVisibleTabFilters();
 
-		if (!Core.isThemeApplied() || !aTabFilters.length) {
+		if (!this._bThemeApplied || !aTabFilters.length) {
 			return;
 		}
 
@@ -1330,10 +1341,10 @@ sap.ui.define([
 				if ($target.hasClass('sapMITBFilterIcon') || $target.hasClass('sapMITBCount') || $target.hasClass('sapMITBText') || $target.hasClass('sapMITBTab') || $target.hasClass('sapMITBContentArrow') || $target.hasClass('sapMITBSep') || $target.hasClass('sapMITBSepIcon')) {
 					// click on icon: fetch filter instead
 					sControlId = oEvent.srcControl.getId().replace(/-icon$/, "");
-					oControl = Core.byId(sControlId);
+					oControl = Element.getElementById(sControlId);
 					if (oControl.getMetadata().isInstanceOf("sap.m.IconTab") && !(oControl instanceof IconTabSeparator)) {
 
-						if (this._isUnselectable(oControl)) {
+						if (!this._isSelectable(oControl)) {
 							if (oControl.getItems().length || oControl._isOverflow()) {
 								oControl._expandButtonPress();
 							}
@@ -1350,7 +1361,7 @@ sap.ui.define([
 				} else if (oControl.getMetadata().isInstanceOf("sap.m.IconTab") && !(oControl instanceof IconTabSeparator)) {
 					// select item if it is an iconTab but not a separator
 
-					if (this._isUnselectable(oControl)) {
+					if (!this._isSelectable(oControl)) {
 						if (oControl.getItems().length || oControl._isOverflow()) {
 							oControl._expandButtonPress();
 						}
@@ -1368,7 +1379,7 @@ sap.ui.define([
 				//no target id, so we have to check if showAll is set or it's a text only item, because clicking on the number then also leads to selecting the item
 				if (oControl.getMetadata().isInstanceOf("sap.m.IconTab") && !(oControl instanceof IconTabSeparator)) {
 
-					if (this._isUnselectable(oControl)) {
+					if (!this._isSelectable(oControl)) {
 						if (oControl.getItems().length || oControl._isOverflow()) {
 							oControl._expandButtonPress();
 						}
@@ -1402,19 +1413,37 @@ sap.ui.define([
 	};
 
 	/**
-	 * Checks if a IconTabFilter is unable to be selected.
-	 * This instance of the IconTabHeader must be within an IconTabBar and the IconTabBar must have no content aggregation set.
-	 * The passed IconTabFilter instance must not be nested, has to have its items aggregation set and not have content aggregation set.
+	 * Checks if an IconTabFilter is selectable.
+	 * The automatic logic for not selectable (only one click area of the filter) is based on
+	 * when the instance of the IconTabHeader is placed within an IconTabBar and
+	 * the IconTabBar hasn't any content aggregation set.
+	 * The passed IconTabFilter instance isn't nested,
+	 * and has its items aggregation set, but doesn't have any content aggregation set.
 	 * @private
 	 * @param {sap.m.IconTabFilter} oIconTabFilter The instance to check
 	 * @returns {boolean}
 	 */
-	IconTabHeader.prototype._isUnselectable = function (oIconTabFilter) {
-		var oFilter = oIconTabFilter._getRealTab();
+	IconTabHeader.prototype._isSelectable = function (oIconTabFilter) {
+		var oFilter = oIconTabFilter._getRealTab(),
+		sFilterInteractionMode = oFilter.getInteractionMode();
 
-		return !oFilter.getEnabled() || (this._isInsideIconTabBar() && !this.getParent().getContent().length &&
-			oFilter._getNestedLevel() === 1 && oFilter.getItems().length && !oFilter.getContent().length) ||
-			oFilter._isOverflow();
+		if (!oFilter.getEnabled()) {
+			return false;
+		}
+
+		// If an item doesn't have children or it is an overflow, it is selectable
+		if (!oFilter.getItems().length || oFilter._isOverflow()) {
+			return true;
+		}
+
+		if (sFilterInteractionMode === IconTabFilterInteractionMode.Auto) {
+			return !this._isInsideIconTabBar() ||
+				oFilter._getNestedLevel() !== 1 ||
+				this.getParent().getContent().length ||
+				oFilter.getContent().length;
+		}
+
+		return sFilterInteractionMode === IconTabFilterInteractionMode.Select;
 	};
 
 	/**
@@ -1513,8 +1542,8 @@ sap.ui.define([
 			return;
 		}
 
-		// if candidate selected item is unselectable, instead select its first available child item that has content
-		if (this._isUnselectable(this.oSelectedItem)) {
+		// if candidate selected item is not selectable, instead select its first available child item that has content
+		if (!this._isSelectable(this.oSelectedItem)) {
 			this.setSelectedItem(this.oSelectedItem._getFirstAvailableSubFilter(), true);
 			return;
 		}
@@ -1631,7 +1660,11 @@ sap.ui.define([
 	IconTabHeader.prototype.ontouchstart = function(oEvent) {
 		var oTargetTouch = oEvent.targetTouches[0];
 		// store touch state
-		this._iActiveTouch = oTargetTouch.identifier;
+		if (oEvent.which === 3) { // when the event is a right-click
+			return;
+		} else {
+			this._iActiveTouch = oTargetTouch.identifier;
+		}
 	};
 
 	/**

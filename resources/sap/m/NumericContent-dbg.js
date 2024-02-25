@@ -6,6 +6,7 @@
 
 sap.ui.define([
 	"./library",
+	"sap/base/i18n/Localization",
 	"sap/ui/core/Control",
 	"sap/ui/core/IconPool",
 	"sap/ui/core/ResizeHandler",
@@ -13,11 +14,10 @@ sap.ui.define([
 	"./NumericContentRenderer",
 	"sap/ui/events/KeyCodes",
 	"sap/base/util/deepEqual",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/Core",
 	"sap/ui/core/Lib",
 	"sap/ui/core/Theming"
-], function (library, Control, IconPool, ResizeHandler, Image, NumericContentRenderer, KeyCodes, deepEqual, Configuration, Core, CoreLib, Theming) {
+], function (library, Localization, Control, IconPool, ResizeHandler, Image, NumericContentRenderer, KeyCodes, deepEqual, Core, CoreLib, Theming) {
 	"use strict";
 
 	var LANG_MAP = { // keys are compared in lowercase
@@ -111,7 +111,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.34
 	 *
 	 * @public
@@ -241,7 +241,7 @@ sap.ui.define([
 
 	NumericContent.prototype._getMaxDigitsData = function () {
 		var sFontClass = null,
-			sLang = Configuration.getLanguage().toLowerCase(),
+			sLang = Localization.getLanguage().toLowerCase(),
 			iMaxLength = LANG_MAP[sLang] || 4;
 
 		if (this.getAdaptiveFontSize()) {
@@ -460,7 +460,6 @@ sap.ui.define([
 	 */
 	NumericContent.prototype.onkeyup = function (oEvent) {
 		if (oEvent.which === KeyCodes.ENTER || oEvent.which === KeyCodes.SPACE) {
-			this.firePress();
 			oEvent.preventDefault();
 		}
 	};
@@ -471,7 +470,8 @@ sap.ui.define([
 	 * @param {sap.ui.base.Event} oEvent which was fired
 	 */
 	NumericContent.prototype.onkeydown = function (oEvent) {
-		if (oEvent.which === KeyCodes.SPACE) {
+		if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER) {
+			this.firePress();
 			oEvent.preventDefault();
 		}
 	};

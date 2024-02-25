@@ -6,9 +6,12 @@
 
 //Provides control sap.m.PlanningCalendar.
 sap.ui.define([
+	"sap/base/i18n/Formatting",
+	"sap/base/i18n/Localization",
 	'sap/m/delegate/DateNavigation',
 	'sap/ui/core/Control',
 	'sap/ui/base/ManagedObjectObserver',
+	"sap/ui/core/Lib",
 	'sap/ui/unified/library',
 	'sap/ui/unified/calendar/CalendarUtils',
 	'sap/ui/unified/calendar/CalendarDate',
@@ -22,7 +25,6 @@ sap.ui.define([
 	'sap/ui/unified/CalendarRow',
 	'sap/ui/unified/CalendarRowRenderer',
 	'sap/ui/Device',
-	'sap/ui/core/Core',
 	'sap/ui/core/Element',
 	'sap/ui/core/Renderer',
 	'sap/ui/core/ResizeHandler',
@@ -31,7 +33,6 @@ sap.ui.define([
 	'sap/ui/core/dnd/DropInfo',
 	'sap/ui/core/dnd/DragDropInfo',
 	'sap/ui/core/format/DateFormat',
-	'sap/ui/core/Configuration',
 	'sap/ui/core/date/CalendarWeekNumbering',
 	'sap/ui/core/date/CalendarUtils',
 	'sap/ui/core/Locale',
@@ -54,11 +55,15 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/m/List",
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/dom/jquery/control" // jQuery Plugin "control"
+	// jQuery Plugin "control"
+	"sap/ui/dom/jquery/control"
 ], function(
+	Formatting,
+	Localization,
 	DateNavigation,
 	Control,
 	ManagedObjectObserver,
+	Library,
 	unifiedLibrary,
 	CalendarUtils,
 	CalendarDate,
@@ -72,7 +77,6 @@ sap.ui.define([
 	CalendarRow,
 	CalendarRowRenderer,
 	Device,
-	Core,
 	Element,
 	Renderer,
 	ResizeHandler,
@@ -81,7 +85,6 @@ sap.ui.define([
 	DropInfo,
 	DragDropInfo,
 	DateFormat,
-	Configuration,
 	CalendarWeekNumbering,
 	CalendarDateUtils,
 	Locale,
@@ -203,7 +206,7 @@ sap.ui.define([
 	 * {@link sap.m.PlanningCalendarView PlanningCalendarView}'s properties.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -304,8 +307,7 @@ sap.ui.define([
 
 				/**
 				 * Defines rounding of the width <code>CalendarAppoinment</code>
-				 * <b>Note:</b> This property is applied, when the calendar interval type is day and the view shows more than 20 days
-				 * @experimental Since 1.81.0
+				 * <b>Note:</b> This property is applied, when the calendar interval type is Day and the view shows more than 20 days
 				 * @since 1.81.0
 				 */
 				appointmentRoundWidth: { type: "sap.ui.unified.CalendarAppointmentRoundWidth", group: "Appearance", defaultValue: CalendarAppointmentRoundWidth.None},
@@ -451,8 +453,36 @@ sap.ui.define([
 				/**
 				 * Special days in the header calendar visualized as date range with a type.
 				 *
-				 * <b>Note:</b> If one day is assigned to more than one type, only the first type will be used.
-				 */
+				 * <b>Note:</b> In case there are multiple <code>sap.ui.unified.DateTypeRange</code> instances given for a single date,
+				 * only the first <code>sap.ui.unified.DateTypeRange</code> instance will be used.
+				 * For example, using the following sample, the 1st of November will be displayed as a working day of type "Type10":
+				 *
+				 *
+				 *	<pre>
+				 *	new DateTypeRange({
+				 *		startDate: UI5Date.getInstance(2023, 10, 1),
+				 *		type: CalendarDayType.Type10,
+				 *	}),
+				 *	new DateTypeRange({
+				 *		startDate: UI5Date.getInstance(2023, 10, 1),
+				 *		type: CalendarDayType.NonWorking
+				 *	})
+				 *	</pre>
+				 *
+				 * If you want the first of November to be displayed as a non-working day and also as "Type10," the following should be done:
+				 *	<pre>
+				 *	new DateTypeRange({
+				 *		startDate: UI5Date.getInstance(2023, 10, 1),
+				 *		type: CalendarDayType.Type10,
+				 *		secondaryType: CalendarDayType.NonWorking
+				 *	})
+				 *	</pre>
+				 *
+				 * You can use only one of the following types for a given date: <code>sap.ui.unified.CalendarDayType.NonWorking</code>,
+				 * <code>sap.ui.unified.CalendarDayType.Working</code> or <code>sap.ui.unified.CalendarDayType.None</code>.
+				 * Assigning more than one of these values in combination for the same date will lead to unpredictable results.
+				 *
+				*/
 				specialDates : {type : "sap.ui.unified.DateTypeRange", multiple : true, singularName : "specialDate"},
 
 				/**
@@ -773,7 +803,7 @@ sap.ui.define([
 		this.setAggregation("header", this._createHeader());
 		this._attachHeaderEvents();
 
-		this._oRB = Core.getLibraryResourceBundle("sap.m");
+		this._oRB = Library.getResourceBundleFor("sap.m");
 
 		var sId = this.getId();
 		this._oIntervalTypeSelect = this._getHeader()._getOrCreateViewSwitch();
@@ -822,10 +852,15 @@ sap.ui.define([
 				}
 			},
 			onAfterRendering: function () {
-				this._rowHeaderPressEventMouse = oTable.$().find(".sapMPlanCalRowHead > div.sapMLIB").on("click", function (oEvent) {
-					var oRowHeader = Element.closestTo(oEvent.currentTarget),
-						oRow = getRow(oRowHeader.getParent()),
-						sRowHeaderId = oRowHeader.getId();
+				if (this.hasListeners("rowHeaderPress")) {
+					this._addRowHeaderDescription();
+				}
+
+				const oRowHeader = oTable.$().find(".sapMPlanCalRowHead");
+				this._rowHeaderPressEventMouse = oRowHeader.on("click", function (oEvent) {
+					const oRowListItem = Element.closestTo(oEvent.currentTarget),
+						oRow = getRow(oRowListItem),
+						sRowHeaderId = oRowListItem.getAggregation("cells")[0].getId();
 
 					/**
 					 * @deprecated As of version 1.119
@@ -833,7 +868,7 @@ sap.ui.define([
 					this.fireRowHeaderClick({headerId: sRowHeaderId, row: oRow});
 					this.fireRowHeaderPress({headerId: sRowHeaderId, row: oRow});
 				}.bind(this));
-				this._rowHeaderPressEventKeyboard = oTable.$().find(".sapMPlanCalRowHead").on("keydown", function (oEvent) {
+				this._rowHeaderPressEventKeyboard = oRowHeader.on("keydown", function (oEvent) {
 					if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER) {
 						var oRowListItem = Element.closestTo(oEvent.currentTarget),
 							oRow = getRow(oRowListItem),
@@ -946,9 +981,11 @@ sap.ui.define([
 		if (this.hasListeners("intervalSelect")) {
 			INTERVAL_CTR_REFERENCES.forEach(function (sControlRef) {
 				if (this[sControlRef]) {
-					this[sControlRef]._setAriaRole("button"); // set new aria role
+					this[sControlRef]._setAriaRole("columnheader"); // set new aria role
 				}
 			}, this);
+		} else if (this.hasListeners("rowHeaderPress") && this.getDomRef()) {
+			this._addRowHeaderDescription();
 		}
 
 		return this;
@@ -1048,6 +1085,16 @@ sap.ui.define([
 		this.fireStartDateChange();
 	};
 
+	PlanningCalendar.prototype._addRowHeaderDescription = function() {
+		const aPlanningCalendarRowListItems = this.getAggregation("table").getItems();
+		aPlanningCalendarRowListItems.forEach(function(oRowListItem) {
+			const oRowId = oRowListItem.getTimeline().getAssociation("row"),
+				oRow = Element.getElementById(oRowId),
+				sRowDesctiption = oRow.getRowHeaderDescription() || this._oRB.getText("PLANNING_CALENDAR_ROW_HEADER_DESCRIPTION");
+			oRowListItem.getDomRef().querySelector(".sapMPlanCalRowHead").setAttribute("aria-description", sRowDesctiption);
+		}, this);
+	};
+
 	/**
 	 * Creates and formats the strings to be displayed in the picker button from the _header aggregation.
 	 * If the date part of the start and end range of the showed view are different, the string contains
@@ -1062,7 +1109,7 @@ sap.ui.define([
 			oEndDate = CalendarUtils._createLocalDate(oRangeDates.oEndDate, true),
 			sViewKey = this.getViewKey(),
 			sViewType = CalendarIntervalType[sViewKey] ? CalendarIntervalType[sViewKey] : this._getView(sViewKey).getIntervalType(),
-			bRTL = Core.getConfiguration().getRTL(),
+			bRTL = Localization.getRTL(),
 			oDateFormat,
 			sResult,
 			sBeginningResult,
@@ -1178,7 +1225,7 @@ sap.ui.define([
 	};
 
 	PlanningCalendar.prototype._getPrimaryCalendarType = function(){
-		return this.getProperty("primaryCalendarType") || Configuration.getCalendarType();
+		return this.getProperty("primaryCalendarType") || Formatting.getCalendarType();
 	};
 
 	/**
@@ -1279,7 +1326,7 @@ sap.ui.define([
 
 	PlanningCalendar.prototype._setAriaRole = function (oInterval) {
 		if (this.hasListeners("intervalSelect")) {
-			oInterval._setAriaRole("button"); // set new aria role
+			oInterval._setAriaRole("columnheader"); // set new aria role
 		} else {
 			oInterval._setAriaRole("gridcell"); // set new aria role
 		}
@@ -2062,7 +2109,7 @@ sap.ui.define([
 			return;
 		}
 		var sCurrentPickerId = this._getHeader().getAssociation("currentPicker"),
-			oPicker = Core.byId(sCurrentPickerId),
+			oPicker = Element.getElementById(sCurrentPickerId),
 			sViewKey = this.getViewKey(),
 			oDateNav = this._dateNav,
 			oPCStart = oDateNav.getStart(),
@@ -2099,7 +2146,7 @@ sap.ui.define([
 	};
 
 	PlanningCalendar.prototype._updateWeekConfiguration = function() {
-		var sLocale = Configuration.getFormatSettings().getFormatLocale().toString(),
+		var sLocale = new Locale(Formatting.getLanguageTag()).toString(),
 			sCalendarWeekNumbering = this.getCalendarWeekNumbering(),
 			iFirstDayOfWeek = this.getFirstDayOfWeek(),
 			oWeekConfiguration = CalendarDateUtils.getWeekConfigurationValues(sCalendarWeekNumbering, new Locale(sLocale));
@@ -2109,6 +2156,7 @@ sap.ui.define([
 		}
 
 		this._dateNav.setWeekConfiguration(oWeekConfiguration);
+		this.setStartDate(this._dateNav.getStart());
 	};
 
 	PlanningCalendar.prototype._handleFocus = function (oEvent) {
@@ -2184,7 +2232,7 @@ sap.ui.define([
 			 * is because the dates are timezone irrelevant), it should be called with the local datetime values presented
 			 * as UTC ones(e.g. if oStartDate is 21 Dec 1981, 13:00 GMT+02:00, it will be converted to 21 Dec 1981, 13:00 GMT+00:00)
 			 */
-			var sLocale = Configuration.getFormatSettings().getFormatLocale().toString(),
+			var sLocale = new Locale(Formatting.getLanguageTag()).toString(),
 				oWeekConfigurationValues = CalendarDateUtils.getWeekConfigurationValues(this.getCalendarWeekNumbering(), new Locale(sLocale)),
 				oFirstDateOfWeek,
 				oLocalDate;
@@ -2226,7 +2274,7 @@ sap.ui.define([
 	PlanningCalendar.prototype._updatePickerSelection = function() {
 		var oRangeDates = this._getFirstAndLastRangeDate(),
 			sCurrentPickerId = this._getHeader().getAssociation("currentPicker"),
-			oPicker = Core.byId(sCurrentPickerId),
+			oPicker = Element.getElementById(sCurrentPickerId),
 			oSelectedRange;
 
 		oSelectedRange = new DateRange({
@@ -2680,7 +2728,7 @@ sap.ui.define([
 		this.setAssociation("legend", vLegend, true);
 
 		var aRows = this.getRows(),
-			oLegend = this.getLegend() && Core.byId(this.getLegend()),
+			oLegend = this.getLegend() && Element.getElementById(this.getLegend()),
 			oLegendDestroyObserver;
 
 		for (var i = 0; i < aRows.length; i++) {
@@ -3151,7 +3199,11 @@ sap.ui.define([
 	 */
 	PlanningCalendar.prototype._handleDateSelect = function(oEvent) {
 		var oStartDate,
-			oCurrentStartDate = this.getStartDate();
+			oCurrentStartDate = this.getStartDate(),
+			sViewKey = this.getViewKey(),
+			oCurrentView = this._getView(sViewKey),
+			sCurrentViewIntervalType = oCurrentView.getIntervalType(),
+			sControlRef;
 
 		if (this.isRelative()) {
 			oStartDate = UI5Date.getInstance(this.getMinDate().getTime());
@@ -3163,7 +3215,7 @@ sap.ui.define([
 		}
 
 		// Checking if the current view (custom or not) is of type Hour
-		if (this._getView(this.getViewKey()).getIntervalType() === CalendarIntervalType.Hour) {
+		if (sCurrentViewIntervalType === CalendarIntervalType.Hour) {
 			oStartDate.setHours(oCurrentStartDate.getHours());
 			oStartDate.setMinutes(oCurrentStartDate.getMinutes());
 			oStartDate.setSeconds(oCurrentStartDate.getSeconds());
@@ -3171,12 +3223,10 @@ sap.ui.define([
 
 		if (oCurrentStartDate.getTime() !== oStartDate.getTime()){
 			this._changeStartDate(oStartDate);
+			if (sCurrentViewIntervalType === CalendarIntervalType.Month) {
+				oStartDate = this.getStartDate();
+			}
 			this._dateNav.setCurrent(oStartDate);
-
-			var sViewKey = this.getViewKey(),
-				oCurrentView = this._getView(sViewKey),
-				sCurrentViewIntervalType = oCurrentView.getIntervalType(),
-				sControlRef;
 
 			if (sCurrentViewIntervalType === "Hour") {
 				sCurrentViewIntervalType = "Time";
@@ -3675,7 +3725,7 @@ sap.ui.define([
 		for (var i = 0; i < rows.length; i++) {
 			var aApps = getRowTimeline(rows[i]).aSelectedAppointments;
 			for (var j = 0; j < aApps.length; j++) {
-				var oApp = Core.byId(aApps[j]);
+				var oApp = Element.getElementById(aApps[j]);
 				if (oApp) {
 					oApp.setProperty("selected", false, true);
 					oApp.$().removeClass("sapUiCalendarAppSel");
@@ -3983,7 +4033,7 @@ sap.ui.define([
 			sLegendId = oTimeline.getLegend();
 
 		if (sLegendId) {
-			oLegend = Core.byId(sLegendId);
+			oLegend = Element.getElementById(sLegendId);
 			if (oLegend) {
 				aTypes = oLegend.getAppointmentItems ? oLegend.getAppointmentItems() : oLegend.getItems();
 			} else {
@@ -4032,60 +4082,6 @@ sap.ui.define([
 		if (getRow(oTimeline.getParent()).getEnableAppointmentsCreate()) {
 			oRm.attr("draggable", "true");
 		}
-	};
-
-	PlanningCalendarRowTimelineRenderer.renderInterval = function (oRm, oTimeline, iInterval, iWidth,  aIntervalHeaders, aNonWorkingItems, iStartOffset, iNonWorkingMax, aNonWorkingSubItems, iSubStartOffset, iNonWorkingSubMax, bFirstOfType, bLastOfType) {
-		var sIntervalType = oTimeline.getIntervalType(),
-			sAdditionalNonWorkingClass;
-		if (oTimeline._getRelativeInfo().bIsRelative){
-			var aEmptyNonWorkDay = [];
-		return CalendarRowRenderer.renderInterval(oRm, oTimeline, iInterval, iWidth,  aIntervalHeaders, aEmptyNonWorkDay, iStartOffset, iNonWorkingMax, aNonWorkingSubItems, iSubStartOffset, iNonWorkingSubMax, bFirstOfType, bLastOfType, sAdditionalNonWorkingClass);
-		}
-		if (sIntervalType === CalendarIntervalType.Day || sIntervalType === CalendarIntervalType.Week || sIntervalType === CalendarIntervalType.OneMonth || sIntervalType === "OneMonth") {
-			var oRow = getRow(oTimeline.getParent()),
-				oPC = oRow.getParent(),
-				fnNonWorkingFilter = function (oSpecialDate) {
-					return oSpecialDate.getType() === CalendarDayType.NonWorking;
-				},
-				aRowNonWorkingDates = oRow._getSpecialDates().filter(fnNonWorkingFilter),
-				aPCNonWorkingDates = oPC._getSpecialDates().filter(fnNonWorkingFilter),
-				oRowStartDate = oTimeline.getStartDate(),
-				aAllNonworkingDates, oCurrentDate, oNonWorkingStartDate, oNonWorkingEndDate;
-
-			if (aPCNonWorkingDates && aRowNonWorkingDates) {
-				aAllNonworkingDates = aPCNonWorkingDates.concat(aRowNonWorkingDates);
-			} else if (aRowNonWorkingDates) {
-				aAllNonworkingDates = aRowNonWorkingDates;
-			}
-
-			if (aAllNonworkingDates && aAllNonworkingDates.length) {
-				var fnDayMatchesCurrentDate = function (iDay) {
-					return iDay === oCurrentDate.getDay();
-				};
-				oCurrentDate = UI5Date.getInstance(oRowStartDate.getTime());
-				oCurrentDate.setHours(0, 0, 0);
-				oCurrentDate.setDate(oRowStartDate.getDate() + iInterval);
-
-				for (var i = 0; i < aAllNonworkingDates.length; i++) {
-					if (aAllNonworkingDates[i].getStartDate()) {
-						oNonWorkingStartDate = UI5Date.getInstance(aAllNonworkingDates[i].getStartDate().getTime());
-					}
-					if (aAllNonworkingDates[i].getEndDate()) {
-						oNonWorkingEndDate = UI5Date.getInstance(aAllNonworkingDates[i].getEndDate().getTime());
-					} else {
-						oNonWorkingEndDate = UI5Date.getInstance(aAllNonworkingDates[i].getStartDate().getTime());
-						oNonWorkingEndDate.setHours(23, 59, 59);
-					}
-					if (oCurrentDate.getTime() >= oNonWorkingStartDate.getTime() && oCurrentDate.getTime() <= oNonWorkingEndDate.getTime()) {
-						var bAlreadyNonWorkingDate = aNonWorkingItems.some(fnDayMatchesCurrentDate);
-						if (!bAlreadyNonWorkingDate) {
-							sAdditionalNonWorkingClass = "sapUiCalendarRowAppsNoWork";
-						}
-					}
-				}
-			}
-		}
-		CalendarRowRenderer.renderInterval(oRm, oTimeline, iInterval, iWidth,  aIntervalHeaders, aNonWorkingItems, iStartOffset, iNonWorkingMax, aNonWorkingSubItems, iSubStartOffset, iNonWorkingSubMax, bFirstOfType, bLastOfType, sAdditionalNonWorkingClass);
 	};
 
 	/**
@@ -4141,6 +4137,54 @@ sap.ui.define([
 
 	PlanningCalendarRowTimeline.prototype._isCreatingPerformed = function () {
 		return this._isRowAppsIntervalMouseDownTarget;
+	};
+
+	/**
+	 * @private
+	 * @override
+	 */
+	PlanningCalendarRowTimeline.prototype._isNonWorkingInterval = function (iInterval, aNonWorkingItems, iStartOffset, iNonWorkingMax) {
+		const oRow = Element.getElementById(this.getAssociation("row")),
+			oDate = CalendarDate.fromUTCDate(this._getStartDate().getJSDate()),
+			oRowSpecialDates = oRow._getSpecialDates(),
+			oPCSpecialDates = oRow.getParent()._getSpecialDates();
+
+		oDate.setDate(oDate.getDate() + iInterval);
+
+		const bWorkingInRow = this._isDateOfType(oDate, CalendarDayType.Working, oRowSpecialDates),
+			bNonWorkingInRow = this._isDateOfType(oDate, CalendarDayType.NonWorking, oRowSpecialDates),
+			bWorkingInPC = this._isDateOfType(oDate, CalendarDayType.Working, oPCSpecialDates),
+			bNonWorkingInPC = this._isDateOfType(oDate, CalendarDayType.NonWorking, oPCSpecialDates),
+			bNonWorkingProperty = CalendarRow.prototype._isNonWorkingInterval.call(this, iInterval, aNonWorkingItems, iStartOffset, iNonWorkingMax);
+
+		return bNonWorkingInRow
+			|| (bNonWorkingInPC && !bWorkingInRow)
+			|| (bNonWorkingProperty && !bWorkingInRow && !bWorkingInPC);
+	};
+
+	/**
+	 * Checks if a given date corresponds to a given type.
+	 *
+	 * @private
+	 * @param {sap.ui.unified.calendar.CalendarDate} oDate Date object to check if it corresponds to a given type
+	 * @param {string} sType String used for type checking
+	 * @param {array} aSpecialDates A of predefined date types
+	 * @returns {boolean}
+	 */
+	PlanningCalendarRowTimeline.prototype._isDateOfType = function (oDate, sType, aSpecialDates) {
+		let oStartDate, oEndDate;
+		const oDateRange = aSpecialDates
+			.find(function(oDateType) {
+				oStartDate = oDateType.getStartDate()
+					? CalendarDate.fromLocalJSDate(oDateType.getStartDate())
+					: CalendarDate.fromLocalJSDate(oDateType.getEndDate());
+				oEndDate = oDateType.getEndDate()
+					? CalendarDate.fromLocalJSDate(oDateType.getEndDate())
+					: CalendarDate.fromLocalJSDate(oDateType.getStartDate());
+				return CalendarUtils._isBetween(oDate, oStartDate, oEndDate, true);
+			});
+
+		return Boolean(oDateRange) && (oDateRange.getType() === sType || oDateRange.getSecondaryType() === sType);
 	};
 
 	/**
@@ -4308,9 +4352,9 @@ sap.ui.define([
 					fnAlignIndicator = function () {
 						var $Indicator = jQuery(oDragSession.getIndicator()),
 							oDropRects = oDragSession.getDropControl().getDomRef().getBoundingClientRect(),
-							oRowRects = Core.byId(sTargetElementId).getDomRef().getBoundingClientRect(),
+							oRowRects = Element.getElementById(sTargetElementId).getDomRef().getBoundingClientRect(),
 							iAppWidth = oDragSession.getDragControl().$().outerWidth(),
-							bRTL = Core.getConfiguration().getRTL(),
+							bRTL = Localization.getRTL(),
 							iAvailWidth = bRTL ? Math.ceil(oDropRects.right) - oRowRects.left : oRowRects.right - Math.ceil(oDropRects.left);
 
 						$Indicator
@@ -4498,7 +4542,7 @@ sap.ui.define([
 							$Indicator.addClass("sapUiDnDIndicatorHide");
 						},
 						oDropRects = oDragSession.getDropControl().getDomRef().getBoundingClientRect(),
-						oRowRects = Core.byId(sTargetElementId).getDomRef().getBoundingClientRect(),
+						oRowRects = Element.getElementById(sTargetElementId).getDomRef().getBoundingClientRect(),
 						mDraggedControlConfig = {
 							width: oDropRects.left + oDropRects.width - (oDragSession.getDragControl().$().position().left + oRowRects.left),
 							"z-index": 1,
@@ -4631,11 +4675,12 @@ sap.ui.define([
 		};
 	};
 
-	PlanningCalendar.prototype._calcCreateNewAppHours = function(oRowStartDate, iStartIndex, iEndIndex) {
-		var oRowStartUTC = CalendarUtils._createUniversalUTCDate(oRowStartDate, null, true),
+	PlanningCalendar.prototype._calcCreateNewAppHours = function(oRowStartDate, iFirstIndex, iSecondIndex) {
+		var [iStartIndex, iEndIndex] = [iFirstIndex, iSecondIndex].sort((iIndexA, iIndexB) => iIndexA - iIndexB),
+			oRowStartUTC = CalendarUtils._createUniversalUTCDate(oRowStartDate, null, true),
 			iMinutesStep = 30 * 60 * 1000,  // 30 min
-			iStartAddon = (iStartIndex <= iEndIndex) ? iStartIndex : iEndIndex,
-			iEndAddon = (iStartIndex <= iEndIndex) ? iEndIndex + 1 : iStartIndex,
+			iStartAddon = iStartIndex,
+			iEndAddon = iEndIndex + 1,
 			oRowStartDateTimeUTC = UI5Date.getInstance(oRowStartUTC.setUTCMinutes(0, 0, 0)),
 			oAppStartUTC = UI5Date.getInstance(oRowStartDateTimeUTC.getTime() + iStartAddon * iMinutesStep),
 			oAppEndUTC = UI5Date.getInstance(oRowStartDateTimeUTC.getTime() + iEndAddon * iMinutesStep);
@@ -4646,10 +4691,12 @@ sap.ui.define([
 		};
 	};
 
-	PlanningCalendar.prototype._calcCreateNewAppDays = function(oRowStartDate, iStartIndex, iEndIndex) {
-		var oRowStartUTC = CalendarUtils._createUniversalUTCDate(oRowStartDate, null, true),
-			iStartAddon = (iStartIndex <= iEndIndex) ? iStartIndex : iEndIndex,
-			iEndAddon = (iStartIndex <= iEndIndex) ? iEndIndex + 1 : iStartIndex,
+	PlanningCalendar.prototype._calcCreateNewAppDays = function(oRowStartDate, iFirstIndex, iSecondIndex) {
+
+		var [iStartIndex, iEndIndex] = [iFirstIndex, iSecondIndex].sort((iIndexA, iIndexB) => iIndexA - iIndexB),
+			oRowStartUTC = CalendarUtils._createUniversalUTCDate(oRowStartDate, null, true),
+			iStartAddon = iStartIndex,
+			iEndAddon = iEndIndex + 1,
 			oAppStartUTC = UI5Date.getInstance(oRowStartUTC.getTime()),
 			oAppEndUTC = UI5Date.getInstance(oRowStartUTC.getTime());
 
@@ -4659,10 +4706,11 @@ sap.ui.define([
 		};
 	};
 
-	PlanningCalendar.prototype._calcCreateNewAppMonths = function(oRowStartDate, iStartIndex, iEndIndex) {
-		var oRowStartUTC = CalendarUtils._createUniversalUTCDate(oRowStartDate, null, true),
-			iStartAddon = (iStartIndex <= iEndIndex) ? iStartIndex : iEndIndex,
-			iEndAddon = (iStartIndex <= iEndIndex) ? iEndIndex + 1 : iStartIndex,
+	PlanningCalendar.prototype._calcCreateNewAppMonths = function(oRowStartDate, iFirstIndex, iSecondIndex) {
+		var [iStartIndex, iEndIndex] = [iFirstIndex, iSecondIndex].sort((iIndexA, iIndexB) => iIndexA - iIndexB),
+			oRowStartUTC = CalendarUtils._createUniversalUTCDate(oRowStartDate, null, true),
+			iStartAddon = iStartIndex,
+			iEndAddon = iEndIndex + 1,
 			oAppStartUTC = UI5Date.getInstance(oRowStartUTC.getTime()),
 			oAppEndUTC = UI5Date.getInstance(oRowStartUTC.getTime());
 
@@ -4726,7 +4774,7 @@ sap.ui.define([
 						if (iStartXPosition <= oDropRects.left) {
 							oDragSession.setIndicatorConfig({ left: iStartXPosition, width: Math.max((oDropRects.left + oDropRects.width - iStartXPosition), oDropRects.width) });
 						} else {
-							oDragSession.setIndicatorConfig({ left: oDropRects.left, width: iStartXPosition - oDropRects.left });
+							oDragSession.setIndicatorConfig({ left: oDropRects.left, width: Math.max((iStartXPosition - oDropRects.left + oDropRects.width), oDropRects.width) });
 						}
 					} else {
 						oDragSession.setData("text", oDropRects.left + "|" + oTimeline.indexOfAggregation("_intervalPlaceholders", oDragSession.getDropControl()));
@@ -4797,11 +4845,14 @@ sap.ui.define([
 	PlanningCalendar.prototype._getSpecialDates = function(){
 		var specialDates = this.getSpecialDates();
 		for (var i = 0; i < specialDates.length; i++) {
-			var bNeedsSecondTypeAdding = specialDates[i].getSecondaryType() === unifiedLibrary.CalendarDayType.NonWorking
-					&& specialDates[i].getType() !== unifiedLibrary.CalendarDayType.NonWorking;
+			var bNeedsSecondTypeAdding = (specialDates[i].getSecondaryType() === CalendarDayType.NonWorking
+					&& specialDates[i].getType() !== CalendarDayType.NonWorking)
+					|| (specialDates[i].getSecondaryType() === CalendarDayType.Working
+					&& specialDates[i].getType() !== CalendarDayType.Working);
+
 			if (bNeedsSecondTypeAdding) {
 				var newSpecialDate = new DateTypeRange();
-				newSpecialDate.setType(unifiedLibrary.CalendarDayType.NonWorking);
+				newSpecialDate.setType(specialDates[i].getSecondaryType());
 				newSpecialDate.setStartDate(specialDates[i].getStartDate());
 				if (specialDates[i].getEndDate()) {
 					newSpecialDate.setEndDate(specialDates[i].getEndDate());
@@ -4824,11 +4875,11 @@ sap.ui.define([
 	function getRow(oListItem) {
 		var sId = oListItem.getId();
 
-		return Core.byId(sId.substring(0, sId.indexOf(LISTITEM_SUFFIX)));
+		return Element.getElementById(sId.substring(0, sId.indexOf(LISTITEM_SUFFIX)));
 	}
 
 	function getListItem(oRow) {
-		return Core.byId(oRow.getId() + LISTITEM_SUFFIX);
+		return Element.getElementById(oRow.getId() + LISTITEM_SUFFIX);
 	}
 
 	function getRowHeader(oRow) {

@@ -8,6 +8,7 @@ sap.ui.define([
 	"sap/m/Button",
 	"sap/m/Toolbar",
 	"sap/m/ToolbarSpacer",
+	"sap/m/ScrollContainer",
 	"sap/m/library",
 	"sap/ui/Device",
 	"sap/ui/core/Control",
@@ -33,6 +34,7 @@ sap.ui.define([
 	Button,
 	Toolbar,
 	ToolbarSpacer,
+	ScrollContainer,
 	library,
 	Device,
 	Control,
@@ -80,7 +82,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -151,15 +153,6 @@ sap.ui.define([
 			}
 			this.handleOuterEvent(this.getId(), oEvent);
 		}, this);
-	};
-
-	Menu.prototype.applySettings = function (mSettings) {
-		// Only works in JS views, but that's fine. This is only convenience for controls.
-		if (mSettings) {
-			this._addAllToPrivateAggregation(mSettings, "_quickActions");
-			this._addAllToPrivateAggregation(mSettings, "_items");
-		}
-		Control.prototype.applySettings.apply(this, arguments);
 	};
 
 	/**
@@ -248,6 +241,8 @@ sap.ui.define([
 				this._oItemsContainer.destroy();
 				this._oItemsContainer = null;
 			}
+
+			StaticArea.getUIArea().removeContent(this, true);
 			this._oPopover.close();
 			ControlEvents.unbindAnyEvent(this.fAnyEventHandlerProxy);
 		}
@@ -272,15 +267,6 @@ sap.ui.define([
 			delete this._oIsOpenBy;
 		}
 		ControlEvents.unbindAnyEvent(this.fAnyEventHandlerProxy);
-	};
-
-	Menu.prototype._addAllToPrivateAggregation = function (mSettings, sAggregationName) {
-		if (mSettings[sAggregationName]) {
-			mSettings[sAggregationName].forEach(function (oItem) {
-				this.addAggregation(sAggregationName, oItem);
-			}.bind(this));
-			delete mSettings[sAggregationName];
-		}
 	};
 
 	Menu.prototype._initPopover = function () {
@@ -404,6 +390,9 @@ sap.ui.define([
 
 		this._oItemsContainer.addView(oItem);
 		this._setItemVisibility(oMenuItem, oMenuItem.getVisible());
+		oMenuItem.getScrollDelegate = function() {
+			return oItem.getParent().getLayout().getScrollDelegate();
+		};
 	};
 
 	Menu.prototype._createItemsContainer = function () {
@@ -573,11 +562,15 @@ sap.ui.define([
 	};
 
 	Menu.prototype._setItemVisibility = function (oItem, bVisible) {
+		if (!this._oItemsContainer) {
+			return;
+		}
+
 		var oList = this._oItemsContainer._getNavigationList().getItems();
 		var oListItem = oList.find(function (oListItem) {
 			return oListItem._key == oItem.getId();
 		});
-		oListItem && oListItem.setVisible(bVisible);
+		oListItem?.setVisible(bVisible);
 	};
 
 	Menu.prototype._initQuickActionContainer = function () {

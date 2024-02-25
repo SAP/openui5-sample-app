@@ -5,6 +5,8 @@
  */
 
 sap.ui.define([
+	"sap/base/i18n/Formatting",
+	"sap/ui/core/Lib",
 	"sap/ui/core/library",
 	"sap/ui/core/Control",
 	"sap/ui/model/type/Date",
@@ -15,10 +17,11 @@ sap.ui.define([
 	"./library",
 	"./Button",
 	"sap/ui/core/date/UI5Date",
-	"./TimePickerInternalsRenderer",
-	"sap/ui/core/Configuration"
+	"./TimePickerInternalsRenderer"
 ],
 	function(
+		Formatting,
+		Library,
 		coreLibrary,
 		Control,
 		SimpleDateType,
@@ -28,9 +31,8 @@ sap.ui.define([
 		Locale,
 		library,
 		Button,
-        UI5Date,
-		TimePickerInternalsRenderer,
-		Configuration
+		UI5Date,
+		TimePickerInternalsRenderer
 	) {
 		"use strict";
 
@@ -49,7 +51,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @private
@@ -136,12 +138,12 @@ sap.ui.define([
 		 * @private
 		 */
 		TimePickerInternals.prototype.init = function () {
-			var oLocale = Configuration.getFormatSettings().getFormatLocale(),
+			var oLocale = new Locale(Formatting.getLanguageTag()),
 				oLocaleData = LocaleData.getInstance(oLocale),
 				aPeriods = oLocaleData.getDayPeriods("abbreviated"),
 				sDefaultDisplayFormat = oLocaleData.getTimePattern("medium");
 
-			this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			this._oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 			this._sAM = aPeriods[0];
 			this._sPM = aPeriods[1];
@@ -333,7 +335,7 @@ sap.ui.define([
 		 */
 		TimePickerInternals.prototype._getLocaleBasedPattern = function (sPlaceholder) {
 			return LocaleData.getInstance(
-				Configuration.getFormatSettings().getFormatLocale()
+				new Locale(Formatting.getLanguageTag())
 			).getTimePattern(sPlaceholder);
 		};
 
@@ -374,7 +376,7 @@ sap.ui.define([
 			}
 
 			if (!sCalendarType) {
-				sCalendarType = Configuration.getCalendarType();
+				sCalendarType = Formatting.getCalendarType();
 			}
 
 			return this._getFormatterInstance(sPattern, bRelative, sCalendarType);

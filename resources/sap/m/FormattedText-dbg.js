@@ -7,6 +7,7 @@
 // Provides control sap.m.FormattedText.
 sap.ui.define([
 	'./library',
+	"sap/ui/core/Element",
 	'sap/ui/core/library',
 	'sap/ui/core/Control',
 	'./FormattedTextAnchorGenerator',
@@ -14,11 +15,11 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/base/security/URLListValidator",
 	"sap/base/security/sanitizeHTML",
-	"sap/ui/util/openWindow",
-	'sap/ui/core/Core'
+	"sap/ui/util/openWindow"
 ],
 function(
 	library,
+	Element,
 	coreLibrary,
 	Control,
 	FormattedTextAnchorGenerator,
@@ -26,8 +27,7 @@ function(
 	Log,
 	URLListValidator,
 	sanitizeHTML0,
-	openWindow,
-	Core
+	openWindow
 	) {
 		"use strict";
 
@@ -46,7 +46,7 @@ function(
 		 * @class
 		 * The FormattedText control allows the usage of a limited set of tags for inline display of formatted text in HTML format.
 		 * @extends sap.ui.core.Control
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -169,6 +169,7 @@ function(
 				'class' : 1,
 				'a::href' : 1,
 				'a::target' : 1,
+				'a::title' : 1,
 				'dir' : 1
 			},
 			// rules for the allowed tags
@@ -329,7 +330,7 @@ function(
 				return;
 			}
 			oEvent.preventDefault();
-			var oLink = Core.byId(oEvent.currentTarget.id);
+			var oLink = Element.getElementById(oEvent.currentTarget.id);
 			if (oLink && oLink.isA('sap.m.Link') && (oLink.getAccessibleRole() === library.LinkAccessibleRole.Button || !oLink.getHref())) {
 				return;
 			}

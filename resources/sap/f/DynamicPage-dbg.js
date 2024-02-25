@@ -7,10 +7,13 @@
 // Provides control sap.f.DynamicPage.
 sap.ui.define([
 	"./library",
+	"sap/base/i18n/Localization",
 	"sap/ui/core/Control",
-	"sap/ui/core/Core",
+	"sap/ui/core/ControlBehavior",
 	"sap/m/library",
 	"sap/ui/base/ManagedObjectObserver",
+	"sap/ui/core/Element",
+	"sap/ui/core/Lib",
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/core/Configuration",
 	"sap/ui/core/InvisibleText",
@@ -26,10 +29,13 @@ sap.ui.define([
 	"sap/ui/core/library"
 ], function(
 	library,
+	Localization,
 	Control,
-	Core,
+	ControlBehavior,
 	mLibrary,
 	ManagedObjectObserver,
+	Element,
+	Library,
 	ResizeHandler,
 	Configuration,
 	InvisibleText,
@@ -112,7 +118,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -346,6 +352,8 @@ sap.ui.define([
 
 	DynamicPage.HEADER_MAX_ALLOWED_NON_SROLLABLE_ON_MOBILE = 0.3;
 
+	DynamicPage.MEDIA_RANGESET_NAME = "DynamicPageRangeSet";
+
 	DynamicPage.BREAK_POINTS = {
 		DESKTOP: 1439,
 		TABLET: 1024,
@@ -417,7 +425,10 @@ sap.ui.define([
 				this._adjustStickyContent();
 			}};
 
-		this._setAriaRoleDescription(Core.getLibraryResourceBundle("sap.f").getText(DynamicPage.ARIA_ROLE_DESCRIPTION));
+		this._setAriaRoleDescription(Library.getResourceBundleFor("sap.f").getText(DynamicPage.ARIA_ROLE_DESCRIPTION));
+		this._initRangeSet();
+		this._attachMediaContainerWidthChange(this._onMediaRangeChange,
+			this, DynamicPage.MEDIA_RANGESET_NAME);
 	};
 
 	DynamicPage.prototype.onBeforeRendering = function () {
@@ -567,7 +578,7 @@ sap.ui.define([
 			return this;
 		}
 
-		oOldStickySubheaderProvider = Core.byId(sOldStickySubheaderProviderId);
+		oOldStickySubheaderProvider = Element.getElementById(sOldStickySubheaderProviderId);
 
 		if (this._oStickySubheader && oOldStickySubheaderProvider) {
 			oOldStickySubheaderProvider._returnStickyContent();
@@ -682,7 +693,7 @@ sap.ui.define([
 			return;
 		}
 
-		sAnimationMode = Core.getConfiguration().getAnimationMode();
+		sAnimationMode = ControlBehavior.getAnimationMode();
 		bUseAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
 
 		if (exists(this.$contentFitContainer)) {
@@ -1361,7 +1372,7 @@ sap.ui.define([
 			+ iTitleWidth + 'px ' + Math.floor(iTitleHeight) + 'px, '
 			+ iTitleWidth + 'px 0, 100% 0, 100% 100%, 0 100%)'; //
 
-		if (Core.getConfiguration().getRTL()) {
+		if (Localization.getRTL()) {
 			sClipPath = 'polygon(0px 0px, ' + iScrollbarWidth + 'px 0px, '
 			+ iScrollbarWidth + 'px ' + iTitleHeight + 'px, 100% '
 			+ iTitleHeight + 'px, 100% 100%, 0 100%)';
@@ -1405,12 +1416,21 @@ sap.ui.define([
 		this._updateTitleARIAState(bExpanded);
 	};
 
-	DynamicPage.prototype._applyContextualSettings = function (oContextualSettings) {
-		var iCurrentWidth = oContextualSettings.contextualWidth;
+	/**
+	 * Initializes the specific Device.media range set for <code>DynamicPage</code>.
+	 */
+	DynamicPage.prototype._initRangeSet = function () {
+		if (!Device.media.hasRangeSet(DynamicPage.MEDIA_RANGESET_NAME)) {
+			Device.media.initRangeSet(DynamicPage.MEDIA_RANGESET_NAME,
+				[DynamicPage.BREAK_POINTS.PHONE,
+				DynamicPage.BREAK_POINTS.TABLET,
+				DynamicPage.BREAK_POINTS.DESKTOP], "px", ["phone", "tablet", "desktop"]);
+		}
+	};
 
+	DynamicPage.prototype._onMediaRangeChange = function () {
+		var iCurrentWidth = this._getMediaContainerWidth();
 		this._updateMedia(iCurrentWidth);
-
-		return ManagedObject.prototype._applyContextualSettings.call(this, oContextualSettings);
 	};
 
 	/**
@@ -1948,7 +1968,7 @@ sap.ui.define([
 			return;
 		}
 
-		oStickySubheaderProvider = Core.byId(sStickySubheaderProviderId);
+		oStickySubheaderProvider = Element.getElementById(sStickySubheaderProviderId);
 
 		if (!exists(oStickySubheaderProvider)) {
 			return;
@@ -2327,7 +2347,7 @@ sap.ui.define([
 			sStickySubheaderProviderId = this.getStickySubheaderProvider(),
 			bIsInInterface;
 
-		oStickySubheaderProvider = Core.byId(sStickySubheaderProviderId);
+		oStickySubheaderProvider = Element.getElementById(sStickySubheaderProviderId);
 
 		if (exists(oStickySubheaderProvider) && !this._bAlreadyAddedStickySubheaderAfterRenderingDelegate) {
 			bIsInInterface = oStickySubheaderProvider.getMetadata()
@@ -2404,7 +2424,7 @@ sap.ui.define([
 	 * @private
 	 */
 	DynamicPage.prototype._bStickySubheaderProviderExists = function() {
-		var oSticky = Core.byId(this.getStickySubheaderProvider());
+		var oSticky = Element.getElementById(this.getStickySubheaderProvider());
 		return !!oSticky && oSticky.isA("sap.f.IDynamicPageStickyContent");
 	};
 
@@ -2484,7 +2504,7 @@ sap.ui.define([
 		if (oFooter && !oFooter.getAriaLabelledBy().length) {
 			this._oInvisibleText = new InvisibleText({
 				id: oFooter.getId() + "-FooterActions-InvisibleText",
-				text: Core.getLibraryResourceBundle("sap.f").getText(DynamicPage.ARIA_LABEL_TOOLBAR_FOOTER_ACTIONS)
+				text: Library.getResourceBundleFor("sap.f").getText(DynamicPage.ARIA_LABEL_TOOLBAR_FOOTER_ACTIONS)
 			}).toStatic();
 
 			oFooter.addAriaLabelledBy(this._oInvisibleText);

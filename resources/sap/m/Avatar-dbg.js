@@ -6,17 +6,18 @@
 
 // Provides control sap.m.Avatar.
 sap.ui.define([
-    "sap/ui/core/Control",
-    "sap/ui/core/IconPool",
-    "./AvatarRenderer",
-    "sap/ui/events/KeyCodes",
-    "sap/base/Log",
-    "sap/ui/core/Icon",
-    "./library",
+	"sap/ui/core/Control",
+	"sap/ui/core/IconPool",
+	"./AvatarRenderer",
+	"sap/ui/core/Lib",
+	"sap/ui/events/KeyCodes",
+	"sap/base/Log",
+	"sap/ui/core/Icon",
+	"./library",
 	"sap/ui/core/library",
 	'sap/ui/core/InvisibleText',
 	'sap/m/imageUtils/getCacheBustedUrl'
-], function(Control, IconPool, AvatarRenderer, KeyCodes, Log, Icon, library, coreLibrary, InvisibleText, getCacheBustedUrl) {
+], function(Control, IconPool, AvatarRenderer, Library, KeyCodes, Log, Icon, library, coreLibrary, InvisibleText, getCacheBustedUrl) {
 	"use strict";
 
 	// shortcut for sap.m.AvatarType
@@ -84,7 +85,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -283,9 +284,9 @@ sap.ui.define([
 	 * @type {string}
 	 */
 	Avatar.AVATAR_BADGE_TOOLTIP = {
-		"sap-icon://zoom-in" : sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("AVATAR_TOOLTIP_ZOOMIN"),
-		"sap-icon://camera": sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("AVATAR_TOOLTIP_CAMERA"),
-		"sap-icon://edit": sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("AVATAR_TOOLTIP_EDIT")
+		"sap-icon://zoom-in" : Library.getResourceBundleFor("sap.m").getText("AVATAR_TOOLTIP_ZOOMIN"),
+		"sap-icon://camera": Library.getResourceBundleFor("sap.m").getText("AVATAR_TOOLTIP_CAMERA"),
+		"sap-icon://edit": Library.getResourceBundleFor("sap.m").getText("AVATAR_TOOLTIP_EDIT")
 	};
 
 	Avatar.prototype.init = function () {
@@ -364,6 +365,24 @@ sap.ui.define([
 		}
 
 		return this.setAggregation("detailBox", oLightBox);
+	};
+
+	/**
+	 * Destroys the <code>detailBox</code> aggregation.
+	 * @returns {this} <code>this</code> for chaining
+	 * @override
+	 * @public
+	 */
+	Avatar.prototype.destroyDetailBox = function () {
+		var oCurrentDetailBox = this.getDetailBox();
+
+		if (oCurrentDetailBox) {
+			this.detachPress(this._fnLightBoxOpen, oCurrentDetailBox);
+			this._fnLightBoxOpen = null;
+
+		}
+
+		return this.destroyAggregation("detailBox");
 	};
 
 	Avatar.prototype.setBadgeValueState = function(sValue) {
@@ -630,7 +649,7 @@ sap.ui.define([
 	};
 
 	Avatar.prototype._getDefaultTooltip = function() {
-		return sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("AVATAR_TOOLTIP");
+		return Library.getResourceBundleFor("sap.m").getText("AVATAR_TOOLTIP");
 	};
 
 	Avatar.prototype._getBadgeIconSource = function() {
@@ -849,7 +868,6 @@ sap.ui.define([
 	 * It can be used when you have applied ImageCustomData to the Avatar control and you want to force the browser to reload the image.
 	 *
 	 * @function
-	 * @experimental
 	 * @private
 	 * @ui5-restricted sap.fe
 	 */

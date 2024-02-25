@@ -5,11 +5,11 @@
  */
 
 // Provides control sap.f.SearchManager.
-sap.ui.define(['sap/ui/core/Element', 'sap/ui/base/ManagedObjectObserver', './shellBar/Search'],
-	function (Element, ManagedObjectObserver, Search) {
+sap.ui.define(['sap/ui/core/Element', 'sap/ui/base/ManagedObjectObserver', './shellBar/Search', "sap/ui/core/Lib"],
+	function(Element, ManagedObjectObserver, Search, Library) {
 		"use strict";
 
-		var oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 		/**
 		 * Constructor for a new <code>SearchManager</code>.
@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/Element', 'sap/ui/base/ManagedObjectObserver', './sh
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public

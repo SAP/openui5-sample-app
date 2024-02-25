@@ -5,6 +5,8 @@
  */
 
 sap.ui.define([
+	"sap/ui/core/Lib",
+	"sap/ui/core/Messaging",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/Control",
 	"sap/ui/core/CustomData",
@@ -33,6 +35,8 @@ sap.ui.define([
 	"sap/base/security/URLListValidator",
 	"sap/ui/thirdparty/caja-html-sanitizer"
 ], function(
+	Library,
+	Messaging,
 	jQuery,
 	Control,
 	CustomData,
@@ -114,7 +118,7 @@ sap.ui.define([
 	 * The responsiveness of the <code>MessageView</code> is determined by the container in which it is embedded. For that reason the control could not be visualized if the
 	 * container’s sizes are not defined.
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @extends sap.ui.core.Control
 	 * @constructor
@@ -311,7 +315,7 @@ sap.ui.define([
 		var that = this;
 		this._bHasHeaderButton = false;
 
-		this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 		this._createNavigationPages();
 		this._createLists();
@@ -416,16 +420,35 @@ sap.ui.define([
 
 		if (aListItems.length === 1 && aListItems[0].getType()  === ListType.Navigation) {
 
-			this._fnHandleForwardNavigation(aListItems[0], "show");
+			if (this._navContainer.getCurrentPage() !== this._detailsPage) {
+				this._fnHandleForwardNavigation(aListItems[0], "show");
 
-			// TODO: adopt this to NavContainer's public API once a parameter for back navigation transition name is available
-			this._navContainer._pageStack[this._navContainer._pageStack.length - 1].transition = "slide";
+				// TODO: adopt this to NavContainer's public API once a parameter for back navigation transition name is available
+				this._navContainer._pageStack[this._navContainer._pageStack.length - 1].transition = "slide";
+			} else {
+				// if the update is just on the item's props, do not navigate back and forward
+				this._updateDescriptionPage(aItems[0], aListItems[0]);
+			}
 		} else if (aListItems.length === 0) {
 			this._navContainer.backToTop();
 		}
 
 		// Bind automatically to the MessageModel if no items are bound
 		this._makeAutomaticBinding();
+	};
+
+	/**
+	 * Updates details page when a MessageItem gets updated.
+	 * @param {sap.m.MessageItem} oMessageItem Selected MessageItem.
+	 * @param {sap.m.MessageListItem} oListItem MessageListItem created from the MessageItem.
+	 * @private
+	 */
+	MessageView.prototype._updateDescriptionPage = function (oMessageItem, oListItem) {
+		this._clearDetailsPage();
+		this._setTitle(oMessageItem, oListItem);
+		this._setDescription(oMessageItem);
+		this._setIcon(oMessageItem, oListItem);
+		this._detailsPage.invalidate();
 	};
 
 	/**
@@ -521,7 +544,7 @@ sap.ui.define([
 	MessageView.prototype._bindToMessageModel = function () {
 		var that = this;
 
-		this.setModel(sap.ui.getCore().getMessageManager().getMessageModel(), "message");
+		this.setModel(Messaging.getMessageModel(), "message");
 
 		this._oMessageItemTemplate = new MessageItem({
 			type: "{message>type}",

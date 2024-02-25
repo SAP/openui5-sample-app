@@ -10,11 +10,10 @@ sap.ui.define([], function() {
 	 * Static collection of utility functions to handle time zone related conversions
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @namespace
 	 * @alias module:sap/base/i18n/date/TimezoneUtils
 	 * @private
-	 * @ui5-restricted sap.ui.core.Configuration, sap/base/i18n/format/DateFormat
 	 */
 	var TimezoneUtils = {};
 
@@ -92,7 +91,7 @@ sap.ui.define([], function() {
 	 * @param {string} sTimezone The IANA timezone ID which is checked, e.g <code>"Europe/Berlin"</code>
 	 * @returns {boolean} Whether the time zone is a valid IANA timezone ID
 	 * @private
-	 * @ui5-restricted sap.ui.core.Configuration, sap.ui.core.format.DateFormat
+	 * @ui5-restricted sap.base.i18n.Localization, sap.ui.core.format.DateFormat
 	 */
 	TimezoneUtils.isValidTimezone = function(sTimezone) {
 		if (!sTimezone) {
@@ -137,7 +136,7 @@ sap.ui.define([], function() {
 	 * @param {string} sTargetTimezone The target IANA timezone ID, e.g <code>"Europe/Berlin"</code>
 	 * @returns {Date} The new date in the target time zone.
 	 * @private
-	 * @ui5-restricted sap.ui.core.format.DateFormat, sap.ui.unified, sap.m
+	 * @ui5-restricted sap.ui.core.format.DateFormat
 	 */
 	TimezoneUtils.convertToTimezone = function(oDate, sTargetTimezone) {
 		var oFormatParts = this._getParts(oDate, sTargetTimezone);
@@ -253,7 +252,7 @@ sap.ui.define([], function() {
 	 * @param {string} sTimezoneSource The source IANA timezone ID, e.g <code>"Europe/Berlin"</code>
 	 * @returns {number} The difference to UTC between the date in the time zone.
 	 * @private
-	 * @ui5-restricted sap.ui.core.format.DateFormat
+	 * @ui5-restricted sap.ui.core.date.UI5Date, sap.ui.core.format.DateFormat, sap.m.DynamicDateUtil
 	 */
 	TimezoneUtils.calculateOffset = function(oDate, sTimezoneSource) {
 		const oDateInTimezone = TimezoneUtils.convertToTimezone(oDate, sTimezoneSource);
@@ -313,7 +312,7 @@ sap.ui.define([], function() {
 	 *   e.g. <code>"Europe/Berlin"</code> or <code>"Asia/Kolkata"</code>
 	 *
 	 * @private
-	 * @ui5-restricted sap.ui.core.Configuration,sap.m.DateTimeField
+	 * @ui5-restricted sap.base.i18n.Localization, sap.ui.core.date.UI5Date, sap.m.DynamicDateOption
 	 */
 	TimezoneUtils.getLocalTimezone = function() {
 		if (sLocalTimezone === "") { // timezone may be undefined, only value "" means empty cache

@@ -12,6 +12,7 @@ sap.ui.define([
 	'./ButtonRenderer',
 	'sap/ui/core/EnabledPropagator',
 	'sap/ui/core/IconPool',
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'./SplitButtonRenderer',
 	"sap/ui/events/KeyCodes"
@@ -23,10 +24,11 @@ function(
 	ButtonRenderer,
 	EnabledPropagator,
 	IconPool,
+	Library,
 	coreLibrary,
 	SplitButtonRenderer,
 	KeyCodes
-	) {
+) {
 		"use strict";
 
 		// shortcut for sap.ui.core.TextDirection
@@ -46,7 +48,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @private
@@ -217,7 +219,7 @@ function(
 					id: this.getId() + "-arrowButton",
 					icon: "sap-icon://slim-arrow-down",
 					press: this._handleAction.bind(this),
-					tooltip: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("SPLIT_BUTTON_ARROW_TOOLTIP"),
+					tooltip: Library.getResourceBundleFor("sap.m").getText("SPLIT_BUTTON_ARROW_TOOLTIP"),
 					ariaHasPopup: coreLibrary.aria.HasPopup.Menu
 				}).addStyleClass("sapMSBArrow");
 				this.setAggregation("_arrowButton", oCtrl);

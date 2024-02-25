@@ -75,7 +75,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -425,11 +425,9 @@ function(
 
 		if (sType == ListItemType.Navigation) {
 			aOutput.push(oBundle.getText("LIST_ITEM_NAVIGATION"));
-		} else {
-			if (sType == ListItemType.Active || sType == ListItemType.DetailAndActive) {
+		} else if (sType == ListItemType.Active || sType == ListItemType.DetailAndActive) {
 				aOutput.push(oBundle.getText("LIST_ITEM_ACTIVE"));
 			}
-		}
 
 		var sGroupAnnouncement = this.getGroupAnnouncement() || "";
 		if (sGroupAnnouncement) {
@@ -819,6 +817,9 @@ function(
 
 		// set the property and do not invalidate
 		this.setProperty("selected", bSelected, true);
+
+		// let the list know the selected property is changed
+		this.informList("AfterSelectedChange", bSelected);
 
 		return this;
 	};
@@ -1232,12 +1233,12 @@ function(
 
 	// handle propagated focus to make the item row focusable
 	ListItemBase.prototype.onfocusin = function(oEvent) {
-		var oList = this.getList();
+		const oList = this.getList();
 		if (!oList || oEvent.isMarked()) {
 			return;
 		}
 
-		this.informList("FocusIn", oEvent.srcControl);
+		this.informList("FocusIn", oEvent.srcControl, oEvent);
 		oEvent.setMarked();
 	};
 

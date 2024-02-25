@@ -5,7 +5,6 @@ sap.ui.define([
 
 	var Component = ParentComponent.extend("qunit.router.component.parentRoute.ParentExtended.Component", {
 		metadata : {
-			interfaces: ["sap.ui.core.IAsyncContentCreation"],
 			manifest: "json"
 		}
 	});

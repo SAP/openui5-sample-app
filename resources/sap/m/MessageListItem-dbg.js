@@ -6,6 +6,7 @@
 
 // Provides control sap.m.MessageListItem.
 sap.ui.define([
+	"sap/ui/core/Lib",
 	"sap/ui/core/library",
 	"sap/ui/core/InvisibleText",
 	"./library",
@@ -13,7 +14,7 @@ sap.ui.define([
 	'./Link',
 	"./MessageListItemRenderer"
 ],
-	function (coreLibrary, InvisibleText, library, StandardListItem, Link, MessageListItemRenderer) {
+	function(Library, coreLibrary, InvisibleText, library, StandardListItem, Link, MessageListItemRenderer) {
 		"use strict";
 
 		// shortcut for sap.ui.core.MessageType
@@ -33,7 +34,7 @@ sap.ui.define([
 		 * @extends sap.m.StandardListItem
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @private
@@ -81,7 +82,7 @@ sap.ui.define([
 		};
 
 		MessageListItem.prototype._getLinkAriaDescribedBy = function () {
-			var sAccessibilityText = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("MESSAGE_VIEW_LINK_FOCUS_TEXT_" + this.getMessageType().toUpperCase());
+			var sAccessibilityText = Library.getResourceBundleFor("sap.m").getText("MESSAGE_VIEW_LINK_FOCUS_TEXT_" + this.getMessageType().toUpperCase());
 
 			return new InvisibleText(this.getId() + "-link", {
 				text: sAccessibilityText

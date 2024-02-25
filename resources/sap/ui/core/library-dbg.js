@@ -26,19 +26,15 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.120.7",
+		 version: "1.121.0",
 		 designtime: "sap/ui/core/designtime/library.designtime",
-		 // "apiVersion" is still WIP and in 1.120 restricted to the sap.ui.core library only!
-		 // TODO: Remove spread operator once UI5 Tooling can validate this new property
-		 ...{
-			"apiVersion": 2
-		 },
+		 apiVersion: 2,
 		 types: [
 
 			 // builtin types
@@ -95,6 +91,7 @@ sap.ui.define([
 		 interfaces: [
 			 "sap.ui.core.IShrinkable",
 			 "sap.ui.core.Label",
+			 "sap.ui.core.ILabelable",
 			 "sap.ui.core.PopupInterface",
 			 "sap.ui.core.Toolbar",
 			 "sap.ui.core.IContextMenu",
@@ -1264,6 +1261,27 @@ sap.ui.define([
 	 */
 
 	/**
+	 * Defines a control, which can specify if it can be bound to a label
+	 *
+	 * @since 1.121.0
+	 * @name sap.ui.core.ILabelable
+	 * @interface
+	 * @private
+	 * @ui5-restricted sap.ui.mdc
+	 */
+
+	/**
+	 * Returns if the control can be bound to a label
+	 *
+	 * @returns {boolean} <code>true</code> if the control can be bound to a label
+	 * @private
+	 * @ui5-restricted sap.ui.mdc
+	 * @function
+	 * @since 1.121.0
+	 * @name sap.ui.core.ILabelable.hasLabelableHTMLElement
+	 */
+
+	/**
 	 * Colors to highlight certain UI elements.
 	 *
 	 * In contrast to the <code>ValueState</code>, the semantic meaning must be defined by the application.
@@ -1608,7 +1626,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0
@@ -2449,7 +2467,6 @@ sap.ui.define([
 	 *
 	 * @enum {string}
 	 * @public
-	 * @experimental Since 1.73.
 	 * @since 1.78
 	 */
 	thisLib.InvisibleMessageMode =  {

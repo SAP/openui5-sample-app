@@ -5,15 +5,16 @@
  */
 
 sap.ui.define([
+	"sap/ui/core/Element",
 	"sap/ui/core/util/reflection/JsControlTreeModifier"
-], function(JsControlTreeModifier) {
+], function(Element, JsControlTreeModifier) {
 	"use strict";
 
 	/**
 	 * Change handler for hiding of a control.
 	 * @alias sap.ui.fl.changeHandler.HideControl
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @experimental Since 1.27.0
 	 */
 	var UnhideForm = { };
@@ -88,12 +89,12 @@ sap.ui.define([
 		//TODO remove sUnhideId when rta is switched to new logic to create reveal changes
 		var oContent = {};
 		if (oSpecificChangeInfo.sUnhideId) {
-			var oUnhideElement = sap.ui.getCore().byId(oSpecificChangeInfo.sUnhideId);
+			var oUnhideElement = Element.getElementById(oSpecificChangeInfo.sUnhideId);
 			oContent.elementSelector = JsControlTreeModifier.getSelector(oUnhideElement, mPropertyBag.appComponent);
 			oChangeWrapper.addDependentControl(oUnhideElement, "elementSelector", mPropertyBag);
 		} else if (oSpecificChangeInfo.revealedElementId ) {
 			//translate from FormElement (unstable id) to the label control (stable id and in public aggregation)
-			var oFormElement = sap.ui.getCore().byId(oSpecificChangeInfo.revealedElementId || oSpecificChangeInfo.sUnhideId);
+			var oFormElement = Element.getElementById(oSpecificChangeInfo.revealedElementId || oSpecificChangeInfo.sUnhideId);
 			var oLabel = oFormElement.getLabel();
 			oContent.elementSelector = JsControlTreeModifier.getSelector(oLabel, mPropertyBag.appComponent);
 			oChangeWrapper.addDependentControl(oLabel, "elementSelector", mPropertyBag);

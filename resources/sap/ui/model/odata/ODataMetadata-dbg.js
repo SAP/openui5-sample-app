@@ -12,16 +12,16 @@ sap.ui.define([
 	"./AnnotationParser",
 	"sap/base/assert",
 	"sap/base/Log",
+	"sap/base/i18n/Localization",
 	"sap/base/util/each",
 	"sap/base/util/extend",
 	"sap/base/util/isEmptyObject",
 	"sap/base/util/uid",
 	"sap/ui/base/EventProvider",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/cache/CacheManager",
 	"sap/ui/thirdparty/datajs"
 ],
-	function(Utils, AnnotationParser, assert, Log, each, extend, isEmptyObject, uid, EventProvider, Configuration,
+	function(Utils, AnnotationParser, assert, Log, Localization, each, extend, isEmptyObject, uid, EventProvider,
 		CacheManager, OData) {
 	"use strict";
 	/*eslint max-nested-callbacks: 0*/
@@ -49,7 +49,7 @@ sap.ui.define([
 	 * Implementation to access OData metadata
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.ODataMetadata
@@ -1239,6 +1239,36 @@ sap.ui.define([
 		return oPropertyMetadata;
 	};
 
+	/**
+	 * Gets a map of property names defined by referential constraints. Maps a key property name of the given entity to
+	 * the corresponding property name of the entity referenced by the given navigation property.
+	 *
+	 * @param {object} oSourceEntityType
+	 *   The entity type, for example the metadata object for "GWSAMPLE_BASIC.BusinessPartner"
+	 * @param {string} sNavigationProperty
+	 *   The navigation property name, for example "ToProducts"
+	 * @returns {Object<string, string>}
+	 *   Maps a key property name of the given entity to the foreign key property name of the entity referenced by the
+	 *   given navigation property based on the association's referential constraints; returns an empty object if no
+	 *   mapping is defined; for example <code>{"BusinessPartnerID" : "SupplierID"}</code>
+	 * @private
+	 */
+	ODataMetadata.prototype._getReferentialConstraintsMapping = function (oSourceEntityType, sNavigationProperty) {
+		const oNavigationPropertyInfo = oSourceEntityType.navigationProperty
+			.find((oNavigationProperty) => oNavigationProperty.name === sNavigationProperty);
+		const oAssociationInfo = this._splitName(oNavigationPropertyInfo.relationship);
+		const oAssociation = this._getObjectMetadata("association", oAssociationInfo.name, oAssociationInfo.namespace);
+		if (oNavigationPropertyInfo.fromRole === oAssociation.referentialConstraint?.principal.role) {
+			const aSourceProperties = oAssociation.referentialConstraint.principal.propertyRef;
+			const aTargetProperties = oAssociation.referentialConstraint.dependent.propertyRef;
+			return aSourceProperties.reduce((mSource2TargetProperty, oSourceProperty, iSourceIndex) => {
+				mSource2TargetProperty[oSourceProperty.name] = aTargetProperties[iSourceIndex].name;
+				return mSource2TargetProperty;
+			}, {});
+		}
+		return {};
+	};
+
 	ODataMetadata.prototype.destroy = function() {
 		delete this.oMetadata;
 		var that = this;
@@ -1309,7 +1339,7 @@ sap.ui.define([
 				"sap-cancel-on-close": true
 			},
 			oLangHeader = {
-				"Accept-Language": Configuration.getLanguageTag()
+				"Accept-Language": Localization.getLanguageTag().toString()
 			};
 
 		extend(oDefaultHeaders, this.mHeaders, oLangHeader);

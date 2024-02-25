@@ -7,14 +7,16 @@
 sap.ui.define([
 	'sap/ui/core/Control',
 	'./TimePickerSliderRenderer',
+	"sap/ui/core/ControlBehavior",
 	'sap/ui/core/IconPool',
 	'sap/ui/Device',
+	"sap/ui/core/Lib",
 	"sap/ui/events/KeyCodes",
 	"sap/m/Button",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/Configuration"
 ],
-	function(Control, TimePickerSliderRenderer, IconPool, Device, KeyCodes, Button, jQuery, Configuration) {
+	function(Control, TimePickerSliderRenderer, ControlBehavior, IconPool, Device, Library, KeyCodes, Button, jQuery, Configuration) {
 		"use strict";
 
 		/**
@@ -28,7 +30,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @private
@@ -87,7 +89,7 @@ sap.ui.define([
 			renderer: TimePickerSliderRenderer
 		});
 
-		var sAnimationMode = Configuration.getAnimationMode();
+		var sAnimationMode = ControlBehavior.getAnimationMode();
 		var bUseAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
 		var SCROLL_ANIMATION_DURATION = bUseAnimations ? 200 : 0;
 		var MIN_ITEMS = 50;
@@ -265,7 +267,7 @@ sap.ui.define([
 		 *
 		 * @override
 		 * @param {boolean} bValue True or false
-		 * @param {boolean} suppressEvent Whether to suppress event firing
+		 * @param {boolean} [suppressEvent] Whether to suppress event firing
 		 * @returns {this} this instance, used for chaining
 		 * @public
 		 */
@@ -979,8 +981,8 @@ sap.ui.define([
 			$aItems.eq(this._iSelectedItemIndex).addClass("sapMTimePickerItemSelected");
 			//WAI-ARIA region
 			oDescriptionElement = this.getDomRef("valDescription");
-			if (oDescriptionElement.innerHTML !== sAriaLabel) {
-				oDescriptionElement.innerHTML = sAriaLabel;
+			if (oDescriptionElement.textContent !== sAriaLabel) {
+				oDescriptionElement.textContent = sAriaLabel;
 			}
 		};
 
@@ -1160,7 +1162,7 @@ sap.ui.define([
 
 		TimePickerSlider.prototype._initArrows = function() {
 			var that = this, oArrowUp, oArrowDown,
-				oRB = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+				oRB = Library.getResourceBundleFor("sap.m");
 
 			oArrowUp = new Button({
 				icon: IconPool.getIconURI("slim-arrow-up"),

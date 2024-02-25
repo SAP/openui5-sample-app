@@ -37,22 +37,47 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @since 1.110
 	 * @alias sap.m.plugins.CopyProvider
+	 * @borrows sap.m.plugins.PluginBase.findOn as findOn
 	 */
 	const CopyProvider = PluginBase.extend("sap.m.plugins.CopyProvider", /** @lends sap.m.plugins.CopyProvider.prototype */ { metadata: {
 		library: "sap.m",
 		properties: {
 			/**
 			 * Callback function to extract the cell data that is copied to the clipboard.
+			 * <ul>
+			 * <li>If an array is returned, then each array value will be copied as a separate cell into the clipboard.</li>
+			 * <li>If <code>undefined</code> or <code>null</code> is returned, then the cell will be excluded from copying.</li>
+			 * <li>If an object is returned, then it must have the following properties:
+			 * <ul>
+			 *     <li><code>text</code>: (mandatory) The cell data to be copied to the clipboard as <code>text/plain</code> MIME type.</li>
+			 *     <li><code>html</code>: (optional) The cell data to be copied to the clipboard as <code>text/html</code> MIME type.</li>
+			 * </ul>
+			 * </li>
+			 * </ul>
+			 *
+			 * <b>Note:</b> The <code>CopyProvider</code> uses the <code>text/html</code> MIME type to display the merged cell data shown in a UI5 table as a single cell in the clipboard. This allows users
+			 * in applications supporting <code>text/html</code> MIME type, such as <code>Spreadsheet</code>, to preserve the cell data format that appears in a UI5 table.
+			 * The <code>CopyProvider</code> also uses the <code>text/plain</code> MIME type to display the merged cell data shown in a UI5 table as separate clipboard cells. This allows users
+			 * to edit plain data with applications like <code>SpreadSheet</code>, then copy and paste the data back into a UI5 table, preserving data integrity without in-cell formatting.<br>
+			 * Spreadsheet-like applications supporting <code>text/html</code> MIME type typically prioritize <code>text/html</code> clipboard data during paste. This means that
+			 * the data format copied from a UI5 table is preserved with the default paste operation. Users wanting to make edits can access the individual and unformatted cell data in the clipboard,
+			 * which is stored in the text/plain MIME type, by selecting the "Paste Special" option and then choosing "Unicode Text" in spreadsheet applications.<br>
+			 *
+			 * <b>Note:</b> Using <code>text/html</code> MIME type as a clipboard item might not be supported on all platforms. In such cases, the <code>CopyProvider</code> writes only <code>text/plain</code> data
+			 * to the clipboard. Refer to the <code>bIncludeHtmlMimeType</code> parameter and do not return the object type if this value is <code>false</code>.<br>
+			 *
+			 * <b>Note:</b> Even if the user is on a platform supporting <code>text/html</code> MIME type as a clipboard item, currently, any HTML tags are not allowed; all data is encoded.
 			 *
 			 * @callback sap.m.plugins.CopyProvider.extractDataHandler
 			 * @param {sap.ui.model.Context|sap.m.ColumnListItem} oContextOrRow The binding context of the selected row or the row instance if there is no binding
 			 * @param {sap.m.Column|sap.ui.table.Column|sap.ui.mdc.table.Column} oColumn The related column instance of selected cells
-			 * @returns {*|Array.<*>|undefined|null} The cell data to be copied or array of cell data to be split into different cells in the clipboard. <code>undefined</code> or <code>null</code> to exclude the cell from copying.
+			 * @param {boolean} bIncludeHtmlMimeType Indicates whether writing <code>text/html</code> MIME type to the clipboard is supported
+			 * @returns {*|{text: *, html: *}|Array.<*>|undefined|null} The cell data to be copied to the clipboard
 			 * @public
 			 */
 			/**
@@ -165,6 +190,8 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 		return /\n|\r|\t/.test(sCellData) ? '"' + sCellData.replaceAll('"', '""') + '"' : sCellData;
 	}
 
+	CopyProvider.findOn = PluginBase.findOn;
+
 	CopyProvider.prototype._shouldManageExtractData = function() {
 		const oControl = this.getControl();
 		const oParent = this.getParent();
@@ -189,17 +216,23 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 		this._oDelegate = { onkeydown: this.onkeydown, onBeforeRendering: this.onBeforeRendering };
 		oControl.addEventDelegate(this._oDelegate, this);
 
-		this._oCopyButton?.setEnabled(true);
 		this._shouldManageExtractData() && this.setExtractData(this._extractData.bind(this));
-		this._bCellsAreSelectable = this.getPlugin("sap.m.plugins.CellSelector")?.isSelectable();
+
+		this._handleCellSelectorSelectionChange();
+		this._handleControlSelectionChange();
+		this._updateCopyButtonVisibility();
+		this._updateCopyButtonEnabled();
 	};
 
 	CopyProvider.prototype.onDeactivate = function(oControl) {
 		oControl.removeEventDelegate(this._oDelegate, this);
 		this._oDelegate = null;
 
-		this._oCopyButton?.setEnabled(false);
 		this._shouldManageExtractData() && this.setExtractData();
+
+		this._handleCellSelectorSelectionChange();
+		this._handleControlSelectionChange();
+		this._updateCopyButtonEnabled();
 	};
 
 	CopyProvider.prototype.setVisible = function(bVisible) {
@@ -229,20 +262,21 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	 */
 	CopyProvider.prototype.getCopyButton = function(mSettings) {
 		if (!this._oCopyButton) {
-			const sText = coreLib.getResourceBundleFor("sap.m").getText("COPYPROVIDER_COPY");
+			const oBundle = coreLib.getResourceBundleFor("sap.m");
+			const sText = oBundle.getText("COPYPROVIDER_COPY");
 			this._oCopyButton = new OverflowToolbarButton({
 				icon: "sap-icon://copy",
-				enabled: this.getEnabled(),
+				enabled: this._getEffectiveEnabled(),
 				visible: this._getEffectiveVisible(),
 				text: sText,
 				tooltip: sText,
-				press: function() {
-					// TBD Button should be disabled when no selection is available. Until then only when the button is pressed a user message should be shown.
-					this._bActivatedByButton = true;
-					this.copySelectionData(true);
-					this._bActivatedByButton = false;
-				}.bind(this),
+				press: this.copySelectionData.bind(this, true),
 				...mSettings
+			});
+			sap.ui.require(["sap/ui/core/ShortcutHintsMixin"], (ShortcutHintsMixin) => {
+				ShortcutHintsMixin.addConfig(this._oCopyButton, {
+					message: oBundle.getText(Device.os.macintosh ? "COPYPROVIDER_SHORTCUT_MAC" : "COPYPROVIDER_SHORTCUT_WIN")
+				}, this.getParent());
 			});
 		}
 		return this._oCopyButton;
@@ -263,10 +297,11 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	 * if the {@link sap.m.plugins.CellSelector CellSelector} plugin is also enabled for the table.
 	 * <b>Note: </b> The returned array might be a sparse array if the {@link #getCopySparse copySparse} property is <code>true</code>.
 	 *
-	 * @returns {Array.<Array.<*>>} Two-dimensional extracted data from the selection.
+	 * @param {boolean} bIncludeHtmlMimeType Determines whether the selection data to be returned includes <code>text/html</code> MIME type values, if the platform supports <code>text/html</code> MIME type as a clipboard item
+	 * @returns {Array.<Array.<*>>|{text: Array.<Array.<*>>, html: Array.<Array.<*>>}} Two-dimensional data extracted from the selection, or an object with <code>text</code> and <code>html</code> keys, each with two-dimensional data extracted from the selection if <code>bIncludeHtmlMimeType</code> parameter is <code>true</code> and the platform supports <code>text/html</code> MIME type as a clipboard item.
 	 * @public
 	 */
-	CopyProvider.prototype.getSelectionData = function(_bIncludeHtmlMimeType = false) {
+	CopyProvider.prototype.getSelectionData = function(bIncludeHtmlMimeType = false) {
 		const oControl = this.getControl();
 		const fnExtractData = this.getExtractData();
 		if (!oControl || !fnExtractData) {
@@ -294,31 +329,26 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 		const bCellSelectorRowContextsMustBeMerged = Boolean(aCellSelectorRowContexts.length);
 		const bSelectedRowContextsMustBeSparse = bCellSelectorRowContextsMustBeMerged || bCopySparse;
 
-		let iRows = 0;
-		let iCells = 0;
+		this._iSelectedRows = 0;
+		this._iSelectedCells = 0;
 
 		if (this.getCopyPreference() == CopyPreference.Full || !bCellSelectorRowContextsMustBeMerged) {
 			aSelectedRowContexts = this.getConfig("selectedContexts", oControl, bSelectedRowContextsMustBeSparse);
 			Object.assign(aAllSelectedRowContexts, aSelectedRowContexts);
-			iRows = aSelectedRowContexts.reduce((counter, obj) => {
-				if (obj) {
-					counter++;
-				}
-				return counter;
-			}, 0);
+			this._iSelectedRows = aSelectedRowContexts.filter(Boolean).length;
 		}
 
 		if (bCellSelectorRowContextsMustBeMerged) {
 			Object.assign(aAllSelectedRowContexts, Array(mCellSelectionRange.from.rowIndex).concat(aCellSelectorRowContexts));
-			iCells = aCellSelectorRowContexts.length * (Math.abs(mCellSelectionRange.to.colIndex - mCellSelectionRange.from.colIndex) + 1);
+			this._iSelectedCells = aCellSelectorRowContexts.length * (Math.abs(mCellSelectionRange.to.colIndex - mCellSelectionRange.from.colIndex) + 1);
 		}
 
 		const aHtmlSelectionData = [];
 		const aTextSelectionData = [];
 		let bHtmlMimeTypeProvided = false;
 
-		if (_bIncludeHtmlMimeType && !isHtmlMimeTypeAllowed()) {
-			_bIncludeHtmlMimeType = false;
+		if (bIncludeHtmlMimeType && !isHtmlMimeTypeAllowed()) {
+			bIncludeHtmlMimeType = false;
 		}
 
 		for (let iContextIndex = 0; iContextIndex < aAllSelectedRowContexts.length; iContextIndex++) {
@@ -340,12 +370,12 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 				const bContextFromSelectedRows = (oRowContext == aSelectedRowContexts[iContextIndex]);
 				aSelectableColumns.forEach((oColumn, iColumnIndex) => {
 					if (bContextFromSelectedRows || (iColumnIndex >= mCellSelectionRange?.from.colIndex && iColumnIndex <= mCellSelectionRange?.to.colIndex)) {
-						const vCellData = fnExtractData(oRowContext, oColumn, _bIncludeHtmlMimeType);
+						const vCellData = fnExtractData(oRowContext, oColumn, bIncludeHtmlMimeType);
 						if (!isCellDataCopyable(vCellData)) {
 							return;
 						}
 
-						if (_bIncludeHtmlMimeType && vCellData.hasOwnProperty("html")) {
+						if (bIncludeHtmlMimeType && vCellData.hasOwnProperty("html")) {
 							bHtmlMimeTypeProvided = true;
 							pushCellDataTo(vCellData.html, aHtmlRowData);
 						}
@@ -368,15 +398,10 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 			}
 		}
 
-		const res = (bHtmlMimeTypeProvided) ? {
+		return (bHtmlMimeTypeProvided) ? {
 			text: aTextSelectionData,
 			html: aHtmlSelectionData
 		} : aTextSelectionData;
-
-		res.__iRows = iRows;
-		res.__iCells = iCells;
-
-		return res;
 	};
 
 	/**
@@ -393,12 +418,6 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 		const vSelectionData = this.getSelectionData(true);
 		const aTextSelectionData = vSelectionData.text || vSelectionData;
 		if (!aTextSelectionData.length || bFireCopyEvent && !this.fireCopy({data: aTextSelectionData}, true)) {
-
-			// TBD Button should be disabled when no selection is available. Until then only when the button is pressed a user message should be shown.
-			if (this._bActivatedByButton && !aTextSelectionData.length) {
-				this._notifyUser(0, 0);
-			}
-
 			return Promise.resolve();
 		}
 
@@ -411,12 +430,10 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 			return aRows.map(stringifyForTextMimeType).join("\t");
 		}).join("\n");
 
-		let res = null;
-
 		if (!aHtmlSelectionData.length) {
-			res = navigator.clipboard.writeText(sClipboardText);
-			this._notifyUser(vSelectionData.__iRows, vSelectionData.__iCells);
-			return res;
+			return navigator.clipboard.writeText(sClipboardText).then(() => {
+				this._notifyUser();
+			});
 		}
 
 		const sHtmlMimeType = "text/html";
@@ -429,24 +446,25 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 			[sHtmlMimeType]: new Blob([sClipboardHtml], {type: sHtmlMimeType})
 		});
 
-		res = navigator.clipboard.write([oClipboardItem]);
-		this._notifyUser(vSelectionData.__iRows, vSelectionData.__iCells);
-		return res;
+		return navigator.clipboard.write([oClipboardItem]).then(() => {
+			this._notifyUser();
+		});
 	};
 
 	/**
 	 * This hook gets called by the CellSelector when the selectable state is changed.
 	 *
-	 * @param {boolean} bSelectable Whether cells are selectable or not
+	 * @param {sap.m.plugins.CellSelector} oCellSelector The CellSelector instance
 	 * @private
 	 * @ui5-restricted sap.m.plugins.CellSelector
 	 */
-	CopyProvider.prototype.onCellSelectorSelectableChange = function(bSelectable) {
-		this._bCellsAreSelectable = bSelectable;
+	CopyProvider.prototype.onCellSelectorSelectableChange = function(oCellSelector) {
+		this._handleCellSelectorSelectionChange(oCellSelector);
 		this._updateCopyButtonVisibility();
 	};
 
 	CopyProvider.prototype.onBeforeRendering = function() {
+		this._handleControlSelectionChange();
 		this._updateCopyButtonVisibility();
 	};
 
@@ -469,8 +487,38 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 		this.copySelectionData(true);
 	};
 
+	CopyProvider.prototype._handleControlSelectionChange = function() {
+		const oControl = this.getControl();
+		this.getConfig("detachSelectionChange", oControl, this._updateCopyButtonEnabled, this);
+		if (this.isActive() && this.getConfig("isSelectable", oControl)) {
+			this.getConfig("attachSelectionChange", oControl, this._updateCopyButtonEnabled, this);
+		}
+	};
+
+	CopyProvider.prototype._handleCellSelectorSelectionChange = function(oCellSelector) {
+		oCellSelector ??= this.getPlugin("sap.m.plugins.CellSelector");
+		if (!oCellSelector) {
+			return;
+		}
+
+		oCellSelector.detachEvent("selectionChange", this._updateCopyButtonEnabled, this);
+		if (this.isActive() && oCellSelector.isSelectable()) {
+			oCellSelector.attachEvent("selectionChange", this._updateCopyButtonEnabled, this);
+		}
+	};
+
 	CopyProvider.prototype._isControlSelectable = function() {
-		return Boolean(this.getConfig("isSelectable", this.getControl()) || this._bCellsAreSelectable);
+		return Boolean(
+			this.getConfig("isSelectable", this.getControl()) ||
+			this.getPlugin("sap.m.plugins.CellSelector")?.isSelectable()
+		);
+	};
+
+	CopyProvider.prototype._hasControlSelection = function() {
+		return Boolean(
+			this.getConfig("hasSelection", this.getControl()) ||
+			this.getPlugin("sap.m.plugins.CellSelector")?.hasSelection()
+		);
 	};
 
 	CopyProvider.prototype._getEffectiveVisible = function() {
@@ -481,7 +529,15 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 		this._oCopyButton?.setVisible(this._getEffectiveVisible());
 	};
 
-	CopyProvider.prototype._extractData = function(oRowContext, oColumn, _bIncludeHtmlMimeType) {
+	CopyProvider.prototype._getEffectiveEnabled = function() {
+		return this.isActive() ? this._hasControlSelection() : false;
+	};
+
+	CopyProvider.prototype._updateCopyButtonEnabled = function() {
+		this._oCopyButton?.setEnabled(this._getEffectiveEnabled());
+	};
+
+	CopyProvider.prototype._extractData = function(oRowContext, oColumn, bIncludeHtmlMimeType) {
 		if (!this._mColumnClipboardSettings) {
 			this._mColumnClipboardSettings = new WeakMap();
 		}
@@ -513,7 +569,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 			aPropertyValues[0] = fnUnitFormatter(aPropertyValues[0], aPropertyValues[1]);
 		}
 
-		if (!_bIncludeHtmlMimeType) {
+		if (!bIncludeHtmlMimeType) {
 			return aPropertyValues;
 		}
 
@@ -530,66 +586,34 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	};
 
 	/**
-	 * Shows a notification message to the user - either MessageToast or MessageBox.
+	 * Shows the user a notification message about the result of the copy action.
 	 *
-	 * When a message text is given a MessageBox with the given state is shown.
-	 * When the message is <code>""</code> and the state is <code>Error</code> a default error message is displayed.
-	 * Otherwise an information message based on the number of selected rows and / or cells is shown.
-	 *
-	 * @param {int} iRows The count of selected rows
-	 * @param {int} iCells The count of selected cells
-	 * @param {string} [sMessageText] An optional message text
-	 * @param {string} [sState="Error"] The sverity of the optional message
 	 * @returns {Promise}
 	 * @private
 	 */
-	CopyProvider.prototype._notifyUser = function(iRows, iCells, sMessageText, sState = "Error") {
-		const bHasSelection = iRows > 0 || iCells > 0;
-		const oBundle = coreLib.getResourceBundleFor("sap.m");
-		return new Promise(function(resolve, reject) {
-			if (sMessageText === "" && sState === "Error") {
-				sMessageText = oBundle.getText("COPYPROVIDER_DEFAULT_ERROR_MSG");
-			}
+	CopyProvider.prototype._notifyUser = function() {
+		const iRows = this._iSelectedRows;
+		const iCells = this._iSelectedCells;
+		const bPreferCells = this.getCopyPreference() === "Cells";
 
-			if (!bHasSelection && !sMessageText) {
-				sMessageText = oBundle.getText("COPYPROVIDER_NOSELECTION_MSG");
-				sState = "Information";
-			}
-
-			if (sMessageText) {
-				sap.ui.require(["sap/m/MessageBox"], function(MessageBox) {
-					const sFuncName = sState.toLowerCase();
-					if (typeof MessageBox[sFuncName] === "function") {
-						MessageBox[sFuncName](sMessageText);
-						resolve();
-					}
-					reject();
-				});
-			} else if (bHasSelection) {
-				const bPreferCells = this.getCopyPreference() === "Cells";
-
-				sap.ui.require(["sap/m/MessageToast"], function(MessageToast) {
-					let sMsg;
-					if (iRows == 1 && iCells <= 0) {
-						sMsg = oBundle.getText("COPYPROVIDER_SELECT_ROW_SINGLE_MSG");
-					} else if (iRows > 1 && iCells <= 0) {
-						sMsg = oBundle.getText("COPYPROVIDER_SELECT_ROW_MULTI_MSG");
-					} else if (iCells == 1 && (iRows == 0 || bPreferCells)) {
-						sMsg = oBundle.getText("COPYPROVIDER_SELECT_CELL_SINGLE_MSG");
-					} else if (iCells > 1 && (iRows == 0 || bPreferCells)) {
-						sMsg = oBundle.getText("COPYPROVIDER_SELECT_CELL_MULTI_MSG");
-					} else if (iRows > 0 && iCells > 0) {
-						sMsg = oBundle.getText("COPYPROVIDER_SELECT_ROW_AND_CELL_MSG");
-					}
-					if (sMsg) {
-						MessageToast.show(sMsg);
-						resolve();
-					} else {
-						reject();
-					}
-				});
-			}
-		}.bind(this));
+		return new Promise((resolve) => {
+			sap.ui.require(["sap/m/MessageToast"], (MessageToast) => {
+				let sBundleKey;
+				if (iRows && !iCells) {
+					sBundleKey = (iRows == 1) ? "ROW_SINGLE" : "ROW_MULTI";
+				} else if (iCells && (!iRows || bPreferCells)) {
+					sBundleKey = (iCells == 1) ? "CELL_SINGLE" : "CELL_MULTI";
+				} else if (iRows > 0 && iCells > 0) {
+					sBundleKey = "ROW_AND_CELL";
+				}
+				if (sBundleKey) {
+					const oBundle = coreLib.getResourceBundleFor("sap.m");
+					const sMessage = oBundle.getText("COPYPROVIDER_SELECT_" + sBundleKey + "_MSG");
+					MessageToast.show(sMessage);
+				}
+				resolve();
+			});
+		});
 	};
 
 	/**
@@ -597,6 +621,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	 */
 	PluginBase.setConfigs({
 		"sap.m.Table": {
+			_oWM: new WeakMap(),
 			allowForCopySelector: ".sapMLIBFocusable,.sapMLIBSelectM,.sapMLIBSelectS",
 			selectedContexts: function(oTable, bSparse) {
 				const aSelectedContexts = [];
@@ -617,6 +642,25 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 			},
 			isSelectable: function(oTable) {
 				return oTable.getMode().includes("Select");
+			},
+			hasSelection: function(oTable) {
+				return Boolean(oTable.getSelectedItem());
+			},
+			attachSelectionChange: function(oTable, fnHandler, oListener) {
+				// removal of the selected item might cause a selection change
+				const oDelegate = { onBeforeRendering: fnHandler };
+				this._oWM.set(oTable, oDelegate);
+				oTable.addEventDelegate(oDelegate, oListener);
+
+				// the binding update might cause a selection change
+				oTable.attachUpdateFinished(fnHandler, oListener);
+				oTable.attachEvent("itemSelectedChange", fnHandler, oListener);
+			},
+			detachSelectionChange: function(oTable, fnHandler, oListener) {
+				const oDelegate = this._oWM.get(oTable);
+				oTable.removeEventDelegate(oDelegate, oListener);
+				oTable.detachUpdateFinished(fnHandler, oListener);
+				oTable.detachEvent("itemSelectedChange", fnHandler, oListener);
 			}
 		},
 		"sap.ui.table.Table": {
@@ -644,6 +688,17 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 			},
 			isSelectable: function(oTable) {
 				return oTable.getSelectionMode() != "None";
+			},
+			hasSelection: function(oTable) {
+				return oTable._getSelectionPlugin().getSelectedCount() > 0;
+			},
+			attachSelectionChange: function(oTable, fnHandler, oListener) {
+				oTable._getSelectionPlugin().attachSelectionChange(fnHandler, oListener);
+				oTable.attachRowsUpdated(fnHandler, oListener);
+			},
+			detachSelectionChange: function(oTable, fnHandler, oListener) {
+				oTable._getSelectionPlugin().detachSelectionChange(fnHandler, oListener);
+				oTable.detachRowsUpdated(fnHandler, oListener);
 			}
 		}
 	}, CopyProvider);

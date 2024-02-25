@@ -72,7 +72,7 @@ sap.ui.define(
 		 * @alias sap.m.upload.p13n.PersManager
 		 * @extends sap.ui.base.Object
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 * @experimental
 		 * @internal
 		 * @private
@@ -244,7 +244,9 @@ sap.ui.define(
 				}
 			});
 			const aSorters = Object.values(oSorters);
-			oControl.getBinding("items").sort(aSorters.length ? aSorters : null);
+			if (oControl.getBinding("items")) {
+				oControl.getBinding("items").sort(aSorters.length ? aSorters : null);
+			}
 		};
 		return PersManager;
 	}

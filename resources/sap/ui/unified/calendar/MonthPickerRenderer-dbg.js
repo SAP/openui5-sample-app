@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/unified/calendar/CalendarDate", 'sap/ui/core/format/DateFormat', 'sap/ui/core/InvisibleText', 'sap/ui/core/date/UI5Date'],
-	function(CalendarDate, DateFormat, InvisibleText, UI5Date) {
+sap.ui.define(["sap/ui/core/Lib", "sap/ui/unified/calendar/CalendarDate", 'sap/ui/core/format/DateFormat', 'sap/ui/core/InvisibleText', 'sap/ui/core/date/UI5Date'],
+	function(Library, CalendarDate, DateFormat, InvisibleText, UI5Date) {
 	"use strict";
 
 
@@ -66,7 +66,7 @@ sap.ui.define(["sap/ui/unified/calendar/CalendarDate", 'sap/ui/core/format/DateF
 			role: "grid",
 			readonly: "true",
 			multiselectable: oMP.getIntervalSelection(),
-			roledescription: sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified").getText("MONTH_PICKER"),
+			roledescription: Library.getResourceBundleFor("sap.ui.unified").getText("MONTH_PICKER"),
 			describedby: oMP._bCalendar ? InvisibleText.getStaticId("sap.ui.unified", "CALENDAR_YEAR_PICKER_OPEN_HINT") : ""
 		});
 

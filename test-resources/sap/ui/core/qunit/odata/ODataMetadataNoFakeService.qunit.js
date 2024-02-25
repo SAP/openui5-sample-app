@@ -654,6 +654,46 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+[
+	// no referential constraints
+	{oAssociation: {}, oResult: {}},
+	// with referential constraints but fromRole is not the principal role
+	{oAssociation: {referentialConstraint: {principal: {role: "wrongRole"}}}, oResult: {}},
+	// with referential constraints that can be used
+	{
+		oAssociation: {
+			referentialConstraint: {
+				dependent: {propertyRef: [{name: "x"}, {name: "y"}, {name: "z"}]},
+				principal: {propertyRef: [{name: "a"}, {name: "b"}, {name: "c"}], role: "fromRole"}
+			}
+		},
+		oResult: {a: "x", b: "y", c: "z"}
+	}
+].forEach((oFixture, i) => {
+	QUnit.test("_getReferentialConstraintsMapping, #" + i, function (assert) {
+		const oMetadata = {
+			_getObjectMetadata() {},
+			_splitName() {}
+		};
+		const oSourceEntityType = {
+			navigationProperty: [
+				{name: "foo"},
+				{fromRole: "fromRole", name: "toDependent", relationship: "name.space.associationName"}
+			]
+		};
+		this.mock(oMetadata).expects("_splitName").withExactArgs("name.space.associationName")
+			.returns({name: "associationName", namespace: "name.space"});
+		this.mock(oMetadata).expects("_getObjectMetadata").withExactArgs("association", "associationName", "name.space")
+			.returns(oFixture.oAssociation);
+
+		// code under test
+		assert.deepEqual(
+			ODataMetadata.prototype._getReferentialConstraintsMapping.call(oMetadata, oSourceEntityType, "toDependent"),
+			oFixture.oResult);
+	});
+});
+
+	//*********************************************************************************************
 	QUnit.test("_getPropertyMetadata: no entity type given", function (assert) {
 		// code under test
 		assert.strictEqual(ODataMetadata.prototype._getPropertyMetadata.call(/*not relevant*/null), undefined);

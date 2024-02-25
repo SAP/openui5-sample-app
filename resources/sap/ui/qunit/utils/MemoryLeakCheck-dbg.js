@@ -27,7 +27,7 @@ sap.ui.define([ 'sap/ui/core/ElementRegistry', 'sap/ui/core/Control', "sap/ui/qu
 	 * @namespace
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @since 1.48.0
@@ -118,7 +118,8 @@ sap.ui.define([ 'sap/ui/core/ElementRegistry', 'sap/ui/core/Control', "sap/ui/qu
 				oControl2.placeAt("qunit-fixture");
 				await nextUIUpdate();
 
-				oControl2.rerender(); // just re-render again - this finds problems
+				oControl2.invalidate(); // just re-render again - this finds problems
+				await nextUIUpdate();
 			}
 
 			if (fnSomeAdditionalFunction) {

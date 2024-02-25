@@ -4,11 +4,12 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
+	"sap/ui/core/ControlBehavior",
 	'sap/ui/unified/library',
 	"sap/base/security/encodeXML",
 	"sap/ui/core/Configuration"
 ],
-	function(library, encodeXML, Configuration) {
+	function(ControlBehavior, library, encodeXML, Configuration) {
 	"use strict";
 
 
@@ -34,7 +35,7 @@ sap.ui.define([
 	ContentSwitcherRenderer.render = function(oRm, oControl){
 		var sId            = oControl.getId();
 		var sAnimation     = oControl.getAnimation();
-		if (Configuration.getAnimationMode() === Configuration.AnimationMode.none) {
+		if (ControlBehavior.getAnimationMode() === Configuration.AnimationMode.none) {
 			sAnimation = ContentSwitcherAnimation.None;
 		}
 

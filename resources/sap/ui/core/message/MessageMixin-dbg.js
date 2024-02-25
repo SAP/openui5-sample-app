@@ -58,7 +58,7 @@ sap.ui.define(["sap/ui/core/Element", "sap/ui/core/library", "sap/base/Log", "sa
 						);
 					}
 				}
-				if (oMessage.getControlId() !== this.getId()){
+				if (!oMessage.getControlIds().includes(this.getId())){
 					oMessage.addControlId(this.getId());
 					bForceUpdate = true;
 				}

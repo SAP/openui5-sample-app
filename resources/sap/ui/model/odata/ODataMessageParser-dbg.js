@@ -5,6 +5,7 @@
  */
 /*eslint-disable max-len */
 sap.ui.define([
+	"sap/ui/core/Lib",
 	"sap/ui/model/odata/ODataMetadata",
 	"sap/ui/model/odata/ODataUtils",
 	"sap/ui/core/library",
@@ -14,7 +15,7 @@ sap.ui.define([
 	"sap/ui/core/message/Message",
 	"sap/base/Log"
 ],
-	function(ODataMetadata, ODataUtils, coreLibrary, URI, Messaging, MessageParser, Message, Log) {
+	function(Library, ODataMetadata, ODataUtils, coreLibrary, URI, Messaging, MessageParser, Message, Log) {
 	"use strict";
 
 var sClassName = "sap.ui.model.odata.ODataMessageParser",
@@ -85,7 +86,7 @@ var sClassName = "sap.ui.model.odata.ODataMessageParser",
  * @extends sap.ui.core.message.MessageParser
  *
  * @author SAP SE
- * @version 1.120.7
+ * @version 1.121.0
  * @public
  * @alias sap.ui.model.odata.ODataMessageParser
  */
@@ -660,7 +661,7 @@ ODataMessageParser.prototype._parseBody = function (oResponse, mRequestInfo) {
 ODataMessageParser.prototype._createGenericError = function (mRequestInfo) {
 	return [this._createMessage({
 			description : mRequestInfo.response.body,
-			message : sap.ui.getCore().getLibraryResourceBundle().getText("CommunicationError"),
+			message : Library.getResourceBundleFor("sap.ui.core").getText("CommunicationError"),
 			severity : MessageType.Error,
 			transition : true
 		}, mRequestInfo, true)];

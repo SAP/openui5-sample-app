@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/core/util/PasteHelper"], function(PluginBase, Core, PasteHelper) {
+sap.ui.define(["./PluginBase", "sap/ui/core/Element", "sap/ui/core/Lib", "sap/ui/core/util/PasteHelper", "sap/ui/Device"], function(PluginBase, Element, Library, PasteHelper, Device) {
 	"use strict";
 
 	/*global ClipboardEvent, DataTransfer */
@@ -28,11 +28,12 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/core/util/PasteHelper
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @since 1.91
 	 * @alias sap.m.plugins.PasteProvider
+	 * @borrows sap.m.plugins.PluginBase.findOn as findOn
 	 */
 	var PasteProvider = PluginBase.extend("sap.m.plugins.PasteProvider", /** @lends sap.m.plugins.PasteProvider.prototype */ { metadata: {
 		library: "sap.m",
@@ -70,6 +71,8 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/core/util/PasteHelper
 	var oPopover = null;
 	var oActivePlugin = null;
 	var sPasteRegionSelector = "[data-sap-ui-pasteregion]";
+
+	PasteProvider.findOn = PluginBase.findOn;
 
 	PasteProvider.prototype.onActivate = function(oControl) {
 		oControl.attachEvent(this.getConfig("pressEvent"), this._onPress, this);
@@ -125,7 +128,7 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/core/util/PasteHelper
 	}
 
 	function getPasteForDomRef() {
-		var oPasteFor = Core.byId(oActivePlugin.getPasteFor());
+		var oPasteFor = Element.getElementById(oActivePlugin.getPasteFor());
 		var oPasteForDomRef = oPasteFor && oPasteFor.getDomRef();
 		if (!oPasteForDomRef) {
 			return;
@@ -148,12 +151,12 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/core/util/PasteHelper
 			return oPopover.openBy(oControl);
 		}
 
-		sap.ui.require(["sap/ui/Device", "sap/ui/core/HTML", "sap/ui/core/Icon", "sap/m/Popover"], function(Device, HTML, Icon, Popover) {
-			var sMessage, oRB = Core.getLibraryResourceBundle("sap.m");
+		sap.ui.require(["sap/ui/core/HTML", "sap/ui/core/Icon", "sap/m/Popover"], function(HTML, Icon, Popover) {
+			var sMessage, oRB = Library.getResourceBundleFor("sap.m");
 			var bDesktop = Device.system.desktop && !Device.os.ios && !Device.os.android;
 			if (bDesktop) {
 				var sShortCut = oRB.getText("PASTEPROVIDER_SHORTCUT_" + (Device.os.name == "mac" ? "MAC" : "WIN"));
-				sMessage = oRB.getText("PASTEPROVIDER_DESKTOP_MSG", '<span class="sapMPluginsPasteProviderShortCut">' + sShortCut + '</span>');
+				sMessage = oRB.getText("PASTEPROVIDER_DESKTOP_MSG", ['<span class="sapMPluginsPasteProviderShortCut">' + sShortCut + '</span>']);
 			} else {
 				sMessage = oRB.getText("PASTEPROVIDER_MOBILE_MSG");
 			}
@@ -204,14 +207,19 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/core/util/PasteHelper
 	PluginBase.setConfigs({
 		"sap.m.Button": {
 			pressEvent: "press",
-			onActivate: function(oButton) {
+			onActivate: function(oButton, oPlugin) {
 				if (!oButton.getText() && !oButton.getIcon() && !oButton.getTooltip_AsString()) {
-					var sText = Core.getLibraryResourceBundle("sap.m").getText("PASTEPROVIDER_PASTE");
-					oButton.setTooltip(sText);
+					const oBundle = Library.getResourceBundleFor("sap.m");
+					const sText = oBundle.getText("PASTEPROVIDER_PASTE");
+					oButton.setTooltip(sText).setIcon("sap-icon://paste");
 					if (oButton.isA("sap.m.OverflowToolbarButton")) {
 						oButton.setText(sText);
 					}
-					oButton.setIcon("sap-icon://paste");
+					sap.ui.require(["sap/ui/core/ShortcutHintsMixin"], function(ShortcutHintsMixin) {
+						ShortcutHintsMixin.addConfig(oButton, {
+							message: oBundle.getText(Device.os.macintosh ? "PASTEPROVIDER_SHORTCUT_MAC" : "PASTEPROVIDER_SHORTCUT_WIN")
+						}, Element.getElementById(oPlugin.getPasteFor()) || oButton);
+					});
 				}
 			}
 		}

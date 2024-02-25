@@ -5,9 +5,11 @@
  */
 
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/ui/core/EnabledPropagator',
 	'sap/ui/core/InvisibleText',
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/core/ResizeHandler',
 	'sap/base/Log',
@@ -18,13 +20,14 @@ sap.ui.define([
 	'./SliderRenderer',
 	'./ResponsiveScale',
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/events/KeyCodes",
-	"sap/ui/core/Configuration"
+	"sap/ui/events/KeyCodes"
 ],
 function(
+	Localization,
 	Control,
 	EnabledPropagator,
 	InvisibleText,
+	Library,
 	coreLibrary,
 	ResizeHandler,
 	log,
@@ -35,8 +38,7 @@ function(
 	SliderRenderer,
 	ResponsiveScale,
 	jQuery,
-	KeyCodes,
-	Configuration
+	KeyCodes
 ) {
 		"use strict";
 
@@ -94,10 +96,15 @@ function(
 		 * </ul>
 		 *
 		 * @extends sap.ui.core.Control
-		 * @implements sap.ui.core.IFormContent
+		 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
+		 *
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -107,7 +114,10 @@ function(
 		var Slider = Control.extend("sap.m.Slider", /** @lends sap.m.Slider.prototype */ {
 			metadata: {
 
-				interfaces: ["sap.ui.core.IFormContent"],
+				interfaces: [
+					"sap.ui.core.IFormContent",
+					"sap.ui.core.ISemanticFormContent"
+				],
 				library: "sap.m",
 				properties: {
 
@@ -553,7 +563,7 @@ function(
 			}
 
 			// update the position of the handle
-			oHandleDomRef.style[Configuration.getRTL() ? "right" : "left"] = sPerValue;
+			oHandleDomRef.style[Localization.getRTL() ? "right" : "left"] = sPerValue;
 
 			// update the position of the advanced tooltip
 			if (this.getShowAdvancedTooltip() && oTooltipContainer.getDomRef()) {
@@ -812,7 +822,7 @@ function(
 			// resize handler of the slider
 			this._parentResizeHandler = null;
 
-			this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			this._oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 			// a reference to the SliderTooltipContainer
 			this._oTooltipContainer = null;
@@ -1074,7 +1084,7 @@ function(
 
 				fNewValue = (((oTouch.pageX - this._fSliderPaddingLeft - this._fSliderOffsetLeft) / this._fSliderWidth) * (this.getMax() - fMin)) +  fMin;
 
-				if (Configuration.getRTL()) {
+				if (Localization.getRTL()) {
 					fNewValue = this._convertValueToRtlMode(fNewValue);
 				}
 
@@ -1123,7 +1133,7 @@ function(
 				fNewValue = (((iPageX - this._fDiffX - this._fSliderOffsetLeft) / this._fSliderWidth) * (this.getMax() - fMin)) +  fMin;
 
 			// RTL mirror
-			if (Configuration.getRTL()) {
+			if (Localization.getRTL()) {
 				fNewValue = this._convertValueToRtlMode(fNewValue);
 			}
 
@@ -1613,6 +1623,23 @@ function(
 			}
 
 			return this;
+		};
+
+		// support for SemanticFormElement
+		Slider.prototype.getFormFormattedValue = function() {
+			return this.getValue();
+		};
+
+		Slider.prototype.getFormValueProperty = function () {
+			return "value";
+		};
+
+		Slider.prototype.getFormObservingProperties = function() {
+			return ["value"];
+		};
+
+		Slider.prototype.getFormRenderAsControl = function () {
+			return false;
 		};
 
 		return Slider;

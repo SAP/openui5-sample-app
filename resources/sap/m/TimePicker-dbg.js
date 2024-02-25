@@ -13,6 +13,7 @@ sap.ui.define([
 	'./ToolbarSpacer',
 	'./Popover',
 	'./ResponsivePopover',
+	"sap/base/i18n/Formatting",
 	'sap/ui/core/EnabledPropagator',
 	'sap/ui/core/IconPool',
 	'./TimePickerInternals',
@@ -20,6 +21,7 @@ sap.ui.define([
 	'./TimePickerInputs',
 	'./MaskEnabler',
 	'sap/ui/Device',
+	"sap/ui/core/Lib",
 	'sap/ui/core/format/DateFormat',
 	'sap/ui/core/Locale',
 	'sap/m/library',
@@ -30,9 +32,7 @@ sap.ui.define([
 	"sap/ui/core/InvisibleText",
 	'./Button',
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Configuration",
-	"sap/ui/core/date/UI5Date",
-	"sap/ui/core/Core"
+	"sap/ui/core/date/UI5Date"
 ],
 function(
 	InputBase,
@@ -42,6 +42,7 @@ function(
 	ToolbarSpacer,
 	Popover,
 	ResponsivePopover,
+	Formatting,
 	EnabledPropagator,
 	IconPool,
 	TimePickerInternals,
@@ -49,6 +50,7 @@ function(
 	TimePickerInputs,
 	MaskEnabler,
 	Device,
+	Library,
 	DateFormat,
 	Locale,
 	library,
@@ -59,9 +61,7 @@ function(
 	InvisibleText,
 	Button,
 	jQuery,
-	Configuration,
-	UI5Date,
-	Core
+	UI5Date
 ) {
 		"use strict";
 
@@ -105,7 +105,8 @@ function(
 		 * <ul><li>Use the <code>value</code> property if you want to bind the
 		 * <code>TimePicker</code> to a model using the
 		 * <code>sap.ui.model.type.Time</code></li>
-		 * @example <caption> binding the <code>value</code> property by using types </caption>
+		 * <caption> binding the <code>value</code> property by using types </caption>
+		 * <pre>
 		 * new sap.ui.model.json.JSONModel({date: sap.ui.core.date.UI5Date.getInstance(2022,10,10,10,15,10)});
 		 *
 		 * new sap.m.TimePicker({
@@ -114,10 +115,11 @@ function(
 		 *         path:"/date"
 		 *     }
 		 * });
-		 *
+		 * </pre>
 		 * <li>Use the <code>value</code> property if the date is provided as a string from
 		 * the backend or inside the app (for example, as ABAP type DATS field)</li>
-		 * @example <caption> binding the <code>value</code> property by using types </caption>
+		 * <caption> binding the <code>value</code> property by using types </caption>
+		 * <pre>
 		 * new sap.ui.model.json.JSONModel({date:"10:15:10"});
 		 * new sap.m.TimePicker({
 		 *     value: {
@@ -130,7 +132,7 @@ function(
 		 *         }
 		 *     }
 		 * });
-		 *
+		 * </pre>
 		 * <b>Note:</b> There are multiple binding type choices, such as:
 		 * sap.ui.model.type.Date
 		 * sap.ui.model.odata.type.DateTime
@@ -150,6 +152,9 @@ function(
 		 * the input field, it must fit to the used time format and locale.
 		 *
 		 * Supported format options are pattern-based on Unicode LDML Date Format notation.
+		 * The format pattern symbols supported in TimePicker are as follows:
+		 * "h"/"H" (Hour), "m" (Minute), "s" (Second), and "a" (AM/PM).
+		 *
 		 * See {@link http://unicode.org/reports/tr35/#Date_Field_Symbol_Table}
 		 *
 		 * A time format must be specified, otherwise the default "HH:mm:ss a" will be
@@ -176,7 +181,7 @@ function(
 		 * @extends sap.m.DateTimeField
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -422,7 +427,7 @@ function(
 
 			this.setDisplayFormat(getDefaultDisplayFormat());
 
-			this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			this._oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 			// marks if the value is valid or not
 			this._bValid = false;
@@ -1163,7 +1168,7 @@ function(
 		TimePicker.prototype._getLocale = function () {
 			var sLocaleId = this.getLocaleId();
 
-			return sLocaleId ? new Locale(sLocaleId) : Configuration.getFormatSettings().getFormatLocale();
+			return sLocaleId ? new Locale(sLocaleId) : new Locale(Formatting.getLanguageTag());
 		};
 
 		/**
@@ -1510,7 +1515,7 @@ function(
 				sLabelId,
 				sLabel;
 
-			oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			oResourceBundle = Library.getResourceBundleFor("sap.m");
 			sOKButtonText = oResourceBundle.getText("TIMEPICKER_SET");
 			sCancelButtonText = oResourceBundle.getText("TIMEPICKER_CANCEL");
 			sTitle = this._oResourceBundle.getText("TIMEPICKER_SET_TIME");
@@ -1618,7 +1623,7 @@ function(
 				sCancelButtonText,
 				sLocaleId  = this._getLocale().getLanguage();
 
-			oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			oResourceBundle = Library.getResourceBundleFor("sap.m");
 			sOKButtonText = oResourceBundle.getText("TIMEPICKER_SET");
 			sCancelButtonText = oResourceBundle.getText("TIMEPICKER_CANCEL");
 
@@ -1770,7 +1775,7 @@ function(
 		 */
 		 TimePicker.prototype._getLocaleBasedPattern = function (sPlaceholder) {
 			return LocaleData.getInstance(
-				Configuration.getFormatSettings().getFormatLocale()
+				new Locale(Formatting.getLanguageTag())
 			).getTimePattern(sPlaceholder);
 		};
 
@@ -2304,7 +2309,7 @@ function(
 			var oRenderer = this.getRenderer();
 			var oInfo = DateTimeField.prototype.getAccessibilityInfo.apply(this, arguments);
 			var sValue = this.getValue() || "";
-			var sRequired = this.getRequired() ? Core.getLibraryResourceBundle("sap.m").getText("ELEMENT_REQUIRED") : '';
+			var sRequired = this.getRequired() ? Library.getResourceBundleFor("sap.m").getText("ELEMENT_REQUIRED") : '';
 
 			if (this._bValid) {
 				var oDate = this.getDateValue();
@@ -2314,7 +2319,7 @@ function(
 			}
 
 			oInfo.role = oRenderer.getAriaRole(this);
-			oInfo.type = Core.getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_TIMEINPUT");
+			oInfo.type = Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_TIMEINPUT");
 			oInfo.description = [sValue || this._getPlaceholder(), oRenderer.getDescribedByAnnouncement(this), sRequired].join(" ").trim();
 			oInfo.autocomplete = "none";
 			oInfo.haspopup = true;
@@ -2323,7 +2328,7 @@ function(
 		};
 
 		function getDefaultDisplayFormat() {
-			var oLocale = Configuration.getFormatSettings().getFormatLocale(),
+			var oLocale = new Locale(Formatting.getLanguageTag()),
 				oLocaleData = LocaleData.getInstance(oLocale);
 
 			return oLocaleData.getTimePattern(TimeFormatStyles.Medium);

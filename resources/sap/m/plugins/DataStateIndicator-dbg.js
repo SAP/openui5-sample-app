@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/base/ManagedObjectObserver"],
-	function(PluginBase, Core, ManagedObjectObserver) {
+sap.ui.define(["./PluginBase", "sap/ui/base/ManagedObjectObserver", "sap/ui/core/Lib", "sap/ui/core/Messaging"],
+	function(PluginBase, ManagedObjectObserver, Library, Messaging) {
 	"use strict";
 
 	/**
@@ -19,11 +19,12 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/base/ManagedObjectObs
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @since 1.73
 	 * @alias sap.m.plugins.DataStateIndicator
+	 * @borrows sap.m.plugins.PluginBase.findOn as findOn
 	 */
 	var DataStateIndicator = PluginBase.extend("sap.m.plugins.DataStateIndicator", /** @lends sap.m.plugins.DataStateIndicator.prototype */ { metadata: {
 		library: "sap.m",
@@ -95,6 +96,8 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/base/ManagedObjectObs
 			close: {}
 		}
 	}});
+
+	DataStateIndicator.findOn = PluginBase.findOn;
 
 	DataStateIndicator.prototype.onActivate = function(oControl) {
 		this._bFiltering = false;
@@ -325,7 +328,7 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/base/ManagedObjectObs
 			}
 
 			if (bUpdateMessageModel) {
-				Core.getMessageManager().getMessageModel().checkUpdate(true, true);
+				Messaging.getMessageModel().checkUpdate(true, true);
 			}
 		} else {
 			this.showMessage("");
@@ -467,7 +470,7 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/base/ManagedObjectObs
 		var oMetadata = this.getControl().getMetadata();
 		var sLibraryName = oMetadata.getLibraryName();
 		var sControlName = oMetadata.getName().split(".").pop().toUpperCase();
-		var oResourceBundle = Core.getLibraryResourceBundle(sLibraryName);
+		var oResourceBundle = Library.getResourceBundleFor(sLibraryName);
 		var sControlBundleText = sControlName + "_" + sBundleText;
 
 		if (oResourceBundle.hasText(sControlBundleText)) {
@@ -478,7 +481,7 @@ sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/base/ManagedObjectObs
 			return oResourceBundle.getText(sBundleText);
 		}
 
-		return Core.getLibraryResourceBundle("sap.m").getText(sBundleText);
+		return Library.getResourceBundleFor("sap.m").getText(sBundleText);
 	};
 
 	/**

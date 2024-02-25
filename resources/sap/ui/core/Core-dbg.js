@@ -25,6 +25,8 @@ sap.ui.define([
 	"sap/base/config",
 	"sap/base/Event",
 	"sap/base/Log",
+	"sap/base/i18n/Formatting",
+	"sap/base/i18n/Localization",
 	"sap/base/util/Deferred",
 	"sap/base/util/isEmptyObject",
 	"sap/base/util/ObjectPath",
@@ -46,10 +48,14 @@ sap.ui.define([
 	"sap/ui/test/RecorderHotkeyListener",
 	"sap/ui/thirdparty/jquery",
 	"jquery.sap.global",
-	"sap/ui/events/PasteEventFix", // side effect: activates paste event fix
-	"sap/ui/events/jquery/EventSimulation", // side effect: install event simulation
-	"sap/ui/thirdparty/URI", // side effect: make global URI available
-	"sap/ui/thirdparty/jqueryui/jquery-ui-position" // side effect: jQuery.fn.position
+	// side effect: activates paste event fix
+	"sap/ui/events/PasteEventFix",
+	// side effect: install event simulation
+	"sap/ui/events/jquery/EventSimulation",
+	// side effect: make global URI available
+	"sap/ui/thirdparty/URI",
+	// side effect: jQuery.fn.position
+	"sap/ui/thirdparty/jqueryui/jquery-ui-position"
 ],
 	function(
 		AnimationMode,
@@ -71,6 +77,8 @@ sap.ui.define([
 		BaseConfig,
 		BaseEvent,
 		Log,
+		Formatting,
+		Localization,
 		Deferred,
 		isEmptyObject,
 		ObjectPath,
@@ -153,18 +161,30 @@ sap.ui.define([
 	 * Execute configured init module
 	 */
 	var _executeInitModule = function() {
-		var sOnInit = BaseConfig.get({
+		var vOnInit = BaseConfig.get({
 			name: "sapUiOnInit",
-			type: BaseConfig.Type.String
+			type: (vValue) => {
+				if (typeof vValue === "string" || typeof vValue === "function") {
+					return vValue;
+				} else {
+					throw new TypeError("unsupported value");
+				}
+			}
 		});
-		if (sOnInit) {
-			// determine onInit being a module name prefixed via module or a global name
-			var aResult = /^module\:((?:[_$.\-a-zA-Z0-9]+\/)*[_$.\-a-zA-Z0-9]+)$/.exec(sOnInit);
-			if (aResult && aResult[1]) {
-				// ensure that the require is done async and the Core is finally booted!
-				setTimeout(sap.ui.require.bind(null, [aResult[1]]), 0);
+		if (vOnInit) {
+			if (typeof vOnInit === "string") {
+				// determine onInit being a module name prefixed via module or a global name
+				var aResult = /^module\:((?:[_$.\-a-zA-Z0-9]+\/)*[_$.\-a-zA-Z0-9]+)$/.exec(vOnInit);
+				if (aResult && aResult[1]) {
+					// ensure that the require is done async and the Core is finally booted!
+					setTimeout(sap.ui.require.bind(null, [aResult[1]]), 0);
+				} else if (typeof globalThis[vOnInit] === "function") {
+					globalThis[vOnInit]();
+				} else {
+					throw Error("Invalid init module " + vOnInit + " provided via config option 'sapUiOnInit'");
+				}
 			} else {
-				throw Error("Invalid init module " + sOnInit + " provided via config option 'sapUiOnInit'");
+				vOnInit();
 			}
 		}
 	};
@@ -360,7 +380,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 * @final
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @alias sap.ui.core.Core
 	 * @public
 	 * @hideconstructor
@@ -452,6 +472,7 @@ sap.ui.define([
 			/**
 			 * The instance of the root component (defined in the configuration {@link sap.ui.core.Configuration#getRootComponent})
 			 * @private
+			 * @deprecated
 			 */
 			this.oRootComponent = null;
 
@@ -585,10 +606,14 @@ sap.ui.define([
 				}
 			})();
 
+			/**
+			 * @deprecated
+			 */
 			if (Supportability.isDebugModeEnabled()) {
 				// add debug module if configured
 				this.aModules.unshift("sap.ui.debug.DebugEnv");
 			}
+
 			// enforce the core library as the first loaded module
 			var i = this.aLibs.indexOf("sap.ui.core");
 			if ( i != 0 ) {
@@ -634,8 +659,6 @@ sap.ui.define([
 			this._setupBrowser();
 
 			this._setupOS();
-
-			this._setupLang();
 
 			this._setupAnimation();
 
@@ -977,24 +1000,6 @@ sap.ui.define([
 	};
 
 	/**
-	 * Set the body's lang attribute and attach the localization change event
-	 * @private
-	 */
-	Core.prototype._setupLang = function() {
-		var html = document.documentElement;
-
-		// append the lang info to the document (required for ARIA support)
-		var fnUpdateLangAttr = function() {
-			var oLocale = Configuration.getLocale();
-			oLocale ? html.setAttribute("lang", oLocale.toString()) : html.removeAttribute("lang");
-		};
-		fnUpdateLangAttr.call(this);
-
-		// listen to localization change event to update the lang info
-		this.attachLocalizationChanged(fnUpdateLangAttr, this);
-	};
-
-	/**
 	 * Set the body's Animation-related attribute and configures jQuery animations accordingly.
 	 * @private
 	 */
@@ -1048,7 +1053,7 @@ sap.ui.define([
 	 */
 	Core.prototype._boot = function(bAsync, fnCallback) {
 		// add CalendarClass to list of modules
-		this.aModules.push("sap/ui/core/date/" + Configuration.getCalendarType());
+		this.aModules.push("sap/ui/core/date/" + Formatting.getCalendarType());
 
 		// load all modules now
 		if ( bAsync ) {
@@ -1786,7 +1791,7 @@ sap.ui.define([
 	 * <li>With the <code>noLibraryCSS</code> property, the library can be marked as 'theming-free'.
 	 * Otherwise, the framework will add a &lt;link&gt; tag to the page's head, pointing to the library's
 	 * theme-specific stylesheet. The creation of such a &lt;link&gt; tag can be suppressed with the
-	 * {@link sap.ui.core.Configuration global configuration option} <code>preloadLibCss</code>.
+	 * {@link topic:91f2d03b6f4d1014b6dd926db0e91070 global configuration option} <code>preloadLibCss</code>.
 	 * It can contain a list of library names for which no stylesheet should be included.
 	 * This is e.g. useful when an application merges the CSS for multiple libraries and already
 	 * loaded the resulting stylesheet.</li>
@@ -1892,7 +1897,7 @@ sap.ui.define([
 	 * Retrieves a resource bundle for the given library and locale.
 	 *
 	 * If only one argument is given, it is assumed to be the libraryName. The locale
-	 * then falls back to the current {@link sap.ui.core.Configuration#getLanguage session locale}.
+	 * then falls back to the current {@link module:sap/base/i18n/Localization.getLanguage session locale}.
 	 * If no argument is given, the library also falls back to a default: "sap.ui.core".
 	 *
 	 * <h3>Configuration via App Descriptor</h3>
@@ -2064,7 +2069,7 @@ sap.ui.define([
 	 * @param {object} oControlEvent.getParameters
 	 * @param {string} oControlEvent.getParameters.theme Theme name
 	 * @public
-	 * @deprecated since 1.118. See {@link sap.ui.core.Theming#applied Theming#applied} instead.
+	 * @deprecated since 1.118. See {@link module:sap/ui/core/Theming.applied Theming.applied} instead.
 	 */
 
 	 /**
@@ -2080,7 +2085,7 @@ sap.ui.define([
 	 *            [oListener] Context object to call the event handler with. Defaults to a dummy event
 	 *            provider object
 	 * @public
-	 * @deprecated since 1.118. See {@link sap.ui.core.Theming#attachApplied Theming#attachApplied} instead.
+	 * @deprecated since 1.118. See {@link module:sap/ui/core/Theming.attachApplied Theming.attachApplied} instead.
 	 */
 	Core.prototype.attachThemeChanged = function(fnFunction, oListener) {
 		// preparation for letting the "themeChanged" event be forwarded from the ThemeManager to the Core
@@ -2098,7 +2103,7 @@ sap.ui.define([
 	 * @param {object}
 	 *            [oListener] Object on which the given function had to be called.
 	 * @public
-	 * @deprecated since 1.118. See {@link sap.ui.core.Theming#detachApplied Theming#detachApplied} instead.
+	 * @deprecated since 1.118. See {@link module:sap/ui/core/Theming.detachApplied Theming#detachApplied} instead.
 	 */
 	Core.prototype.detachThemeChanged = function(fnFunction, oListener) {
 		_oEventProvider.detachEvent(Core.M_EVENTS.ThemeChanged, fnFunction, oListener);
@@ -2160,7 +2165,7 @@ sap.ui.define([
 	 * @param {sap.ui.base.EventProvider} oEvent.getSource
 	 * @param {object} oEvent.getParameters
 	 * @param {object} oEvent.getParameters.changes a map of the changed localization properties
-	 * @deprecated since 1.118. See {@link sap.base.i18n.Localization#change Localization#change} instead.
+	 * @deprecated since 1.118. See {@link module:sap/base/i18n/Localization.change Localization.change} instead.
 	 * @public
 	 */
 
@@ -2173,7 +2178,7 @@ sap.ui.define([
 	 * @param {function} fnFunction Callback to be called when the event occurs
 	 * @param {object} [oListener] Context object to call the function on
 	 * @public
-	 * @deprecated since 1.118. Please use {@link sap.base.i18n.Localization#attachChange Localization#attachChange} instead.
+	 * @deprecated since 1.118. Please use {@link module:sap/base/i18n/Localization.attachChange Localization.attachChange} instead.
 	 */
 	Core.prototype.attachLocalizationChanged = function(fnFunction, oListener) {
 		_oEventProvider.attachEvent(Core.M_EVENTS.LocalizationChanged, fnFunction, oListener);
@@ -2188,7 +2193,7 @@ sap.ui.define([
 	 * @param {function} fnFunction Callback to be deregistered
 	 * @param {object} [oListener] Context object on which the given function had to be called
 	 * @public
-	 * @deprecated since 1.118. Please use {@link sap.base.i18n.Localization#detachChange Localization#detachChange} instead.
+	 * @deprecated since 1.118. Please use {@link module:sap/base/i18n/Localization.detachChange Localization.detachChange} instead.
 	 */
 	Core.prototype.detachLocalizationChanged = function(fnFunction, oListener) {
 		_oEventProvider.detachEvent(Core.M_EVENTS.LocalizationChanged, fnFunction, oListener);
@@ -2743,8 +2748,7 @@ sap.ui.define([
 	 * @param {string|string[]} [vFieldGroupIds] ID of the field group or an array of field group IDs to match
 	 * @return {sap.ui.core.Control[]} The list of controls with matching field group IDs
 	 * @public
-	 * @deprecated As of version 1.118, use {@link sap.ui.core.Control#getControlsByFieldGroup Control.prototype.getControlsByFieldGroup} instead.
-
+	 * @deprecated As of version 1.118, use {@link sap.ui.core.Control.getControlsByFieldGroupId Control.getControlsByFieldGroupId} instead.
 	 */
 	Core.prototype.byFieldGroupId = function(vFieldGroupIds) {
 		return Element.registry.filter(function(oElement) {

@@ -8,14 +8,15 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/base/util/extend",
 	"sap/ui/core/CalendarType",
+	"sap/ui/core/Lib",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/format/DateFormat",
 	"sap/ui/model/FormatException",
 	"sap/ui/model/ParseException",
 	"sap/ui/model/ValidateException",
 	"sap/ui/model/odata/type/ODataType"
-], function (Log, extend, CalendarType, UI5Date, DateFormat, FormatException, ParseException,
-		ValidateException, ODataType) {
+], function(Log, extend, CalendarType, Library, UI5Date, DateFormat, FormatException, ParseException,
+	ValidateException, ODataType) {
 	"use strict";
 
 	var rDate = /\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])/,
@@ -75,7 +76,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @alias sap.ui.model.odata.type.Date
 	 * @param {object} [oFormatOptions]
@@ -160,7 +161,7 @@ sap.ui.define([
 	EdmDate.prototype._getErrorMessage = function () {
 		var sDemoDate = UI5Date.getInstance().getFullYear() + "-12-31";
 
-		return sap.ui.getCore().getLibraryResourceBundle().getText("EnterDate",
+		return Library.getResourceBundleFor("sap.ui.core").getText("EnterDate",
 			[this.formatValue(sDemoDate, "string")]);
 	};
 

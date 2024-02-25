@@ -5,8 +5,8 @@
  */
 
 // Provides default renderer for control sap.ui.unified.SplitContainer
-sap.ui.define(["sap/ui/core/library", "sap/ui/core/Configuration"],
-	function(coreLibrary, Configuration) {
+sap.ui.define(["sap/ui/core/ControlBehavior", "sap/ui/core/library", "sap/ui/core/Configuration"],
+	function(ControlBehavior, coreLibrary, Configuration) {
 	"use strict";
 
 
@@ -35,7 +35,7 @@ sap.ui.define(["sap/ui/core/library", "sap/ui/core/Configuration"],
 		rm.writeControlData(oControl);
 		rm.addClass("sapUiUfdSpltCont");
 		rm.addClass("sapUiUfdSpltCont" + (bVertical ? "V" : "H"));
-		if (Configuration.getAnimationMode() !== Configuration.AnimationMode.none) {
+		if (ControlBehavior.getAnimationMode() !== Configuration.AnimationMode.none) {
 			rm.addClass("sapUiUfdSpltContAnim");
 		}
 

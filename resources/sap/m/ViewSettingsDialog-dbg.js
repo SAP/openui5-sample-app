@@ -35,6 +35,7 @@ sap.ui.define([
 	"sap/ui/base/Object",
 	"sap/ui/core/StaticArea",
 	"sap/base/Log",
+	"sap/ui/core/library",
 	"sap/ui/thirdparty/jquery",
 	// jQuery Plugin "firstFocusableDomRef"
 	"sap/ui/dom/jquery/Focusable"
@@ -69,6 +70,7 @@ function(
 	BaseObject,
 	StaticArea,
 	Log,
+	coreLibrary,
 	jQuery
 ) {
 	"use strict";
@@ -87,6 +89,9 @@ function(
 
 	// shortcut for sap.m.ButtonType
 	var ButtonType = library.ButtonType;
+
+	// shortcut for sap.ui.core.TitleLevel
+	var TitleLevel = coreLibrary.TitleLevel;
 
 	var LIST_ITEM_SUFFIX = "-list-item";
 
@@ -150,7 +155,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -375,6 +380,8 @@ function(
 				listProp: "title"
 			},
 			selected: {
+			},
+			wrapping: {
 			}
 		}, {
 			tooltip: {}
@@ -574,7 +581,7 @@ function(
 			oList = new List(sListId, this.mToList[sType].listOptions),
 			oGHI = this._createGroupHeaderItem(sType);
 
-		oList.addItem(oGHI);
+		oList.addItemGroup(undefined, oGHI);
 		this[this.mToList[sType].listName] = oList;
 
 		return oList;
@@ -781,7 +788,7 @@ function(
 			if (!oList) {
 				oList = this._createList(sType);
 			} else if (!oList.getItems().length) {
-				oList.addItem(this._createGroupHeaderItem(sType));
+				oList.addItemGroup(undefined, this._createGroupHeaderItem(sType));
 			}
 
 			oList.addItem(oListItem);
@@ -817,7 +824,7 @@ function(
 				oList = this._createList(sType);
 				oList.insertItem(oListItem, iIndex);
 			} else if (!oList.getItems().length) {
-				oList.addItem(this._createGroupHeaderItem(sType));
+				oList.addItemGroup(undefined, this._createGroupHeaderItem(sType));
 				oList.insertItem(oListItem, iIndex + 1);
 			} else {
 				oList.insertItem(oListItem, iIndex);
@@ -1198,7 +1205,7 @@ function(
 	 *
 	 * @override
 	 * @public
-	 * @param {sap.m.ViewSettingsItem|string} vItemOrKey The selected item, the item's string key
+	 * @param {sap.m.ViewSettingsItem|sap.ui.core.ID|string} vItemOrKey The selected item, the item's string key
 	 * or the item id
 	 * @returns {this} Reference to <code>this</code> for method chaining
 	 */
@@ -1243,7 +1250,7 @@ function(
 	 *
 	 * @override
 	 * @public
-	 * @param {sap.m.ViewSettingsItem|string} vItemOrKey The selected item, the item's string key
+	 * @param {sap.m.ViewSettingsItem|sap.ui.core.ID|string} vItemOrKey The selected item, the item's string key
 	 * or the item id
 	 * @returns {this} Reference to <code>this</code> for method chaining
 	 */
@@ -1292,7 +1299,7 @@ function(
 	 *
 	 * @override
 	 * @public
-	 * @param {sap.m.ViewSettingsItem|string|null} vItemOrKey The selected item or the item's key string
+	 * @param {sap.m.ViewSettingsItem|sap.ui.core.ID|string|null} vItemOrKey The selected item or the item's key string
 	 * @returns {this} Reference to <code>this</code> for method chaining
 	 */
 	ViewSettingsDialog.prototype.setSelectedPresetFilterItem = function(vItemOrKey) {
@@ -1929,7 +1936,8 @@ function(
 	ViewSettingsDialog.prototype._getTitleLabel = function() {
 		if (this._titleLabel === undefined) {
 			this._titleLabel = new Title(this._sTitleLabelId, {
-				text : this._rb.getText("VIEWSETTINGS_TITLE")
+				text : this._rb.getText("VIEWSETTINGS_TITLE"),
+				level: TitleLevel.H1
 			}).addStyleClass("sapMVSDTitle");
 		}
 		return this._titleLabel;
@@ -1978,9 +1986,9 @@ function(
 	 */
 	ViewSettingsDialog.prototype._getDetailTitleLabel = function() {
 		if (this._detailTitleLabel === undefined) {
-			this._detailTitleLabel = new Title(this.getId() + "-detailtitle",
-				{
-					text : this._rb.getText("VIEWSETTINGS_TITLE_FILTERBY")
+			this._detailTitleLabel = new Title(this.getId() + "-detailtitle", {
+					text : this._rb.getText("VIEWSETTINGS_TITLE_FILTERBY"),
+					level: TitleLevel.H1
 				}).addStyleClass("sapMVSDTitle");
 		}
 		return this._detailTitleLabel;
@@ -2239,7 +2247,8 @@ function(
 				title : ManagedObject.escapeSettingsValue(aSubFilters[i].getText()),
 				type : ListType.Active,
 				selected : aSubFilters[i].getSelected(),
-				tooltip : aSubFilters[i].getTooltip()
+				tooltip : aSubFilters[i].getTooltip(),
+				wrapping: aSubFilters[i].getWrapping()
 			}).data("item", aSubFilters[i]);
 			this._filterDetailList.addItem(oListItem);
 		}
@@ -2295,7 +2304,7 @@ function(
 			ariaLabelledBy: this._ariaSortOrderInvisibleText
 		});
 
-		this._sortOrderList.addItem(new GroupHeaderListItem({title: this._rb.getText("VIEWSETTINGS_SORT_BY")}));
+		this._sortOrderList.addItemGroup(undefined, new GroupHeaderListItem({title: this._rb.getText("VIEWSETTINGS_SORT_BY")}));
 
 		this._sortOrderList.addItem(new StandardListItem({
 			title : this._rb.getText("VIEWSETTINGS_ASCENDING_ITEM")
@@ -2326,14 +2335,15 @@ function(
 
 		this._groupList.destroyItems();
 		if (aGroupItems.length) {
-			this._groupList.addItem(new GroupHeaderListItem({title: sTitleGroupObject}));
+			this._groupList.addItemGroup(undefined, new GroupHeaderListItem({title: sTitleGroupObject}));
 			aGroupItems.forEach(function (oItem) {
 				oListItem = new StandardListItem({
 					id: oItem.getId() + LIST_ITEM_SUFFIX,
 					title: ManagedObject.escapeSettingsValue(oItem.getText()),
 					type: ListType.Active,
 					selected: oItem.getSelected(),
-					tooltip : oItem.getTooltip()
+					tooltip : oItem.getTooltip(),
+					wrapping: oItem.getWrapping()
 				}).data("item", oItem);
 				this._groupList.addItem(oListItem);
 			}, this);
@@ -2361,7 +2371,8 @@ function(
 				id: this._oGroupingNoneItem.getId() + LIST_ITEM_SUFFIX,
 				title: this._oGroupingNoneItem.getText(),
 				type: ListType.Active,
-				selected: this._oGroupingNoneItem.getSelected()
+				selected: this._oGroupingNoneItem.getSelected(),
+				wrapping: this._oGroupingNoneItem.getWrapping()
 			}).data("item", this._oGroupingNoneItem);
 			this._groupList.addItem(oListItem);
 		}
@@ -2394,7 +2405,7 @@ function(
 			ariaLabelledBy: this._ariaGroupOrderInvisibleText
 		});
 
-		this._groupOrderList.addItem(new GroupHeaderListItem({title: this._rb.getText("VIEWSETTINGS_GROUP_BY")}));
+		this._groupOrderList.addItemGroup(undefined, new GroupHeaderListItem({title: this._rb.getText("VIEWSETTINGS_GROUP_BY")}));
 		this._groupOrderList.addItem(new StandardListItem({
 			title : this._rb.getText("VIEWSETTINGS_ASCENDING_ITEM")
 		}).data("item", false).setSelected(true));
@@ -2444,7 +2455,8 @@ function(
 					title: ManagedObject.escapeSettingsValue(oItem.getText()),
 					type: ListType.Active,
 					selected: oItem.getSelected(),
-					tooltip: oItem.getTooltip()
+					tooltip: oItem.getTooltip(),
+					wrapping: oItem.getWrapping()
 				}).data("item", oItem);
 				this._presetFilterList.addItem(oListItem);
 			}, this);
@@ -2462,7 +2474,7 @@ function(
 		this._filterList.destroyItems();
 		aFilterItems = this.getFilterItems();
 
-		this._filterList.addItem(new GroupHeaderListItem({title: sTitleFilterBy}));
+		this._filterList.addItemGroup(undefined, new GroupHeaderListItem({title: sTitleFilterBy}));
 
 		if (aFilterItems.length) {
 			aFilterItems.forEach(function(oItem) {
@@ -2472,6 +2484,7 @@ function(
 						title : ManagedObject.escapeSettingsValue(oItem.getText()),
 						type : ListType.Active,
 						tooltip : oItem.getTooltip(),
+						wrapping: oItem.getWrapping(),
 						press : (function(oItem) {
 							return function(oEvent) {
 								// navigate to details page
@@ -2860,7 +2873,7 @@ function(
 	 *
 	 * @override
 	 * @public
-	 * @param { int| sap.m.ViewSettingsFilterItem | string } vFilterItem The filter item's index, or the item itself, or its id
+	 * @param { int| sap.m.ViewSettingsFilterItem | sap.ui.core.ID } vFilterItem The filter item's index, or the item itself, or its ID
 	 * @returns {sap.m.ViewSettingsFilterItem|null} The removed item or <code>null</code>
 	 */
 	ViewSettingsDialog.prototype.removeFilterItem = function (vFilterItem) {
@@ -2953,7 +2966,7 @@ function(
 
 		if (this.getTitle()) { // custom title
 			oTitleLabel.setText(this.getTitle());
-		} else { // default title
+		} else if (this._hasSubHeader()) { // default title if necessary
 			oTitleLabel.setText(this._rb.getText("VIEWSETTINGS_TITLE"));
 		}
 

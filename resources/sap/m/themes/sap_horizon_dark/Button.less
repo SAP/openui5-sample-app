@@ -10,20 +10,7 @@
 }
 
 .sapMBtnEmphasized {
-	font-weight: @sapUiButtonEmphasizedFontWeight;
-}
-
-.sapMIBar-CTX .sapMBtn:hover > .sapMBtnHoverable.sapMBtnEmphasized:not(.sapMBtnActive),
-span.sapMBtnInner.sapMBtnEmphasized {
-	text-shadow: none;
-}
-
-.sapMIBar-CTX .sapMBtn:hover > .sapMBtnHoverable.sapMBtnEmphasized:not(.sapMBtnActive) {
-	color: @sapUiButtonEmphasizedHoverTextColor;
-	font-weight: @sapUiButtonEmphasizedFontWeight;
-	.sapMBtnIcon {
-		color: @sapUiButtonEmphasizedHoverTextColor;
-	}
+	font-family: @sapUiFontBoldFamily;
 }
 
 .sapMIBar-CTX .sapMBarLeft .sapMBtn:hover {
@@ -43,12 +30,6 @@ span.sapMBtnInner.sapMBtnEmphasized {
 	position: relative;
 	border-radius: @sapUiButtonBorderCornerRadius;
 	text-shadow: none;
-	&.sapMBtnCritical,
-	&.sapMBtnNegative,
-	&.sapMBtnSuccess,
-	&.sapMBtnNeutral {
-		font-weight: bold;
-	}
 }
 
 /* ------------------- */

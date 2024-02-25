@@ -7,14 +7,15 @@
 // Provides control sap.m.Panel.
 sap.ui.define([
 	'./library',
-	'sap/ui/core/Configuration',
 	'sap/ui/core/Control',
+	"sap/ui/core/ControlBehavior",
 	'sap/ui/core/IconPool',
 	'sap/ui/Device',
 	'./PanelRenderer',
+	"sap/ui/core/Lib",
 	'sap/m/Button'
 ],
-	function(library, Configuration, Control, IconPool, Device, PanelRenderer, Button) {
+	function(library, Control, ControlBehavior, IconPool, Device, PanelRenderer, Library, Button) {
 	"use strict";
 
 	// shortcut for sap.m.PanelAccessibleRole
@@ -67,7 +68,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -256,7 +257,7 @@ sap.ui.define([
 			this._oExpandButton = this._createExpandButton();
 		}
 
-		if (Configuration.getAccessibility()) {
+		if (ControlBehavior.isAccessibilityEnabled()) {
 			this.$().attr("role", this.getAccessibleRole().toLowerCase());
 		}
 	};
@@ -324,6 +325,10 @@ sap.ui.define([
 			oEvent.preventDefault();
 		}
 
+		if (oEvent.originalEvent.repeat) {
+			return;
+		}
+
 		this.ontap(oEvent);
 	};
 
@@ -346,7 +351,7 @@ sap.ui.define([
 	Panel.prototype._createExpandButton = function () {
 		var that = this,
 			sIconURI = this.getExpanded() ? IconPool.getIconURI("slim-arrow-down") : IconPool.getIconURI("slim-arrow-right"),
-			sTooltipBundleText = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("PANEL_ICON"),
+			sTooltipBundleText = Library.getResourceBundleFor("sap.m").getText("PANEL_ICON"),
 			oButton;
 
 		if (!this.getHeaderToolbar()) {

@@ -6,8 +6,11 @@
 
 //Provides control sap.ui.unified.Calendar.
 sap.ui.define([
+	"sap/base/i18n/Formatting",
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/ui/Device',
+	"sap/ui/core/Lib",
 	'sap/ui/core/LocaleData',
 	'sap/ui/unified/calendar/CalendarUtils',
 	'sap/ui/core/format/TimezoneUtil',
@@ -24,11 +27,13 @@ sap.ui.define([
 	"sap/ui/unified/CalendarAppointment",
 	'sap/ui/core/InvisibleMessage',
 	'sap/ui/core/library',
-	'sap/ui/core/Configuration',
 	"sap/ui/core/date/UI5Date"
 ], function(
+	Formatting,
+	Localization,
 	Control,
 	Device,
+	Library,
 	LocaleData,
 	CalendarUtils,
 	TimezoneUtil,
@@ -45,7 +50,6 @@ sap.ui.define([
 	CalendarAppointment,
 	InvisibleMessage,
 	corelibrary,
-	Configuration,
 	UI5Date
 ) {
 	"use strict";
@@ -88,7 +92,7 @@ sap.ui.define([
 	 * @class
 	 * A calendar row with a header and appointments. The Appointments will be placed in the defined interval.
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -230,8 +234,7 @@ sap.ui.define([
 
 			/**
 			 * Defines rounding of the width of <code>CalendarAppoinment<code>
-			 * <b>Note:</b> This property is applied, when the calendar interval type is day and the view shows more than 20 days
-			 * @experimental Since 1.81.0
+			 * <b>Note:</b> This property is applied, when the calendar interval type is Day and the view shows more than 20 days
 			 * @since 1.81.0
 			 */
 			appointmentRoundWidth: { type: "sap.ui.unified.CalendarAppointmentRoundWidth", group: "Appearance", defaultValue: CalendarAppointmentRoundWidth.None},
@@ -252,7 +255,7 @@ sap.ui.define([
 			 *
 			 * <b>Note:</b> For performance reasons, only appointments in the visible time range or nearby should be assigned.
 			 */
-			appointments : {type : "sap.ui.unified.CalendarAppointment", multiple : true, singularName : "appointment"},
+			appointments : {type : "sap.ui.unified.CalendarAppointment", defaultClass: CalendarAppointment, multiple : true, singularName : "appointment"},
 
 			/**
 			 * Appointments to be displayed in the top of the intervals. The <code>intervalHeaders</code> are used to visualize
@@ -361,8 +364,8 @@ sap.ui.define([
 
 	CalendarRow.prototype.init = function(){
 
-		this._bRTL  = Configuration.getRTL();
-		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
+		this._bRTL  = Localization.getRTL();
+		this._oRb = Library.getResourceBundleFor("sap.ui.unified");
 
 		this._oFormatAria = DateFormat.getDateTimeInstance({
 			pattern: "EEEE dd/MM/YYYY 'at' " + _getLocaleData.call(this).getTimePattern("medium")
@@ -1023,7 +1026,7 @@ sap.ui.define([
 	function _getLocale(){
 
 		if (!this._sLocale) {
-			this._sLocale = Configuration.getFormatSettings().getFormatLocale().toString();
+			this._sLocale = new Locale(Formatting.getLanguageTag()).toString();
 		}
 
 		return this._sLocale;
@@ -1888,6 +1891,20 @@ sap.ui.define([
 			}
 			oParent = oParent.getParent();
 		}
+	};
+
+	/**
+	 * Hook for controls that extend the sap.ui.unified.CalendarRow control.
+	 * Checks whether an interval representing a day as part of a row will be displayed as non working.
+	 * @private
+	 * @param {int} iInterval The interval number representing a day as part of a row.
+	 * @param {array} aNonWorkingItems The interval number representing a day as part of a row.
+	 * @param {int} iStartOffset The interval index based on the start date of the view.
+	 * @param {int} iNonWorkingMax The non working maximal index based on the view.
+	 * @returns {boolean}
+	 */
+	CalendarRow.prototype._isNonWorkingInterval = function (iInterval, aNonWorkingItems, iStartOffset, iNonWorkingMax) {
+		return aNonWorkingItems.includes((iInterval + iStartOffset) % iNonWorkingMax);
 	};
 
 	/**

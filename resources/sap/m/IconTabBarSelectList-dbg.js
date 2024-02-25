@@ -40,7 +40,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @private
@@ -284,7 +284,7 @@ sap.ui.define([
 			return;
 		}
 
-		if (this._oIconTabHeader._isUnselectable(oTappedItem)) {
+		if (!this._oIconTabHeader._isSelectable(oTappedItem)) {
 			return;
 		}
 

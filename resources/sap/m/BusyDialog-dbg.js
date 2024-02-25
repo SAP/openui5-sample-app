@@ -5,24 +5,8 @@
  */
 
 // Provides control sap.m.BusyDialog.
-sap.ui.define(['./library',
-		'sap/ui/core/Control',
-		'sap/m/Dialog',
-		'sap/m/BusyIndicator',
-		'sap/m/Label',
-		'sap/m/Button',
-		"sap/base/Log",
-		'sap/ui/core/Core',
-		'sap/ui/core/InvisibleText'],
-	function (library,
-			  Control,
-			  Dialog,
-			  BusyIndicator,
-			  Label,
-			  Button,
-			  Log,
-			  Core,
-			  InvisibleText) {
+sap.ui.define(['./library', 'sap/ui/core/Control', 'sap/m/Dialog', 'sap/m/BusyIndicator', 'sap/m/Label', 'sap/m/Button', "sap/base/Log", 'sap/ui/core/Core', 'sap/ui/core/InvisibleText', "sap/ui/core/Lib"],
+	function(library, Control, Dialog, BusyIndicator, Label, Button, Log, Core, InvisibleText, Library) {
 		"use strict";
 
 		// shortcut for sap.m.TitleAlignment
@@ -62,7 +46,7 @@ sap.ui.define(['./library',
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @public
 		 * @alias sap.m.BusyDialog
@@ -264,9 +248,18 @@ sap.ui.define(['./library',
 		 * @returns {this} BusyDialog reference for chaining.
 		 */
 		BusyDialog.prototype.open = function () {
-			var aAriaLabelledBy = this.getAriaLabelledBy();
-
 			Log.debug("sap.m.BusyDialog.open called at " + Date.now());
+
+			//if the code is not ready yet (new sap.m.BusyDialog().open()) wait 50ms and then try ot open it.
+			if (!document.body) {
+				this._iOpenTimer = setTimeout(function () {
+					this.open();
+				}.bind(this), 50);
+
+				return this;
+			}
+
+			var aAriaLabelledBy = this.getAriaLabelledBy();
 
 			if (aAriaLabelledBy && aAriaLabelledBy.length) {
 				if (!this._oDialog._$dialog) {
@@ -279,14 +272,7 @@ sap.ui.define(['./library',
 				this._oDialog.addAriaLabelledBy(InvisibleText.getStaticId("sap.m", "BUSYDIALOG_TITLE"));
 			}
 
-			//if the code is not ready yet (new sap.m.BusyDialog().open()) wait 50ms and then try ot open it.
-			if (!document.body || !Core.isInitialized()) {
-				this._iOpenTimer = setTimeout(function () {
-					this.open();
-				}.bind(this), 50);
-			} else {
-				this._oDialog.open();
-			}
+			this._oDialog.open();
 
 			return this;
 		};
@@ -408,7 +394,7 @@ sap.ui.define(['./library',
 		 * Sets custom icon.
 		 *
 		 * @public
-		 * @param {string} sIcon Icon to use as a busy animation.
+		 * @param {sap.ui.core.URI} sIcon Icon to use as a busy animation.
 		 * @returns {this} BusyDialog reference for chaining.
 		 */
 		BusyDialog.prototype.setCustomIcon = function (sIcon) {
@@ -447,7 +433,7 @@ sap.ui.define(['./library',
 		 * Sets the width of the custom icon.
 		 *
 		 * @public
-		 * @param {string} sWidth Width of the provided icon in CSSSize.
+		 * @param {sap.ui.core.CSSSize} sWidth Width of the provided icon in CSSSize.
 		 * @returns {this} BusyDialog reference for chaining.
 		 */
 		BusyDialog.prototype.setCustomIconWidth = function (sWidth) {
@@ -460,7 +446,7 @@ sap.ui.define(['./library',
 		 * Sets the height of the custom icon.
 		 *
 		 * @public
-		 * @param {string} sHeight Height of the provided icon in CSSSize.
+		 * @param {sap.ui.core.CSSSize} sHeight Height of the provided icon in CSSSize.
 		 * @returns {this} BusyDialog reference for chaining.
 		 */
 		BusyDialog.prototype.setCustomIconHeight = function (sHeight) {
@@ -549,7 +535,7 @@ sap.ui.define(['./library',
 		 */
 		BusyDialog.prototype._getCancelButton = function () {
 			var cancelButtonText = this.getCancelButtonText();
-			cancelButtonText = cancelButtonText ? cancelButtonText : Core.getLibraryResourceBundle("sap.m").getText("BUSYDIALOG_CANCELBUTTON_TEXT");
+			cancelButtonText = cancelButtonText ? cancelButtonText : Library.getResourceBundleFor("sap.m").getText("BUSYDIALOG_CANCELBUTTON_TEXT");
 
 			// eslint-disable-next-line no-return-assign
 			return this._cancelButton ? this._cancelButton : this._cancelButton = new Button(this.getId() + 'busyCancelBtn', {

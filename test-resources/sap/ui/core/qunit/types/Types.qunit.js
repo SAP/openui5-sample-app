@@ -1,7 +1,9 @@
 /*global QUnit, sinon */
 sap.ui.define([
 	"sap/base/Log",
-	"sap/ui/core/Configuration",
+	"sap/base/i18n/Formatting",
+	"sap/base/i18n/Localization",
+	"sap/ui/core/Lib",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/format/NumberFormat",
 	"sap/ui/model/FormatException",
@@ -19,11 +21,9 @@ sap.ui.define([
 	"sap/ui/model/type/TimeInterval",
 	"sap/ui/model/type/Unit",
 	"sap/ui/test/TestUtils"
-], function (Log, Configuration, UI5Date, NumberFormat, FormatException, ParseException,
-		ValidateException, BooleanType, CurrencyType, DateTimeType, DateTimeIntervalType,
-		FileSizeType, FloatType, IntegerType, StringType, TimeType, TimeIntervalType, UnitType,
-		TestUtils
-) {
+], function(Log, Formatting, Localization, Library, UI5Date, NumberFormat, FormatException, ParseException,
+		ValidateException, BooleanType, CurrencyType, DateTimeType, DateTimeIntervalType, FileSizeType, FloatType,
+		IntegerType, StringType, TimeType, TimeIntervalType, UnitType, TestUtils) {
 	"use strict";
 
 	function checkValidateException(oEx) {
@@ -77,7 +77,7 @@ sap.ui.define([
 		});
 	}
 
-	var sDefaultLanguage = Configuration.getLanguage();
+	var sDefaultLanguage = Localization.getLanguage();
 
 	//*********************************************************************************************
 	QUnit.module("sap.ui.model.type.Boolean", {
@@ -85,10 +85,10 @@ sap.ui.define([
 			this.__ignoreIsolatedCoverage__ = true;
 		},
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -129,10 +129,10 @@ sap.ui.define([
 			this.__ignoreIsolatedCoverage__ = true;
 		},
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -432,7 +432,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("currency parseValue with strict mode - CLDR (showMeasure=true)", function (assert) {
-		var oBundle = sap.ui.getCore().getLibraryResourceBundle();
+		var oBundle = Library.getResourceBundleFor("sap.ui.core");
 		var currencyType = new CurrencyType({
 			strictParsing: true,
 			showMeasure: true
@@ -481,7 +481,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("currency parseValue with strict mode - CLDR (showMeasure=false)", function (assert) {
-		var oBundle = sap.ui.getCore().getLibraryResourceBundle();
+		var oBundle = Library.getResourceBundleFor("sap.ui.core");
 		var currencyType = new CurrencyType({
 			strictParsing: true,
 			showMeasure: false
@@ -534,7 +534,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("currency parseValue with strict mode - Custom (showMeasure=true)", function (assert) {
-		var oBundle = sap.ui.getCore().getLibraryResourceBundle();
+		var oBundle = Library.getResourceBundleFor("sap.ui.core");
 		var mCustomCurrencies = {
 			"BTC": {
 				"symbol": "Ƀ",
@@ -614,7 +614,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("currency parseValue with strict mode - Custom (showMeasure=false)", function (assert) {
-		var oBundle = sap.ui.getCore().getLibraryResourceBundle();
+		var oBundle = Library.getResourceBundleFor("sap.ui.core");
 		var mCustomCurrencies = {
 			"BTC": {
 				"symbol": "Ƀ",
@@ -733,10 +733,10 @@ sap.ui.define([
 	//*********************************************************************************************
 	QUnit.module("sap.ui.model.type.DateTime", {
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -814,10 +814,10 @@ sap.ui.define([
 	//*********************************************************************************************
 	QUnit.module("sap.ui.model.type.DateTimeInterval", {
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -892,10 +892,10 @@ sap.ui.define([
 			this.__ignoreIsolatedCoverage__ = true;
 		},
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1071,10 +1071,10 @@ sap.ui.define([
 			this.__ignoreIsolatedCoverage__ = true;
 		},
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1282,10 +1282,10 @@ sap.ui.define([
 			this.__ignoreIsolatedCoverage__ = true;
 		},
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1416,7 +1416,7 @@ sap.ui.define([
 				minimum: 1
 			});
 
-		this.mock(sap.ui.getCore()).expects("getLibraryResourceBundle").withExactArgs().returns(oBundle);
+		this.mock(Library).expects("getResourceBundleFor").withExactArgs("sap.ui.core").returns(oBundle);
 		this.mock(oBundle).expects("getText").withExactArgs("Integer.Minimum", ["1"]).returns(">=1");
 
 		// code under test
@@ -1437,7 +1437,7 @@ sap.ui.define([
 				maximum: 0
 			});
 
-		this.mock(sap.ui.getCore()).expects("getLibraryResourceBundle").withExactArgs().returns(oBundle);
+		this.mock(Library).expects("getResourceBundleFor").withExactArgs("sap.ui.core").returns(oBundle);
 		oBundleMock.expects("getText").withExactArgs("Integer.Minimum", ["2"]).returns(">=2");
 		oBundleMock.expects("getText").withExactArgs("Integer.Maximum", ["0"]).returns("<=0");
 
@@ -1455,10 +1455,10 @@ sap.ui.define([
 			this.__ignoreIsolatedCoverage__ = true;
 		},
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1599,10 +1599,10 @@ sap.ui.define([
 	//*********************************************************************************************
 	QUnit.module("sap.ui.model.type.Time", {
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1679,10 +1679,10 @@ sap.ui.define([
 	//*********************************************************************************************
 	QUnit.module("sap.ui.model.type.TimeInterval", {
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1749,10 +1749,10 @@ sap.ui.define([
 			this.__ignoreIsolatedCoverage__ = true;
 		},
 		beforeEach : function() {
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach : function() {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1973,7 +1973,6 @@ sap.ui.define([
 	});
 
 	QUnit.test("unit format and parse - custom units (global)", function (assert) {
-		var oFormatSettings = Configuration.getFormatSettings();
 		var oConfigObject = {
 			"lebkuchen": {
 				"unitPattern-count-one": "{0} LK",
@@ -1982,7 +1981,7 @@ sap.ui.define([
 				"decimals": 3
 			}
 		};
-		oFormatSettings.setCustomUnits(oConfigObject);
+		Formatting.setCustomUnits(oConfigObject);
 
 		var oType = new UnitType();
 
@@ -1993,11 +1992,11 @@ sap.ui.define([
 		// format and parse valid unit
 		assert.strictEqual(oType.formatValue([200.57, "lebkuchen"], "string"), "200.570 LKs", "decimals '3' is respected");
 		assert.deepEqual(oType.parseValue("200.5123 LKs", "string"), [200.5123, "lebkuchen"], "parsing is valid");
+		Formatting.setCustomUnits(undefined);
 	});
 
 	QUnit.test("unit format and parse - custom units (global & local)", function (assert) {
 		// global config
-		var oFormatSettings = Configuration.getFormatSettings();
 		var oConfigObject = {
 			"lebkuchen": {
 				"unitPattern-count-one": "{0} LK",
@@ -2006,7 +2005,7 @@ sap.ui.define([
 				"decimals": 3
 			}
 		};
-		oFormatSettings.setCustomUnits(oConfigObject);
+		Formatting.setCustomUnits(oConfigObject);
 
 		// local config  -->  hides global config
 		var oType = new UnitType({
@@ -2041,6 +2040,8 @@ sap.ui.define([
 		// format and parse valid unit
 		assert.strictEqual(oType.formatValue([200.575, "electric-inductance"], "string"), "200.575 H", "precision 4 is respected (rounded)");
 		assert.deepEqual(oType.parseValue("200.5123 H", "string"), [200.5123, "electric-inductance"], "parsing is valid");
+
+		Formatting.setCustomUnits(undefined);
 	});
 
 	QUnit.test("unit validateValue - minimum and maximum value constraints", function (assert) {
@@ -2142,7 +2143,7 @@ sap.ui.define([
 				//call super validateValue
 				UnitType.prototype.validateValue.apply(this, arguments);
 
-				var oBundle = sap.ui.getCore().getLibraryResourceBundle(),
+				var oBundle = Library.getResourceBundleFor("sap.ui.core"),
 					aValues = vValue,
 					iValue;
 				if (this.oInputFormat) {
@@ -2208,7 +2209,6 @@ sap.ui.define([
 
 	QUnit.test("Unit: Dynamic values & unit overdefiniton via Configuration (decimals)", function (assert) {
 		// overwrite the length-meter unit, and define a decimals value
-		var oFormatSettings = Configuration.getFormatSettings();
 		var oConfigObject = {
 			"length-meter": {
 				"unitPattern-count-one": "{0} m",
@@ -2217,7 +2217,7 @@ sap.ui.define([
 				"decimals": 3
 			}
 		};
-		oFormatSettings.setCustomUnits(oConfigObject);
+		Formatting.setCustomUnits(oConfigObject);
 
 		// new Meter type
 		var MeterType = UnitType.extend("sap.ui.core.test.MeterType", {
@@ -2263,11 +2263,12 @@ sap.ui.define([
 
 		assert.deepEqual(oMeterType.parseValue("123.100000000001 m", "string"), [123.100000000001, "length-meter"], " number with too many digits parse 5 digits meters expected");
 		assert.strictEqual(oMeterTypeInstanceSpy.callCount, 10, "10 instances because 10 different decimal options are provided");
+
+		Formatting.setCustomUnits(undefined);
 	});
 
 	QUnit.test("Unit: Dynamic values & unit overdefiniton via Configuration (precision)", function (assert) {
 		// overwrite the length-meter unit, and define a decimals value
-		var oFormatSettings = Configuration.getFormatSettings();
 		var oConfigObject = {
 			"length-meter": {
 				"unitPattern-count-one": "{0} m",
@@ -2276,7 +2277,7 @@ sap.ui.define([
 				"precision": 4
 			}
 		};
-		oFormatSettings.setCustomUnits(oConfigObject);
+		Formatting.setCustomUnits(oConfigObject);
 
 		// new Meter type
 		var MeterType = UnitType.extend("sap.ui.core.test.MeterType", {
@@ -2322,6 +2323,8 @@ sap.ui.define([
 
 		assert.deepEqual(oMeterType.parseValue("123.100000000001 m", "string"), [123.100000000001, "length-meter"], " number with too many digits parse 5 digits meters expected");
 		assert.strictEqual(oMeterTypeInstanceSpy.callCount, 10, "10 instances because 10 different precision options are provided");
+
+		Formatting.setCustomUnits(undefined);
 	});
 
 	QUnit.test("Multiple Unit-Instances with bound custom units and other distinct format options", function (assert) {
@@ -2422,7 +2425,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("unit parseValue with strict mode - CLDR (showMeasure=true)", function (assert) {
-		var oBundle = sap.ui.getCore().getLibraryResourceBundle();
+		var oBundle = Library.getResourceBundleFor("sap.ui.core");
 		var unitType = new UnitType({
 			strictParsing: true,
 			showMeasure: true
@@ -2468,7 +2471,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("unit parseValue with strict mode - CLDR (showMeasure=false)", function (assert) {
-		var oBundle = sap.ui.getCore().getLibraryResourceBundle();
+		var oBundle = Library.getResourceBundleFor("sap.ui.core");
 		var unitType = new UnitType({
 			strictParsing: true,
 			showMeasure: false
@@ -2514,7 +2517,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("unit parseValue with strict mode - Custom (showMeasure=true)", function (assert) {
-		var oBundle = sap.ui.getCore().getLibraryResourceBundle();
+		var oBundle = Library.getResourceBundleFor("sap.ui.core");
 		var mCustomUnits = {
 			"zomb": {
 				"displayName": "ZOMBIES!!",
@@ -2583,7 +2586,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("unit parseValue with strict mode - Custom (showMeasure=false)", function (assert) {
-		var oBundle = sap.ui.getCore().getLibraryResourceBundle();
+		var oBundle = Library.getResourceBundleFor("sap.ui.core");
 		var mCustomUnits = {
 			"zomb": {
 				"displayName": "ZOMBIES!!",

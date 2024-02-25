@@ -5,7 +5,7 @@
  */
 
 sap.ui.define(['sap/ui/core/Element'],
-	function (Element) {
+	(Element) => {
 		"use strict";
 
 		/**
@@ -20,17 +20,17 @@ sap.ui.define(['sap/ui/core/Element'],
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @alias sap.m.p13n.AbstractContainerItem
 		 * @author SAP SE
-		 * @version 1.120.7
-	 	 * @since 1.96
-	 	 * @private
+		 * @version 1.121.0
+		 * @since 1.96
+		 * @private
 		 * @ui5-restricted
 		 */
-		var AbstractContainerItem = Element.extend("sap.m.p13n.AbstractContainerItem", {
+		const AbstractContainerItem = Element.extend("sap.m.p13n.AbstractContainerItem", {
 			metadata: {
 				library: "sap.m",
 				defaultAggregation: "content",
@@ -69,7 +69,7 @@ sap.ui.define(['sap/ui/core/Element'],
 			}
 		});
 
-		AbstractContainerItem.prototype.exit = function () {
+		AbstractContainerItem.prototype.exit = function() {
 			Element.prototype.exit.apply(this, arguments);
 			if (this._oContent) {
 				this._oContent.destroy();

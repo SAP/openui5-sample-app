@@ -192,6 +192,12 @@ sap.ui.define([], function () {
 		GroupTable: "sapIllus-GroupTable",
 
 		/**
+		 * "New Mail" illustration type.
+		 * @public
+		 */
+		NewMail: "sapIllus-NewMail",
+
+		/**
 		 * "No Filter Results" illustration type.
 		 * @public
 		 */
@@ -226,6 +232,12 @@ sap.ui.define([], function () {
 		 * @public
 		 */
 		SearchFolder: "sapIllus-SearchFolder",
+
+		/**
+		 * "Sign Out" illustration type.
+		 * @public
+		 */
+		SignOut: "sapIllus-SignOut",
 
 		/**
 		 * "Simple Balloon" illustration type.

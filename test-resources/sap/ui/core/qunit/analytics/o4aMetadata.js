@@ -88,6 +88,9 @@ sap.ui.define([
 		"					MaxLength=\"40\" sap:label=\"Controlling Area2\" sap:attribute-for=\"ControllingAreaWithTextEmptyLabel\" />\n" +
 		"				<!-- property of type Edm.Time for grouping SNOW: CS20230006325114 -->\n" +
 		"				<Property Name=\"CreationTime\" Type=\"Edm.Time\" sap:label=\"Created At\" sap:aggregation-role=\"dimension\" />\n" +
+		"				<!-- Ordinary properties -->\n" +
+		"				<Property Name=\"Property0\" Type=\"Edm.String\" />\n" +
+		"				<Property Name=\"Property1\" Type=\"Edm.String\" />\n" +
 		"				<NavigationProperty Name=\"ControllingAreaDetails\"\n" +
 		"					Relationship=\"servicemock.ControllingAreaToMasterDataType\"\n" +
 		"					FromRole=\"ActualPlannedCostsResultsDependent\" ToRole=\"ControllingAreasPrincipal\" sap:hierarchy-node-for=\"ControllingArea\"/>\n" +

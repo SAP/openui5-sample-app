@@ -6,6 +6,7 @@
 
 // Provides control sap.m.ObjectListItem.
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	'sap/ui/base/ManagedObjectObserver',
 	'./ListItemBase',
 	'./library',
@@ -15,10 +16,10 @@ sap.ui.define([
 	'./ObjectMarker',
 	'./Text',
 	'./ObjectListItemRenderer',
-	'sap/ui/core/Configuration',
 	"sap/m/ImageHelper"
 ],
 function(
+	Localization,
 	ManagedObjectObserver,
 	ListItemBase,
 	library,
@@ -28,7 +29,6 @@ function(
 	ObjectMarker,
 	Text,
 	ObjectListItemRenderer,
-	Configuration,
 	ImageHelper
 	) {
 		"use strict";
@@ -60,7 +60,7 @@ function(
 		 *
 		 * <b>Note:</b> The control must only be used in the context of a list.
 		 * @extends sap.m.ListItemBase
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -244,7 +244,7 @@ function(
 
 		ObjectListItem.prototype.onAfterRendering = function() {
 			var oObjectNumber = this.getAggregation("_objectNumber"),
-				bPageRTL = Configuration.getRTL(),
+				bPageRTL = Localization.getRTL(),
 				sTextAlign = bPageRTL ? TextAlign.Left : TextAlign.Right;
 
 			if (oObjectNumber && oObjectNumber.getNumber()) { // adjust alignment according the design specification

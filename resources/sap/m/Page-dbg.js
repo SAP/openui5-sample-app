@@ -8,6 +8,7 @@
 sap.ui.define([
 	"./library",
 	"sap/ui/core/Control",
+	"sap/ui/core/ControlBehavior",
 	"sap/ui/core/Lib",
 	"sap/ui/core/delegate/ScrollEnablement",
 	"sap/m/Title",
@@ -26,6 +27,7 @@ sap.ui.define([
 function(
 	library,
 	Control,
+	ControlBehavior,
 	Library,
 	ScrollEnablement,
 	Title,
@@ -95,7 +97,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 * @mixes sap.ui.core.ContextMenuSupport
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @public
 		 * @alias sap.m.Page
@@ -451,7 +453,7 @@ function(
 			}
 
 			var $footer = jQuery(this.getDomRef()).find(".sapMPageFooter").last(),
-				sAnimationMode = Configuration.getAnimationMode(),
+				sAnimationMode = ControlBehavior.getAnimationMode(),
 				bHasAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
 
 			if (!this.getFloatingFooter()) {
@@ -725,9 +727,6 @@ function(
 		/**
 		 * Returns an InvisibleText control for the ARIA labelled-by attribute of the header toolbar of the page.
 		 *
-		 * @memberof Page.prototype
-		 * @function
-		 * @name _getHeaderToolbarAriaLabelledBy
 		 * @param {string} sId - The ID of header toolbar aggregation.
 		 * @returns {sap.ui.core.InvisibleText} The InvisibleText control for the header toolbar ARIA labelled-by attribute.
 		 *
@@ -745,9 +744,6 @@ function(
 		/**
 		 * Returns an InvisibleText control for the ARIA labelled-by attribute of the footer toolbar of the page.
 		 *
-		 * @memberof Page.prototype
-		 * @function
-		 * @name _getFooterToolbarAriaLabelledBy
 		 * @param {string} sId - The ID of the page.
 		 * @returns {sap.ui.core.InvisibleText} The InvisibleText control for the footer toolbar ARIA labelled-by attribute.
 		 *

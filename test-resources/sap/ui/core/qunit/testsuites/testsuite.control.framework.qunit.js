@@ -69,6 +69,18 @@ sap.ui.define(function() {
 					theme: "sap_hcb"
 				}
 			},
+			DuplicateIds: {
+				title: "sap.ui.core: Duplicate ID checks"
+			},
+			/**
+			 * @deprecated As of Version 1.120
+			 */
+			DuplicateIds_noError: {
+				title: "sap.ui.core: Duplicate ID checks (with errors disabled)",
+				ui5: {
+					noDuplicateIds: false
+				}
+			},
 			Element: {
 				title: "sap.ui.core.Element",
 				loader:{
@@ -148,6 +160,20 @@ sap.ui.define(function() {
 					reorder: false
 				}
 			},
+			Rendering: {
+				title: "sap.ui.core.Rendering",
+				loader: {
+					paths: {
+						"sap/ui/testlib": "test-resources/sap/ui/core/qunit/testdata/uilib/"
+					}
+				},
+				qunit: {
+					"reorder": false // one test expects to run without any previous rendering action
+				},
+				ui5: {
+					libs: "sap.ui.testlib"
+				}
+			},
 			RenderManager: {
 				title: "sap.ui.core.RenderManager"
 			},
@@ -162,6 +188,15 @@ sap.ui.define(function() {
 			},
 			StashedControlSupport: {
 				title: "sap.ui.core.StashedControlSupport",
+				loader: {
+					paths: {
+						"testdata/mvc": "test-resources/sap/ui/core/qunit/mvc/testdata", // used by async tests
+						test: "test-resources/sap/ui/core/qunit/"
+					}
+				}
+			},
+			StashedControlSupport_unavoidablySync: {
+				title: "sap.ui.core.StashedControlSupport_unavoidablySync",
 				loader: {
 					paths: {
 						"testdata/mvc": "test-resources/sap/ui/core/qunit/mvc/testdata", // used by async tests

@@ -18,6 +18,7 @@ sap.ui.define([
 	'sap/m/PageAccessibleLandmarkInfo',
 	'sap/ui/base/ManagedObjectObserver',
 	'sap/ui/core/Control',
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	"sap/ui/core/InvisibleText",
 	'sap/m/library',
@@ -39,6 +40,7 @@ function(
 	PageAccessibleLandmarkInfo,
 	ManagedObjectObserver,
 	Control,
+	Library,
 	coreLibrary,
 	InvisibleText,
 	library,
@@ -111,7 +113,7 @@ function(
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -285,7 +287,7 @@ function(
 
 	// Static members
 	SemanticPage._getResourceBundle = function () {
-		return sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		return Library.getResourceBundleFor("sap.m");
 	};
 
 	SemanticPage.ARIA = {

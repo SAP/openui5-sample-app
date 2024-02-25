@@ -1012,7 +1012,8 @@
 		 */
 		dependsOn(oDependantModule) {
 			const dependant = oDependantModule.name,
-				visited = Object.create(null);
+				visited = Object.create(null),
+				stack = log.isLoggable() ? [this.name, dependant] : undefined;
 
 			// log.debug("checking for a cycle between", this.name, "and", dependant);
 			function visit(mod) {
@@ -1020,13 +1021,22 @@
 					// log.debug("  ", mod);
 					visited[mod] = true;
 					const pending = mModules[mod]?.pending;
-					return Array.isArray(pending) &&
-						(pending.indexOf(dependant) >= 0 || pending.some(visit));
+					if (Array.isArray(pending) &&
+						(pending.includes(dependant) || pending.some(visit)) ) {
+						stack?.push(mod);
+						return true;
+					}
 				}
 				return false;
 			}
 
-			return this.name === dependant || visit(this.name);
+			const result = this.name === dependant || visit(this.name);
+			if ( result && stack ) {
+				log.error("Dependency cycle detected: ",
+					stack.reverse().map((entry, idx) => `${"".padEnd(idx)} -> ${entry}`).join("\n").slice(4)
+				);
+			}
+			return result;
 		}
 
 		/**
@@ -2011,6 +2021,7 @@
 			queue.push(sResourceName, aDependencies, vFactory, bExport);
 			if ( sResourceName != null ) {
 				const oModule = Module.get(sResourceName);
+				// change state of PRELOADED or INITIAL modules to prevent further requests/executions
 				if ( oModule.state <= INITIAL ) {
 					oModule.state = EXECUTING;
 					oModule.async = true;
@@ -4260,12 +4271,22 @@
 
 	})();
 
-	if (BaseConfig.get({
+	const bFuture = BaseConfig.get({
+		name: "sapUiXxFuture",
+		type: BaseConfig.Type.Boolean,
+		external: true,
+		freeze: true
+	});
+
+	// xx-future implicitly sets the loader to async
+	const bAsync = BaseConfig.get({
 		name: "sapUiAsync",
 		type: BaseConfig.Type.Boolean,
 		external: true,
 		freeze: true
-	})) {
+	}) || bFuture;
+
+	if (bAsync) {
 		ui5loader.config({
 			async: true
 		});
@@ -4297,12 +4318,16 @@
 
 	//calculate syncCallBehavior
 	let syncCallBehavior = 0; // ignore
-	const sNoSync = BaseConfig.get({
+	let sNoSync = BaseConfig.get({ // call must be made to ensure freezing
 		name: "sapUiXxNoSync",
 		type: BaseConfig.Type.String,
 		external: true,
 		freeze: true
 	});
+
+	// sap-ui-xx-future enforces strict sync call behavior
+	sNoSync = bFuture ? "x" : sNoSync;
+
 	if (sNoSync === 'warn') {
 		syncCallBehavior = 1;
 	} else if (/^(true|x)$/i.test(sNoSync)) {
@@ -4310,7 +4335,7 @@
 	}
 
 	/**
-	 * @deprectaed As of Version 1.120
+	 * @deprecated As of Version 1.120
 	 */
 	(() => {
 		const GlobalConfigurationProvider = sap.ui.require("sap/base/config/GlobalConfigurationProvider");

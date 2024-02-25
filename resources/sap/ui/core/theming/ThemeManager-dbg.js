@@ -8,13 +8,14 @@
 sap.ui.define([
 	"sap/base/assert",
 	"sap/base/Eventing",
+	"sap/base/future",
 	"sap/base/Log",
 	"sap/base/config",
 	"sap/base/i18n/Localization",
 	"sap/base/util/each",
 	"sap/base/util/LoaderExtensions",
 	"sap/ui/Device",
-	"sap/ui/Global",
+	"sap/ui/VersionInfo",
 	"sap/ui/core/Lib",
 	"sap/ui/core/Theming",
 	"sap/ui/core/theming/ThemeHelper",
@@ -22,13 +23,14 @@ sap.ui.define([
 ], function(
 	assert,
 	Eventing,
+	future,
 	Log,
 	BaseConfig,
 	Localization,
 	each,
 	LoaderExtensions,
 	Device,
-	Global,
+	VersionInfo,
 	Library,
 	Theming,
 	ThemeHelper,
@@ -472,7 +474,7 @@ sap.ui.define([
 
 			} catch (e) {
 				// parsing error
-				Log.error("[FUTURE FATAL] Custom check: Error parsing JSON string for custom.css indication.", e);
+				future.errorThrows("Custom check: Error parsing JSON string for custom.css indication.", e);
 			}
 		}
 
@@ -523,7 +525,7 @@ sap.ui.define([
 			ThemeManager.themeLoaded = true;
 			ThemeManager.fireThemeApplied();
 			if (bEmergencyExit) {
-				Log.error("[FUTURE FATAL] ThemeManager: max. check cycles reached.");
+				future.errorThrows("ThemeManager: max. check cycles reached.");
 			}
 		} else {
 			ThemeManager.themeLoaded = true;
@@ -668,8 +670,8 @@ sap.ui.define([
 			sQuery = "?version=" + oLibInfo.version;
 
 			// distribution version may not be available (will be loaded in Core constructor syncpoint2)
-			if (Global.versioninfo) {
-				sQuery += "&sap-ui-dist-version=" + Global.versioninfo.version;
+			if (VersionInfo._content) {
+				sQuery += "&sap-ui-dist-version=" + VersionInfo._content.version;
 			}
 		}
 		return sQuery;

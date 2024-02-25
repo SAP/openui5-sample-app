@@ -5,11 +5,11 @@
  */
 
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	"sap/base/util/uid",
-	"sap/ui/core/Configuration",
 	"sap/ui/fl/util/ManagedObjectModel" // used implicitly by oModifier.createControl() function
 ], function (
-	uid, Configuration
+	Localization, uid
 ) {
 	"use strict";
 
@@ -18,7 +18,7 @@ sap.ui.define([
 	 *
 	 * @alias sap.m.changeHandler.CombineButtons
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @experimental Since 1.48
 	 */
 	var CombineButtons = {};
@@ -30,7 +30,7 @@ sap.ui.define([
 		var sPropertyVisible = "";
 		var sOR = "";
 		var aMenuButtonModels = [];
-		var bIsRtl = Configuration.getRTL();
+		var bIsRtl = Localization.getRTL();
 		var aMenuButtonName = [];
 
 		return aButtons.reduce(function(oPreviousPromise, oButton, index) {

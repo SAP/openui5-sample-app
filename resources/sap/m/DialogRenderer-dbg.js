@@ -7,7 +7,8 @@ sap.ui.define([
 	"sap/m/library",
 	"sap/ui/Device",
 	"sap/ui/core/library",
-	"sap/ui/core/Lib"
+	"sap/ui/core/Lib",
+	"sap/ui/core/IconPool" // side effect: required when calling RenderManager#icon
 ], function (library, Device, coreLibrary, Library) {
 	"use strict";
 
@@ -51,7 +52,6 @@ sap.ui.define([
 			oEndButton = oDialog.getEndButton(),
 			sState = oDialog.getState(),
 			bStretch = oDialog.getStretch(),
-			bStretchOnPhone = oDialog.getStretchOnPhone() && Device.system.phone,
 			oValueStateText = oDialog.getAggregation("_valueState"),
 			oFooter = oDialog.getFooter();
 
@@ -78,7 +78,14 @@ sap.ui.define([
 			oRM.class("sapMDialogTouched");
 		}
 
-		if (bStretch || bStretchOnPhone) {
+		if (bStretch) {
+			oRM.class("sapMDialogStretched");
+		}
+
+		/**
+		 * @deprecated As of version 1.11.2
+		 */
+		if (!bStretch && oDialog.getStretchOnPhone() && Device.system.phone) {
 			oRM.class("sapMDialogStretched");
 		}
 

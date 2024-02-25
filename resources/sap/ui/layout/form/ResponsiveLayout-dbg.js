@@ -7,6 +7,7 @@
 // Provides control sap.ui.layout.form.ResponsiveLayout.
 sap.ui.define([
 	'sap/ui/core/Control',
+	"sap/ui/core/Element",
 	'sap/ui/layout/library',
 	'sap/ui/layout/ResponsiveFlowLayout',
 	'sap/ui/layout/ResponsiveFlowLayoutData',
@@ -18,6 +19,7 @@ sap.ui.define([
 ],
 	function(
 		Control,
+		Element,
 		library,
 		ResponsiveFlowLayout,
 		ResponsiveFlowLayoutData,
@@ -50,7 +52,7 @@ sap.ui.define([
 	 * @extends sap.ui.layout.form.FormLayout
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -120,8 +122,8 @@ sap.ui.define([
 		getLayoutData :  function(){
 
 			// only ResponsiveFlowLayoutData are interesting
-			var oContainer = sap.ui.getCore().byId(this.getContainer());
-			var oLayout    = sap.ui.getCore().byId(this.getLayout());
+			var oContainer = Element.getElementById(this.getContainer());
+			var oLayout    = Element.getElementById(this.getLayout());
 			var oLD;
 			if (oLayout && oContainer) {
 				oLD = oLayout.getLayoutDataForElement(oContainer, "sap.ui.layout.ResponsiveFlowLayoutData");
@@ -132,7 +134,7 @@ sap.ui.define([
 
 		getCustomData :  function(){
 
-			var oContainer = sap.ui.getCore().byId(this.getContainer());
+			var oContainer = Element.getElementById(this.getContainer());
 			if (oContainer) {
 				return oContainer.getCustomData();
 			}
@@ -141,7 +143,7 @@ sap.ui.define([
 
 		refreshExpanded :  function(){
 
-			var oContainer = sap.ui.getCore().byId(this.getContainer());
+			var oContainer = Element.getElementById(this.getContainer());
 			if (oContainer) {
 				if (oContainer.getExpanded()) {
 					this.$().removeClass("sapUiRLContainerColl");
@@ -155,8 +157,8 @@ sap.ui.define([
 			apiVersion: 2,
 			render: function(oRm, oPanel) {
 
-				var oContainer = sap.ui.getCore().byId(oPanel.getContainer());
-				var oLayout    = sap.ui.getCore().byId(oPanel.getLayout());
+				var oContainer = Element.getElementById(oPanel.getContainer());
+				var oLayout    = Element.getElementById(oPanel.getLayout());
 				var oContent   = oPanel.getContent();
 
 				if (!oContainer || !oLayout) {
@@ -575,7 +577,7 @@ sap.ui.define([
 			// to not change parent assignment of controls
 			if (!bElementContent) {
 				oRFLayout.getContent = function(){
-					var oElement = sap.ui.getCore().byId(this.__myParentElementId);
+					var oElement = Element.getElementById(this.__myParentElementId);
 					if (oElement) {
 						var aContent = [];
 						var oLabel = oElement.getLabelControl();
@@ -610,7 +612,7 @@ sap.ui.define([
 
 					if (iIndex == 0) {
 						// check if it's the label of the FormElement
-						var oElement = sap.ui.getCore().byId(this.__myParentElementId);
+						var oElement = Element.getElementById(this.__myParentElementId);
 						if (oElement) {
 							var oLabel = oElement.getLabelControl();
 							if (oControl == oLabel) {
@@ -624,7 +626,7 @@ sap.ui.define([
 				};
 			} else {
 				oRFLayout.getContent = function(){
-					var oElement = sap.ui.getCore().byId(this.__myParentElementId);
+					var oElement = Element.getElementById(this.__myParentElementId);
 					if (oElement) {
 						return oElement.getFieldsForRendering();
 					} else {
@@ -635,7 +637,7 @@ sap.ui.define([
 		} else if (oContainer) {
 			oRFLayout._getAccessibleRole = function() {
 
-				var oContainer = sap.ui.getCore().byId(this.__myParentContainerId);
+				var oContainer = Element.getElementById(this.__myParentContainerId);
 				var oLayout = this.__myParentLayout;
 				if (oLayout._mainRFLayout && !oContainer.getToolbar() && !oContainer.getTitle() &&
 						!oContainer.getExpandable() && oContainer.getAriaLabelledBy().length > 0) {
@@ -646,7 +648,7 @@ sap.ui.define([
 			};
 
 			oRFLayout.getAriaLabelledBy = function(){
-				var oContainer = sap.ui.getCore().byId(this.__myParentContainerId);
+				var oContainer = Element.getElementById(this.__myParentContainerId);
 				if (oContainer && !oContainer.getToolbar() && !oContainer.getTitle() && !oContainer.getExpandable()) {
 					return oContainer.getAriaLabelledBy();
 				}
@@ -680,8 +682,8 @@ sap.ui.define([
 			oRFLayout.__originalGetLayoutData = oRFLayout.getLayoutData;
 			oRFLayout.getLayoutData = function(){
 				var oLayout = this.__myParentLayout;
-				var oContainer = sap.ui.getCore().byId(this.__myParentContainerId);
-				var oElement = sap.ui.getCore().byId(this.__myParentElementId);
+				var oContainer = Element.getElementById(this.__myParentContainerId);
+				var oElement = Element.getElementById(this.__myParentElementId);
 
 				var oLD;
 				if (oElement) {
@@ -789,7 +791,7 @@ sap.ui.define([
 		// so the ResponsiveFlowLayouts must be updated and the control object must be adjusted
 		var sElementId = oElement.getId();
 		var sId = sElementId + "--RFLayout";
-		var oRFLayout = sap.ui.getCore().byId(sId);
+		var oRFLayout = Element.getElementById(sId);
 
 		if (!mRFLayouts[sElementId] && oRFLayout) {
 			// Element not maintained in control object of container but already has a RFLayout
@@ -834,10 +836,10 @@ sap.ui.define([
 					oContainer = undefined;
 					if (oContentElement.getContainer) {
 						// it's a panel
-						oContainer = sap.ui.getCore().byId(oContentElement.getContainer());
+						oContainer = Element.getElementById(oContentElement.getContainer());
 					} else {
 						// it's a RFLayout
-						oContainer = sap.ui.getCore().byId(oContentElement.__myParentContainerId);
+						oContainer = Element.getElementById(oContentElement.__myParentContainerId);
 					}
 					if (oContainer && oContainer.isVisible()) {
 						var oVisibleContainer = aVisibleContainers[j];

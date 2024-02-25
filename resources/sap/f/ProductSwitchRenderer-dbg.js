@@ -4,15 +4,15 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/Core"],
-	function (Core) {
+sap.ui.define(["sap/ui/core/Lib"],
+	function (Library) {
 		"use strict";
 
 		return {
 			apiVersion: 2,
 
 			render: function (oRm, oControl) {
-				var oRb = Core.getLibraryResourceBundle("sap.f");
+				var oRb = Library.getResourceBundleFor("sap.f");
 
 				oRm.openStart("div", oControl);
 				oRm.attr("role", "menu");

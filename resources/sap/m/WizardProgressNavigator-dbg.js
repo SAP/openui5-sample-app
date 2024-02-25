@@ -7,6 +7,7 @@
 sap.ui.define([
 	"./library",
 	"sap/ui/core/Control",
+	"sap/ui/core/Lib",
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/core/delegate/ItemNavigation",
 	"sap/ui/Device",
@@ -19,6 +20,7 @@ sap.ui.define([
 function(
 	library,
 	Control,
+	Library,
 	ResizeHandler,
 	ItemNavigation,
 	Device,
@@ -43,7 +45,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @private
@@ -123,8 +125,9 @@ function(
 		this._iActiveStep = 1;
 		this._aCachedSteps = [];
 		this._aStepOptionalIndication = [];
-		this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oResourceBundle = Library.getResourceBundleFor("sap.m");
 		this._oActionSheet = new ActionSheet();
+		this._aStepIds = [];
 		this._createStepNavigation();
 	};
 
@@ -185,6 +188,8 @@ function(
 	};
 
 	WizardProgressNavigator.prototype.onsapspace = function (oEvent) {
+		oEvent.preventDefault();
+
 		if (this._onEnter) {
 			this._onEnter(oEvent, this._oStepNavigation.getFocusedIndex());
 		}
@@ -211,6 +216,7 @@ function(
 		this._iCurrentStep = null;
 		this._iActiveStep = null;
 		this._aCachedSteps = null;
+		this._aStepIds = null;
 
 		this._aStepOptionalIndication = null;
 	};
@@ -727,6 +733,16 @@ function(
 						.attr(WizardProgressNavigatorRenderer.ATTRIBUTES.STEP);
 
 		return parseInt($iStepNumber);
+	};
+
+	WizardProgressNavigator.prototype._setStepIds = function (aSteps) {
+		if (!aSteps.length) {
+			return;
+		}
+
+		this._aStepIds = aSteps.map(function (oStep) {
+			return oStep.getId();
+		});
 	};
 
 	return WizardProgressNavigator;

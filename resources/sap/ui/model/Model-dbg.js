@@ -51,7 +51,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.message.MessageProcessor
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.Model
@@ -785,7 +785,11 @@ sap.ui.define([
 				sContextPath = oContext.getPath();
 				sResolvedPath = sContextPath + (sContextPath.endsWith("/") ? "" : "/") + sPath;
 			} else {
-				sResolvedPath = this.isLegacySyntax() ? "/" + sPath : undefined;
+				sResolvedPath = undefined;
+				/** @deprecated As of version 1.88.0 */
+				if (this.isLegacySyntax()) {
+					sResolvedPath = "/" + sPath;
+				}
 			}
 		}
 		if (!sPath && oContext) {

@@ -89,8 +89,13 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent, sap.ui.core.IAccessKeySupport
 	 *
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
+	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -142,6 +147,20 @@ sap.ui.define([
 				 * <b>Note:</b> Disabled <code>CheckBox</code> is not interactive and is rendered differently according to the theme.
 				 */
 				enabled : {type : "boolean", group : "Behavior", defaultValue : true},
+
+				/**
+				 * Sets the <code>required</code> state of the <code>CheckBox</code>.
+				 *
+				 * <b>Note:</b> Use this property only when a single relationship between this field and a Label cannot be established.
+				 * For example, with the assistance of the <code>labelFor</code> property of <code>sap.m.Label</code>.
+				 *
+				 * <b>Note:</b> This property won't work as expected without setting a value to the <code>text</code> property of the <code>CheckBox</code>.
+ 				 * The <code>text</code> property acts as a label for the <code>CheckBox</code> and is crucial for assistive technologies,
+ 				 * like screen readers, to provide a meaningful context.
+				 *
+				 * @since 1.121
+				 */
+				required: {type: "boolean", group: "Misc", defaultValue: false},
 
 				/**
 				 * The 'name' property to be used in the HTML code, for example for HTML forms that send data to the server via submit.
@@ -383,6 +402,14 @@ sap.ui.define([
 		return "selected";
 	};
 
+	CheckBox.prototype.getFormObservingProperties = function() {
+		return ["selected", "displayOnly"]; // as displayOnly changes the rendering mode
+	};
+
+	CheckBox.prototype.getFormRenderAsControl = function () {
+		return this.getDisplayOnly(); // for displayOnly CheckBox, show the control
+	};
+
 	/**
 	 * Event handler called when the CheckBox is touched.
 	 *
@@ -478,7 +505,7 @@ sap.ui.define([
 	/**
 	 * Lazy loads the CheckBox`s label
 	 *
-	 * @return {sap.m.Label}
+	 * @return {sap.m.Label} The label control
 	 * @private
 	 */
 	CheckBox.prototype._getLabel = function() {
@@ -558,7 +585,7 @@ sap.ui.define([
 
 		if (aLabelIds.length > 0) {
 			aLabelIds.forEach(function (sLabelId) {
-				Element.registry.get(sLabelId).addEventDelegate({
+				Element.getElementById(sLabelId).addEventDelegate({
 					ontap: function () {
 						that._fnLabelTapHandler();
 					}
@@ -582,7 +609,8 @@ sap.ui.define([
 			description: (sText ? sText + " " : "") + this.getFormattedState(),
 			focusable: this.getEnabled() && !this.getDisplayOnly(),
 			enabled: this.getEnabled(),
-			editable: this.getEditable()
+			editable: this.getEditable(),
+			required: this._isRequired()
 		};
 	};
 
@@ -599,11 +627,24 @@ sap.ui.define([
 		return true;
 	};
 
-	/*
+	/**
 	 * Checkbox without label must not be stretched in Form.
+	 * @returns {boolean} If the width of the control should not be adjusted
 	 */
 	CheckBox.prototype.getFormDoNotAdjustWidth = function() {
 		return this.getText() ? false : true;
+	};
+
+	/**
+	 * Determines if the CheckBox is required.
+	 * A CheckBox is considered required if it has been explicitly set as required,
+	 * or if it is required by LabelEnablement.
+	 *
+	 * @returns {boolean} True if the CheckBox is required, false otherwise.
+	 * @private
+	 */
+	CheckBox.prototype._isRequired = function () {
+		return this.getRequired() || LabelEnablement.isRequired(this);
 	};
 
 	return CheckBox;

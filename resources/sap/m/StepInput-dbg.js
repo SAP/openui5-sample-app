@@ -8,6 +8,7 @@
 sap.ui.define([
 	"sap/ui/core/Control",
 	"sap/ui/core/IconPool",
+	"sap/ui/core/Lib",
 	"sap/ui/core/message/MessageMixin",
 	"sap/ui/core/format/NumberFormat",
 	"sap/ui/model/ValidateException",
@@ -22,6 +23,7 @@ sap.ui.define([
 function(
 	Control,
 	IconPool,
+	Library,
 	MessageMixin,
 	NumberFormat,
 	ValidateException,
@@ -119,7 +121,7 @@ function(
 		 * @implements sap.ui.core.IFormContent
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -299,7 +301,7 @@ function(
 		});
 
 		// get resource translation bundle;
-		var oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oLibraryResourceBundle = Library.getResourceBundleFor("sap.m");
 		StepInput.STEP_INPUT_INCREASE_BTN_TOOLTIP = oLibraryResourceBundle.getText("STEP_INPUT_INCREASE_BTN");
 		StepInput.STEP_INPUT_DECREASE_BTN_TOOLTIP = oLibraryResourceBundle.getText("STEP_INPUT_DECREASE_BTN");
 
@@ -727,7 +729,7 @@ function(
 			var min = this._getMin(),
 				max = this._getMax(),
 				value = this._parseNumber(this._getInput().getValue()),
-				oCoreMessageBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.core"),
+				oCoreMessageBundle = Library.getResourceBundleFor("sap.ui.core"),
 				oBinding = this.getBinding("value"),
 				oBindingType = oBinding && oBinding.getType && oBinding.getType(),
 				sBindingConstraintMax = oBindingType && oBindingType.oConstraints && oBindingType.oConstraints.maximum,
@@ -1623,7 +1625,7 @@ function(
 
 		StepInput.prototype.getAccessibilityInfo = function() {
 			return {
-				type: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_STEPINPUT"),
+				type: Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_STEPINPUT"),
 				description: this.getValue() || "",
 				focusable: this.getEnabled(),
 				enabled: this.getEnabled(),

@@ -408,6 +408,8 @@ sap.ui.define([
 		 *   The group ID
 		 * @param {boolean} [bApplicationGroup]
 		 *   Whether only an application group ID is considered valid
+		 * @param {boolean} [bAllowSingle]
+		 *   Whether "$single" is allowed as a group ID
 		 * @param {string} [sErrorMessage]
 		 *   The error message to be used if group ID is not valid; the group ID will be appended
 		 * @throws {Error}
@@ -415,10 +417,11 @@ sap.ui.define([
 		 *
 		 * @public
 		 */
-		checkGroupId : function (sGroupId, bApplicationGroup, sErrorMessage) {
+		checkGroupId : function (sGroupId, bApplicationGroup, bAllowSingle, sErrorMessage) {
 			if (!bApplicationGroup && sGroupId === undefined
 					|| typeof sGroupId === "string"
-						&& (bApplicationGroup ? rApplicationGroupID : rGroupID).test(sGroupId)) {
+						&& (bApplicationGroup ? rApplicationGroupID : rGroupID).test(sGroupId)
+					|| bAllowSingle && sGroupId === "$single") {
 				return;
 			}
 			throw new Error((sErrorMessage || "Invalid group ID: ") + sGroupId);
@@ -812,12 +815,13 @@ sap.ui.define([
 
 				if (!isRelevant(oClone.error, sTopLevelContentID)) {
 					oClone.error.$ignoreTopLevel = true;
-				} else {
-					oClone.strictHandlingFailed = oError.strictHandlingFailed;
+				}
+				if (oError.strictHandlingFailed) {
+					oClone.strictHandlingFailed = true;
 				}
 				if (oClone.error.details) {
-					oClone.error.details = oClone.error.details.filter(function (oDetail, i) {
-						return isRelevant(oDetail, aDetailContentIDs[i]);
+					oClone.error.details = oClone.error.details.filter(function (oDetail, j) {
+						return isRelevant(oDetail, aDetailContentIDs[j]);
 					});
 				}
 
@@ -1784,7 +1788,7 @@ sap.ui.define([
 			if (vOld && typeof vOld === "object") {
 				Object.keys(vOld).forEach(function (sProperty) {
 					// not covered in the new value
-					if (!vNew.hasOwnProperty(sProperty)) {
+					if (!Object.hasOwn(vNew, sProperty)) {
 						_Helper.informAll(mChangeListeners, _Helper.buildPath(sPath, sProperty),
 							vOld[sProperty], undefined, bAllowUndefined);
 					}
@@ -1808,15 +1812,19 @@ sap.ui.define([
 		 *   The source object to inherit from
 		 * @param {object} oTarget
 		 *   The target object to inherit into
+		 * @param {boolean} [bTolerateNull]
+		 *   Whether a <code>null</code> value in the target is tolerated and treated as a missing
+		 *   object, which is then created along the way
 		 * @throws {Error}
-		 *   If a property along the way exists, but has an <code>undefined</code> or
-		 *   <code>null</code> value
+		 *   If a property along the way exists, but has an <code>undefined</code> value or an
+		 *   untolerated <code>null</code> value
 		 *
 		 * @public
 		 */
-		inheritPathValue : function (aSegments, oSource, oTarget) {
+		inheritPathValue : function (aSegments, oSource, oTarget, bTolerateNull) {
 			aSegments.forEach(function (sSegment, i) {
-				var bMissing = !(sSegment in oTarget); // Note: TypeError if !oTarget
+				var bMissing = !(sSegment in oTarget) // Note: TypeError if !oTarget
+					|| bTolerateNull && oTarget[sSegment] === null;
 
 				if (i + 1 < aSegments.length) { // intermediate step
 					if (bMissing) {

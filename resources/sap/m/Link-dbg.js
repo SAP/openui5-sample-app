@@ -7,12 +7,13 @@
 // Provides control sap.m.Link.
 sap.ui.define([
 	"./library",
-	"sap/ui/core/Core",
 	"sap/ui/core/Control",
+	"sap/ui/core/Element",
 	"sap/ui/core/InvisibleText",
 	"sap/ui/core/EnabledPropagator",
 	"sap/ui/core/AccessKeysEnablement",
 	"sap/ui/core/LabelEnablement",
+	"sap/ui/core/Lib",
 	"sap/ui/core/library",
 	"sap/ui/Device",
 	"./LinkRenderer",
@@ -21,12 +22,13 @@ sap.ui.define([
 ],
 function(
 	library,
-	Core,
 	Control,
+	Element,
 	InvisibleText,
 	EnabledPropagator,
 	AccessKeysEnablement,
 	LabelEnablement,
+	Library,
 	coreLibrary,
 	Device,
 	LinkRenderer,
@@ -83,10 +85,15 @@ function(
 	 * @see {@link fiori:https://experience.sap.com/fiori-design-web/link/ Link}
 	 *
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.core.IShrinkable, sap.ui.core.IFormContent, sap.ui.core.ITitleContent, sap.ui.core.IAccessKeySupport
+	 * @implements sap.ui.core.IShrinkable, sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent, sap.ui.core.ITitleContent, sap.ui.core.IAccessKeySupport
+	 *
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -99,6 +106,7 @@ function(
 			interfaces : [
 				"sap.ui.core.IShrinkable",
 				"sap.ui.core.IFormContent",
+				"sap.ui.core.ISemanticFormContent",
 				"sap.ui.core.ITitleContent",
 				"sap.ui.core.IAccessKeySupport",
 				"sap.m.IToolbarInteractiveControl"
@@ -480,7 +488,7 @@ function(
 	 * @returns {sap.ui.core.AccessibilityInfo} The <code>sap.m.Link</code>  accessibility information
 	 */
 	Link.prototype.getAccessibilityInfo = function() {
-		var oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m"),
+		var oResourceBundle = Library.getResourceBundleFor("sap.m"),
 			sEmphasizedInfo = this.getEmphasized() ? oResourceBundle.getText("LINK_EMPHASIZED") : "",
 			sSubtleInfo = this.getSubtle() ? oResourceBundle.getText("LINK_SUBTLE") : "",
 			sText = this.getText(),
@@ -557,7 +565,7 @@ function(
 		var aLabels = this.getAriaLabelledBy();
 
 		if (aLabels.length) {
-			var oLabel = Core.byId(aLabels[0]);
+			var oLabel = Element.getElementById(aLabels[0]);
 
 			oLabel.setProperty("highlightAccKeysRef", bHighlightAccKeysRef);
 
@@ -565,6 +573,22 @@ function(
 				this.setProperty("accesskey", oLabel.getText()[0].toLowerCase());
 			}
 		}
+	};
+
+	Link.prototype.getFormFormattedValue = function () {
+		return this.getText();
+	};
+
+	Link.prototype.getFormValueProperty = function () {
+		return "text";
+	};
+
+	Link.prototype.getFormObservingProperties = function() {
+		return ["text"];
+	};
+
+	Link.prototype.getFormRenderAsControl = function () {
+		return true;
 	};
 
 	return Link;

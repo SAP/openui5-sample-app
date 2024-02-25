@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(function () {
+sap.ui.define(["sap/ui/core/Lib"], function(Library) {
 	"use strict";
 
 	/**
@@ -13,7 +13,7 @@ sap.ui.define(function () {
 	 *
 	 * @author SAP SE
 	 * @since 1.56.0
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @function
 	 * @param {string} sMessage - Dialog message
@@ -22,7 +22,7 @@ sap.ui.define(function () {
 	 */
 	return function (sMessage) {
 		return new Promise(function (fnResolve, fnReject) {
-			var bMessageBoxAvailable = sap.ui.getCore().getLoadedLibraries().hasOwnProperty('sap.m');
+			var bMessageBoxAvailable = Library.isLoaded('sap.m');
 
 			if (bMessageBoxAvailable) {
 				sap.ui.require(['sap/m/MessageBox'], function (MessageBox) {

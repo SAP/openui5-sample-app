@@ -6,6 +6,7 @@
 
 // Provides control sap.m.Dialog.
 sap.ui.define([
+	"sap/ui/core/AnimationMode",
 	"sap/ui/core/ControlBehavior",
 	"sap/base/i18n/Localization",
 	"sap/ui/core/Lib",
@@ -33,13 +34,13 @@ sap.ui.define([
 	"./DialogRenderer",
 	"sap/base/Log",
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Core",
 	"sap/ui/core/Configuration",
 	"sap/ui/dom/units/Rem",
 	// jQuery Plugin "firstFocusableDomRef", "lastFocusableDomRef"
 	"sap/ui/dom/jquery/Focusable"
 ],
 function(
+	AnimationMode,
 	ControlBehavior,
 	Localization,
 	Library,
@@ -67,7 +68,6 @@ function(
 	DialogRenderer,
 	Log,
 	jQuery,
-	Core,
 	Configuration,
 	Rem
 ) {
@@ -95,7 +95,7 @@ function(
 		var TitleAlignment = library.TitleAlignment;
 
 		var sAnimationMode = ControlBehavior.getAnimationMode();
-		var bUseAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
+		var bUseAnimations = sAnimationMode !== AnimationMode.none && sAnimationMode !== AnimationMode.minimal;
 
 		// the time should be longer the longest transition in the CSS (200ms),
 		// because of focusing and transition related issues,
@@ -173,7 +173,7 @@ function(
 		*
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.120.7
+		* @version 1.121.0
 		*
 		* @constructor
 		* @public
@@ -497,6 +497,12 @@ function(
 			return this._headerTitle ? this._headerTitle.getId() : false;
 		});
 
+		/**
+		 * @type {boolean}
+		 * @private
+		 * @deprecated As of version 1.119, getCompatibilityVersion is deprecated.
+		 *    Consumers should behave as if 'edge' was configured
+		 */
 		Dialog._bPaddingByDefault = (Configuration.getCompatibilityVersion("sapMDialogWithPadding").compareTo("1.16") < 0);
 
 		Dialog._initIcons = function () {
@@ -1200,7 +1206,6 @@ function(
 		Dialog.prototype._setDimensions = function () {
 			var $this = this.$(),
 				bStretch = this.getStretch(),
-				bStretchOnPhone = this.getStretchOnPhone() && Device.system.phone,
 				bMessageType = this.getType() === DialogType.Message,
 				oStyles = {};
 
@@ -1225,7 +1230,14 @@ function(
 				oStyles.height = undefined;
 			}
 
-			if ((bStretch && !bMessageType) || (bStretchOnPhone)) {
+			if (bStretch && !bMessageType) {
+				this.$().addClass('sapMDialogStretched');
+			}
+
+			/**
+			 * @deprecated As of version 1.11.2
+			 */
+			if (this.getStretchOnPhone() && Device.system.phone) {
 				this.$().addClass('sapMDialogStretched');
 			}
 
@@ -1582,7 +1594,7 @@ function(
 				oControl;
 
 			if (oFocusDomRef && oFocusDomRef.id) {
-				oControl = Core.byId(oFocusDomRef.id);
+				oControl = Element.getElementById(oFocusDomRef.id);
 			}
 
 			if (oControl) {
@@ -1909,7 +1921,7 @@ function(
 
 		Dialog.prototype.setLeftButton = function (vButton) {
 			if (typeof vButton === "string") {
-				vButton = Core.byId(vButton);
+				vButton = Element.getElementById(vButton);
 			}
 
 			//setting leftButton will also set the beginButton with the same button instance.
@@ -1920,7 +1932,7 @@ function(
 
 		Dialog.prototype.setRightButton = function (vButton) {
 			if (typeof vButton === "string") {
-				vButton = Core.byId(vButton);
+				vButton = Element.getElementById(vButton);
 			}
 
 			//setting rightButton will also set the endButton with the same button instance.

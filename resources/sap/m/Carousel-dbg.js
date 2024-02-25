@@ -7,11 +7,12 @@
 // Provides control sap.m.Carousel.
 sap.ui.define([
 	"./library",
-	"sap/ui/core/Core",
+	"sap/base/i18n/Localization",
 	"sap/ui/core/Control",
 	"sap/ui/core/Element",
-	"sap/ui/core/Configuration",
+	"sap/ui/core/Theming",
 	"sap/ui/Device",
+	"sap/ui/core/Lib",
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/core/library",
 	"sap/m/IllustratedMessage",
@@ -24,14 +25,16 @@ sap.ui.define([
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/IconPool",
 	"./CarouselLayout",
-	"sap/ui/dom/jquery/Selectors" // provides jQuery custom selector ":sapTabbable"
-], function (
+	// provides jQuery custom selector ":sapTabbable"
+	"sap/ui/dom/jquery/Selectors"
+], function(
 	library,
-	Core,
+	Localization,
 	Control,
 	Element,
-	Configuration,
+	Theming,
 	Device,
+	Library,
 	ResizeHandler,
 	coreLibrary,
 	IllustratedMessage,
@@ -61,9 +64,12 @@ sap.ui.define([
 	//shortcut for sap.m.BorderDesign
 	var BorderDesign = library.BorderDesign;
 
+	//shortcut for sap.m.CarouselScrollMode
+	var CarouselScrollMode = library.CarouselScrollMode;
+
 	var iDragRadius = 10;
 	var iMoveRadius = 20;
-	var bRtl = Core.getConfiguration().getRTL();
+	var bRtl = Localization.getRTL();
 
 	function getCursorPosition(e) {
 		e = e.originalEvent || e;
@@ -126,7 +132,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -328,10 +334,11 @@ sap.ui.define([
 		this._aAllActivePages = [];
 		this._aAllActivePagesIndexes = [];
 		this._bShouldFireEvent = true;
+		this._handleThemeAppliedBound = this._handleThemeApplied.bind(this);
 
 		this.data("sap-ui-fastnavgroup", "true", true); // Define group for F6 handling
 
-		this._oRb = Core.getLibraryResourceBundle("sap.m");
+		this._oRb = Library.getResourceBundleFor("sap.m");
 	};
 
 	/**
@@ -358,9 +365,9 @@ sap.ui.define([
 		this._aAllActivePages = null;
 		this._aAllActivePagesIndexes = null;
 
-		if (this._bThemeChangedAttached) {
-			Core.detachThemeChanged(this._handleThemeChanged, this);
-			this._bThemeChangedAttached = false;
+		if (this._bThemeAppliedAttached) {
+			Theming.detachApplied(this._handleThemeAppliedBound);
+			this._bThemeAppliedAttached = false;
 		}
 	};
 
@@ -452,11 +459,9 @@ sap.ui.define([
 			this.setAssociation("activePage", this.getPages()[iActivePageIndex].getId(), true);
 		}
 
-		if (Core.isThemeApplied()) {
-			this._initialize();
-		} else if (!this._bThemeChangedAttached) {
-			this._bThemeChangedAttached = true;
-			Core.attachThemeChanged(this._handleThemeChanged, this);
+		if (!this._bThemeAppliedAttached) {
+			this._bThemeAppliedAttached = true;
+			Theming.attachApplied(this._handleThemeAppliedBound);
 		}
 
 		this._sResizeListenerId = ResizeHandler.register($innerDiv, this._resize.bind(this));
@@ -471,10 +476,10 @@ sap.ui.define([
 	 *
 	 * @private
 	 */
-	Carousel.prototype._handleThemeChanged = function () {
+	Carousel.prototype._handleThemeApplied = function () {
 		this._initialize();
-		Core.detachThemeChanged(this._handleThemeChanged, this);
-		this._bThemeChangedAttached = false;
+		Theming.detachApplied(this._handleThemeAppliedBound);
+		this._bThemeAppliedAttached = false;
 	};
 
 	/**
@@ -517,9 +522,9 @@ sap.ui.define([
 				iNewActivePageIndex = iOldActivePageIndex;
 			} else {
 				if (bForward) {
-					iNewActivePageIndex = iOldActivePageIndex + 1;
+					iNewActivePageIndex = this._iCurrSlideIndex;
 				} else {
-					iNewActivePageIndex = iOldActivePageIndex - 1;
+					iNewActivePageIndex = this._iCurrSlideIndex + this._getNumberOfItemsToShow() - 1;
 				}
 
 				// loop happened
@@ -815,13 +820,35 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns the index of the slide that should be shown
+	 * @private
+	 * @param {int} iCurrentSlideIndex Current slide index
+	 * @param {int} iDefaultIndexStep Index that shows if previous or next arrow is pressed
+	 * @returns {int} Index of the slide
+	 */
+	Carousel.prototype._calculateSlideIndex = function (iCurrentSlideIndex, iDefaultIndexStep) {
+		const oCarouselLayout = this.getCustomLayout();
+		let iSlideIndex;
+
+		if (oCarouselLayout && oCarouselLayout.getScrollMode() === CarouselScrollMode.VisiblePages) {
+			const iNumberOfItemsOnPage =  this._getNumberOfItemsToShow();
+			iSlideIndex = iDefaultIndexStep > 0 ? iCurrentSlideIndex + iNumberOfItemsOnPage : Math.max(0, iCurrentSlideIndex - iNumberOfItemsOnPage);
+		} else {
+			iSlideIndex = iDefaultIndexStep > 0 ? iCurrentSlideIndex + 1 : iCurrentSlideIndex - 1;
+		}
+
+		return iSlideIndex;
+	};
+
+	/**
 	 * Call this method to display the previous page (corresponds to a swipe left).
 	 *
 	 * @returns {this} Reference to <code>this</code> in order to allow method chaining
 	 * @public
 	 */
 	Carousel.prototype.previous = function () {
-		this._moveToPage(this._iCurrSlideIndex - 1);
+		const iSlideIndex = this._calculateSlideIndex(this._iCurrSlideIndex, -1);
+		this._moveToPage(iSlideIndex);
 		return this;
 	};
 
@@ -832,7 +859,8 @@ sap.ui.define([
 	 * @public
 	 */
 	Carousel.prototype.next = function () {
-		this._moveToPage(this._iCurrSlideIndex + 1);
+		const iSlideIndex = this._calculateSlideIndex(this._iCurrSlideIndex, 1);
+		this._moveToPage(iSlideIndex);
 		return this;
 	};
 
@@ -1451,7 +1479,7 @@ sap.ui.define([
 	 * @returns {sap.ui.core.Control} The page
 	 */
 	Carousel.prototype._getClosestPage = function (oElement) {
-		return Element.closestTo(jQuery(oElement).closest(".sapMCrsPage")[0]);
+		return Element.closestTo(oElement.closest(".sapMCrsPage"));
 	};
 
 	//================================================================================

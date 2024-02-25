@@ -6,7 +6,7 @@
   <copyright>OpenUI5
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.120.7</version>
+  <version>1.121.0</version>
 
   <documentation>The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.</documentation>
 
@@ -73,10 +73,11 @@
                 <module>sap/m/UploadCollection</module>
                 <module>sap/m/ActionTile</module>
                 <module>sap/m/ActionTileContent</module>
-                <module>sap/m/CustomAttribute</module>
+                <module>sap/m/TileAttribute</module>
                 <module>sap/m/SlideTile</module>
                 <module>sap/m/GenericTile</module>
                 <module>sap/m/LinkTileContent</module>
+                <module>sap/m/ContentConfig</module>
                 <module>sap/m/TileContent</module>
                 <module>sap/m/FeedContent</module>
                 <module>sap/m/NewsContent</module>
@@ -135,6 +136,21 @@
                 <module>sap/m/P13nFilterPanel</module>
                 <module>sap/m/P13nGroupPanel</module>
                 <module>sap/m/P13nSortPanel</module>
+            </modules>
+        </component>
+        <component>
+            <name>CA-UI5-MDC</name>
+            <modules>
+                <module>sap/m/p13n/SelectionController</module>
+                <module>sap/m/p13n/SelectionPanel</module>
+                <module>sap/m/p13n/SortController</module>
+                <module>sap/m/p13n/SortPanel</module>
+                <module>sap/m/p13n/GroupController</module>
+                <module>sap/m/p13n/GroupPanel</module>
+                <module>sap/m/p13n/Engine</module>
+                <module>sap/m/p13n/MetadataHelper</module>
+                <module>sap/m/p13n/Popup</module>
+                <module>sap/m/VariantManagement</module>
             </modules>
         </component>
         <component>

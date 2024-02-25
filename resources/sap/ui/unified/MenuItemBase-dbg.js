@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/Element', './library', 'sap/ui/core/IconPool'],
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -160,9 +160,9 @@ sap.ui.define(['sap/ui/core/Element', './library', 'sap/ui/core/IconPool'],
 	};
 
 
-	MenuItemBase.prototype._getIcon = function(oItem) {
+	MenuItemBase.prototype._getIcon = function() {
 		return IconPool.createControlByURI({
-			src: oItem.getIcon(),
+			src: this.getIcon(),
 			useIconTooltip: false
 		});
 	};

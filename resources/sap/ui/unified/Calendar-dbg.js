@@ -5,9 +5,11 @@
  */
 //Provides control sap.ui.unified.Calendar.
 sap.ui.define([
+	"sap/base/i18n/Formatting",
+	"sap/base/i18n/Localization",
 	'sap/ui/core/CalendarType',
 	'sap/ui/core/Control',
-	'sap/ui/core/Core',
+	"sap/ui/core/Element",
 	'sap/ui/core/LocaleData',
 	'sap/ui/unified/calendar/CalendarUtils',
 	'sap/ui/unified/DateTypeRange',
@@ -29,12 +31,13 @@ sap.ui.define([
 	"sap/ui/dom/containsOrEquals",
 	"sap/base/util/deepEqual",
 	"sap/base/Log",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/date/CalendarWeekNumbering"
 ], function(
+	Formatting,
+	Localization,
 	CalendarType,
 	Control,
-	oCore,
+	Element,
 	LocaleData,
 	CalendarUtils,
 	DateTypeRange,
@@ -56,7 +59,6 @@ sap.ui.define([
 	containsOrEquals,
 	deepEqual,
 	Log,
-	Configuration,
 	CalendarWeekNumbering
 ) {
 	"use strict";
@@ -76,7 +78,7 @@ sap.ui.define([
 	 * Basic Calendar.
 	 * This calendar is used for DatePickers
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -230,16 +232,43 @@ sap.ui.define([
 			selectedDates : {type : "sap.ui.unified.DateRange", multiple : true, singularName : "selectedDate"},
 
 			/**
-			 * Dates or date ranges with type, to visualize special days in the <code>Calendar</code>.
-			 * If one day is assigned to more than one Type, only the first one will be used.
+			 * Dates or date ranges with type, to visualize special days.
 			 *
 			 * To set a single date (instead of a range), set only the <code>startDate</code> property
-			 * of the {@link sap.ui.unified.DateRange} class.
+			 * of the {@link sap.ui.unified.DateTypeRange} class.
 			 *
-			 * <b>Note:</b> Keep in mind that the <code>NonWorking</code> type is for marking specific
-			 * dates or date ranges as non-working, where if you need a weekly-reccuring non-working days
+			 * <b>Note:</b> If you need a weekly-reccuring non-working days
 			 * (weekend), you should use the <code>nonWorkingDays</code> property. Both the non-working
 			 * days (from property) and dates (from aggregation) are visualized the same.
+			 *
+			 * <b>Note:</b> In case there are multiple <code>sap.ui.unified.DateTypeRange</code> instances given for a single date,
+			 * only the first <code>sap.ui.unified.DateTypeRange</code> instance will be used.
+			 * For example, using the following sample, the 1st of November will be displayed as a working day of type "Type10":
+			 *
+			 *
+			 *	<pre>
+			 *	new DateTypeRange({
+			 *		startDate: UI5Date.getInstance(2023, 10, 1),
+			 *		type: CalendarDayType.Type10,
+			 *	}),
+			 *	new DateTypeRange({
+			 *		startDate: UI5Date.getInstance(2023, 10, 1),
+			 *		type: CalendarDayType.NonWorking
+			 *	})
+			 *	</pre>
+			 *
+			 * If you want the first of November to be displayed as a non-working day and also as "Type10," the following should be done:
+			 *	<pre>
+			 *	new DateTypeRange({
+			 *		startDate: UI5Date.getInstance(2023, 10, 1),
+			 *		type: CalendarDayType.Type10,
+			 *		secondaryType: CalendarDayType.NonWorking
+			 *	})
+			 *	</pre>
+			 *
+			 * You can use only one of the following types for a given date: <code>sap.ui.unified.CalendarDayType.NonWorking</code>,
+			 * <code>sap.ui.unified.CalendarDayType.Working</code> or <code>sap.ui.unified.CalendarDayType.None</code>.
+			 * Assigning more than one of these values in combination for the same date will lead to unpredictable results.
 			 *
 			 * @since 1.24.0
 			 */
@@ -703,7 +732,7 @@ sap.ui.define([
 	Calendar.prototype.getLocale = function(){
 
 		if (!this._sLocale) {
-			this._sLocale = Configuration.getFormatSettings().getFormatLocale().toString();
+			this._sLocale = new Locale(Formatting.getLanguageTag()).toString();
 		}
 
 		return this._sLocale;
@@ -912,7 +941,7 @@ sap.ui.define([
 	};
 
 	Calendar.prototype._getPrimaryCalendarType = function(){
-		return this.getProperty("primaryCalendarType") || Configuration.getCalendarType();
+		return this.getProperty("primaryCalendarType") || Formatting.getCalendarType();
 	};
 
 	/**
@@ -1298,7 +1327,7 @@ sap.ui.define([
 
 	Calendar.prototype._updateLegendParent = function(){
 		var sLegend = this.getLegend(),
-			oLegend = oCore.byId(sLegend);
+			oLegend = Element.getElementById(sLegend);
 
 		oLegend && oLegend._setParent(this);
 	};
@@ -2396,8 +2425,8 @@ sap.ui.define([
 	 */
 	Calendar.prototype._toggleTwoMonthsInTwoColumnsCSS = function () {
 		if (this._isTwoMonthsInTwoColumns()) {
-			if (oCore.getConfiguration().getLocale().getLanguage().toLowerCase() === "ja" ||
-				oCore.getConfiguration().getLocale().getLanguage().toLowerCase() === "zh") {
+			if (new Locale(Localization.getLanguageTag()).getLanguage().toLowerCase() === "ja" ||
+				new Locale(Localization.getLanguageTag()).getLanguage().toLowerCase() === "zh") {
 				this.addStyleClass("sapUiCalTwoMonthsTwoColumnsJaZh");
 				this.removeStyleClass("sapUiCalTwoMonthsTwoColumns");
 			} else {
@@ -2489,8 +2518,13 @@ sap.ui.define([
 
 	Calendar.prototype._adjustYearRangeDisplay = function() {
 		var oYearRangePicker = this.getAggregation("yearRangePicker"),
-			sLang = sap.ui.getCore().getConfiguration().getLanguage().toLocaleLowerCase(),
-			sPrimaryCalendarType = this._getPrimaryCalendarType();
+			sLang = Localization.getLanguage().toLocaleLowerCase(),
+			sPrimaryCalendarType = this._getPrimaryCalendarType(),
+			sSecondaryCalendarType = this._getSecondaryCalendarType(),
+			bKorean = sLang == "ko" || sLang == "ko-kr",
+			bJapaneseCalendar = sPrimaryCalendarType === CalendarType.Japanese || sSecondaryCalendarType === CalendarType.Japanese,
+			bGregorianCalendar = sPrimaryCalendarType === CalendarType.Gregorian
+				&& (sSecondaryCalendarType === CalendarType.Gregorian || !sSecondaryCalendarType);
 
 		if (!this._getSucessorsPickerPopup()) {
 			// An evaluation about the count of year cells that could fit in the sap.ui.unified.calendar.YearRangePicker
@@ -2498,13 +2532,13 @@ sap.ui.define([
 			// Based on those two criteria a couple of groups with different year cells count would be indicated and we
 			// could cover those scenarios with visual tests afterwards. Currently only the scenario with korean language
 			// is covered.
-			if (sPrimaryCalendarType == CalendarType.Japanese) {
+			if (bJapaneseCalendar) {
 				oYearRangePicker.setColumns(1);
 				oYearRangePicker.setYears(4);
-			} else if (sLang == "ko" || sLang == "ko-kr" || sPrimaryCalendarType != CalendarType.Gregorian) {
+			} else if (bKorean || !bGregorianCalendar) {
 				oYearRangePicker.setColumns(2);
 				oYearRangePicker.setYears(8);
-			} else if (sPrimaryCalendarType == CalendarType.Gregorian) {
+			} else if (bGregorianCalendar) {
 				oYearRangePicker.setColumns(3);
 				oYearRangePicker.setYears(9);
 			}

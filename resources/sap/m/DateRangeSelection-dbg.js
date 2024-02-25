@@ -6,9 +6,12 @@
 
 // Provides control sap.m.DateRangeSelection.
 sap.ui.define([
+	"sap/base/i18n/Formatting",
 	'sap/ui/Device',
 	'./DatePicker',
 	'./library',
+	"sap/ui/core/Lib",
+	"sap/ui/core/Locale",
 	'sap/ui/core/LocaleData',
 	'sap/ui/core/format/DateFormat',
 	'sap/ui/core/date/UniversalDate',
@@ -18,16 +21,17 @@ sap.ui.define([
 	"sap/base/util/deepEqual",
 	"sap/base/Log",
 	"sap/base/assert",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/date/UI5Date",
-	"sap/ui/core/Core",
 	// jQuery Plugin "cursorPos"
 	"sap/ui/dom/jquery/cursorPos"
 ],
 	function(
+		Formatting,
 		Device,
 		DatePicker,
 		library,
+		Library,
+		Locale,
 		LocaleData,
 		DateFormat,
 		UniversalDate,
@@ -37,9 +41,7 @@ sap.ui.define([
 		deepEqual,
 		Log,
 		assert,
-		Configuration,
-		UI5Date,
-		Core
+		UI5Date
 	) {
 	"use strict";
 
@@ -100,7 +102,8 @@ sap.ui.define([
 	 *
 	 * <ul><li>Use the <code>value</code> property if the date range is already provided as
 	 * a formatted string</li>
-	 * @example <caption> binding the <code>value</code> property by using types </caption>
+	 * <caption> binding the <code>value</code> property by using types </caption>
+	 * <pre>
 	 * new sap.ui.model.json.JSONModel({start:'2022-11-10', end:'2022-11-15'});
 	 *
 	 * new sap.m.DateRangeSelection({
@@ -125,7 +128,7 @@ sap.ui.define([
 	 *         }}]
 	 *     }
 	 * });
-	 *
+	 * </pre>
 	 * <b>Note:</b> There are multiple binding type choices, such as:
 	 * sap.ui.model.type.Date
 	 * sap.ui.model.odata.type.DateTime
@@ -165,8 +168,8 @@ sap.ui.define([
 	 * compact mode and provides a touch-friendly size in cozy mode.
 	 *
 	 * @extends sap.m.DatePicker
-	 * @version 1.120.7
-	 * @version 1.120.7
+	 * @version 1.121.0
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -276,7 +279,7 @@ sap.ui.define([
 
 		if (!sPlaceholder) {
 			oBinding = this.getBinding("value");
-			oLocale = Configuration.getFormatSettings().getFormatLocale();
+			oLocale = new Locale(Formatting.getLanguageTag());
 			oLocaleData = LocaleData.getInstance(oLocale);
 
 			if (oBinding && oBinding.getType() && oBinding.getType().isA("sap.ui.model.type.DateInterval")) {
@@ -1092,7 +1095,7 @@ sap.ui.define([
 		var oRenderer = this.getRenderer();
 		var oInfo = DatePicker.prototype.getAccessibilityInfo.apply(this, arguments);
 		var sValue = this.getValue() || "";
-		var sRequired = this.getRequired() ? Core.getLibraryResourceBundle("sap.m").getText("ELEMENT_REQUIRED") : '';
+		var sRequired = this.getRequired() ? Library.getResourceBundleFor("sap.m").getText("ELEMENT_REQUIRED") : '';
 
 		if (this._bValid) {
 			var oDate = this.getDateValue();
@@ -1100,7 +1103,7 @@ sap.ui.define([
 				sValue = this._formatValue(oDate, this.getSecondDateValue());
 			}
 		}
-		oInfo.type = Core.getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_DATERANGEINPUT");
+		oInfo.type = Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_DATERANGEINPUT");
 		oInfo.description = [sValue || this._getPlaceholder(), oRenderer.getLabelledByAnnouncement(this), oRenderer.getDescribedByAnnouncement(this), sRequired].join(" ").trim();
 		return oInfo;
 	};
@@ -1305,7 +1308,7 @@ sap.ui.define([
 
 		if (!sDelimiter) {
 			if (!this._sLocaleDelimiter) {
-				var oLocale = Configuration.getFormatSettings().getFormatLocale();
+				var oLocale = new Locale(Formatting.getLanguageTag());
 				var oLocaleData = LocaleData.getInstance(oLocale);
 				var sPattern = oLocaleData.getIntervalPattern();
 				var iIndex1 = sPattern.indexOf("{0}") + 3;

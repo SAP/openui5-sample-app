@@ -6,7 +6,6 @@
 
 // Provides control sap.m.Table.
 sap.ui.define([
-	"sap/ui/events/KeyCodes",
 	"sap/ui/core/Core",
 	"sap/ui/core/ControlBehavior",
 	"./library",
@@ -26,7 +25,7 @@ sap.ui.define([
     // jQuery custom selectors ":sapTabbable"
 	"sap/ui/dom/jquery/Selectors"
 ],
-	function(KeyCodes, Core, ControlBehavior, library, ListBase, ListItemBase, CheckBox, TableRenderer, BaseObject, ResizeHandler, PasteHelper, jQuery, ListBaseRenderer, Icon, Util, Library, Log) {
+	function(Core, ControlBehavior, library, ListBase, ListItemBase, CheckBox, TableRenderer, BaseObject, ResizeHandler, PasteHelper, jQuery, ListBaseRenderer, Icon, Util, Library, Log) {
 	"use strict";
 
 
@@ -67,7 +66,7 @@ sap.ui.define([
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -443,7 +442,7 @@ sap.ui.define([
 			}
 		}
 
-		if (this._bCheckLastColumnWidth && Core.isThemeApplied()) {
+		if (this._bCheckLastColumnWidth && Util.isThemeApplied()) {
 			window.requestAnimationFrame(this._checkLastColumnWidth.bind(this));
 		}
 	};
@@ -1047,7 +1046,7 @@ sap.ui.define([
 	Table.prototype._setNoColumnsMessageAnnouncement = function (oTarget) {
 		if (!this.shouldRenderItems()) {
 			var oNoData = this.getNoData();
-			var sDescription = Core.getLibraryResourceBundle("sap.m").getText("TABLE_NO_COLUMNS");
+			var sDescription = Library.getResourceBundleFor("sap.m").getText("TABLE_NO_COLUMNS");
 			if (oNoData && typeof oNoData !== "string" && oNoData.isA("sap.m.IllustratedMessage")) {
 				sDescription = ListItemBase.getAccessibilityText(this.getAggregation("_noColumnsMessage"));
 			}

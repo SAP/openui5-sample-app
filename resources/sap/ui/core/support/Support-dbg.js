@@ -31,7 +31,7 @@ sap.ui.define([
 	 * @class This class provides the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 	 *
 	 * @extends sap.ui.base.EventProvider
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @private
 	 * @alias sap.ui.core.support.Support
 	 */
@@ -440,7 +440,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Support.getDiagnosticLibraries = function() {
-		var mLibs = sap.ui.getCore().getLoadedLibraries(),
+		var mLibs = Library.all(),
 			aLibs = [];
 		for (var n in mLibs) {
 			var oLib = mLibs[n];

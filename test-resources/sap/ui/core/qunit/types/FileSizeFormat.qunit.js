@@ -1,10 +1,14 @@
-/*global QUnit */
+/*global QUnit, sinon */
 sap.ui.define([
 	"sap/base/Log",
+	"sap/base/i18n/Formatting",
 	"sap/base/i18n/Localization",
+	"sap/ui/core/Lib",
 	"sap/ui/core/Locale",
-	"sap/ui/core/format/FileSizeFormat"
-], function (Log, Localization, Locale, FileSizeFormat) {
+	"sap/ui/core/LocaleData",
+	"sap/ui/core/format/FileSizeFormat",
+	"sap/ui/core/format/NumberFormat"
+], function (Log, Formatting, Localization, Lib, Locale, LocaleData, FileSizeFormat, NumberFormat) {
 	"use strict";
 
 	var oFormatBinary = FileSizeFormat.getInstance({ binaryFilesize: true, maxFractionDigits: 2 }, new Locale("en"));
@@ -196,5 +200,71 @@ sap.ui.define([
 		var oFormat = FileSizeFormat.getInstance();
 		assert.equal(oFormat.format(100000), "100 KB", "BinarySize is set to false by default");
 	});
-});
 
+	//*********************************************************************************************
+	QUnit.test("createInstance: called with format options and locale", function (assert) {
+		const oLocale = {
+			toString() { return "~locale"; }
+		};
+		this.mock(LocaleData).expects("getInstance").withExactArgs(sinon.match.same(oLocale)).returns("~oLocaleData");
+		this.mock(NumberFormat).expects("getFloatInstance").withExactArgs("~oFormatOptions", sinon.match.same(oLocale))
+			.returns("~oNumberFormat");
+		this.mock(Lib).expects("getResourceBundleFor").withExactArgs("sap.ui.core", "~locale").returns("~oBundle");
+
+		// code under test
+		const oFormat = FileSizeFormat.createInstance("~oFormatOptions", oLocale);
+
+		assert.ok(oFormat instanceof FileSizeFormat);
+		assert.strictEqual(oFormat.oLocale, oLocale);
+		assert.strictEqual(oFormat.oLocaleData, "~oLocaleData");
+		assert.strictEqual(oFormat.oNumberFormat, "~oNumberFormat");
+		assert.strictEqual(oFormat.oBundle, "~oBundle");
+		assert.strictEqual(oFormat.bBinary, false);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("createInstance: first argument is a Locale; no format options", function (assert) {
+		const oLocale = new Locale("en");
+		this.mock(LocaleData).expects("getInstance").withExactArgs(sinon.match.same(oLocale)).returns("~oLocaleData");
+		this.mock(NumberFormat).expects("getFloatInstance").withExactArgs(undefined, sinon.match.same(oLocale))
+			.returns("~oNumberFormat");
+		this.mock(Lib).expects("getResourceBundleFor").withExactArgs("sap.ui.core", "en").returns("~oBundle");
+
+		// code under test
+		const oFormat = FileSizeFormat.createInstance(oLocale);
+
+		assert.ok(oFormat instanceof FileSizeFormat);
+		assert.strictEqual(oFormat.oLocale, oLocale);
+		assert.strictEqual(oFormat.oLocaleData, "~oLocaleData");
+		assert.strictEqual(oFormat.oNumberFormat, "~oNumberFormat");
+		assert.strictEqual(oFormat.oBundle, "~oBundle");
+		assert.strictEqual(oFormat.bBinary, false);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("createInstance: use binaryFilesize format option; no locale", function (assert) {
+		let oLocale;
+		const oFormatOptions = {binaryFilesize: "~binaryFilesize~anyTruthyValue"};
+		this.mock(Formatting).expects("getLanguageTag").withExactArgs().returns("en");
+		this.mock(LocaleData).expects("getInstance").withExactArgs(sinon.match((oLocale0) => {
+				oLocale = oLocale0;
+				assert.strictEqual(oLocale0.toString(), "en");
+				return oLocale0 instanceof Locale;
+			}))
+			.returns("~oLocaleData");
+		this.mock(NumberFormat).expects("getFloatInstance")
+			.withExactArgs(sinon.match.same(oFormatOptions), sinon.match((oLocale0) => oLocale0 === oLocale))
+			.returns("~oNumberFormat");
+		this.mock(Lib).expects("getResourceBundleFor").withExactArgs("sap.ui.core", "en").returns("~oBundle");
+
+		// code under test
+		const oFormat = FileSizeFormat.createInstance(oFormatOptions);
+
+		assert.ok(oFormat instanceof FileSizeFormat);
+		assert.strictEqual(oFormat.oLocale, oLocale);
+		assert.strictEqual(oFormat.oLocaleData, "~oLocaleData");
+		assert.strictEqual(oFormat.oNumberFormat, "~oNumberFormat");
+		assert.strictEqual(oFormat.oBundle, "~oBundle");
+		assert.strictEqual(oFormat.bBinary, true);
+	});
+});

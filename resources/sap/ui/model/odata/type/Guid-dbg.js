@@ -6,11 +6,12 @@
 
 sap.ui.define([
 	"sap/base/Log",
+	"sap/ui/core/Lib",
 	"sap/ui/model/FormatException",
 	"sap/ui/model/ParseException",
 	"sap/ui/model/ValidateException",
 	"sap/ui/model/odata/type/ODataType"
-], function (Log, FormatException, ParseException, ValidateException, ODataType) {
+], function(Log, Library, FormatException, ParseException, ValidateException, ODataType) {
 	"use strict";
 
 	var rAllWhitespaceAndSeparators = /[-\s]/g, // whitespace and "-" separator, globally
@@ -24,7 +25,7 @@ sap.ui.define([
 	 * @private
 	 */
 	function getErrorMessage() {
-		return sap.ui.getCore().getLibraryResourceBundle().getText("EnterGuid");
+		return Library.getResourceBundleFor("sap.ui.core").getText("EnterGuid");
 	}
 
 	/**
@@ -62,7 +63,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @alias sap.ui.model.odata.type.Guid
 	 * @param {object} [oFormatOptions]

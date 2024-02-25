@@ -1,22 +1,22 @@
 sap.ui.define([
 	"sap/base/Log",
+	"sap/base/i18n/Localization",
 	"sap/base/i18n/ResourceBundle",
 	"sap/ui/Device",
 	"sap/ui/base/SyncPromise",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/Core",
 	"sap/ui/core/Supportability",
 	"sap/ui/model/BindingMode",
 	"sap/ui/model/resource/ResourceModel",
 	"sap/ui/testlib/TestButton"
-], function(Log, ResourceBundle, Device, SyncPromise, Configuration, Core, Supportability, BindingMode,
+], function(Log, Localization, ResourceBundle, Device, SyncPromise, Core, Supportability, BindingMode,
 		ResourceModel, TestButton) {
 	/*global sinon, QUnit*/
 	/*eslint no-new: 0 */
 	"use strict";
 
 	var sClassname = "sap.ui.model.resource.ResourceModel",
-		sDefaultLanguage = Configuration.getLanguage();
+		sDefaultLanguage = Localization.getLanguage();
 
 	var oModel, oLabel, oLabel2,
 		sCustomMessagesProperties
@@ -27,15 +27,13 @@ sap.ui.define([
 
 	QUnit.module("sap.ui.model.resource.ResourceModel: Resources bundle loaded via name", {
 		beforeEach: function() {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 			oModel = new ResourceModel({bundleName: "testdata.messages"});
-			Core.setModel(oModel);
 		},
 		afterEach: function() {
-			Core.setModel(null);
 			oModel.destroy();
 			oModel = undefined;
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -58,6 +56,7 @@ sap.ui.define([
 	QUnit.test("test model getProperty and via binding", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{TEST_TEXT}"});
 		oLabel.placeAt("qunit-fixture");
+		oLabel.setModel(oModel);
 		var value = oModel.getProperty("TEST_TEXT");
 		assert.equal(value, "A text en");
 		assert.equal(oLabel.getText(), "A text en");
@@ -67,15 +66,13 @@ sap.ui.define([
 	QUnit.module("sap.ui.model.resource.ResourceModel: "
 			+ "Resources bundle loaded via name / set Model with alias", {
 		beforeEach: function() {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 			oModel = new ResourceModel({bundleName: "testdata.messages"});
-			Core.setModel(oModel, "i18n");
 		},
 		afterEach: function() {
-			Core.setModel(null, "i18n");
 			oModel.destroy();
 			oModel = undefined;
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -98,6 +95,7 @@ sap.ui.define([
 	QUnit.test("test model getProperty and via binding", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{i18n>TEST_TEXT}"});
 		oLabel.placeAt("qunit-fixture");
+		oLabel.setModel(oModel, "i18n");
 		var value = oModel.getProperty("TEST_TEXT");
 		assert.equal(value, "A text en");
 		assert.equal(oLabel.getText(), "A text en");
@@ -106,16 +104,14 @@ sap.ui.define([
 
 	QUnit.module("sap.ui.model.resource.ResourceModel: Resources bundle loaded via url", {
 		beforeEach: function() {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 			this.stub(Supportability, "collectOriginInfo").returns(true);
 			oModel = new ResourceModel({bundleUrl: sMessagesProperties});
-			Core.setModel(oModel, "i18n");
 		},
 		afterEach: function() {
-			Core.setModel(null, "i18n");
 			oModel.destroy();
 			oModel = undefined;
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 	//model created
@@ -140,6 +136,7 @@ sap.ui.define([
 	QUnit.test("test model getProperty and via binding", function(assert) {
 		oLabel = new TestButton("myLabel", {text: "{i18n>TEST_TEXT}"});
 		oLabel.placeAt("qunit-fixture");
+		oLabel.setModel(oModel, "i18n");
 		var value = oModel.getProperty("TEST_TEXT");
 		assert.equal(value, "A text en");
 		assert.equal(oLabel.getText(), "A text en");
@@ -149,6 +146,7 @@ sap.ui.define([
 	QUnit.test("test composite bindings", function(assert) {
 		oLabel2 = new TestButton("myLabel2", {text: {parts: [{path: "i18n>TEST_TEXT"}, {path: "i18n>TEST_TEXT"}]}});
 		oLabel2.placeAt("qunit-fixture");
+		oLabel2.setModel(oModel, "i18n");
 
 		assert.ok(oLabel2, "Label with composite binding must be created");
 		assert.equal(oLabel2.getText(), "A text en A text en", "Text msut be: 'A text en A text en'");
@@ -203,7 +201,7 @@ sap.ui.define([
 
 	QUnit.module("sap.ui.model.resource.ResourceModel: Resources bundle passed as parameter", {
 		beforeEach: function () {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 		},
 		prepare: function(opts) {
 			// Load the bundle beforehand
@@ -221,7 +219,7 @@ sap.ui.define([
 				this.oModel.destroy();
 				this.oModel = null;
 			}
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -300,7 +298,7 @@ sap.ui.define([
 	QUnit.module("sap.ui.model.resource.ResourceModel: Resources bundle passed as parameter -"
 			+ "Language change on enhanced model", {
 		beforeEach: function () {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 		},
 		prepare: function(opts) {
 			// Load the bundle beforehand
@@ -319,8 +317,11 @@ sap.ui.define([
 				});
 			}
 
-			// localizationChange is only fired on models set to a ManagedObject or on the Core
-			Core.setModel(this.oModel, "i18n");
+			this.oButton = new TestButton({
+				text: "{i18n>TEST_TEXT}"
+			});
+			// localizationChange is only fired on models set to a ManagedObject
+			this.oButton.setModel(this.oModel, "i18n");
 
 			// Spy on "localizationChange" method
 			this.localizationChangeSpy = this.spy(this.oModel, "_handleLocalizationChange");
@@ -335,7 +336,7 @@ sap.ui.define([
 			assert.equal(this.oModel.getProperty("TEST_TEXT"), "A text en", "text TEST_TEXT of enhanced model is correct");
 			assert.equal(this.oModel.getProperty("TEST_TEXT_CUSTOM"), "A modified text", "text TEST_TEXT_CUSTOM of enhanced model is correct");
 
-			Configuration.setLanguage("de");
+			Localization.setLanguage("de");
 
 			assert.equal(this.localizationChangeSpy.callCount, 1, "_handleLocalizationChange should be called after changing the language");
 			assert.notEqual(this.oModel.getResourceBundle(), this.oBundle, "A new bundle has been created");
@@ -352,7 +353,7 @@ sap.ui.define([
 			assert.equal(this.oModel.getProperty("TEST_TEXT"), "Ein Text de", "text TEST_TEXT of enhanced model is correct");
 			assert.equal(this.oModel.getProperty("TEST_TEXT_CUSTOM"), "Ein modifizierter Text", "text TEST_TEXT_CUSTOM of enhanced model is correct");
 
-			Configuration.setLanguage("it");
+			Localization.setLanguage("it");
 
 			assert.equal(this.localizationChangeSpy.callCount, 1, "_handleLocalizationChange should be called after changing the language");
 			assert.notEqual(this.oModel.getResourceBundle(), this.oBundle, "A new bundle has been created");
@@ -360,13 +361,13 @@ sap.ui.define([
 			assert.equal(this.oModel.getProperty("TEST_TEXT_CUSTOM"), "Ein modifizierter Text", "Texts from enhancement are still in 'de'");
 		},
 		afterEach: function() {
-			Core.setModel(null, "i18n");
+			this.oButton.destroy();
 			this.oBundle = null;
 			if (this.oModel) {
 				this.oModel.destroy();
 				this.oModel = null;
 			}
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -382,7 +383,7 @@ sap.ui.define([
 		assert.equal(this.oModel.getProperty("TEST_TEXT"), "A text en", "text TEST_TEXT of enhanced model is correct");
 		assert.equal(this.oModel.getProperty("TEST_TEXT_CUSTOM"), "A modified text", "text TEST_TEXT_CUSTOM of enhanced model is correct");
 
-		Configuration.setLanguage("de");
+		Localization.setLanguage("de");
 
 		assert.equal(this.localizationChangeSpy.callCount, 1, "_handleLocalizationChange should be called after changing the language");
 		assert.notEqual(this.oModel.getResourceBundle(), this.oBundle, "The passed bundle is recreated");
@@ -460,7 +461,7 @@ sap.ui.define([
 		assert.equal(this.oModel.getProperty("TEST_TEXT"), "Ein Text de", "text TEST_TEXT of enhanced model is correct");
 		assert.equal(this.oModel.getProperty("TEST_TEXT_CUSTOM"), "Ein modifizierter Text", "text TEST_TEXT_CUSTOM of enhanced model is correct");
 
-		Configuration.setLanguage("it");
+		Localization.setLanguage("it");
 
 		assert.equal(this.localizationChangeSpy.callCount, 1, "_handleLocalizationChange should be called after changing the language");
 		assert.equal(this.oModel.getProperty("TEST_TEXT"), "Ein Text de", "Texts from the bundle are still in 'de'");
@@ -534,7 +535,7 @@ sap.ui.define([
 	QUnit.module("sap.ui.model.resource.ResourceModel: Async -"
 			+ "Resources bundle passed as parameter", {
 		beforeEach: function () {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 		},
 		prepare: function(opts) {
 			// Load the bundle beforehand
@@ -559,7 +560,7 @@ sap.ui.define([
 				this.oModel.destroy();
 				this.oModel = null;
 			}
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -650,7 +651,7 @@ sap.ui.define([
 	QUnit.module("sap.ui.model.resource.ResourceModel Async: Resources bundle passed as parameter -"
 			+ " Language change on enhanced model", {
 		beforeEach: function () {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 		},
 		prepare: function(opts) {
 			// Load the bundle beforehand
@@ -663,6 +664,9 @@ sap.ui.define([
 					async: true
 				});
 			}
+			this.oButton = new TestButton({
+				text: "{i18n>TEST_TEXT}"
+			});
 
 			return p.then(function (oBundle) {
 				this.oBundle = oBundle;
@@ -676,8 +680,8 @@ sap.ui.define([
 					});
 				}
 
-				// localizationChange is only fired on models set to a ManagedObject or on the Core
-				Core.setModel(this.oModel, "i18n");
+				// localizationChange is only fired on models set to a ManagedObject
+				this.oButton.setModel(this.oModel, "i18n");
 
 				// Spy on "localizationChange" method
 				this.localizationChangeSpy = this.spy(this.oModel, "_handleLocalizationChange");
@@ -694,7 +698,7 @@ sap.ui.define([
 				assert.equal(this.oModel.getProperty("TEST_TEXT"), "A text en", "text TEST_TEXT of enhanced model is correct");
 				assert.equal(this.oModel.getProperty("TEST_TEXT_CUSTOM"), "A modified text", "text TEST_TEXT_CUSTOM of enhanced model is correct");
 
-				Configuration.setLanguage("de");
+				Localization.setLanguage("de");
 
 				assert.equal(this.localizationChangeSpy.callCount, 1, "_handleLocalizationChange should be called after changing the language");
 
@@ -722,7 +726,7 @@ sap.ui.define([
 				assert.equal(this.oModel.getProperty("TEST_TEXT"), "Ein Text de", "text TEST_TEXT of enhanced model is correct");
 				assert.equal(this.oModel.getProperty("TEST_TEXT_CUSTOM"), "Ein modifizierter Text", "text TEST_TEXT_CUSTOM of enhanced model is correct");
 
-				Configuration.setLanguage("it");
+				Localization.setLanguage("it");
 
 				assert.equal(this.localizationChangeSpy.callCount, 1, "_handleLocalizationChange should be called after changing the language");
 
@@ -739,12 +743,14 @@ sap.ui.define([
 		},
 		afterEach: function() {
 			this.oBundle = null;
-			Core.setModel(null, "i18n");
+			if (this.oButton) {
+				this.oButton.destroy();
+			}
 			if (this.oModel) {
 				this.oModel.destroy();
 				this.oModel = null;
 			}
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -759,7 +765,7 @@ sap.ui.define([
 				assert.equal(this.oModel.getProperty("TEST_TEXT"), "A text en", "text TEST_TEXT of enhanced model is correct");
 				assert.equal(this.oModel.getProperty("TEST_TEXT_CUSTOM"), "A modified text", "text TEST_TEXT_CUSTOM of enhanced model is correct");
 
-				Configuration.setLanguage("de");
+				Localization.setLanguage("de");
 
 				assert.equal(this.localizationChangeSpy.callCount, 1, "_handleLocalizationChange should be called after changing the language");
 				assert.equal(this.oModel.getProperty("TEST_TEXT"), "A text en", "Texts from the bundle are still in 'en'");
@@ -835,8 +841,11 @@ sap.ui.define([
 			bundleLocale: "de"
 		});
 
-		// localizationChange is only fired on models set to a ManagedObject or on the Core
-		Core.setModel(oModel, "i18n");
+		const oButton = new TestButton({
+			text: "{i18n>TEST_TEXT}"
+		});
+		// localizationChange is only fired on models set to a ManagedObject
+		oButton.setModel(oModel, "i18n");
 
 		// Spy on "localizationChange" method
 		var localizationChangeSpy = this.spy(oModel, "_handleLocalizationChange");
@@ -850,7 +859,7 @@ sap.ui.define([
 			assert.equal(oModel.getProperty("TEST_TEXT"), "Ein Text de", "text TEST_TEXT of enhanced model is correct");
 			assert.equal(oModel.getProperty("TEST_TEXT_CUSTOM"), "Ein modifizierter Text", "text TEST_TEXT_CUSTOM of enhanced model is correct");
 
-			Configuration.setLanguage("it");
+			Localization.setLanguage("it");
 
 			assert.equal(localizationChangeSpy.callCount, 1, "_handleLocalizationChange should be called after changing the language");
 
@@ -861,8 +870,9 @@ sap.ui.define([
 		}).then(function (oModelBundle) {
 			assert.equal(oModelBundle, oBundle, "The passed bundle is still returned by the model");
 
+			oButton.destroy();
 			oModel.destroy();
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 		});
 	});
 
@@ -938,23 +948,21 @@ sap.ui.define([
 
 	QUnit.module("sap.ui.model.resource.ResourceModel: Async", {
 		beforeEach: function() {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 			oLabel = new TestButton("myLabel", {text: "{async>TEST_TEXT}"});
 			oLabel.placeAt("qunit-fixture");
 			oLabel2 = new TestButton("myLabel2", {text: "{async>TEST_TEXT}"});
 			oLabel2.placeAt("qunit-fixture");
 			oModel = new ResourceModel({bundleName: "testdata.messages", async: true});
-			Core.setModel(oModel, "async");
+			oLabel.setModel(oModel, "async");
+			oLabel2.setModel(oModel, "async");
 		},
 		afterEach: function() {
-			Core.setModel(null, "async");
-			Core.setModel(null, "async5");
-			Core.setModel(null, "sync5");
 			oModel.destroy();
 			oModel = undefined;
 			oLabel.destroy();
 			oLabel2.destroy();
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1072,17 +1080,16 @@ sap.ui.define([
 			bundleName: "testdata.messages",
 			async: true
 		});
-		Core.setModel(oAsyncModel, "async5");
+		oBtn.setModel(oAsyncModel, "async5");
 
 
 		var iChangeCount = 0;
 		oBtn.getBinding("text").attachChange(function() {
 			if (iChangeCount++ === 0) {
 				assert.equal(oBtn.getText(), "A text en", "Binding Change: Texts available after sync load");
-				Configuration.setLanguage("de");
+				Localization.setLanguage("de");
 			} else {
 				assert.equal(oBtn.getText(), "Ein Text de", "Binding Change: Texts available after sync load");
-
 				oBtn.destroy();
 				oAsyncModel.destroy();
 				done();
@@ -1092,7 +1099,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("OneWay Binding and Language Change (Synchronous)", function(assert) {
-		Configuration.setLanguage("en");
+		Localization.setLanguage("en");
 
 		var oBtn = new TestButton({
 			text: "{sync5>TEST_TEXT}"
@@ -1103,10 +1110,10 @@ sap.ui.define([
 			bundleName: "testdata.messages",
 			async: false
 		});
-		Core.setModel(oSyncModel, "sync5");
+		oBtn.setModel(oSyncModel, "sync5");
 
 		assert.equal(oBtn.getText(), "A text en", "Binding Change: Texts available after sync load");
-		Configuration.setLanguage("de");
+		Localization.setLanguage("de");
 
 		assert.equal(oBtn.getText(), "Ein Text de", "Binding Change: Texts available after sync load");
 		oBtn.destroy();
@@ -1116,10 +1123,10 @@ sap.ui.define([
 
 	QUnit.module("sap.ui.model.resource.ResourceModel: constructor enhanceWith parameter", {
 		beforeEach: function () {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 		},
 		afterEach: function () {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1240,10 +1247,10 @@ sap.ui.define([
 
 	QUnit.module("sap.ui.model.resource.ResourceModel: constructor enhanceWith error handling", {
 		beforeEach: function () {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 		},
 		afterEach: function () {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1320,10 +1327,10 @@ sap.ui.define([
 
 	QUnit.module("sap.ui.model.resource.ResourceModel: enhance error handling", {
 		beforeEach: function () {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 		},
 		afterEach: function () {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1364,11 +1371,11 @@ sap.ui.define([
 
 	QUnit.module("sap.ui.model.resource.ResourceModel: Parameters passed to ResourceBundle", {
 		beforeEach: function () {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 			this.stub(Supportability, "collectOriginInfo").returns(true);
 		},
 		afterEach: function () {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1461,11 +1468,11 @@ sap.ui.define([
 			this.oLogMock = this.mock(Log);
 			this.oLogMock.expects("warning").never();
 			this.oLogMock.expects("error").never();
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 			this.stub(Supportability, "collectOriginInfo").returns(true);
 		},
 		afterEach: function () {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 
@@ -1630,10 +1637,10 @@ sap.ui.define([
 
 	QUnit.module("sap.ui.model.resource.ResourceModel: Exotic scenarios", {
 		beforeEach: function () {
-			Configuration.setLanguage("en");
+			Localization.setLanguage("en");
 		},
 		afterEach: function () {
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		}
 	});
 

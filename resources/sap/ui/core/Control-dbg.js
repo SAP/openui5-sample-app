@@ -15,24 +15,25 @@ sap.ui.define([
 	'./RenderManager',
 	'./BusyIndicatorUtils',
 	'./BlockLayerUtils',
+	"sap/base/future",
 	"sap/base/Log",
 	"sap/ui/performance/trace/Interaction",
 	"sap/ui/thirdparty/jquery"
-],
-	function(
-		CustomStyleClassSupport,
-		Core,
-		Element,
-		ElementRegistry,
-		UIArea,
-		StaticArea,
-		RenderManager,
-		BusyIndicatorUtils,
-		BlockLayerUtils,
-		Log,
-		Interaction,
-		jQuery
-	) {
+], function(
+	CustomStyleClassSupport,
+	Core,
+	Element,
+	ElementRegistry,
+	UIArea,
+	StaticArea,
+	RenderManager,
+	BusyIndicatorUtils,
+	BlockLayerUtils,
+	future,
+	Log,
+	Interaction,
+	jQuery
+) {
 	"use strict";
 
 	// soft dependency
@@ -83,7 +84,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @alias sap.ui.core.Control
 	 */
 	var Control = Element.extend("sap.ui.core.Control", /** @lends sap.ui.core.Control.prototype */ {
@@ -664,7 +665,7 @@ sap.ui.define([
 
 			if (oContainer instanceof Element) {
 				if (!isSuitableAsContainer(oContainer)) {
-					Log.warning("[FUTURE FATAL] placeAt cannot be processed because container " + oContainer + " does not have an aggregation 'content'.");
+					future.warningThrows("placeAt cannot be processed because container " + oContainer + " does not have an aggregation 'content'.");
 					return this;
 				}
 			} else {
@@ -693,7 +694,7 @@ sap.ui.define([
 						oContainer.addContent(this);
 						break;
 					default:
-						Log.warning("[FUTURE FATAL] Position " + vPosition + " is not supported for function placeAt.");
+						future.warningThrows("Position " + vPosition + " is not supported for function placeAt.");
 				}
 			}
 		}.bind(this));
@@ -978,8 +979,9 @@ sap.ui.define([
 	 *
 	 * @param {boolean} bBlocked The new blocked state to be set
 	 * @returns {this} <code>this</code> to allow method chaining
+	 *
 	 * @private
-	 * @ui5-restricted sap.ui.core, sap.m, sap.viz
+	 * @ui5-restricted sap.ui.core, sap.m, sap.viz, sap.ui.rta, sap.ui.table
 	 * @deprecated since version 1.69, the blocked property is deprecated.
 	 * There is no accessibility support for this property.
 	 * Blocked controls should not be used inside Controls, which rely on keyboard navigation, e.g. List controls.
@@ -1039,6 +1041,19 @@ sap.ui.define([
 		}
 
 		return this;
+	};
+
+	/**
+	 * Gets current value of property blocked.
+	 * @returns {boolean} Whether the control is currently in blocked state. Default is 'false'.
+	 * @public
+	 *
+	 * @deprecated since version 1.69, the blocked property is deprecated.
+	 * There is no accessibility support for this property.
+	 * Blocked controls should not be used inside Controls, which rely on keyboard navigation, e.g. List controls.
+	 */
+	Control.prototype.getBlocked = function() {
+		return this.getProperty("blocked");
 	};
 
 	/**

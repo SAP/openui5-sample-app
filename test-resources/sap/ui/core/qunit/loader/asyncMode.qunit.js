@@ -244,18 +244,11 @@
 			// would still cause some test runners like Karma to report an error
 			this.origOnError = window.onerror;
 			window.onerror = this.stub().returns(false);
-
-			return new Promise(function(resolve, reject) {
-				sap.ui.require(['jquery.sap.global'], resolve, reject);
-			});
 		},
 		afterEach: function() {
 			window.onerror = this.origOnError;
 		}
 	});
-
-	// skip all tests in FF that require handling of global errors because document.currentScript is not supported during the window.error event
-	var SKIP_ASYNC_ERROR_HANDLING = sap.ui.Device.browser.firefox ? "execution errors for asynchronously executed legacy modules can't be associated with the executing module" : false;
 
 	[
 		{
@@ -272,20 +265,9 @@
 			module: 'amd/module-with-dependency-to-failing-amd-module'
 		},
 		{
-			caption: "an AMD module with a dependency to a failing UI5 legacy module",
-			module: 'amd/module-with-dependency-to-failing-ui5-legacy-module',
-			skip: SKIP_ASYNC_ERROR_HANDLING
-		},
-		{
 			caption: "an AMD module with a dependency to an already failed AMD module",
 			module: 'amd/module-with-dependency-to-failed-amd-module',
 			requireFirst: 'amd/failing-module1'
-		},
-		{
-			caption: "an AMD module with a dependency to an already failed UI5 legacy module",
-			module: 'amd/module-with-dependency-to-failed-ui5-legacy-module',
-			requireFirst: 'ui5-legacy/failing-module1',
-			skip: SKIP_ASYNC_ERROR_HANDLING
 		}
 	].forEach(function(config) {
 
@@ -497,26 +479,50 @@
 
 	});
 
-	// ========================================================================================
-	// Automatic Export to Global
-	// ========================================================================================
-
-	QUnit.module("Export to Global");
-
-	QUnit.test("basic support", function(assert) {
+	QUnit.test("No premature READY state", function(assert) {
 		var done = assert.async();
+		const MODULE_NAME = "fixture/embedded-module-definitions/module2";
+		const UNIQUE_FROM_PREDEFINE = {};
+		const UNIQUE = {};
 
-		function getModule1() {
-			return window.fixture && window.fixture["amd-with-export-true"] && window.fixture["amd-with-export-true"].module1;
-		}
-
-		assert.strictEqual(getModule1(), undefined, "before module execution, the namespace should not exist");
-		sap.ui.require(['fixture/amd-with-export-true/module1'], function(module1) {
-			assert.strictEqual(typeof module1.parentNamespace, 'object', "during module execution, the namespace should already exist");
-			assert.strictEqual(module1.parentNamespace.module1, module1, "namespace member should equal the export");
-			assert.strictEqual(getModule1(), module1, "after module execution, the global object should equal the export");
-			done();
+		// precondition: the module is already in the preload cache (state === -1)
+		sap.ui.predefine(MODULE_NAME, [], function() {
+			return UNIQUE_FROM_PREDEFINE;
 		});
+
+		// Act:
+		// embedded module definition
+		sap.ui.define(MODULE_NAME, [
+			// some dependency that is not part of the preloads and which hasn't been required yet
+			"sap/ui/thirdparty/jszip"
+		], function() {
+			return UNIQUE;
+		});
+
+		setTimeout(() => {
+			assert.strictEqual(
+				sap.ui.require(MODULE_NAME),
+				undefined,
+				"module is not defined yet"
+			);
+			assert.notStrictEqual(
+				privateLoaderAPI.getModuleState(MODULE_NAME + ".js"),
+				/* READY */ 4,
+				"module should not be READY immediately after sap.ui.define call was processed"
+			);
+
+			sap.ui.require([MODULE_NAME], function(importValue) {
+				assert.strictEqual(
+					importValue,
+					UNIQUE,
+					"require should receive the module export from the embedded module"
+				);
+				done();
+			}, function() {
+				assert.ok(false, "no error should occur when requiring the module");
+				done();
+			});
+		}, 0); // depends on implementation details: must be after ui5loader's queue processing timeout of 0
 	});
 
 

@@ -10,12 +10,13 @@ sap.ui.define([
 	"./ViewType",
 	"./XMLViewRenderer",
 	"sap/base/config",
+	"sap/base/future",
 	"sap/base/Log",
+	"sap/base/i18n/Localization",
 	"sap/base/strings/hash",
 	"sap/base/util/LoaderExtensions",
 	"sap/base/util/merge",
 	"sap/ui/base/ManagedObject",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/Control",
 	"sap/ui/core/RenderManager",
 	"sap/ui/core/XMLTemplateProcessor",
@@ -32,12 +33,13 @@ sap.ui.define([
 		ViewType,
 		XMLViewRenderer,
 		BaseConfig,
+		future,
 		Log,
+		Localization,
 		hash,
 		LoaderExtensions,
 		merge,
 		ManagedObject,
-		Configuration,
 		Control,
 		RenderManager,
 		XMLTemplateProcessor,
@@ -110,7 +112,7 @@ sap.ui.define([
 	 * bound content aggregation. An error will be thrown when the above combination is detected.
 	 *
 	 * @extends sap.ui.core.mvc.View
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.XMLView
@@ -442,7 +444,7 @@ sap.ui.define([
 		return [
 			sComponentName || window.location.host + window.location.pathname,
 			oView.getId(),
-			Configuration.getLanguageTag()
+			Localization.getLanguageTag().toString()
 		].concat(oRootComponent && oRootComponent.getActiveTerminologies() || []);
 	}
 
@@ -827,7 +829,7 @@ sap.ui.define([
 		if (XMLView.PreprocessorType[sType]) {
 			View.registerPreprocessor(XMLView.PreprocessorType[sType], vPreprocessor, sOwnViewType, bSyncSupport, bOnDemand, mSettings);
 		} else {
-			Log.error("[FUTURE FATAL] Preprocessor could not be registered due to unknown sType \"" + sType + "\"", this.getMetadata().getName());
+			future.errorThrows("Preprocessor could not be registered due to unknown sType \"" + sType + "\"", this.getMetadata().getName());
 		}
 	};
 

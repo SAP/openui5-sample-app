@@ -20,20 +20,20 @@ sap.ui.define([
 	"sap/base/util/each",
 	"sap/ui/core/CalendarType",
 	"sap/ui/core/format/DateFormat",
+	"sap/ui/model/_Helper",
 	"sap/ui/model/FilterProcessor",
 	"sap/ui/model/Sorter"
-], function(assert, Log, encodeURL, each, CalendarType, DateFormat, FilterProcessor, Sorter) {
+], function(assert, Log, encodeURL, each, CalendarType, DateFormat, _Helper, FilterProcessor, Sorter) {
 	"use strict";
 
-	var oDateTimeFormat,
-		oDateTimeFormatMs,
-		oDateTimeOffsetFormat,
-		rDecimal = /^([-+]?)0*(\d+)(\.\d+|)$/,
-		// URL might be encoded, "(" becomes %28
-		rSegmentAfterCatalogService = /\/(Annotations|ServiceNames|ServiceCollection)(\(|%28)/,
-		oTimeFormat,
-		rTrailingDecimal = /\.$/,
-		rTrailingZeroes = /0+$/;
+	let oDateTimeFormat, oDateTimeFormatMs, oDateTimeOffsetFormat, oDateTimeOffsetFormatMs, oTimeFormat;
+	const sClassName = "sap.ui.model.odata.ODataUtils";
+	const rDecimal = /^([-+]?)0*(\d+)(\.\d+|)$/;
+	// URL might be encoded, "(" becomes %28
+	const rSegmentAfterCatalogService = /\/(Annotations|ServiceNames|ServiceCollection)(\(|%28)/;
+	const rTrailingDecimal = /\.$/;
+	const rTrailingSingleQuote = /'$/;
+	const rTrailingZeroes = /0+$/;
 
 	function setDateTimeFormatter () {
 		// Lazy creation of format objects
@@ -48,6 +48,10 @@ sap.ui.define([
 			});
 			oDateTimeOffsetFormat = DateFormat.getDateInstance({
 				pattern: "'datetimeoffset'''yyyy-MM-dd'T'HH:mm:ss'Z'''",
+				calendarType: CalendarType.Gregorian
+			});
+			oDateTimeOffsetFormatMs = DateFormat.getDateInstance({
+				pattern: "'datetimeoffset'''yyyy-MM-dd'T'HH:mm:ss.SSS'Z'''",
 				calendarType: CalendarType.Gregorian
 			});
 			oTimeFormat = DateFormat.getTimeInstance({
@@ -102,16 +106,16 @@ sap.ui.define([
 	}
 
 	/**
-	 * Creates URL parameters strings for filtering.
-	 * The Parameter string is prepended with the "$filter=" system query option to form
-	 * a valid URL part for OData Request.
-	 * In case an array of filters is passed, they will be grouped in a way that filters on the
-	 * same path are ORed and filters on different paths are ANDed with each other
-	 * @see ODataUtils._createFilterParams
-	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]} vFilter the root filter or filter array
-	 * @param {object} oMetadata the entity metadata object
-	 * @param {object} oEntityType the entity type object
-	 * @return {string} the URL encoded filter parameters
+	 * Creates the URL parameter string for filtering. The parameter string is prepended with the "$filter=" system
+	 * query option to form a valid URL part for an OData request. In case an array of filters is passed, they are
+	 * grouped in a way that filters on the same path are OR-ed and filters on different paths are AND-ed with each
+	 * other.
+	 *
+	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]} vFilter The filter or filter array
+	 * @param {sap.ui.model.odata.ODataMetadata} oMetadata The model metadata
+	 * @param {sap.ui.model.odata.ODataMetaModel.EntityType} oEntityType The entity type
+	 * @return {string} The URL encoded <code>$filter</code> system query option
+	 *
 	 * @private
 	 */
 	ODataUtils.createFilterParams = function(vFilter, oMetadata, oEntityType) {
@@ -130,62 +134,75 @@ sap.ui.define([
 	};
 
 	/**
-	 * Creates a string of logically (or/and) linked filter options,
-	 * which will be used as URL query parameters for filtering.
-	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]} vFilter the root filter or filter array
-	 * @param {object} oMetadata the entity metadata object
-	 * @param {object} oEntityType the entity type object
-	 * @return {string} the URL encoded filter parameters
+	 * Creates a string of logically (or/and) linked filter options, which can be used as a value for the
+	 * <code>$filter</code> system query option.
+	 *
+	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]} vFilter The filter or filter array
+	 * @param {sap.ui.model.odata.ODataMetadata} oMetadata The model metadata
+	 * @param {sap.ui.model.odata.ODataMetaModel.EntityType} oEntityType The entity type
+	 * @return {string} The URL encoded value for <code>$filter</code> system query option
+	 *
 	 * @private
 	 */
 	ODataUtils._createFilterParams = function(vFilter, oMetadata, oEntityType) {
-		var that = this,
-			oFilter = Array.isArray(vFilter) ? FilterProcessor.groupFilters(vFilter) : vFilter;
-
-		function create(oFilter, bOmitBrackets) {
-			oFilter = convertLegacyFilter(oFilter);
-
-			if (oFilter.aFilters) {
-				return createMulti(oFilter, bOmitBrackets);
-			}
-			return that._createFilterSegment(oFilter.sPath, oMetadata, oEntityType, oFilter.sOperator, oFilter.oValue1, oFilter.oValue2, oFilter.bCaseSensitive);
-		}
-
-		function createMulti(oMultiFilter, bOmitBrackets) {
-			var aFilters = oMultiFilter.aFilters,
-				bAnd = !!oMultiFilter.bAnd,
-				sFilter = "";
-
-			if (aFilters.length === 0) {
-				return bAnd ? "true" : "false";
-			}
-
-			if (aFilters.length === 1) {
-				if (aFilters[0]._bMultiFilter) {
-					return create(aFilters[0]);
-				}
-				return create(aFilters[0], true);
-			}
-
-			if (!bOmitBrackets) {
-				sFilter += "(";
-			}
-			sFilter += create(aFilters[0]);
-			for (var i = 1; i < aFilters.length; i++) {
-				sFilter += bAnd ? "%20and%20" : "%20or%20";
-				sFilter += create(aFilters[i]);
-			}
-			if (!bOmitBrackets) {
-				sFilter += ")";
-			}
-			return sFilter;
-		}
-
+		const oFilter = Array.isArray(vFilter) ? FilterProcessor.groupFilters(vFilter) : vFilter;
 		if (!oFilter) {
 			return undefined;
 		}
+		return ODataUtils._processSingleFilter(oFilter, oMetadata, oEntityType, true);
+	};
 
-		return create(oFilter, true);
+	/**
+	 * Gets the filter string for a given filter object.
+	 *
+	 * @param {sap.ui.model.Filter} oFilter The filter object to be processed
+	 * @param {sap.ui.model.odata.ODataMetadata} oMetadata The model metadata
+	 * @param {sap.ui.model.odata.ODataMetaModel.EntityType} oEntityType The entity type
+	 * @param {boolean} [bOmitBrackets] Whether to omit brackets around the resulting filter string
+	 * @returns {string} The URL encoded string representation of the given filter object
+	 *
+	 * @private
+	 */
+	ODataUtils._processSingleFilter = function (oFilter, oMetadata, oEntityType, bOmitBrackets) {
+		oFilter = convertLegacyFilter(oFilter);
+
+		if (oFilter.aFilters) {
+			return ODataUtils._processMultiFilter(oFilter, oMetadata, oEntityType, bOmitBrackets);
+		}
+		return ODataUtils._createFilterSegment(oFilter, oMetadata, oEntityType);
+	};
+
+	/**
+	 * Gets the filter string for a given multi-filter object.
+	 *
+	 * @param {sap.ui.model.Filter} oFilter The multi-filter object to be processed
+	 * @param {sap.ui.model.odata.ODataMetadata} oMetadata The model metadata
+	 * @param {sap.ui.model.odata.ODataMetaModel.EntityType} oEntityType The entity type
+	 * @param {boolean} [bOmitBrackets] Whether to omit brackets around the resulting filter string
+	 * @returns {string} The URL encoded string representation of the given multi-filter object
+	 *
+	 * @private
+	 */
+	ODataUtils._processMultiFilter = function (oFilter, oMetadata, oEntityType, bOmitBrackets) {
+		const aFilters = oFilter.aFilters;
+		const bAnd = !!oFilter.bAnd;
+
+		if (aFilters.length === 0) {
+			return bAnd ? "true" : "false";
+		}
+
+		if (aFilters.length === 1) {
+			if (aFilters[0]._bMultiFilter) {
+				return ODataUtils._processSingleFilter(aFilters[0], oMetadata, oEntityType);
+			}
+			return ODataUtils._processSingleFilter(aFilters[0], oMetadata, oEntityType, true);
+		}
+
+		return (!bOmitBrackets ? "(" : "")
+			+ aFilters.map((oFilter) => {
+				return ODataUtils._processSingleFilter(oFilter, oMetadata, oEntityType);
+			}).join(bAnd ? "%20and%20" : "%20or%20")
+			+ (!bOmitBrackets ? ")" : "");
 	};
 
 	/**
@@ -387,88 +404,74 @@ sap.ui.define([
 
 
 	/**
-	 * Convert multi filter to filter string.
+	 * Convert multi-filter to filter string.
 	 *
-	 * @param {object} oMultiFilter A multi filter
-	 * @param {sap.ui.model.odata.ODataMetadata} oMetadata The metadata
-	 * @param {object} oEntityType The entity type to filter
-	 * @returns {string} A filter string
+	 * @param {object} oMultiFilter A multi-filter
+	 * @param {sap.ui.model.odata.ODataMetadata} oMetadata The model metadata
+	 * @param {sap.ui.model.odata.ODataMetaModel.EntityType} oEntityType The entity type
+	 * @returns {string} The URL encoded string representation of the given multi-filter object
 	 *
 	 * @private
 	 */
 	ODataUtils._resolveMultiFilter = function(oMultiFilter, oMetadata, oEntityType){
-		var that = this,
-			aFilters = oMultiFilter.aFilters,
-			sFilterParam = "";
-
+		const aFilters = oMultiFilter.aFilters;
 		if (aFilters) {
-			sFilterParam += "(";
-			each(aFilters, function(i, oFilter) {
-				if (oFilter._bMultiFilter) {
-					sFilterParam += that._resolveMultiFilter(oFilter, oMetadata, oEntityType);
-				} else if (oFilter.sPath) {
-					sFilterParam += that._createFilterSegment(oFilter.sPath, oMetadata, oEntityType, oFilter.sOperator, oFilter.oValue1, oFilter.oValue2, "", oFilter.bCaseSensitive);
-				}
-				if (i < (aFilters.length - 1)) {
-					if (oMultiFilter.bAnd) {
-						sFilterParam += "%20and%20";
-					} else {
-						sFilterParam += "%20or%20";
+			return "("
+				+ aFilters.map((oFilter) => {
+					let sFilterParam = "";
+					if (oFilter._bMultiFilter) {
+						sFilterParam = ODataUtils._resolveMultiFilter(oFilter, oMetadata, oEntityType);
+					} else if (oFilter.sPath) {
+						sFilterParam = ODataUtils._createFilterSegment(oFilter, oMetadata, oEntityType);
 					}
-				}
-			});
-			sFilterParam += ")";
+					return sFilterParam;
+				}).join(oMultiFilter.bAnd ? "%20and%20" : "%20or%20")
+				+ ")";
 		}
 
-		return sFilterParam;
+		return "";
 	};
 
 	/**
-	 * Create a single filter segment of the OData filter parameters.
+	 * Create a single filter segment for the given filter.
 	 *
-	 * @param {string} sPath The path to the value
-	 * @param {sap.ui.model.odata.ODataMetadata} oMetadata The metadata
-	 * @param {object} oEntityType The value's entity type
-	 * @param {string} sOperator The filter operator
-	 * @param {object} oValue1 The first value
-	 * @param {object} oValue2 The second value
-	 * @param {boolean} [bCaseSensitive=true] Whether the case should be considered
+	 * @param {sap.ui.model.Filter} oFilter The filter object to be processed
+	 * @param {sap.ui.model.odata.ODataMetadata} oMetadata The model metadata
+	 * @param {sap.ui.model.odata.ODataMetaModel.EntityType} oEntityType The entity type object
 	 * @returns {string} The encoded string representation of the given filter
-	 *
 	 * @private
 	 */
-	ODataUtils._createFilterSegment = function(sPath, oMetadata, oEntityType, sOperator, oValue1, oValue2, bCaseSensitive) {
-
-		var oPropertyMetadata, sType;
-
-		if (bCaseSensitive === undefined) {
-			bCaseSensitive = true;
-		}
-
+	ODataUtils._createFilterSegment = function(oFilter, oMetadata, oEntityType) {
+		let {sPath, oValue1, oValue2} = oFilter;
+		const {sOperator, bCaseSensitive = true, sFractionalSeconds1, sFractionalSeconds2} = oFilter;
+		let sType;
 		if (oEntityType) {
-			oPropertyMetadata = oMetadata._getPropertyMetadata(oEntityType, sPath);
-			sType = oPropertyMetadata && oPropertyMetadata.type;
-			assert(oPropertyMetadata, "PropertyType for property " + sPath + " of EntityType " + oEntityType.name + " not found!");
+			const oPropertyMetadata = oMetadata._getPropertyMetadata(oEntityType, sPath);
+			if (oPropertyMetadata) {
+				sType = oPropertyMetadata.type;
+				if (sType) {
+					oValue1 = ODataUtils._formatValue(oValue1, sType, bCaseSensitive, sFractionalSeconds1);
+					oValue2 = oValue2 === null || oValue2 === undefined
+						? null
+						: ODataUtils._formatValue(oValue2, sType, bCaseSensitive, sFractionalSeconds2);
+				} else {
+					Log.error("Type for property '" + sPath + "' of EntityType '" + oEntityType.name
+						+ "' not found!", undefined, sClassName);
+				}
+			} else {
+				Log.error("Property type for property '" + sPath + "' of EntityType '" + oEntityType.name
+					+ "' not found!", undefined, sClassName);
+			}
 		}
-
-		if (sType) {
-			oValue1 = this.formatValue(oValue1, sType, bCaseSensitive);
-			oValue2 = (oValue2 != null) ? this.formatValue(oValue2, sType, bCaseSensitive) : null;
-		} else {
-			assert(null, "Type for filter property could not be found in metadata!");
-		}
-
 		if (oValue1) {
-			oValue1 = encodeURL(String(oValue1));
+			oValue1 = _Helper.encodeURL(String(oValue1));
 		}
 		if (oValue2) {
-			oValue2 = encodeURL(String(oValue2));
+			oValue2 = _Helper.encodeURL(String(oValue2));
 		}
-
 		if (!bCaseSensitive && sType === "Edm.String") {
-			sPath =  "toupper(" + sPath + ")";
+			sPath = "toupper(" + sPath + ")";
 		}
-
 		switch (sOperator) {
 			case "EQ":
 			case "NE":
@@ -494,7 +497,7 @@ sap.ui.define([
 			case "NotEndsWith":
 				return "not%20endswith(" + sPath + "," + oValue1 + ")";
 			default:
-				Log.error("ODataUtils :: Unknown filter operator " + sOperator);
+				Log.error("Unknown filter operator '" + sOperator + "'", undefined, sClassName);
 				return "true";
 		}
 	};
@@ -511,6 +514,22 @@ sap.ui.define([
 	 * @public
 	 */
 	ODataUtils.formatValue = function(vValue, sType, bCaseSensitive) {
+		return ODataUtils._formatValue(vValue, sType, bCaseSensitive);
+	};
+
+	/**
+	 * Like {@link #formatValue}, but allows for providing fractional seconds for Date values and if the given type
+	 * is "Edm.DateTime" or "Edm.DateTimeOffset".
+	 *
+	 * @param {any} vValue The value to format
+	 * @param {string} sType The EDM type (e.g. Edm.Decimal)
+	 * @param {boolean} bCaseSensitive Whether strings gets compared case sensitive or not
+	 * @param {string} [sFractionalSeconds] The fractional seconds to be appended to the given value in case it is a
+	 *   <code>Date<code>
+	 * @return {string} The formatted value
+	 * @private
+	 */
+	ODataUtils._formatValue = function(vValue, sType, bCaseSensitive, sFractionalSeconds) {
 		var oDate, sValue;
 
 		if (bCaseSensitive === undefined) {
@@ -544,14 +563,30 @@ sap.ui.define([
 				oDate = vValue instanceof Date ? vValue : new Date(vValue);
 				if (oDate.getMilliseconds() > 0) {
 					sValue = oDateTimeFormatMs.format(oDate, true);
+					if (sFractionalSeconds) {
+						sValue = sValue.replace(rTrailingSingleQuote, sFractionalSeconds + "'");
+					}
 				} else {
 					sValue = oDateTimeFormat.format(oDate, true);
+					if (sFractionalSeconds) {
+						sValue = sValue.replace(rTrailingSingleQuote, ".000" + sFractionalSeconds + "'");
+					}
 				}
 				break;
 			case "Edm.DateTimeOffset":
 				// no need to use UI5Date.getInstance as only the UTC timestamp is used
 				oDate = vValue instanceof Date ? vValue : new Date(vValue);
-				sValue = oDateTimeOffsetFormat.format(oDate, true);
+				if (oDate.getMilliseconds() > 0) {
+					sValue = oDateTimeOffsetFormatMs.format(oDate, true);
+					if (sFractionalSeconds) {
+						sValue = sValue.replace("Z'", sFractionalSeconds + "Z'");
+					}
+				} else {
+					sValue = oDateTimeOffsetFormat.format(oDate, true);
+					if (sFractionalSeconds) {
+						sValue = sValue.replace("Z'", ".000" + sFractionalSeconds + "Z'");
+					}
+				}
 				break;
 			case "Edm.Guid":
 				sValue = "guid'" + vValue + "'";
@@ -603,13 +638,13 @@ sap.ui.define([
 				ms : oTimeFormat.parse(sValue, true).getTime()
 			};
 		} else if (sValue.startsWith("datetime'")) { // Edm.DateTime
-			if (sValue.indexOf(".") === -1) {
-				return oDateTimeFormat.parse(sValue, true);
-			} else { // Edm.DateTime with ms
-				return oDateTimeFormatMs.parse(sValue, true);
-			}
+			return sValue.includes(".")
+				? oDateTimeFormatMs.parse(sValue, true)
+				: oDateTimeFormat.parse(sValue, true);
 		} else if (sValue.startsWith("datetimeoffset'")) { // Edm.DateTimeOffset
-			return oDateTimeOffsetFormat.parse(sValue, true);
+			return sValue.includes(".")
+				? oDateTimeOffsetFormatMs.parse(sValue, true)
+				: oDateTimeOffsetFormat.parse(sValue, true);
 		} else if (sValue.startsWith("guid'")) { // Edm.Guid
 			return sValue.slice(5, -1);
 		} else if (sValue === "null") { // null

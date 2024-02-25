@@ -7,8 +7,8 @@
 // Provides control sap.m.ExpandableText
 sap.ui.define([
 	'./library',
-	'sap/ui/core/Core',
 	'sap/ui/core/Control',
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/Device',
@@ -21,8 +21,8 @@ sap.ui.define([
 	"./ExpandableTextRenderer"
 ],
 function(library,
-		 Core,
 		 Control,
+		 Library,
 		 coreLibrary,
 		 InvisibleText,
 		 Device,
@@ -35,7 +35,7 @@ function(library,
 		 ExpandableTextRenderer) {
 	"use strict";
 
-	var oRb = Core.getLibraryResourceBundle("sap.m");
+	var oRb = Library.getResourceBundleFor("sap.m");
 
 	var TEXT_SHOW_MORE = oRb.getText("EXPANDABLE_TEXT_SHOW_MORE");
 	var TEXT_SHOW_LESS = oRb.getText("EXPANDABLE_TEXT_SHOW_LESS");
@@ -105,7 +105,7 @@ function(library,
 	 * @implements sap.ui.core.IFormContent, sap.m.IHyphenation
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -215,7 +215,7 @@ function(library,
 	 * Gets the text.
 	 *
 	 * @public
-	 * @param {boolean} bNormalize Indication for normalized text.
+	 * @param {boolean} [bNormalize] Indication for normalized text.
 	 * @returns {string} Text value.
 	 */
 	ExpandableText.prototype.getText = function (bNormalize) {
@@ -345,10 +345,6 @@ function(library,
 						}
 
 						showMoreLink.setText(TEXT_SHOW_LESS);
-						// force the re-rendering of the link,
-						// so the popover won't flickering,
-						// because of text changing
-						showMoreLink.rerender();
 
 						oPopover.removeAllAriaLabelledBy();
 						oPopover.destroyContent();

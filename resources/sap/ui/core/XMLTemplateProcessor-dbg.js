@@ -11,6 +11,7 @@ sap.ui.define([
 	'sap/ui/base/BindingInfo',
 	'sap/ui/core/CustomData',
 	'sap/ui/core/Component',
+	'sap/ui/core/ElementRegistry',
 	'./mvc/View',
 	'./mvc/ViewType',
 	'./mvc/XMLProcessingMode',
@@ -18,6 +19,7 @@ sap.ui.define([
 	'./ExtensionPoint',
 	'./StashedControlSupport',
 	'sap/ui/base/SyncPromise',
+	'sap/base/future',
 	'sap/base/Log',
 	'sap/base/util/ObjectPath',
 	'sap/base/assert',
@@ -33,6 +35,7 @@ function(
 	BindingInfo,
 	CustomData,
 	Component,
+	ElementRegistry,
 	View,
 	ViewType,
 	XMLProcessingMode,
@@ -40,6 +43,7 @@ function(
 	ExtensionPoint,
 	StashedControlSupport,
 	SyncPromise,
+	future,
 	Log,
 	ObjectPath,
 	assert,
@@ -87,7 +91,7 @@ function(
 
 				// if the parsed value is not valid, we don't fail but only log an error
 				if (!oType.isValid(vValue)) {
-					Log.error("[FUTURE FATAL] Value '" + sValue + "' is not valid for type '" + oType.getName() + "'.");
+					future.errorThrows("Value '" + sValue + "' is not valid for type '" + oType.getName() + "'.");
 				}
 			}
 			// else keep original sValue (e.g. for enums)
@@ -741,7 +745,7 @@ function(
 			sNodeName = localName(node);
 			if (oView.isA("sap.ui.core.mvc.XMLView")) {
 				if ((sNodeName !== "View" && sNodeName !== "XMLView") || node.namespaceURI !== CORE_MVC_NAMESPACE) {
-					Log.error("[FUTURE FATAL] XMLView's root node must be 'View' or 'XMLView' and have the namespace 'sap.ui.core.mvc'" + (sCurrentName ? " (View name: " + sCurrentName + ")" : ""));
+					future.errorThrows("XMLView's root node must be 'View' or 'XMLView' and have the namespace 'sap.ui.core.mvc'" + (sCurrentName ? " (View name: " + sCurrentName + ")" : ""));
 				}
 				// createRegularControls
 				pResultChain = pChain.then(function() {
@@ -790,7 +794,7 @@ function(
 					sClassName = oLibrary.name + "." + ((oLibrary.tagNames && oLibrary.tagNames[sLocalName]) || sLocalName);
 				}
 			});
-			// TODO guess library from sNamespaceURI and load corresponding lib!?
+
 			sClassName = sClassName || sNamespaceURI + "." + sLocalName;
 
 			/**
@@ -800,7 +804,7 @@ function(
 			 */
 			function validateClass(fnClass) {
 				if (!fnClass) {
-					let sErrorLogMessage = `[FUTURE FATAL] Control '${sClassName}' did not return a class definition from sap.ui.define.`;
+					let sErrorLogMessage = `Control '${sClassName}' did not return a class definition from sap.ui.define.`;
 					/**
 					 * Some modules might not return a class definition, so we fallback to the global namespace.
 					 * This is against the AMD definition, but is required for backward compatibility.
@@ -813,7 +817,7 @@ function(
 						}
 					})();
 
-					Log.error(sErrorLogMessage, "", "XMLTemplateProcessor");
+					future.errorThrows(sErrorLogMessage, "", "XMLTemplateProcessor");
 				}
 				return fnClass;
 			}
@@ -832,8 +836,12 @@ function(
 				}
 				return new Promise(function(resolve, reject) {
 					sap.ui.require([sResourceName], function(oClassObject) {
-						oClassObject = validateClass(oClassObject);
-						resolve(oClassObject);
+						try {
+							oClassObject = validateClass(oClassObject);
+							resolve(oClassObject);
+						} catch (e) {
+							reject(e);
+						}
 					}, reject);
 				});
 			}
@@ -1262,7 +1270,7 @@ function(
 								try {
 									mMetaContextsInfo = XMLTemplateProcessor._calculatedModelMapping(sValue, oView._oContainingView.oController, true);
 								} catch (e) {
-									Log.error("[FUTURE FATAL] " + oView + ":" + e.message);
+									future.errorThrows("" + oView + ":" + e.message);
 								}
 
 								if (mMetaContextsInfo) {
@@ -1324,7 +1332,7 @@ function(
 								if ( oBindingInfo ) {
 									mSettings[sName] = oBindingInfo;
 								} else {
-									Log.error("[FUTURE FATAL] " + oView + ": aggregations with cardinality 0..n specifies a non valid BindingInfo (wrong value: " + sName + "='" + sValue + "')");
+									future.errorThrows("" + oView + ": aggregations with cardinality 0..n specifies a non valid BindingInfo (wrong value: " + sName + "='" + sValue + "')");
 								}
 							}
 
@@ -1350,7 +1358,7 @@ function(
 									if (vEventHandler) {
 										aEventHandlers.push(vEventHandler);
 									} else  {
-										Log.warning("[FUTURE FATAL] " + oView + ": event handler function \"" + sEventHandler + "\" is not a function or does not exist in the controller.");
+										future.warningThrows("" + oView + ": event handler function \"" + sEventHandler + "\" is not a function or does not exist in the controller.");
 									}
 								});
 
@@ -1364,10 +1372,10 @@ function(
 							if (oMetadata.isA("sap.ui.core.mvc.View") && sName == "async") {
 								mSettings[sName] = parseScalarType(oInfo.type, sValue, sName, oView._oContainingView.oController, oRequireModules);
 							} else {
-								Log.warning("[FUTURE FATAL] " + oView + ": setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "') is not supported");
+								future.warningThrows("" + oView + ": setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "') is not supported");
 							}
 						} else {
-							assert(sName === 'xmlns', "[FUTURE FATAL] " + oView + ": encountered unknown setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "')");
+							future.assertThrows(sName === 'xmlns', oView + ": encountered unknown setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "')");
 							if (XMLTemplateProcessor._supportInfo) {
 								XMLTemplateProcessor._supportInfo({
 									context : node,
@@ -1470,29 +1478,31 @@ function(
 							childNode = childNode.cloneNode();
 							// remove stashed attribute as it is an unknown property.
 							oStashedNode.removeAttribute("stashed");
-
 							fnCreateStashedControl = function() {
 								var sControlId = getId(oView, childNode);
 
 								StashedControlSupport.createStashedControl({
 									wrapperId: sControlId,
-									fnCreate: function() {
-										// EVO-Todo: stashed control-support is still mandatory SYNC
-										// this means we need to switch back the view processing to synchronous too
-										// at this point everything is sync again
+									fnCreate: function(bSync) {
 										var bPrevAsync = bAsync;
-										bAsync = false;
+										bAsync = !bSync;
 
 										try {
-											return handleChild(node, oStashedNode, {
+											setUI5Attribute(oStashedNode, "unstash");
+											let vUnstashedControl = handleChild(node, oStashedNode, {
 												aggregation: oAggregation,
 												allAggregations: mAggregations,
 												chain: SyncPromise.resolve(oRequireContext),
 												closestBinding: oClosestBinding
-											}).unwrap();
+											});
+											/**
+											 * @deprecated
+											 */
+											if (bSync) {
+												vUnstashedControl = vUnstashedControl.unwrap();
+											}
+											return vUnstashedControl;
 										} finally {
-											// EVO-Todo:revert back to the original async/sync behavior
-											// if we moved to the sync path for the stashed control, we might now go back to the async path.
 											bAsync = bPrevAsync;
 										}
 									}
@@ -1711,7 +1721,18 @@ function(
 						} else {
 							// the scoped runWithOwner function is only during ASYNC processing!
 							oInstance = scopedRunWithOwner(function () {
-								var oInstance = new oClass(mSettings);
+								var oInstance;
+								if (node.getAttributeNS(UI5_INTERNAL_NAMESPACE, "unstash") === "true") {
+									oInstance = ElementRegistry.get(mSettings.id);
+									// If the placeholder has a visible property we set it to false to hide the placeholder.
+									// We must reset the setting to true to make it visible again or reflect the new settings.
+									if (oInstance.setVisible) {
+										oInstance.setVisible(true);
+									}
+									oInstance.applySettings(mSettings);
+								} else {
+									oInstance = new oClass(mSettings);
+								}
 								return oInstance;
 							});
 						}

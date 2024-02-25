@@ -5,8 +5,8 @@
  */
 
 // Provides helper sap.m.TitlePropagationSupport
-sap.ui.define(["sap/ui/core/Configuration"],
-	function(Configuration) {
+sap.ui.define(["sap/ui/core/ControlBehavior"],
+	function(ControlBehavior) {
 		"use strict";
 
 		/**
@@ -51,7 +51,7 @@ sap.ui.define(["sap/ui/core/Configuration"],
 		 * style class support on existing elements by calling this function.
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @param {string} sAggregationName the name of the aggregation which should be affected
 		 * @param {object} fnGetTitleID function that would return the ID of the title
@@ -82,7 +82,7 @@ sap.ui.define(["sap/ui/core/Configuration"],
 					oItem;
 
 				// Note: in case accessibility mode is off we don't need the propagation
-				if (!Configuration.getAccessibility() || !sTitleID || !aContent
+				if (!ControlBehavior.isAccessibilityEnabled() || !sTitleID || !aContent
 					|| aContent.length === 0) {
 						return false;
 				}

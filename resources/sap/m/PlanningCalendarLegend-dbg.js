@@ -5,8 +5,8 @@
  */
 
 // Provides control sap.m.PlanningCalendarLegend.
-sap.ui.define(['sap/ui/unified/CalendarLegend', 'sap/ui/unified/CalendarAppointment', 'sap/ui/core/Core', './PlanningCalendarLegendRenderer'],
-	function(CalendarLegend, CalendarAppointment, Core, PlanningCalendarLegendRenderer) {
+sap.ui.define(["sap/ui/core/Lib", 'sap/ui/unified/CalendarLegend', 'sap/ui/unified/CalendarAppointment', './PlanningCalendarLegendRenderer'],
+	function(Library, CalendarLegend, CalendarAppointment, PlanningCalendarLegendRenderer) {
 		"use strict";
 
 
@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/unified/CalendarLegend', 'sap/ui/unified/CalendarAppointm
 		 * @extends sap.ui.unified.CalendarLegend
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -116,7 +116,7 @@ sap.ui.define(['sap/ui/unified/CalendarLegend', 'sap/ui/unified/CalendarAppointm
 			var sItemsHeader = this.getItemsHeader();
 
 			if (sItemsHeader == undefined) {
-				return Core.getLibraryResourceBundle('sap.m').getText("PLANNING_CALENDAR_LEGEND_ITEMS_HEADER");
+				return Library.getResourceBundleFor('sap.m').getText("PLANNING_CALENDAR_LEGEND_ITEMS_HEADER");
 			}
 
 			return sItemsHeader;
@@ -126,7 +126,7 @@ sap.ui.define(['sap/ui/unified/CalendarLegend', 'sap/ui/unified/CalendarAppointm
 			var sAppointmentItemsHeader = this.getAppointmentItemsHeader();
 
 			if (sAppointmentItemsHeader == undefined) {
-				return Core.getLibraryResourceBundle('sap.m').getText("PLANNING_CALENDAR_LEGEND_APPOINTMENT_ITEMS_HEADER");
+				return Library.getResourceBundleFor('sap.m').getText("PLANNING_CALENDAR_LEGEND_APPOINTMENT_ITEMS_HEADER");
 			}
 
 			return sAppointmentItemsHeader;

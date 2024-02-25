@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -85,7 +85,13 @@ sap.ui.define([
 		if (sPath.endsWith("/")) {
 			throw new Error("Invalid path: " + sPath);
 		}
+		this.mScope = undefined;
 		if (mParameters) {
+			if (typeof mParameters.scope === "object") {
+				this.mScope = mParameters.scope;
+				mParameters = {...mParameters};
+				delete mParameters.scope;
+			}
 			this.checkBindingParameters(mParameters,
 				["$$groupId", "$$ignoreMessages", "$$noPatch"]);
 			this.sGroupId = mParameters.$$groupId;
@@ -306,7 +312,8 @@ sap.ui.define([
 					sMetaPath = "." + sMetaPath;
 				}
 				return oMetaModel.fetchObject(sMetaPath,
-					oMetaModel.getMetaContext(that.oModel.resolve(sDataPath, that.oContext)));
+					oMetaModel.getMetaContext(that.oModel.resolve(sDataPath, that.oContext)),
+					that.mScope && {scope : that.mScope});
 			}).then(function (vValue) {
 				if (!vValue || typeof vValue !== "object") {
 					return vValue;

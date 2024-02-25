@@ -8,16 +8,16 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
+	"sap/ui/core/Lib",
 	'sap/ui/core/ValueStateSupport',
 	'sap/ui/core/IndicationColorSupport',
 	'sap/ui/core/library',
 	'sap/ui/base/DataType',
 	'./ObjectStatusRenderer',
 	'sap/m/ImageHelper',
-	'sap/ui/core/LabelEnablement',
-	'sap/ui/core/InvisibleText'
+	'sap/ui/core/LabelEnablement'
 ],
-	function(library, Control, ValueStateSupport, IndicationColorSupport, coreLibrary, DataType, ObjectStatusRenderer, ImageHelper, LabelEnablement, InvisibleText) {
+	function(library, Control, Library, ValueStateSupport, IndicationColorSupport, coreLibrary, DataType, ObjectStatusRenderer, ImageHelper, LabelEnablement) {
 	"use strict";
 
 
@@ -45,8 +45,13 @@ sap.ui.define([
 
 	 *
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.core.IFormContent
-	 * @version 1.120.7
+	 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
+	 * @version 1.121.0
+	 *
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 	 *
 	 * @constructor
 	 * @public
@@ -56,7 +61,7 @@ sap.ui.define([
 	var ObjectStatus = Control.extend("sap.m.ObjectStatus", /** @lends sap.m.ObjectStatus.prototype */ {
 		metadata : {
 
-			interfaces : ["sap.ui.core.IFormContent"],
+			interfaces : ["sap.ui.core.IFormContent", "sap.ui.core.ISemanticFormContent"],
 			library : "sap.m",
 			designtime: "sap/m/designtime/ObjectStatus.designtime",
 			properties : {
@@ -182,10 +187,6 @@ sap.ui.define([
 			this._oImageControl.destroy();
 			this._oImageControl = null;
 		}
-		if (this._oInvisibleStateText) {
-			this._oInvisibleStateText.destroy();
-			this._oInvisibleStateText = null;
-		}
 	};
 
 	/**
@@ -200,12 +201,12 @@ sap.ui.define([
 			mProperties = {
 				src : this.getIcon(),
 				densityAware : this.getIconDensityAware(),
-				useIconTooltip : false
+				useIconTooltip : false,
+				decorative: !this.getActive()
 			};
 
 		if (bIsIconOnly) {
-			mProperties.decorative = false;
-			mProperties.alt = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("OBJECT_STATUS_ICON");
+			mProperties.alt = Library.getResourceBundleFor("sap.m").getText("OBJECT_STATUS_ICON");
 		}
 
 		this._oImageControl = ImageHelper.getImageControl(sImgId, this._oImageControl, this, mProperties);
@@ -317,7 +318,7 @@ sap.ui.define([
 		).trim();
 
 		sDescription = this._isActive()
-			? sDescription + (sDescription ? " " + sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("OBJECT_STATUS_ACTIVE") : "")
+			? sDescription + (sDescription ? " " + Library.getResourceBundleFor("sap.m").getText("OBJECT_STATUS_ACTIVE") : "")
 			: sDescription;
 
 		return { description: sDescription };
@@ -363,15 +364,20 @@ sap.ui.define([
 		return this._isActive() && (sSourceId === this.getId() + "-link" || sSourceId === this.getId() + "-text" || sSourceId === this.getId() + "-statusIcon" || sSourceId === this.getId() + "-icon");
 	};
 
-	ObjectStatus.prototype._fnInvisibleStateLabelFactory = function() {
-		if (!this._oInvisibleStateText) {
-			this._oInvisibleStateText = new InvisibleText({
-				id: this.getId() + "-state-text",
-				text: this._getStateText(this.getState())
-			}).toStatic();
-		}
+	ObjectStatus.prototype.getFormFormattedValue = function () {
+		return this.getText();
+	};
 
-		return this._oInvisibleStateText;
+	ObjectStatus.prototype.getFormValueProperty = function () {
+		return "text";
+	};
+
+	ObjectStatus.prototype.getFormObservingProperties = function() {
+		return ["text", "title"]; // title should not used inside Form as there is a Label
+	};
+
+	ObjectStatus.prototype.getFormRenderAsControl = function () {
+		return true;
 	};
 
 	return ObjectStatus;

@@ -25,7 +25,7 @@ function(Control, ScrollBarRenderer) {
 	 * care of only rendering the currently visible rows and use this <code>ScrollBar</code> control to make
 	 * the users think they are actually scrolling through a long list.
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @private
 	 * @alias sap.m.ScrollBar
@@ -83,7 +83,7 @@ function(Control, ScrollBarRenderer) {
 		this.invalidate();
 	};
 
-	/**
+	/*
 	 * @override
 	 */
 	ScrollBar.prototype.setScrollPosition = function (iScrollPosition) {
@@ -93,7 +93,7 @@ function(Control, ScrollBarRenderer) {
 		return this.setProperty("scrollPosition", iPos, true);
 	};
 
-	/**
+	/*
 	 * Custom setter, helping DOM changes to appear to the element, before DOM event handlers hit on it.
 	 * @override
 	 */

@@ -61,7 +61,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.DateTimeBase
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @alias sap.ui.model.odata.type.DateTime
 	 * @param {object} [oFormatOptions]
@@ -135,7 +135,7 @@ sap.ui.define([
 	 *   If the constraints of this type instance are violated
 	 *
 	 * @public
-	 * @see {@link sap.ui.core.Configuration#getTimezone}
+	 * @see {@link module:sap/base/i18n/Localization.getTimezone Localization.getTimezone}
 	 * @since 1.111.0
 	 */
 	DateTime.prototype.getModelValue = function (oDate) {

@@ -22,7 +22,11 @@ sap.ui.define([
 	'./OverflowToolbarLayoutData',
 	'./OverflowToolbarButton',
 	'./ToolbarSpacer',
+	"sap/base/i18n/Localization",
+	"sap/ui/core/Element",
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
+	"sap/ui/core/Locale",
 	'sap/ui/model/ChangeReason',
 	'sap/ui/model/json/JSONModel',
 	'sap/ui/model/BindingMode',
@@ -30,8 +34,7 @@ sap.ui.define([
 	'sap/ui/core/Item',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/core/IconPool',
-	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Configuration"
+	"sap/ui/thirdparty/jquery"
 ], function(
 	library,
 	P13nPanel,
@@ -49,7 +52,11 @@ sap.ui.define([
 	OverflowToolbarLayoutData,
 	OverflowToolbarButton,
 	ToolbarSpacer,
+	Localization,
+	Element,
+	Library,
 	CoreLibrary,
+	Locale,
 	ChangeReason,
 	JSONModel,
 	BindingMode,
@@ -57,8 +64,7 @@ sap.ui.define([
 	Item,
 	InvisibleText,
 	IconPool,
-	jQuery,
-	Configuration
+	jQuery
 ) {
 	"use strict";
 
@@ -89,7 +95,7 @@ sap.ui.define([
 	 *        dimensions and measures for table personalization.
 	 * @extends sap.m.P13nPanel
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @constructor
 	 * @public
 	 * @since 1.34.0
@@ -201,7 +207,7 @@ sap.ui.define([
 
 		this._bOnAfterRenderingFirstTimeExecuted = false;
 
-		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oRb = Library.getResourceBundleFor("sap.m");
 		this.oAvailableRoleTypes = {
 			Dimension: [
 				{
@@ -535,7 +541,7 @@ sap.ui.define([
 	};
 
 	P13nDimMeasurePanel.prototype._createTable = function() {
-		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oRb = Library.getResourceBundleFor("sap.m");
 		this._oTable = new Table({
 			mode: ListMode.MultiSelect,
 			rememberSelections: false,
@@ -624,7 +630,7 @@ sap.ui.define([
 	 */
 	P13nDimMeasurePanel.prototype._createToolbar = function() {
 		var that = this;
-		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oRb = Library.getResourceBundleFor("sap.m");
 
 		var oInvisibleChartTypeText = new InvisibleText({
 			text: oRb.getText('COLUMNSPANEL_CHARTTYPE')
@@ -882,7 +888,7 @@ sap.ui.define([
 	P13nDimMeasurePanel.prototype._sortModelItemsByPersistentIndex = function(aModelItems) {
         // BCP 0020751294 0000593415 2018
         var oCollator;
-        var sLanguage = Configuration.getLocale().toString();
+        var sLanguage = new Locale(Localization.getLanguageTag()).toString();
         try {
             if (typeof window.Intl !== 'undefined') {
                 oCollator = window.Intl.Collator(sLanguage, {
@@ -960,10 +966,10 @@ sap.ui.define([
 	};
 
 	P13nDimMeasurePanel.prototype._getToolbar = function() {
-		return sap.ui.getCore().byId(this.getId() + "-toolbar") || null;
+		return Element.getElementById(this.getId() + "-toolbar") || null;
 	};
 	P13nDimMeasurePanel.prototype._getSearchField = function() {
-		return sap.ui.getCore().byId(this.getId() + "-searchField") || null;
+		return Element.getElementById(this.getId() + "-searchField") || null;
 	};
 	P13nDimMeasurePanel.prototype._getSearchText = function() {
 		var oSearchField = this._getSearchField();
@@ -985,7 +991,7 @@ sap.ui.define([
 		this._getInternalModel().setProperty("/isMoveDownButtonEnabled", aVisibleTableItems.indexOf(this._getMarkedTableItem()) > -1 && aVisibleTableItems.indexOf(this._getMarkedTableItem()) < aVisibleTableItems.length - 1);
 
 		// Switch off the "Select all (n/m)" checkbox if search
-		var oTableCB = sap.ui.getCore().byId(this._oTable.getId() + '-sa');
+		var oTableCB = Element.getElementById(this._oTable.getId() + '-sa');
 		if (oTableCB) {
 			oTableCB.setEnabled(!bIsSearchActive && !bShowOnlySelectedItems);
 		}

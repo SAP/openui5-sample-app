@@ -10,29 +10,31 @@ sap.ui.define([
 	'./Link',
 	'./Text',
 	'sap/ui/core/Control',
+	"sap/ui/core/ControlBehavior",
 	'sap/ui/core/IconPool',
 	'sap/ui/core/InvisibleText',
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/Device',
 	'sap/ui/base/ManagedObject',
 	'./ObjectIdentifierRenderer',
-	"sap/ui/events/KeyCodes",
-	"sap/ui/core/Configuration"
+	"sap/ui/events/KeyCodes"
 ],
 function(
 	library,
 	Link,
 	Text,
 	Control,
+	ControlBehavior,
 	IconPool,
 	InvisibleText,
+	Library,
 	coreLibrary,
 	Device,
 	ManagedObject,
 	ObjectIdentifierRenderer,
-	KeyCodes,
-	Configuration
-	) {
+	KeyCodes
+) {
 	"use strict";
 
 
@@ -54,7 +56,7 @@ function(
 	 *
      * <b>Note:</b> This control should not be used with {@link sap.m.Label} or in Forms along with {@link sap.m.Label}.
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -172,9 +174,9 @@ function(
 	 * @private
 	 */
 	ObjectIdentifier.prototype.init = function() {
-		var oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oLibraryResourceBundle = Library.getResourceBundleFor("sap.m");
 
-		if (Configuration.getAccessibility()) {
+		if (ControlBehavior.isAccessibilityEnabled()) {
 			ObjectIdentifier.OI_ARIA_ROLE = oLibraryResourceBundle.getText("OI_ARIA_ROLE");
 		}
 	};
@@ -301,6 +303,33 @@ function(
 		}
 
 		return oTitleControl;
+	};
+
+	/**
+	 * Sets title control.
+	 *
+	 * Possible controls are Link, SmartLink, Text.
+	 * @param {sap.ui.core.Control} oTitleControl the control placed as title.
+	 * @returns {sap.m.ObjectIdentifier} <code>this</code> for chaining
+	 * @private
+	 * @ui5-restricted sap.ui.comp
+	 */
+	ObjectIdentifier.prototype.setTitleControl = function(oTitleControl) {
+		this.setAggregation("_titleControl", oTitleControl);
+
+		return this;
+	};
+
+	/**
+	 * Returns the title control.
+	 *
+	 * Possible controls are Link, SmartLink, Text.
+	 * @returns {sap.ui.core.Control} oTitleControl the control placed as title.
+	 * @private
+	 * @ui5-restricted sap.ui.comp
+	 */
+	ObjectIdentifier.prototype.getTitleControl = function(oTitleControl) {
+		return this._getTitleControl();
 	};
 
 	/**

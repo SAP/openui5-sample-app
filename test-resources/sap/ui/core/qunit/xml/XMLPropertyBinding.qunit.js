@@ -1,16 +1,16 @@
 /*global QUnit */
 sap.ui.define([
 	"sap/base/Log",
+	"sap/base/i18n/Localization",
 	"sap/m/Input",
-	"sap/ui/core/Configuration",
 	"sap/ui/model/ChangeReason",
 	"sap/ui/model/type/Float",
 	"sap/ui/model/xml/XMLModel",
 	"sap/ui/model/xml/XMLPropertyBinding"
-], function(Log, Input, Configuration, ChangeReason, TypeFloat, XMLModel, XMLPropertyBinding) {
+], function(Log, Localization, Input, ChangeReason, TypeFloat, XMLModel, XMLPropertyBinding) {
 	"use strict";
 
-	var sDefaultLanguage = Configuration.getLanguage();
+	var sDefaultLanguage = Localization.getLanguage();
 
 	var testData =
 		"<root>" +
@@ -46,13 +46,11 @@ sap.ui.define([
 			// reset bindings
 			this.oModel = new XMLModel();
 			this.oModel.setXML(testData);
-			sap.ui.getCore().setModel(this.oModel);
-			Configuration.setLanguage("en-US");
+			Localization.setLanguage("en-US");
 		},
 		afterEach: function() {
-			sap.ui.getCore().setModel(null);
 			this.oModel.destroy();
-			Configuration.setLanguage(sDefaultLanguage);
+			Localization.setLanguage(sDefaultLanguage);
 		},
 		createPropertyBindings: function(path, property, context) {
 			// create bindings
@@ -155,7 +153,7 @@ sap.ui.define([
 		var oInput = new Input({
 			value: "{/name}"
 		});
-		oInput.placeAt("qunit-fixture");
+		oInput.setModel(this.oModel);
 		oInput.attachChange(function() {
 			assert.ok(false, "should not land here!");
 		});
@@ -185,7 +183,7 @@ sap.ui.define([
 		var oInput = new Input({
 			value: "{/name}"
 		});
-		oInput.placeAt("qunit-fixture");
+		oInput.setModel(this.oModel);
 		oInput.attachChange(this, function() {
 			assert.ok(false, "should not land here!");
 		});
@@ -216,7 +214,7 @@ sap.ui.define([
 		var oInput = new Input({
 			value: "{/name}"
 		});
-		oInput.placeAt("qunit-fixture");
+		oInput.setModel(this.oModel);
 		oInput.attachChange(this, function() {
 			assert.ok(false, "should not land here!");
 		});
@@ -255,7 +253,7 @@ sap.ui.define([
 		var oInput = new Input({
 			value: "{/name}"
 		});
-		oInput.placeAt("qunit-fixture");
+		oInput.setModel(this.oModel);
 		oInput.attachChange(this, function() {
 			assert.ok(false, "should not land here!");
 		});
@@ -290,7 +288,7 @@ sap.ui.define([
 		var oInput = new Input({
 			value: "{/name}"
 		});
-		oInput.placeAt("qunit-fixture");
+		oInput.setModel(this.oModel);
 		this.oModel.attachPropertyChange(this, function(oEvent){
 			var sPath = oEvent.getParameter('path');
 			var oContext = oEvent.getParameter('context');
@@ -316,7 +314,7 @@ sap.ui.define([
 		var oInput = new Input({
 			value: "{@firstName}"
 		});
-		oInput.placeAt("qunit-fixture");
+		oInput.setModel(this.oModel);
 		this.oModel.attachPropertyChange(this, function(oEvent){
 			var sPath = oEvent.getParameter('path');
 			var oContext = oEvent.getParameter('context');
@@ -344,7 +342,7 @@ sap.ui.define([
 			value: "{@firstName}"
 		});
 		var iCount = 0;
-		oInput.placeAt("qunit-fixture");
+		oInput.setModel(this.oModel);
 		this.oModel.attachPropertyChange(this, function(oEvent){
 			iCount++;
 			var sPath = oEvent.getParameter('path');

@@ -113,6 +113,12 @@ sap.ui.define([
 
 			oView.setModel(oView.getModel(), "header");
 			oView.setBindingContext(oRowsBinding.getHeaderContext(), "header");
+
+			this.initMessagePopover("table");
+		},
+
+		onRefresh : function () {
+			this.byId("table").getBinding("rows").refresh();
 		},
 
 		onSort : function () {
@@ -140,6 +146,10 @@ sap.ui.define([
 
 			this.getView().getModel("ui").setProperty("/sIcon", sNewIcon);
 			this.byId("table").getBinding("rows").sort(oSorter);
+		},
+
+		onSynchronize : function () {
+			this.byId("table").getBinding("rows").getHeaderContext().requestSideEffects([""]);
 		}
 	});
 });

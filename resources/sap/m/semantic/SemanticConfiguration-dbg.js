@@ -17,8 +17,10 @@ sap.ui.define([
 	"sap/m/library",
 	"sap/m/OverflowToolbarLayoutData",
 	"sap/ui/core/IconPool",
-	"sap/ui/core/InvisibleText"
-], function(BaseObject, library, OverflowToolbarLayoutData, IconPool, InvisibleText) {
+	"sap/ui/core/InvisibleText",
+	"sap/ui/core/Messaging",
+	"sap/ui/core/Lib"
+], function(BaseObject, library, OverflowToolbarLayoutData, IconPool, InvisibleText, Messaging, Library) {
 	"use strict";
 
 	// shortcut for sap.m.ButtonType
@@ -36,7 +38,7 @@ sap.ui.define([
 	 * Constructor for an sap.m.semantic.SemanticConfiguration.
 	 *
 	 * @class Defines the visual properties and positioning for each supported semantic type
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @private
 	 * @since 1.30.0
 	 * @alias sap.m.semantic.SemanticConfiguration
@@ -122,7 +124,7 @@ sap.ui.define([
 	SemanticConfiguration._oTypeConfigs = (function () { //TODO: set from outside?
 
 	var oTypeConfigs = {},
-			oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			oBundle = Library.getResourceBundleFor("sap.m");
 
 		oTypeConfigs["sap.m.semantic.MultiSelectAction"] = {
 			position: SemanticConfiguration.prototype._PositionInPage.headerRight,
@@ -482,7 +484,7 @@ sap.ui.define([
 							return aMessages && aMessages.length > 0;
 						}
 					},
-					models: {message: sap.ui.getCore().getMessageManager().getMessageModel()},
+					models: {message: Messaging.getMessageModel()},
 					layoutData: new OverflowToolbarLayoutData({
 						priority: OverflowToolbarPriority.NeverOverflow
 					})

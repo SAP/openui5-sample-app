@@ -62,7 +62,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @alias sap.m.FlexBox
@@ -277,7 +277,7 @@ function(
 	 * Sets the render type of the FlexBox.
 	 *
 	 * @public
-	 * @param {string} sValue Render type in string format.
+	 * @param {sap.m.FlexRendertype} sValue Render type in string format.
 	 * @returns {this} <code>this</code> FlexBox reference for chaining.
 	 */
 	FlexBox.prototype.setRenderType = function(sValue) {

@@ -21,7 +21,7 @@ sap.ui.define(['sap/ui/base/EventProvider', './HTMLViewSerializer', './XMLViewSe
 	 * @class ViewSerializer class.
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @alias sap.ui.core.util.serializer.ViewSerializer
 	 * @private
 	 * @ui5-restricted sap.watt, com.sap.webide

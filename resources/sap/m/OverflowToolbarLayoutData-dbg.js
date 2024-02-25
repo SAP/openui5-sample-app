@@ -22,7 +22,7 @@ sap.ui.define(['sap/m/ToolbarLayoutData', 'sap/m/library', "sap/base/Log"],
 	 * Holds layout data for the {@link sap.m.OverflowToolbar} items.
 	 * @extends sap.m.ToolbarLayoutData
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -92,7 +92,7 @@ sap.ui.define(['sap/m/ToolbarLayoutData', 'sap/m/library', "sap/base/Log"],
 		return ToolbarLayoutData.prototype.invalidate.call(this);
 	};
 
-	/**
+	/*
 	 * @override
 	 */
 	OverflowToolbarLayoutData.prototype.setPriority = function (sPriority) {

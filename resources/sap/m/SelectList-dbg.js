@@ -34,7 +34,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -578,7 +578,7 @@ sap.ui.define([
 			this.setProperty("selectedItemId", (vItem instanceof Item) ? vItem.getId() : vItem);
 
 			if (typeof vItem === "string") {
-				vItem = Element.registry.get(vItem);
+				vItem = Element.getElementById(vItem);
 			}
 
 			this.setProperty("selectedKey", vItem ? vItem.getKey() : "", true);
@@ -916,7 +916,7 @@ sap.ui.define([
 		/**
 		 * Sets the <code>selectedItem</code> association.
 		 *
-		 * @param {string | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
+		 * @param {sap.ui.core.ID | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
 		 * If an ID of a <code>sap.ui.core.Item</code> is given, the item with this ID becomes the <code>selectedItem</code> association.
 		 * Alternatively, a <code>sap.ui.core.Item</code> instance may be given or <code>null</code> to clear the selection.
 		 *
@@ -927,7 +927,7 @@ sap.ui.define([
 
 			if (typeof vItem === "string") {
 				this.setAssociation("selectedItem", vItem, true);
-				vItem = Element.registry.get(vItem);
+				vItem = Element.getElementById(vItem);
 			}
 
 			if (!(vItem instanceof Item) && vItem !== null) {
@@ -992,7 +992,7 @@ sap.ui.define([
 		 */
 		SelectList.prototype.getSelectedItem = function() {
 			var vSelectedItem = this.getAssociation("selectedItem");
-			return (vSelectedItem === null) ? null : Element.registry.get(vSelectedItem) || null;
+			return (vSelectedItem === null) ? null : Element.getElementById(vSelectedItem) || null;
 		};
 
 		/**
@@ -1057,7 +1057,7 @@ sap.ui.define([
 		/**
 		 * Removes an item from the aggregation named <code>items</code>.
 		 *
-		 * @param {int | string | sap.ui.core.Item} vItem The item to remove or its index or id.
+		 * @param {int | sap.ui.core.ID | sap.ui.core.Item} vItem The item to remove or its index or id.
 		 * @returns {sap.ui.core.Item|null} The removed item or <code>null</code>.
 		 * @public
 		 */

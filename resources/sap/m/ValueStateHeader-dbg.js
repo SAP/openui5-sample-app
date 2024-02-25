@@ -6,8 +6,8 @@
 
 // Provides control sap.m.ValueStateHeader.
 sap.ui.define(
-	["./library", "sap/ui/core/library", "sap/ui/Device", "sap/ui/core/Core", "sap/ui/core/Control"],
-	function (library, coreLibrary, Device, Core, Control) {
+	["./library", "sap/ui/core/Element", "sap/ui/core/library", "sap/ui/Device", "sap/ui/core/Control"],
+	function (library, Element, coreLibrary, Device, Control) {
 		"use strict";
 
 		var ValueState = coreLibrary.ValueState;
@@ -23,7 +23,7 @@ sap.ui.define(
 		 *
 		 * @extends sap.ui.core.Control
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @private
@@ -112,7 +112,7 @@ sap.ui.define(
 		ValueStateHeader.prototype.setPopup = function (vPopup) {
 			var that = this;
 			var repositioned = false;
-			var oPopup = (typeof vPopup === "string") ? Core.byId(vPopup) : vPopup;
+			var oPopup = (typeof vPopup === "string") ? Element.getElementById(vPopup) : vPopup;
 
 			this.setAssociation("popup", oPopup);
 
@@ -146,7 +146,7 @@ sap.ui.define(
 		};
 
 		ValueStateHeader.prototype._getAssociatedPopupObject = function () {
-			return Core.byId(this.getPopup());
+			return Element.getElementById(this.getPopup());
 		};
 
 		ValueStateHeader.prototype.onAfterRendering = function () {

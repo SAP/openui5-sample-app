@@ -6,14 +6,15 @@
 
 // Provides class sap.ui.core.date.UniversalDate
 sap.ui.define([
+	"sap/base/i18n/Formatting",
 	'sap/ui/base/Object',
-	'sap/ui/core/Configuration',
+	"sap/ui/core/Locale",
 	'sap/ui/core/LocaleData',
 	'./_Calendars',
 	'./CalendarUtils',
 	'./CalendarWeekNumbering',
 	'./UI5Date'
-], function(BaseObject, Configuration, LocaleData, _Calendars, CalendarUtils, CalendarWeekNumbering, UI5Date) {
+], function(Formatting, BaseObject, Locale, LocaleData, _Calendars, CalendarUtils, CalendarWeekNumbering, UI5Date) {
 	"use strict";
 
 	/**
@@ -90,18 +91,7 @@ sap.ui.define([
 			return UI5Date.getInstance.apply(null, aArgs);
 		}
 
-		switch (aArgs.length) {
-			case 0: return new clDate();
-			// new Date(new Date()) is officially not supported
-			// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/Date
-			case 1: return new clDate(aArgs[0] instanceof Date ? aArgs[0].getTime() : aArgs[0]);
-			case 2: return new clDate(aArgs[0], aArgs[1]);
-			case 3: return new clDate(aArgs[0], aArgs[1], aArgs[2]);
-			case 4: return new clDate(aArgs[0], aArgs[1], aArgs[2], aArgs[3]);
-			case 5: return new clDate(aArgs[0], aArgs[1], aArgs[2], aArgs[3], aArgs[4]);
-			case 6: return new clDate(aArgs[0], aArgs[1], aArgs[2], aArgs[3], aArgs[4], aArgs[5]);
-			case 7: return new clDate(aArgs[0], aArgs[1], aArgs[2], aArgs[3], aArgs[4], aArgs[5], aArgs[6]);
-		}
+		return new clDate(...aArgs);
 	};
 
 	/**
@@ -113,8 +103,8 @@ sap.ui.define([
 	 *
 	 * @param {Date|module:sap/ui/core/date/UI5Date|sap.ui.core.date.UniversalDate} [oDate]
 	 *   The date object, defaults to <code>UI5Date.getInstance()</code>
-	 * @param {sap.ui.core.CalendarType} [sCalendarType]
-	 *   The calendar type, defaults to <code>sap.ui.getCore().getConfiguration().getCalendarType()</code>
+	 * @param {module:sap/base/i18n/date/CalendarType} [sCalendarType]
+	 *   The calendar type, defaults to <code>module:sap/base/i18n/Formatting.getCalendarType()</code>
 	 * @returns {sap.ui.core.date.UniversalDate}
 	 *   An instance of <code>UniversalDate</code>
 	 *
@@ -133,7 +123,7 @@ sap.ui.define([
 		}
 
 		if (!sCalendarType) {
-			sCalendarType = Configuration.getCalendarType();
+			sCalendarType = Formatting.getCalendarType();
 		}
 		clDate = UniversalDate.getClass(sCalendarType);
 		oInstance = Object.create(clDate.prototype);
@@ -147,7 +137,7 @@ sap.ui.define([
 	 * Returns the constructor function of a subclass of <code>UniversalDate</code> for the given calendar type.
 	 * If no calendar type is given the globally configured calendar type is used.
 	 *
-	 * @param {sap.ui.core.CalendarType} sCalendarType the type of the used calendar
+	 * @param {module:sap/base/i18n/date/CalendarType} sCalendarType the type of the used calendar
 	 *
 	 * @returns {function}
 	 *   The class of the given <code>sCalenderType</code>. If <code>sCalenderType</code> is not
@@ -158,7 +148,7 @@ sap.ui.define([
 	 */
 	UniversalDate.getClass = function(sCalendarType) {
 		if (!sCalendarType) {
-			sCalendarType = Configuration.getCalendarType();
+			sCalendarType = Formatting.getCalendarType();
 		}
 		return _Calendars.get(sCalendarType);
 	};
@@ -728,7 +718,7 @@ sap.ui.define([
 	/**
 	 * Returns the calendar type of the current instance of a UniversalDate.
 	 *
-	 * @returns {sap.ui.core.CalendarType} The calendar type of the date
+	 * @returns {module:sap/base/i18n/date/CalendarType} The calendar type of the date
 	 *
 	 * @private
 	 * @ui5-restricted SAPUI5 Distribution Layer Libraries
@@ -1012,9 +1002,9 @@ sap.ui.define([
 	 * </ul>
 	 */
 	UniversalDate.getWeekByDate = function(sCalendarType, iYear, iMonth, iDay, oLocale, vCalendarWeekNumbering) {
-		vCalendarWeekNumbering = vCalendarWeekNumbering || Configuration.getCalendarWeekNumbering();
+		vCalendarWeekNumbering = vCalendarWeekNumbering || Formatting.getCalendarWeekNumbering();
 		checkWeekConfig(vCalendarWeekNumbering);
-		oLocale = oLocale || Configuration.getFormatSettings().getFormatLocale();
+		oLocale = oLocale || new Locale(Formatting.getLanguageTag());
 		var clDate = this.getClass(sCalendarType);
 		var oFirstDay = getFirstDayOfFirstWeek(clDate, iYear, oLocale, vCalendarWeekNumbering);
 		var oDate = new clDate(clDate.UTC(iYear, iMonth, iDay));
@@ -1067,9 +1057,9 @@ sap.ui.define([
 	 * </ul>
 	 */
 	UniversalDate.getFirstDateOfWeek = function(sCalendarType, iYear, iWeek, oLocale, vCalendarWeekNumbering) {
-		vCalendarWeekNumbering = vCalendarWeekNumbering || Configuration.getCalendarWeekNumbering();
+		vCalendarWeekNumbering = vCalendarWeekNumbering || Formatting.getCalendarWeekNumbering();
 		checkWeekConfig(vCalendarWeekNumbering);
-		oLocale = oLocale || Configuration.getFormatSettings().getFormatLocale();
+		oLocale = oLocale || new Locale(Formatting.getLanguageTag());
 		var clDate = this.getClass(sCalendarType);
 		var oFirstDay = getFirstDayOfFirstWeek(clDate, iYear, oLocale, vCalendarWeekNumbering);
 		var oDate = new clDate(oFirstDay.valueOf() + iWeek * iMillisecondsInWeek);
@@ -1161,7 +1151,7 @@ sap.ui.define([
 	 * @returns {Date} first day of the first week in the given year, e.g. <code>Mon Jan 04 2016 01:00:00 GMT+0100</code>
 	 */
 	function getFirstDayOfFirstWeek(clDate, iYear, oLocale, vCalendarWeekNumbering) {
-		oLocale = oLocale || Configuration.getFormatSettings().getFormatLocale();
+		oLocale = oLocale || new Locale(Formatting.getLanguageTag());
 
 		var oWeekConfig = resolveCalendarWeekConfiguration(vCalendarWeekNumbering, oLocale);
 		var iMinDays = oWeekConfig.minimalDaysInFirstWeek;
@@ -1280,7 +1270,7 @@ sap.ui.define([
 	 * @returns {array} An array of all available era in the given calender
 	 */
 	function getEras(sCalendarType) {
-		var oLocale = Configuration.getFormatSettings().getFormatLocale(),
+		var oLocale = new Locale(Formatting.getLanguageTag()),
 			oLocaleData = LocaleData.getInstance(oLocale),
 			aEras = mEras[sCalendarType];
 		if (!aEras) {

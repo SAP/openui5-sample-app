@@ -104,7 +104,7 @@ sap.ui.define([
 			trigger: "undetermined", // control which triggered interaction
 			component: "undetermined", // component or app identifier
 			appVersion: "undetermined", // application version as from app descriptor
-			start: iTime || window.performance.timing.fetchStart, // interaction start - page fetchstart if initial
+			start: iTime || performance.timeOrigin, // interaction start - page timeOrigin if initial
 			end: 0, // interaction end
 			navigation: 0, // sum over all navigation times
 			roundtrip: 0, // time from first request sent to last received response end - without gaps and ignored overlap
@@ -133,7 +133,7 @@ sap.ui.define([
 	/**
 	 * Check if request is initiated by XHR, comleted and timeframe of request is within timeframe of current interaction
 	 *
-	 * @param {object} oRequestTiming PerformanceResourceTiming as retrieved by window.performance.getEntryByType("resource")
+	 * @param {object} oRequestTiming PerformanceResourceTiming as retrieved by performance.getEntryByType("resource")
 	 * @return {boolean} true if the request is a completed XHR with started and ended within the current interaction
 	 * @private
 	 */
@@ -143,8 +143,8 @@ sap.ui.define([
 			oRequestTiming.startTime <= oRequestTiming.requestStart &&
 			oRequestTiming.requestStart <= oRequestTiming.responseEnd;
 
-		var bPartOfInteraction = oPendingInteraction.start <= (performance.timing.navigationStart + oRequestTiming.requestStart) &&
-			oPendingInteraction.end >= (performance.timing.navigationStart + oRequestTiming.responseEnd);
+		var bPartOfInteraction = oPendingInteraction.start <= (performance.timeOrigin + oRequestTiming.requestStart) &&
+			oPendingInteraction.end >= (performance.timeOrigin + oRequestTiming.responseEnd);
 
 		return bPartOfInteraction && bComplete && oRequestTiming.initiatorType === "xmlhttprequest";
 	}
@@ -194,19 +194,11 @@ sap.ui.define([
 		} else {
 			oPendingInteraction.networkTime = 0;
 		}
-
-		// in case processing is not determined, which means no re-rendering occured, take start to end
-		if (oPendingInteraction.processing === 0) {
-			var iRelativeStart = oPendingInteraction.start - window.performance.timing.fetchStart;
-			oPendingInteraction.duration = oTimings.end - iRelativeStart;
-			// calculate processing time of before requests start
-			oPendingInteraction.processing = oTimings.start - iRelativeStart;
-		}
 	}
 
 	function finalizeInteraction(iTime) {
 		if (oPendingInteraction) {
-			var aAllRequestTimings = window.performance.getEntriesByType("resource");
+			var aAllRequestTimings = performance.getEntriesByType("resource");
 			var oFinshedInteraction;
 			oPendingInteraction.end = iTime;
 			oPendingInteraction.processing = iTime - oPendingInteraction.start;
@@ -408,7 +400,7 @@ sap.ui.define([
 				this.pendingInteraction.networkTime += sFesrec ? Math.round(parseFloat(sFesrec, 10) / 1000) : 0;
 				var sSapStatistics = this.getResponseHeader("sap-statistics");
 				if (sSapStatistics) {
-					var aTimings = window.performance.getEntriesByType("resource");
+					var aTimings = performance.getEntriesByType("resource");
 					this.pendingInteraction.sapStatistics.push({
 						// add response url for mapping purposes
 						url: this.responseURL,
@@ -530,8 +522,8 @@ sap.ui.define([
 			iInteractionCounter = 0;
 
 			// clear request timings for new interaction
-			if (window.performance.clearResourceTimings) {
-				window.performance.clearResourceTimings();
+			if (performance.clearResourceTimings) {
+				performance.clearResourceTimings();
 			}
 
 			var oComponentInfo = createOwnerComponentInfo(oSrcElement);

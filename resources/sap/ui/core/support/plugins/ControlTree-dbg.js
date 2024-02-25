@@ -7,6 +7,7 @@
 // Provides class sap.ui.core.support.plugins.ControlTree (ControlTree support plugin)
 sap.ui.define([
 	'sap/ui/core/Core',
+	"sap/ui/core/RenderManager",
 	'sap/ui/core/support/Plugin',
 	'sap/ui/core/util/serializer/ViewSerializer',
 	'sap/ui/core/util/File',
@@ -23,13 +24,15 @@ sap.ui.define([
 	'sap/ui/model/CompositeBinding',
 	'sap/base/util/each',
 	'sap/base/util/isEmptyObject',
-	'sap/base/util/ObjectPath',
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/events/KeyCodes",
-	"sap/ui/dom/jquery/selectText",// jQuery Plugin "selectText"
-	"sap/ui/dom/jquery/cursorPos" // jQuery Plugin "cursorPos"
+	// jQuery Plugin "selectText"
+	"sap/ui/dom/jquery/selectText",
+	// jQuery Plugin "cursorPos"
+	"sap/ui/dom/jquery/cursorPos"
 ], function(
 	Core,
+	RenderManager,
 	Plugin,
 	ViewSerializer,
 	File,
@@ -46,7 +49,6 @@ sap.ui.define([
 	CompositeBinding,
 	each,
 	isEmptyObject,
-	ObjectPath,
 	$,
 	KeyCodes
 ) {
@@ -57,7 +59,7 @@ sap.ui.define([
 		 * @class This class represents the ControlTree plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 * @private
 		 * @alias sap.ui.core.support.plugins.ControlTree
 		 */
@@ -186,7 +188,7 @@ sap.ui.define([
 		}
 
 		ControlTree.prototype.renderContentAreas = function() {
-			var rm = Core.createRenderManager();
+			var rm = new RenderManager().getInterface();
 
 			rm.openStart("div").class("sapUiSupportControlTreeTitle").openEnd().text("You can find a control in this tree by clicking it in the application UI while pressing the Ctrl+Alt+Shift keys.").close("div");
 
@@ -208,7 +210,7 @@ sap.ui.define([
 
 		ControlTree.prototype.renderControlTree = function(aControlTree) {
 
-			var rm = Core.createRenderManager();
+			var rm = new RenderManager().getInterface();
 
 			function renderNode (iIndex, mElement) {
 				var bHasChildren = mElement.aggregation.length > 0 || mElement.association.length > 0;
@@ -268,7 +270,7 @@ sap.ui.define([
 
 		ControlTree.prototype.renderPropertiesTab = function(aControlProps, sControlId) {
 
-			var rm = Core.createRenderManager();
+			var rm = new RenderManager().getInterface();
 
 			rm.openStart("ul").class("sapUiSupportControlTreeList").attr("data-sap-ui-controlid", sControlId).openEnd();
 			each(aControlProps, function(iIndex, oValue) {
@@ -432,7 +434,7 @@ sap.ui.define([
 
 		ControlTree.prototype.renderBindingsTab = function(mBindingInfos, sControlId) {
 
-			var rm = Core.createRenderManager();
+			var rm = new RenderManager().getInterface();
 
 			if (mBindingInfos.contexts.length > 0) {
 
@@ -716,7 +718,11 @@ sap.ui.define([
 											.text(" (" + oBinding.model.location.id + ")")
 										.close("a");
 									rm.close("div");
-								} else {
+								}
+								/**
+								 * @deprecated As of version 1.118
+								 */
+								if (oBinding.model.location.type !== 'control') {
 									rm.openStart("div").openEnd().openStart("span").attr("title", "Core").openEnd().text("Core").close("span").close("div");
 								}
 							} else {
@@ -742,7 +748,7 @@ sap.ui.define([
 
 		ControlTree.prototype.renderBreakpointsTab = function(aMethods, sControlId) {
 
-			var rm = Core.createRenderManager();
+			var rm = new RenderManager().getInterface();
 
 			rm.openStart("div").class("sapUiSupportControlMethods").attr("data-sap-ui-controlid", sControlId).openEnd();
 
@@ -785,7 +791,7 @@ sap.ui.define([
 
 		ControlTree.prototype.renderExportTab = function() {
 
-			var rm = Core.createRenderManager();
+			var rm = new RenderManager().getInterface();
 
 			rm.openStart("button", "sapUiSupportControlExportToXml").class("sapUiSupportRoundedButton").class("sapUiSupportExportButton").openEnd().text("Export To XML").close("button");
 			rm.voidStart("br").voidEnd();
@@ -1419,7 +1425,10 @@ sap.ui.define([
 
 					if (!mAllElements[mAssoc.id]) {
 
-						var oType = ObjectPath.get(mAssoc.type || "");
+						var oType;
+						if (mAssoc.type) {
+							oType = sap.ui.require(mAssoc.type.replace(/\./g, "/"));
+						}
 
 						if (!(typeof oType === "function")) {
 							continue;
@@ -1732,8 +1741,10 @@ sap.ui.define([
 					}
 				} while ( (oCurrentControl = oCurrentControl.getParent()) );
 
-				// check for core model if no model was found
-				if (!mModelInfo.location) {
+				/**
+				 * @deprecated As of version 1.118
+				 */
+				if (!mModelInfo.location) { // check for core model if no model was found
 
 					var oCoreModel = null;
 

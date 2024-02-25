@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/Element',
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -41,23 +41,20 @@ sap.ui.define(['sap/ui/core/Element',
 
 				/**
 				 * Determines additional text to be displayed for the item.
-				 * @experimental
-				 * since 1.63 Disclaimer: this property is in a beta state - incompatible API changes may be done before its official public release. Use at your own discretion.
+				 * @since 1.63
 				 */
 				additionalText : {type : "string", group : "Misc", defaultValue : ""},
 
 				/**
 				 * Defines the icon to be displayed as graphical element within the <code>TabContainerItem</code>.
 				 * It can be an image or an icon from the icon font.
-				 * @experimental
-				 * since 1.63 Disclaimer: this property is in a beta state - incompatible API changes may be done before its official public release. Use at your own discretion.
-				 */
+				 * @since 1.63
+				 * */
 				icon : {type : "sap.ui.core.URI", group : "Appearance", defaultValue : null},
 
 				/**
 				 * Determines the tooltip text of the <code>TabContainerItem</code>'s icon.
-				 * @experimental
-				 * since 1.63 Disclaimer: this property is in a beta state - incompatible API changes may be done before its official public release. Use at your own discretion.
+				 * @since 1.63
 				 */
 				iconTooltip : {type : "string", group : "Accessibility", defaultValue : null},
 

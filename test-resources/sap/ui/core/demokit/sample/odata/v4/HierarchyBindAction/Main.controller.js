@@ -10,6 +10,22 @@ sap.ui.define([
 	"use strict";
 
 	return Controller.extend("sap.ui.core.sample.odata.v4.HierarchyBindAction.Main", {
+		onChangeHierarchy : function (oEvent) {
+			const oSource = oEvent.getSource();
+			const oContext = oSource.toString().includes("ODataListBinding")
+				? oSource.getAllCurrentContexts()[0]
+				: oSource.getSelectedItem().getBindingContext();
+			const oTreeTable = this.byId("table");
+			oTreeTable.setBindingContext(oContext);
+
+			const oRowsBinding = oTreeTable.getBinding("rows");
+			oRowsBinding.setAggregation(this._oAggregation);
+
+			const oView = this.getView();
+			oView.setModel(oView.getModel(), "header");
+			oView.setBindingContext(oRowsBinding.getHeaderContext(), "header");
+		},
+
 		onCreate : async function (oEvent) {
 			try {
 				const oParentContext = oEvent.getSource().getBindingContext();
@@ -24,22 +40,6 @@ sap.ui.define([
 		onCreateRoot : async function () {
 			try {
 				await this.byId("table").getBinding("rows").create({}, /*bSkipRefresh*/true);
-			} catch (oError) {
-				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
-			}
-		},
-
-		onCut : function (oEvent) {
-			try {
-				const oNode = oEvent.getSource().getBindingContext();
-				oNode.delete("noSubmit");
-				MessageBox.confirm("Restore again (undo cut)", {
-					actions : MessageBox.Action.OK,
-					emphasizedAction : MessageBox.Action.OK,
-					onClose : function () {
-						oNode.resetChanges();
-					}
-				});
 			} catch (oError) {
 				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
 			}
@@ -62,9 +62,7 @@ sap.ui.define([
 
 		onInit : function () {
 			var oTreeTable = this.byId("table"),
-				oRowsBinding = oTreeTable.getBinding("rows"),
-				oUriParameters = new URLSearchParams(window.location.search),
-				oView = this.getView();
+				oUriParameters = new URLSearchParams(window.location.search);
 
 			oTreeTable._oProxy._bEnableV4 = true; // enable V4 tree table flag
 			const sVisibleRowCount = oUriParameters.get("visibleRowCount");
@@ -79,11 +77,11 @@ sap.ui.define([
 					: parseFloat(sExpandTo || "1"), // Note: parseInt("1E16") === 1
 				hierarchyQualifier : "I_SADL_BHV_BIND_DIR_HIERVIEW"
 			};
-			oRowsBinding.setAggregation(this._oAggregation);
-			oRowsBinding.resume();
 
-			oView.setModel(oView.getModel(), "header");
-			oView.setBindingContext(oRowsBinding.getHeaderContext(), "header");
+			this.byId("selectHierarchy").getBinding("items")
+				.attachEventOnce("dataReceived", this.onChangeHierarchy.bind(this));
+
+			this.initMessagePopover("table");
 		},
 
 		onMakeRoot : async function (oEvent) {
@@ -116,6 +114,10 @@ sap.ui.define([
 				const sParentId = oEvent.getParameter("selectedItem").getTitle();
 				const oParent = this.oNode.getBinding().getAllCurrentContexts()
 					.find((oNode) => oNode.getProperty("Id") === sParentId);
+				if (!oParent) {
+					throw new Error(`Parent ${sParentId} not yet loaded`);
+				}
+
 				await this.oNode.move({parent : oParent});
 			} catch (oError) {
 				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
@@ -124,8 +126,12 @@ sap.ui.define([
 			}
 		},
 
+		onRefresh : function () {
+			this.byId("table").getBindingContext().refresh();
+		},
+
 		onSynchronize : function () {
-			this.byId("table").getBinding("rows").getHeaderContext().requestSideEffects(["*"]);
+			this.byId("table").getBinding("rows").getHeaderContext().requestSideEffects([""]);
 		}
 	});
 });

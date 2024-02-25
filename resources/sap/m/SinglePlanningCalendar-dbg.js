@@ -15,7 +15,9 @@ sap.ui.define([
 	'./SinglePlanningCalendarRenderer',
 	'sap/base/Log',
 	'sap/ui/core/Control',
+	"sap/ui/core/Element",
 	'sap/ui/core/InvisibleText',
+	"sap/ui/core/Lib",
 	'sap/ui/core/ResizeHandler',
 	'sap/ui/core/format/DateFormat',
 	'sap/ui/unified/calendar/CalendarDate',
@@ -37,7 +39,9 @@ function(
 	SinglePlanningCalendarRenderer,
 	Log,
 	Control,
+	Element,
 	InvisibleText,
+	Library,
 	ResizeHandler,
 	DateFormat,
 	CalendarDate,
@@ -107,7 +111,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -279,7 +283,35 @@ function(
 				/**
 				 * Special days in the header visualized as a date range with type.
 				 *
-				 * <b>Note:</b> If one day is assigned to more than one type, only the first type is used.
+				 * <b>Note:</b> In case there are multiple <code>sap.ui.unified.DateTypeRange</code> instances given for a single date,
+				 * only the first <code>sap.ui.unified.DateTypeRange</code> instance will be used.
+				 * For example, using the following sample, the 1st of November will be displayed as a working day of type "Type10":
+				 *
+				 *
+				 *	<pre>
+				 *	new DateTypeRange({
+				 *		startDate: UI5Date.getInstance(2023, 10, 1),
+				 *		type: CalendarDayType.Type10,
+				 *	}),
+				 *	new DateTypeRange({
+				 *		startDate: UI5Date.getInstance(2023, 10, 1),
+				 *		type: CalendarDayType.NonWorking
+				 *	})
+				 *	</pre>
+				 *
+				 * If you want the first of November to be displayed as a non-working day and also as "Type10," the following should be done:
+				 *	<pre>
+				 *	new DateTypeRange({
+				 *		startDate: UI5Date.getInstance(2023, 10, 1),
+				 *		type: CalendarDayType.Type10,
+				 *		secondaryType: CalendarDayType.NonWorking
+				 *	})
+				 *	</pre>
+				 *
+				 * You can use only one of the following types for a given date: <code>sap.ui.unified.CalendarDayType.NonWorking</code>,
+				 * <code>sap.ui.unified.CalendarDayType.Working</code> or <code>sap.ui.unified.CalendarDayType.None</code>.
+				 * Assigning more than one of these values in combination for the same date will lead to unpredictable results.
+				 *
 				 * @since 1.66
 				 */
 				specialDates : {type : "sap.ui.unified.DateTypeRange",
@@ -513,7 +545,7 @@ function(
 	SinglePlanningCalendar.prototype.init = function() {
 		var sOPCId = this.getId();
 
-		this._oRB = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oRB = Library.getResourceBundleFor("sap.m");
 		this._oDefaultView = new SinglePlanningCalendarWeekView({
 			key: "DEFAULT_INNER_WEEK_VIEW_CREATED_FROM_CONTROL",
 			title: ""
@@ -699,7 +731,7 @@ function(
 
 	/**
 	 * Removes the selected dates of the grid.
-	 * @returns {object} An array of the removed DateRange objects
+	 * @returns {sap.ui.unified.DateRange[]} An array of the removed DateRange objects
 	 * @public
 	 */
 	SinglePlanningCalendar.prototype.removeAllSelectedDates = function () {
@@ -708,7 +740,7 @@ function(
 
 	/**
 	 * Gets the selected dates of the grid.
-	 * @returns {object} An array of DateRange objects
+	 * @returns {sap.ui.unified.DateRange[]} An array of DateRange objects
 	 * @public
 	 */
 	SinglePlanningCalendar.prototype.getSelectedDates = function () {
@@ -717,7 +749,7 @@ function(
 
 	/**
 	 * Adds a selected date to the grid.
-	 * @param {object} oSelectedDate A DateRange object
+	 * @param {sap.ui.unified.DateRange} oSelectedDate A DateRange object
 	 * @returns {this} Reference to <code>this</code> for method chaining
 	 * @public
 	 */
@@ -919,7 +951,7 @@ function(
 	 * @private
 	 */
 	SinglePlanningCalendar.prototype._viewsObserverCallbackFunction = function (oChanges) {
-		sap.ui.getCore().byId(oChanges.object.getId() + SEGMENTEDBUTTONITEM__SUFFIX).setText(oChanges.current);
+		Element.getElementById(oChanges.object.getId() + SEGMENTEDBUTTONITEM__SUFFIX).setText(oChanges.current);
 	};
 
 	/**
@@ -1007,7 +1039,7 @@ function(
 		if (sLegend) {
 			this.getAggregation("_grid")._sLegendId = sLegend;
 			this.getAggregation("_mvgrid")._sLegendId = sLegend;
-			oLegend = sap.ui.getCore().byId(sLegend);
+			oLegend = Element.getElementById(sLegend);
 		}
 
 		if (oLegend) { //destroy of the associated legend should rerender the SPC
@@ -1150,7 +1182,7 @@ function(
 	SinglePlanningCalendar.prototype._getSelectedView = function () {
 		var oSelectedView,
 			aViews = this.getViews(),
-			sCurrentViewKey = sap.ui.getCore().byId(this.getAssociation("selectedView")).getKey();
+			sCurrentViewKey = Element.getElementById(this.getAssociation("selectedView")).getKey();
 
 		for (var i = 0; i < aViews.length; i++) {
 			if (sCurrentViewKey === aViews[i].getKey()) {

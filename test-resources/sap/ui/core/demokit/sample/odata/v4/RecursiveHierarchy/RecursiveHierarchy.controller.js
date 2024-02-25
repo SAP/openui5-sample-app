@@ -42,22 +42,6 @@ sap.ui.define([
 			}
 		},
 
-		onCut : function (oEvent) {
-			try {
-				const oNode = oEvent.getSource().getBindingContext();
-				oNode.delete("noSubmit");
-				MessageBox.confirm("Restore again (undo cut)", {
-					actions : MessageBox.Action.OK,
-					emphasizedAction : MessageBox.Action.OK,
-					onClose : function () {
-						oNode.resetChanges();
-					}
-				});
-			} catch (oError) {
-				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
-			}
-		},
-
 		onDelete : async function (oEvent) {
 			try {
 				await oEvent.getSource().getBindingContext().delete();
@@ -73,7 +57,7 @@ sap.ui.define([
 				|| oUriParameters.get("expandTo");
 			this._oAggregation = {
 				expandTo : sExpandTo === "*"
-					? 999
+					? Number.MAX_SAFE_INTEGER
 					: parseFloat(sExpandTo || "3"), // Note: parseInt("1E16") === 1
 				hierarchyQualifier : "OrgChart"
 			};
@@ -81,6 +65,7 @@ sap.ui.define([
 			const sVisibleRowCount = TestUtils.retrieveData( // controlled by OPA
 					"sap.ui.core.sample.odata.v4.RecursiveHierarchy.visibleRowCount")
 				|| oUriParameters.get("visibleRowCount");
+			const sThreshold = oUriParameters.get("threshold");
 
 			const oTable = this.byId("table");
 			if (sTreeTable === "Y") {
@@ -89,6 +74,9 @@ sap.ui.define([
 			} else {
 				if (sVisibleRowCount) {
 					oTable.getRowMode().setRowCount(parseInt(sVisibleRowCount));
+				}
+				if (sThreshold) {
+					oTable.setThreshold(parseInt(sThreshold));
 				}
 				const oRowsBinding = oTable.getBinding("rows");
 				oRowsBinding.setAggregation(this._oAggregation);
@@ -110,6 +98,9 @@ sap.ui.define([
 				oTreeTable._oProxy._bEnableV4 = true;
 				if (sVisibleRowCount) {
 					oTreeTable.getRowMode().setRowCount(parseInt(sVisibleRowCount));
+				}
+				if (sThreshold) {
+					oTable.setThreshold(parseInt(sThreshold));
 				}
 				const oTreeRowsBinding = oTreeTable.getBinding("rows");
 				oTreeRowsBinding.setAggregation(this._oAggregation);
@@ -188,6 +179,14 @@ sap.ui.define([
 			if (oContext.hasPendingChanges()) {
 				oContext.requestSideEffects(["AGE", "Name"]);
 			} // else: invalid value (has not reached model)
+		},
+
+		onRefresh : function () {
+			this.byId("table").getBinding("rows").getHeaderContext().requestSideEffects([""]);
+		},
+
+		onRefreshTreeTable : function () {
+			this.byId("treeTable").getBinding("rows").getHeaderContext().requestSideEffects([""]);
 		},
 
 		onSynchronize : function () {

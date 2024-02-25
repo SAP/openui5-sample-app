@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['./library', 'sap/ui/core/library', 'sap/ui/core/Control', './TileContentRenderer', 'sap/ui/core/Configuration', 'sap/ui/core/Lib'],
-	function(library, Core, Control, TileContentRenderer, Configuration, CoreLib) {
+sap.ui.define(['./library', "sap/base/i18n/Localization", 'sap/ui/core/library', 'sap/ui/core/Control', './TileContentRenderer', 'sap/ui/core/Lib'],
+	function(library, Localization, Core, Control, TileContentRenderer, CoreLib) {
 	"use strict";
 
 	var Priority = library.Priority;
@@ -24,7 +24,7 @@ sap.ui.define(['./library', 'sap/ui/core/library', 'sap/ui/core/Control', './Til
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.34.0
 	 *
 	 * @public
@@ -136,6 +136,10 @@ sap.ui.define(['./library', 'sap/ui/core/library', 'sap/ui/core/Control', './Til
 	TileContent.prototype.onAfterRendering = function() {
 		var oContent = this.getContent();
 		if (oContent) {
+			const oParent = this.getParent();
+            if (oParent && oParent.isA("sap.m.GenericTile") ) {
+			oParent._applyCssStyle(this);
+		}
 			var thisRef = this.$();
 			var aTooltipEments = thisRef.find("*");
 			// tooltip of the entire tile
@@ -206,7 +210,7 @@ sap.ui.define(['./library', 'sap/ui/core/library', 'sap/ui/core/Control', './Til
 		var sUnit = this.getUnit();
 		if (sUnit) {
 			if (sFooter) {
-				if (Configuration.getRTL()) {
+				if (Localization.getRTL()) {
 					return resourceBundle.getText('TILECONTENT_FOOTER_TEXT', [sFooter, sUnit]);
 				} else {
 					return resourceBundle.getText('TILECONTENT_FOOTER_TEXT', [sUnit, sFooter]);

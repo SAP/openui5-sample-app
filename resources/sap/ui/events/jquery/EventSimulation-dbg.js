@@ -4,6 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	'sap/base/util/Version',
 	'sap/ui/core/Element',
 	'sap/ui/events/PseudoEvents',
@@ -13,7 +14,7 @@ sap.ui.define([
 	'sap/ui/events/TouchToMouseMapping',
 	'sap/ui/thirdparty/jquery',
 	'sap/ui/thirdparty/jquery-mobile-custom'
-], function(Version, Element, PseudoEvents, checkMouseEnterOrLeave, ControlEvents, Device, TouchToMouseMapping, jQuery /*, jQueryMobile*/) {
+], function(Localization, Version, Element, PseudoEvents, checkMouseEnterOrLeave, ControlEvents, Device, TouchToMouseMapping, jQuery /*, jQueryMobile*/) {
 	"use strict";
 
 	/**
@@ -354,13 +355,13 @@ sap.ui.define([
 		//Define additional pseudo events to be added to the event list
 		this.aAdditionalPseudoEvents.push({
 			sName: "swipebegin", aTypes: ["swipeleft", "swiperight"], fnCheck: function(oEvent) {
-				var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+				var bRtl = Localization.getRTL();
 				return (bRtl && oEvent.type === "swiperight") || (!bRtl && oEvent.type === "swipeleft");
 			}
 		});
 		this.aAdditionalPseudoEvents.push({
 			sName: "swipeend", aTypes: ["swipeleft", "swiperight"], fnCheck: function(oEvent) {
-				var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+				var bRtl = Localization.getRTL();
 				return (!bRtl && oEvent.type === "swiperight") || (bRtl && oEvent.type === "swipeleft");
 			}
 		});

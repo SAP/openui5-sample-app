@@ -7,8 +7,8 @@
 sap.ui.define([
 	"./library",
 	"sap/ui/core/Control",
+	"sap/ui/core/Lib",
 	"sap/ui/core/Popup",
-	"sap/ui/core/Core",
 	"sap/m/IllustratedMessage",
 	"sap/m/IllustratedMessageType",
 	"sap/m/IllustratedMessageSize",
@@ -25,8 +25,8 @@ sap.ui.define([
 ], function (
 	library,
 	Control,
+	Library,
 	Popup,
-	Core,
 	IllustratedMessage,
 	IllustratedMessageType,
 	IllustratedMessageSize,
@@ -96,7 +96,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -168,7 +168,7 @@ sap.ui.define([
 		this._iResizeListenerId = null;
 		this._$lightBox = null;
 
-		this._oRB = Core.getLibraryResourceBundle("sap.m");
+		this._oRB = Library.getResourceBundleFor("sap.m");
 
 		// create an ARIA announcement for enlarged image
 		this.setAggregation("_invisiblePopupText", new InvisibleText());

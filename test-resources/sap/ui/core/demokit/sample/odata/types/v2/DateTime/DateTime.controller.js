@@ -4,13 +4,13 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"sap/ui/core/Configuration",
+	"sap/base/i18n/Localization",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/model/odata/ODataUtils",
 	"sap/ui/model/odata/type/DateTimeWithTimezone"
-], function (Configuration, UI5Date, Controller, JSONModel, ODataUtils, DateTimeWithTimezone) {
+], function (Localization, UI5Date, Controller, JSONModel, ODataUtils, DateTimeWithTimezone) {
 	"use strict";
 
 	return Controller.extend("sap.ui.core.sample.odata.types.v2.DateTime.DateTime", {
@@ -33,7 +33,7 @@ sap.ui.define([
 				+ " <code>&lt;Property Name=\"Date\" Type=\"Edm.DateTime\""
 				+ " <strong>sap:display-format=\"Date\"</strong> /&gt;</code></p>",
 			EndDate: null,
-			Timezone: Configuration.getTimezone()
+			Timezone: Localization.getTimezone()
 		}),
 
 		formatDate: function (vValue) {

@@ -4,147 +4,165 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-    "./ModificationHandler",
-    "sap/m/p13n/FlexUtil",
-    "sap/m/p13n/enum/PersistenceMode",
-    "sap/ui/core/Core"
-], function(ModificationHandler, FlexUtil, mode, Core) {
+	"./ModificationHandler",
+	"sap/m/p13n/FlexUtil",
+	"sap/m/p13n/enums/PersistenceMode",
+	"sap/ui/core/Lib",
+	"sap/ui/core/Element"
+], (ModificationHandler, FlexUtil, mode, Library, Element) => {
 	"use strict";
 
-    var oFlexModificationHandler, pInitialize, pRuntimeAPI, pWriteAPI;
+	let oFlexModificationHandler, pInitialize, pRuntimeAPI, pWriteAPI;
 
-    var _requireFlexRuntimeAPI = function() {
-        if (!pRuntimeAPI) {
-            pRuntimeAPI = new Promise(function (resolve, reject) {
-                sap.ui.require([
-                    "sap/ui/fl/apply/api/FlexRuntimeInfoAPI"
-                ], function (FlexRuntimeInfoAPI) {
-                    resolve(FlexRuntimeInfoAPI);
-                }, reject);
-            });
-        }
-        return pRuntimeAPI;
-    };
+	const _requireFlexRuntimeAPI = () => {
+		if (!pRuntimeAPI) {
+			pRuntimeAPI = new Promise((resolve, reject) => {
+				sap.ui.require([
+					"sap/ui/fl/apply/api/FlexRuntimeInfoAPI"
+				], (FlexRuntimeInfoAPI) => {
+					resolve(FlexRuntimeInfoAPI);
+				}, reject);
+			});
+		}
+		return pRuntimeAPI;
+	};
 
-    var _requireWriteAPI = function() {
-        if (!pWriteAPI) {
-            pWriteAPI = new Promise(function (resolve, reject) {
-                sap.ui.require([
-                    "sap/ui/fl/write/api/ControlPersonalizationWriteAPI"
-                ], function (ControlPersonalizationWriteAPI) {
-                    resolve(ControlPersonalizationWriteAPI);
-                });
-            });
-        }
-        return pWriteAPI;
-    };
+	const _requireWriteAPI = () => {
+		if (!pWriteAPI) {
+			pWriteAPI = new Promise((resolve, reject) => {
+				sap.ui.require([
+					"sap/ui/fl/write/api/ControlPersonalizationWriteAPI"
+				], (ControlPersonalizationWriteAPI) => {
+					resolve(ControlPersonalizationWriteAPI);
+				});
+			});
+		}
+		return pWriteAPI;
+	};
 
-    /**
+	/**
 	 * @class This class offers <code>sap.ui.fl</code> capabilities.
-     * It should be used as the persistence layer in the {@link sap.m.p13n.Engine#register Engine#register} process.
+	 * It should be used as the persistence layer in the {@link sap.m.p13n.Engine#register Engine#register} process.
 	 *
 	 * @author SAP SE
 	 * @private
-     * @experimental Since 1.104.
+	 * @experimental Since 1.104.
 	 * @alias sap.m.p13n.modification.FlexModificationHandler
 	 */
-	var FlexModificationHandler = ModificationHandler.extend("sap.m.p13n.modification.FlexModificationHandler");
+	const FlexModificationHandler = ModificationHandler.extend("sap.m.p13n.modification.FlexModificationHandler");
 
-    FlexModificationHandler.prototype.processChanges = function(aChanges, oModificationPayload){
-        var oControl = aChanges && aChanges[0] ? aChanges[0].selectorElement : undefined;
+	FlexModificationHandler.prototype.processChanges = async function(aChanges, oModificationPayload) {
+		const oControl = aChanges && aChanges[0] ? aChanges[0].selectorElement : undefined;
 
-        var sInternalPersistenceMode = oModificationPayload.mode;
+		let sInternalPersistenceMode = oModificationPayload.mode;
 
-        /**
-         * In case of 'Auto' we internally overwrite the persistence mode to use the VM
-         * in case it has been provided instead of the PP
-         */
-        var bIsAutoGlobal = sInternalPersistenceMode === mode.Auto;
-        if (bIsAutoGlobal) {
-            sInternalPersistenceMode = oModificationPayload.hasVM ? "Standard" : mode.Global;
-        }
+		/**
+		 * In case of 'Auto' we internally overwrite the persistence mode to use the VM
+		 * in case it has been provided instead of the PP
+		 */
+		const bIsAutoGlobal = sInternalPersistenceMode === mode.Auto;
+		if (bIsAutoGlobal) {
+			sInternalPersistenceMode = oModificationPayload.hasVM ? "Standard" : mode.Global;
+		}
 
-        var bIsGlobal = sInternalPersistenceMode === mode.Global;
+		const bIsGlobal = sInternalPersistenceMode === mode.Global;
 
-        var bIsTransient = sInternalPersistenceMode === mode.Transient;
+		const bIsTransient = sInternalPersistenceMode === mode.Transient;
 
-        return this.initialize()
-        .then(function(){
+		const bHandleSequentialy = aChanges.some((oChange) => {
+			return typeof oChange.selectorElement === "string";
+		});
 
-            var oHandleChangesPromise = FlexUtil.handleChanges(aChanges, bIsGlobal, bIsTransient);
-            return bIsGlobal ? oHandleChangesPromise.then(function(aDirtyChanges){
-                return FlexUtil.saveChanges(oControl, aDirtyChanges);
-            }) : oHandleChangesPromise;
-        });
-    };
+		await this.initialize();
 
-    FlexModificationHandler.prototype.waitForChanges = function(mPropertyBag, oModificationPayload){
-        return this.initialize()
-        .then(function(){
-            return _requireFlexRuntimeAPI().then(function(FlexRuntimeInfoAPI){
-                return FlexRuntimeInfoAPI.waitForChanges(mPropertyBag, oModificationPayload);
-            });
-        });
-    };
+		if (bHandleSequentialy) {
+			return this._processChangesSequentialy(aChanges, oControl, bIsGlobal, bIsTransient);
+		} else {
+			const oHandleChangesPromise = FlexUtil.handleChanges(aChanges, bIsGlobal, bIsTransient);
+			return bIsGlobal ? oHandleChangesPromise.then((aDirtyChanges) => {
+				return FlexUtil.saveChanges(oControl, aDirtyChanges);
+			}) : oHandleChangesPromise;
+		}
+	};
 
-    FlexModificationHandler.prototype.hasChanges = function(mPropertyBag, oModificationPayload){
+	FlexModificationHandler.prototype._processChangesSequentialy = async function(aChanges, oControl, bIsGlobal, bIsTransient) {
+		await aChanges.reduce(async (oPrevious, oCurrent) => {
+			await oPrevious;
+			if (typeof oCurrent.selectorElement === "string") {
+				oCurrent.selectorElement = Element.getElementById(oCurrent.selectorElement);
+			}
+			const aDirtyChanges = await FlexUtil.handleChanges([oCurrent], bIsGlobal, bIsTransient);
+			if (bIsGlobal) {
+				await FlexUtil.saveChanges(oControl, aDirtyChanges);
+			}
+		}, Promise.resolve());
+	};
 
-        var sInternalPersistenceMode = oModificationPayload.mode;
+	FlexModificationHandler.prototype.waitForChanges = function(mPropertyBag, oModificationPayload) {
+		return this.initialize()
+			.then(() => {
+				return _requireFlexRuntimeAPI().then((FlexRuntimeInfoAPI) => {
+					return FlexRuntimeInfoAPI.waitForChanges(mPropertyBag, oModificationPayload);
+				});
+			});
+	};
 
-        if (sInternalPersistenceMode === mode.Auto) {
-            sInternalPersistenceMode = oModificationPayload.hasVM ? "Standard" : mode.Global;
-        }
+	FlexModificationHandler.prototype.hasChanges = function(mPropertyBag, oModificationPayload) {
 
-        return this.initialize()
-        .then(function(){
-            if (sInternalPersistenceMode === mode.Global) {
-                return _requireFlexRuntimeAPI().then(function(FlexRuntimeInfoAPI){
-                    return FlexRuntimeInfoAPI.isPersonalized({selectors: [mPropertyBag.selector]});
-                });
-            } else {
-                return _requireWriteAPI().then(function(ControlPersonalizationWriteAPI){
-                    return ControlPersonalizationWriteAPI.hasDirtyFlexObjects(mPropertyBag);
-                });
-            }
-        });
-    };
+		let sInternalPersistenceMode = oModificationPayload.mode;
 
-    FlexModificationHandler.prototype.reset = function(mPropertyBag, oModificationPayload){
-        var sPersistenceMode = oModificationPayload.mode;
+		if (sInternalPersistenceMode === mode.Auto) {
+			sInternalPersistenceMode = oModificationPayload.hasVM ? "Standard" : mode.Global;
+		}
 
-        var bIsGlobal = sPersistenceMode === mode.Global;
-        var bIsAutoGlobal = !oModificationPayload.hasVM && oModificationPayload.hasPP && sPersistenceMode === mode.Auto;
+		return this.initialize()
+			.then(() => {
+				if (sInternalPersistenceMode === mode.Global) {
+					return _requireFlexRuntimeAPI().then((FlexRuntimeInfoAPI) => {
+						return FlexRuntimeInfoAPI.isPersonalized({ ...mPropertyBag });
+					});
+				} else {
+					return _requireWriteAPI().then((ControlPersonalizationWriteAPI) => {
+						return ControlPersonalizationWriteAPI.hasDirtyFlexObjects(mPropertyBag);
+					});
+				}
+			});
+	};
 
-        return this.initialize()
-        .then(function(){
-            return (bIsGlobal || bIsAutoGlobal) ? FlexUtil.reset(mPropertyBag) : FlexUtil.restore(mPropertyBag);
-        });
-    };
+	FlexModificationHandler.prototype.reset = function(mPropertyBag, oModificationPayload) {
+		const sPersistenceMode = oModificationPayload.mode;
 
-    FlexModificationHandler.prototype.isModificationSupported = function(mPropertyBag, oModificationPayload){
-        return this.initialize()
-        .then(function(){
-            return _requireFlexRuntimeAPI().then(function(FlexRuntimeInfoAPI){
-                return FlexRuntimeInfoAPI.isFlexSupported(mPropertyBag, oModificationPayload);
-            });
-        });
-    };
+		const bIsGlobal = sPersistenceMode === mode.Global;
+		const bIsAutoGlobal = !oModificationPayload.hasVM && oModificationPayload.hasPP && sPersistenceMode === mode.Auto;
 
-    FlexModificationHandler.prototype.initialize = function() {
-        if (!pInitialize) {
-            pInitialize = Core.loadLibrary('sap.ui.fl', {
-                async: true
-            });
-        }
-        return pInitialize;
-    };
+		return this.initialize()
+			.then(() => {
+				return (bIsGlobal || bIsAutoGlobal) ? FlexUtil.reset(mPropertyBag) : FlexUtil.restore(mPropertyBag);
+			});
+	};
 
-    FlexModificationHandler.getInstance = function() {
-        if (!oFlexModificationHandler){
-            oFlexModificationHandler = new FlexModificationHandler();
-        }
-        return oFlexModificationHandler;
-    };
+	FlexModificationHandler.prototype.isModificationSupported = function(mPropertyBag, oModificationPayload) {
+		return this.initialize()
+			.then(() => {
+				return _requireFlexRuntimeAPI().then((FlexRuntimeInfoAPI) => {
+					return FlexRuntimeInfoAPI.isFlexSupported(mPropertyBag, oModificationPayload);
+				});
+			});
+	};
+
+	FlexModificationHandler.prototype.initialize = function() {
+		if (!pInitialize) {
+			pInitialize = Library.load({ name: 'sap.ui.fl' });
+		}
+		return pInitialize;
+	};
+
+	FlexModificationHandler.getInstance = () => {
+		if (!oFlexModificationHandler) {
+			oFlexModificationHandler = new FlexModificationHandler();
+		}
+		return oFlexModificationHandler;
+	};
 
 	return FlexModificationHandler;
 });

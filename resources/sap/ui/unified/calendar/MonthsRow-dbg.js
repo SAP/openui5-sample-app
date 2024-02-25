@@ -6,39 +6,41 @@
 
 //Provides control sap.ui.unified.CalendarMonthInterval.
 sap.ui.define([
+	"sap/base/i18n/Formatting",
 	'sap/ui/core/Control',
+	"sap/ui/core/Element",
+	"sap/ui/core/Lib",
 	'sap/ui/core/LocaleData',
 	'sap/ui/core/delegate/ItemNavigation',
 	'sap/ui/unified/calendar/CalendarUtils',
 	'sap/ui/unified/calendar/CalendarDate',
 	'sap/ui/unified/library',
 	'sap/ui/core/format/DateFormat',
-	'sap/ui/core/library',
 	'sap/ui/core/Locale',
 	"./MonthsRowRenderer",
 	"sap/ui/dom/containsOrEquals",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/unified/DateRange",
-	"sap/ui/core/Configuration",
-	'sap/ui/core/Core',
-	"sap/ui/core/date/UI5Date"
+	"sap/ui/core/date/UI5Date",
+	'sap/ui/core/InvisibleText'
 ], function(
+	Formatting,
 	Control,
+	Element,
+	Library,
 	LocaleData,
 	ItemNavigation,
 	CalendarUtils,
 	CalendarDate,
 	library,
 	DateFormat,
-	coreLibrary,
 	Locale,
 	MonthsRowRenderer,
 	containsOrEquals,
 	jQuery,
 	DateRange,
-	Configuration,
-	Core,
-	UI5Date
+	UI5Date,
+	InvisibleText
 ) {
 	"use strict";
 
@@ -64,7 +66,7 @@ sap.ui.define([
 	 * The MontsRow works with UI5Date or JavaScript Date objects, but only the month and the year are used to display and interact.
 	 * As representation for a month, the 1st of the month will always be returned in the API.
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -192,7 +194,7 @@ sap.ui.define([
 		this._oFormatOnlyYearLong = DateFormat.getInstance({pattern: "yyyy", calendarType: sCalendarType});
 		this._oFormatLong = DateFormat.getInstance({pattern: "MMMM y", calendarType: sCalendarType});
 		this._mouseMoveProxy = jQuery.proxy(this._handleMouseMove, this);
-		this._rb = Core.getLibraryResourceBundle("sap.ui.unified");
+		this._rb = Library.getResourceBundleFor("sap.ui.unified");
 	};
 
 	MonthsRow.prototype.setPrimaryCalendarType = function (sCalendarType){
@@ -205,7 +207,7 @@ sap.ui.define([
 	};
 
 	MonthsRow.prototype._getPrimaryCalendarType = function(){
-		return this.getProperty("primaryCalendarType") || Configuration.getCalendarType();
+		return this.getProperty("primaryCalendarType") || Formatting.getCalendarType();
 	};
 
 	MonthsRow.prototype.setSecondaryCalendarType = function (sCalendarType){
@@ -238,6 +240,10 @@ sap.ui.define([
 			clearTimeout(this._sInvalidateMonths);
 		}
 
+		if (this._invisibleDayHint) {
+			this._invisibleDayHint.destroy();
+			this._invisibleDayHint = null;
+		}
 	};
 
 	MonthsRow.prototype.onAfterRendering = function(){
@@ -251,7 +257,7 @@ sap.ui.define([
 
 	MonthsRow.prototype.onsapfocusleave = function(oEvent){
 
-		if (!oEvent.relatedControlId || !containsOrEquals(this.getDomRef(), sap.ui.getCore().byId(oEvent.relatedControlId).getFocusDomRef())) {
+		if (!oEvent.relatedControlId || !containsOrEquals(this.getDomRef(), Element.getElementById(oEvent.relatedControlId).getFocusDomRef())) {
 			if (this._bMouseMove) {
 				_unbindMousemove.call(this, true);
 
@@ -435,7 +441,7 @@ sap.ui.define([
 		if (oParent && oParent.getLocale) {
 			return oParent.getLocale();
 		} else if (!this._sLocale) {
-			this._sLocale = Configuration.getFormatSettings().getFormatLocale().toString();
+			this._sLocale = new Locale(Formatting.getLanguageTag()).toString();
 		}
 
 		return this._sLocale;
@@ -615,6 +621,20 @@ sap.ui.define([
 	MonthsRow.prototype._getAriaRole = function(){
 
 		return this._ariaRole ? this._ariaRole : "gridcell";
+	};
+
+	MonthsRow.prototype._getMonthDescription = function() {
+		return this._fnInvisibleHintFactory().getId();
+	};
+
+	MonthsRow.prototype._fnInvisibleHintFactory = function() {
+		if (!this._invisibleDayHint) {
+			this._invisibleDayHint = new InvisibleText({
+				text: Library.getResourceBundleFor("sap.m").getText("SLIDETILE_ACTIVATE")
+			}).toStatic();
+		}
+
+		return this._invisibleDayHint;
 	};
 
 	/**

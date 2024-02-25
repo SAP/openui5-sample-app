@@ -6,9 +6,9 @@
 
 sap.ui.define([
 		'./library',
-		'sap/ui/core/Core',
 		'sap/ui/core/Element',
 		'sap/ui/Device',
+		"sap/ui/core/Lib",
 		"sap/ui/dom/isHidden",
 		'sap/ui/core/ResizeHandler',
 		'./ListItemBase',
@@ -22,9 +22,9 @@ sap.ui.define([
 		'sap/ui/core/library'
 	],
 	function (library,
-			  Core,
 			  Element,
 			  Device,
+			  Library,
 			  isHidden,
 			  ResizeHandler,
 			  ListItemBase,
@@ -53,7 +53,7 @@ sap.ui.define([
 		// shortcut for sap.m.OverflowToolbarPriority
 		var OverflowToolbarPriority = library.OverflowToolbarPriority;
 
-		var resourceBundle = Core.getLibraryResourceBundle('sap.m'),
+		var resourceBundle = Library.getResourceBundleFor('sap.m'),
 			closeText = resourceBundle.getText('NOTIFICATION_LIST_ITEM_CLOSE'), // this is used for tooltip for the "X" button and the text of the button "X" when it is in the overflow toolbar on mobile
 			closeAllText = resourceBundle.getText('NOTIFICATION_LIST_GROUP_CLOSE'); // this is used for tooltip for the "X" button and the text of the button "X" when it is in the overflow toolbar on mobile
 
@@ -91,7 +91,7 @@ sap.ui.define([
 		 * @extends sap.m.ListItemBase
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public

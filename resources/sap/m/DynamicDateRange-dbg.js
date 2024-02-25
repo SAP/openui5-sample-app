@@ -10,6 +10,7 @@ sap.ui.define([
 	'sap/ui/core/InvisibleText',
 	'sap/ui/core/Element',
 	'sap/ui/core/Control',
+	"sap/ui/core/Lib",
 	'sap/ui/core/ListItem',
 	'sap/ui/core/library',
 	'sap/ui/core/Renderer',
@@ -43,43 +44,44 @@ sap.ui.define([
 	'sap/ui/unified/calendar/CalendarUtils',
 	'sap/ui/core/CustomData'
 ], function(
-		Log,
-		InvisibleText,
-		Element,
-		Control,
-		ListItem,
-		coreLibrary,
-		Renderer,
-		MessageMixin,
-		DynamicDateFormat,
-		IconPool,
-		Icon,
-		LabelEnablement,
-		UniversalDate,
-		DateFormat,
-		TimezoneUtil,
-		ManagedObjectObserver,
-		Device,
-		Label,
-		GroupHeaderListItem,
-		StandardListItem,
-		StandardListItemRenderer,
-		Button,
-		List,
-		Input,
-		InputRenderer,
-		Toolbar,
-		ResponsivePopover,
-		Page,
-		NavContainer,
-		DynamicDateRangeRenderer,
-		StandardDynamicDateOption,
-		library,
-		jQuery,
-		Configuration,
-		CalendarUtils,
-		CustomData
-	) {
+	Log,
+	InvisibleText,
+	Element,
+	Control,
+	Library,
+	ListItem,
+	coreLibrary,
+	Renderer,
+	MessageMixin,
+	DynamicDateFormat,
+	IconPool,
+	Icon,
+	LabelEnablement,
+	UniversalDate,
+	DateFormat,
+	TimezoneUtil,
+	ManagedObjectObserver,
+	Device,
+	Label,
+	GroupHeaderListItem,
+	StandardListItem,
+	StandardListItemRenderer,
+	Button,
+	List,
+	Input,
+	InputRenderer,
+	Toolbar,
+	ResponsivePopover,
+	Page,
+	NavContainer,
+	DynamicDateRangeRenderer,
+	StandardDynamicDateOption,
+	library,
+	jQuery,
+	Configuration,
+	CalendarUtils,
+	CustomData
+) {
 		"use strict";
 
 		// shortcut for sap.ui.core.ValueState
@@ -89,7 +91,7 @@ sap.ui.define([
 			ListType = library.ListType,
 			ListMode = library.ListMode,
 			ListSeparators = library.ListSeparators,
-			oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 			var oStandardOptionsObjects = {
 				"TODAY": new StandardDynamicDateOption({ key: "TODAY", valueTypes: [] }),
@@ -249,6 +251,9 @@ sap.ui.define([
 		 * In order for a specific option to be used its key should be added into the <code>standardOptions</code> property
 		 * of the control. No options are added by default.
 		 *
+		 * <b>Note:</b> Property binding with the <code>value</code> and <code>formatter</code> properties is not supported.
+		 * Instead, you should use their public getter and setter methods.
+		 *
 		 * Suggestions are available when the user types in the control input field.
 		 *
 		 * <h3>Responsive behavior</h3>
@@ -257,7 +262,7 @@ sap.ui.define([
 		 * is opened. The dialog is closed via a date time period value selection or by pressing the "Cancel" button.
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -275,6 +280,9 @@ sap.ui.define([
 					 * 'values' - an array of parameters for the same option.
 					 * The control uses a special wrong-value object, when the input receives
 					 * an unrecognized string - { operator: "PARSEERROR", values: [...]}
+					 *
+					 *  <b>Note:</b> Data binding for the <code>value</code> property is not supported. Instead,
+					 *  you should use DynamicDateRange's <code>getValue</code> and <code>setValue</code> methods.
 					 *
 					 * @since 1.92
 					 * @private
@@ -351,6 +359,9 @@ sap.ui.define([
 					/**
 					 * An instance of sap.m.DynamicDateFormat or a user defined format object with the
 					 * corresponding formatting and parsing functionality.
+					 *
+					 * <b>Note:</b> Data binding for the <code>formatter</code> property is not supported. Instead,
+					 * you should use DynamicDateRange's <code>getFormatter</code> and <code>setFormatter</code> methods.
 					 *
 					 * @since 1.92
 					 * @private
@@ -513,8 +524,6 @@ sap.ui.define([
 		DynamicDateRange.prototype.init = function() {
 			var bValueHelpDecorative = !Device.support.touch || Device.system.desktop ? true : false;
 			this._oInput = new DynamicDateRangeInput(this.getId() + "-input", {
-				showValueHelp: true,
-				valueHelpIconSrc: IconPool.getIconURI("sap-icon://check-availability"),
 				valueHelpRequest: this._toggleOpen.bind(this),
 				showSuggestion: true,
 				suggest: this._handleSuggest.bind(this)
@@ -567,6 +576,7 @@ sap.ui.define([
 		/**
 		 * Getter for the <code>value</code> of the control.
 		 * @returns {sap.m.DynamicDateRangeValue} A <code>sap.m.DynamicDateRangeValue</code>
+		 * @public
 		 */
 		DynamicDateRange.prototype.getValue = function() {
 			return this.getProperty("value");
@@ -575,6 +585,7 @@ sap.ui.define([
 		/**
 		 * Getter for the <code>formatter</code> of the control.
 		 * @returns {sap.m.DynamicDateFormat} A <code>sap.m.DynamicDateFormat</code>
+		 * @public
 		 */
 		 DynamicDateRange.prototype.getFormatter = function() {
 			return this.getProperty("formatter");
@@ -585,6 +596,7 @@ sap.ui.define([
 		 * @returns {sap.m.DynamicDateFormat} A <code>sap.m.DynamicDateFormat</code>
 		 * @param {sap.m.DynamicDateFormat} oFormatter A <code>sap.m.DynamicDateFormat</code>
 		 * @returns {this} Reference to <code>this</code> for method chaining
+		 * @public
 		 */
 		 DynamicDateRange.prototype.setFormatter = function(oFormatter) {
 			this.setProperty("formatter", oFormatter);
@@ -635,6 +647,7 @@ sap.ui.define([
 		 * Setter for the <code>value</code> control property.
 		 * @param {sap.m.DynamicDateRangeValue} oValue A <code>sap.m.DynamicDateRangeValue</code>
 		 * @returns {this} Reference to <code>this</code> for method chaining
+		 * @public
 		 */
 		DynamicDateRange.prototype.setValue = function(oValue) {
 			var sOptionKey = oValue && oValue.operator;
@@ -841,7 +854,7 @@ sap.ui.define([
 		/**
 		 * Calculates a date range from a provided object in the format of the DynamicDateRange's value.
 		 *
-		 * @param {string} oValue The provided value
+		 * @param {sap.m.DynamicDateRangeValue} oValue A <code>sap.m.DynamicDateRangeValue</code>
 		 * @returns {sap.ui.core.date.UniversalDate[]} An array of two date objects - start and end date
 		 * @public
 		 */
@@ -1640,7 +1653,7 @@ sap.ui.define([
 			return LabelEnablement.getReferencingLabels(this)
 				.concat(this.getAriaLabelledBy())
 				.reduce(function(sAccumulator, sCurrent) {
-					var oCurrentControl = Element.registry.get(sCurrent);
+					var oCurrentControl = Element.getElementById(sCurrent);
 					return sAccumulator + " " + (oCurrentControl.getText ? oCurrentControl.getText() : "");
 				}, "")
 				.trim();

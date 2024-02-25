@@ -44,11 +44,13 @@ sap.ui.define([
 
 
 	/**
-	 * Creates a GrowingEnablement delegate that can be attached to ListBase Controls requiring capabilities for growing
+	 * Creates a GrowingEnablement delegate that can be attached to ListBase Controls requiring capabilities for growing.
+	 *
+	 * <b>Note</b>: Do not extend this class.
 	 *
 	 * @extends sap.ui.base.Object
 	 * @alias sap.m.GrowingEnablement
-	 * @experimental Since 1.16. This class is experimental and provides only limited functionality. Also the API might be changed in future.
+	 * @since 1.16
 	 *
 	 * @param {sap.m.ListBase} oControl the ListBase control of which this Growing is the delegate
 	 *
@@ -824,7 +826,6 @@ sap.ui.define([
 
 				// put the focus to the newly added item if growing button is pressed
 				// or to the item if the focus was on the items container
-
 				if (this._bHadFocus) {
 					this._bHadFocus = false;
 					jQuery(this._oControl.getNavigationRoot()).trigger("focus");
@@ -855,7 +856,7 @@ sap.ui.define([
 					oControl.$("triggerList").css("display", "");
 					oControl.$("listUl").addClass("sapMListHasGrowing");
 					oTrigger.$().removeClass("sapMGrowingListBusyIndicatorVisible");
-					this.adaptTriggerButtonWidth();
+					setTimeout(this.adaptTriggerButtonWidth.bind(this));
 				}
 
 				// store the last item count to be able to focus to the newly added item when the growing button is pressed
@@ -883,13 +884,13 @@ sap.ui.define([
 		// adapt trigger button width if dummy col is rendered
 		adaptTriggerButtonWidth: function() {
 			var oControl = this._oControl;
-			if (!oControl.isA("sap.m.Table") || oControl.hasPopin() || !oControl.shouldRenderDummyColumn()) {
+			if (!oControl || !oControl.isA("sap.m.Table") || oControl.hasPopin() || !oControl.shouldRenderDummyColumn()) {
 				return;
 			}
 
 			window.requestAnimationFrame(function() {
 				var oTriggerDomRef = this._oTrigger && this._oTrigger.getDomRef();
-				if (!oTriggerDomRef) {
+				if (!oTriggerDomRef || !oTriggerDomRef.clientWidth) {
 					return;
 				}
 

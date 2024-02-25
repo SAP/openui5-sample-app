@@ -156,7 +156,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
@@ -2979,9 +2979,12 @@ sap.ui.define([
 	 *   The context to be used as a starting point in case of a relative path
 	 * @param {object} [mParameters]
 	 *   Optional (binding) parameters; if they are given, <code>oContext</code> cannot be omitted
-	 * @param {object} [mParameters.scope]
-	 *   Scope for lookup of aliases for computed annotations (since 1.43.0). Since 1.120.3 looking
-	 *   up a computed annotation via its global name is deprecated; always use this scope instead.
+	 * @param {Object<object|function>} [mParameters.scope]
+	 *   Scope for lookup of aliases for computed annotations (since 1.43.0) as a map from alias to
+	 *   a module (like <code>{AH : AnnotationHelper}</code>) or function (like
+	 *   <code>{format : AnnotationHelper.format}</code>); the alias must not contain a dot.
+	 *   Since 1.120.3 looking up a computed annotation via its global name is deprecated; always
+	 *   use this scope instead.
 	 * @returns {Promise<any>}
 	 *   A promise which is resolved with the requested metadata value as soon as it is available;
 	 *   it is rejected if the requested metadata cannot be loaded

@@ -25,6 +25,9 @@ sap.ui.define([],
 				remove: {
 					changeType: "hideControl"
 				},
+				reveal: {
+					changeType: "unhideControl"
+				},
 				split: {
 					changeType: "splitMenuButton",
 					changeOnRelevantContainer : true,

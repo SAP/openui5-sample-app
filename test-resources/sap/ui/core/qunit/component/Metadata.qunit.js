@@ -4,10 +4,10 @@ sap.ui.define([
 	"sap/base/util/deepClone",
 	"sap/ui/VersionInfo",
 	"sap/ui/core/Component",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/_UrlResolver",
+	"sap/ui/core/Supportability",
 	"sap/ui/thirdparty/URI"
-], function(require, Log, deepClone, VersionInfo, Component, Configuration, _UrlResolver, URI) {
+], function(require, Log, deepClone, VersionInfo, Component, _UrlResolver, Supportability, URI) {
 
 	"use strict";
 	/*global QUnit*/
@@ -338,7 +338,7 @@ sap.ui.define([
 			assert.deepEqual(this.oMetadata._getManifest(), this.oExpectedManifest, "Manifest is correct!");
 			assert.strictEqual(this.oMetadata._getManifestEntry("foo.bar"), null, "Manifest entry with string value is not allowed and should return null");
 			assert.strictEqual(this.oMetadata._getManifestEntry("foo"), null, "Manifest entry without a dot is not allowed and should return null");
-			assert.strictEqual(this.oMetadata._getManifestEntry("baz.buz"), null, "Not existing manifest entry should return null");
+			assert.strictEqual(this.oMetadata._getManifestEntry("baz.buz"), undefined, "Not existing manifest entry should return undefined");
 		});
 
 		/**
@@ -349,7 +349,7 @@ sap.ui.define([
 			assert.deepEqual(this.oMetadata.getRawManifest(), this.oExpectedRawManifest, "Raw Manifest is correct!");
 			assert.strictEqual(this.oMetadata.getManifestEntry("foo.bar"), null, "Manifest entry with string value is not allowed and should return null");
 			assert.strictEqual(this.oMetadata.getManifestEntry("foo"), null, "Manifest entry without a dot is not allowed and should return null");
-			assert.strictEqual(this.oMetadata.getManifestEntry("baz.buz"), null, "Not existing manifest entry should return null");
+			assert.strictEqual(this.oMetadata.getManifestEntry("baz.buz"), undefined, "Not existing manifest entry should return undefined");
 
 		});
 	}
@@ -542,7 +542,7 @@ sap.ui.define([
 				}
 				// in case of debug mode is on the warning should be reported
 				// when it is turned off => no warning!
-				if (Configuration.getDebug()) {
+				if (Supportability.isDebugModeEnabled()) {
 					assert.ok(bFound, "Warning has been reported!");
 				} else {
 					assert.ok(!bFound, "Warning has not been reported!");

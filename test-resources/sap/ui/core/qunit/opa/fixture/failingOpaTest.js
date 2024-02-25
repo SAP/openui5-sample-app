@@ -9,6 +9,7 @@ QUnit.config.autostart = false;
  */
 
 sap.ui.require([
+	"sap/ui/core/Core",
 	"sap/ui/test/Opa5",
 	"sap/ui/test/Opa",
 	"sap/ui/test/_OpaLogger",
@@ -17,9 +18,11 @@ sap.ui.require([
 	"sap/ui/test/autowaiter/_timeoutWaiter",
 	"sap/base/Log",
 	"sap/ui/qunit/qunit-junit",
-	"sap/ui/qunit/qunit-coverage"
-], function (Opa5, Opa, _OpaLogger, opaTest, PropertyStrictEquals, _timeoutWaiter, Log) {
+	"sap/ui/qunit/qunit-coverage-istanbul"
+], async function (Core, Opa5, Opa, _OpaLogger, opaTest, PropertyStrictEquals, _timeoutWaiter, Log) {
 	"use strict";
+
+	await Core.ready();
 
 	QUnit.module("Timeouts");
 
@@ -196,7 +199,7 @@ sap.ui.require([
 		oOpa.waitFor({
 			success: function () {
 				// prevent timeout detection from interfering (IE11 testrunner)
-				var oIFrameTimeoutWaiter = Opa5.getWindow().sap.ui.test.autowaiter._timeoutWaiter;
+				var oIFrameTimeoutWaiter = Opa5.getWindow().sap.ui.require("sap/ui/test/autowaiter/_timeoutWaiter");
 				oTimeoutWaiterStub = sinon.stub(oIFrameTimeoutWaiter, "hasPending");
 				oTimeoutWaiterStub.returns(false);
 			}

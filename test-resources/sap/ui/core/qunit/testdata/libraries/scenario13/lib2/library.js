@@ -1,9 +1,12 @@
 sap.ui.define([
-	"sap/ui/core/Core",
-	"sap/ui/core/library"
-], function(oCore) {
+	"sap/ui/core/Lib",
+	"sap/ui/core/library",
+	"testlibs/scenario13/lib4/library",
+	"testlibs/scenario13/lib1/library",
+	"testlibs/scenario13/lib7/library"
+], function(Library) {
 	"use strict";
-	return oCore.initLibrary({
+	return Library.init({
 		name: "testlibs.scenario13.lib2",
 		dependencies: [
 			"testlibs.scenario13.lib4",

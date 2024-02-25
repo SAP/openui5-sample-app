@@ -131,7 +131,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.Toolbar,sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -423,7 +423,7 @@ sap.ui.define([
 			$LastFocusableChildControl = this.$().lastFocusableDomRef();
 
 		if (this.sFocusedChildControlId) {
-			oFocusedChildControl = Element.registry.get(this.sFocusedChildControlId);
+			oFocusedChildControl = Element.getElementById(this.sFocusedChildControlId);
 		}
 
 		if (oFocusedChildControl && oFocusedChildControl.getDomRef()){

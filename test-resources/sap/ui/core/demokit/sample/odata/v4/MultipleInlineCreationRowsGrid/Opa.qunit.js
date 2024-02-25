@@ -74,6 +74,7 @@ sap.ui.require([
 
 					// activate row 2
 					When.onTheObjectPage.enterPartDescription(1, "Part 99");
+					Then.onTheObjectPage.checkPartIDValueState("Warning", 1);
 					Then.onTheMessagePopover.checkMessages([{
 						message : "ID must not be empty",
 						type : MessageType.Warning
@@ -93,6 +94,7 @@ sap.ui.require([
 					Then.onAnyTable.checkMessageStrip("parts");
 					Then.onTheObjectPage.checkPart(1, "", "Inactive", "");
 					When.onTheObjectPage.enterPartDescription(1, "Part 99");
+					Then.onTheObjectPage.checkPartIDValueState("Warning", 1);
 					Then.onTheMessagePopover.checkMessages([{
 						message : "ID must not be empty",
 						type : MessageType.Warning
@@ -201,6 +203,7 @@ sap.ui.require([
 
 					// activate row 4
 					When.onTheObjectPage.enterPartDescription(3, "Part 99");
+					Then.onTheObjectPage.checkPartIDValueState("Warning", 3);
 					Then.onTheMessagePopover.checkMessages([{
 						message : "ID must not be empty",
 						type : MessageType.Warning
@@ -221,6 +224,7 @@ sap.ui.require([
 					Then.onTheObjectPage.checkPartsLength(5);
 					Then.onTheObjectPage.checkPart(3, "", "Inactive", "");
 					When.onTheObjectPage.enterPartDescription(3, "Part 99");
+					Then.onTheObjectPage.checkPartIDValueState("Warning", 3);
 					Then.onTheMessagePopover.checkMessages([{
 						message : "ID must not be empty",
 						type : MessageType.Warning
@@ -405,6 +409,7 @@ sap.ui.require([
 		Then.onTheObjectPage.checkPartsTableTitle("Product: 110, 0 Parts");
 
 		When.onTheObjectPage.enterPartDescription(0, "Part 50");
+		Then.onTheObjectPage.checkPartIDValueState("Warning", 0);
 		Then.onTheMessagePopover.checkMessages([{
 			message : "ID must not be empty",
 			type : MessageType.Warning
@@ -412,6 +417,7 @@ sap.ui.require([
 		When.onTheObjectPage.pressResetButton(sAtBinding ? "Parts" : "All");
 		Then.onTheObjectPage.checkPart(0, "", "Inactive", "");
 		When.onTheObjectPage.enterPartDescription(0, "Part 50");
+		Then.onTheObjectPage.checkPartIDValueState("Warning", 0);
 		Then.onTheMessagePopover.checkMessages([{
 			message : "ID must not be empty",
 			type : MessageType.Warning

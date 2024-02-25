@@ -5,9 +5,11 @@
  */
 
 sap.ui.define([
-		'sap/ui/core/Renderer',
-		'sap/ui/unified/CalendarRenderer'],
-	function(Renderer, CalendarRenderer) {
+	"sap/ui/core/Lib",
+	'sap/ui/core/Renderer',
+	'sap/ui/unified/CalendarRenderer'
+],
+	function(Library, Renderer, CalendarRenderer) {
 		"use strict";
 
 
@@ -23,13 +25,6 @@ sap.ui.define([
 		 * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
 		 * @param {sap.f.CalendarInCard} oCal an object representation of the control that should be rendered
 		 */
-
-		/**
-		 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
-		 *
-		 * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
-		 * @param {sap.f.Calendar} oCal an object representation of the control that should be rendered
-		 */
 		CalendarInCardRenderer.render = function(oRm, oCal){
 
 			// oCal._iMode = 0; // it's rendered always as DayPicker
@@ -38,7 +33,7 @@ sap.ui.define([
 				sTooltip = oCal.getTooltip_AsString(),
 				aMonths = oCal.getAggregation("month"),
 				sWidth = oCal.getWidth(),
-				rb = sap.ui.getCore().getLibraryResourceBundle("sap.f"),
+				rb = Library.getResourceBundleFor("sap.f"),
 				mAccProps = {labelledby: {value: "", append: false}};
 
 			oRm.openStart("div", oCal);

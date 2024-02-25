@@ -1,1 +1,0 @@
-{"version":3,"file":"PersistenceMode.js","names":["sap","ui","define","PersistenceMode","Global","Auto","Transient"],"sources":["PersistenceMode-dbg.js"],"mappings":";;;;;AAKAA,IAAIC,GAAGC,OAAO,WACV,aAmBA,IAAIC,EAAkB,CAOlBC,OAAQ,SAURC,KAAM,OAQNC,UAAW,aAGf,OAAOH,CACX,EAAkB"}

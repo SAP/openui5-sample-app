@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['./library', 'sap/ui/core/Core'],
-	function(library, Core) {
+sap.ui.define(['./library', "sap/ui/core/Lib"],
+	function(library, Library) {
 	"use strict";
 
 
@@ -21,7 +21,7 @@ sap.ui.define(['./library', 'sap/ui/core/Core'],
 	var EmptyIndicatorMode = library.EmptyIndicatorMode;
 
 	// shortcut for library resource bundle
-	var oRb = Core.getLibraryResourceBundle("sap.m");
+	var oRb = Library.getResourceBundleFor("sap.m");
 
 	/**
 	 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.

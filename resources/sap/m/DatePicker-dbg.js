@@ -6,6 +6,8 @@
 
 // Provides control sap.m.DatePicker.
 sap.ui.define([
+	"sap/base/i18n/Localization",
+	"sap/ui/core/Lib",
 	'sap/ui/thirdparty/jquery',
 	'sap/ui/Device',
 	"sap/ui/core/Element",
@@ -31,14 +33,14 @@ sap.ui.define([
 	"sap/ui/unified/calendar/CustomYearPicker",
 	"sap/ui/core/LabelEnablement",
 	"sap/ui/unified/library",
-	"sap/ui/core/Configuration",
 	"sap/ui/unified/calendar/CalendarUtils",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/date/CalendarWeekNumbering",
-	"sap/ui/core/Core",
 	"sap/ui/dom/jquery/cursorPos"
 ],
 	function(
+		Localization,
+		Library,
 		jQuery,
 		Device,
 		Element,
@@ -63,11 +65,9 @@ sap.ui.define([
 		CustomYearPicker,
 		LabelEnablement,
 		unifiedLibrary,
-		Configuration,
 		CalendarUtils,
 		UI5Date,
-		CalendarWeekNumbering,
-		Core
+		CalendarWeekNumbering
 	) {
 	"use strict";
 
@@ -75,7 +75,7 @@ sap.ui.define([
 	// shortcut for sap.ui.core.CalendarType
 	var CalendarType = coreLibrary.CalendarType;
 
-	var oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+	var oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 	/**
 	 * Constructor for a new <code>DatePicker</code>.
@@ -115,7 +115,8 @@ sap.ui.define([
 	 *
 	 * <ul><li>Use the <code>value</code> property if you want to bind the
 	 * <code>DatePicker</code> to a model using the <code>sap.ui.model.type.Date</code></li>
-	 * @example <caption> binding the <code>value</code> property by using types </caption>
+	 * <caption> binding the <code>value</code> property by using types </caption>
+	 * <pre>
 	 * new sap.ui.model.json.JSONModel({
 	 *     date: sap.ui.core.date.UI5Date.getInstance(2022,10,10,10,10,10)
 	 * });
@@ -123,10 +124,11 @@ sap.ui.define([
 	 * new sap.m.DatePicker({
 	 *     value:{path:"/date",type:"sap.ui.model.type.Date"}
 	 * });
-	 *
+	 *</pre>
 	 * <li>Use the <code>value</code> property if the date is provided as a string from
 	 * the backend or inside the app (for example, as ABAP type DATS field)</li>
-	 * @example <caption> binding the <code>value</code> property by using types </caption>
+	 * <caption> binding the <code>value</code> property by using types </caption>
+	 * <pre>
 	 * new sap.ui.model.json.JSONModel({date:'2022-11-10');
 	 *
 	 * new sap.m.DatePicker({
@@ -140,7 +142,7 @@ sap.ui.define([
 	 *         }
 	 *     }
 	 * });
-	 *
+	 * </pre>
 	 * <b>Note:</b> There are multiple binding type choices, such as:
 	 * sap.ui.model.type.Date
 	 * sap.ui.model.odata.type.DateTime
@@ -186,7 +188,7 @@ sap.ui.define([
 	 * the close event), or select Cancel.
 	 *
 	 * @extends sap.m.DateTimeField
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -938,7 +940,7 @@ sap.ui.define([
 	 * Sets <code>showFooter</code> property to the given boolean value
 	 *
 	 * @since 1.70
-	 * @param {} bFlag when true footer is displayed
+	 * @param {boolean} bFlag when true footer is displayed
 	 * @public
 	 */
 	DatePicker.prototype.setShowFooter = function(bFlag) {
@@ -1004,7 +1006,7 @@ sap.ui.define([
 	 *
 	 * @since 1.38.5
 	 * @param {sap.ui.unified.DateTypeRange} oSpecialDate The <code>specialDate</code> to remove or its index or ID
-	 * @returns {sap.ui.unified.DateTypeRange|null} The removed <code>specialDate</code> or <code>null</code>
+	 * @returns {int | string | sap.ui.unified.DateTypeRange} The removed <code>specialDate</code>
 	 * @public
 	 */
 	DatePicker.prototype.removeSpecialDate = function(oSpecialDate){
@@ -1053,7 +1055,7 @@ sap.ui.define([
 		var sId = this.getLegend();
 		if (sId) {
 			var CalendarLegend = sap.ui.require("sap/ui/unified/CalendarLegend");
-			oLegend = sap.ui.getCore().byId(sId);
+			oLegend = Element.getElementById(sId);
 			if (oLegend && !(typeof CalendarLegend == "function" && oLegend instanceof CalendarLegend)) {
 				throw new Error(oLegend + " is not an sap.ui.unified.CalendarLegend. " + this);
 			}
@@ -1225,7 +1227,6 @@ sap.ui.define([
 				showArrow: false,
 				showHeader: false,
 				placement: library.PlacementType.VerticalPreferredBottom,
-				contentWidth: this.$().closest(".sapUiSizeCompact").length > 0 ? "18rem" : "21rem",
 				beginButton: new Button({
 					type: library.ButtonType.Emphasized,
 					text: oResourceBundle.getText("DATEPICKER_SELECTION_CONFIRM"),
@@ -1245,7 +1246,7 @@ sap.ui.define([
 				sTitleText = LabelEnablement.getReferencingLabels(this)
 					.concat(this.getAriaLabelledBy())
 					.reduce(function(sAccumulator, sCurrent) {
-						var oCurrentControl = Element.registry.get(sCurrent);
+						var oCurrentControl = Element.getElementById(sCurrent);
 						return sAccumulator + " " + (oCurrentControl.getText ? oCurrentControl.getText() : "");
 					}, "")
 					.trim();
@@ -1449,7 +1450,7 @@ sap.ui.define([
 		var oRenderer = this.getRenderer();
 		var oInfo = InputBase.prototype.getAccessibilityInfo.apply(this, arguments);
 		var sValue = this.getValue() || "";
-		var sRequired = this.getRequired() ? Core.getLibraryResourceBundle("sap.m").getText("ELEMENT_REQUIRED") : '';
+		var sRequired = this.getRequired() ? Library.getResourceBundleFor("sap.m").getText("ELEMENT_REQUIRED") : '';
 
 		if (this._bValid) {
 			var oDate = this.getDateValue();
@@ -1508,7 +1509,7 @@ sap.ui.define([
 	};
 
 	DatePicker.prototype._getTimezone = function(bUseDefaultAsFallback) {
-		return Configuration.getTimezone();
+		return Localization.getTimezone();
 	};
 
 	/* sets cursor inside the input in order to focus it */

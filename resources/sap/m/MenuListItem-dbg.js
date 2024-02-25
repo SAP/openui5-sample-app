@@ -8,12 +8,13 @@
 sap.ui.define([
 	'./ListItemBase',
 	'./library',
+	"sap/ui/core/Element",
 	'sap/ui/core/IconPool',
 	'sap/ui/core/library',
 	'./MenuListItemRenderer',
-    'sap/m/Image'
+	'sap/m/Image'
 ],
-	function(ListItemBase, library, IconPool, coreLibrary, MenuListItemRenderer, Image) {
+	function(ListItemBase, library, Element, IconPool, coreLibrary, MenuListItemRenderer, Image) {
 		"use strict";
 
 		// shortcut for sap.ui.core.TextDirection
@@ -33,7 +34,7 @@ sap.ui.define([
 		 * @extends sap.m.ListItemBase
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @private
@@ -155,7 +156,7 @@ sap.ui.define([
 		};
 
 		MenuListItem.prototype._hasSubItems = function() {
-			return !!(this.getMenuItem() && sap.ui.getCore().byId(this.getMenuItem()).getItems().length);
+			return !!(this.getMenuItem() && Element.getElementById(this.getMenuItem()).getItems().length);
 		};
 
 		MenuListItem.prototype.setProperty = function(sPropertyKey, vPropertyValue) {

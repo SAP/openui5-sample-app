@@ -5,16 +5,16 @@
  */
 sap.ui.define([
 	"sap/ui/core/Control",
-	"sap/ui/core/Core",
 	"sap/ui/core/IntervalTrigger",
+	"sap/ui/core/Lib",
 	"sap/ui/core/format/DateFormat",
 	"sap/ui/core/date/UniversalDate",
 	"sap/ui/core/library",
 	"sap/m/Text"
 ], function (
 	Control,
-	Core,
 	IntervalTrigger,
+	Library,
 	DateFormat,
 	UniversalDate,
 	coreLibrary,
@@ -26,6 +26,8 @@ sap.ui.define([
 	 * @const int The refresh interval for dataTimestamp in ms.
 	 */
 	var DATA_TIMESTAMP_REFRESH_INTERVAL = 60000;
+
+	var oResourceBundle = Library.getResourceBundleFor("sap.f");
 
 	var TextAlign = coreLibrary.TextAlign;
 
@@ -42,7 +44,7 @@ sap.ui.define([
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -87,7 +89,17 @@ sap.ui.define([
 				 * If the header should be rendered as a tile.
 				 * @private
 				 */
-				useTileLayout: { type: "boolean", group: "Appearance", visibility: "hidden" }
+				useTileLayout: { type: "boolean", group: "Appearance", visibility: "hidden" },
+
+				/**
+				 * Defines aria-level of the header.
+				 *
+				 * When header is in a dialog aria-level is 1
+				 * When header is not in a dialog(standard scenario) aria-level is 3
+				 *
+				 * @private
+				 */
+				headingLevel: { type: "string", visibility: "hidden", defaultValue: "3"}
 			},
 			aggregations: {
 				/**
@@ -118,7 +130,7 @@ sap.ui.define([
 	});
 
 	BaseHeader.prototype.init = function () {
-		this._oRb = Core.getLibraryResourceBundle("sap.f");
+		this._oRb = Library.getResourceBundleFor("sap.f");
 
 		this._oToolbarDelegate = {
 			onfocusin: this._onToolbarFocusin,
@@ -199,7 +211,7 @@ sap.ui.define([
 		}
 	};
 
-	/**
+	/*
 	 * @override
 	 */
 	BaseHeader.prototype.setDataTimestamp = function (sDataTimestamp) {
@@ -221,7 +233,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * @override
+	 * @private
 	 */
 	BaseHeader.prototype.setDataTimestampUpdating = function (bDataTimestampUpdating) {
 		var oTimestampText = this._createDataTimestamp();
@@ -279,7 +291,7 @@ sap.ui.define([
 
 		// no less than "1 minute ago" should be shown, "30 seconds ago" should not be shown
 		if (oUniversalDate.getTime() + 59000 > Date.now()) {
-			sFormattedText = "now"; //@todo get formatted (translated text) for "now"
+			sFormattedText = oResourceBundle.getText("CARD_HEADER_DATETIMESTAMP_NOW");
 		}
 
 		oDataTimestamp.setText(sFormattedText);
@@ -342,7 +354,7 @@ sap.ui.define([
 	 * @ui5-restricted
 	 */
 	BaseHeader.prototype.getAriaHeadingLevel = function () {
-		return "3";
+		return this.getProperty("headingLevel");
 	};
 
 	/**

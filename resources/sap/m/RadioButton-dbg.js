@@ -8,8 +8,8 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
-	'sap/ui/core/Core',
 	'sap/ui/core/EnabledPropagator',
+	"sap/ui/core/Lib",
 	'sap/ui/core/message/MessageMixin',
 	'sap/m/Label',
 	'sap/ui/core/library',
@@ -19,8 +19,8 @@ sap.ui.define([
 function(
 	library,
 	Control,
-	Core,
 	EnabledPropagator,
+	Library,
 	MessageMixin,
 	Label,
 	coreLibrary,
@@ -91,7 +91,7 @@ function(
 	 * @implements sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -453,7 +453,7 @@ function(
 	 * @returns {sap.ui.core.AccessibilityInfo} The <code>sap.m.RadioButton</code> accessibility information
 	 */
 	RadioButton.prototype.getAccessibilityInfo = function() {
-		var oBundle = Core.getLibraryResourceBundle("sap.m");
+		var oBundle = Library.getResourceBundleFor("sap.m");
 		return {
 			role: "radio",
 			type: oBundle.getText("ACC_CTR_TYPE_RADIO"),

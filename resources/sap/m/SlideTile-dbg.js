@@ -6,6 +6,7 @@
 
 sap.ui.define([
 	'./library',
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/m/GenericTile',
 	'sap/ui/core/Icon',
@@ -13,12 +14,12 @@ sap.ui.define([
 	"sap/ui/events/KeyCodes",
 	"sap/ui/events/PseudoEvents",
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/InvisibleText",
 	"sap/ui/core/Lib"
 ],
 	function(
 		library,
+		Localization,
 		Control,
 		GenericTile,
 		Icon,
@@ -26,7 +27,6 @@ sap.ui.define([
 		KeyCodes,
 		PseudoEvents,
 		jQuery,
-		Configuration,
 		InvisibleText,
 		CoreLib
 	) {
@@ -45,7 +45,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.34
 	 *
 	 * @public
@@ -93,7 +93,7 @@ sap.ui.define([
 				/**
 				 * The set of Generic Tiles to be shown in the control.
 				 */
-				tiles: {type: "sap.m.GenericTile", multiple: true, singularName: "tile", bindable: "bindable"},
+				tiles: {type: "sap.m.GenericTile", defaultClass: GenericTile, multiple: true, singularName: "tile", bindable: "bindable"},
 				/**
 				 * The pause/play icon that is being used to display the pause/play state of the control.
 				 */
@@ -565,7 +565,7 @@ sap.ui.define([
 	SlideTile.prototype._scrollToTile = function (tileIndex) {
 		if (tileIndex >= 0) {
 			var oWrapperTo = this.$("wrapper-" + tileIndex);
-			var sDir = Configuration.getRTL() ? "right" : "left";
+			var sDir = Localization.getRTL() ? "right" : "left";
 
 			this._changeSizeTo(tileIndex);
 			oWrapperTo.css(sDir, "0rem");
@@ -608,7 +608,7 @@ sap.ui.define([
 		}
 
 		oWrapperTo = this.$("wrapper-" + this._iCurrentTile);
-		sDir = Configuration.getRTL() ? "right" : "left";
+		sDir = Localization.getRTL() ? "right" : "left";
 
 		var oCurrentTile = this.getTiles()[this._iCurrentTile];
 		if (oCurrentTile && oCurrentTile._isNavigateActionEnabled()) {

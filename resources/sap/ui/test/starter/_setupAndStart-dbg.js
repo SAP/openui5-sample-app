@@ -132,7 +132,7 @@ sap.ui.define([
 
 	function initTestModule(oConfig) {
 		var pAfterLoader, pQUnit, pSinon, pSinonQUnitBridge, pSinonConfig, pCoverage, pTestEnv,
-			oQUnitConfig, aJUnitDoneCallbacks;
+			oQUnitConfig;
 
 		document.title = oConfig.title;
 
@@ -164,22 +164,7 @@ sap.ui.define([
 				utils.addStylesheet(oQUnitConfig.css);
 				return requireP(oQUnitConfig.module);
 			}).then(function() {
-
-				// install a mock version of the qunit-reporter-junit API to collect jUnitDone callbacks
-				aJUnitDoneCallbacks = [];
-				QUnit.jUnitDone = function(cb) {
-					aJUnitDoneCallbacks.push(cb);
-				};
 				return requireP("sap/ui/qunit/qunit-junit");
-			}).then(function() {
-				delete QUnit.jUnitDone;
-				return requireP("sap/ui/thirdparty/qunit-reporter-junit");
-			}).then(function() {
-				// now register the collected callbacks with the real qunit-reporter-junit API
-				aJUnitDoneCallbacks.forEach(function(cb) {
-					QUnit.jUnitDone(cb);
-				});
-				aJUnitDoneCallbacks = undefined;
 			});
 		}
 
@@ -425,8 +410,8 @@ sap.ui.define([
 			pTestEnv = pTestEnv.then(function() {
 				return new Promise(function(resolve, reject) {
 					sap.ui.require(["sap/ui/core/Core"], function(core) {
-						core.boot();
-						core.attachInit(resolve);
+						core.boot?.(); // method no longer exists with new bootstrap
+						core.ready(resolve);
 					}, reject);
 				});
 			});
@@ -467,6 +452,8 @@ sap.ui.define([
 		});
 
 	}
+
+	utils.registerResourceRoots();
 
 	var oParams = new URLSearchParams(window.location.search),
 		sSuiteName = utils.getAttribute('data-sap-ui-testsuite') || oParams.get("testsuite"),

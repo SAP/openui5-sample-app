@@ -3,7 +3,7 @@
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(["sap/ui/core/XMLComposite", "./library", "sap/ui/core/Item"], function(XMLComposite, library, Item) {
+sap.ui.define(["sap/ui/core/Lib", "sap/ui/core/XMLComposite", "./library", "sap/ui/core/Item"], function(Library, XMLComposite, library, Item) {
 	"use strict";
 
 	/**
@@ -17,12 +17,12 @@ sap.ui.define(["sap/ui/core/XMLComposite", "./library", "sap/ui/core/Item"], fun
 	 * @implements sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @experimental since 1.52
 	 * @since 1.52.0
 	 * @alias sap.m.MultiEditField
 	 * @private
-	 * @deprecated Since version 1.120
+	 * @deprecated Since version 1.121.
 	 * @ui5-restricted sap.m.MultiEditField
 	 */
 	var MultiEditField = XMLComposite.extend("sap.m.MultiEditField", /** @lends sap.m.MultiEditField.prototype */ {
@@ -116,7 +116,7 @@ sap.ui.define(["sap/ui/core/XMLComposite", "./library", "sap/ui/core/Item"], fun
 
 	MultiEditField.prototype.init = function() {
 		if (!MultiEditField.prototype._oRb) {
-			MultiEditField.prototype._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			MultiEditField.prototype._oRb = Library.getResourceBundleFor("sap.m");
 		}
 
 		var oKeepItem = new Item({

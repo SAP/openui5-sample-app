@@ -11,6 +11,7 @@ sap.ui.define([
 	'./SearchField',
 	'./Table',
 	'./library',
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'./SelectDialogBase',
 	'sap/ui/core/InvisibleText',
@@ -23,12 +24,13 @@ sap.ui.define([
 	'sap/m/Bar',
 	'sap/m/Title',
 	'sap/base/Log'
-], function (
+], function(
 	Button,
 	Dialog,
 	SearchField,
 	Table,
 	library,
+	Library,
 	CoreLibrary,
 	SelectDialogBase,
 	InvisibleText,
@@ -110,7 +112,7 @@ sap.ui.define([
 	 * When using the <code>sap.m.TableSelectDialog</code> in SAP Quartz and Horizon themes, the breakpoints and layout paddings could be determined by the dialog's width. To enable this concept and add responsive paddings to an element of the control, you have to add the following classes depending on your use case: <code>sapUiResponsivePadding--header</code>, <code>sapUiResponsivePadding--subHeader</code>, <code>sapUiResponsivePadding--content</code>, <code>sapUiResponsivePadding--footer</code>.
 	 * @extends sap.m.SelectDialogBase
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -352,7 +354,7 @@ sap.ui.define([
 		this._bAppendedToUIArea = false;
 		this._bInitBusy = false;
 		this._bFirstRender = true;
-		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oRb = Library.getResourceBundleFor("sap.m");
 
 		// store a reference to the table for binding management
 		this._oTable = new Table(this.getId() + "-table", {

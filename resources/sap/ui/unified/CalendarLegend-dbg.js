@@ -10,17 +10,18 @@ sap.ui.define([
 	'./library',
 	'./CalendarLegendRenderer',
 	"sap/base/Log",
+	"sap/ui/core/Element",
+	"sap/ui/core/Lib",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/unified/CalendarLegendItem",
-	"sap/ui/core/Core",
 	"sap/ui/Device",
 	"sap/ui/core/delegate/ItemNavigation"
 ],
-	function(Control, library, CalendarLegendRenderer, Log, jQuery, CalendarLegendItem, Core, Device, ItemNavigation) {
+	function(Control, library, CalendarLegendRenderer, Log, Element, Library, jQuery, CalendarLegendItem, Device, ItemNavigation) {
 	"use strict";
 
 	// Resource Bundle
-	var oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
+	var oResourceBundle = Library.getResourceBundleFor("sap.ui.unified");
 
 	// shortcut for sap.ui.unified.CalendarDayType
 	var CalendarDayType = library.CalendarDayType;
@@ -56,7 +57,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -189,7 +190,7 @@ sap.ui.define([
 	CalendarLegend.prototype._onItemNavigationAfterFocus = function(oEvent) {
 		var oSource = oEvent.getSource(),
 			oLegendItemDomRef = oSource.getItemDomRefs()[oSource.getFocusedIndex()],
-			sType = Core.byId(oLegendItemDomRef.id).getType(),
+			sType = Element.getElementById(oLegendItemDomRef.id).getType(),
 			oParent = this._getParent();
 
 		this._setSpecialDateTypeFilter(sType);
@@ -344,6 +345,7 @@ sap.ui.define([
 
 		delete oFreeTypes[CalendarDayType.None];
 		delete oFreeTypes[CalendarDayType.NonWorking];
+		delete oFreeTypes[CalendarDayType.Working];
 
 		//remove types that are used
 		for (i = 0; i < aItems.length; i++) {

@@ -10,6 +10,8 @@ sap.ui.define([
 	'sap/m/Button',
 	'sap/ui/base/Interface',
 	'sap/ui/Device',
+	"sap/ui/core/ControlBehavior",
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'./SelectionDetailsRenderer',
 	'sap/base/util/uid',
@@ -21,6 +23,8 @@ function(
 	Button,
 	Interface,
 	Device,
+	ControlBehavior,
+	Library,
 	CoreLibrary,
 	SelectionDetailsRenderer,
 	uid,
@@ -39,7 +43,7 @@ function(
 	 * <b><i>Note:</i></b>It is protected and should only be used within the framework itself.
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @extends sap.ui.core.Control
 	 * @constructor
@@ -157,7 +161,7 @@ function(
 		// Indicates whether the labels are wrapped
 		this._bWrapLabels = false;
 
-		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oRb = Library.getResourceBundleFor("sap.m");
 		this.setAggregation("_button", new Button({
 			id: this.getId() + "-button",
 			type: library.ButtonType.Transparent,
@@ -369,7 +373,7 @@ function(
 
 			height = Math.min(SelectionDetails._POPOVER_MAX_HEIGHT, height);
 			oPopover._oControl._deregisterContentResizeHandler();
-			var bAnimationMode = Configuration.getAnimationMode() !== Configuration.AnimationMode.none;
+			var bAnimationMode = ControlBehavior.getAnimationMode() !== Configuration.AnimationMode.none;
 			$PopoverContent.animate({
 				"height": Math.min(height, iMaxHeight)
 			}, bAnimationMode ? 100 : 0, function() {

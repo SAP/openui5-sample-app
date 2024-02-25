@@ -5,6 +5,8 @@
  */
 
 sap.ui.define([
+	"sap/ui/core/Element",
+	"sap/ui/core/Lib",
 	'sap/ui/core/date/UniversalDate',
 	'sap/ui/unified/CalendarAppointment',
 	'sap/ui/unified/CalendarLegendRenderer',
@@ -13,17 +15,21 @@ sap.ui.define([
 	'sap/ui/core/InvisibleText',
 	"sap/ui/core/date/UI5Date",
 	'sap/base/Log',
-	'sap/ui/core/IconPool' // required by RenderManager#icon
-	],
-	function (
+	// side effect: required by RenderManager#icon
+	'sap/ui/core/IconPool'
+],
+	function(
+		Element,
+		Library,
 		UniversalDate,
 		CalendarAppointment,
 		CalendarLegendRenderer,
 		Device,
 		library,
 		InvisibleText,
-        UI5Date,
-		Log) {
+		UI5Date,
+		Log
+	) {
 		"use strict";
 
 
@@ -84,9 +90,6 @@ sap.ui.define([
 		}
 
 	//		var rb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
-		oRm.accessibilityState(oRow, {
-			role: "row"
-		});
 		oRm.openEnd(); // div element
 
 		this.renderAppointmentsRow(oRm, oRow, aTypes);
@@ -260,7 +263,7 @@ sap.ui.define([
 	CalendarRowRenderer.writeCustomAttributes = function (oRm, oRow) {
 	};
 
-	CalendarRowRenderer.renderInterval = function(oRm, oRow, iInterval, iWidth,  aIntervalHeaders, aNonWorkingItems, iStartOffset, iNonWorkingMax, aNonWorkingSubItems, iSubStartOffset, iNonWorkingSubMax, bFirstOfType, bLastOfType, sAdditionalNonWorkingClass){
+	CalendarRowRenderer.renderInterval = function(oRm, oRow, iInterval, iWidth,  aIntervalHeaders, aNonWorkingItems, iStartOffset, iNonWorkingMax, aNonWorkingSubItems, iSubStartOffset, iNonWorkingSubMax, bFirstOfType, bLastOfType){
 
 		var sId = oRow.getId() + "-AppsInt" + iInterval;
 		var i;
@@ -270,19 +273,14 @@ sap.ui.define([
 
 		oRm.openStart("div", sId);
 		oRm.class("sapUiCalendarRowAppsInt");
-		if (sAdditionalNonWorkingClass) {
-			oRm.class(sAdditionalNonWorkingClass);
-		}
 		oRm.style("width", iWidth + "%");
 
 		if (iInterval >= iDaysLength && (oRow.getIntervalType() === CalendarIntervalType.OneMonth || oRow.getIntervalType() === "OneMonth")){
 			oRm.class("sapUiCalItemOtherMonth");
 		}
-		for (i = 0; i < aNonWorkingItems.length; i++) {
-			if ((iInterval + iStartOffset) % iNonWorkingMax == aNonWorkingItems[i]) {
-				oRm.class("sapUiCalendarRowAppsNoWork");
-				break;
-			}
+
+		if (oRow._isNonWorkingInterval(iInterval, aNonWorkingItems, iStartOffset, iNonWorkingMax)) {
+			oRm.class("sapUiCalendarRowAppsNoWork");
 		}
 
 		if (!bShowIntervalHeaders) {
@@ -342,11 +340,8 @@ sap.ui.define([
 				oRm.class("sapUiCalendarRowAppsSubInt");
 				oRm.style("width", iSubWidth + "%");
 
-				for (var j = 0; j < aNonWorkingSubItems.length; j++) {
-					if ((i + iSubStartOffset) % iNonWorkingSubMax == aNonWorkingSubItems[j]) {
-						oRm.class("sapUiCalendarRowAppsNoWork");
-						break;
-					}
+				if (oRow._isNonWorkingInterval(i, aNonWorkingSubItems, iSubStartOffset, iNonWorkingSubMax)) {
+					oRm.class("sapUiCalendarRowAppsNoWork");
 				}
 
 				oRm.openEnd();
@@ -385,6 +380,7 @@ sap.ui.define([
 	CalendarRowRenderer.renderIntervalHeader = function(oRm, oRow, oIntervalHeader, bRtl, left, right) {
 		var sId = oIntervalHeader.appointment.getId(),
 			mAccProps = {
+				role: "listitem",
 				labelledby: { value: sId + "-Descr", append: true }
 			},
 			sStartEndAriaText;
@@ -460,7 +456,7 @@ sap.ui.define([
 		}
 
 		var sTitle = oIntervalHeader.appointment.getTitle();
-		if (sTitle) {
+		if (sTitle && !oIntervalHeader.appointment.getCustomContent().length) {
 			oRm.openStart("span", sId + "-Title");
 			oRm.class("sapUiCalendarRowAppsIntHeadTitle");
 			oRm.openEnd(); // span element
@@ -469,7 +465,7 @@ sap.ui.define([
 		}
 
 		var sText = oIntervalHeader.appointment.getText();
-		if (sText) {
+		if (sText && !oIntervalHeader.appointment.getCustomContent().length) {
 			oRm.openStart("span", sId + "-Text");
 			oRm.class("sapUiCalendarRowAppsIntHeadText");
 			oRm.openEnd(); // span element
@@ -525,11 +521,11 @@ sap.ui.define([
 			mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + aAriaLabels.join(" ");
 		}
 
-		if (sTitle) {
+		if (sTitle && !oAppointment.getCustomContent().length) {
 			mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + sId + "-Title";
 		}
 
-		if (sText) {
+		if (sText && !oAppointment.getCustomContent().length) {
 			mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + sId + "-Text";
 		}
 
@@ -717,11 +713,8 @@ sap.ui.define([
 			oRm.class("sapUiCalItemOtherMonth");
 		}
 
-		for (i = 0; i < aNonWorkingItems.length; i++) {
-			if ((iInterval + iStartOffset) % iNonWorkingMax == aNonWorkingItems[i]) {
-				oRm.class("sapUiCalendarRowAppsNoWork");
-				break;
-			}
+		if (oRow._isNonWorkingInterval(iInterval, aNonWorkingItems, iStartOffset, iNonWorkingMax)) {
+			oRm.class("sapUiCalendarRowAppsNoWork");
 		}
 
 		if (!bShowIntervalHeaders) {
@@ -792,8 +785,8 @@ sap.ui.define([
 			oRm.openStart("div");
 			oRm.class("sapUiCalendarNoApps");
 			oRm.openEnd();
-			var oPCRow = sap.ui.getCore().byId(oRow.getAssociation("row"));
-			sNoAppointments = oPCRow.getNoAppointmentsText() ? oPCRow.getNoAppointmentsText() : sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("PLANNINGCALENDAR_ROW_NO_APPOINTMENTS");
+			var oPCRow = Element.getElementById(oRow.getAssociation("row"));
+			sNoAppointments = oPCRow.getNoAppointmentsText() ? oPCRow.getNoAppointmentsText() : Library.getResourceBundleFor("sap.m").getText("PLANNINGCALENDAR_ROW_NO_APPOINTMENTS");
 			oRm.text(sNoAppointments);
 			oRm.close("div");
 		}
@@ -850,12 +843,10 @@ sap.ui.define([
 				oRm.class("sapUiCalendarRowAppsSubInt");
 				oRm.style("width", iSubWidth + "%");
 
-				for (var j = 0; j < aNonWorkingSubItems.length; j++) {
-					if ((i + iSubStartOffset) % iNonWorkingSubMax == aNonWorkingSubItems[j]) {
-						oRm.class("sapUiCalendarRowAppsNoWork");
-						break;
-					}
+				if (oRow._isNonWorkingInterval(i, aNonWorkingSubItems, iSubStartOffset, iNonWorkingSubMax)) {
+					oRm.class("sapUiCalendarRowAppsNoWork");
 				}
+
 				oRm.openEnd(); // div element
 				oRm.close("div");
 			}
@@ -877,7 +868,7 @@ sap.ui.define([
 			sLegendId = oCalRow.getLegend();
 
 		if (sLegendId) {
-			oLegend = sap.ui.getCore().byId(sLegendId);
+			oLegend = Element.getElementById(sLegendId);
 			if (oLegend) {
 				aResult = oLegend.getItems();
 			} else {

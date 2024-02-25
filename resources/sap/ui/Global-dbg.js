@@ -18,7 +18,7 @@
  * sap.ui.lazyRequire("sap.ui.core.Control");
  * sap.ui.lazyRequire("sap.m.Button");
  *
- * @version 1.120.7
+ * @version 1.121.0
  * @author  SAP SE
  * @public
  */
@@ -48,37 +48,38 @@ sap.ui.define([
 	 * The <code>sap</code> namespace is automatically registered with the
 	 * OpenAjax hub if it exists.
 	 *
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @namespace
 	 * @public
 	 * @name sap
 	 */
-	if ( typeof window.sap !== "object" && typeof window.sap !== "function"  ) {
-	  window.sap = {};
-	}
 
 	/**
 	 * The <code>sap.ui</code> namespace is the central OpenAjax compliant entry
 	 * point for UI related JavaScript functionality provided by SAP.
 	 *
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @namespace
 	 * @name sap.ui
 	 * @public
 	 */
-	if ( typeof window.sap.ui !== "object") {
-		window.sap.ui = {};
-	}
 
-	sap.ui = Object.assign(sap.ui, {
+	let Global = {
 		/**
 		 * The version of the SAP UI Library
 		 * @type string
 		 */
-		version: "1.120.7",
+		version: "1.121.0",
 		// buildinfo.lastchange is deprecated and is therefore defaulted to empty string
-		buildinfo : { lastchange : "", buildtime : "20240218-0326" }
-	});
+		buildinfo : { lastchange : "", buildtime : "20240225-0327" }
+	};
+
+	/**
+	 * Module export must be the global sap.ui namespace in UI5 v1.
+	 * In UI5 v2, the export is a plain object containing the version and buildinfo.
+	 * @deprecated since 1.120
+	 */
+	Global = Object.assign(sap.ui, Global);
 
 	var syncCallBehavior = sap.ui.loader._.getSyncCallBehavior();
 
@@ -309,7 +310,7 @@ sap.ui.define([
 	 *
 	 * @static
 	 * @public
-	 * @deprecated since 1.56.0, use <code>sap.ui.require.toUrl</code> instead.
+	 * @deprecated since 1.56.0, use {@link sap.ui.require.toUrl} instead.
 	 */
 	sap.ui.resource = function(sLibraryName, sResourcePath) {
 		assert(typeof sLibraryName === "string", "sLibraryName must be a string");
@@ -351,7 +352,7 @@ sap.ui.define([
 	 * @param {string} sNamespace Namespace prefix for which to load resources relative to the application root folder
 	 * @public
 	 * @static
-	 * @deprecated since 1.56, use <code>sap.ui.loader.config</code> instead.
+	 * @deprecated since 1.56, use {@link sap.ui.loader.config} and its <code>paths</code> option instead.
 	 */
 	sap.ui.localResources = function(sNamespace) {
 		assert(sNamespace, "sNamespace must not be empty");
@@ -360,6 +361,6 @@ sap.ui.define([
 		sap.ui.loader.config({paths:mPaths});
 	};
 
-	return sap.ui;
+	return Global;
 
 });

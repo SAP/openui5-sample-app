@@ -58,8 +58,7 @@ sap.ui.define([
 					DeliveryDate : this.createDeliveryDate(),
 					GrossAmount : null,
 					Quantity : null,
-					QuantityUnit : null,
-					SalesOrderID : oItemsBinding.getContext().getProperty("SalesOrderID")
+					QuantityUnit : null
 				}, /*bAtEnd*/ true, {inactive : true});
 		},
 
@@ -93,7 +92,7 @@ sap.ui.define([
 			var oView = this.getView(),
 				oModel = oView.getModel(),
 				oTable = oView.byId("ToLineItems"),
-				oSelectedItem = oTable.getContextByIndex(oTable.getSelectedIndex()).getObject(),
+				oSelectedItem = oTable.getContextByIndex(oTable.getSelectedIndices()[0]).getObject(),
 				sSalesOrderID = oSelectedItem.SalesOrderID,
 				sSalesOrderItemPosition = oSelectedItem.ItemPosition,
 				sItem = "\"" + sSalesOrderID + " / " + sSalesOrderItemPosition + "\"";
@@ -160,8 +159,7 @@ sap.ui.define([
 				Note : "Created by OData V2 Sales Orders App",
 				ProductID : "HT-1000",
 				Quantity : "1",
-				QuantityUnit : "EA",
-				SalesOrderID : bDeepCreate ? undefined : oBindingContext.getProperty("SalesOrderID")
+				QuantityUnit : "EA"
 			}, /*bAtEnd*/true, mParameters);
 
 			oCreatedContext.created().then(function () {
@@ -210,7 +208,7 @@ sap.ui.define([
 		onDeleteItem : function () {
 			var sSalesOrderLineItem,
 				oTable = this.byId("ToLineItems"),
-				oItemContext = oTable.getContextByIndex(oTable.getSelectedIndex()),
+				oItemContext = oTable.getContextByIndex(oTable.getSelectedIndices()[0]),
 				that = this;
 
 			function onConfirm(sCode) {

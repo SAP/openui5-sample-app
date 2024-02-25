@@ -1063,14 +1063,16 @@ sap.ui.define([
 [undefined, "~path~"].forEach(function (sPath) {
 	[false, true].forEach(function (bTransient) {
 		[false, true].forEach(function (bDefault) {
-			const sTitle = `_Cache#restoreElement, path=${sPath}, transient=${bTransient},
- default=${bDefault}`;
+			[42, 43].forEach((iLength) => {
+	const sTitle = `_Cache#restoreElement, path=${sPath}, transient=${bTransient},
+ default=${bDefault}, length=${iLength}`;
 
 	QUnit.test(sTitle, function (assert) {
 		const oCache = new _Cache(this.oRequestor, "TEAMS");
 		oCache.iLimit = 234;
 		oCache.iActiveElements = 1;
 		const aElements = [];
+		aElements.length = iLength;
 		aElements.$byPredicate = {};
 		aElements.$created = 2;
 		if (bDefault) {
@@ -1086,7 +1088,8 @@ sap.ui.define([
 		oHelperMock.expects("addToCount")
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), sPath0,
 				sinon.match.same(aElements), 1);
-		this.mock(aElements).expects("splice").withExactArgs(42, 0, "~oElement~");
+		this.mock(aElements).expects("splice").exactly(iLength > 42 ? 1 : 0)
+			.withExactArgs(42, 0, "~oElement~");
 		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~oElement~", "predicate")
 			.returns("~predicate~");
 
@@ -1099,7 +1102,11 @@ sap.ui.define([
 		assert.strictEqual(aElements.$created, bTransient ? 3 : 2);
 		assert.strictEqual(oCache.iActiveElements, bTransient && !sPath ? 2 : 1);
 		assert.deepEqual(aElements.$byPredicate, {"~predicate~" : "~oElement~"});
+		if (iLength <= 42) {
+			assert.strictEqual(aElements[42], "~oElement~", "avoid #splice here");
+		}
 	});
+			});
 		});
 	});
 });
@@ -7612,9 +7619,9 @@ sap.ui.define([
 		// code under test
 		oPromise = oCache.requestElements(iStart, iEnd, "~oGroupLock~", 0, "~fnDataRequested~");
 
-		assert.deepEqual(oCache.aReadRequests, [{iStart, iEnd}]);
+		assert.deepEqual(oCache.aReadRequests, [{iStart, iEnd, bObsolete : false}]);
 		if (bSuccess === undefined) {
-			oCache.aReadRequests[0].obsolete = true;
+			oCache.aReadRequests[0].bObsolete = true;
 		}
 		assert.strictEqual(oCache.bSentRequest, true);
 		assert.strictEqual(oFillExpectation.args[0][0], oPromise);
@@ -7667,7 +7674,7 @@ sap.ui.define([
 		// code under test
 		oPromise = oCache.requestElements(iStart, iEnd, "~oGroupLock~", 0, "~fnDataRequested~");
 
-		assert.deepEqual(oCache.aReadRequests, [{iStart, iEnd}]);
+		assert.deepEqual(oCache.aReadRequests, [{iStart, iEnd, bObsolete : false}]);
 
 		assert.strictEqual(oCache.bSentRequest, true);
 		assert.strictEqual(oFillExpectation.args[0][0], oPromise);
@@ -10947,8 +10954,8 @@ sap.ui.define([
 			.withExactArgs({"" : "~listeners~"}, "")
 			.callsFake(function () {
 				assert.deepEqual(oCache.aReadRequests, [
-					{iStart : 1, iEnd : 2, obsolete : true},
-					{iStart : 3, iEnd : 4, obsolete : true}
+					{iStart : 1, iEnd : 2, bObsolete : true},
+					{iStart : 3, iEnd : 4, bObsolete : true}
 				]);
 			});
 
@@ -10956,8 +10963,8 @@ sap.ui.define([
 		oCache.reset([], undefined, "~mQueryOptions~");
 
 		assert.deepEqual(oCache.aReadRequests, [
-			{iStart : 1, iEnd : 2, obsolete : true},
-			{iStart : 3, iEnd : 4, obsolete : true}
+			{iStart : 1, iEnd : 2, bObsolete : true},
+			{iStart : 3, iEnd : 4, bObsolete : true}
 		]);
 		assert.strictEqual(oCache.aElements, aElements);
 		assert.strictEqual(oCache.aElements.length, 0);
@@ -11280,7 +11287,7 @@ sap.ui.define([
 				sResourcePath = "LeaveRequest('1')/Submit",
 				oCache = this.createSingle(sResourcePath, undefined, true);
 
-			this.mock(oGroupLock).expects("getGroupId").twice().withExactArgs().returns("group");
+			this.mock(oGroupLock).expects("getGroupId").withExactArgs().returns("group");
 			this.oRequestorMock.expects("relocateAll")
 				.withExactArgs("$parked.group", "group", sinon.match.same(oEntity));
 			this.oRequestorMock.expects("isActionBodyOptional").withExactArgs().returns(bOptional);
@@ -11351,8 +11358,9 @@ sap.ui.define([
 	//*********************************************************************************************
 [false, true].forEach(function (bHasETag) {
 	[false, true].forEach(function (bHasSelect) {
-		var sTitle = "SingleCache: post for bound operation, has ETag: " + bHasETag
-				+ ", has $select: " + bHasSelect;
+		["$single", "any"].forEach(function (sGroupId) {
+	const sTitle = "SingleCache: post for bound operation, has ETag: " + bHasETag + ", has $select:"
+		+ bHasSelect + ", groupId=" + sGroupId;
 
 	QUnit.test(sTitle, function (assert) {
 		var mQueryOptions = bHasSelect ? {$select : "~select~"} : {},
@@ -11371,13 +11379,14 @@ sap.ui.define([
 			mTypes = {},
 			oUnlockExpectation;
 
-		oGroupLockMock.expects("getGroupId").withExactArgs().returns("group");
+		oGroupLockMock.expects("getGroupId").withExactArgs().returns(sGroupId);
 		this.oRequestorMock.expects("relocateAll")
-			.withExactArgs("$parked.group", "group", sinon.match.same(oEntity));
+			.withExactArgs("$parked." + sGroupId, sGroupId, sinon.match.same(oEntity));
 		this.oRequestorMock.expects("isActionBodyOptional").never();
 		oRequestExpectation = this.oRequestorMock.expects("request")
 			.withExactArgs("POST", sResourcePath, sinon.match.same(oGroupLock),
-				{"If-Match" : bHasETag ? "*" : {}}, null, sinon.match.func)
+				{"If-Match" : bHasETag ? "*" : {}}, null,
+				sGroupId !== "$single" ? sinon.match.func : false)
 			.resolves(oReturnValue);
 		this.mock(oCache).expects("fetchTypes")
 			.withExactArgs()
@@ -11395,22 +11404,25 @@ sap.ui.define([
 		oResult = oCache.post(oGroupLock, /*oData*/null, oEntity, /*bIgnoreETag*/true, undefined,
 			"fnGetOriginalResourcePath");
 
-		oGroupLockMock.expects("getGroupId").withExactArgs().returns("~group~");
-		this.oRequestorMock.expects("lockGroup")
-			.withExactArgs("~group~", sinon.match.same(oCache), true)
-			.returns(oRequestLock);
+		if (sGroupId !== "$single") {
+			this.oRequestorMock.expects("lockGroup")
+				.withExactArgs(sGroupId, sinon.match.same(oCache), true)
+				.returns(oRequestLock);
+			// code under test
+			oRequestExpectation.args[0][5](); // call onSubmit
 
-		// code under test
-		oRequestExpectation.args[0][5](); // call onSubmit
-
-		oUnlockExpectation = this.mock(oRequestLock).expects("unlock").withExactArgs();
+			oUnlockExpectation = this.mock(oRequestLock).expects("unlock").withExactArgs();
+		}
 
 		return oResult.then(function (oResult) {
 				assert.strictEqual(oResult, oReturnValue);
-				assert.ok(oUnlockExpectation.calledAfter(oResponseExpectation));
+				if (oUnlockExpectation) {
+					assert.ok(oUnlockExpectation.calledAfter(oResponseExpectation));
+				}
 				assert.ok(oResponseExpectation.calledAfter(oPathExpectation));
 			});
 	});
+		});
 	});
 });
 	//TODO with an expand on 1..n navigation properties, compute the count of the nested collection
@@ -11517,7 +11529,7 @@ sap.ui.define([
 			mExpectedHeaders0["If-Match"] = mExpectedHeaders1["If-Match"] = oEntity;
 		}
 		oError.strictHandlingFailed = true;
-		this.mock(oGroupLock).expects("getGroupId").exactly(bBound ? 2 : 0)
+		this.mock(oGroupLock).expects("getGroupId").exactly(bBound ? 1 : 0)
 			.withExactArgs()
 			.returns("groupId");
 		this.mock(this.oRequestor).expects("relocateAll").exactly(bBound ? 1 : 0)

@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 //Provides class sap.ui.core.util.PasteHelper - a utility for converting and validating data pasted from clipboard.
-sap.ui.define([ "sap/ui/core/Core", "sap/ui/model/ParseException", "sap/ui/model/ValidateException", "sap/base/Log"], function(Core, ParseException, ValidateException, Log) {
+sap.ui.define([ "sap/ui/core/Lib", "sap/ui/model/ParseException", "sap/ui/model/ValidateException", "sap/base/Log"], function(Library, ParseException, ValidateException, Log) {
 	"use strict";
 
 	/**
@@ -13,7 +13,7 @@ sap.ui.define([ "sap/ui/core/Core", "sap/ui/model/ParseException", "sap/ui/model
 	 *
 	 * @class Parses and validates data on the <code>paste</code> event of an SAPUI5 table.
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @private
 	 * @ui5-restricted sap.ui.table.Table, sap.m.Table, sap.m.plugins.PasteProvider
 	 * @alias sap.ui.core.util.PasteHelper
@@ -229,7 +229,7 @@ sap.ui.define([ "sap/ui/core/Core", "sap/ui/model/ParseException", "sap/ui/model
 			throw new Error("Missing parameter aColumnInfo"); //Check -  missing param standard exception?
 		}
 
-		var aErrors = [], aRowPromises = [], oBundle = Core.getLibraryResourceBundle();
+		var aErrors = [], aRowPromises = [], oBundle = Library.getResourceBundleFor("sap.ui.core");
 		var fnParse = function(sCellData, oType) {
 			return oType.parseValue(sCellData, "string");
 		};

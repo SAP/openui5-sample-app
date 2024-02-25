@@ -34,8 +34,8 @@ sap.ui.define([
 	"./lib/_Requestor",
 	"sap/base/assert",
 	"sap/base/Log",
+	"sap/base/i18n/Localization",
 	"sap/ui/base/SyncPromise",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/library",
 	"sap/ui/core/Messaging",
 	"sap/ui/core/Rendering",
@@ -49,7 +49,7 @@ sap.ui.define([
 	"sap/ui/thirdparty/URI"
 ], function (ODataContextBinding, ODataListBinding, ODataMetaModel, ODataPropertyBinding,
 		SubmitMode, _GroupLock, _Helper, _MetadataRequestor, _Parser, _Requestor, assert, Log,
-		SyncPromise, Configuration, coreLibrary, Messaging, Rendering, Supportability,
+		Localization, SyncPromise, coreLibrary, Messaging, Rendering, Supportability,
 		CacheManager, Message, BindingMode, BaseContext, Model, OperationMode, URI) {
 	"use strict";
 
@@ -88,6 +88,7 @@ sap.ui.define([
 			serviceUrl : true,
 			sharedRequests : true,
 			supportReferences : true,
+			// @deprecated As of Version 1.110.0
 			synchronizationMode : true,
 			updateGroupId : true,
 			withCredentials : true
@@ -141,7 +142,7 @@ sap.ui.define([
 		 *   Whether to ignore all annotations from service metadata and "cross-service references";
 		 *   only the value <code>true</code> is allowed. Only annotations from annotation files
 		 *   (see parameter "annotationURI") are loaded. This parameter is not inherited by value
-		 *   list models. @experimental as of version 1.111.0
+		 *   list models. Supported since 1.121.0
 		 * @param {object} [mParameters.metadataUrlParams]
 		 *   Additional map of URL parameters used specifically for $metadata requests. Note that
 		 *   "sap-context-token" applies only to the service's root $metadata, but not to
@@ -177,7 +178,7 @@ sap.ui.define([
 		 *   (Controls synchronization between different bindings which refer to the same data for
 		 *   the case data changes in one binding. Must be set to 'None' which means bindings are
 		 *   not synchronized at all; all other values are not supported and lead to an error.)
-		 *   <b>deprecated:</b> As of Version 1.110.0, this parameter is optional; see also
+		 *   <b>deprecated:</b> As of Version 1.110.0, this parameter is obsolete; see also
 		 *   {@link topic:648e360fa22d46248ca783dc6eb44531 Data Reuse}
 		 * @param {string} [mParameters.updateGroupId]
 		 *   The group ID that is used for update requests. If no update group ID is specified,
@@ -234,7 +235,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
@@ -260,7 +261,7 @@ sap.ui.define([
 	function constructor(mParameters) {
 		var sGroupId,
 			oGroupProperties,
-			sLanguageTag = Configuration.getLanguageTag(),
+			sLanguageTag = Localization.getLanguageTag().toString(),
 			sODataVersion,
 			sParameter,
 			mQueryParams,
@@ -273,6 +274,7 @@ sap.ui.define([
 		Model.call(this);
 
 		mParameters = mParameters || {};
+		// @deprecated As of Version 1.110.0
 		if ("synchronizationMode" in mParameters && mParameters.synchronizationMode !== "None") {
 			throw new Error("Synchronization mode must be 'None'");
 		}
@@ -315,7 +317,7 @@ sap.ui.define([
 		if (this.sGroupId !== "$auto" && this.sGroupId !== "$direct") {
 			throw new Error("Group ID must be '$auto' or '$direct'");
 		}
-		_Helper.checkGroupId(mParameters.updateGroupId, false, "Invalid update group ID: ");
+		_Helper.checkGroupId(mParameters.updateGroupId, false, false, "Invalid update group ID: ");
 		this.sUpdateGroupId = mParameters.updateGroupId || this.getGroupId();
 		this.mGroupProperties = {};
 		for (sGroupId in mParameters.groupProperties) {
@@ -827,16 +829,16 @@ sap.ui.define([
 	 *   The binding path in the model; must not end with a slash
 	 * @param {sap.ui.model.Context} [oContext]
 	 *   The context which is required as base for a relative path
-	 * @param {sap.ui.model.Sorter|sap.ui.model.Sorter[]} [vSorters]
+	 * @param {sap.ui.model.Sorter|sap.ui.model.Sorter[]} [vSorters=[]]
 	 *   The dynamic sorters to be used initially. Call
 	 *   {@link sap.ui.model.odata.v4.ODataListBinding#sort} to replace them. Static sorters, as
 	 *   defined in the '$orderby' binding parameter, are always executed after the dynamic sorters.
 	 *   Supported since 1.39.0.
-	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]} [vFilters]
-	 *   The dynamic application filters to be used initially. Call
-	 *   {@link sap.ui.model.odata.v4.ODataListBinding#filter} to replace them. Static filters, as
-	 *   defined in the '$filter' binding parameter, are always combined with the dynamic filters
-	 *   using a logical <code>AND</code>.
+	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]} [vFilters=[]]
+	 *   The dynamic {@link sap.ui.model.FilterType.Application application} filters to be used
+	 *   initially. Call {@link sap.ui.model.odata.v4.ODataListBinding#filter} to replace them.
+	 *   Static filters, as defined in the '$filter' binding parameter, are always combined with the
+	 *   dynamic filters using a logical <code>AND</code>.
 	 *   Supported since 1.39.0.
 	 * @param {object} [mParameters]
 	 *   Map of binding parameters which can be OData query options as specified in <a href=
@@ -1051,6 +1053,9 @@ sap.ui.define([
 	 * @param {boolean} [mParameters.$$noPatch]
 	 *   Whether changing the value of this property binding is not causing a PATCH request; only
 	 *   the value <code>true</code> is allowed.
+	 * @param {any} [mParameters.scope]
+	 *   The scope for {@link sap.ui.model.odata.v4.ODataMetaModel#requestObject} if it is an
+	 *   object; a custom query option otherwise
 	 * @returns {sap.ui.model.odata.v4.ODataPropertyBinding}
 	 *   The property binding
 	 * @throws {Error}
@@ -1513,7 +1518,9 @@ sap.ui.define([
 	 * @param {string} [sGroupId]
 	 *   The group ID that is used for the DELETE request; if not specified, the model's
 	 *   {@link #getUpdateGroupId update group ID} is used; the resulting group ID must not have
-	 *   {@link sap.ui.model.odata.v4.SubmitMode.API}
+	 *   {@link sap.ui.model.odata.v4.SubmitMode.API}. You can use the '$single' group ID to send a
+	 *   DELETE request as fast as possible; it will be wrapped in a batch request as for a '$auto'
+	 *   group (since 1.121.0).
 	 * @param {boolean} [bRejectIfNotFound]
 	 *   If <code>true</code>, deletion fails if the entity does not exist (HTTP status code 404 or
 	 *   412 due to the <code>If-Match: *</code> header); otherwise we assume that it has already
@@ -1549,7 +1556,7 @@ sap.ui.define([
 				vCanonicalPath.fetchValue("@odata.etag", /*oListener*/null, /*bCached*/true)
 			]);
 		}
-		_Helper.checkGroupId(sGroupId);
+		_Helper.checkGroupId(sGroupId, false, true);
 		sGroupId = sGroupId || this.getUpdateGroupId();
 		if (this.isApiGroup(sGroupId)) {
 			throw new Error("Illegal update group ID: " + sGroupId);
@@ -1809,6 +1816,9 @@ sap.ui.define([
 			case "submit":
 				if (sGroupId.startsWith("$auto.")) {
 					return SubmitMode.Auto;
+				}
+				if (sGroupId === "$single") {
+					return "Single";
 				}
 				return this.mGroupProperties[sGroupId]
 					? this.mGroupProperties[sGroupId].submit

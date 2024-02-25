@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.120.7"
+      "version": "1.121.0"
     },
     "title": "The SAPUI5 Core Runtime.",
     "description": "The SAPUI5 Core Runtime.\n\n  Contains the UI5 jQuery plugins (jQuery.sap.*), the Core and all its components,\n  base classes for Controls, Components and the Model View Controller classes.",
@@ -126,7 +126,7 @@
       {
         "name": "cldr",
         "packagedWithMySelf": true,
-        "version": "43"
+        "version": "44"
       },
       {
         "name": "mobiscroll",
@@ -251,7 +251,7 @@
       {
         "name": "tzdata",
         "packagedWithMySelf": true,
-        "version": "2023c"
+        "version": "2023d"
       }
     ]
   },
@@ -264,7 +264,7 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.120",
+      "minUI5Version": "1.121",
       "libs": {}
     },
     "library": {
@@ -418,6 +418,7 @@
         "interfaces": [
           "sap.ui.core.IShrinkable",
           "sap.ui.core.Label",
+          "sap.ui.core.ILabelable",
           "sap.ui.core.PopupInterface",
           "sap.ui.core.Toolbar",
           "sap.ui.core.IContextMenu",

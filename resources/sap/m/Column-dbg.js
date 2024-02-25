@@ -7,14 +7,13 @@
 // Provides control sap.m.Column.
 sap.ui.define([
 	"./library",
-	"sap/ui/core/Core",
 	"sap/ui/core/Element",
 	"sap/ui/core/Renderer",
 	"sap/ui/core/library",
 	"sap/ui/Device",
 	"sap/ui/core/InvisibleText"
 ],
-	function(library, Core, Element, Renderer, coreLibrary, Device, InvisibleText) {
+	function(library, Element, Renderer, coreLibrary, Device, InvisibleText) {
 	"use strict";
 
 
@@ -46,7 +45,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -584,7 +583,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Column.prototype.getHeaderMenuInstance = function () {
-		return Core.byId(this.getHeaderMenu());
+		return Element.getElementById(this.getHeaderMenu());
 	};
 
 	Column.prototype.setHeader = function (oControl) {

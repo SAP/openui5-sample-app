@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @public
 	 * @class
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.9.2
 	 * @alias sap.ui.core.ComponentMetadata
 	 * @extends sap.ui.base.ManagedObjectMetadata
@@ -136,10 +136,13 @@ sap.ui.define([
 	 * - {@link sap.ui.component} / {@link sap.ui.component.load} with an existing manifest to prevent the sync request
 	 *
 	 * @param {object} oManifestJson manifest object (will be modified internally!)
+	 * @param {boolean} [bSkipProcess=false] whether the sync processing of the manifest should be skipped.
+	 *  This needs to be set to true when the processing of manifest should be done asynchronously with
+	 *  separated code
 	 * @private
 	 * @ui5-restricted sap.ui.core.Component
 	 */
-	ComponentMetadata.prototype._applyManifest = function(oManifestJson) {
+	ComponentMetadata.prototype._applyManifest = function(oManifestJson, bSkipProcess = false) {
 		// Make sure to not create the manifest object twice!
 		// This could happen when the manifest is accessed (via #getManifestObject) while sap.ui.component is loading it.
 		// Then the async request wouldn't be cancelled and the manifest already loaded (sync) should not be be overridden.
@@ -166,8 +169,9 @@ sap.ui.define([
 		this._oManifest = new Manifest(oManifestJson, {
 			componentName: this.getComponentName(),
 			baseUrl: sap.ui.require.toUrl(this.getComponentName().replace(/\./g, "/")) + "/",
-			process: this._oStaticInfo.__metadataVersion === 2
+			process: !bSkipProcess && this._oStaticInfo.__metadataVersion === 2
 		});
+
 	};
 
 	/**

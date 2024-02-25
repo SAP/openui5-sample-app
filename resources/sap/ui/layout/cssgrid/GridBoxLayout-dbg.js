@@ -5,11 +5,13 @@
  */
 
 sap.ui.define([
+	"sap/ui/core/Element",
 	"sap/ui/layout/cssgrid/GridLayoutBase",
 	"sap/ui/layout/cssgrid/GridSettings",
 	"sap/ui/Device",
 	"sap/ui/thirdparty/jquery"
-], function (
+], function(
+	Element,
 	GridLayoutBase,
 	GridSettings,
 	Device,
@@ -48,7 +50,7 @@ sap.ui.define([
 	 * Applies a sap.ui.layout.cssgrid.GridSettings to a provided DOM element or Control.
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @extends sap.ui.layout.cssgrid.GridLayoutBase
 	 *
@@ -101,7 +103,7 @@ sap.ui.define([
 
 		GridLayoutBase.prototype._applySingleGridLayout.call(this, oElement);
 
-		var oGridList = sap.ui.getCore().byId(oElement.parentElement.id);
+		var oGridList = Element.getElementById(oElement.parentElement.id);
 
 		if (oGridList && oGridList.isA("sap.f.GridList") && oGridList.isGrouped()) {
 			this._flattenHeight(oGridList);

@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/Device", "sap/m/library", "sap/ui/core/Configuration"], function(Device, library, Configuration) {
+sap.ui.define(["sap/ui/Device", "sap/m/library", "sap/ui/core/Configuration", "sap/ui/core/ControlBehavior"], function(Device, library, Configuration, ControlBehavior) {
 		"use strict";
 
 		// shortcut for sap.m.SwitchType
@@ -37,8 +37,8 @@ sap.ui.define(["sap/ui/Device", "sap/m/library", "sap/ui/core/Configuration"], f
 				sTooltip = oSwitch.getTooltip_AsString(),
 				bEnabled = oSwitch.getEnabled(),
 				sName = oSwitch.getName(),
-				bAccessibilityEnabled = Configuration.getAccessibility(),
-				sAnimationMode = Configuration.getAnimationMode(),
+				bAccessibilityEnabled = ControlBehavior.isAccessibilityEnabled(),
+				sAnimationMode = ControlBehavior.getAnimationMode(),
 				CSS_CLASS = SwitchRenderer.CSS_CLASS;
 
 			oRm.openStart("div", oSwitch);

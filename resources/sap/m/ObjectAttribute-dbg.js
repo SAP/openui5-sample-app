@@ -7,17 +7,18 @@
 // Provides control sap.m.ObjectAttribute.
 sap.ui.define([
 	'./library',
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/ui/core/library',
 	'sap/m/Text',
 	'sap/ui/core/Element',
+	"sap/ui/core/Locale",
 	'sap/ui/events/KeyCodes',
 	'./ObjectAttributeRenderer',
 	'sap/base/Log',
-	'sap/ui/base/ManagedObjectObserver',
-	'sap/ui/core/Core'
+	'sap/ui/base/ManagedObjectObserver'
 ],
-function(library, Control, coreLibrary, Text, Element, KeyCodes, ObjectAttributeRenderer, Log, ManagedObjectObserver, oCore) {
+function(library, Localization, Control, coreLibrary, Text, Element, Locale, KeyCodes, ObjectAttributeRenderer, Log, ManagedObjectObserver) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TextDirection
@@ -43,7 +44,7 @@ function(library, Control, coreLibrary, Text, Element, KeyCodes, ObjectAttribute
 	 * <code>text</code> property is styled and acts as a link. In this case the <code>text</code>
 	 * property must also be set, as otherwise there will be no link displayed for the user.
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -173,7 +174,7 @@ function(library, Control, coreLibrary, Text, Element, KeyCodes, ObjectAttribute
 			sText = this.getAggregation('customContent') ? this.getAggregation('customContent').getText() : this.getText(),
 			sTextDir = this.getTextDirection(),
 			oParent = this.getParent(),
-			bPageRTL = oCore.getConfiguration().getRTL(),
+			bPageRTL = Localization.getRTL(),
 			iMaxLines,
 			bWrap = true,
 			oppositeDirectionMarker = '',
@@ -191,7 +192,7 @@ function(library, Control, coreLibrary, Text, Element, KeyCodes, ObjectAttribute
 
 		if (sTitle) {
 			sResult = sTitle;
-			if (oCore.getConfiguration().getLocale().getLanguage().toLowerCase() === "fr") {
+			if (new Locale(Localization.getLanguageTag()).getLanguage().toLowerCase() === "fr") {
 				sResult += " ";
 			}
 			sResult += ": " + sText;

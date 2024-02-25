@@ -6,20 +6,20 @@
 
 // Provides control sap.f.ProductSwitch
 sap.ui.define([
-	"sap/ui/core/Core",
 	"sap/ui/core/Control",
 	"sap/f/GridContainer",
 	"sap/f/GridContainerSettings",
 	"sap/f/ProductSwitchItem",
-	"sap/f/ProductSwitchRenderer"
+	"sap/f/ProductSwitchRenderer",
+	"sap/ui/core/Element"
 ],
 	function (
-		Core,
 		Control,
 		GridContainer,
 		GridContainerSettings,
 		ProductSwitchItem,
-		ProductSwitchRenderer
+		ProductSwitchRenderer,
+		Element
 	) {
 		"use strict";
 		/**
@@ -34,7 +34,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @public
@@ -167,7 +167,7 @@ sap.ui.define([
 		/**
 		* Sets the <code>selectedItem</code> association.
 		*
-		* @param {string | sap.f.ProductSwitchItem | null} vItem New value for the <code>selectedItem</code> association.
+		* @param {sap.ui.core.ID | sap.f.ProductSwitchItem | null} vItem New value for the <code>selectedItem</code> association.
 		* If an ID of a <code>sap.f.ProductSwitchItem</code> instance is given, the item with this ID becomes the <code>selectedItem</code> association.
 		* Alternatively, a <code>sap.f.ProductSwitchItem</code> instance may be given or <code>null</code> to clear the selection.
 		*
@@ -177,7 +177,7 @@ sap.ui.define([
 
 		ProductSwitch.prototype.setSelectedItem = function (vItem) {
 			if (typeof vItem === "string") {
-				vItem = Core.byId(vItem);
+				vItem = Element.getElementById(vItem);
 			}
 
 			if (!(vItem instanceof ProductSwitchItem) && vItem !== null) {

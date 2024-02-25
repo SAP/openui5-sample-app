@@ -8,20 +8,20 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
+	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/core/Icon',
 	'./TokenRenderer',
-	'sap/ui/events/KeyCodes',
-	'sap/ui/core/Core'
+	'sap/ui/events/KeyCodes'
 ],
 	function(
 		library,
 		Control,
+		Library,
 		coreLibrary,
 		Icon,
 		TokenRenderer,
-		KeyCodes,
-		Core
+		KeyCodes
 	) {
 	"use strict";
 
@@ -50,7 +50,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -165,7 +165,7 @@ sap.ui.define([
 				src : "sap-icon://decline",
 				noTabStop: true,
 				press : this._fireDeleteToken.bind(this),
-				tooltip: Core.getLibraryResourceBundle("sap.m").getText("TOKEN_ICON_TOOLTIP")
+				tooltip: Library.getResourceBundleFor("sap.m").getText("TOKEN_ICON_TOOLTIP")
 			});
 
 		oDeleteIcon.addStyleClass("sapMTokenIcon");

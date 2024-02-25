@@ -1,9 +1,10 @@
-/* global QUnit, sinon, globalThis */
+/* global QUnit, sinon */
 
 sap.ui.define([
 	"sap/base/config",
 	"sap/base/Event",
 	"sap/ui/base/config/URLConfigurationProvider",
+	"sap/ui/core/Control",
 	"sap/ui/core/Theming",
 	"sap/ui/core/theming/ThemeHelper",
 	"sap/ui/qunit/utils/waitForThemeApplied"
@@ -11,6 +12,7 @@ sap.ui.define([
 	BaseConfig,
 	BaseEvent,
 	URLConfigurationProvider,
+	Control,
 	Theming,
 	ThemeHelper,
 	themeApplied
@@ -163,6 +165,142 @@ sap.ui.define([
 		});
 	});
 
+	QUnit.module("ThemeRoot Validation");
+
+	// determine the default port depending on the protocol of the current page
+	const defaultPort = window.location.protocol === "https:" ? 443 : 80;
+	const origin = window.location.origin;
+	const originWithoutProtocol = origin.replace(window.location.protocol, "");
+
+	[
+		{
+			caption: "Relative URL, All Origins",
+			theme: "custom@custom-theme/",
+			allowedOrigins: "*",
+			expectedThemeRoot: "custom-theme/UI5/"
+		},
+		{
+			caption: "Relative URL, no valid origins",
+			theme: "custom@custom-theme/",
+			allowedOrigins: null,
+			expectedThemeRoot: "custom-theme/UI5/"
+		},
+		{
+			caption: "Relative URL, baseURI on different domain, no valid origins",
+			theme: "custom@custom-theme/",
+			allowedOrigins: null,
+			expectedThemeRoot: "custom-theme/UI5/",
+			baseURI: "http://example.org" //Check why needed
+		},
+		{
+			caption: "Relative URL, baseURI on different domain, All origins",
+			theme: "custom@custom-theme/",
+			allowedOrigins: "*",
+			expectedThemeRoot: "custom-theme/UI5/",
+			baseURI: "http://example.org" //Check why needed
+		},
+		{
+			caption: "Relative URL, relative baseURI",
+			theme: "custom@../custom-theme",
+			allowedOrigins: null,
+			expectedThemeRoot: "../custom-theme/UI5/",
+			baseURI: "/some/other/path/" //Check why needed
+		},
+		{
+			caption: "Absolute URL, All Origins",
+			theme: "custom@ftp://example.org/theming/custom-theme/",
+			allowedOrigins: "*",
+			expectedThemeRoot: "ftp://example.org/theming/custom-theme/UI5/"
+		},
+		{
+			caption: "Absolute URL, Same Domain",
+			theme: `custom@${origin}/theming/custom-theme/`,
+			allowedOrigins: origin,
+			expectedThemeRoot: "/theming/custom-theme/UI5/"
+		},
+		{
+			caption: "Absolute URL, Valid, but Different Domain",
+			theme: "custom@https://example.com/theming/custom-theme/",
+			allowedOrigins: "https://example.com",
+			expectedThemeRoot: "https://example.com/theming/custom-theme/UI5/"
+		},
+		{
+			caption: "Absolute URL, no valid origins",
+			theme: "custom@https://example.com/theming/custom-theme/",
+			allowedOrigins: null,
+			expectedThemeRoot: "/theming/custom-theme/UI5/"
+		},
+		{
+			caption: "Absolute URL, empty valid origins",
+			theme: "custom@https://example.com/theming/custom-theme/",
+			allowedOrigins: "",
+			expectedThemeRoot: "/theming/custom-theme/UI5/"
+		},
+		{
+			caption: "Absolute URL with same protocol, Valid",
+			theme: "custom@//example.com/theming/custom-theme/",
+			allowedOrigins: "example.com",
+			expectedThemeRoot: "//example.com/theming/custom-theme/UI5/",
+			noProtocol: true
+		},
+		{
+			caption: "Absolute URL with same protocol and themeRoot has default port, Valid",
+			theme: `custom@//example.com:${defaultPort}/theming/custom-theme/`,
+			allowedOrigins: "example.com",
+			expectedThemeRoot: "//example.com/theming/custom-theme/UI5/",
+			noProtocol: true
+		},
+		{
+			caption: "Absolute URL with same protocol and allowedThemeOrigin has default port, Valid",
+			theme: "custom@//example.com/theming/custom-theme/",
+			allowedOrigins: `example.com:${defaultPort}`,
+			expectedThemeRoot: "//example.com/theming/custom-theme/UI5/",
+			noProtocol: true
+		},
+		{
+			caption: "Absolute URL with same protocol and custom port, Valid",
+			theme: "custom@//example.com:8080/theming/custom-theme/",
+			allowedOrigins: "example.com:8080",
+			expectedThemeRoot: "//example.com:8080/theming/custom-theme/UI5/",
+			noProtocol: true
+		},
+		{
+			caption: "Absolute URL with same protocol and themeRoot has custom port, not valid",
+			theme: "custom@//example.com:8080/theming/custom-theme/",
+			allowedOrigins: "example.com",
+			expectedThemeRoot: `${originWithoutProtocol}/theming/custom-theme/UI5/`,
+			noProtocol: true
+		},
+		{
+			caption: "Absolute URL with same protocol and allowedThemeOrigin has custom port, not valid",
+			theme: "custom@//example.com/theming/custom-theme/",
+			allowedOrigins: "example.com:8080",
+			expectedThemeRoot: `${originWithoutProtocol}/theming/custom-theme/UI5/`,
+			noProtocol: true
+		}
+	].forEach(function(oSetup) {
+		QUnit.test(oSetup.caption, function(assert) {
+			BaseConfig._.invalidate();
+			const oStub = sinon.stub(BaseConfig, "get");
+			const fnFake = function(mParameters) {
+				switch (mParameters.name) {
+					case "sapAllowedThemeOrigins":
+						return oSetup.allowedOrigins;
+					case "sapUiTheme":
+						return oSetup.theme;
+					default:
+						return oStub.wrappedMethod.call(this, mParameters);
+				}
+			};
+			oStub.callsFake(fnFake);
+			assert.equal(Theming.getTheme(), "custom", "Configuration 'getTheme' returns expected 'theme' " + Theming.getTheme());
+			// eslint-disable-next-line no-restricted-globals
+			assert.equal(Theming.getThemeRoot(), oSetup.noProtocol ? oSetup.expectedThemeRoot : new URL(oSetup.expectedThemeRoot, location.href).toString(),
+				"Theming 'getThemeRoot' returns expected 'themeRoot' " + Theming.getThemeRoot());
+			oStub.restore();
+		});
+	});
+
 	QUnit.module("Theming runtime behavior", {
 		beforeEach: async function (assert) {
 			// make sure we have a fixed theme to begin with
@@ -282,4 +420,39 @@ sap.ui.define([
 		assert.ok(isApplied(), "Theming should be applied.");
 	});
 
+	QUnit.module("others");
+
+	/**
+	 * Tests that <code>Theming.notifyContentDensityChanged()</code> calls each control's #onThemeChanged method
+	 */
+	QUnit.test(".notifyContentDensityChanged", function(assert) {
+		const done = assert.async();
+		assert.expect(4);
+
+		const oCtrl = new Control();
+		oCtrl.onThemeChanged = function(oEvent) {
+			assert.ok(oEvent, "TestButton#onThemeChanged is called");
+			assert.equal(oEvent.theme, Theming.getTheme(), "Current theme is passed along 'themeChanged' event");
+		};
+
+		let ignoreEvent = true;
+
+		function handler(oEvent) {
+			if ( ignoreEvent ) {
+				return;
+			}
+			assert.ok(oEvent, "listener for 'applied' event is called");
+			assert.equal(oEvent.theme, Theming.getTheme(), "Current theme is passed along 'applied' event");
+
+			// cleanup
+			Theming.detachApplied(handler);
+			oCtrl.destroy();
+
+			done();
+		}
+		Theming.attachApplied(handler); // immediately might call listener
+
+		ignoreEvent = false;
+		Theming.notifyContentDensityChanged();
+	});
 });

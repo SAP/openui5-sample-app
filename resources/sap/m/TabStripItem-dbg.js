@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 // Provides control sap.m.TabStripItem.
-sap.ui.define(["./library", "sap/ui/core/Item", "sap/ui/base/ManagedObject", "sap/ui/core/IconPool", "./AccButton", "sap/m/ImageHelper"],
-	function(library, Item, ManagedObject, IconPool, AccButton, ImageHelper) {
+sap.ui.define(["./library", "sap/ui/core/Item", "sap/ui/base/ManagedObject", "sap/ui/core/IconPool", "./AccButton", "sap/m/ImageHelper", "sap/ui/core/Lib"],
+	function(library, Item, ManagedObject, IconPool, AccButton, ImageHelper, Library) {
 		"use strict";
 
 		// shortcut for sap.m.ButtonType
@@ -22,7 +22,7 @@ sap.ui.define(["./library", "sap/ui/core/Item", "sap/ui/base/ManagedObject", "sa
 		 * @extends sap.ui.core.Item
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @private
@@ -36,23 +36,20 @@ sap.ui.define(["./library", "sap/ui/core/Item", "sap/ui/base/ManagedObject", "sa
 
 					/**
 					 * Determines additional text to be displayed for the item.
-					 * @experimental
-					 * since 1.63 Disclaimer: this property is in a beta state - incompatible API changes may be done before its official public release. Use at your own discretion.
+					 * @since 1.63
 					 */
 					additionalText : {type : "string", group : "Misc", defaultValue : ""},
 
 					/**
 					 * Defines the icon to be displayed as graphical element within the <code>TabStripItem</code>.
 					 * It can be an image or an icon from the icon font.
-					 * @experimental
-					 * since 1.63 Disclaimer: this property is in a beta state - incompatible API changes may be done before its official public release. Use at your own discretion.
+					 * @since 1.63
 					 */
 					icon : {type : "sap.ui.core.URI", group : "Appearance", defaultValue : null},
 
 					/**
 					 * Determines the tooltip text of the <code>TabStripItem</code> icon.
-					 * @experimental
-					 * since 1.63 Disclaimer: this property is in a beta state - incompatible API changes may be done before its official public release. Use at your own discretion.
+					 * @since 1.63
 					 */
 					iconTooltip : {type : "string", group : "Accessibility", defaultValue : null},
 
@@ -210,7 +207,7 @@ sap.ui.define(["./library", "sap/ui/core/Item", "sap/ui/base/ManagedObject", "sa
 			var oButton = new AccButton({
 				type: ButtonType.Transparent,
 				icon: IconPool.getIconURI("decline"),
-				tooltip: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("TABSTRIP_ITEM_CLOSE_BTN"),
+				tooltip: Library.getResourceBundleFor("sap.m").getText("TABSTRIP_ITEM_CLOSE_BTN"),
 				tabIndex: "-1",
 				ariaHidden: "true"
 			}).addStyleClass(TabStripItem.CSS_CLASS_CLOSE_BUTTON);

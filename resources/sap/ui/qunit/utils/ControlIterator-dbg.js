@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/core/Core', "sap/ui/VersionInfo"],
-		function(oCore, VersionInfo) {
+sap.ui.define(['sap/ui/core/Core', "sap/ui/VersionInfo", "sap/ui/core/Lib"],
+		function(oCore, VersionInfo, Lib) {
 	"use strict";
 
 	/**
@@ -53,7 +53,7 @@ sap.ui.define(['sap/ui/core/Core', "sap/ui/VersionInfo"],
 	 * @namespace
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @since 1.48.0
@@ -266,7 +266,7 @@ sap.ui.define(['sap/ui/core/Core', "sap/ui/VersionInfo"],
 			})
 			.then(function() {
 				// get a shallow copy the loaded library metadata
-				var mLibraries = oCore.getLoadedLibraries();
+				var mLibraries = Lib.all();
 				// filter libraries out that have not been requested
 				for (var sLibName in mLibraries) {
 					if (!fnFilter(sLibName)) {

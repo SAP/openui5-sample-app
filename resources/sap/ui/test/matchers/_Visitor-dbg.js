@@ -19,9 +19,6 @@ sap.ui.define([
 				return true;
 			}
 
-			var oAppWindow = this._getApplicationWindow(),
-			oAppWindowJQuery = oAppWindow.jQuery,
-			oStaticArea = oAppWindow.sap.ui.require("sap/ui/core/Core").getStaticAreaRef();
 
 			var oParent = oControl.getParent();
 			if (bDirect) {
@@ -32,7 +29,8 @@ sap.ui.define([
 				if (fnMatch(oParent)) {
 					return true;
 				}
-				oParent = (oParent.isA("sap.ui.core.UIComponent") &&  !oAppWindowJQuery.contains(oStaticArea, oControl.getDomRef()))
+				oParent = (oParent.isA("sap.ui.core.UIComponent")
+					&&  !this._isInStaticArea(oControl.getDomRef()))
 					? oParent.oContainer : oParent.getParent();
 			}
 

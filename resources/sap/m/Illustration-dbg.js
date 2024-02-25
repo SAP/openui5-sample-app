@@ -10,13 +10,13 @@ sap.ui.define([
 	"sap/ui/core/Control",
 	"./IllustrationRenderer",
 	"./IllustrationPool",
-	"sap/ui/core/Core"
+	"sap/ui/core/Theming"
 ], function(
 	Log,
 	Control,
 	IllustrationRenderer,
 	IllustrationPool,
-	Core
+	Theming
 ) {
 	"use strict";
 
@@ -41,7 +41,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -149,7 +149,7 @@ sap.ui.define([
 		var sMappedType = sType,
 			sPrefix = "",
 			oMetadata = IllustrationPool.getIllustrationSetMetadata(sSet),
-			sCurrentTheme = Core.getConfiguration().getTheme(),
+			sCurrentTheme = Theming.getTheme(),
 			sCollectionPath = oCollectionMap[sCurrentTheme];
 
 		if (

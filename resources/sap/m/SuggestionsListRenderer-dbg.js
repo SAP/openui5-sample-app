@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/Core"], function (Core) {
+sap.ui.define(["sap/ui/core/Element"], function (Element) {
 	"use strict";
 
 	/**
@@ -44,7 +44,7 @@ sap.ui.define(["sap/ui/core/Core"], function (Core) {
 		var searchValue;
 		var selectedIndex = oList.getSelectedItemIndex();
 		try {
-			searchValue = Core.byId(oList.getParentInput()).getValue();
+			searchValue = Element.getElementById(oList.getParentInput()).getValue();
 		} catch (e) {
 			searchValue = "";
 		}

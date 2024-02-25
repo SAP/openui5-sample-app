@@ -5,6 +5,7 @@
  */
 sap.ui.define([
 	"sap/base/Log",
+	"sap/ui/core/Element",
 	"sap/ui/core/sample/common/Helper",
 	"sap/ui/model/odata/v4/lib/_Requestor",
 	"sap/ui/qunit/QUnitUtils",
@@ -15,7 +16,7 @@ sap.ui.define([
 	"sap/ui/test/TestUtils",
 	"sap/ui/test/matchers/Properties",
 	"sap/ui/security/Security"
-], function (Log, Helper, _Requestor, QUnitUtils, RuleAnalyzer, Press, Opa, Opa5,
+], function (Log, Element, Helper, _Requestor, QUnitUtils, RuleAnalyzer, Press, Opa, Opa5,
 		TestUtils, Properties, Security) {
 	"use strict";
 
@@ -41,6 +42,7 @@ sap.ui.define([
 					aExpected.splice(i, 1);
 					return true;
 				}
+				return false;
 			});
 		}
 
@@ -380,8 +382,8 @@ sap.ui.define([
 											// check not possible when document lost focus
 											bDocumentHasFocus = document.hasFocus();
 											return !bDocumentHasFocus
-												|| sTargetId === sap.ui.getCore()
-													.getCurrentFocusedControlId();
+												|| sTargetId === Element.getActiveElement()
+													?.getId();
 										},
 										id : sTargetId,
 										success : function () {

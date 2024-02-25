@@ -7,13 +7,12 @@
 // Provides control sap.m.QuickViewPage
 sap.ui.define([
 	"./library",
-	"sap/ui/core/Core",
 	"sap/ui/core/Control",
 	"sap/ui/core/IconPool",
+	"sap/ui/core/Lib",
 	"sap/ui/layout/form/SimpleForm",
 	"sap/ui/layout/VerticalLayout",
 	"sap/ui/layout/HorizontalLayout",
-	"sap/m/library",
 	"sap/m/Avatar",
 	"sap/m/Page",
 	"sap/m/Button",
@@ -36,13 +35,12 @@ sap.ui.define([
 	"sap/ui/dom/jquery/Focusable" // jQuery Plugin "firstFocusableDomRef"
 ], function (
 	library,
-	Core,
 	Control,
 	IconPool,
+	Library,
 	SimpleForm,
 	VerticalLayout,
 	HorizontalLayout,
-	mLibrary,
 	Avatar,
 	Page,
 	Button,
@@ -87,10 +85,10 @@ sap.ui.define([
 	// shortcut for sap.m.EmptyIndicator
 	var EmptyIndicatorMode = library.EmptyIndicatorMode;
 
-	var oRB = Core.getLibraryResourceBundle('sap.m');
+	var oRB = Library.getResourceBundleFor('sap.m');
 
 	// shortcut for sap.m.PageBackgroundDesign
-	var PageBackgroundDesign = mLibrary.PageBackgroundDesign;
+	var PageBackgroundDesign = library.PageBackgroundDesign;
 
 	/**
 	 * Constructor for a new QuickViewPage.
@@ -105,7 +103,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -212,9 +210,10 @@ sap.ui.define([
 	 */
 
 	QuickViewPage.prototype.init =  function() {
-		if (this._initCrossAppNavigationService) {
-			this._initCrossAppNavigationService();
-		}
+		/**
+	 	 * @deprecated As of version 1.111.
+		 */
+		this._initCrossAppNavigationService();
 	};
 
 	/**
@@ -466,16 +465,22 @@ sap.ui.define([
 				href: sTitleUrl,
 				target: "_blank"
 			});
-		} else if (this.getCrossAppNavCallback && this.getCrossAppNavCallback() && sTitle) {
-			oTitle = new Link({
-				text: sTitle
-			});
-			oTitle.attachPress(this._crossApplicationNavigation.bind(this));
 		} else if (sTitle) {
 			oTitle = new Title({
 				text: sTitle,
 				level: CoreTitleLevel.H3
 			});
+
+			/**
+			 * @deprecated As of version 1.111.
+			 */
+			if (this.getCrossAppNavCallback()) {
+				oTitle.destroy();
+				oTitle = new Link({
+					text: sTitle
+				});
+				oTitle.attachPress(this._crossApplicationNavigation.bind(this));
+			}
 		}
 
 		this.setPageTitleControl(oTitle);
@@ -596,7 +601,10 @@ sap.ui.define([
 	 * @private
 	 */
 	QuickViewPage.prototype._crossApplicationNavigation = function () {
-		if (this.getCrossAppNavCallback && this.getCrossAppNavCallback() && this.oCrossAppNavigator) {
+		/**
+		 * @deprecated As of version 1.111.
+		 */
+		if (this.getCrossAppNavCallback() && this.oCrossAppNavigator) {
 			var targetConfigCallback = this.getCrossAppNavCallback();
 			if (typeof targetConfigCallback == "function") {
 				var targetConfig = targetConfigCallback();
@@ -612,7 +620,11 @@ sap.ui.define([
 
 				URLHelper.redirect(href);
 			}
-		} else if (this.getTitleUrl()) {
+
+			return;
+		}
+
+		if (this.getTitleUrl()) {
 			URLHelper.redirect(this.getTitleUrl(), true);
 		}
 	};

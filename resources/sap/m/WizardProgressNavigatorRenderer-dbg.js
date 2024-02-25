@@ -6,9 +6,12 @@
 
 sap.ui.define([
 	"sap/ui/core/InvisibleText",
-	"sap/ui/core/IconPool"
-], function (
-	InvisibleText, IconPool
+	"sap/ui/core/IconPool", // side effect: required when calling RenderManager#icon
+	"sap/ui/core/Lib"
+], function(
+	InvisibleText,
+	_IconPool,
+	Library
 ) {
 	"use strict";
 
@@ -46,7 +49,7 @@ sap.ui.define([
 			CLASSES: CLASSES,
 			ATTRIBUTES: ATTRIBUTES
 		},
-		oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 	WizardProgressNavigatorRenderer.render = function (oRm, oControl) {
 		this.startNavigator(oRm, oControl);
@@ -124,8 +127,9 @@ sap.ui.define([
 			role: "listitem",
 			label: sValueText
 		};
+		const sStepId = oControl.getId() + "-step-" + oControl._aStepIds[iStepNumber - 1];
 
-		oRm.openStart("li")
+		oRm.openStart("li", sStepId )
 			.class(CLASSES.STEP)
 			.attr(ATTRIBUTES.STEP, iStepNumber)
 			.attr("tabindex", "-1")

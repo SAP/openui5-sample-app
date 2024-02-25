@@ -6,6 +6,7 @@
 
 // Provides control sap.m.SelectDialog.
 sap.ui.define([
+	"sap/ui/core/Lib",
 	"sap/ui/thirdparty/jquery",
 	'./Button',
 	'./Dialog',
@@ -27,6 +28,7 @@ sap.ui.define([
 	'sap/base/Log'
 ],
 function(
+	Library,
 	jQuery,
 	Button,
 	Dialog,
@@ -126,7 +128,7 @@ function(
 	 * @extends sap.m.SelectDialogBase
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -345,7 +347,7 @@ function(
 		this._bInitBusy = false;
 		this._bFirstRender = true;
 		this._bAfterCloseAttached = false;
-		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oRb = Library.getResourceBundleFor("sap.m");
 
 		// store a reference to the list for binding management
 		this._oList = new List(this.getId() + "-list", {
@@ -1345,7 +1347,7 @@ function(
 	SelectDialog.prototype._getListItemsEventDelegates = function () {
 		var fnEventDelegate = function (oEvent) {
 
-			var oListItem = Element.closestTo(jQuery(oEvent.target).closest(".sapMLIB")[0]);
+			var oListItem = Element.closestTo(oEvent.target.closest(".sapMLIB"));
 
 			if (oListItem._eventHandledByControl) {
 				return;

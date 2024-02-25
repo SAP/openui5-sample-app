@@ -1,11 +1,13 @@
-/*global QUnit */
+/*global QUnit, sinon */
 sap.ui.define([
+	"sap/base/i18n/Formatting",
+	"sap/base/i18n/Localization",
+	"sap/ui/core/format/FormatUtils",
 	"sap/ui/core/format/NumberFormat",
 	"sap/ui/core/Locale",
 	"sap/ui/core/LocaleData",
-	"sap/base/Log",
-	"sap/ui/core/Configuration"
-], function (NumberFormat, Locale, LocaleData, Log, Configuration) {
+	"sap/base/Log"
+], function(Formatting, Localization, FormatUtils, NumberFormat, Locale, LocaleData, Log) {
 	"use strict";
 
 	var getCurrencyInstance = function(options, oLocale) {
@@ -40,10 +42,14 @@ sap.ui.define([
 		assert.strictEqual(oFormat.format(12345.12345, "EUR"), "12,345.12\xa0EUR", "12345.12345");
 		assert.strictEqual(oFormat.format(1234567890, "EUR"), "1,234,567,890.00\xa0EUR", "1234567890");
 		assert.strictEqual(oFormat.format(-123.23, "EUR"), "-123.23\xa0EUR", "-123.23");
+		assert.strictEqual(oFormat.format(1.23e+9, "EUR"), "1,230,000,000.00\xa0EUR", "1.23e+9");
+		assert.strictEqual(oFormat.format(1.23e-9, "EUR"), "0.00\xa0EUR", "1.23e-9");
+		assert.strictEqual(oFormat.format(-1.23e+9, "EUR"), "-1,230,000,000.00\xa0EUR", "-1.23e+9");
+		assert.strictEqual(oFormat.format(-1.23e-9, "EUR"), "0.00\xa0EUR", "-1.23e-9");
 		assert.strictEqual(oFormat.format("1.23e+9", "EUR"), "1,230,000,000.00\xa0EUR", "1.23e+9");
 		assert.strictEqual(oFormat.format("1.23e-9", "EUR"), "0.00\xa0EUR", "1.23e-9");
 		assert.strictEqual(oFormat.format("-1.23e+9", "EUR"), "-1,230,000,000.00\xa0EUR", "-1.23e+9");
-		assert.strictEqual(oFormat.format("-1.23e-9", "EUR"), "-0.00\xa0EUR", "-1.23e-9");
+		assert.strictEqual(oFormat.format("-1.23e-9", "EUR"), "0.00\xa0EUR", "-1.23e-9");
 		assert.strictEqual(oFormat.format("1.2345e+2", "EUR"), "123.45\xa0EUR", "1.2345e+2");
 		assert.strictEqual(oFormat.format("12345e-2", "EUR"), "123.45\xa0EUR", "12345e-2");
 		assert.strictEqual(oFormat.format("-1.2345e+2", "EUR"), "-123.45\xa0EUR", "-1.2345e+2");
@@ -270,7 +276,7 @@ sap.ui.define([
 		assert.strictEqual(oFormat.format(123456.789, "BTC"), "BTC\xa0" + "123,456.79", "123456.79 BTC");
 
 		// set custom currency digits
-		Configuration.getFormatSettings().setCustomCurrencies({
+		Formatting.setCustomCurrencies({
 			"EUR": { "digits": 1 },
 			"JPY": { "digits": 3 },
 			"CZK": { "digits": 3 },
@@ -286,7 +292,7 @@ sap.ui.define([
 		assert.strictEqual(oFormat.format(123456.789, "BTC"), "BTC\xa0" + "123,456.78900", "123456.789 BTC");
 
 		// add custom currencies
-		Configuration.getFormatSettings().addCustomCurrencies({
+		Formatting.addCustomCurrencies({
 			"DEFAULT": { "digits": 6 }
 		});
 		oFormat = getCurrencyInstance({
@@ -296,7 +302,7 @@ sap.ui.define([
 		assert.strictEqual(oFormat.format(123456.789, "MON"), "MON\xa0" + "123,456.789000", "123456.789 MON");
 
 		// reset custom currencies
-		Configuration.getFormatSettings().setCustomCurrencies();
+		Formatting.setCustomCurrencies();
 
 		oFormat = getCurrencyInstance({
 			currencyCode: false
@@ -337,7 +343,7 @@ sap.ui.define([
 	QUnit.module("Custom currencies - Unknown currencies", {
 		afterEach: function() {
 			// reset global configuration
-			Configuration.getFormatSettings().setCustomCurrencies();
+			Formatting.setCustomCurrencies();
 		}
 	});
 
@@ -353,6 +359,7 @@ sap.ui.define([
 
 		assert.strictEqual(sFormatted, "", "Empty string formatted.");
 		assert.deepEqual(oFormat.parse(""), [NaN, undefined], "[NaN, undefined] is returned.");
+		assert.deepEqual(oFormat.parse(" \t\n\r\u00a0"), [NaN, undefined], "'space only' are trimmed");
 		assert.deepEqual(oFormat.parse("123.456,789 BTC"), null, "null is returned.");
 		// tolerated, despite wrong grouping, because of multiple grouping separators
 		assert.deepEqual(oFormat.parse("12,3,456 BTC"), [123456, "BTC"], "null is returned.");
@@ -379,7 +386,7 @@ sap.ui.define([
 	QUnit.module("Custom currencies - simple formatting", {
 		afterEach: function() {
 			// reset global configuration
-			Configuration.getFormatSettings().setCustomCurrencies();
+			Formatting.setCustomCurrencies();
 		}
 	});
 
@@ -555,7 +562,7 @@ sap.ui.define([
 	QUnit.module("Custom currencies - currencyCode: false", {
 		afterEach: function() {
 			// reset global configuration
-			Configuration.getFormatSettings().setCustomCurrencies();
+			Formatting.setCustomCurrencies();
 		}
 	});
 
@@ -575,7 +582,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Format with currency symbol with isoCode lookup", function (assert) {
-		Configuration.getFormatSettings().addCustomCurrencies({
+		Formatting.addCustomCurrencies({
 			"BTC": {
 				"symbol": "Ƀ",
 				"decimals": 5
@@ -613,7 +620,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Format with currencies with symbol from global config", function (assert) {
-		Configuration.getFormatSettings().addCustomCurrencies({
+		Formatting.addCustomCurrencies({
 			"BTC": {
 				symbol: "Ƀ"
 			},
@@ -641,7 +648,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Format with currencies from global config", function (assert) {
-		Configuration.getFormatSettings().addCustomCurrencies({
+		Formatting.addCustomCurrencies({
 			"BTC": {
 				symbol: "Ƀ"
 			},
@@ -671,13 +678,13 @@ sap.ui.define([
 	QUnit.module("Custom currencies - exclusive behaviour", {
 		afterEach: function() {
 			// reset global configuration
-			Configuration.getFormatSettings().setCustomCurrencies();
+			Formatting.setCustomCurrencies();
 		}
 	});
 
 	QUnit.test("Custom Currencies instance overwrites global configuration", function (assert) {
 		// global configuration
-		Configuration.getFormatSettings().addCustomCurrencies({
+		Formatting.addCustomCurrencies({
 			"DOLLAR": {
 				"symbol": "$",
 				"digits": 5
@@ -714,7 +721,7 @@ sap.ui.define([
 	QUnit.module("Custom currencies - complex cases", {
 		afterEach: function() {
 			// reset global configuration
-			Configuration.getFormatSettings().setCustomCurrencies();
+			Formatting.setCustomCurrencies();
 		}
 	});
 
@@ -1093,6 +1100,16 @@ sap.ui.define([
 				}
 			}, new Locale("de"));
 
+		const oLocalDataMock = this.mock(oFormat.oLocaleData);
+		const fnOriginalGetDecimalFormat = oFormat.oLocaleData.getDecimalFormat;
+		oLocalDataMock.expects("getDecimalFormat")
+			.withExactArgs(sinon.match.string, sinon.match.string, sinon.match.string)
+			.atLeast(1)
+			.callsFake(function () { // inject RTL codes in the pattern retrieved from CLDR
+				const sRTLCodes = "\u061c\u200e\u200f\u202a\u202b\u202c";
+				const sFormat = fnOriginalGetDecimalFormat.apply(this, arguments);
+				return sFormat && (sFormat.replace(" ", sRTLCodes + " ") + sRTLCodes);
+		});
 		assert.deepEqual(oFormat.parse("2000 F CFA"), [2000, "XOF"]);
 		assert.deepEqual(oFormat.parse("2000 F\x0aCFA"), [2000, "XOF"]);
 		assert.deepEqual(oFormat.parse("2 Mio. F\x0aCFA"), [2000000, "XOF"]);
@@ -1107,7 +1124,7 @@ sap.ui.define([
 	QUnit.module("Custom currencies - Ambiguous currency information", {
 		afterEach: function() {
 			// reset global configuration
-			Configuration.getFormatSettings().setCustomCurrencies();
+			Formatting.setCustomCurrencies();
 		}
 	});
 
@@ -1153,7 +1170,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("Duplicated symbol defined via custom currency", function(assert) {
-		Configuration.getFormatSettings().setCustomCurrencies({
+		Formatting.setCustomCurrencies({
 			"EURO": {
 				"digits": 5,
 				"isoCode": "EUR"
@@ -1245,7 +1262,7 @@ sap.ui.define([
 	QUnit.module("Custom currencies - parseAsString: true", {
 		afterEach: function() {
 			// reset global configuration
-			Configuration.getFormatSettings().setCustomCurrencies();
+			Formatting.setCustomCurrencies();
 		}
 	});
 
@@ -1354,7 +1371,7 @@ sap.ui.define([
 	QUnit.module("Standard Currency Formatting", {
 		afterEach: function() {
 			// reset global configuration
-			Configuration.getFormatSettings().setCustomCurrencies();
+			Formatting.setCustomCurrencies();
 		}
 	});
 
@@ -1487,8 +1504,27 @@ sap.ui.define([
 		assert.deepEqual(oFormatter.parse("\u200f702.00\u200e"), ["702.00", undefined], "rtl character wrapped number can be parsed properly");
 	});
 
+[
+	{locale : "en", code : "EUR", result : "€42.00", context : "accounting"},
+	{locale : "en", code : "AED", result : "42.00\u00a0AED", context : "sap-accounting"},
+	{locale : "ar", code : "AED", result : "\u200f42.00\u00a0\u202aد.إ.\u200f\u202c", context : "sap-standard"},
+	{locale : "ar", code : "AED", result : "\u200f42.00\u00a0\u202bد.إ.\u200f\u200e\u202c", context : "standard"},
+	{locale : "ar", code : "AED", result : "\u061c42.00\u202bد.إ.\u200f\u200e\u202c", context : "accounting"}
+].forEach((oFixture) => {// JIRA: CPOUI5MODELS-1502
+	const sTitle = `Format and parse (RTL): ${oFixture.locale}, ${oFixture.code}, ${oFixture.context}`;
+	QUnit.test(sTitle, function (assert) {
+		const oLocale = new Locale(oFixture.locale);
+		const oFormatter = NumberFormat.getCurrencyInstance({currencyCode: false,
+			currencyContext : oFixture.context}, oLocale);
 
+		// code under test: format -> code to symbol
+		const sValue = oFormatter.format(42, oFixture.code);
+		assert.strictEqual(sValue, oFixture.result);
 
+		// code under test: parse -> symbol to code
+		assert.deepEqual(oFormatter.parse(sValue), [42, oFixture.code]);
+	});
+});
 
 	QUnit.test("parse currency format", function (assert) {
 		var oFormat = getCurrencyInstance();
@@ -2043,7 +2079,7 @@ sap.ui.define([
 	//*****************************************************************************************************************
 	QUnit.module("Support case insensitive input of currency codes", {
 		beforeEach : function () {
-			this.defaultLanguage = Configuration.getLanguage();
+			this.defaultLanguage = Localization.getLanguage();
 			this.oFormat = getCurrencyInstance({
 				customCurrencies : {
 					BTC : {digits : 2},
@@ -2062,10 +2098,10 @@ sap.ui.define([
 					BJC : {digits : 2, symbol : "$"}
 				}
 			});
-			Configuration.setLanguage("de-DE");
+			Localization.setLanguage("de-DE");
 		},
 		afterEach : function () {
-			Configuration.setLanguage(this.defaultLanguage);
+			Localization.setLanguage(this.defaultLanguage);
 		}
 	});
 

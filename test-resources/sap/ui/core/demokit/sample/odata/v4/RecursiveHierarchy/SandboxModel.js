@@ -21,7 +21,7 @@ sap.ui.define([
 						regExp : /^DELETE \/sap\/opu\/odata4\/IWBEP\/TEA\/default\/IWBEP\/TEA_BUSI\/0001\/EMPLOYEES\('([^']*)'\)$/,
 						response : {buildResponse : buildDeleteResponse, code : 204}
 					}, {
-						regExp : /^GET [\w\/.]+\$metadata[\w?&\-=]+sap-language=..$/,
+						regExp : /^GET [\w\/.]+\$metadata([\w?&\-=]+sap-language=..|)$/,
 						response : {source : "metadata.xml"}
 					}, {
 						regExp : /^GET \/sap\/opu\/odata4\/IWBEP\/TEA\/default\/IWBEP\/TEA_BUSI\/0001\/EMPLOYEES\?(.*)$/,
@@ -46,29 +46,29 @@ sap.ui.define([
 	// - ID is hierarchical (but we omit the "0." prefix)
 	// - Name follows Greek alphabet in preorder
 	// Αα  Alpha
-	// Ββ  Beta
-	// Γγ  Gamma
-	// Δδ  Delta
-	// Εε  Epsilon
-	// Ζζ  Zeta
-	// Ηη  Eta
-	// Θθ  Theta
-	// Ιι  Iota
-	// Κκ  Kappa
-	// Λλ  Lambda
-	// Μμ  Mu
-	// Νν  Nu
-	// Ξξ  Xi
-	// Οο  Omicron
-	// Ππ  Pi
-	// Ρρ  Rho
-	// Σσς Sigma
-	// Ττ  Tau
-	// Υυ  Upsilon
-	// Φφ  Phi
-	// Χχ  Chi
-	// Ψψ  Psi
-	// Ωω  Omega
+		// Ββ  Beta
+			// Γγ  Gamma
+				// Δδ  Delta
+				// Εε  Epsilon
+			// Ζζ  Zeta
+				// Ηη  Eta
+				// Θθ  Theta
+				// Ιι  Iota
+		// Κκ  Kappa
+		// Λλ  Lambda
+		// Μμ  Mu
+			// Νν  Nu
+		// Ξξ  Xi
+			// Οο  Omicron
+				// Ππ  Pi
+				// Ρρ  Rho
+				// Σσς Sigma
+				// Ττ  Tau
+				// Υυ  Upsilon
+				// Φφ  Phi
+				// Χχ  Chi
+				// Ψψ  Psi
+				// Ωω  Omega
 	const aOriginalData = [{
 		AGE : 60,
 		ID : "0",
@@ -270,6 +270,13 @@ sap.ui.define([
 	 */
 	function buildGetCollectionResponse(aMatches, oResponse) {
 		const mQueryOptions = getQueryOptions(aMatches[1]);
+		function getExpandLevels() {
+			if (mQueryOptions.$apply.includes("ExpandLevels")) {
+				let sExpandLevels = mQueryOptions.$apply.match(/,ExpandLevels=(.+)\)/)[1];
+				sExpandLevels = decodeURIComponent(sExpandLevels);
+				return new Map(JSON.parse(sExpandLevels).map((o) => [o.NodeID, o.Levels]));
+			}
+		}
 
 		if ("$apply" in mQueryOptions) {
 			if (mQueryOptions.$apply.includes("TopLevels")) {
@@ -280,7 +287,7 @@ sap.ui.define([
 				const iLevels = mQueryOptions.$apply.includes(",Levels=")
 					? parseInt(mQueryOptions.$apply.match(/,Levels=(\d+)/)[1])
 					: Infinity;
-				let aRows = topLevels(iLevels - 1); // Note: already cloned
+				let aRows = topLevels(iLevels - 1, getExpandLevels()); // Note: already cloned
 				if ("$filter" in mQueryOptions) {
 					// ID%20eq%20'1'
 					const aIDs = mQueryOptions.$filter.split("%20or%20")
@@ -293,6 +300,7 @@ sap.ui.define([
 							oNode.LimitedRank = "" + i; // Edm.Int64
 							return true;
 						}
+						return false;
 					});
 				}
 				selectCountSkipTop(aRows, mQueryOptions, oResponse);
@@ -377,7 +385,7 @@ sap.ui.define([
 		function adjustDistanceFromRoot(oNode, iDiff) {
 			oNode.DistanceFromRoot += iDiff;
 			(mChildrenByParentId[oNode.ID] || [])
-				.forEach((oChild) => adjustDistanceFromRoot(oChild, iDiff));
+				.forEach((oChild) => { adjustDistanceFromRoot(oChild, iDiff); });
 		}
 
 		if (oRequest.requestHeaders.Prefer !== "return=minimal") {
@@ -589,11 +597,27 @@ sap.ui.define([
 	 * Returns the hierarchy's top levels in preorder.
 	 *
 	 * @param {number} iMaxDistanceFromRoot - Maximum distance from root to include
+	 * @param {Map} [oExpandLevels] - Mapping of NodeID to Levels to be expanded
 	 * @returns {object[]} - List of node objects in preorder
 	 */
-	function topLevels(iMaxDistanceFromRoot) {
+	function topLevels(iMaxDistanceFromRoot, oExpandLevels = new Map()) {
+		function isAncestorCollapsed(oNode) {
+			const oParent = mNodeById[oNode.MANAGER_ID];
+			if (!oParent) {
+				return false;
+			}
+			return !isExpanded(oParent) || isAncestorCollapsed(oParent);
+		}
+
+		function isExpanded(oNode) {
+			if (oExpandLevels.has(oNode.ID)) {
+				return oExpandLevels.get(oNode.ID) > 0;
+			}
+			return oNode.DistanceFromRoot < iMaxDistanceFromRoot;
+		}
+
 		function limitedDescendantCount(oNode) {
-			const aChildren = oNode.DistanceFromRoot < iMaxDistanceFromRoot
+			const aChildren = isExpanded(oNode)
 				? mChildrenByParentId[oNode.ID] || [] // "expanded"
 				: [];
 
@@ -603,12 +627,22 @@ sap.ui.define([
 		}
 
 		return aAllNodes
-			.filter((oNode) => oNode.DistanceFromRoot <= iMaxDistanceFromRoot)
+			.filter((oNode) => {
+				if (isAncestorCollapsed(oNode)) {
+					return false; // node is not part of hierarchy if an ancestor is collapsed
+				}
+				if (oExpandLevels.get(oNode.MANAGER_ID) === 1) {
+					return true; // node is part of hierarchy if parent is expanded
+				}
+				return oNode.DistanceFromRoot <= iMaxDistanceFromRoot;
+			})
 			.map((oNode) => {
 				oNode = {...oNode, DescendantCount : limitedDescendantCount(oNode)};
-				if (oNode.DrillState === "collapsed"
-						&& oNode.DistanceFromRoot < iMaxDistanceFromRoot) {
+				const bIsExpanded = isExpanded(oNode);
+				if (oNode.DrillState === "collapsed" && bIsExpanded) {
 					oNode.DrillState = "expanded";
+				} else if (oNode.DrillState === "expanded" && !bIsExpanded) {
+					oNode.DrillState = "collapsed";
 				}
 				return oNode;
 			});

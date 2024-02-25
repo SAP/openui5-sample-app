@@ -7,14 +7,14 @@
 sap.ui.define([
 	"sap/ui/fl/changeHandler/HideControl",
 	"sap/ui/fl/changeHandler/UnhideControl",
-    "sap/m/p13n/handler/xConfigHandler"
+	"sap/m/p13n/handler/xConfigHandler"
 ], function(HideControl, UnhideControl, xConfigHandler) {
 	"use strict";
 
 	return {
-        "hideControl": "default",
+		"hideControl": "default",
 		"unhideControl": "default",
-        createItem: {
+		createItem: {
 			layers: {
 				USER: true
 			},
@@ -32,23 +32,29 @@ sap.ui.define([
 			aggregationBased: true,
 			property: "position"
 		}),
-        addSort: xConfigHandler.createHandler({
+		addSort: xConfigHandler.createHandler({
 			property: "sortConditions"
 		}),
-        removeSort: xConfigHandler.createHandler({
+		removeSort: xConfigHandler.createHandler({
 			property: "sortConditions"
 		}),
-        moveSort: xConfigHandler.createHandler({
+		moveSort: xConfigHandler.createHandler({
 			property: "sortConditions"
+		}),
+		addCondition: xConfigHandler.createHandler({
+			property: "filterConditions"
+		}),
+		removeCondition: xConfigHandler.createHandler({
+			property: "filterConditions"
 		}),
 		addGroup: xConfigHandler.createHandler({
 			property: "groupConditions"
 		}),
-        removeGroup: xConfigHandler.createHandler({
+		removeGroup: xConfigHandler.createHandler({
 			property: "groupConditions"
 		}),
 		moveGroup: xConfigHandler.createHandler({
-			property: "groupConditions"
+			property: "sortConditions"
 		}),
 		setColumnWidth: xConfigHandler.createHandler({
 			aggregationBased: true,

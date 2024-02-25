@@ -7,8 +7,8 @@
 // Provides control sap.m.Button.
 sap.ui.define([
 	"./library",
-	"sap/ui/core/Core",
 	"sap/ui/core/Control",
+	"sap/ui/core/Lib",
 	"sap/ui/core/ShortcutHintsMixin",
 	"sap/ui/core/EnabledPropagator",
 	"sap/ui/core/AccessKeysEnablement",
@@ -25,8 +25,8 @@ sap.ui.define([
 	"sap/m/Image"
 ], function(
 	library,
-	Core,
 	Control,
+	Library,
 	ShortcutHintsMixin,
 	EnabledPropagator,
 	AccessKeysEnablement,
@@ -98,7 +98,7 @@ sap.ui.define([
 	 * @mixes sap.ui.core.ContextMenuSupport
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -369,7 +369,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Button.prototype._updateBadgeInvisibleText = function(vValue) {
-		var oRb = Core.getLibraryResourceBundle("sap.m"),
+		var oRb = Library.getResourceBundleFor("sap.m"),
 			sInvisibleTextValue,
 			iPlusPos;
 
@@ -378,12 +378,12 @@ sap.ui.define([
 
 		iPlusPos = vValue.indexOf("+");
 		if (iPlusPos !== -1) {
-			sInvisibleTextValue = oRb.getText("BUTTON_BADGE_MORE_THAN_ITEMS", vValue.substr(0, iPlusPos));
+			sInvisibleTextValue = oRb.getText("BUTTON_BADGE_MORE_THAN_ITEMS", [vValue.substr(0, iPlusPos)]);
 		} else {
 			switch (vValue) {
 				case "":		sInvisibleTextValue = ""; break;
-				case "1":		sInvisibleTextValue = oRb.getText("BUTTON_BADGE_ONE_ITEM", vValue); break;
-				default:		sInvisibleTextValue = oRb.getText("BUTTON_BADGE_MANY_ITEMS", vValue);
+				case "1":		sInvisibleTextValue = oRb.getText("BUTTON_BADGE_ONE_ITEM", [vValue]); break;
+				default:		sInvisibleTextValue = oRb.getText("BUTTON_BADGE_MANY_ITEMS", [vValue]);
 			}
 		}
 
@@ -951,7 +951,7 @@ sap.ui.define([
 
 		return {
 			role: sAccessibleRole === ButtonAccessibleRole.Default ? "button" : sAccessibleRole.toLowerCase(),
-			type: Core.getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_BUTTON"),
+			type: Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_BUTTON"),
 			description: sDesc,
 			focusable: this.getEnabled(),
 			enabled: this.getEnabled()

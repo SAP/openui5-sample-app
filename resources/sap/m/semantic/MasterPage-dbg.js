@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/m/semantic/SemanticPage", "sap/m/semantic/SemanticPageRenderer", "sap/m/library"], function(SemanticPage, SemanticPageRenderer, library) {
+sap.ui.define(["sap/m/semantic/SemanticPage", "sap/m/semantic/SemanticPageRenderer", "sap/m/library", "sap/ui/core/Lib"], function(SemanticPage, SemanticPageRenderer, library, Library) {
 	"use strict";
 
 
@@ -45,7 +45,7 @@ sap.ui.define(["sap/m/semantic/SemanticPage", "sap/m/semantic/SemanticPageRender
 	 * @extends sap.m.semantic.SemanticPage
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -162,7 +162,7 @@ sap.ui.define(["sap/m/semantic/SemanticPage", "sap/m/semantic/SemanticPageRender
 	MasterPage.prototype.init = function () {
 
 		SemanticPage.prototype.init.call(this);
-		this._getPage().getLandmarkInfo().setRootLabel(sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("SEMANTIC_MASTER_PAGE_TITLE"));
+		this._getPage().getLandmarkInfo().setRootLabel(Library.getResourceBundleFor("sap.m").getText("SEMANTIC_MASTER_PAGE_TITLE"));
 	};
 
 	MasterPage.prototype.getSemanticRuleSet = function() {

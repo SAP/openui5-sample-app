@@ -15,7 +15,6 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/base/assert",
 	"sap/ui/thirdparty/jquery",
-	"./PDFViewerRenderer",
 	"sap/ui/core/Lib"
 ],
 	function(
@@ -28,7 +27,6 @@ sap.ui.define([
 		Log,
 		assert,
 		jQuery,
-		PDFViewerRenderer1,
 		CoreLib
 	) {
 		"use strict";
@@ -49,7 +47,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 * @since 1.48
 		 *
 		 * @constructor
@@ -184,7 +182,7 @@ sap.ui.define([
 					}
 				},
 
-				renderer: PDFViewerRenderer1
+				renderer: PDFViewerRenderer
 			});
 
 
@@ -244,6 +242,10 @@ sap.ui.define([
 
 		PDFViewer.prototype.onBeforeRendering = function () {
 			try {
+				if (!this.getIsTrustedSource() && !this._isDisplayTypeLink()) {
+					this.sInitialDisplayType = this.getDisplayType();
+					this.setProperty("displayType", PDFViewerDisplayType.Link, true);
+				}
 				//unbind all iFrame events before rendering
 				var oIframeElement = this._getIframeDOMElement();
 				oIframeElement.remove();
@@ -258,6 +260,9 @@ sap.ui.define([
 		 * @private
 		 */
 		PDFViewer.prototype.onAfterRendering = function () {
+			if (this.sInitialDisplayType) {
+				this.setProperty("displayType", this.sInitialDisplayType, true);
+			}
 			var fnInitIframeElement = function () {
 				// cant use attachBrowserEvent because it attach event to component root node (this.$())
 				// load event does not bubble so it has to be bind directly to iframe element
@@ -274,7 +279,7 @@ sap.ui.define([
 				Log.error(error);
 				if (this._isError) {
 					this._isError = false;
-					this._objectsRegister.getPlaceholderIllustratedMessageControl().rerender();
+					this._objectsRegister.getPlaceholderIllustratedMessageControl().invalidate();
 				}
 				this.setBusy(false);
 			}
@@ -441,6 +446,9 @@ sap.ui.define([
 		 * @public
 		 */
 		PDFViewer.prototype.open = function () {
+			if (!this.getIsTrustedSource() && !this._isDisplayTypeLink()) {
+				this.setProperty("displayType", PDFViewerDisplayType.Link, true);
+			}
 			if (!this._isSourceValidToDisplay()) {
 				assert(false, "The PDF file cannot be opened with the given source. Given source: " + this.getSource());
 				return;

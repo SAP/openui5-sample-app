@@ -16,6 +16,13 @@
 (function() {
 	'use strict';
 
+	// ##### BEGIN: MODIFIED BY SAP
+	// Prevent script from being executed twice (from sap/ui/thirdparty/qunit-reporter-junit.js + copy within sap/ui/qunit/qunit-junit.js)
+	if (QUnit.jUnitDone) {
+		return;
+	}
+	// ##### END: MODIFIED BY SAP
+
 	var currentRun, currentModule, currentTest, assertCount,
 			jUnitReportData, _executeRegisteredCallbacks,
 			// ##### BEGIN: MODIFIED BY SAP
@@ -68,6 +75,18 @@
 			start: new Date(),
 			time: 0
 		};
+		// ##### BEGIN: MODIFIED BY SAP
+		// Register testDone callback late so that `currentTest` is more likely to be defined
+		// even when another `testDone` callback uses e.g. `QUnit.log` / `QUnit.push(Failure)`
+		QUnit.testDone(function(data) {
+			currentTest.time = (new Date()).getTime() - currentTest.start.getTime();  // ms
+			currentTest.total = data.total;
+			currentTest.passed = data.passed;
+			currentTest.failed = data.failed;
+
+			currentTest = null;
+		});
+		// ##### END: MODIFIED BY SAP
 	});
 
 	QUnit.moduleStart(function(data) {
@@ -138,14 +157,17 @@
 		}
 	});
 
-	QUnit.testDone(function(data) {
-		currentTest.time = (new Date()).getTime() - currentTest.start.getTime();  // ms
-		currentTest.total = data.total;
-		currentTest.passed = data.passed;
-		currentTest.failed = data.failed;
-
-		currentTest = null;
-	});
+	// ##### BEGIN: MODIFIED BY SAP
+	// Moved into `QUnit.begin` callback
+	//QUnit.testDone(function(data) {
+	//	currentTest.time = (new Date()).getTime() - currentTest.start.getTime();  // ms
+	//	currentTest.total = data.total;
+	//	currentTest.passed = data.passed;
+	//	currentTest.failed = data.failed;
+	//
+	//	currentTest = null;
+	//});
+	// ##### END: MODIFIED BY SAP
 
 	QUnit.moduleDone(function(data) {
 		currentModule.time = (new Date()).getTime() - currentModule.start.getTime();  // ms

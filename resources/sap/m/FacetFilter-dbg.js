@@ -12,6 +12,7 @@ sap.ui.define([
 	'sap/ui/core/CustomData',
 	'sap/ui/core/Element',
 	'sap/ui/core/IconPool',
+	"sap/ui/core/Lib",
 	'sap/ui/core/delegate/ItemNavigation',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/core/IntervalTrigger',
@@ -39,6 +40,7 @@ sap.ui.define([
 	"sap/m/StandardListItem",
 	"sap/m/CheckBox",
 	"sap/m/Page",
+	"sap/ui/core/library",
 	'sap/ui/core/date/UI5Date',
 	// jQuery Plugin "scrollRightRTL"
 	"sap/ui/dom/jquery/scrollRightRTL",
@@ -54,6 +56,7 @@ sap.ui.define([
 		CustomData,
 		Element,
 		IconPool,
+		Library,
 		ItemNavigation,
 		InvisibleText,
 		IntervalTrigger,
@@ -81,7 +84,8 @@ sap.ui.define([
 		StandardListItem,
 		CheckBox,
 		Page,
-        UI5Date
+		coreLibrary,
+		UI5Date
 	) {
 	"use strict";
 
@@ -107,6 +111,9 @@ sap.ui.define([
 
 	// shortcut for sap.m.FacetFilterType
 	var FacetFilterType = library.FacetFilterType;
+
+	// shortcut for sap.ui.core.TitleLevel
+	var TitleLevel = coreLibrary.TitleLevel;
 
 	var SCROLL_DURATION = 500;
 
@@ -174,7 +181,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IShrinkable
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @constructor
 	 * @public
@@ -399,7 +406,7 @@ sap.ui.define([
 		if (this._displayedList) {
 
 			var oList = this._displayedList;
-			var oSearchField = sap.ui.getCore().byId(oList.getAssociation("search"));
+			var oSearchField = Element.getElementById(oList.getAssociation("search"));
 
 			// Always detach the handler at first regardless of bVal, otherwise multiple calls of this method will add
 			// a separate change handler to the search field.
@@ -499,7 +506,7 @@ sap.ui.define([
 		this._addTarget = null;
 		this._aRows = null; //save item level div
 
-		this._bundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._bundle = Library.getResourceBundleFor("sap.m");
 
 		this.data("sap-ui-fastnavgroup", "true", true); // Define group for F6 handling
 
@@ -557,7 +564,7 @@ sap.ui.define([
 
 		if (this._aOwnedLabels) {
 			this._aOwnedLabels.forEach(function (sId) {
-				oCtrl = sap.ui.getCore().byId(sId);
+				oCtrl = Element.getElementById(sId);
 				if (oCtrl) {
 					oCtrl.destroy();
 				}
@@ -693,12 +700,12 @@ sap.ui.define([
 			return;
 		}
 
-		oButton = sap.ui.getCore().byId(oEvent.target.id);
+		oButton = Element.getElementById(oEvent.target.id);
 		if (!oButton) {//not a UI5 object
 			return;
 		}
 
-		oList = sap.ui.getCore().byId(oButton.getAssociation("list"));
+		oList = Element.getElementById(oButton.getAssociation("list"));
 		// no deletion on button 'Add', "Reset"
 		if (!oList) {//We allow only buttons with attached list.
 			return;
@@ -1221,7 +1228,7 @@ sap.ui.define([
 		// Don't open if already open, otherwise the popover will display empty.
 		if (!oPopover.isOpen()) {
 
-			var oList = sap.ui.getCore().byId(oControl.getAssociation("list"));
+			var oList = Element.getElementById(oControl.getAssociation("list"));
 			assert(oList, "The facet filter button should be associated with a list.");
 
 			bIsListOpenDefaultPrevented = !oList.fireListOpen({});
@@ -1519,6 +1526,7 @@ sap.ui.define([
 		var oPage = new Page({
 			enableScrolling : true,
 			title : this._bundle.getText("FACETFILTER_TITLE"),
+			titleLevel: TitleLevel.H1,
 			subHeader : new Bar({
 			contentMiddle : oFacetsSearchField
 			}),
@@ -1536,6 +1544,7 @@ sap.ui.define([
 	FacetFilter.prototype._createFilterItemsPage = function() {
 
 		var oPage = new Page({
+			titleLevel: TitleLevel.H1,
 			showNavButton : true,
 			enableScrolling : true,
 			navButtonPress : function(oEvent) {

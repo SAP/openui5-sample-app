@@ -20,7 +20,7 @@ sap.ui.define([
 
 	var mUtils = {
 		getPlugin: function (window) {
-			return new window.sap.ui.test.OpaPlugin("sap.ui.test.Opa5");
+			return new (window.sap.ui.require("sap/ui/test/OpaPlugin"))("sap.ui.test.Opa5");
 		},
 		getJQuery: function (window) {
 			return window.jQuery;
@@ -29,10 +29,10 @@ sap.ui.define([
 			return window;
 		},
 		getUtils: function (window) {
-			return window.sap.ui.qunit.QUnitUtils;
+			return window.sap.ui.require("sap/ui/qunit/QUnitUtils");
 		},
 		getHashChanger: function (window) {
-			return window.sap.ui.core.routing.HashChanger.getInstance();
+			return window.sap.ui.require("sap/ui/core/routing/HashChanger").getInstance();
 		}
 	};
 
@@ -104,9 +104,10 @@ sap.ui.define([
 				var oWindow = Opa5.getWindow();
 
 				// Act
-				var oNewHashChanger = new oWindow.sap.ui.core.routing.HashChanger();
+				var IFrameHashChanger = oWindow.sap.ui.require("sap/ui/core/routing/HashChanger");
+				var oNewHashChanger = new IFrameHashChanger();
 				var fnSetHash = oNewHashChanger.setHash;
-				oWindow.sap.ui.core.routing.HashChanger.replaceHashChanger(oNewHashChanger);
+				IFrameHashChanger.replaceHashChanger(oNewHashChanger);
 
 				// Assert
 				assert.notStrictEqual(oNewHashChanger.setHash, fnSetHash, "did modify the hashchanger");

@@ -7,11 +7,13 @@
 sap.ui.define([
 	"sap/m/table/columnmenu/QuickActionBase",
 	"sap/m/ToggleButton",
-	"sap/m/library"
-], function (
+	"sap/m/library",
+	"sap/ui/core/Lib"
+], function(
 	QuickActionBase,
 	ToggleButton,
-	library
+	library,
+	Library
 ) {
 	"use strict";
 
@@ -28,7 +30,7 @@ sap.ui.define([
 	 * @extends sap.m.table.columnmenu.QuickActionBase
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -70,7 +72,7 @@ sap.ui.define([
 	};
 
 	QuickGroup.prototype.getLabel = function() {
-		var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oBundle = Library.getResourceBundleFor("sap.m");
 		return oBundle.getText("table.COLUMNMENU_QUICK_GROUP");
 	};
 

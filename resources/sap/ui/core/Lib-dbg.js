@@ -10,6 +10,7 @@ sap.ui.define([
 	'sap/base/config',
 	'sap/base/i18n/Localization',
 	'sap/base/i18n/ResourceBundle',
+	'sap/base/future',
 	'sap/base/Log',
 	'sap/base/util/deepExtend',
 	"sap/base/util/isEmptyObject",
@@ -26,13 +27,14 @@ sap.ui.define([
 	'sap/ui/base/EventProvider',
 	'sap/ui/base/Object',
 	'sap/ui/base/SyncPromise',
-	'sap/ui/core/Configuration',
-	'sap/ui/core/_UrlResolver'
+	'sap/ui/core/_UrlResolver',
+	"sap/ui/core/Supportability"
 ], function (
 	assert,
 	BaseConfig,
 	Localization,
 	ResourceBundle,
+	future,
 	Log,
 	deepExtend,
 	isEmptyObject,
@@ -49,8 +51,8 @@ sap.ui.define([
 	EventProvider,
 	BaseObject,
 	SyncPromise,
-	Configuration,
-	_UrlResolver
+	_UrlResolver,
+	Supportability
 ) {
 	"use strict";
 
@@ -411,7 +413,7 @@ sap.ui.define([
 						vValueToSet = vValue;
 					} else if ( sKey != "name" ) {
 						// ignore other values (silently ignore "name")
-						Log.warning("[FUTURE FATAL] library info setting ignored: " + sKey + "=" + vValue);
+						future.warningThrows("library info setting ignored: " + sKey + "=" + vValue);
 					}
 
 					if (vValueToSet !== undefined) {
@@ -479,10 +481,10 @@ sap.ui.define([
 		 */
 		preload: function(mOptions) {
 			if (mOptions && (mOptions.hasOwnProperty("async") || mOptions.hasOwnProperty("sync"))) {
-				Log.error("[FUTURE FATAL] The 'preload' function of class sap/ui/core/Lib only support preloading a library asynchronously. The given 'async' or 'sync' setting is ignored.");
+				future.errorThrows("The 'preload' function of class sap/ui/core/Lib only support preloading a library asynchronously. The given 'async' or 'sync' setting is ignored.");
 			}
 			if (mOptions && mOptions.hasOwnProperty("json")) {
-				Log.error("[FUTURE FATAL] The 'preload' function of class sap/ui/core/Lib only support preloading in JS Format. The given 'json' setting is ignored.");
+				future.errorThrows("The 'preload' function of class sap/ui/core/Lib only support preloading in JS Format. The given 'json' setting is ignored.");
 			}
 
 			return this._preload(["url", "lazy"].reduce(function(acc, sProperty) {
@@ -915,7 +917,7 @@ sap.ui.define([
 		/**
 		 * Returns a resource bundle for the given locale.
 		 *
-		 * The locale's default value is read from {@link sap.ui.core.Configuration#getLanguage session locale}.
+		 * The locale's default value is read from {@link module:sap/base/i18n/Localization.getLanguage session locale}.
 		 *
 		 * This method returns the resource bundle directly. When the resource bundle for the given locale isn't loaded
 		 * yet, synchronous request will be used to load the resource bundle. If it should be loaded asynchronously, use
@@ -942,7 +944,7 @@ sap.ui.define([
 		/**
 		 * Retrieves a resource bundle for the given locale.
 		 *
-		 * The locale's default value is read from {@link sap.ui.core.Configuration#getLanguage session locale}.
+		 * The locale's default value is read from {@link module:sap/base/i18n/Localization.getLanguage session locale}.
 		 *
 		 * <h3>Configuration via App Descriptor</h3>
 		 * When the App Descriptor for the library is available without further request (manifest.json
@@ -1298,7 +1300,7 @@ sap.ui.define([
 	 *
 	 * <li>With the <code>noLibraryCSS</code> property, the library can be marked as 'theming-free'.  Otherwise, the
 	 * framework will add a &lt;link&gt; tag to the page's head, pointing to the library's theme-specific stylesheet.
-	 * The creation of such a &lt;link&gt; tag can be suppressed with the {@link sap.ui.core.Configuration global
+	 * The creation of such a &lt;link&gt; tag can be suppressed with the {@link topic:91f2d03b6f4d1014b6dd926db0e91070 global
 	 * configuration option} <code>preloadLibCss</code>.  It can contain a list of library names for which no stylesheet
 	 * should be included.  This is e.g. useful when an application merges the CSS for multiple libraries and already
 	 * loaded the resulting stylesheet.</li>
@@ -1391,6 +1393,11 @@ sap.ui.define([
 		// If a library states that it is using apiVersion 2, we expect types to be fully declared.
 		// In this case we don't need to create Proxies for the library namespace.
 		const apiVersion = mSettings.apiVersion ?? 1;
+
+		if (![1, 2].includes(apiVersion)) {
+			throw new TypeError(`The library '${mSettings.name}' has defined 'apiVersion: ${apiVersion}', which is an unsupported value. The supported values are: 1, 2 and undefined (defaults to 1).`);
+		}
+
 		if (apiVersion < 2) {
 			const oLibProxyHandler = createProxyForLibraryNamespace(mSettings.name, oLibNamespace);
 
@@ -1431,8 +1438,10 @@ sap.ui.define([
 			if ( !/^(any|boolean|float|int|string|object|void)$/.test(oLib.types[i]) ) {
 				// register a wrapper module that logs a deprecation warning
 				const sTypeName = oLib.types[i];
+				const sLibraryJsPath = oLib.name.replace(/\./g, "/") + "/library";
 				sap.ui.loader._.declareModule(sTypeName.replace(/\./g, "/") + ".js",
-					`Deprecation: Importing the type '${sTypeName}' as a module is deprecated. Please require the corresponding 'library.js' containing the type directly. You can then reference the type via the library's module export.`);
+					`Deprecation: Importing the type '${sTypeName}' as a pseudo module is deprecated. Please import the type from the module '${sLibraryJsPath}'. You can then reference this type via the library's module export. ` +
+					`For more information, see documentation under 'Best Practices for Loading Modules'.`);
 
 				// ensure parent namespace of the type
 				var sNamespacePrefix = sTypeName.substring(0, sTypeName.lastIndexOf("."));
@@ -1701,7 +1710,7 @@ sap.ui.define([
 	 * yet, synchronous request will be used to load the resource bundle.
 	 *
 	 * If only one argument is given, it is assumed to be the library name. The locale
-	 * then falls back to the current {@link sap.ui.core.Configuration#getLanguage session locale}.
+	 * then falls back to the current {@link module:sap/base/i18n/Localization.getLanguage session locale}.
 	 *
 	 * <h3>Configuration via App Descriptor</h3>
 	 * When the App Descriptor for the library is available without further request (manifest.json
@@ -1911,7 +1920,7 @@ sap.ui.define([
 	 */
 	Library.getPreloadMode = function() {
 		// if debug sources are requested, then the preload feature must be deactivated
-		if (Configuration.getDebug() === true) {
+		if (Supportability.isDebugModeEnabled() === true) {
 			return "";
 		}
 		// determine preload mode (e.g. resolve default or auto)

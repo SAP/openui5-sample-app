@@ -6,6 +6,7 @@
 
 sap.ui.define([
 	'./library',
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/m/Text',
 	'sap/ui/core/HTML',
@@ -16,6 +17,7 @@ sap.ui.define([
 	'sap/m/GenericTileLineModeRenderer',
 	'sap/m/Image',
 	'sap/ui/Device',
+	"sap/ui/core/Lib",
 	'sap/ui/core/ResizeHandler',
 	"sap/base/strings/camelize",
 	"sap/base/util/deepEqual",
@@ -23,12 +25,12 @@ sap.ui.define([
 	"sap/ui/core/theming/Parameters",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/library",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/InvisibleText",
 	"sap/ui/core/Core",
 	"sap/ui/core/Theming"
-], function (
+], function(
 	library,
+	Localization,
 	Control,
 	Text,
 	HTML,
@@ -39,6 +41,7 @@ sap.ui.define([
 	LineModeRenderer,
 	Image,
 	Device,
+	Library,
 	ResizeHandler,
 	camelize,
 	deepEqual,
@@ -46,13 +49,12 @@ sap.ui.define([
 	Parameters,
 	jQuery,
 	coreLibrary,
-	Configuration,
 	InvisibleText,
 	Core,
 	Theming
 ) {
 	"use strict";
-
+	var frameTypes = library.FrameType;
 	var GenericTileScope = library.GenericTileScope,
 		LoadState = library.LoadState,
 		CSSColor = coreLibrary.CSSColor,
@@ -85,7 +87,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @since 1.34.0
 	 *
 	 * @public
@@ -360,7 +362,7 @@ sap.ui.define([
 	/* --- Lifecycle Handling --- */
 
 	GenericTile.prototype.init = function () {
-		this._oRb = Core.getLibraryResourceBundle("sap.m");
+		this._oRb = Library.getResourceBundleFor("sap.m");
 
 		// Defines custom screen range set: smaller than or equal to 449px defines 'small' and bigger than 449px defines 'large' screen
 		if (!Device.media.hasRangeSet(DEVICE_SET)) {
@@ -504,7 +506,7 @@ sap.ui.define([
 				this._oMoreIcon.destroy();
 				this._oMoreIcon = null;
 			}
-			if (this.isA("sap.m.GenericTile") && this._isIconMode() && this.getFrameType() === FrameType.TwoByHalf){
+			if (this.isA("sap.m.GenericTile") && this._isIconModeOfTypeTwoByHalf()){
 				// Acts Like an actual Button in Icon mode for TwoByHalf Tile
 				this._oMoreIcon = this._oMoreIcon || new Button({
 					id: this.getId() + "-action-more",
@@ -713,7 +715,7 @@ sap.ui.define([
 		}
 
 		//Adds the classes for the action-more buton in IconMode for TwoByHalf Tile
-		if (this._isIconMode() && this.getFrameType() === FrameType.TwoByHalf && this._oMoreIcon.getDomRef()){
+		if (this._isIconModeOfTypeTwoByHalf() && this._oMoreIcon.getDomRef()){
 			this._addClassesForButton();
 		}
 
@@ -732,6 +734,62 @@ sap.ui.define([
 		if (this.getDomRef() && this.getParent() && this.getParent().isA("sap.m.SlideTile")) {
 			this.getDomRef().setAttribute("tabindex","-1");
 		}
+
+		//Adding the aria roles and events to the more button in the IconMode tile
+		if (this._oMoreIcon && this._oMoreIcon.getDomRef() && (this._isIconModeOfTypeTwoByHalf())) {
+			this._attachFocusHandlingOnMoreButton(this._oMoreIcon.getDomRef());
+		}
+	};
+
+	/**
+	 * Checks if a tile is in IconMode and TwoByHalf frameType
+	 * @returns {boolean} indicates whether the tile is in IconMode and TwoByHalf frameType
+	 * @private
+	 */
+
+	GenericTile.prototype._isIconModeOfTypeTwoByHalf = function() {
+		return this._isIconMode() && this.getFrameType() === FrameType.TwoByHalf;
+	};
+
+	/**
+	 * Attaching focus handlers to the more button to adhere to the ACC guidelines
+	 * @param {HTMLElement} [oButton] The DOM reference of the more button
+	 * @private
+	 */
+	GenericTile.prototype._attachFocusHandlingOnMoreButton = function(oButton){
+		var aText = [this.getHeader(),this.getSubheader(),this._oRb.getText("GENERICTILE_MORE_ACTIONBUTTON_TEXT")];
+		var aFilteredTexts = aText.filter(function(sText){
+			return sText.trim() !== '';
+		});
+		oButton.removeAttribute("title");
+		oButton.removeAttribute("aria-describedby");
+		oButton.setAttribute("aria-label",aFilteredTexts.join(" "));
+		//Removes the mouseenter event if its already present
+		oButton.removeEventListener("mouseenter",this._setTooltipForMoreButton.bind(this,oButton));
+		oButton.addEventListener("mouseenter",this._setTooltipForMoreButton.bind(this,oButton));
+		//Removes the mouseleave event if its already present
+		oButton.removeEventListener("mouseleave",this._removeTooltipForButton.bind(null,oButton));
+		oButton.addEventListener("mouseleave",this._removeTooltipForButton.bind(null,oButton));
+	};
+
+	/**
+	 * Sets tooltip for the more button
+	 * @param {HTMLElement} oButton
+	 * @private
+	 */
+
+	GenericTile.prototype._setTooltipForMoreButton = function(oButton) {
+		oButton.setAttribute("title",this._oRb.getText("GENERICTILE_MORE_ACTIONBUTTON_TEXT"));
+	};
+
+	/**
+	 * Removes tooltip for the more button
+	 * @param {HTMLElement} oButton
+	 * @private
+	 */
+
+	GenericTile.prototype._removeTooltipForButton = function(oButton) {
+		oButton.removeAttribute("title");
 	};
 	/**
 	 * Increases the height of the TileContent when the header-text has one line
@@ -967,7 +1025,7 @@ sap.ui.define([
 			bLineBreak = this.$().is(":not(:first-child)") && iLines > 1,
 			$LineBreak = jQuery("<span><br></span>"),
 			i = 0,
-			bRTL = Configuration.getRTL(),
+			bRTL = Localization.getRTL(),
 			oEndMarkerPosition = $End.position();
 
 		if (bLineBreak) { //tile does not fit in line without breaking --> add line-break before tile
@@ -1292,7 +1350,7 @@ sap.ui.define([
 	};
 
 	GenericTile.prototype.onsaptabnext = function(oEvt) {
-		if (this._isIconMode() && this.getFrameType() === FrameType.TwoByHalf && oEvt && oEvt.keyCode) {
+		if (this._isIconModeOfTypeTwoByHalf() && oEvt && oEvt.keyCode) {
 			if (oEvt.keyCode === 9 && oEvt.srcControl.getId() == this._oMoreIcon.getId()) {
 					this._oMoreIcon.removeStyleClass("sapMGTVisible");
 			} else if (oEvt.keyCode === 9) {
@@ -1301,7 +1359,7 @@ sap.ui.define([
 		}
     };
 	GenericTile.prototype.onsaptabprevious = function() {
-		if (this._isIconMode() && this.getFrameType() === FrameType.TwoByHalf) {
+		if (this._isIconModeOfTypeTwoByHalf()) {
 			this._oMoreIcon.removeStyleClass("sapMGTVisible");
 		}
 	};
@@ -1597,7 +1655,9 @@ sap.ui.define([
 			if (this.getLinkTileContents().length > 0) {
 				sAriaText += ("\n" + this._oRb.getText("GENERICTILE_LINK_TILE_CONTENT_DESCRIPTION"));
 			} else {
-				sAriaText += ("\n" + this._getSizeDescription());
+				if (this.getFrameType() !== FrameType.Stretch) {
+					sAriaText += ("\n" + this._getSizeDescription());
+				}
 			}
 		}
 		return sAriaText.trim();  // ARIA label set by the app, equal to tooltip
@@ -1694,7 +1754,16 @@ sap.ui.define([
 		var oLinkTileContent = this.getLinkTileContents().find(function(oLinkTileContent){
 			return oLinkTileContent._getLink().getDomRef().id === sEventId;
 		});
-		return !!oLinkTileContent;
+
+		//The below piece of code is written for the scenario if the link inside the TileAttribute has been clicked
+		var bIsLinkClicked = false;
+		this.getTileContent().forEach(function(oActionTileContent){
+			if (oActionTileContent._isLinkPressed) {
+				bIsLinkClicked = true;
+				oActionTileContent._isLinkPressed = false;
+			}
+		});
+		return !!oLinkTileContent || bIsLinkClicked;
 	};
 
 	/**
@@ -1714,7 +1783,7 @@ sap.ui.define([
 	 * @private
 	 */
 	 GenericTile.prototype._isActionMoreButtonVisibleIconMode = function (oEvent)  {
-		return (this.getScope() === GenericTileScope.ActionMore || this.getScope() === GenericTileScope.Actions) && this._isIconMode() && this.getFrameType() === FrameType.TwoByHalf && oEvent.target.id.indexOf("-action-more") > -1;
+		return (this.getScope() === GenericTileScope.ActionMore || this.getScope() === GenericTileScope.Actions) && this._isIconModeOfTypeTwoByHalf() && oEvent.target.id.indexOf("-action-more") > -1;
 	};
 
 	/**
@@ -2020,6 +2089,25 @@ GenericTile.prototype._isNavigateActionEnabled = function() {
 		oEvent.preventDefault();
 		var sURL = oEvent.getSource().getParent().getUrl();
 		URLHelper.redirect(sURL, true);
+	};
+
+	/**
+	* Function to apply CSS class when the footer property of TileContent is applied later
+	* @param {sap.m.TileContent} oTileContent The tileContent object
+	* @private
+	*/
+	GenericTile.prototype._applyCssStyle = function(oTileContent) {
+		var isFooterPresent = this._checkFooter(oTileContent, this) && (oTileContent.getFooter() ||  oTileContent.getUnit());
+		var frameType = this.getFrameType();
+		if (this.getSystemInfo() || this.getAppShortcut()) {
+			if (isFooterPresent && frameType !== frameTypes.OneByHalf) {
+			        this.getDomRef("content").classList.add("appInfoWithFooter");
+			        this.getDomRef("content").classList.remove("appInfoWithoutFooter");
+                        } else if (!isFooterPresent){
+                                this.getDomRef("content").classList.add("appInfoWithoutFooter");
+				this.getDomRef("content").classList.remove("appInfoWithFooter");
+                       }
+		}
 	};
 
 	/**

@@ -15,6 +15,7 @@ sap.ui.define([
 	'./mvc/Controller',
 	'./mvc/View',
 	'sap/base/util/ObjectPath',
+	'sap/base/future',
 	'sap/base/Log'
 ],
 	function(
@@ -27,6 +28,7 @@ sap.ui.define([
 		Controller,
 		View,
 		ObjectPath,
+		future,
 		Log
 	) {
 	"use strict";
@@ -55,7 +57,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Component
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @alias sap.ui.core.UIComponent
 	 * @since 1.9.2
 	 */
@@ -457,7 +459,7 @@ sap.ui.define([
 				}
 			}
 			if (!fnConstructor) {
-				Log.error("[FUTURE FATAL] The specified class for router or targets '" + vRoutingObjectConstructor + "' is undefined.", this);
+				future.errorThrows("The specified class for router or targets '" + vRoutingObjectConstructor + "' is undefined.", this);
 			}
 		} else {
 			fnConstructor = vRoutingObjectConstructor;
@@ -486,8 +488,8 @@ sap.ui.define([
 	 */
 	UIComponent.prototype.rootControlLoaded = function() {
 		if (!this.pRootControlLoaded) {
-			Log.error(
-				"[FUTURE FATAL] Mandatory init() not called for UIComponent: '" + this.getManifestObject().getComponentName() + "'. This is likely caused by a missing super call in the component's init implementation.",
+			future.errorThrows(
+				"Mandatory init() not called for UIComponent: '" + this.getManifestObject().getComponentName() + "'. This is likely caused by a missing super call in the component's init implementation.",
 				null,
 				"sap.ui.support",
 				function() {

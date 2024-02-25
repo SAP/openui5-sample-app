@@ -881,7 +881,7 @@ sap.ui.define([
 	 * {@link #loaded loaded} has been resolved!
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 * @alias sap.ui.model.odata.ODataMetaModel
 	 * @extends sap.ui.model.MetaModel
 	 * @public
@@ -1123,6 +1123,7 @@ sap.ui.define([
 
 		Utils.visitChildren(oEntityContainer.entitySet, mChildAnnotations, "EntitySet", aSchemas,
 			/*fnCallback*/null, iFirstNewEntitySet);
+		Utils.addUnitAnnotations(aSchemas, this);
 	};
 
 

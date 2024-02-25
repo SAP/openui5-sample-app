@@ -6,37 +6,44 @@
 
 // Provides control sap.m.SinglePlanningCalendarGrid.
 sap.ui.define([
-		'./SinglePlanningCalendarUtilities',
-		'./library',
-		'sap/ui/unified/DateRange',
-		'sap/ui/core/Control',
-		'sap/ui/core/LocaleData',
-		'sap/ui/core/Locale',
-		'sap/ui/core/InvisibleText',
-		'sap/ui/core/format/DateFormat',
-		'sap/ui/core/format/TimezoneUtil',
-		'sap/ui/core/Core',
-		'sap/ui/core/date/UniversalDate',
-		'sap/ui/core/dnd/DragDropInfo',
-		'sap/ui/unified/library',
-		'sap/ui/unified/calendar/DatesRow',
-		'sap/ui/unified/calendar/CalendarDate',
-		'sap/ui/unified/calendar/CalendarUtils',
-		'sap/ui/unified/DateTypeRange',
-		'sap/ui/events/KeyCodes',
-		'./SinglePlanningCalendarGridRenderer',
-		'sap/ui/core/delegate/ItemNavigation',
-		"sap/ui/thirdparty/jquery",
-		'./PlanningCalendarLegend',
-		'sap/ui/core/InvisibleMessage',
-		'sap/ui/core/library',
-		"sap/ui/core/date/CalendarUtils",
-		"sap/ui/core/Configuration",
-		"sap/ui/core/date/UI5Date"
-	],
-	function (
+	'./SinglePlanningCalendarUtilities',
+	'./library',
+	"sap/base/i18n/Formatting",
+	"sap/base/i18n/Localization",
+	"sap/ui/core/Element",
+	"sap/ui/core/Lib",
+	'sap/ui/unified/DateRange',
+	'sap/ui/core/Control',
+	'sap/ui/core/LocaleData',
+	'sap/ui/core/Locale',
+	'sap/ui/core/InvisibleText',
+	'sap/ui/core/format/DateFormat',
+	'sap/ui/core/format/TimezoneUtil',
+	'sap/ui/core/Core',
+	'sap/ui/core/date/UniversalDate',
+	'sap/ui/core/dnd/DragDropInfo',
+	'sap/ui/unified/library',
+	'sap/ui/unified/calendar/DatesRow',
+	'sap/ui/unified/calendar/CalendarDate',
+	'sap/ui/unified/calendar/CalendarUtils',
+	'sap/ui/unified/DateTypeRange',
+	'sap/ui/events/KeyCodes',
+	'./SinglePlanningCalendarGridRenderer',
+	'sap/ui/core/delegate/ItemNavigation',
+	"sap/ui/thirdparty/jquery",
+	'./PlanningCalendarLegend',
+	'sap/ui/core/InvisibleMessage',
+	'sap/ui/core/library',
+	"sap/ui/core/date/CalendarUtils",
+	"sap/ui/core/date/UI5Date"
+],
+	function(
 		SinglePlanningCalendarUtilities,
 		library,
+		Formatting,
+		Localization,
+		Element,
+		Library,
 		DateRange,
 		Control,
 		LocaleData,
@@ -60,7 +67,6 @@ sap.ui.define([
 		InvisibleMessage,
 		coreLibrary,
 		CalendarDateUtils,
-		Configuration,
 		UI5Date
 	) {
 		"use strict";
@@ -111,7 +117,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.7
+		 * @version 1.121.0
 		 *
 		 * @constructor
 		 * @private
@@ -217,7 +223,35 @@ sap.ui.define([
 					/**
 					 * Special days in the header visualized as a date range with type.
 					 *
-					 * <b>Note:</b> If one day is assigned to more than one type, only the first type is used.
+					 * <b>Note:</b> In case there are multiple <code>sap.ui.unified.DateTypeRange</code> instances given for a single date,
+					 * only the first <code>sap.ui.unified.DateTypeRange</code> instance will be used.
+					 * For example, using the following sample, the 1st of November will be displayed as a working day of type "Type10":
+					 *
+					 *
+					 *	<pre>
+					 *	new DateTypeRange({
+					 *		startDate: UI5Date.getInstance(2023, 10, 1),
+					 *		type: CalendarDayType.Type10,
+					 *	}),
+					 *	new DateTypeRange({
+					 *		startDate: UI5Date.getInstance(2023, 10, 1),
+					 *		type: CalendarDayType.NonWorking
+					 *	})
+					 *	</pre>
+					 *
+					 * If you want the first of November to be displayed as a non-working day and also as "Type10," the following should be done:
+					 *	<pre>
+					 *	new DateTypeRange({
+					 *		startDate: UI5Date.getInstance(2023, 10, 1),
+					 *		type: CalendarDayType.Type10,
+					 *		secondaryType: CalendarDayType.NonWorking
+					 *	})
+					 *	</pre>
+					 *
+					 * You can use only one of the following types for a given date: <code>sap.ui.unified.CalendarDayType.NonWorking</code>,
+					 * <code>sap.ui.unified.CalendarDayType.Working</code> or <code>sap.ui.unified.CalendarDayType.None</code>.
+					 * Assigning more than one of these values in combination for the same date will lead to unpredictable results.
+					 *
 					 * @since 1.66
 					 */
 					specialDates : {type : "sap.ui.unified.DateTypeRange", multiple : true, singularName : "specialDate"},
@@ -392,12 +426,12 @@ sap.ui.define([
 			this._configureAppointmentsResize();
 			this._configureAppointmentsCreate();
 
-			this._oUnifiedRB = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
+			this._oUnifiedRB = Library.getResourceBundleFor("sap.ui.unified");
 			this._oFormatStartEndInfoAria = DateFormat.getDateTimeInstance({
-				pattern: "EEEE dd/MM/yyyy 'at' " + sTimePattern
+				pattern: "EEEE, MMMM d, yyyy 'at' " + sTimePattern
 			});
 			this._oFormatAriaFullDayCell = DateFormat.getDateTimeInstance({
-				pattern: "EEEE dd/MM/yyyy"
+				pattern: "EEEE, MMMM d, yyyy"
 			});
 
 			this._oFormatYyyymmdd = DateFormat.getInstance({pattern: "yyyyMMdd", calendarType: CalendarType.Gregorian});
@@ -797,7 +831,7 @@ sap.ui.define([
 					oBrowserEvent.dataTransfer.setDragImage(getResizeGhost(), 0, 0);
 
 					var oGrid = oEvent.getParameter("target"),
-						bIsRtl = Configuration.getRTL(),
+						bIsRtl = Localization.getRTL(),
 						aIntervalPlaceholders = oGrid.getAggregation("_intervalPlaceholders"),
 						oFirstIntervalRectangle = aIntervalPlaceholders[0].getDomRef().getBoundingClientRect(),
 						iIntervalHeight = oFirstIntervalRectangle.height,
@@ -1015,7 +1049,7 @@ sap.ui.define([
 		 * @private
 		 */
 		SinglePlanningCalendarGrid.prototype._appFocusHandler = function(oEvent, iDirection) {
-			var oTarget = sap.ui.getCore().byId(oEvent.target.id) || this._findSrcControl(oEvent);
+			var oTarget = Element.getElementById(oEvent.target.id) || this._findSrcControl(oEvent);
 
 			if (oTarget && oTarget.isA("sap.ui.unified.CalendarAppointment")) {
 				this.fireAppointmentSelect({
@@ -1290,6 +1324,9 @@ sap.ui.define([
 			if ((oEvent.which === KeyCodes.ARROW_LEFT || oEvent.which === KeyCodes.ARROW_RIGHT) && oEvent.shiftKey && bMultiDateSelection) {
 				this._bMultiDateSelectWithArrow = true;
 			} else if (oEvent.which === KeyCodes.SPACE && !oEvent.shiftKey && bMultiDateSelection) {
+				this._bMultiDateSelect = true;
+			} else if (oEvent.which === KeyCodes.SPACE && !oEvent.shiftKey) {
+				this.removeAllSelectedDates();
 				this._bMultiDateSelect = true;
 			}
 			this._fireSelectionEvent(oEvent);
@@ -2115,7 +2152,7 @@ sap.ui.define([
 		 */
 		SinglePlanningCalendarGrid.prototype._getCoreLocaleId = function () {
 			if (!this._sLocale) {
-				this._sLocale = Configuration.getFormatSettings().getFormatLocale().toString();
+				this._sLocale = new Locale(Formatting.getLanguageTag()).toString();
 			}
 
 			return this._sLocale;
@@ -2211,13 +2248,27 @@ sap.ui.define([
 		 * @private
 		 */
 		SinglePlanningCalendarGrid.prototype._getAppointmentAnnouncementInfo = function (oAppointment) {
-			var sStartTime = this._oUnifiedRB.getText("CALENDAR_START_TIME"),
-				sEndTime = this._oUnifiedRB.getText("CALENDAR_END_TIME"),
-				sFormattedStartDate = this._oFormatStartEndInfoAria.format(oAppointment.getStartDate()),
-				sFormattedEndDate = this._oFormatStartEndInfoAria.format(oAppointment.getEndDate()),
-				sAppInfo = sStartTime + ": " + sFormattedStartDate + "; " + sEndTime + ": " + sFormattedEndDate;
+			var oStartDate = oAppointment.getStartDate(),
+				oEndDate = oAppointment.getEndDate(),
+				bFullDay = this.isAllDayAppointment(oStartDate, oEndDate),
+				bSingleDay =  this._isSingleDayAppointment(oStartDate, oEndDate),
+				sLegendInfo = PlanningCalendarLegend.findLegendItemForItem(Core.byId(this._sLegendId), oAppointment),
+				sFormattedDate;
 
-			return sAppInfo + "; " + PlanningCalendarLegend.findLegendItemForItem(sap.ui.getCore().byId(this._sLegendId), oAppointment);
+			if (bFullDay && bSingleDay) {
+				sFormattedDate = this._oUnifiedRB.getText("CALENDAR_ALL_DAY_INFO", [this._oFormatAriaFullDayCell.format(oStartDate)]);
+			} else if (bFullDay) {
+				sFormattedDate = this._oUnifiedRB.getText( "CALENDAR_APPOINTMENT_INFO", [
+					this._oFormatAriaFullDayCell.format(oStartDate),
+					this._oFormatAriaFullDayCell.format(oEndDate)
+				]);
+			} else {
+				sFormattedDate = this._oUnifiedRB.getText( "CALENDAR_APPOINTMENT_INFO", [
+					this._oFormatStartEndInfoAria.format(oStartDate),
+					this._oFormatStartEndInfoAria.format(oEndDate)
+				]);
+			}
+			return sFormattedDate + ", " + sLegendInfo;
 		};
 
 		/**
@@ -2258,12 +2309,24 @@ sap.ui.define([
 		/**
 		 * Returns whether an appointment starts at 00:00 and ends in 00:00 on any day in the future.
 		 *
-		 * @param {Object} oAppStartDate - Start date of the appointment
-		 * @param {Object} oAppEndDate - End date of the appointment
+		 * @param {Date|module:sap/ui/core/date/UI5Date} oAppStartDate - Start date of the appointment
+		 * @param {Date|module:sap/ui/core/date/UI5Date} oAppEndDate - End date of the appointment
 		 * @returns {boolean}
 		 */
 		SinglePlanningCalendarGrid.prototype.isAllDayAppointment = function(oAppStartDate, oAppEndDate) {
 			return CalendarUtils._isMidnight(oAppStartDate) && CalendarUtils._isMidnight(oAppEndDate);
+		};
+
+		/**
+		 * Returns whether an appointment starts and ends on the same day.
+		 *
+		 * @param {Date|module:sap/ui/core/date/UI5Date} oAppStartDate - Start date of the appointment
+		 * @param {Date|module:sap/ui/core/date/UI5Date} oAppEndDate - End date of the appointment
+		 * @returns {boolean}
+		 * @private
+		 */
+		SinglePlanningCalendarGrid.prototype._isSingleDayAppointment = function(oAppStartDate, oAppEndDate) {
+			return !oAppEndDate || oAppStartDate.getDate() === oAppEndDate.getDate();
 		};
 
 		SinglePlanningCalendarGrid.prototype._createBlockersDndPlaceholders = function (oStartDate, iColumns) {
@@ -2304,7 +2367,7 @@ sap.ui.define([
 		};
 
 		SinglePlanningCalendarGrid.prototype._createAppointmentsDndPlaceholders = function (oStartDate, iColumns) {
-			var bIsRtl = Configuration.getRTL(),
+			var bIsRtl = Localization.getRTL(),
 				i;
 
 			this._dndPlaceholdersMap = {};
@@ -2350,13 +2413,18 @@ sap.ui.define([
 		};
 
 		SinglePlanningCalendarGrid.prototype._isNonWorkingDay = function(oCalendarDate) {
-			return this._getSpecialDates().filter(function(oDateRange) {
-				return oDateRange.getType() === unifiedLibrary.CalendarDayType.NonWorking;
-			}).map(function(oDateRange) {
-				return CalendarDate.fromLocalJSDate(oDateRange.getStartDate());
-			}).some(function(oDate) {
-				return oDate.isSame(oCalendarDate);
+			const aSpecialDates = this._getSpecialDates().filter((oDateRange) => {
+				return oDateRange.getStartDate() && CalendarDate.fromLocalJSDate(oDateRange.getStartDate()).isSame(oCalendarDate);
 			});
+			const sType = aSpecialDates.length > 0 && aSpecialDates[0].getType();
+			const sSecondaryType =  aSpecialDates.length > 0 && aSpecialDates[0].getSecondaryType();
+			const bNonWorkingWeekend = CalendarUtils._isWeekend(oCalendarDate, this._getCoreLocaleData())
+				&& sType !== unifiedLibrary.CalendarDayType.Working
+				&& sSecondaryType !== unifiedLibrary.CalendarDayType.Working;
+
+			return sType === unifiedLibrary.CalendarDayType.NonWorking
+				|| sSecondaryType === unifiedLibrary.CalendarDayType.NonWorking
+				|| bNonWorkingWeekend;
 		};
 
 		function getResizeGhost() {

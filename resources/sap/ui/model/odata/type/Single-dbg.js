@@ -6,12 +6,13 @@
 
 sap.ui.define([
 	"sap/base/Log",
+	"sap/ui/core/Lib",
 	"sap/ui/core/format/NumberFormat",
 	"sap/ui/model/FormatException",
 	"sap/ui/model/ParseException",
 	"sap/ui/model/ValidateException",
 	"sap/ui/model/odata/type/ODataType"
-], function (Log, NumberFormat, FormatException, ParseException, ValidateException, ODataType) {
+], function(Log, Library, NumberFormat, FormatException, ParseException, ValidateException, ODataType) {
 	"use strict";
 
 	/**
@@ -21,7 +22,7 @@ sap.ui.define([
 	 *   the locale-dependent error message
 	 */
 	function getErrorMessage() {
-		return sap.ui.getCore().getLibraryResourceBundle().getText("EnterNumber");
+		return Library.getResourceBundleFor("sap.ui.core").getText("EnterNumber");
 	}
 
 	/**
@@ -73,7 +74,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.121.0
 	 *
 	 * @alias sap.ui.model.odata.type.Single
 	 * @param {object} [oFormatOptions]
