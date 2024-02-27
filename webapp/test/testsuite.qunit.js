@@ -1,12 +1,36 @@
-window.suite = () => {
+sap.ui.define(function () {
 	"use strict";
-
-	// eslint-disable-next-line
-	const oSuite = new parent.jsUnitTestSuite(),
-		sContextPath = location.pathname.substring(0, location.pathname.lastIndexOf("/") + 1);
-
-	oSuite.addTestPage(sContextPath + "unit/unitTests.qunit.html");
-	oSuite.addTestPage(sContextPath + "integration/opaTests.qunit.html");
-
-	return oSuite;
-};
+	return {
+		name: "QUnit test suite for Todo App",
+		defaults: {
+			page: "test/Test.qunit.html?testsuite={suite}&test={name}",
+			qunit: {
+				version: 2
+			},
+			sinon: {
+				version: 4
+			},
+			ui5: {
+				language: "EN",
+				theme: "sap_horizon"
+			},
+			cover: {
+				only: "sap/ui/demo/todo/",
+				never: "sap/ui/demo/todo/test/"
+			},
+			loader: {
+				paths: {
+					"sap/ui/demo/todo": "./"
+				}
+			}
+		},
+		tests: {
+			"unit/unitTests": {
+				title: "Unit tests for Todo App"
+			},
+			"integration/opaTests": {
+				title: "Integration tests for Todo App"
+			}
+		}
+	};
+});
