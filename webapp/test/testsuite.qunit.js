@@ -14,7 +14,7 @@ sap.ui.define(function () {
 				language: "EN",
 				theme: "sap_horizon"
 			},
-			cover: {
+			coverage: {
 				only: "sap/ui/demo/todo/",
 				never: "sap/ui/demo/todo/test/"
 			},
