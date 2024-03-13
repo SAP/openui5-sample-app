@@ -1,2 +1,0 @@
-sap.ui.define(["sap/ui/test/Opa5","sap/ui/demo/todo/test/integration/arrangements/Startup","sap/ui/demo/todo/test/integration/TodoListJourney","sap/ui/demo/todo/test/integration/SearchJourney","sap/ui/demo/todo/test/integration/FilterJourney"],(t,e)=>{"use strict";t.extendConfig({arrangements:new e,autoWait:true})});
-//# sourceMappingURL=AllJourneys.js.map

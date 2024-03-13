@@ -1,2 +1,2 @@
-QUnit.config.autostart=false;sap.ui.getCore().attachInit(()=>{"use strict";sap.ui.require(["sap/ui/demo/todo/test/integration/AllJourneys"],()=>QUnit.start())});
+sap.ui.define(["sap/ui/test/Opa5","sap/ui/demo/todo/test/integration/arrangements/Startup","sap/ui/demo/todo/test/integration/TodoListJourney","sap/ui/demo/todo/test/integration/SearchJourney","sap/ui/demo/todo/test/integration/FilterJourney"],(t,e)=>{"use strict";t.extendConfig({arrangements:new e,autoWait:true})});
 //# sourceMappingURL=opaTests.qunit.js.map
