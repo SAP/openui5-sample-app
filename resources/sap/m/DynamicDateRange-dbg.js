@@ -40,7 +40,6 @@ sap.ui.define([
 	'./StandardDynamicDateOption',
 	'./library',
 	'sap/ui/thirdparty/jquery',
-	'sap/ui/core/Configuration',
 	'sap/ui/unified/calendar/CalendarUtils',
 	'sap/ui/core/CustomData'
 ], function(
@@ -78,7 +77,6 @@ sap.ui.define([
 	StandardDynamicDateOption,
 	library,
 	jQuery,
-	Configuration,
 	CalendarUtils,
 	CustomData
 ) {
@@ -262,7 +260,7 @@ sap.ui.define([
 		 * is opened. The dialog is closed via a date time period value selection or by pressing the "Cancel" button.
 		 *
 		 * @author SAP SE
-		 * @version 1.121.0
+		 * @version 1.122.0
 		 *
 		 * @constructor
 		 * @public
@@ -524,6 +522,7 @@ sap.ui.define([
 		DynamicDateRange.prototype.init = function() {
 			var bValueHelpDecorative = !Device.support.touch || Device.system.desktop ? true : false;
 			this._oInput = new DynamicDateRangeInput(this.getId() + "-input", {
+				valueHelpIconSrc: IconPool.getIconURI("sap-icon://check-availability"),
 				valueHelpRequest: this._toggleOpen.bind(this),
 				showSuggestion: true,
 				suggest: this._handleSuggest.bind(this)
@@ -2033,6 +2032,19 @@ sap.ui.define([
 		DynamicDateRangeInput.prototype.preventChangeOnFocusLeave = function(oEvent) {
 			return this.bFocusoutDueRendering;
 		};
+
+		DynamicDateRangeInput.prototype.onsapshow = function(oEvent) {
+			if (!this.getEnabled() || !this.getEditable()) {
+				return;
+			}
+
+			this.bValueHelpRequested = true;
+			this._fireValueHelpRequest(false);
+			oEvent.preventDefault();
+			oEvent.stopPropagation();
+		};
+
+		DynamicDateRangeInput.prototype.onsaphide = DynamicDateRangeInput.prototype.onsapshow;
 
 		DynamicDateRangeInput.prototype.shouldSuggetionsPopoverOpenOnMobile = function(oEvent) {
 			var bIsClickedOnIcon = oEvent.srcControl instanceof Icon;

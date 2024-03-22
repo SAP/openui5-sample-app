@@ -2590,7 +2590,7 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(sPath));
 		this.mock(oBinding).expects("fetchCache")
 			.withExactArgs(sinon.match.same(oContext), false, /*bKeepQueryOptions*/true, undefined);
-		this.mock(oBinding).expects("refreshKeptElements").withExactArgs("myGroup")
+		this.mock(oBinding).expects("refreshKeptElements").withExactArgs("myGroup", undefined)
 			.returns(oRefreshKeptElementsPromise);
 		this.mock(oBinding).expects("createRefreshPromise").withExactArgs(undefined).callThrough();
 		this.mock(oBinding).expects("reset")
@@ -2726,6 +2726,9 @@ sap.ui.define([
 					oBinding.oCachePromise = SyncPromise.resolve(oBinding.oCache);
 				}
 			});
+		this.mock(oBinding).expects("refreshKeptElements")
+			.withExactArgs("myGroup", bKeepCacheOnError)
+			.returns(SyncPromise.resolve());
 		this.mock(oBinding).expects("reset").exactly(iNoOfCalls)
 			.withExactArgs(ChangeReason.Refresh, bKeepCacheOnError ? false : undefined, "myGroup")
 			.callsFake(function () {
@@ -2806,6 +2809,8 @@ sap.ui.define([
 				oBinding.oCache = oNewCache;
 				oBinding.oCachePromise = SyncPromise.resolve(oNewCache);
 			});
+		this.mock(oBinding).expects("refreshKeptElements").withExactArgs("myGroup", true)
+			.returns(SyncPromise.resolve());
 		this.mock(oBinding).expects("createRefreshPromise").withExactArgs(true)
 			.returns(oRefreshPromise);
 		this.mock(oBinding).expects("reset").withExactArgs(ChangeReason.Refresh, false, "myGroup");
@@ -2863,6 +2868,8 @@ sap.ui.define([
 				oBinding.oCache = oNewCache;
 				oBinding.oCachePromise = SyncPromise.resolve(oNewCache);
 			});
+		this.mock(oBinding).expects("refreshKeptElements").withExactArgs("myGroup", true)
+			.returns(SyncPromise.resolve());
 		this.mock(oBinding).expects("createRefreshPromise").withExactArgs(true).rejects(oError);
 		this.mock(oBinding).expects("fetchResourcePath").never();
 		this.mock(oCache).expects("restore").withExactArgs(false); // free memory
@@ -3059,7 +3066,7 @@ sap.ui.define([
 		};
 		this.mock(oBinding).expects("lockGroup").withExactArgs("myGroup").returns("~groupLock~");
 		oRefreshKeptElementsCall = this.mock(oNewCache).expects("refreshKeptElements")
-			.withExactArgs("~groupLock~", sinon.match.func)
+			.withExactArgs("~groupLock~", sinon.match.func, false, "~bIgnorePendingChanges~")
 			.returns(bFail
 				? SyncPromise.reject(oError)
 				: SyncPromise.resolve("~result~"));
@@ -3068,7 +3075,8 @@ sap.ui.define([
 				sinon.match.same(oError));
 
 		// code under test
-		return oBinding.refreshKeptElements("myGroup").then(function (vResult) {
+		return oBinding.refreshKeptElements("myGroup", "~bIgnorePendingChanges~")
+				.then(function (vResult) {
 			var iCallCount = iIndex >= 0 ? 0 : 1;
 
 			assert.strictEqual(vResult, "~result~");
@@ -4369,6 +4377,30 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+	QUnit.test("createContexts: reuse a created context in a RH", function (assert) {
+		const oBinding = this.bindList("/EMPLOYEES");
+		oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
+		const oCreatedContext = Context.create(this.oModel, oBinding, "/EMPLOYEES('1')", 42,
+			SyncPromise.resolve());
+
+		oBinding.mPreviousContextsByPath = {
+			"/EMPLOYEES('1')" : oCreatedContext
+		};
+		this.mock(Context).expects("create").never();
+		this.mock(oBinding).expects("destroyPreviousContextsLater").withExactArgs([]);
+		this.mock(oCreatedContext).expects("destroy").never();
+		this.mock(oCreatedContext).expects("checkUpdate").withExactArgs();
+
+		// code under test
+		oBinding.createContexts(0, [{
+			"@$ui5._" : {context : "n/a", predicate : "('1')"}
+		}]);
+
+		assert.strictEqual(oBinding.aContexts[0], oCreatedContext);
+		assert.strictEqual(oCreatedContext.getModelIndex(), 0);
+	});
+
+	//*********************************************************************************************
 	QUnit.test("createContexts: reuse created from 'context' annotation", function (assert) {
 		var oBinding = this.bindList("/EMPLOYEES"),
 			oCreatedContext = Context.create(this.oModel, oBinding, "/EMPLOYEES('1')", -1,
@@ -4810,7 +4842,8 @@ sap.ui.define([
 		// code under test - call fnErrorCallback
 		oCreateInCacheExpectation.args[0][6](oError);
 
-		oSetSelectedExpectation = this.mock(oContext0).expects("setSelected").withExactArgs(false);
+		oSetSelectedExpectation = this.mock(oContext0).expects("doSetSelected")
+			.withExactArgs(false);
 		oRemoveCreatedExpectation = oBindingMock.expects("removeCreated")
 			.withExactArgs(sinon.match.same(oContext0));
 
@@ -5882,7 +5915,7 @@ sap.ui.define([
 		oContext.created().catch(function (oError) {
 			assert.ok(oError.canceled, "create promise rejected with 'canceled'");
 		});
-		this.mock(oContext).expects("setSelected").withExactArgs(false);
+		this.mock(oContext).expects("doSetSelected").withExactArgs(false);
 		this.mock(oBinding).expects("removeCreated").withExactArgs(sinon.match.same(oContext))
 			.callThrough();
 		oBindingMock.expects("deleteFromCache").callsFake(function () {
@@ -7889,7 +7922,8 @@ sap.ui.define([
 		this.mock(oBinding).expects("getGroupId").exactly(bRefreshKeptElements ? 1 : 0)
 			.returns("myGroup");
 		this.mock(oBinding).expects("refreshKeptElements").exactly(bRefreshKeptElements ? 1 : 0)
-			.withExactArgs("myGroup");
+			.withExactArgs("myGroup")
+			.returns(SyncPromise.resolve());
 		this.mock(oBinding).expects("fetchCache")
 			.withExactArgs(sinon.match.same(oContext), false);
 		this.mock(oBinding).expects("_fireRefresh").never();

@@ -57,7 +57,7 @@ sap.ui.define([
 	 * @extends sap.f.cards.BaseHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public
@@ -297,11 +297,17 @@ sap.ui.define([
 
 		this._getTitle()
 			.setText(this.getTitle())
-			.setMaxLines(this.getTitleMaxLines());
+			.setMaxLines(this.getTitleMaxLines())
+			.setWrappingType(this.getWrappingType());
+
+		this._enhanceText(this._getTitle());
 
 		this._getSubtitle()
 			.setText(this.getSubtitle())
-			.setMaxLines(this.getSubtitleMaxLines());
+			.setMaxLines(this.getSubtitleMaxLines())
+			.setWrappingType(this.getWrappingType());
+
+		this._enhanceText(this._getSubtitle());
 
 		this._getUnitOfMeasurement().setText(this.getUnitOfMeasurement());
 
@@ -324,7 +330,10 @@ sap.ui.define([
 		} else {
 			this._createDetails()
 				.setText(this.getDetails())
-				.setMaxLines(this.getDetailsMaxLines());
+				.setMaxLines(this.getDetailsMaxLines())
+				.setWrappingType(this.getWrappingType());
+
+			this._enhanceText(this._getDetails());
 		}
 
 		this._getNumericIndicators()
@@ -377,6 +386,7 @@ sap.ui.define([
 				wrapping: true,
 				maxLines: this.getTitleMaxLines()
 			});
+
 			this.setAggregation("_title", oControl);
 		}
 
@@ -398,6 +408,7 @@ sap.ui.define([
 				wrapping: true,
 				maxLines: this.getSubtitleMaxLines()
 			});
+
 			this.setAggregation("_subtitle", oControl);
 		}
 

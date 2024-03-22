@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @extends sap.m.table.columnmenu.QuickActionBase
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -146,8 +146,8 @@ sap.ui.define([
 			oButton.setPressed(oItem.getGrouped());
 		}
 
-		for (var i = aItems.length; i < aContent.length; i++) {
-			aContent[i].destroy();
+		for (var j = aItems.length; j < aContent.length; j++) {
+			aContent[j].destroy();
 		}
 	};
 

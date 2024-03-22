@@ -4092,6 +4092,8 @@ sap.ui.define([
 			.exactly(bTransient ? 1 : 0)
 			.withExactArgs(sinon.match.same(oElement), "transientPredicate",
 				sTransientPredicate);
+		this.mock(_Helper).expects("copySelected")
+			.withExactArgs(sinon.match.same(oOldElement), sinon.match.same(oElement));
 		this.mock(_Helper).expects("restoreUpdatingProperties")
 			.withExactArgs(sinon.match.same(oOldElement), sinon.match.same(oElement));
 		this.mock(_Helper).expects("buildPath")
@@ -4120,14 +4122,24 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
-	QUnit.test("Cache#replaceElement for an element that has no index", function (assert) {
+[false, true].forEach((bHasOldElement) => {
+	const sTitle = "Cache#replaceElement for an element that has no index, bHasOldElement="
+		+ bHasOldElement;
+	QUnit.test(sTitle, function (assert) {
 		var oCache = new _Cache(this.oRequestor, "TEAMS"),
 			aElements = [{a : "doNotTouch"}],
 			oNewElement = {a : "4711", b : "0815"},
-			oOldElement = {a : "0815"},
+			oOldElement = bHasOldElement ? {a : "0815"} : undefined,
 			mTypeForMetaPath = {};
 
-		aElements.$byPredicate = {doNotTouch : aElements[0], "('42')" : oOldElement};
+		if (bHasOldElement) {
+			aElements.$byPredicate = {doNotTouch : aElements[0], "('42')" : oOldElement};
+			this.mock(_Helper).expects("copySelected")
+				.withExactArgs(sinon.match.same(oOldElement), sinon.match.same(oNewElement));
+		} else {
+			aElements.$byPredicate = {doNotTouch : aElements[0]};
+			this.mock(_Helper).expects("copySelected").never();
+		}
 
 		this.mock(_Cache).expects("getElementIndex").never();
 		this.mock(_Helper).expects("restoreUpdatingProperties")
@@ -4147,6 +4159,7 @@ sap.ui.define([
 		assert.deepEqual(aElements.$byPredicate,
 			{doNotTouch : aElements[0], "('42')" : oNewElement});
 	});
+});
 
 	//*********************************************************************************************
 [
@@ -4446,6 +4459,7 @@ sap.ui.define([
 	QUnit.test(sTitle, function (assert) {
 		var oCache = new _Cache(this.oRequestor, "TEAMS", {/*mQueryOptions*/}),
 			oCacheMock = this.mock(oCache),
+			oCopySelectedExpectation,
 			fnDataRequested = this.spy(),
 			oElement = {"@$ui5._" : {predicate : "('13')"}},
 			aElements = [oElement],
@@ -4528,13 +4542,17 @@ sap.ui.define([
 
 				return Promise.resolve(oInCollectionResponse);
 			});
+		oCopySelectedExpectation = this.mock(_Helper).expects("copySelected")
+			.exactly(oFixture.inCollection ? 0 : 1)
+			.withExactArgs(sinon.match.same(aElements.$byPredicate["('13')"]),
+				sinon.match.same(oReadResponse.value[0]));
+		oRemoveExpectation = oCacheMock.expects("removeElement")
+			.exactly(oFixture.inCollection ? 0 : 1)
+			.withExactArgs(0, "('13')", sinon.match.same(aElements), "~");
 		oReplaceExpectation = oCacheMock.expects("replaceElement")
 			.withExactArgs(sinon.match.same(aElements), oFixture.inCollection ? 0 : undefined,
 				"('13')", sinon.match.same(oReadResponse.value[0]),
 				sinon.match.same(mTypeForMetaPath), "~");
-		oRemoveExpectation = oCacheMock.expects("removeElement")
-			.exactly(oFixture.inCollection ? 0 : 1)
-			.withExactArgs(0, "('13')", sinon.match.same(aElements), "~");
 
 		// code under test
 		return oCache.refreshSingleWithRemove(oGroupLock, "~", 0, "('13')", true,
@@ -4548,6 +4566,7 @@ sap.ui.define([
 				assert.strictEqual(mQueryOptionsForPathCopy.$apply, "apply");
 				assert.strictEqual(mQueryOptionsForPathCopy.$search, undefined);
 				if (!oFixture.inCollection) {
+					assert.ok(oRemoveExpectation.calledAfter(oCopySelectedExpectation));
 					assert.ok(oReplaceExpectation.calledAfter(oRemoveExpectation));
 					sinon.assert.calledOnceWithExactly(fnOnRemove, true);
 				}
@@ -13235,7 +13254,8 @@ sap.ui.define([
 
 			oCacheMock.expects("hasPendingChangesForPath")
 				.exactly("key" in oElement || oElement.bChanges ? 1 : 0)
-				.withExactArgs(sPredicate).returns(oElement.bChanges);
+				.withExactArgs(sPredicate, "~bIgnorePendingChanges~")
+				.returns(oElement.bChanges);
 			oHelperMock.expects("getKeyFilter").exactly("key" in oElement ? 1 : 0)
 				.withExactArgs(sinon.match.same(oElement), oCache.sMetaPath,
 					sinon.match.same(mTypes))
@@ -13295,7 +13315,8 @@ sap.ui.define([
 			});
 
 		// code under test
-		return oCache.refreshKeptElements(oGroupLock, fnOnRemove, oFixture.bDropApply)
+		return oCache.refreshKeptElements(oGroupLock, fnOnRemove, oFixture.bDropApply,
+			"~bIgnorePendingChanges~")
 		.then(function (oResult) {
 			var mByPredicateAfterRefresh = {},
 				iCallCount = 0;
@@ -13321,6 +13342,25 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
+	QUnit.test("refreshKeptElements w/ deleteted element", function (assert) {
+		const oCache = _Cache.create(this.oRequestor, "Employees", {});
+
+		oCache.aElements.$byPredicate["('Foo')"] = {
+			"@$ui5.context.isDeleted" : true,
+			"@$ui5._" : {predicate : "('Foo')"}
+		};
+
+		this.mock(oCache).expects("hasPendingChangesForPath").never();
+		this.mock(oCache).expects("checkSharedRequest").withExactArgs();
+		this.mock(oCache).expects("getTypes").never();
+		this.mock(oCache.oRequestor).expects("request").never();
+
+		// code under test
+		assert.strictEqual(oCache.refreshKeptElements({/*GroupLock*/}, {/*fnOnRemove*/}),
+			undefined);
+	});
+
+	//*********************************************************************************************
 	QUnit.test("refreshKeptElements w/o kept-alive element", function (assert) {
 		var oCache = _Cache.create(this.oRequestor, "Employees", {});
 
@@ -13329,7 +13369,8 @@ sap.ui.define([
 		this.mock(oCache.oRequestor).expects("request").never();
 
 		// code under test
-		assert.deepEqual(oCache.refreshKeptElements({/*GroupLock*/}), undefined);
+		assert.strictEqual(oCache.refreshKeptElements({/*GroupLock*/}, {/*fnOnRemove*/}),
+			undefined);
 	});
 
 	//*********************************************************************************************

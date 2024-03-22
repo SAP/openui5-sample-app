@@ -12,6 +12,7 @@ sap.ui.define([
 	"./Object",
 	"./BindingInfo",
 	"sap/ui/util/ActivityDetection",
+	"sap/ui/util/_enforceNoReturnValue",
 	"sap/base/future",
 	"sap/base/util/ObjectPath",
 	"sap/base/Log",
@@ -28,6 +29,7 @@ sap.ui.define([
 	BaseObject,
 	BindingInfo,
 	ActivityDetection,
+	_enforceNoReturnValue,
 	future,
 	ObjectPath,
 	Log,
@@ -262,7 +264,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @public
 	 * @alias sap.ui.base.ManagedObject
 	 */
@@ -528,7 +530,7 @@ sap.ui.define([
 
 					// Call init method here instead of specific Controls constructor.
 					if (that.init) {
-						that.init();
+						_enforceNoReturnValue(that.init(), /*mLogInfo=*/{ name: "init", component: that.getId()}); // 'init' hook isn't allowed to return any values.
 					}
 
 					// apply the settings
@@ -3009,7 +3011,7 @@ sap.ui.define([
 		}
 
 		if (this.exit) {
-			this.exit();
+			_enforceNoReturnValue(this.exit(), /*mLogInfo=*/{ name: "exit", component: this.getId() }); // 'exit' hook isn't allowed to return any values.
 		}
 
 		// TODO: generic concept for exit hooks?
@@ -3596,6 +3598,23 @@ sap.ui.define([
 	};
 
 	ManagedObject.prototype._unbindProperty = logError.bind(null, "_unbindProperty");
+
+	/**
+	 * Find out whether the given property is being updated. This occurs when the corresponding data in the model for
+	 * the given property is changed. The method can be used to determine if the setter of a property is called
+	 * from a model update.
+	 *
+	 * When the given property isn't bound at all, <code>false</code> is returned.
+	 *
+	 * @param {string} sName the name of the property
+	 * @return {boolean} Whether the given property is being updated
+	 * @private
+	 * @ui5-restricted sap.m
+	 */
+	ManagedObject.prototype.isPropertyBeingUpdated = function(sName) {
+		const oBindingInfo = this.getBindingInfo(sName);
+		return !!(oBindingInfo?.skipModelUpdate);
+	};
 
 	/**
 	 * Generic method which is called, whenever a property binding is changed.

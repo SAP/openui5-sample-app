@@ -6,11 +6,13 @@
 sap.ui.define([
 	"sap/ui/core/Control",
 	"sap/m/Text",
-	"sap/f/cards/NumericSideIndicatorRenderer"
+	"sap/f/cards/NumericSideIndicatorRenderer",
+	"sap/f/cards/util/addTooltipIfTruncated"
 ], function (
 	Control,
 	Text,
-	NumericSideIndicatorRenderer
+	NumericSideIndicatorRenderer,
+	addTooltipIfTruncated
 ) {
 	"use strict";
 
@@ -26,7 +28,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public
@@ -58,7 +60,13 @@ sap.ui.define([
 				 * @experimental since 1.95
 				 * Disclaimer: this property is in a beta state - incompatible API changes may be done before its official public release. Use at your own discretion.
 				 */
-				state: { "type": "sap.m.ValueColor", group: "Appearance", defaultValue : "None" }
+				state: { "type": "sap.m.ValueColor", group: "Appearance", defaultValue : "None" },
+
+				/**
+				 * Defines if tooltips should be shown for truncated texts.
+				 * @private
+				 */
+				useTooltips: { type: "boolean", visibility: "hidden", defaultValue: false}
 			},
 			aggregations: {
 
@@ -120,6 +128,18 @@ sap.ui.define([
 		return this;
 	};
 
+	NumericSideIndicator.prototype.onAfterRendering = function () {
+		if (this.getAggregation("_title")) {
+			this._enhanceText(this.getAggregation("_title"));
+		}
+		if (this.getAggregation("_number")) {
+			this._enhanceText(this.getAggregation("_number"));
+		}
+		if (this.getAggregation("_unit")) {
+			this._enhanceText(this.getAggregation("_unit"));
+		}
+	};
+
 	/**
 	 * Lazily create a title and return it.
 	 *
@@ -176,6 +196,17 @@ sap.ui.define([
 		}
 
 		return oControl;
+	};
+
+	/**
+	 * When the option <code>useTooltips</code> is set to <code>true</code> - enhances the given text with a tooltip if the text is truncated.
+	 * @private
+	 * @param {sap.m.Text} oText The text control.
+	 */
+	NumericSideIndicator.prototype._enhanceText = function (oText) {
+		if (this.getProperty("useTooltips")) {
+			addTooltipIfTruncated(oText);
+		}
 	};
 
 	return NumericSideIndicator;

@@ -26,6 +26,7 @@ sap.ui.define([
 	"sap/ui/events/KeyCodes",
 	"sap/base/Log",
 	"sap/ui/core/EnabledPropagator",
+	"sap/ui/core/Theming",
 	"sap/ui/core/theming/Parameters",
 	// jQuery Plugin "scrollLeftRTL"
 	"sap/ui/dom/jquery/scrollLeftRTL"
@@ -51,6 +52,7 @@ sap.ui.define([
 		KeyCodes,
 		Log,
 		EnabledPropagator,
+		Theming,
 		Parameters
 	) {
 	"use strict";
@@ -82,7 +84,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public
@@ -292,6 +294,15 @@ sap.ui.define([
 
 			oEvent.cancelBubble();
 		}, this);
+
+		this._bThemeApplied = false;
+
+		this._handleThemeApplied = () => {
+			this._bThemeApplied = true;
+			Theming.detachApplied(this._handleThemeApplied);
+		};
+
+		Theming.attachApplied(this._handleThemeApplied);
 	};
 
 	/**
@@ -326,6 +337,7 @@ sap.ui.define([
 	Tokenizer.prototype._handleNMoreIndicatorPress = function () {
 		this._togglePopup(this.getTokensPopup());
 	};
+
 
 	/**
 	* Getter for the list containing tokens.
@@ -894,10 +906,9 @@ sap.ui.define([
 
 		this._oIndicator = this.$().find(".sapMTokenizerIndicator");
 
-		if (Core.isThemeApplied()) {
+		if (this._bThemeApplied) {
 			this._storeTokensSizes();
 		}
-
 		// refresh the render mode (loose/narrow) based on whether an indicator should be shown
 		// to ensure that the N-more label is rendered correctly
 		this._useCollapsedMode(sRenderMode);
@@ -1617,6 +1628,8 @@ sap.ui.define([
 		this._oIndicator = null;
 		this._aTokenValidators = null;
 		this._bShouldRenderTabIndex = null;
+		this._bThemeApplied = false;
+
 	};
 
 	/**

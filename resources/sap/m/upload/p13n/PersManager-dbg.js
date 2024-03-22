@@ -72,7 +72,7 @@ sap.ui.define(
 		 * @alias sap.m.upload.p13n.PersManager
 		 * @extends sap.ui.base.Object
 		 * @author SAP SE
-		 * @version 1.121.0
+		 * @version 1.122.0
 		 * @experimental
 		 * @internal
 		 * @private

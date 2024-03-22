@@ -88,8 +88,8 @@ sap.ui.define([
 	};
 
 	/**
-	 * Specifies a rounding behavior for numerical operations capable of discarding precision. Each rounding mode in this object indicates how the least
-	 * significant returned digits of rounded result is to be calculated.
+	 * Specifies a rounding behavior for numerical operations capable of discarding precision. Each rounding mode in
+	 * this object indicates how the least significant returned digits of rounded result are to be calculated.
 	 *
 	 * @public
 	 * @enum {string}
@@ -97,49 +97,61 @@ sap.ui.define([
 	 */
 	var mRoundingMode = {
 		/**
-		 * Rounding mode to round towards negative infinity
+		 * Rounding mode to round towards negative infinity; examples of rounding results to one fractional digit: 0.51
+		 * is rounded to 0.5, and -0.51 is rounded to -0.6.
 		 * @public
 		 * @type {string}
 		 */
 		FLOOR: "FLOOR",
 		/**
-		 * Rounding mode to round towards positive infinity
+		 * Rounding mode to round towards positive infinity; examples of rounding results to one fractional digit: 0.51
+		 * is rounded to 0.6, and -0.51 is rounded to -0.5.
 		 * @public
 		 * @type {string}
 		 */
 		CEILING: "CEILING",
 		/**
-		 * Rounding mode to round towards zero
+		 * Rounding mode to round towards zero; examples of rounding results to one fractional digit: 0.59 is rounded to
+		 * 0.5, and -0.59 is rounded to -0.5.
 		 * @public
 		 * @type {string}
 		 */
 		TOWARDS_ZERO: "TOWARDS_ZERO",
 		/**
-		 * Rounding mode to round away from zero
+		 * Rounding mode to round away from zero; examples of rounding results to one fractional digit: 0.51 is rounded
+		 * to 0.6, and -0.51 is rounded to -0.6.
 		 * @public
 		 * @type {string}
 		 */
 		AWAY_FROM_ZERO: "AWAY_FROM_ZERO",
 		/**
-		 * Rounding mode to round towards the nearest neighbor unless both neighbors are equidistant, in which case round towards negative infinity.
+		 * Rounding mode to round towards the nearest neighbor, unless both neighbors are equidistant, in which case
+		 * round towards negative infinity; examples of rounding results to one fractional digit: 0.54 or 0.46 are
+		 * rounded to 0.5, -0.54 or -0.46 are rounded to -0.5, 0.55 is rounded to 0.5, and -0.55 is rounded to -0.6.
 		 * @public
 		 * @type {string}
 		 */
 		HALF_FLOOR: "HALF_FLOOR",
 		/**
-		 * Rounding mode to round towards the nearest neighbor unless both neighbors are equidistant, in which case round towards positive infinity.
+		 * Rounding mode to round towards the nearest neighbor, unless both neighbors are equidistant, in which case
+		 * round towards positive infinity; examples of rounding results to one fractional digit: 0.54 or 0.46 are
+		 * rounded to 0.5, -0.54 or -0.46 are rounded to -0.5, 0.55 is rounded to 0.6, and -0.55 is rounded to -0.5.
 		 * @public
 		 * @type {string}
 		 */
 		HALF_CEILING: "HALF_CEILING",
 		/**
-		 * Rounding mode to round towards the nearest neighbor unless both neighbors are equidistant, in which case round towards zero.
+		 * Rounding mode to round towards the nearest neighbor, unless both neighbors are equidistant, in which case
+		 * round towards zero; examples of rounding results to one fractional digit: 0.54 or 0.46 are rounded to 0.5,
+		 * -0.54 or -0.46 are rounded to -0.5, 0.55 is rounded to 0.5, and -0.55 is rounded to -0.5.
 		 * @public
 		 * @type {string}
 		 */
 		HALF_TOWARDS_ZERO: "HALF_TOWARDS_ZERO",
 		/**
-		 * Rounding mode to round towards the nearest neighbor unless both neighbors are equidistant, in which case round away from zero.
+		 * Rounding mode to round towards the nearest neighbor unless, both neighbors are equidistant, in which case
+		 * round away from zero; examples of rounding results to one fractional digit: 0.54 or 0.46 are rounded to 0.5,
+		 * -0.54 or -0.46 are rounded to -0.5, 0.55 is rounded to 0.6, and -0.55 is rounded to -0.6.
 		 * @public
 		 * @type {string}
 		 */
@@ -1344,9 +1356,13 @@ sap.ui.define([
 	/**
 	 * Format a number according to the given format options.
 	 *
-	 * @param {number|array} vValue the number to format or an array which contains the number to format and the sMeasure parameter
-	 * @param {string} [sMeasure] an optional unit which has an impact on formatting currencies and units
-	 * @return {string} the formatted output value
+	 * @param {number|string|array} vValue
+	 *   The number to format as a number or a string, such as <code>1234.45</code> or <code>"-1234.45"</code>, or an
+	 *   array which contains both the number to format as a number or a string and the <code>sMeasure</code> parameter
+	 * @param {string} [sMeasure]
+	 *   An optional unit which has an impact on formatting currencies and units
+	 * @returns {string}
+	 *   The formatted value
 	 * @public
 	 */
 	NumberFormat.prototype.format = function(vValue, sMeasure) {
@@ -1441,6 +1457,9 @@ sap.ui.define([
 
 			// either take the decimals/precision on the custom units or fallback to the given format-options
 			oOptions.decimals = (mUnitPatterns && (typeof mUnitPatterns.decimals === "number" && mUnitPatterns.decimals >= 0)) ? mUnitPatterns.decimals : oOptions.decimals;
+			// if decimals and maxFractionDigits are set, then maxFractionDigits of the amount wins over the decimals
+			oOptions.decimals = oOptions.maxFractionDigits < oOptions.decimals
+				? oOptions.maxFractionDigits : oOptions.decimals;
 			oOptions.precision = (mUnitPatterns && (typeof mUnitPatterns.precision === "number" && mUnitPatterns.precision >= 0)) ? mUnitPatterns.precision : oOptions.precision;
 		}
 

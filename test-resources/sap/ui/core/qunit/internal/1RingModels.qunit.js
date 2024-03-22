@@ -52,7 +52,9 @@ sap.ui.require([
 		//TODO: get test running in 1RingModels.qunit; tests don't run independently - refactoring
 		// needed, currently they depend on the language en_US
 		// "sap/ui/core/qunit/types/DateFormat.qunit",
-		// "sap/ui/core/qunit/types/NumberFormat.qunit",
+		"sap/ui/core/qunit/types/NumberFormat.qunit",
+		//TODO: get test running in 1RingModels.qunit; tests don't run independently - refactoring
+		// needed, currently they depend on the language en_US
 		// "sap/ui/core/qunit/types/NumberFormatCurrencies.qunit",
 		// "sap/ui/core/qunit/types/NumberFormatCurrenciesTrailing.qunit",
 		"sap/ui/core/qunit/types/Date.qunit",
@@ -65,11 +67,8 @@ sap.ui.require([
 		// ***************************************************************************************
 		// sap.ui.core.rules.Model.support - tests are contained in testsuite.rule.qunit.js
 		// ***************************************************************************************
-		//TODO: get test running in 1RingModels.qunit; breaks ODataModel.integration.qunit when
-		//  sap.ui.table.* controls are used due to a support rule for this library leading to error
-		//  log
-		//  "Support rule with the id gridTableAccessibleLabel should have an audience."
-		// "sap/ui/core/qunit/rule/model/modelSupport.qunit",
+		"sap/ui/core/qunit/rule/model/bindingPathSyntaxValidation.qunit",
+		"sap/ui/core/qunit/rule/model/selectUsedInBoundAggregation.qunit",
 
 		// ***************************************************************************************
 		// sap.ui.model.* - tests are contained in testsuite.databinding.qunit.js

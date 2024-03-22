@@ -37,7 +37,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -159,7 +159,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	}});
 
 	function isHtmlMimeTypeAllowed() {
-		return Boolean(Device.system.desktop && ClipboardItem && navigator.clipboard?.write);
+		return Boolean(Device.system.desktop && window.ClipboardItem && navigator.clipboard?.write);
 	}
 
 	function isCellDataCopyable(vCellData) {

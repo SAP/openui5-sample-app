@@ -5,8 +5,8 @@
  */
 
 // Provides class sap.ui.base.EventProvider
-sap.ui.define(['./Event', './Object', "sap/base/assert"],
-	function(Event, BaseObject, assert) {
+sap.ui.define(['./Event', './Object', "sap/base/assert", "sap/base/Log"],
+	function(Event, BaseObject, assert, Log) {
 	"use strict";
 
 
@@ -18,7 +18,7 @@ sap.ui.define(['./Event', './Object', "sap/base/assert"],
 	 * @abstract
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @public
 	 * @alias sap.ui.base.EventProvider
 	 */
@@ -238,7 +238,13 @@ sap.ui.define(['./Event', './Object', "sap/base/assert"],
 
 				for (i = 0, iL = aEventListeners.length; i < iL; i++) {
 					oInfo = aEventListeners[i];
-					oInfo.fFunction.call(oInfo.oListener || oProvider, oEvent, oInfo.oData);
+					const vResult = oInfo.fFunction.call(oInfo.oListener || oProvider, oEvent, oInfo.oData);
+					// proper error handling for rejected promises
+					if (typeof vResult?.then === "function") {
+						vResult.catch?.((err) => {
+							Log.error(`EventProvider.fireEvent: Event Listener for event '${sEventId}' failed during execution.`, err);
+						});
+					}
 				}
 
 				bEnableEventBubbling = bEnableEventBubbling && !oEvent.bCancelBubble;

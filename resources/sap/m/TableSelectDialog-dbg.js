@@ -112,7 +112,7 @@ sap.ui.define([
 	 * When using the <code>sap.m.TableSelectDialog</code> in SAP Quartz and Horizon themes, the breakpoints and layout paddings could be determined by the dialog's width. To enable this concept and add responsive paddings to an element of the control, you have to add the following classes depending on your use case: <code>sapUiResponsivePadding--header</code>, <code>sapUiResponsivePadding--subHeader</code>, <code>sapUiResponsivePadding--content</code>, <code>sapUiResponsivePadding--footer</code>.
 	 * @extends sap.m.SelectDialogBase
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public
@@ -522,7 +522,6 @@ sap.ui.define([
 	* Shows the busy state and is called after the renderer is finished.
 	* @override
 	* @protected
-	* @returns {this} this pointer for chaining
 	*/
 	TableSelectDialog.prototype.onAfterRendering = function () {
 		if (this._bInitBusy && this._bFirstRender) {
@@ -530,8 +529,6 @@ sap.ui.define([
 			this._bInitBusy = false;
 			this._bFirstRender = false;
 		}
-
-		return this;
 	};
 
 	/**

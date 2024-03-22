@@ -43,6 +43,7 @@ sap.ui.define([
 	"sap/m/OverflowToolbarLayoutData",
 	"sap/m/VBox",
 	'sap/m/HBox',
+	"sap/m/IllustratedMessage",
 	"sap/ui/events/KeyCodes",
 	'sap/base/Log',
 	"sap/ui/core/library",
@@ -85,6 +86,7 @@ sap.ui.define([
 	OverflowToolbarLayoutData,
 	VBox,
 	HBox,
+	IllustratedMessage,
 	KeyCodes,
 	Log,
 	coreLibrary,
@@ -112,9 +114,6 @@ sap.ui.define([
 
 	// shortcut for sap.m.ListKeyboardMode
 	var ListKeyboardMode = mobileLibrary.ListKeyboardMode;
-
-	// shortcut for sap.m.FlexJustifyContent
-	var FlexJustifyContent = mobileLibrary.FlexJustifyContent;
 
 	// shortcut for sap.ui.core.ValueState
 	var ValueState = coreLibrary.ValueState;
@@ -186,9 +185,9 @@ sap.ui.define([
 				},
 
 				/**
-				 *  Indicates that contexts functionality is supported.
-				 * <b>Note:</b>
-				 * This property is used internally for SAPUI5 Adaptation scenario.
+				 *  Indicates that contexts functionality is supported.<br>
+				 * <b>Note:</b> This property is used internally by the SAPUI5 flexibility layer.
+				 * @restricted sap.ui.fl, sap.ui.comp
 				 */
 				supportContexts: {
 					type: "boolean",
@@ -316,10 +315,10 @@ sap.ui.define([
 				 * Renders the name of the variant as a text.
 				 * The name of the variant is usually rendered as {@link sap.m.Title}
 				 * but there are use cases - related to accessibility requirements - where the
-				 * rendering should be done using {@link sap.m.Text} instead.
+				 * rendering should be done using {@link sap.m.Text} instead.<br>
 				 * <b>Note:</b>
-				 * If the name of the variant is rendered as <code>sap.m.Text</code>, all the <code>sap.m.Title</code>-
-				 * specific information (<code>headerLevel</code> and <code>titleStyle</code>) is ignored.
+				 * If the name of the variant is rendered as <code>sap.m.Text</code>, all the <code>sap.m.Title</code>
+				 * specific information like <code>level</code> and <code>titleStyle</code> is ignored.
 				 *
 				 * @since 1.118
 				 */
@@ -413,15 +412,16 @@ sap.ui.define([
 						},
 
 						/**
-						 * Array describing the contexts.
-						 * <b>Note:</b> It is only used internally by the SAPUI5 flexibility layer.
+						 * Array describing the contexts.<br>
+						 * <b>Note:</b> This property is used internally by the SAPUI5 flexibility layer.
+						 * @restricted sap.ui.fl, sap.ui.comp
 						 */
 						contexts: {
 							type: "object[]"
 						},
 
 						/**
-						 * Indicates the check box state for 'Create Tile'.
+						 * Indicates the check box state for 'Create Tile'.<br>
 						 * <b>Note:</b>
 						 * This event parameter is used only internally.
 						 */
@@ -449,10 +449,9 @@ sap.ui.define([
 					parameters: {
 						/**
 						 * List of changed variants.
-						 * Each entry contains a <code>key</code> (the variant key)  and a <code>name</code> (the new title of the variant).
 						 */
 						renamed: {
-							type: "object[]"
+							type: "sap.m.VariantManagementRename[]"
 						},
 
 						/**
@@ -464,18 +463,16 @@ sap.ui.define([
 
 						/**
 						 * List of variant keys and the associated Execute on Selection indicator.
-						 * Each entry contains a <code>key</code> (the variant key) and an <code>exe</code> flag describing the intention.
 						 */
 						exe: {
-							type: "object[]"
+							type: "sap.m.VariantManagementExe[]"
 						},
 
 						/**
 						 * List of variant keys and the associated favorite indicator.
-						 * Each entry contains a <code>key</code> (the variant key) and a <code>visible</code> flag describing the intention.
 						 */
 						fav: {
-							type: "object[]"
+							type: "sap.m.VariantManagementFav[]"
 						},
 
 						/**
@@ -487,8 +484,9 @@ sap.ui.define([
 
 						/**
 						 * List of variant keys and the associated contexts array.
-						 * Each entry contains a <code>key</code> (the variant key) and a <code>contexts</code> array describing the contexts.
-						 * <b>Note:</b> It is only used internally by the SAPUI5 flexibility layer.
+						 * Each entry contains a <code>key</code> (the variant key) and a <code>contexts</code> array describing the contexts.<br>
+						 * <b>Note:</b> This property is used internally by the SAPUI5 flexibility layer.
+						 * @restricted sap.ui.fl, sap.ui.comp
 						 */
 						contexts: {
 							type: "object[]"
@@ -621,7 +619,7 @@ sap.ui.define([
  	 * Special handling of the rendering the apply automatically control in <i>Manage Views</i>
 	 * @returns {string} Value of the private property
 	 * @private
-	 * @restricted sap.ui.mdc, sap.ui.comp
+	 * @restricted sap.ui.fl, sap.ui.comp
  	 */
 	VariantManagement.prototype.getDisplayTextForExecuteOnSelectionForStandardVariant = function() {
 		return this.getProperty("_displayTextForExecuteOnSelectionForStandardVariant");
@@ -631,7 +629,7 @@ sap.ui.define([
 	 * @param {string} sValue to be displayed
 	 * @returns {string} the current instance
 	 * @private
-	 * @restricted sap.ui.mdc, sap.ui.comp
+	 * @restricted sap.ui.fl, sap.ui.comp
  	 */
 	VariantManagement.prototype.setDisplayTextForExecuteOnSelectionForStandardVariant = function(sValue) {
 		this.setProperty("_displayTextForExecuteOnSelectionForStandardVariant", sValue);
@@ -640,9 +638,9 @@ sap.ui.define([
 	/**
  	 * Special handling of the rendering of this control.
 	 * @param {boolean} bValue defines the intended rendering
-	 * @returns {sap.ui.m.VariantManagement} the current instance
+	 * @returns {sap.m.VariantManagement} the current instance
 	 * @private
-	 * @restricted sap.ui.mdc, sap.ui.comp
+	 * @restricted sap.ui.fl, sap.ui.comp
  	 */
 	VariantManagement.prototype.setShowAsText = function(bValue) {
 		this.setProperty("_showAsText", bValue);
@@ -654,7 +652,7 @@ sap.ui.define([
  	 * Special handling of the rendering of this control.
 	 * @returns {boolean} the current intend
 	 * @private
-	 * @restricted sap.ui.mdc, sap.ui.comp
+	 * @restricted sap.ui.fl, sap.ui.comp
  	 */
 	VariantManagement.prototype.getShowAsText = function() {
 		return this.getProperty("_showAsText");
@@ -918,7 +916,7 @@ sap.ui.define([
 	 * Assignes the key of the <i>Standard</i> variant.
 	 *
 	 * @private
-	 * @restricted sap.ui.mdc, sap.ui.comp
+	 * @restricted sap.ui.fl, sap.ui.comp
 	 * @param {string} sValue describing the key of the standard variant
 	 */
 	VariantManagement.prototype.setStandardVariantKey = function(sValue) {
@@ -928,7 +926,7 @@ sap.ui.define([
 	VariantManagement.prototype._getFirstVisibleVariant = function() {
 		var aItems = this._getItems();
 		for (var i = 0; i < aItems.length; i++) {
-			if (aItems[i].getVisible()) {
+			if (!this._isItemDeleted(aItems[i])) {
 				if (this.getSupportFavorites()) {
 					if (aItems[i].getFavorite()) {
 						return aItems[i].getKey();
@@ -1136,11 +1134,36 @@ sap.ui.define([
 		this.oErrorVariantPopOver.openBy(this.oVariantLayout);
 	};
 
+	VariantManagement.prototype._createIllustratedMessages = function() {
+
+		if (!this._oNoDataIllustratedMessage || this._oNoDataIllustratedMessage.bIsDestroyed) {
+			this._oNoDataIllustratedMessage = new IllustratedMessage({
+				title: this._oRb.getText("VARIANT_MANAGEMENT_NODATA"),
+				description: this._oRb.getText("VARIANT_MANAGEMENT_NODATA_DESCR"),
+				enableVerticalResponsiveness: true,
+				illustrationSize: "Auto",
+				illustrationType: mobileLibrary.IllustratedMessageType.SimpleEmptyList
+			});
+		}
+		if (!this._oNoDataFoundIllustratedMessage || this._oNoDataFoundIllustratedMessage.bIsDestroyed) {
+			this._oNoDataFoundIllustratedMessage = new IllustratedMessage({
+				title: this._oRb.getText("VARIANT_MANAGEMENT_NODATA_FOUND"),
+				description: this._oRb.getText("VARIANT_MANAGEMENT_NODATA_FOUND_DESCR"),
+				enableVerticalResponsiveness: true,
+				illustrationSize: "Auto",
+				illustrationType: mobileLibrary.IllustratedMessageType.NoSearchResults
+			});
+			this._oNoDataFoundIllustratedMessage.addStyleClass("sapMVarMngmtIllustratedMessage");
+		}
+	};
+
 	// My Views List
 	VariantManagement.prototype._createVariantList = function() {
 		if (this.oVariantPopOver) {
 			return;
 		}
+
+		this._createIllustratedMessages();
 
 		this.oVariantManageBtn = new Button(this.getId() + "-manage", {
 			text: this._oRb.getText("VARIANT_MANAGEMENT_MANAGE"),
@@ -1237,17 +1260,13 @@ sap.ui.define([
 		this.oVariantListInvisibleText.toStatic();
 		this.oVariantList.addAriaLabelledBy(this.oVariantListInvisibleText);
 
-
-		this.oVariantListNoDataText = new Text(this.getId() + "-no-data-text", { text: this._oRb.getText("VARIANT_MANAGEMENT_NODATA") });
-		this.oNodataTextLayout = new HBox(this.getId() + "-no-data", {
+		this.oNodataTextLayout = new VBox(this.getId() + "-no-data", {
 			visible: {
 				path: "/hasNoData",
 				model: VariantManagement.INNER_MODEL_NAME
 			},
-			justifyContent: FlexJustifyContent.Center,
-			enableScrolling: false,
 			fitContainer: true,
-			items: [this.oVariantListNoDataText]
+			items: [this._oNoDataFoundIllustratedMessage]
 		});
 
 		var oItemTemplate = new Item({
@@ -1297,6 +1316,7 @@ sap.ui.define([
 			titleAlignment: "Auto",
 			contentWidth: "400px",
 			placement: PlacementType.VerticalPreferredBottom,
+			resizable: true,
 			content: [
 				this.oVariantSelectionPage
 			],
@@ -1383,7 +1403,8 @@ sap.ui.define([
 		oListBinding.filter(this._getFilters());
 
 		if (this.oVariantList.getItems().length < 1) {
-			this.oVariantListNoDataText.setText(this._oRb.getText("VARIANT_MANAGEMENT_NODATA"));
+			this.oNodataTextLayout.removeAllItems();
+			this.oNodataTextLayout.addItem(this._oNoDataIllustratedMessage);
 		}
 
 		this.oVariantSelectionPage.setShowSubHeader(this.oVariantList.getItems().length > 9);
@@ -1421,7 +1442,13 @@ sap.ui.define([
 		oVariantList.getBinding("items").filter(this._getFilters(oFilter));
 
 		if (oVariantList.getItems().length < 1) {
-			this.oVariantListNoDataText.setText(this._oRb.getText("VARIANT_MANAGEMENT_NODATA_FOUND"));
+			if ((this.oNodataTextLayout.getItems().length === 0) || (this.oNodataTextLayout.getItems().length > 0) && (this.oNodataTextLayout.getItems()[0] !== this._oNoDataFoundIllustratedMessage)) {
+				if (!this._oNoDataFoundIllustratedMessage.hasStyleClass("sapMVarMngmtIllustratedMessage")) {
+					this._oNoDataFoundIllustratedMessage.toggleStyleClass("sapMVarMngmtIllustratedMessage");
+				}
+				this.oNodataTextLayout.removeAllItems();
+				this.oNodataTextLayout.addItem(this._oNoDataFoundIllustratedMessage);
+			}
 		}
 	};
 
@@ -1959,7 +1986,10 @@ sap.ui.define([
 		oManagementTable.getBinding("items").filter(aFilters);
 
         if (this.oManagementTable.getItems().length < 1) {
-			this.oManagementTable.setNoDataText(this._oRb.getText("VARIANT_MANAGEMENT_NODATA_FOUND"));
+			if (this._oNoDataFoundIllustratedMessage.hasStyleClass("sapMVarMngmtIllustratedMessage")) {
+				this._oNoDataFoundIllustratedMessage.toggleStyleClass("sapMVarMngmtIllustratedMessage");
+			}
+			this.oManagementTable.setNoData(this._oNoDataFoundIllustratedMessage);
 		}
 
 		this._bRebindRequired = true;
@@ -1972,11 +2002,13 @@ sap.ui.define([
 	VariantManagement.prototype._createManagementDialog = function() {
 		if (!this.oManagementDialog || this.oManagementDialog.bIsDestroyed) {
 
+			this._createIllustratedMessages();
+
 			this.oManagementTable = new Table(this.getId() + "-managementTable", {
 				contextualWidth: "Auto",
 				fixedLayout: false,
 				growing: true,
-				noDataText: this._oRb.getText("VARIANT_MANAGEMENT_NODATA"),
+				noData: this._oNoDataIllustratedMessage,
 				keyboardMode: ListKeyboardMode.Navigation,
 				columns: [
 					new Column({
@@ -2353,7 +2385,7 @@ sap.ui.define([
 			]
 		});
 
-		if (this._getDeletedItems() && this._getDeletedItems().indexOf(oItem.getKey()) > -1) {
+		if (this._isItemDeleted(oItem)) {
 			oListItem.setVisible(false);
 		}
 
@@ -2399,7 +2431,7 @@ sap.ui.define([
 		}
 
         if (this.oManagementTable.getItems().length < 1) {
-			this.oManagementTable.setNoDataText(this._oRb.getText("VARIANT_MANAGEMENT_NODATA"));
+			this.oManagementTable.setNoData(this._oNoDataIllustratedMessage);
 		}
 
 		this.oManagementDialog.open();
@@ -2567,15 +2599,16 @@ sap.ui.define([
 		}
 
 		this.getItems().forEach(function(oItem) {
+			const bDeleted = this._isItemDeleted(oItem);
 
-			if (!oItem.getVisible()) {
+			if (bDeleted) {
 				if (!oVariantInfo.deleted) {
 					oVariantInfo.deleted = [];
 				}
 				oVariantInfo.deleted.push(oItem.getKey());
 			}
 
-			if (oItem.getVisible() && (oItem.getFavorite() !== oItem._getOriginalFavorite())) {
+			if (!bDeleted && (oItem.getFavorite() !== oItem._getOriginalFavorite())) {
 				if (!oVariantInfo.fav) {
 					oVariantInfo.fav = [];
 				}
@@ -2583,7 +2616,7 @@ sap.ui.define([
 				oItem._setOriginalFavorite(oItem.getFavorite());
 			}
 
-			if (oItem.getVisible() && (oItem.getTitle() !== oItem._getOriginalTitle())) {
+			if (!bDeleted && (oItem.getTitle() !== oItem._getOriginalTitle())) {
 				if (!oVariantInfo.renamed) {
 					oVariantInfo.renamed = [];
 				}
@@ -2591,7 +2624,7 @@ sap.ui.define([
 				oItem._setOriginalTitle(oItem.getTitle());
 			}
 
-			if (oItem.getVisible()  && (oItem.getExecuteOnSelect() !== oItem._getOriginalExecuteOnSelect())) {
+			if (!bDeleted && (oItem.getExecuteOnSelect() !== oItem._getOriginalExecuteOnSelect())) {
 				if (!oVariantInfo.exe) {
 					oVariantInfo.exe = [];
 				}
@@ -2599,7 +2632,7 @@ sap.ui.define([
 				oItem._setOriginalExecuteOnSelect(oItem.getExecuteOnSelect());
 			}
 
-			if (oItem.getVisible() && this._hasContextsChanged(oItem)) {
+			if (!bDeleted && this._hasContextsChanged(oItem)) {
 				if (!oVariantInfo.contexts) {
 					oVariantInfo.contexts = [];
 				}
@@ -2632,12 +2665,6 @@ sap.ui.define([
 
 		if (this._getDeletedItems().length > 0) {
 			this._bRebindRequired = true;
-			this._getDeletedItems().forEach(function(sKey) {
-				var oItem = this._getItemByKey(sKey);
-				if (oItem) {
-					oItem.setVisible(false);
-				}
-			}.bind(this));
 		}
 
 		if (this._getRenamedItems().length > 0) {
@@ -2697,13 +2724,21 @@ sap.ui.define([
 		}
 	};
 
+	VariantManagement.prototype._isItemDeleted = function(oItem) {
+		const aItemsDeleted = this._getDeletedItems();
+		if (!oItem || !aItemsDeleted) {
+			return false;
+		}
+		return (aItemsDeleted.indexOf(oItem.getKey()) > -1);
+	};
+
 	VariantManagement.prototype._anyInErrorStateManageTable = function(oManagementTable) {
 		var bInError = false;
 
 		if (oManagementTable) {
-			oManagementTable.getItems().some(function(oItem) {
-				if (oItem.getVisible()) {
-					var oInput = oItem.getCells()[VariantManagement.COLUMN_NAME_IDX];
+			oManagementTable.getItems().some(function(oRow) {
+				if (oRow.getVisible()) {
+					var oInput = oRow.getCells()[VariantManagement.COLUMN_NAME_IDX];
 					if (oInput && oInput.getValueState && (oInput.getValueState() === ValueState.Error)) {
 						bInError = true;
 					}
@@ -3008,6 +3043,16 @@ sap.ui.define([
 		this._oSearchFieldOnMgmtDialog = undefined;
 		this._sDefaultKey = undefined;
 		this._oCtrlRef = undefined;
+
+		if (this._oNoDataIllustratedMessage && !this._oNoDataIllustratedMessage.bIsDestroyed) {
+			this._oNoDataIllustratedMessage.destroy();
+		}
+		if (this._oNoDataFoundIllustratedMessage && !this._oNoDataFoundIllustratedMessage.bIsDestroyed) {
+			this._oNoDataFoundIllustratedMessage.destroy();
+		}
+
+		this._oNoDataIllustratedMessage = undefined;
+		this._oNoDataFoundIllustratedMessage = undefined;
 
 		oModel = this.getModel(VariantManagement.INNER_MODEL_NAME);
 		if (oModel) {

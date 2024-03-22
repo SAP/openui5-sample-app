@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-// Provides a filter for list bindings
+// Provides a base exception class
 sap.ui.define(function() {
 	"use strict";
 

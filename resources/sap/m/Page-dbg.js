@@ -97,7 +97,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 * @mixes sap.ui.core.ContextMenuSupport
 		 * @author SAP SE
-		 * @version 1.121.0
+		 * @version 1.122.0
 		 *
 		 * @public
 		 * @alias sap.m.Page

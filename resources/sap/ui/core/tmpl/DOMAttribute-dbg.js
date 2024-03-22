@@ -19,7 +19,7 @@ sap.ui.define(['sap/ui/core/Element', 'sap/ui/core/library'],
 	 * @class
 	 * Represents a DOM attribute of a DOM element.
 	 * @extends sap.ui.core.Element
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @public
 	 * @since 1.15

@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.121.0
+		 * @version 1.122.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -100,6 +100,9 @@ sap.ui.define([
 		} else {
 			this.sGroupId = undefined;
 			this.bNoPatch = false;
+		}
+		if (this.sPath === "@$ui5.context.isSelected") {
+			this.bNoPatch = true;
 		}
 		this.oCheckUpdateCallToken = undefined;
 		this.oContext = oContext;
@@ -338,7 +341,8 @@ sap.ui.define([
 			});
 			if (bForceUpdate && vValue.isFulfilled()) {
 				if (vType && vType.isFulfilled && vType.isFulfilled()) {
-					this.oType = vType.getResult();
+					PropertyBinding.prototype.setType
+						.call(this, vType.getResult(), this.sInternalType);
 				}
 				this.vValue = vValue.getResult();
 			}
@@ -352,7 +356,7 @@ sap.ui.define([
 
 			if (oCallToken === that.oCheckUpdateCallToken) { // latest call to checkUpdateInternal
 				that.oCheckUpdateCallToken = undefined;
-				that.oType = oType;
+				PropertyBinding.prototype.setType.call(that, oType, that.sInternalType);
 				if (oCallToken.forceUpdate || that.vValue !== vValue) {
 					that.bInitial = false;
 					that.vValue = vValue;
@@ -370,11 +374,15 @@ sap.ui.define([
 	};
 
 	/**
-	 * Deregisters the binding as change listener from its cache or operation binding ($Parameter).
+	 * Deregisters the binding as change listener from its context if applicable. If not, it will be
+	 * deregistered from the cache or operation binding ($Parameter).
 	 *
 	 * @private
 	 */
 	ODataPropertyBinding.prototype.deregisterChangeListener = function () {
+		if (this.bRelative && this.oContext?.deregisterChangeListener?.(this)) {
+			return;
+		}
 		if (this.sReducedPath) {
 			this.doDeregisterChangeListener(this.sReducedPath, this);
 		}
@@ -687,7 +695,7 @@ sap.ui.define([
 						// Note: this.oType => this.sReducedPath
 						&& _Helper.getMetaPath(this.oModel.resolve(this.sPath, oContext))
 							!== _Helper.getMetaPath(this.sReducedPath)) {
-						this.oType = undefined;
+						PropertyBinding.prototype.setType.call(this, undefined, this.sInternalType);
 					}
 					this.sReducedPath = undefined;
 				}
@@ -736,7 +744,10 @@ sap.ui.define([
 	 * be updated on the server, an error is logged to the console and added to the message manager
 	 * as a technical message. Unless preconditions fail synchronously, a
 	 * {@link sap.ui.model.odata.v4.ODataModel#event:propertyChange 'propertyChange'} event is
-	 * fired and provides a promise on the outcome of the asynchronous operation.
+	 * fired and provides a promise on the outcome of the asynchronous operation. Since 1.122.0
+	 * this method allows updates to the client-side annotation "@$ui5.context.isSelected". Note:
+	 * Changing the value of a client-side annotation never triggers a PATCH request, no matter
+	 * which <code>sGroupId</code> is given. Thus, it cannot be reverted via {@link #resetChanges}.
 	 *
 	 * @param {any} vValue
 	 *   The new value which must be primitive
@@ -744,7 +755,8 @@ sap.ui.define([
 	 *   The group ID to be used for this update call; if not specified, the update group ID for
 	 *   this binding (or its relevant parent binding) is used, see {@link #getUpdateGroupId}.
 	 *   Valid values are <code>undefined</code>, '$auto', '$auto.*', '$direct' or application group
-	 *   IDs as specified in {@link sap.ui.model.odata.v4.ODataModel}.
+	 *   IDs as specified in {@link sap.ui.model.odata.v4.ODataModel}. When writing to a client-side
+	 *   annotation, this parameter is ignored.
 	 * @throws {Error} If
 	 *   <ul>
 	 *     <li> the binding's root binding is suspended.

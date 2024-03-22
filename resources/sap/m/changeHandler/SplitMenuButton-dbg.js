@@ -20,7 +20,7 @@ sap.ui.define([
 	 *
 	 * @alias sap.m.changeHandler.SplitMenuButton
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @experimental Since 1.48
 	 */
 	var SplitMenuButton = {};
@@ -146,10 +146,8 @@ sap.ui.define([
 							});
 						})
 						.then(function(){
-							return oModifier.attachEvent(
-								oButton,
+							oButton.attachEvent(
 								"press",
-								"sap.m.changeHandler.SplitMenuButton.pressHandler",
 								{
 									selector: oModifier.getSelector(oMenuItem, oAppComponent),
 									appComponentId: oAppComponent.getId(),
@@ -157,8 +155,6 @@ sap.ui.define([
 								},
 								SplitMenuButton.pressHandler
 							);
-						})
-						.then(function(){
 							return oModifier.insertAggregation(oParent, sParentAggregation, oButton, iAggregationIndex + iIndex, oView);
 						});
 				}, Promise.resolve());

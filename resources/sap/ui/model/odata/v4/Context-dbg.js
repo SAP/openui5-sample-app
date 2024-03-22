@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.121.0
+		 * @version 1.122.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -349,6 +349,24 @@ sap.ui.define([
 	};
 
 	/**
+	 * Deregisters the given change listener if it is registered for its path. Note: This
+	 * method is for special cases with a header context and the path "@$ui5.context.isSelected"
+	 * and should not be confused with <code>Cache#deregisterChangeListener</code>.
+	 *
+	 * @param {sap.ui.model.odata.v4.ODataPropertyBinding} oListener - The listener to be removed
+	 * @returns {boolean} - If this function has handled the deregistering
+	 *
+	 * @private
+	 */
+	Context.prototype.deregisterChangeListener = function (oListener) {
+		if (this.mChangeListeners && oListener.getPath() === "@$ui5.context.isSelected") {
+			_Helper.removeByPath(this.mChangeListeners, "", oListener);
+			return true;
+		}
+		return false;
+	};
+
+	/**
 	 * Destroys this context, that is, it removes this context from all dependent bindings and drops
 	 * references to binding and model, so that the context cannot be used anymore; it keeps path
 	 * and index for debugging purposes.
@@ -373,6 +391,7 @@ sap.ui.define([
 			oDependentBinding.setContext(undefined);
 		});
 		this.oBinding = undefined;
+		delete this.mChangeListeners;
 		this.oCreatedPromise = undefined;
 		// keep oDeletePromise so that isDeleted does not unexpectedly become false
 		this.oSyncCreatePromise = undefined;
@@ -477,6 +496,19 @@ sap.ui.define([
 			}
 			throw new Error("Must not modify a deleted entity: " + this);
 		}
+
+		if (sPath === "@$ui5.context.isSelected") {
+			this.setSelected(vValue);
+
+			if (oGroupLock) {
+				oGroupLock.unlock();
+				oGroupLock = null;
+			}
+			if (this.oBinding.getHeaderContext?.() === this) {
+				return SyncPromise.resolve();
+			}
+		}
+
 		if (oGroupLock && this.isTransient() && !this.isInactive()) {
 			oValue = this.getValue();
 			oPromise = oValue && _Helper.getPrivateAnnotation(oValue, "transient");
@@ -578,6 +610,22 @@ sap.ui.define([
 	};
 
 	/**
+	 * Sets the selected state for this context.
+	 *
+	 * @param {boolean} bSelected
+	 *   Whether this context is to be selected
+	 *
+	 * @private
+	 * @see #setSelected
+	 */
+	Context.prototype.doSetSelected = function (bSelected) {
+		this.bSelected = bSelected;
+		if (this.oBinding) {
+			this.oBinding.onKeepAliveChanged(this); // selected contexts are effectively kept alive
+		}
+	};
+
+	/**
 	 * Expands the group node that this context points to.
 	 *
 	 * @throws {Error}
@@ -663,25 +711,43 @@ sap.ui.define([
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise on the outcome of the binding's <code>fetchValue</code> call; it is rejected
 	 *   in case cached values are asked for, but not found
+	 * @throws {Error} If this context is a header context and no or empty path is given and
+	 *   a listener is given.
 	 *
 	 * @private
+	 * @see #getObject
+	 * @see #getProperty
 	 */
 	Context.prototype.fetchValue = function (sPath, oListener, bCached) {
-		var oBinding = this.oBinding;
+		var oBinding = this.oBinding,
+			that = this;
 
 		if (this.iIndex === iVIRTUAL) {
 			return SyncPromise.resolve(); // no cache access for virtual contexts
 		}
-		if (oBinding.getHeaderContext && oBinding.getHeaderContext() === this) {
+		if (oBinding.getHeaderContext?.() === this) {
 			if (sPath && sPath.startsWith(this.sPath)) {
 				sPath = sPath.slice(this.sPath.length + 1);
 			}
 			if (!sPath) {
-				return oBinding.fetchValue(this.sPath + "/$count", oListener, bCached)
-					.then(function (iCount) {
-						return {$count : iCount};
-					});
-			} else if (sPath !== "$count") {
+				if (oListener) {
+					throw new Error("Cannot register change listener for header context object");
+				}
+				return oBinding.fetchValue(this.sPath + "/$count", null, bCached).then((iCount) => {
+					return {
+						"@$ui5.context.isSelected" : that.bSelected,
+						$count : iCount
+					};
+				});
+			} else if (sPath === "@$ui5.context.isSelected") {
+				// @$ui5.context.isSelected is a virtual property for header contexts and not part
+				// of the cache (in contrast to row contexts, where it is saved in the cache).
+				// Therefore, change listeners are saved and fired via the header context
+				this.mChangeListeners ??= {};
+				_Helper.addByPath(this.mChangeListeners, "", oListener);
+
+				return SyncPromise.resolve(this.bSelected);
+			} else if (sPath !== "$count" && sPath !== "@$ui5.context.isSelected") {
 				throw new Error("Invalid header path: " + sPath);
 			}
 		}
@@ -851,8 +917,8 @@ sap.ui.define([
 	 * Returns <code>undefined</code> if the data is not (yet) available; no request is triggered.
 	 * Use {@link #requestObject} for asynchronous access.
 	 *
-	 * The header context of a list binding only delivers <code>$count</code> (wrapped in an object
-	 * if <code>sPath</code> is "").
+	 * The header context of a list binding only delivers <code>$count</code> and
+	 * <code>@$ui5.context.isSelected</code> (wrapped in an object if <code>sPath</code> is "").
 	 *
 	 * @param {string} [sPath=""]
 	 *   A path relative to this context
@@ -860,7 +926,7 @@ sap.ui.define([
 	 *   The requested value
 	 * @throws {Error}
 	 *   If the context's root binding is suspended or if the context is a header context and the
-	 *   path is neither empty nor "$count".
+	 *   path is neither empty, "$count", nor "@ui5.context.isSelected".
 	 *
 	 * @public
 	 * @see sap.ui.model.Context#getObject
@@ -886,8 +952,8 @@ sap.ui.define([
 	 *     <li> this context is not part of a recursive hierarchy.
 	 *   </ul>
 	 *
-	 * @experimental As of version 1.120.0
 	 * @public
+	 * @since 1.122.0
 	 */
 	Context.prototype.getParent = function () {
 		if (!this.oBinding.fetchOrGetParent) {
@@ -914,7 +980,8 @@ sap.ui.define([
 	 *   <ul>
 	 *     <li> the context's root binding is suspended,
 	 *     <li> the value is not primitive,
-	 *     <li> or the context is a header context and the path is not "$count"
+	 *     <li> or the context is a header context and the path is not "$count" or
+	 *        "@ui5.context.isSelected".
 	 *   </ul>
 	 *
 	 * @public
@@ -1157,7 +1224,9 @@ sap.ui.define([
 
 	/**
 	 * Tells whether this context is currently selected, but not {@link #delete deleted} on the
-	 * client.
+	 * client. Since 1.122.0 the selection state can also be accessed via instance annotation
+	 * "@$ui5.context.isSelected" at the entity. Note that the annotation does not take the deletion
+	 * state into account.
 	 *
 	 * @returns {boolean} Whether this context is currently selected
 	 *
@@ -1376,8 +1445,8 @@ sap.ui.define([
 	 * Note that the function clones the result. Modify values via
 	 * {@link sap.ui.model.odata.v4.Context#setProperty}.
 	 *
-	 * The header context of a list binding only delivers <code>$count</code> (wrapped in an object
-	 * if <code>sPath</code> is "").
+	 * The header context of a list binding only delivers <code>$count</code> and
+	 * <code>@$ui5.context.isSelected</code> (wrapped in an object if <code>sPath</code> is "").
 	 *
 	 * In case of a {@link sap.ui.model.odata.v4.ODataContextBinding#getBoundContext context
 	 * binding's bound context} that hasn't requested its data yet, this method causes an initial
@@ -1394,7 +1463,7 @@ sap.ui.define([
 	 *   A promise on the requested value
 	 * @throws {Error}
 	 *   If the context's root binding is suspended, or if the context is a header context and the
-	 *   path is neither empty nor "$count"
+	 *   path is neither empty, "$count", nor "@$ui5.context.isSelected".
 	 *
 	 * @public
 	 * @see #getBinding
@@ -1412,8 +1481,6 @@ sap.ui.define([
 	 * Requests the parent node (in case of a recursive hierarchy; see
 	 * {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}).
 	 *
-	 * Note: <strong>DO NOT</strong> call {@link #setKeepAlive} on the resulting context!
-	 *
 	 * @returns {Promise<sap.ui.model.odata.v4.Context|null>} A promise which:
 	 *   <ul>
 	 *     <li> Resolves if successful with either the parent node or <code>null</code> for a root
@@ -1426,9 +1493,9 @@ sap.ui.define([
 	 *     <li> this context is not part of a recursive hierarchy.
 	 *    </ul>
 	 *
-	 * @experimental As of version 1.120.0
 	 * @public
 	 * @see #getParent
+	 * @since 1.122.0
 	 */
 	Context.prototype.requestParent = function () {
 		if (!this.oBinding.fetchOrGetParent) {
@@ -1450,7 +1517,7 @@ sap.ui.define([
 	 *   given property paths that format corresponding to the properties' EDM types and constraints
 	 * @returns {Promise<any>}
 	 *   A promise on the requested value or values; it is rejected if a value is not primitive or
-	 *   if the context is a header context and a path is not "$count"
+	 *   if the context is a header context and a path is not "$count" or "@$ui5.context.isSelected"
 	 * @throws {Error}
 	 *   If the context's root binding is suspended
 	 *
@@ -2019,7 +2086,10 @@ sap.ui.define([
 	/**
 	 * Sets a new value for the property identified by the given path. The path is relative to this
 	 * context and is expected to point to a structural property with primitive type or, since
-	 * 1.85.0, to an instance annotation.
+	 * 1.85.0, to an instance annotation. Since 1.122.0 the client-side annotation
+	 * "@$ui5.context.isSelected" can be given as a path. Note: Writing to a client-side
+	 * annotation never triggers a PATCH request, even if <code>sGroupId</code> is given.
+	 * Thus, reverting the value of this annotation cannot be done via {@link #resetChanges}.
 	 *
 	 * @param {string} sPath
 	 *   A path relative to this context
@@ -2027,7 +2097,8 @@ sap.ui.define([
 	 *   The new value which must be primitive
 	 * @param {string} [sGroupId]
 	 *   The group ID to be used for the PATCH request; if not specified, the update group ID for
-	 *   the context's binding is used, see {@link #getUpdateGroupId}. Since 1.74.0, you can use
+	 *   the context's binding is used, see {@link #getUpdateGroupId}. When writing to a client-side
+	 *   annotation, <code>null</code> is used automatically. Since 1.74.0, you can use
 	 *   <code>null</code> to prevent the PATCH request.
 	 * @param {boolean} [bRetry]
 	 *   Since 1.85.0, if <code>true</code> the property is not reset if the PATCH request failed.
@@ -2094,10 +2165,12 @@ sap.ui.define([
 	};
 
 	/**
-	 * Determines whether this context is currently selected. If the preconditions of
-	 * {@link #setKeepAlive} hold, a best effort is made to implicitly keep a selected context alive
-	 * in order to preserve the selection state. While a context is currently
-	 * {@link #delete deleted} on the client, it does not appear as {@link #isSelected selected}.
+	 * Sets whether this context is currently selected. While a context is currently
+	 * {@link #delete deleted} on the client, it does not appear as {@link #isSelected selected}. If
+	 * the preconditions of {@link #setKeepAlive} hold, a best effort is made to implicitly keep a
+	 * selected context alive in order to preserve the selection state. Once the selection is no
+	 * longer needed, for example because you perform an operation on this context which logically
+	 * removes it from its list, you need to reset the selection.
 	 *
 	 * <b>Note:</b> It is unsafe to keep a reference to a context instance which is not
 	 * {@link #isKeepAlive kept alive}.
@@ -2118,10 +2191,18 @@ sap.ui.define([
 		if (bSelected && this.isDeleted()) {
 			throw new Error("Must not select a deleted entity: " + this);
 		}
-		this.bSelected = bSelected;
-		if (this.oBinding) {
-			this.oBinding.onKeepAliveChanged(this); // selected contexts are effectively kept alive
+		if (bSelected !== this.bSelected) {
+			if (this.mChangeListeners) {
+				_Helper.fireChange(this.mChangeListeners, "", bSelected);
+			}
+			this.withCache((oCache, sPath) => {
+				if (this.oBinding) {
+					oCache.setProperty("@$ui5.context.isSelected", bSelected, sPath);
+				} // else: context already destroyed
+			}, "");
 		}
+
+		this.doSetSelected(bSelected);
 	};
 
 	/**

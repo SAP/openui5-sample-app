@@ -10,7 +10,6 @@ sap.ui.define([
 	"sap/ui/core/Configuration",
 	'sap/ui/core/Control',
 	"sap/ui/core/ControlBehavior",
-	"sap/ui/core/Core",
 	"sap/ui/core/Element",
 	'sap/ui/core/RenderManager',
 	'./NavContainerRenderer',
@@ -23,7 +22,6 @@ sap.ui.define([
 	Configuration,
 	Control,
 	ControlBehavior,
-	Core,
 	Element,
 	RenderManager,
 	NavContainerRenderer,
@@ -50,7 +48,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public

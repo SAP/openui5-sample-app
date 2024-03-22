@@ -36,13 +36,13 @@ sap.ui.define(["sap/ui/base/DataType",
 	 * @namespace
 	 * @alias sap.f
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @since 1.44
 	 * @public
 	 */
 	var thisLib = sap.ui.getCore().initLibrary({
 		name : "sap.f",
-		version: "1.121.0",
+		version: "1.122.0",
 		dependencies : ["sap.ui.core", "sap.m", "sap.ui.layout"],
 		designtime: "sap/f/designtime/library.designtime",
 		interfaces: [
@@ -134,6 +134,11 @@ sap.ui.define(["sap/ui/base/DataType",
 				"sap.f.DynamicPageTitle" : "sap/f/flexibility/DynamicPageTitle",
 				"sap.f.semantic.SemanticPage" : {
 					"moveControls": "default"
+				},
+				"sap.f.GridContainer": {
+					"moveControls": "default",
+					"hideControl": "default",
+					"unhideControl": "default"
 				}
 			},
 			//Configuration used for rule loading of Support Assistant

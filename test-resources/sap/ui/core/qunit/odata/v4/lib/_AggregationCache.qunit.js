@@ -570,6 +570,13 @@ sap.ui.define([
 		assert.ok(oCache.oTreeState instanceof _TreeState);
 		assert.strictEqual(oCache.oTreeState.sNodeProperty, "node/property");
 		assert.strictEqual(oCache.bUnifiedCache, false);
+
+		this.mock(oCache).expects("getTypes").returns("~types~");
+		this.mock(_Helper).expects("getKeyFilter")
+			.withExactArgs("~node~", "/resource/path", "~types~").returns("~filter~");
+
+		// code under test: callback function provided for _TreeState c'tor
+		assert.strictEqual(oCache.oTreeState.fnGetKeyFilter("~node~"), "~filter~");
 	});
 });
 
@@ -1047,7 +1054,123 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("fetchParentIndex", async function (assert) {
+[false, true].forEach(function (bParentIsPlaceholder) {
+	[false, true].forEach(function (bCandidateFound) {
+		const sTitle = "fetchParentIndex: parent is placeholder = " + bParentIsPlaceholder
+				+ ", candidate outside collection found = " + bCandidateFound;
+
+		if (bCandidateFound && !bParentIsPlaceholder) {
+			return; // parent is either inside or outside collection
+		}
+
+	QUnit.test(sTitle, async function (assert) {
+		const oAggregation = {
+			$DistanceFromRoot : "DistFromRoot",
+			$DrillState : "myDrillState",
+			$LimitedDescendantCount : "LtdDescendant_Count",
+			$metaPath : "~metaPath~",
+			$NodeProperty : "NodeID",
+			$path : "/path",
+			aggregate : {},
+			group : {},
+			groupLevels : ["BillToParty"],
+			hierarchyQualifier : "X"
+		};
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, oAggregation);
+		const sQueryOptions = JSON.stringify(oCache.mQueryOptions);
+		const oCacheMock = this.mock(oCache);
+		oCacheMock.expects("getTypes").atLeast(1).returns("~Types~");
+		const oNode = {"@$ui5.node.level" : 3};
+		oCache.aElements[20] = {"@$ui5.node.level" : 0};
+		oCache.aElements[21] = {"@$ui5.node.level" : 4};
+		oCache.aElements[22] = {"@$ui5.node.level" : 4};
+		oCache.aElements[23] = oNode;
+		oCache.aElements[24] = {"@$ui5.node.level" : 4};
+		oCache.aElements[25] = {"@$ui5.node.level" : 5};
+		oCache.aElements[26] = {"@$ui5.node.level" : 3};
+		const oHelperMock = this.mock(_Helper);
+		oHelperMock.expects("getKeyFilter").withExactArgs(oNode, "~metaPath~", "~Types~")
+			.returns("~Key~");
+		this.mock(this.oRequestor).expects("buildQueryString")
+			.withExactArgs(null, {$apply : "ancestors($root/path,X,NodeID,filter(~Key~),1)"})
+			.returns("/~QueryString~");
+		this.mock(this.oRequestor).expects("request")
+			.withExactArgs("GET", "Foo/~QueryString~", "~GroupLock~")
+			.callsFake(async () => {
+				var oPropertiesExpectation, oNodePropertyExpectation;
+
+				await "next tick";
+
+				oHelperMock.expects("getKeyPredicate")
+					.withExactArgs("~Parent~", "/Foo", "~Types~")
+					.returns("('n/a')");
+				if (bCandidateFound) {
+					oCache.aElements.$byPredicate["('n/a')"] = "~ParentOutsideCollection~";
+					oHelperMock.expects("getPrivateAnnotation")
+						.withExactArgs("~ParentOutsideCollection~", "rank")
+						.returns(undefined);
+				} else { // parent not already in cache
+					oHelperMock.expects("getPrivateAnnotation").never();
+				}
+				oCacheMock.expects("getArrayIndex").never(); // not yet
+				oHelperMock.expects("setPrivateAnnotation")
+					.withExactArgs("~Parent~", "parent", sinon.match.same(oCache.oFirstLevel));
+				oCacheMock.expects("requestRank")
+					.withExactArgs("~Parent~", "~GroupLock~")
+					.callsFake(async () => {
+						await "next tick";
+
+						assert.ok(oPropertiesExpectation.called, "called in sync");
+						assert.ok(oNodePropertyExpectation.called, "called in sync");
+
+						oCache.aElements[17] = "~ParentInsideCollection~";
+						this.mock(oCache.oFirstLevel).expects("calculateKeyPredicate")
+							.withExactArgs("~Parent~", "~Types~", "/Foo");
+						oCacheMock.expects("getArrayIndex").withExactArgs("~iRank~")
+							.returns(17);
+						oHelperMock.expects("getPrivateAnnotation")
+							.withExactArgs("~ParentInsideCollection~", "placeholder")
+							.returns(bParentIsPlaceholder);
+						oCacheMock.expects("insertNode").exactly(bParentIsPlaceholder ? 1 : 0)
+							.withExactArgs("~Parent~", "~iRank~", 17);
+
+						return "~iRank~";
+					});
+				oPropertiesExpectation = oCacheMock.expects("requestProperties")
+					.withExactArgs("~Parent~", ["DistFromRoot", "myDrillState",
+						"LtdDescendant_Count"], "~GroupLock~", true)
+					.resolves();
+				oNodePropertyExpectation = oCacheMock.expects("requestNodeProperty")
+					.withExactArgs("~Parent~", "~GroupLock~")
+					.resolves();
+
+				return {value : ["~Parent~"]};
+			});
+
+		// code under test
+		const oPromise = oCache.fetchParentIndex(26, "~GroupLock~");
+		const oPromise0 = oCache.fetchParentIndex(23, "~GroupLock~");
+		const oPromise1 = oCache.fetchParentIndex(26, "~GroupLock~");
+		const oPromise2 = oCache.fetchParentIndex(23, "~GroupLock~");
+
+		assert.strictEqual(_Helper.getPrivateAnnotation(oNode, "parentIndexPromise"), oPromise,
+			"cached");
+		assert.strictEqual(oPromise, oPromise0, "same promise");
+		assert.strictEqual(oPromise, oPromise1, "same promise");
+		assert.strictEqual(oPromise, oPromise2, "same promise");
+		assert.ok(oPromise instanceof SyncPromise);
+		assert.strictEqual(await oPromise, 17);
+		assert.strictEqual(JSON.stringify(oCache.mQueryOptions), sQueryOptions, "unchanged");
+		assert.notOk(_Helper.hasPrivateAnnotation(oNode, "parentIndexPromise"), "gone");
+	});
+	});
+});
+
+	//*********************************************************************************************
+["~rank~", 0].forEach((iRank) => {
+	const sTitle = "fetchParentIndex: parent already inside collection, rank = " + iRank;
+
+	QUnit.test(sTitle, async function (assert) {
 		const oAggregation = {
 			$DistanceFromRoot : "DistFromRoot",
 			$DrillState : "myDrillState",
@@ -1063,8 +1186,9 @@ sap.ui.define([
 		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, oAggregation);
 		const sQueryOptions = JSON.stringify(oCache.mQueryOptions);
 
-		this.mock(oCache).expects("getTypes").returns("~Types~").twice();
+		this.mock(oCache).expects("getTypes").atLeast(1).returns("~Types~");
 		const oNode = {};
+		oCache.aElements[22] = {"@$ui5.node.level" : 0};
 		oCache.aElements[23] = oNode;
 		this.mock(_Helper).expects("getKeyFilter").withExactArgs(oNode, "~metaPath~", "~Types~")
 			.returns("~Key~");
@@ -1074,53 +1198,75 @@ sap.ui.define([
 		this.mock(this.oRequestor).expects("request")
 			.withExactArgs("GET", "Foo/~QueryString~", "~GroupLock~")
 			.callsFake(async () => {
-				var oPropertiesExpectation, oNodePropertyExpectation;
-
 				await "next tick";
 
-				this.mock(_Helper).expects("setPrivateAnnotation")
-					.withExactArgs("~Parent~", "parent", sinon.match.same(oCache.oFirstLevel));
-				this.mock(oCache).expects("requestRank")
-					.withExactArgs("~Parent~", "~GroupLock~")
-					.callsFake(async () => {
-						await "next tick";
-
-						assert.ok(oPropertiesExpectation.called, "called in sync");
-						assert.ok(oNodePropertyExpectation.called, "called in sync");
-
-						this.mock(_Helper).expects("buildPath").withExactArgs("/Foo", "")
-							.returns("~Path~");
-						this.mock(_Helper).expects("getMetaPath").withExactArgs("~Path~")
-							.returns("~MetaPath~");
-						this.mock(oCache.oFirstLevel).expects("calculateKeyPredicate")
-							.withExactArgs("~Parent~", "~Types~", "~MetaPath~");
-						this.mock(oCache).expects("getArrayIndex").withExactArgs("~iRank~")
-							.returns("~iIndex~");
-						this.mock(oCache).expects("addElements")
-							.withExactArgs("~Parent~", "~iIndex~",
-								sinon.match.same(oCache.oFirstLevel), "~iRank~");
-						this.mock(oCache.oFirstLevel).expects("removeElement")
-							.withExactArgs("~iRank~");
-						this.mock(oCache.oFirstLevel).expects("restoreElement")
-							.withExactArgs("~iRank~", "~Parent~");
-
-						return "~iRank~";
-					});
-				oPropertiesExpectation = this.mock(oCache).expects("requestProperties")
-					.withExactArgs("~Parent~", ["DistFromRoot", "myDrillState",
-						"LtdDescendant_Count"], "~GroupLock~", true)
-					.resolves();
-				oNodePropertyExpectation = this.mock(oCache).expects("requestNodeProperty")
-					.withExactArgs("~Parent~", "~GroupLock~")
-					.resolves();
+				oCache.aElements.$byPredicate["('42')"] = "~ParentInCache~";
+				this.mock(_Helper).expects("getKeyPredicate")
+					.withExactArgs("~Parent~", "/Foo", "~Types~")
+					.returns("('42')");
+				this.mock(_Helper).expects("getPrivateAnnotation")
+					.withExactArgs("~ParentInCache~", "rank")
+					.returns(iRank);
+				this.mock(oCache).expects("getArrayIndex")
+					.withExactArgs(iRank)
+					.returns("~iIndex~");
+				this.mock(oCache).expects("requestRank").never();
 
 				return {value : ["~Parent~"]};
 			});
 
 		// code under test
-		assert.strictEqual(await oCache.fetchParentIndex(23, "~GroupLock~"), "~iIndex~");
+		const oPromise = oCache.fetchParentIndex(23, "~GroupLock~");
 
+		assert.strictEqual(_Helper.getPrivateAnnotation(oNode, "parentIndexPromise"), oPromise,
+			"cached");
+		assert.ok(oPromise instanceof SyncPromise);
+		assert.strictEqual(await oPromise, "~iIndex~");
 		assert.strictEqual(JSON.stringify(oCache.mQueryOptions), sQueryOptions, "unchanged");
+		assert.notOk(_Helper.hasPrivateAnnotation(oNode, "parentIndexPromise"), "gone");
+	});
+});
+
+	//*********************************************************************************************
+	QUnit.test("fetchParentIndex: clean up on failed request", async function (assert) {
+		const oAggregation = {
+			$DistanceFromRoot : "DistFromRoot",
+			$DrillState : "myDrillState",
+			$LimitedDescendantCount : "LtdDescendant_Count",
+			$metaPath : "~metaPath~",
+			$NodeProperty : "NodeID",
+			$path : "/path",
+			aggregate : {},
+			group : {},
+			groupLevels : ["BillToParty"],
+			hierarchyQualifier : "X"
+		};
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, oAggregation);
+		const sQueryOptions = JSON.stringify(oCache.mQueryOptions);
+
+		this.mock(oCache).expects("getTypes").returns("~Types~");
+		const oNode = {};
+		oCache.aElements[22] = {"@$ui5.node.level" : 0};
+		oCache.aElements[23] = oNode;
+		this.mock(_Helper).expects("getKeyFilter").withExactArgs(oNode, "~metaPath~", "~Types~")
+			.returns("~Key~");
+		this.mock(this.oRequestor).expects("buildQueryString")
+			.withExactArgs(null, {$apply : "ancestors($root/path,X,NodeID,filter(~Key~),1)"})
+			.returns("/~QueryString~");
+		const oError = new Error();
+		this.mock(this.oRequestor).expects("request")
+			.withExactArgs("GET", "Foo/~QueryString~", "~GroupLock~")
+			.rejects(oError);
+
+		// code under test
+		const oPromise = oCache.fetchParentIndex(23, "~GroupLock~");
+
+		assert.strictEqual(_Helper.getPrivateAnnotation(oNode, "parentIndexPromise"), oPromise,
+			"cached");
+		assert.ok(oPromise instanceof SyncPromise);
+		await assert.rejects(oPromise, oError);
+		assert.strictEqual(JSON.stringify(oCache.mQueryOptions), sQueryOptions, "unchanged");
+		assert.notOk(_Helper.hasPrivateAnnotation(oNode, "parentIndexPromise"), "gone");
 	});
 
 	//*********************************************************************************************
@@ -1532,53 +1678,114 @@ sap.ui.define([
 [{
 	bHasGrandTotal : false,
 	iFirstLevelIndex : 0,
-	iFirstLevelLength : 3
+	iFirstLevelLength : 3,
+	iExpectedStart : 0,
+	iExpectedLength : 23
 }, {
 	bHasGrandTotal : true,
 	iFirstLevelIndex : 0,
-	iFirstLevelLength : 2
+	iFirstLevelLength : 2,
+	iExpectedStart : 0,
+	iExpectedLength : 22
 }, {
 	bHasGrandTotal : true,
 	grandTotalAtBottomOnly : false,
 	iFirstLevelIndex : 0,
-	iFirstLevelLength : 2
+	iFirstLevelLength : 2,
+	iExpectedStart : 0,
+	iExpectedLength : 22
 }, {
 	bHasGrandTotal : true,
 	grandTotalAtBottomOnly : true,
 	iFirstLevelIndex : 0,
-	iFirstLevelLength : 1
+	iFirstLevelLength : 1,
+	iExpectedStart : 0,
+	iExpectedLength : 21
 }, {
 	bHasGrandTotal : false,
 	iFirstLevelIndex : 10,
-	iFirstLevelLength : 3
+	iFirstLevelLength : 3,
+	iExpectedStart : 0,
+	iExpectedLength : 33
+}, {
+	bHasGrandTotal : false,
+	iFirstLevelIndex : 20,
+	iFirstLevelLength : 1,
+	iExpectedStart : 0,
+	iExpectedLength : 41
+}, {
+	bHasGrandTotal : false,
+	iFirstLevelIndex : 21,
+	iFirstLevelLength : 1,
+	iExpectedStart : 1,
+	iExpectedLength : 41
 }, {
 	bHasGrandTotal : true,
 	iFirstLevelIndex : 9,
-	iFirstLevelLength : 3
+	iFirstLevelLength : 3,
+	iExpectedStart : 0,
+	iExpectedLength : 32
 }, {
 	bHasGrandTotal : true,
 	grandTotalAtBottomOnly : false,
 	iFirstLevelIndex : 9,
-	iFirstLevelLength : 3
+	iFirstLevelLength : 3,
+	iExpectedStart : 0,
+	iExpectedLength : 32
 }, {
 	bHasGrandTotal : true,
 	grandTotalAtBottomOnly : true,
 	iFirstLevelIndex : 10,
-	iFirstLevelLength : 3
+	iFirstLevelLength : 3,
+	iExpectedStart : 0,
+	iExpectedLength : 33
 }, {
 	bHasGrandTotal : true,
 	iFirstLevelIndex : 0,
-	iFirstLevelLength : 42
+	iFirstLevelLength : 42,
+	iExpectedStart : 0,
+	iExpectedLength : 62
 }, {
 	iExpandTo : 2,
 	iLevel : 0, // symbolic level for generic initial placeholders inside top pyramid
 	iFirstLevelIndex : 10,
-	iFirstLevelLength : 3
+	iFirstLevelLength : 3,
+	iExpectedStart : 0,
+	iExpectedLength : 33
 }, {
 	bUnifiedCache : true,
 	iLevel : 0, // symbolic level for generic initial placeholders inside top pyramid
 	iFirstLevelIndex : 10,
-	iFirstLevelLength : 3
+	iFirstLevelLength : 3,
+	iExpectedStart : 0,
+	iExpectedLength : 33
+}, {
+	iFirstLevelIndex : 25,
+	iFirstLevelLength : 1,
+	iOutOfPlaceCount : 5,
+	iPrefetchLength : 10,
+	iExpectedStart : 10,
+	iExpectedLength : 26
+}, {
+	iFirstLevelIndex : 21,
+	iFirstLevelLength : 1,
+	iOutOfPlaceCount : 5,
+	iExpectedStart : 0,
+	iExpectedLength : 42
+}, {
+	iFirstLevelIndex : 20,
+	iFirstLevelLength : 1,
+	iOutOfPlaceCount : 5,
+	iPrefetchLength : 0,
+	iExpectedStart : 15,
+	iExpectedLength : 6
+}, {
+	iFirstLevelIndex : 2,
+	iFirstLevelLength : 1,
+	iOutOfPlaceCount : 5,
+	iPrefetchLength : 0,
+	iExpectedStart : 0,
+	iExpectedLength : 3
 }].forEach(function (oFixture, i) {
 	QUnit.test("readFirst: #" + i, function (assert) {
 		var oAggregation = { // filled before by buildApply
@@ -1591,13 +1798,12 @@ sap.ui.define([
 			oAggregationHelperMock = this.mock(_AggregationHelper),
 			oCache = _AggregationCache.create(this.oRequestor, "~", "", {}, oAggregation),
 			oCacheMock = this.mock(oCache),
+			iExpectedLength = oFixture.iExpectedLength,
 			iExpectedLevel = "iLevel" in oFixture ? oFixture.iLevel : 1, // cf. createPlaceholder
-			iFirstLevelIndex = oFixture.iFirstLevelIndex,
-			iFirstLevelLength = oFixture.iFirstLevelLength,
+			iExpectedStart = oFixture.iExpectedStart,
 			oGrandTotal = {},
 			oGrandTotalCopy = {},
 			iOffset = oFixture.bHasGrandTotal && oFixture.grandTotalAtBottomOnly !== true ? 1 : 0,
-			iPrefetchLength = 20,
 			oReadResult = {
 				value : []
 			},
@@ -1616,14 +1822,18 @@ sap.ui.define([
 			oCache.oGrandTotalPromise = SyncPromise.resolve(oGrandTotal);
 			_Helper.setPrivateAnnotation(oGrandTotal, "copy", oGrandTotalCopy);
 		}
-		for (i = 0; i < Math.min(iFirstLevelLength + iPrefetchLength, 42); i += 1) {
+		for (i = 0; i < Math.min(iExpectedLength, 42); i += 1) {
 			oReadResult.value.push({});
 		}
 		oReadResult.value.$count = 42;
+		this.mock(oCache.oTreeState).expects("getOutOfPlaceCount").withExactArgs()
+			.returns(oFixture.iOutOfPlaceCount ?? 0);
 		this.mock(oCache.oFirstLevel).expects("read")
-			.withExactArgs(iFirstLevelIndex, iFirstLevelLength + iPrefetchLength, 0,
-				"~oGroupLock~", "~fnDataRequested~")
+			.withExactArgs(iExpectedStart, iExpectedLength, 0, "~oGroupLock~", "~fnDataRequested~")
 			.returns(SyncPromise.resolve(Promise.resolve(oReadResult)));
+		this.mock(oCache).expects("requestOutOfPlaceNodes").withExactArgs("~oGroupLock~")
+			.returns([Promise.resolve("~outOfPlaceResult0~"),
+				Promise.resolve("~outOfPlaceResult1~"), Promise.resolve("~outOfPlaceResult2~")]);
 		if (oFixture.bHasGrandTotal) {
 			switch (oFixture.grandTotalAtBottomOnly) {
 				case false: // top & bottom
@@ -1647,31 +1857,33 @@ sap.ui.define([
 						.callsFake(addElements); // so that oCache.aElements is actually filled
 			}
 		}
-		oCacheMock.expects("addElements")
-			.withExactArgs(sinon.match.same(oReadResult.value), iFirstLevelIndex + iOffset,
-				sinon.match.same(oCache.oFirstLevel), iFirstLevelIndex)
+		const oAddElementsExpectation = oCacheMock.expects("addElements")
+			.withExactArgs(sinon.match.same(oReadResult.value), iExpectedStart + iOffset,
+				sinon.match.same(oCache.oFirstLevel), iExpectedStart)
 			.callsFake(addElements); // so that oCache.aElements is actually filled
 		// expect placeholders before and after real read results
-		for (i = 0; i < iFirstLevelIndex; i += 1) {
+		for (i = 0; i < iExpectedStart; i += 1) {
 			oAggregationHelperMock.expects("createPlaceholder")
 				.withExactArgs(iExpectedLevel, i, sinon.match.same(oCache.oFirstLevel))
 				.returns("~placeholder~" + i);
 		}
-		for (i = iFirstLevelIndex + iFirstLevelLength + iPrefetchLength; i < 42; i += 1) {
+		for (i = iExpectedStart + iExpectedLength; i < 42; i += 1) {
 			oAggregationHelperMock.expects("createPlaceholder")
 				.withExactArgs(iExpectedLevel, i, sinon.match.same(oCache.oFirstLevel))
 				.returns("~placeholder~" + i);
 		}
+		const oHandleOutOfPlaceNodesExpectation = this.mock(oCache).expects("handleOutOfPlaceNodes")
+			.withExactArgs(["~outOfPlaceResult0~", "~outOfPlaceResult1~", "~outOfPlaceResult2~"]);
 
 		// code under test
-		return oCache.readFirst(iFirstLevelIndex, iFirstLevelLength, iPrefetchLength,
-				"~oGroupLock~", "~fnDataRequested~")
+		return oCache.readFirst(oFixture.iFirstLevelIndex, oFixture.iFirstLevelLength,
+				oFixture.iPrefetchLength ?? 20, "~oGroupLock~", "~fnDataRequested~")
 			.then(function () {
 				// check placeholders before and after real read results
-				for (i = 0; i < iFirstLevelIndex; i += 1) {
+				for (i = 0; i < iExpectedStart; i += 1) {
 					assert.strictEqual(oCache.aElements[iOffset + i], "~placeholder~" + i);
 				}
-				for (i = iFirstLevelIndex + iFirstLevelLength + iPrefetchLength; i < 42; i += 1) {
+				for (i = iExpectedStart + iExpectedLength; i < 42; i += 1) {
 					assert.strictEqual(oCache.aElements[iOffset + i], "~placeholder~" + i);
 				}
 
@@ -1691,6 +1903,8 @@ sap.ui.define([
 					assert.strictEqual(oCache.aElements.length, 42);
 					assert.strictEqual(oCache.aElements.$count, 42);
 				}
+
+				assert.ok(oHandleOutOfPlaceNodesExpectation.calledAfter(oAddElementsExpectation));
 			});
 	});
 });
@@ -3409,6 +3623,8 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(oElement), sinon.match.same(oKeptElement));
 		this.mock(oCache).expects("hasPendingChangesForPath").exactly(bIgnore ? 1 : 0)
 			.withExactArgs("(1)").returns(false);
+		this.mock(_Helper).expects("copySelected").withExactArgs(sinon.match.same(oKeptElement),
+			sinon.match.same(oElement));
 
 		// code under test
 		oCache.addElements(oElement, 1, "~parent~", 42);
@@ -3560,6 +3776,7 @@ sap.ui.define([
 		const oHelperMock = this.mock(_Helper);
 
 		function setupMocks(iRange) {
+			oHelperMock.expects("hasPrivateAnnotation").never();
 			for (let i = 0; i < iRange; i += 1) {
 				const oNode = oCache.aElements[i];
 				oHelperMock.expects("getPrivateAnnotation")
@@ -3583,6 +3800,23 @@ sap.ui.define([
 			oCache.getArrayIndex(oFixture.iRank), oFixture.iIndex);
 	});
 });
+
+	//*********************************************************************************************
+	QUnit.test("getArrayIndex: throws Error without rank", function (assert) {
+		const oCache = _AggregationCache.create(this.oRequestor, "~", "", {},
+				{hierarchyQualifier : "X"});
+
+		oCache.aElements = [{
+			"@$ui5._" : { // no private annotation "rank"
+				parent : oCache.oFirstLevel
+			}
+		}];
+
+		assert.throws(function () {
+			// code under test
+			oCache.getArrayIndex(1);
+		}, new Error("Missing rank"));
+	});
 
 	//*********************************************************************************************
 	QUnit.test("getParentIndex", function (assert) {
@@ -4594,6 +4828,9 @@ make root = ${bMakeRoot}`;
 			.exactly(bParentExpanded || bCreateRoot ? 0 : 1)
 			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "('42')",
 				sinon.match.same(oParentNode), {"@$ui5.node.isExpanded" : true});
+		this.mock(oCache.oTreeState).expects("expand")
+			.exactly(bParentExpanded || bCreateRoot ? 0 : 1)
+			.withExactArgs(sinon.match.same(oParentNode));
 		const oEntityData = {
 				"@$ui5.node.parent" : (bCreateRoot ? undefined : "Foo('42')"),
 				bar : "~bar~",
@@ -4622,6 +4859,9 @@ make root = ${bMakeRoot}`;
 							// Note: #calculateKeyPredicateRH doesn't know better :-(
 							oEntityData["@$ui5.node.level"] = 1;
 						}
+						that.mock(oCache.oTreeState).expects("setOutOfPlace")
+							.withExactArgs(sinon.match.same(oEntityData),
+								bCreateRoot ? undefined : sinon.match.same(oParentNode));
 						const iCallCount = bInFirstLevel && iExpandTo > 1 ? 1 : 0;
 						const oRankExpectation = that.mock(oCache).expects("requestRank")
 							.exactly(iCallCount)
@@ -5288,5 +5528,259 @@ make root = ${bMakeRoot}`;
 		oCache.makeLeaf(oElement);
 
 		assert.notOk("@$ui5.node.isExpanded" in oElement);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("requestOutOfPlaceNodes", function (assert) {
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
+			hierarchyQualifier : "X"
+		});
+		oCache.bUnifiedCache = true;
+		const oGroupLock = {getUnlockedCopy : mustBeMocked};
+
+		const aOutOfPlaceByParent = ["~outOfPlace1~", "~outOfPlace2~"];
+		this.mock(oCache.oTreeState).expects("getOutOfPlaceGroupedByParent").withExactArgs()
+			.returns(aOutOfPlaceByParent);
+		this.mock(oCache.oFirstLevel).expects("getQueryOptions").withExactArgs()
+			.returns("~firstLevelQueryOptions~");
+		const oAggregationHelperMock = this.mock(_AggregationHelper);
+		oAggregationHelperMock.expects("getQueryOptionsForOutOfPlaceNodesRank")
+			.withExactArgs(sinon.match.same(aOutOfPlaceByParent),
+				sinon.match.same(oCache.oAggregation), "~firstLevelQueryOptions~")
+			.returns("~queryOptions0~");
+		const oRequestorMock = this.mock(oCache.oRequestor);
+		oRequestorMock.expects("buildQueryString")
+			.withExactArgs("/Foo", "~queryOptions0~", false, true).returns("~query0~");
+		const oGroupLockMock = this.mock(oGroupLock);
+		oGroupLockMock.expects("getUnlockedCopy").withExactArgs().returns("~oGroupLock0~");
+		oRequestorMock.expects("request").withExactArgs("GET", "Foo~query0~", "~oGroupLock0~")
+			.returns("~request0~");
+		// outOfPlace1
+		oAggregationHelperMock.expects("getQueryOptionsForOutOfPlaceNodesData")
+			.withExactArgs("~outOfPlace1~", sinon.match.same(oCache.oAggregation),
+				sinon.match.same(oCache.mQueryOptions))
+			.returns("~queryOptions1~");
+		oRequestorMock.expects("buildQueryString")
+			.withExactArgs("/Foo", "~queryOptions1~", false, true).returns("~query1~");
+		oGroupLockMock.expects("getUnlockedCopy").withExactArgs().returns("~oGroupLock1~");
+		oRequestorMock.expects("request").withExactArgs("GET", "Foo~query1~", "~oGroupLock1~")
+			.returns("~request1~");
+		// outOfPlace2
+		oAggregationHelperMock.expects("getQueryOptionsForOutOfPlaceNodesData")
+			.withExactArgs("~outOfPlace2~", sinon.match.same(oCache.oAggregation),
+				sinon.match.same(oCache.mQueryOptions))
+			.returns("~queryOptions2~");
+		oRequestorMock.expects("buildQueryString")
+			.withExactArgs("/Foo", "~queryOptions2~", false, true).returns("~query2~");
+		oGroupLockMock.expects("getUnlockedCopy").withExactArgs().returns("~oGroupLock2~");
+		oRequestorMock.expects("request").withExactArgs("GET", "Foo~query2~", "~oGroupLock2~")
+			.returns("~request2~");
+
+		// code under test
+		assert.deepEqual(oCache.requestOutOfPlaceNodes(oGroupLock),
+			["~request0~", "~request1~", "~request2~"]);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("requestOutOfPlaceNodes: no out of place handling needed", function (assert) {
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
+			hierarchyQualifier : "X"
+		});
+
+		this.mock(oCache.oTreeState).expects("getOutOfPlaceGroupedByParent")
+			.withExactArgs().returns([]);
+
+		// code under test
+		assert.deepEqual(oCache.requestOutOfPlaceNodes("~oGroupLock~"), []);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("handleOutOfPlaceNodes", function () {
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
+			hierarchyQualifier : "X",
+			$LimitedRank : "~LimitedRank~"
+		});
+		oCache.aElements.$byPredicate = {
+			"~predicate2~" : "~node2~",
+			"~predicate4~" : "~node4~"
+		};
+		const oRankResult = {
+			value : ["~parent1RankResult~", "~node2RankResult~", "~node3RankResult~",
+				"~node1RankResult~", "~parent2RankResult~", "~node4RankResult~"]
+		};
+		const oOutOfPlaceNodeResult1 = {
+			value : ["~node1Data~", "~node2Data~"]
+		};
+		const oOutOfPlaceNodeResult2 = {
+			value : ["~node3Data~"]
+		};
+		const oOutOfPlaceNodeResult3 = {
+			value : ["~node4Data~"]
+		};
+		const oCacheMock = this.mock(oCache);
+		const oFirstLevelMock = this.mock(oCache.oFirstLevel);
+		const oHelperMock = this.mock(_Helper);
+
+		oCacheMock.expects("getTypes").atLeast(1).withExactArgs().returns("~types~");
+		// oRankResult
+		oHelperMock.expects("getKeyPredicate")
+			.withExactArgs("~parent1RankResult~", "/Foo", "~types~")
+			.returns("~parent1Predicate~");
+		oHelperMock.expects("getKeyPredicate")
+			.withExactArgs("~node2RankResult~", "/Foo", "~types~")
+			.returns("~predicate2~");
+		oHelperMock.expects("getKeyPredicate")
+			.withExactArgs("~node3RankResult~", "/Foo", "~types~")
+			.returns("~predicate3~");
+		oHelperMock.expects("getKeyPredicate")
+			.withExactArgs("~node1RankResult~", "/Foo", "~types~")
+			.returns("~predicate1~");
+		oHelperMock.expects("getKeyPredicate")
+			.withExactArgs("~parent2RankResult~", "/Foo", "~types~")
+			.returns("~parent2Predicate~");
+		oHelperMock.expects("getKeyPredicate")
+			.withExactArgs("~node4RankResult~", "/Foo", "~types~")
+			.returns("~predicate4~");
+		// "~node1Data~"
+		oHelperMock.expects("getKeyPredicate").withExactArgs("~node1Data~", "/Foo", "~types~")
+			.returns("~predicate1~");
+		oHelperMock.expects("merge").withExactArgs("~node1Data~", "~node1RankResult~");
+		oHelperMock.expects("drillDown").withExactArgs("~node1Data~", "~LimitedRank~").returns("4");
+		oFirstLevelMock.expects("calculateKeyPredicate")
+			.withExactArgs("~node1Data~", "~types~", "/Foo");
+		oCacheMock.expects("insertNode").withExactArgs("~node1Data~", 4)
+			.callsFake(function () {
+				oCache.aElements.$byPredicate["~predicate1~"] = "~node1Data~";
+			});
+		// "~node2Data~"
+		oHelperMock.expects("getKeyPredicate").withExactArgs("~node2Data~", "/Foo", "~types~")
+			.returns("~predicate2~");
+		// "~node3Data~"
+		oHelperMock.expects("getKeyPredicate").withExactArgs("~node3Data~", "/Foo", "~types~")
+			.returns("~predicate3~");
+		oHelperMock.expects("merge").withExactArgs("~node3Data~", "~node3RankResult~");
+		oHelperMock.expects("drillDown").withExactArgs("~node3Data~", "~LimitedRank~").returns("5");
+		oFirstLevelMock.expects("calculateKeyPredicate")
+			.withExactArgs("~node3Data~", "~types~", "/Foo");
+		oCacheMock.expects("insertNode").withExactArgs("~node3Data~", 5)
+			.callsFake(function () {
+				oCache.aElements.$byPredicate["~predicate3~"] = "~node3Data~";
+			});
+		// "~node4Data~"
+		oHelperMock.expects("getKeyPredicate").withExactArgs("~node4Data~", "/Foo", "~types~")
+			.returns("~predicate4~");
+		// move nodes
+		this.mock(oCache.oTreeState).expects("getOutOfPlaceGroupedByParent").withExactArgs()
+			.returns([{
+				nodePredicates : "~parent1NodePredicates~",
+				parentPredicate : "~parent1Predicate~"
+			}, {
+				nodePredicates : "~parent2NodePredicates~",
+				parentPredicate : "~parent2Predicate~"
+			}, {
+				nodePredicates : "~rootNodePredicates~"
+			}]);
+		oHelperMock.expects("drillDown").withExactArgs("~parent1RankResult~", "~LimitedRank~")
+			.returns("42"); // doesn't really matter, but must be a number
+		oCacheMock.expects("moveOutOfPlaceNodes").withExactArgs(42, "~parent1NodePredicates~");
+		oHelperMock.expects("drillDown").withExactArgs("~parent2RankResult~", "~LimitedRank~")
+			.returns("23"); // doesn't really matter, but must be a number
+		oCacheMock.expects("moveOutOfPlaceNodes").withExactArgs(23, "~parent2NodePredicates~");
+		oCacheMock.expects("moveOutOfPlaceNodes").withExactArgs(undefined, "~rootNodePredicates~");
+
+		// code under test
+		oCache.handleOutOfPlaceNodes(
+			[oRankResult, oOutOfPlaceNodeResult1, oOutOfPlaceNodeResult2, oOutOfPlaceNodeResult3]);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("handleOutOfPlaceNodes: no out of place handling", function () {
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
+			hierarchyQualifier : "X"
+		});
+
+		this.mock(oCache.oFirstLevel).expects("calculateKeyPredicate").never();
+		this.mock(oCache).expects("insertNode").never();
+
+		// code under test
+		oCache.handleOutOfPlaceNodes([]);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("insertNode: defaulting", function () {
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
+			hierarchyQualifier : "X"
+		});
+		this.mock(oCache).expects("addElements")
+			.withExactArgs("~oNode~", "~iRank~", sinon.match.same(oCache.oFirstLevel), "~iRank~");
+		this.mock(oCache.oFirstLevel).expects("removeElement").withExactArgs("~iRank~");
+		this.mock(oCache.oFirstLevel).expects("restoreElement").withExactArgs("~iRank~", "~oNode~");
+
+		// code under test
+		oCache.insertNode("~oNode~", "~iRank~");
+	});
+
+	//*********************************************************************************************
+	QUnit.test("insertNode: index != rank", function () {
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
+			hierarchyQualifier : "X"
+		});
+		this.mock(oCache).expects("addElements")
+			.withExactArgs("~oNode~", "~iInsertIndex~", sinon.match.same(oCache.oFirstLevel),
+				"~iRank~");
+		this.mock(oCache.oFirstLevel).expects("removeElement").withExactArgs("~iRank~");
+		this.mock(oCache.oFirstLevel).expects("restoreElement").withExactArgs("~iRank~", "~oNode~");
+
+		// code under test
+		oCache.insertNode("~oNode~", "~iRank~", "~iInsertIndex~");
+	});
+
+	//*********************************************************************************************
+	QUnit.test("moveOutOfPlaceNodes: below parent", function (assert) {
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
+			hierarchyQualifier : "X",
+			$LimitedRank : "~LimitedRank~"
+		});
+		oCache.aElements = ["~foo~", "~parent~", "~node2~", "~bar~", "~node1~", "~node3~"];
+		oCache.aElements.$byPredicate = {
+			"~predicate1~" : "~node1~",
+			"~predicate2~" : "~node2~",
+			"~predicate3~" : "~node3~"
+		};
+
+		const oHelperMock = this.mock(_Helper);
+		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~foo~", "rank")
+			.returns(0);
+		oHelperMock.expects("getPrivateAnnotation").withExactArgs("~parent~", "rank")
+			.returns("~iParentRank~");
+
+		// code under test
+		oCache.moveOutOfPlaceNodes("~iParentRank~",
+			// the order is important: node2 is not moved, moving node3 shifts the location of
+			// node1 which must be searched again (aElements.indexOf(...))
+			["~predicate2~", "~predicate3~", "~predicate1~"]);
+
+		assert.deepEqual(oCache.aElements,
+			["~foo~", "~parent~", "~node1~", "~node3~", "~node2~", "~bar~"]);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("moveOutOfPlaceNodes: root nodes", function (assert) {
+		const oCache = _AggregationCache.create(this.oRequestor, "Foo", "", {}, {
+			hierarchyQualifier : "X",
+			$LimitedRank : "~LimitedRank~"
+		});
+		oCache.aElements = ["~foo~", "~node2~", "~bar~", "~node1~", "~baz~"];
+		oCache.aElements.$byPredicate = {
+			"~predicate1~" : "~node1~",
+			"~predicate2~" : "~node2~"
+		};
+
+		this.mock(_Helper).expects("drillDown").never();
+
+		// code under test
+		oCache.moveOutOfPlaceNodes(undefined, ["~predicate1~", "~predicate2~"]);
+
+		assert.deepEqual(oCache.aElements, ["~node2~", "~node1~", "~foo~", "~bar~", "~baz~"]);
 	});
 });

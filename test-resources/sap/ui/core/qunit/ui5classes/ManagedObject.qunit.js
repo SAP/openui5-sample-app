@@ -16,8 +16,10 @@ sap.ui.define([
 	"sap/ui/base/ManagedObjectMetadata",
 	"sap/base/strings/escapeRegExp",
 	"sap/base/util/isEmptyObject",
-	"sap/base/util/ObjectPath"
-], function(BindingInfo, BindingParser, DataType, ManagedObject, Element, JSONModel, Context, ManagedObjectModel, StringType, Control, Component, UIComponent, Sorter, ManagedObjectMetadata, escapeRegExp, isEmptyObject, ObjectPath) {
+	"sap/base/util/ObjectPath",
+	"sap/base/future",
+	"sap/base/Log"
+], function(BindingInfo, BindingParser, DataType, ManagedObject, Element, JSONModel, Context, ManagedObjectModel, StringType, Control, Component, UIComponent, Sorter, ManagedObjectMetadata, escapeRegExp, isEmptyObject, ObjectPath, future, Log) {
 	"use strict";
 	var mObjects = {};
 
@@ -614,6 +616,28 @@ sap.ui.define([
 		assert.equal(this.obj.getProperty("value"), "newvalue", "New model value must be reflected");
 		this.obj.setProperty("value", "othervalue");
 		assert.equal(oModel.getProperty("/value"), "newvalue", "Control property change must not update model");
+		oModel.setProperty("/value", "testvalue");
+	});
+
+	QUnit.test("Bind property OneWay - isPropertyBeingUpdated", function(assert) {
+		assert.strictEqual(this.obj.isPropertyBeingUpdated("value"), false, "'isPropertyBeingUpdated' returns false before the property is bound");
+		this.obj.bindProperty("value", {
+			path: "/value",
+			mode: "OneWay"
+		});
+
+		assert.strictEqual(this.obj.isPropertyBeingUpdated("value"), false, "'isPropertyBeingUpdated' returns false when there's no change for the bound property");
+
+		assert.equal(this.obj.isBound("value"), true, "isBound must return true for bound properties");
+		assert.equal(this.obj.getProperty("value"), "testvalue", "Property must return model value");
+
+		this.stub(this.obj, "setProperty").callsFake(() => {
+			assert.strictEqual(this.obj.isPropertyBeingUpdated("value"), true, "'isPropertyBeingUpdated' returns true during the property value update");
+		});
+
+		oModel.setProperty("/value", "newvalue");
+		assert.equal(this.obj.setProperty.callCount, 1, "Setter is called");
+		// restore
 		oModel.setProperty("/value", "testvalue");
 	});
 
@@ -3258,6 +3282,47 @@ sap.ui.define([
 			assert.ok(oElement.isDestroyStarted(), "Must be marked as destroy started");
 			assert.ok(oElement.isDestroyed(), "Must be marked as destroy started");
 			done();
+		});
+	});
+
+	QUnit.module("init/exit");
+
+	QUnit.test("Ensure that hooks do not return a value", async function(assert) {
+		const oFutureFatalSpy = sinon.spy(Log, "fatal");
+		const aPromises = [];
+
+		const MySampleManagedObject = ManagedObject.extend("sap.ui.core.MySampleManagedObject", {
+			metadata: {
+				properties: {
+					name: { type: "string", defaultValue: "hello" }
+				}
+			},
+			init: function() {
+				return "init() shouldn't return a value.";
+			},
+			exit: async function() {
+				const oPromise = Promise.reject(new Error("exit() failed."));
+				aPromises.push(oPromise);
+				await oPromise;
+			}
+		});
+
+		// init
+		const oMySample = new MySampleManagedObject();
+		assert.ok(oFutureFatalSpy.getCall(0).calledWith("[FUTURE FATAL] The registered Event Listener 'init' must not have a return value."), "init() should be logged correctly.");
+
+		// exit
+		const oErrorLogSpy = sinon.spy(Log, "error");
+		oMySample.destroy();
+
+		await Promise.allSettled(aPromises);
+		assert.ok(oFutureFatalSpy.getCall(1).calledWith("[FUTURE FATAL] The registered Event Listener 'exit' must not have a return value."), "exit() should be logged correctly.");
+
+		await Promise.resolve(() => {
+			assert.ok(oErrorLogSpy.getCall(0).calledWith("The registered Event Listener 'exit' of '__object0' failed."), "Promise rejection caught successfully.");
+
+			oFutureFatalSpy.restore();
+			oErrorLogSpy.restore();
 		});
 	});
 });

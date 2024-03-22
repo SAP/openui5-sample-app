@@ -75,13 +75,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		name : "sap.m",
-		version: "1.121.0",
+		version: "1.122.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -292,6 +292,7 @@ sap.ui.define([
 			"sap.m.MessageView",
 			"sap.m.MessageStrip",
 			"sap.m.MultiComboBox",
+			/** @deprecated since 1.121 */
 			"sap.m.MultiEditField",
 			"sap.m.MultiInput",
 			"sap.m.NavContainer",
@@ -2054,18 +2055,19 @@ sap.ui.define([
 	 * Defines the rendering type of the TileAttribute
 	 *
 	 * @enum {string}
-	 * @since 1.121
-	 * @private
+	 * @since 1.122
+	 * @experimental since 1.122
+	 * @public
 	 */
 	thisLib.ContentConfigType = {
 		/**
 		 * Renders a text inside the TileAttribute
-		 * @private
+		 * @public
 		 */
 		Text: "Text",
 		/**
 		 * Renders a link inside the TileAttribute
-		 * @private
+		 * @public
 		 */
 		Link: "Link"
 	};
@@ -6176,6 +6178,30 @@ sap.ui.define([
 			}
 		});
 	}
+
+	/**
+	 * @typedef {object} sap.m.VariantManagementRename
+	 * @description An object type that represents the {@link sap.m.VariantManagement} <code>manage</code>-event property <code>rename</code>.
+	 * @public
+	 * @property {string} key the variant key.
+	 * @property {string} name the new title of the variant.
+	 */
+
+	/**
+	 * @typedef {object} sap.m.VariantManagementExe
+	 * @description An object type that represents the {@link sap.m.VariantManagement} <code>manage</code>-event property <code>exe</code>.
+	 * @public
+	 * @property {string} key the variant key.
+	 * @property {boolean} exe flag describing the associated Appy Automatically indicator.
+	 */
+
+	/**
+	 * @typedef {object} sap.m.VariantManagementFav
+	 * @description An object type that represents the {@link sap.m.VariantManagement} <code>manage</code>-event property <code>fav</code>.
+	 * @public
+	 * @property {string} key the variant key.
+	 * @property {boolean} visible flag describing the associated Favorite indicator.
+	 */
 
 	// ES6 constant represents the maximum safe integer
 	if (!Number.MAX_SAFE_INTEGER) {

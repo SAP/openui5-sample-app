@@ -36,7 +36,7 @@ sap.ui.define([
 	 * @class Annotation loader for OData V2 services
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @public
 	 * @since 1.37.0
@@ -474,7 +474,7 @@ sap.ui.define([
 	 * Parameters of the <code>failed</code> event.
 	 *
 	 * @typedef {object} sap.ui.model.odata.v2.ODataAnnotations.failedParameters
-	 * @property {Error[]} result An array of Errors (@see sap.ui.model.v2.ODataAnnotations#error) that occurred while
+	 * @property {Error[]} result An array of Errors, see {@link sap.ui.model.v2.ODataAnnotations#error} that occurred while
 	 *           loading a group of annotations
 	 * @public
 	 */

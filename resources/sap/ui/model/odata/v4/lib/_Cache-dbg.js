@@ -1637,6 +1637,7 @@ sap.ui.define([
 						.reportStateMessages(that.sResourcePath, {}, [sPath + sPredicate]);
 					fnOnRemove(false);
 				} else if (bRemoveFromCollection) {
+					_Helper.copySelected(aElements.$byPredicate[sPredicate], aReadResult[0]);
 					that.removeElement(iIndex, sPredicate, aElements, sPath);
 					// element no longer in cache -> re-insert via replaceElement
 					that.replaceElement(aElements, undefined, sPredicate, aReadResult[0],
@@ -1783,6 +1784,7 @@ sap.ui.define([
 		var oOldElement, sTransientPredicate;
 
 		if (iIndex === undefined) { // kept-alive element not in the list
+			// might be undefined because it was removed in #refreshSingleWithRemove already
 			oOldElement = aElements.$byPredicate[sPredicate];
 			aElements.$byPredicate[sPredicate] = oElement;
 		} else {
@@ -1797,6 +1799,9 @@ sap.ui.define([
 				aElements.$byPredicate[sTransientPredicate] = oElement;
 				_Helper.setPrivateAnnotation(oElement, "transientPredicate", sTransientPredicate);
 			}
+		}
+		if (oOldElement) {
+			_Helper.copySelected(oOldElement, oElement);
 		}
 		_Helper.restoreUpdatingProperties(oOldElement, oElement);
 
@@ -3311,6 +3316,8 @@ sap.ui.define([
 	 *   no longer exist after refresh; the index is undefined for a non-created element
 	 * @param {boolean} [bDropApply]
 	 *   Whether to drop the "$apply" system query option from the resulting GET
+	 * @param {boolean} [bIgnorePendingChanges]
+	 *   Whether kept elements are refreshed although there are pending changes.
 	 * @returns {Promise<void>|undefined}
 	 *   A promise which is resolved without a defined result, or rejected with an error if the
 	 *   refresh fails, or <code>undefined</code> if there are no kept-alive elements.
@@ -3319,10 +3326,11 @@ sap.ui.define([
 	 *
 	 * @public
 	 */
-	_CollectionCache.prototype.refreshKeptElements = function (oGroupLock, fnOnRemove, bDropApply) {
+	_CollectionCache.prototype.refreshKeptElements = function (oGroupLock, fnOnRemove, bDropApply,
+			bIgnorePendingChanges) {
 		var that = this,
-			// Note: at this time only kept-alive and created elements are in the cache, but we
-			// don't care if $byPredicate still contains two entries for the same element
+			// Note: at this time only kept-alive, created, and deleted elements are in the cache,
+			// but we don't care if $byPredicate still contains two entries for the same element
 			aPredicates = Object.keys(this.aElements.$byPredicate).filter(isRefreshNeeded).sort(),
 			mTypes;
 
@@ -3374,7 +3382,8 @@ sap.ui.define([
 
 			return _Helper.getPrivateAnnotation(oElement, "predicate") === sPredicate
 				&& Object.keys(oElement).length > 1 // entity has key properties
-				&& !that.hasPendingChangesForPath(sPredicate);
+				&& !oElement["@$ui5.context.isDeleted"]
+				&& !that.hasPendingChangesForPath(sPredicate, bIgnorePendingChanges);
 		}
 
 		this.checkSharedRequest();

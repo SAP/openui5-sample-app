@@ -118,7 +118,7 @@ sap.ui.define([
 	 * The responsiveness of the <code>MessageView</code> is determined by the container in which it is embedded. For that reason the control could not be visualized if the
 	 * container’s sizes are not defined.
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @extends sap.ui.core.Control
 	 * @constructor
@@ -523,7 +523,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * If there's no items binding, attach the MessageView to the sap.ui.getCore().getMessageManager().getMessageModel()
+	 * If there's no items binding, attach the MessageView to the sap.ui.core.Messaging.getMessageModel()
 	 *
 	 * @private
 	 * @ui5-restricted sap.m.MessagePopover

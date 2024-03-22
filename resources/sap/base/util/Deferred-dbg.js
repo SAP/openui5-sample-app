@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define([], function() {
+sap.ui.define(() => {
 	"use strict";
 
 	/**
@@ -21,17 +21,15 @@ sap.ui.define([], function() {
 	 * @template {any} [T=any]
 	 */
 	var Deferred = function() {
-		var that = this;
-
 		/**
 		 * Promise instance of the Deferred
 		 *
 		 * @type {Promise<T>}
 		 * @public
 		 */
-		this.promise = new Promise(function(resolve, reject) {
-			that.resolve = resolve;
-			that.reject = reject;
+		this.promise = new Promise((resolve, reject) => {
+			this.resolve = resolve;
+			this.reject = reject;
 		});
 	};
 

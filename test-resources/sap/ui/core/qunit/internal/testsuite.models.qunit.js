@@ -90,14 +90,6 @@ sap.ui.define(function() {
 					language : "en-US"
 				}
 			},
-			NumberFormat : {
-				// not in 1RingModels.qunit because test has to be refactored
-				title : "sap.ui.core.format.NumberFormat",
-				module : ["test-resources/sap/ui/core/qunit/types/NumberFormat.qunit"],
-				ui5 : {
-					language : "en-US"
-				}
-			},
 			NumberFormatCurrencies : {
 				// not in 1RingModels.qunit because test has to be refactored
 				title : "sap.ui.core.format.NumberFormatCurrencies",
@@ -366,15 +358,50 @@ sap.ui.define(function() {
 			},
 
 			// *************************************************************************
-			// Test for model support assistant rules
+			// Tests considering MockServer
 			// *************************************************************************
-			// contained in testsuite.rule.qunit.js
-			"Model.support" : {
-				// not in 1RingModels.qunit because usage of sap.ui.table library in
-				// ODataModel.integration.qunit leads to a console error
-				title : "sap.ui.core.rules.Model.support",
-				module : ["test-resources/sap/ui/core/qunit/rule/model/modelSupport.qunit"],
-				qunit : {testTimeout : 15000}
+			// contained in testsuite.mockserver.qunit.js
+			MockServerSinon1: {
+				title: "sap.ui.core.util.MockServer (Sinon: V1)",
+				module: ["test-resources/sap/ui/core/qunit/mockserver/MockServer.qunit"],
+				sinon: 1,
+				ui5: {
+					libs: ["sap.m"]
+				}
+			},
+			MockServerFeatureSinon1: {
+				title: "sap.ui.core.util.MockServer (Sinon: V1): given data and complex filter features",
+				module: ["test-resources/sap/ui/core/qunit/mockserver/MockServerFeature.qunit"],
+				sinon: 1
+			},
+			MockServerAPFSinon1: {
+				title: "sap.ui.core.util.MockServer (Sinon: V1): APF model",
+				module: ["test-resources/sap/ui/core/qunit/mockserver/MockServerAPF.qunit"],
+				sinon: 1
+			},
+			DraftEnabledMockServerSinon1: {
+				title: "sap.ui.core.util.DraftEnabledMockServer (Sinon: V1)",
+				module: ["test-resources/sap/ui/core/qunit/mockserver/DraftEnabledMockServer.qunit"],
+				sinon: 1
+			},
+			MockServer: {
+				title: "sap.ui.core.util.MockServer (Sinon: V4)",
+				module: ["test-resources/sap/ui/core/qunit/mockserver/MockServer.qunit"],
+				ui5: {
+					libs: ["sap.m"]
+				}
+			},
+			MockServerFeature: {
+				title: "sap.ui.core.util.MockServer (Sinon: V4): given data and complex filter features",
+				module: ["test-resources/sap/ui/core/qunit/mockserver/MockServerFeature.qunit"]
+			},
+			MockServerAPF: {
+				title: "sap.ui.core.util.MockServer (Sinon: V4): APF model",
+				module: ["test-resources/sap/ui/core/qunit/mockserver/MockServerAPF.qunit"]
+			},
+			DraftEnabledMockServer: {
+				title: "sap.ui.core.util.DraftEnabledMockServer (Sinon: V4)",
+				module: ["test-resources/sap/ui/core/qunit/mockserver/DraftEnabledMockServer.qunit"]
 			}
 		}
 	};

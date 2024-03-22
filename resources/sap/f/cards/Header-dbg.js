@@ -48,7 +48,7 @@ sap.ui.define([
 	 * @implements sap.f.cards.IHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public
@@ -201,7 +201,7 @@ sap.ui.define([
 	Header.prototype._getSubtitle = function () {
 		var oSubtitle = this.getAggregation("_subtitle");
 		if (!oSubtitle) {
-			oSubtitle = new Text().addStyleClass("sapFCardSubtitle");
+			oSubtitle = new Text(this.getId() + "-subtitle").addStyleClass("sapFCardSubtitle");
 			this.setAggregation("_subtitle", oSubtitle);
 		}
 		return oSubtitle;
@@ -232,11 +232,17 @@ sap.ui.define([
 
 		this._getTitle()
 			.setText(this.getTitle())
-			.setMaxLines(this.getTitleMaxLines());
+			.setMaxLines(this.getTitleMaxLines())
+			.setWrappingType(this.getWrappingType());
+
+		this._enhanceText(this._getTitle());
 
 		this._getSubtitle()
 			.setText(this.getSubtitle())
-			.setMaxLines(this.getSubtitleMaxLines());
+			.setMaxLines(this.getSubtitleMaxLines())
+			.setWrappingType(this.getWrappingType());
+
+		this._enhanceText(this._getSubtitle());
 
 		this._getAvatar()
 			.setDisplayShape(this.getIconDisplayShape())

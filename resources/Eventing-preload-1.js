@@ -81,6 +81,12 @@ sap.ui.predefine("sap/ui/security/Security", ["sap/base/config"],function(e){"us
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.predefine("sap/ui/util/ActivityDetection", ["sap/ui/core/Theming"],function(e){"use strict";var t={},n=true,i=null,r=1e4,o=[],u=false,c=null;function s(){i=null;if(u&&document.hidden!==true){d();return}n=false;c.observe(document.documentElement,{childList:true,attributes:true,subtree:true,characterData:true})}function d(){if(document.hidden){return}if(!n){n=true;f(o);c.disconnect()}if(i){u=true}else{i=setTimeout(s,r);u=false}}function f(e){if(e.length===0){return}var t=e.slice();setTimeout(function(){var e;for(var n=0,i=t.length;n<i;n++){e=t[n];e.fFunction.call(e.oListener||window)}},0)}t.attachActivate=function(e,t){o.push({oListener:t,fFunction:e})};t.detachActivate=function(e,t){for(var n=0,i=o.length;n<i;n++){if(o[n].fFunction===e&&o[n].oListener===t){o.splice(n,1);break}}};t.isActive=function(){return n};t.refresh=d;var a=["resize","orientationchange","mousemove","mousedown","mouseup","paste","cut","keydown","keyup","DOMMouseScroll","mousewheel"];if("ontouchstart"in window){a.push("touchstart","touchmove","touchend","touchcancel")}for(var h=0;h<a.length;h++){window.addEventListener(a[h],t.refresh,{capture:true,passive:true})}if(window.MutationObserver){c=new window.MutationObserver(t.refresh)}else if(window.WebKitMutationObserver){c=new window.WebKitMutationObserver(t.refresh)}else{c={observe:function(){document.documentElement.addEventListener("DOMSubtreeModified",t.refresh)},disconnect:function(){document.documentElement.removeEventListener("DOMSubtreeModified",t.refresh)}}}if(typeof document.hidden==="boolean"){document.addEventListener("visibilitychange",function(){if(document.hidden!==true){t.refresh()}},false)}e.attachApplied(function(){t.refresh()});d();return t});
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.predefine("sap/ui/util/_enforceNoReturnValue", ["sap/base/future","sap/base/Log"],function(e,n){"use strict";function t(t,r){if(t!==undefined){const a=r.name?`'${r.name}' `:"";if(typeof t.then==="function"){t.catch(e=>{n.error(`The registered Event Listener ${a}of '${r.component}' failed.`,e)})}e.fatalThrows(`The registered Event Listener ${a}must not have a return value.`,r.component)}}return t});
 sap.ui.require.preload({
 	"sap/ui/thirdparty/jquery-compat.js":function(){
 /*!

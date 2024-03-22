@@ -100,7 +100,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @private
@@ -370,8 +370,15 @@ function(
 			press: function () {
 				if (this.fireEvent("_pickerButtonPress", {}, true)) {
 					var oDate = this.getStartDate() || UI5Date.getInstance(),
-						sCurrentPickerId = this.getAssociation("currentPicker");
+						sCurrentPickerId = this.getAssociation("currentPicker"),
+						oMinDate;
 					oPicker = Element.getElementById(sCurrentPickerId);
+					if (oPicker instanceof Calendar) {
+						oMinDate = oPicker.getMinDate();
+						if (oMinDate && oMinDate.getTime() > oDate.getTime()) {
+							oDate = oMinDate;
+						}
+					}
 					if (oPicker.displayDate) {
 						oPicker.displayDate(oDate);
 					}

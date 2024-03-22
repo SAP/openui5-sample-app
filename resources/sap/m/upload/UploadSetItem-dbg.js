@@ -38,7 +38,7 @@ sap.ui.define([
 	 * @class Item that represents one file to be uploaded using the {@link sap.m.upload.UploadSet} control.
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -514,7 +514,8 @@ sap.ui.define([
 	/* Event handlers */
 	/* ============== */
 
-	UploadSetItem.prototype._handleFileNamePressed = function () {
+	UploadSetItem.prototype._handleFileNamePressed = function (oEvent) {
+		oEvent.preventDefault(); // preventing default href opening via link press and delegating the handling to press event logic.
 		if (this.fireOpenPressed({item: this})) {
 			MobileLibrary.URLHelper.redirect(this.getUrl(), true);
 		}
@@ -630,7 +631,8 @@ sap.ui.define([
 			this._oFileNameLink = new Link({
 				id: this.getId() + "-fileNameLink",
 				press: [this, this._handleFileNamePressed, this],
-				wrapping: true
+				wrapping: true,
+				href: this.getUrl()
 			});
 			this._oFileNameLink.setText(this.getFileName());//For handling curly braces in file name we have to use setter.Otherwise it will be treated as binding.
 			this._oFileNameLink.addStyleClass("sapMUCFileName");

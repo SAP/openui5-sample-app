@@ -43,7 +43,7 @@ sap.ui.define(['jquery.sap.global'],
 	 * Note that async=false is always enforced by this method.
 	 *
 	 * @param {string} oOrigSettings the ajax() settings
-	 * @return result, see above
+	 * @returns {object}, details see above
 	 *
 	 * @public
 	 * @since 0.9.0
@@ -81,6 +81,7 @@ sap.ui.define(['jquery.sap.global'],
 
 	/**
 	 * Convenience wrapper that checks whether a given web resource could be accessed.
+	 * @returns {boolean} Whether the given web resource could be accessed.
 	 * @deprecated since 1.58 see {@link jQuery.sap.sjax}
 	 * @SecSink {0|PATH} Parameter is used for future HTTP requests
 	 * @SecSource {return} Returned value is under control of an external resource
@@ -96,7 +97,7 @@ sap.ui.define(['jquery.sap.global'],
 	 * @param {string} sUrl the URL
 	 * @param {string|object} data request parameters in the format accepted by jQuery.ajax()
 	 * @param {string} [sDataType='text'] the type of data expected from the server, default is "text"
-	 * @return result @see jQuery.sap.sjax
+	 * @returns {object} See {@link jQuery.sap.sjax}
 	 *
 	 * @public
 	 * @since 0.9.0
@@ -120,7 +121,7 @@ sap.ui.define(['jquery.sap.global'],
 	 * @param {string} sUrl the URL
 	 * @param {string|object} data request parameters in the format accepted by jQuery.ajax()
 	 * @param {string} [sDataType='text'] the type of data expected from the server, default is "text"
-	 * @return result @see jQuery.sap.sjax
+	 * @returns {object} See {@link jQuery.sap.sjax}
 	 *
 	 * @public
 	 * @since 0.9.0
@@ -149,7 +150,7 @@ sap.ui.define(['jquery.sap.global'],
 	 * @param {string} sUrl the URL
 	 * @param {string|object} data request parameters in the format accepted by jQuery.ajax()
 	 * @param {string} [fallback] if set, only data is returned (and this fallback instead in case of errors); if unset, a result structure is returned
-	 * @return  result @see jQuery.sap.sjax
+	 * @returns {object} See {@link jQuery.sap.sjax}
 	 *
 	 * @public
 	 * @since 0.9.0
@@ -181,7 +182,7 @@ sap.ui.define(['jquery.sap.global'],
 	 * @param {string} sUrl the URL
 	 * @param {string|object} data request parameters in the format accepted by jQuery.ajax()
 	 * @param {object} [fallback] if set, only data is returned (and this fallback instead in case of errors); if unset, a result structure is returned
-	 * @return result @see jQuery.sap.sjax
+	 * @returns {object} See {@link jQuery.sap.sjax}
 	 *
 	 * @public
 	 * @since 0.9.0

@@ -30,6 +30,7 @@ sap.ui.define([
 	"sap/ui/model/message/MessageModel",
 	"sap/ui/model/odata/CountMode",
 	"sap/ui/model/odata/MessageScope",
+	"sap/ui/model/odata/type/Decimal",
 	"sap/ui/model/odata/v2/Context",
 	"sap/ui/model/odata/v2/ODataModel",
 	"sap/ui/model/xml/XMLModel",
@@ -40,8 +41,8 @@ sap.ui.define([
 	// "sap/ui/table/Table"
 ], function (Log, Localization, merge, uid, Input, Device, ManagedObjectObserver, SyncPromise,
 		Library, coreLibrary, Messaging, UI5Date, Message, Controller, View, Rendering, BindingMode, Filter,
-		FilterOperator, FilterType, Model, Sorter, JSONModel, MessageModel, CountMode, MessageScope, Context,
-		ODataModel, XMLModel, TestUtils, datajs, XMLHelper) {
+		FilterOperator, FilterType, Model, Sorter, JSONModel, MessageModel, CountMode, MessageScope, Decimal,
+		Context, ODataModel, XMLModel, TestUtils, datajs, XMLHelper) {
 	/*global QUnit, sinon*/
 	/*eslint max-nested-callbacks: 0, no-warning-comments: 0, quote-props: 0*/
 	"use strict";
@@ -10057,6 +10058,76 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 	});
 
 	//*********************************************************************************************
+	// Scenario: AnalyticalBinding filtering by Edm.DateTime property with precision > 3
+	// JIRA: CPOUI5MODELS-1582
+	QUnit.test("AnalyticalBinding: Filtering Edm.DateTime property with precision > 3", function (assert) {
+		const oModel = createModel("/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS");
+		const sView = '\
+<t:AnalyticalTable id="table" threshold="10" visibleRowCount="4">\
+	<t:AnalyticalColumn grouped="true" leadingProperty="CompanyCode">\
+		<Label text="CompanyCode"/>\
+		<t:template><Text wrapping="false" text="{CompanyCode}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn grouped="false" leadingProperty="Customer">\
+		<Label text="Customer"/>\
+		<t:template><Text text="{Customer}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn summed="true" leadingProperty="AmountInCompanyCodeCurrency">\
+		<Label text="AmountInCompanyCodeCurrency"/>\
+		<t:template><Text wrapping="false" text="{AmountInCompanyCodeCurrency}"/></t:template>\
+	</t:AnalyticalColumn>\
+</t:AnalyticalTable>';
+
+		return this.createView(assert, sView, oModel).then(() => {
+			const sExpectedFilter = "&$filter=((ChangedAt%20ge%20datetime%272020-02-01T15%3a30%3a02.456123%27%20"
+				+ "and%20ChangedAt%20le%20datetime%272020-02-01T18%3a45%3a02.456789%27))";
+			this.expectHeadRequest()
+				.expectRequest({ // count request
+					encodeRequestUri : false,
+					requestUri : "Items?$select=CompanyCode,Customer" + sExpectedFilter
+						+ "&$top=0&$inlinecount=allpages"
+				}, {__count : "1", results : []})
+				.expectRequest({ // first level request
+					encodeRequestUri : false,
+					requestUri : "Items?"
+					+ "$select=CompanyCode,AmountInCompanyCodeCurrency,Currency" + sExpectedFilter
+					+ "&$orderby=CompanyCode%20asc&$top=14&$inlinecount=allpages"
+				}, {
+					results : [getFarCustomerLineItem("A0")]
+				})
+				.expectRequest({ // grand total request
+					encodeRequestUri : false,
+					requestUri : "Items?$select=AmountInCompanyCodeCurrency,Currency" + sExpectedFilter
+						+ "&$top=100&$inlinecount=allpages"
+				}, {
+					__count : 1,
+					results : [{
+						__metadata : {uri : "/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS/Items(grandTotal)"},
+						AmountInCompanyCodeCurrency : "140",
+						Currency : "USD"
+					}]
+				});
+			const oFilter = new Filter("ChangedAt", FilterOperator.BT, new Date(Date.UTC(2020, 1, 1, 15, 30, 2, 456)),
+				new Date(Date.UTC(2020, 1, 1, 18, 45, 2, 456)));
+			oFilter.appendFractionalSeconds1("123");
+			oFilter.appendFractionalSeconds2("789");
+
+			// code under test
+			this.oView.byId("table").bindRows({
+				path : "/Items",
+				parameters : {
+					autoExpandMode : "Sequential",
+					numberOfExpandedLevels : 0,
+					useBatchRequests : true
+				},
+				filters : [oFilter]
+			});
+
+			return this.waitForChanges(assert);
+		});
+	});
+
+	//*********************************************************************************************
 	// Scenario: If a request for an AnalyticalBinding is cancelled because the analytical info has
 	// been updated before the request was processed, a "dataReceived" event has to be fired. Table
 	// counts the "dataRequested" and "dataReceived" event to show a busy indicator, so the number
@@ -11241,6 +11312,76 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 
 			// code under test
 			oControl.setValue("");
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: Do not show more decimal places than available for the amount/quantity part
+	// JIRA: CPOUI5MODELS-1600
+	QUnit.test("OData UnitType with unit decimals places > measure scale", function (assert) {
+		const oModel = createModel("/sap/opu/odata/sap/ZUI5_GWSAMPLE_BASIC/?CPOUI5MODELS-1600=true",
+				{defaultBindingMode : "TwoWay", tokenHandling : false});
+		const sView = '\
+<FlexBox binding="{/ProductSet(\'P1\')}">\
+	<Input id="weight" value="{\
+		parts : [{\
+			constraints : {precision : 13, scale : 3},\
+			path : \'WeightMeasure\',\
+			type : \'sap.ui.model.odata.type.Decimal\'\
+		}, {\
+			path : \'WeightUnit\',\
+			type : \'sap.ui.model.odata.type.String\'\
+		}, {\
+			mode : \'OneTime\',\
+			path : \'/##@@requestUnitsOfMeasure\',\
+			targetType : \'any\'\
+		}],\
+		mode : \'TwoWay\',\
+		type : \'sap.ui.model.odata.type.Unit\'\
+	}" />\
+</FlexBox>';
+		let oControl;
+
+		this.expectRequest("ProductSet('P1')?CPOUI5MODELS-1600=true", {
+				ProductID : "P1",
+				WeightMeasure : "12.34",
+				WeightUnit : "KWH"
+			})
+			.expectRequest("SAP__UnitsOfMeasure?CPOUI5MODELS-1600=true&$skip=0&$top=5000", {
+				results : [{
+					DecimalPlaces : 99, // more decimals than WeightMeasure's scale
+					ExternalCode : "KWH",
+					ISOCode : "KWH",
+					Text : "Kilowatt hour",
+					UnitCode : "KWH"
+				}]
+			})
+			.expectValue("weight", "12.340 KWH");
+
+		return this.createView(assert, sView, oModel).then(() => {
+			oControl = this.oView.byId("weight");
+
+			this.expectValue("weight", "23.456 KWH");
+
+			// code under test
+			oControl.setValue("23.456 KWH");
+
+			return this.waitForChanges(assert);
+		}).then(() => {
+			this.expectValue("weight", "0.000 KWH")
+				.expectValue("weight", "0.000 KWH"); // twice because 2 parts changed
+
+			// code under test
+			oControl.setValue("");
+
+			return this.waitForChanges(assert);
+		}).then(() => {
+			this.expectValue("weight", "0.00 KWH");
+
+			// code under test (change WeightMeasure's type, scale is now 2)
+			oControl.getBinding("value").getBindings()[0].setType(new Decimal(undefined, {precision : 13, scale : 2}));
+
+			return this.waitForChanges(assert);
 		});
 	});
 

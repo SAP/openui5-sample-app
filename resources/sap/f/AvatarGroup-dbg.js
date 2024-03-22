@@ -16,8 +16,9 @@ sap.ui.define([
 	"sap/m/library",
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/events/KeyCodes",
-	"sap/ui/core/Core"
-], function(library, Control, Library, ItemNavigation, Rem, AvatarGroupRenderer, Button, mLibrary, ResizeHandler, KeyCodes, Core) {
+	"sap/ui/core/Core",
+	"sap/ui/core/Theming"
+], function(library, Control, Library, ItemNavigation, Rem, AvatarGroupRenderer, Button, mLibrary, ResizeHandler, KeyCodes, Core, Theming) {
 	"use strict";
 
 	var AvatarGroupType = library.AvatarGroupType;
@@ -99,7 +100,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public
@@ -253,7 +254,7 @@ sap.ui.define([
 		this._detachResizeHandlers();
 		this._attachResizeHandlers();
 
-		if (Core.isThemeApplied()) {
+		if (this._isThemeApplied()) {
 			this._onResize();
 		}
 
@@ -268,6 +269,24 @@ sap.ui.define([
 		}
 
 		this._updateAccState();
+	};
+
+	/**
+	 * Informs whether the current theme is fully applied already.
+	 * Replacement for Core#isThemeApplied.
+	 * Based on sap/m/table/Util#isThemeApplied
+	 *
+	 * @returns {boolean} true if theme is applied
+	 * @private
+	 */
+	AvatarGroup.prototype._isThemeApplied = function() {
+		var bIsApplied = false;
+		var fnOnThemeApplied = function() {
+			bIsApplied = true;
+		};
+		Theming.attachApplied(fnOnThemeApplied); // Will be called immediately when theme is applied
+		Theming.detachApplied(fnOnThemeApplied);
+		return bIsApplied;
 	};
 
 	AvatarGroup.prototype.onThemeChanged = function () {

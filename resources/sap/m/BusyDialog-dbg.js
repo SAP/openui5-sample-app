@@ -5,8 +5,8 @@
  */
 
 // Provides control sap.m.BusyDialog.
-sap.ui.define(['./library', 'sap/ui/core/Control', 'sap/m/Dialog', 'sap/m/BusyIndicator', 'sap/m/Label', 'sap/m/Button', "sap/base/Log", 'sap/ui/core/Core', 'sap/ui/core/InvisibleText', "sap/ui/core/Lib"],
-	function(library, Control, Dialog, BusyIndicator, Label, Button, Log, Core, InvisibleText, Library) {
+sap.ui.define(['./library', 'sap/ui/core/Control', 'sap/m/Dialog', 'sap/m/BusyIndicator', 'sap/m/Label', 'sap/m/Button', "sap/base/Log", 'sap/ui/core/InvisibleText', "sap/ui/core/Lib"],
+	function(library, Control, Dialog, BusyIndicator, Label, Button, Log, InvisibleText, Library) {
 		"use strict";
 
 		// shortcut for sap.m.TitleAlignment
@@ -46,7 +46,7 @@ sap.ui.define(['./library', 'sap/ui/core/Control', 'sap/m/Dialog', 'sap/m/BusyIn
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.121.0
+		 * @version 1.122.0
 		 *
 		 * @public
 		 * @alias sap.m.BusyDialog

@@ -20,6 +20,7 @@ sap.ui.define([
 	'sap/ui/core/ResizeHandler',
 	'sap/ui/thirdparty/URI',
 	'sap/ui/performance/trace/Interaction',
+	'sap/ui/util/_enforceNoReturnValue',
 	'sap/base/assert',
 	'sap/base/Log',
 	'sap/base/util/Deferred',
@@ -47,6 +48,7 @@ sap.ui.define([
 	ResizeHandler,
 	URI,
 	Interaction,
+	_enforceNoReturnValue,
 	assert,
 	Log,
 	Deferred,
@@ -236,7 +238,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -1325,7 +1327,7 @@ sap.ui.define([
 	 * @param {string} [vUsage.id] ID of the nested component that is prefixed with <code>autoPrefixId</code>
 	 * @param {boolean} [vUsage.async=true] Indicates whether the component creation is done asynchronously (You should use synchronous creation only if really necessary, because this has a negative impact on performance.)
 	 * @param {object} [vUsage.settings] Settings for the nested component like for {#link sap.ui.component} or the component constructor
-	 * @param {object} [vUsage.componentData] Initial data of the component (@see sap.ui.core.Component#getComponentData)
+	 * @param {object} [vUsage.componentData] Initial data of the component, see {@link sap.ui.core.Component#getComponentData}
 	 * @return {sap.ui.core.Component|Promise<sap.ui.core.Component>} Component instance or Promise which will be resolved with the component instance (defaults to Promise / asynchronous behavior)
 	 * @public
 	 * @since 1.47.0
@@ -1412,6 +1414,13 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @name sap.ui.core.Component.prototype.init
+	 * @returns {void|undefined} This hook method must not have a return value. Return value <code>void</code> is deprecated since 1.120, as it does not force functions to <b>not</b> return something.
+	 * 	This implies that, for instance, no async function returning a Promise should be used.
+	 *
+	 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
+	 *	implementation of this hook must not return anything but undefined. Any other
+	 * 	return value will cause an error log in this version of UI5 and will fail in future
+	 * 	major versions of UI5.
 	 * @protected
 	 */
 	//Component.prototype.init = function() {};
@@ -1427,6 +1436,13 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @name sap.ui.core.Component.prototype.exit
+	 * @returns {void|undefined} This hook method must not have a return value. Return value <code>void</code> is deprecated since 1.120, as it does not force functions to <b>not</b> return something.
+	 * 	This implies that, for instance, no async function returning a Promise should be used.
+	 *
+	 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
+	 *	implementation of this hook must not return anything but undefined. Any other
+	 * 	return value will cause an error log in this version of UI5 and will fail in future
+	 * 	major versions of UI5.
 	 * @protected
 	 */
 	//Component.prototype.exit = function() {};
@@ -2509,7 +2525,7 @@ sap.ui.define([
 	 *              <code>vConfig.manifest</code> is set to a non-empty string), then the name specified in that
 	 *              manifest will be ignored and this name will be used instead to determine the module to be loaded.
 	 * @param {string} [vConfig.url] Alternative location from where to load the Component. If a <code>manifestUrl</code> is given, this URL specifies the location of the final component defined via that manifest, otherwise it specifies the location of the component defined via its name <code>vConfig.name</code>.
-	 * @param {object} [vConfig.componentData] Initial data of the Component (@see sap.ui.core.Component#getComponentData)
+	 * @param {object} [vConfig.componentData] Initial data of the Component, see {@link sap.ui.core.Component#getComponentData}
 	 * @param {string} [vConfig.id] sId of the new Component
 	 * @param {object} [vConfig.settings] Settings of the new Component
 	 * @param {string[]} [vConfig.activeTerminologies] List of active terminologies.
@@ -3943,7 +3959,7 @@ sap.ui.define([
 
 		// call lifecyclehook 'onDeactivate'
 		if (typeof this.onDeactivate === "function") {
-			this.onDeactivate();
+			_enforceNoReturnValue(this.onDeactivate(), /*mLogInfo=*/{name: "onDeactivate", component: this.getId()});
 		}
 	};
 
@@ -4006,7 +4022,7 @@ sap.ui.define([
 
 		// call lifecyclehook 'onActivate'
 		if (typeof this.onActivate === "function") {
-			this.onActivate();
+			_enforceNoReturnValue(this.onActivate(), /*mLogInfo=*/{ name: "onActivate", component: this.getId() });
 		}
 	};
 
@@ -4058,6 +4074,12 @@ sap.ui.define([
 	 * @name sap.ui.core.Component.prototype.onActivate
 	 * @abstract
 	 * @since 1.88
+	 * @returns {void|undefined} This lifecycle hook must not have a return value.
+	 *
+	 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
+	 *	implementation of this hook must not return anything but undefined. Any other
+	 * 	return value will cause an error log in this version of UI5 and will fail in future
+	 * 	major versions of UI5.
 	 * @protected
 	 */
 
@@ -4068,6 +4090,12 @@ sap.ui.define([
 	 * @name sap.ui.core.Component.prototype.onDeactivate
 	 * @abstract
 	 * @since 1.88
+	 * @returns {void|undefined} This lifecycle hook must not have a return value.
+	 *
+	 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
+	 *	implementation of this hook must not return anything but undefined. Any other
+	 * 	return value will cause an error log in this version of UI5 and will fail in future
+	 * 	major versions of UI5.
 	 * @protected
 	 */
 

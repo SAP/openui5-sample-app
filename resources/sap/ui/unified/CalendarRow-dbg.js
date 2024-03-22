@@ -14,7 +14,6 @@ sap.ui.define([
 	'sap/ui/core/LocaleData',
 	'sap/ui/unified/calendar/CalendarUtils',
 	'sap/ui/core/format/TimezoneUtil',
-	'sap/ui/core/Core',
 	'sap/ui/core/date/UniversalDate',
 	'./library',
 	'sap/ui/core/InvisibleText',
@@ -37,7 +36,6 @@ sap.ui.define([
 	LocaleData,
 	CalendarUtils,
 	TimezoneUtil,
-	Core,
 	UniversalDate,
 	library,
 	InvisibleText,
@@ -92,7 +90,7 @@ sap.ui.define([
 	 * @class
 	 * A calendar row with a header and appointments. The Appointments will be placed in the defined interval.
 	 * @extends sap.ui.core.Control
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public

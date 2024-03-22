@@ -42,7 +42,7 @@ sap.ui.define([
 	 * ShareMenu is a special menu that is represented by (1) an actionSheet with the menu items and (2) a button that opens the actionSheet.
 	 * If the menu has only one item, then that item appears in place of the button that opens the actionSheet.
 	 *
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @private
 	 * @since 1.30.0
 	 * @alias sap.m.semantic.ShareMenu

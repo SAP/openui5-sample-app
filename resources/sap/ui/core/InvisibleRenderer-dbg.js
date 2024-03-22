@@ -12,7 +12,7 @@ sap.ui.define([], function() {
 	 * Provides the default renderer for the controls that have set their <code>visible</code> property to <code>false</code>.
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @alias module:sap/ui/core/InvisibleRenderer
 	 * @since 1.66.0
 	 * @protected

@@ -26,7 +26,7 @@ sap.ui.define([
 	UploadSetRenderer.render = function (oRm, oControl) {
 		oRm.openStart("div",oControl);
 
-		oRm.class("sapMUC");
+		oRm.class("sapMUC").class("sapMUS");
 		oRm.openEnd();
 		this.renderDragDropOverlay(oRm, oControl);
 		this.renderList(oRm, oControl);

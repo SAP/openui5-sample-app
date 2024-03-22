@@ -68,7 +68,7 @@ sap.ui.define([
    * @public
    * @experimental since 1.120
    * @since 1.120
-   * @version 1.121.0
+   * @version 1.122.0
    * @extends sap.ui.core.Element
    * @name sap.m.upload.FilePreviewDialog
    */
@@ -105,6 +105,7 @@ sap.ui.define([
 			this._oDialog = null;
 			this._oViewer = null;
 			this._oContentResource = null;
+			this._oCarouselItems = null;
 		},
 
 		/**
@@ -262,7 +263,7 @@ sap.ui.define([
      	*/
 		_createCarousel: async function () {
 			const oPreviewItem = this._previewItem;
-			let aItems = !this.getShowCarouselArrows() ? [this._previewItem] : this._items;
+			let aItems = this._oCarouselItems = !this.getShowCarouselArrows() ? [this._previewItem] : this._items;
 			let sActivePageId = "";
 			aItems = aItems?.filter((oItem) => oItem?.isA("sap.m.upload.UploadSetwithTableItem"));
 			const aPagePromises = aItems.map(async (oItem) => {
@@ -400,7 +401,7 @@ sap.ui.define([
 			const iIndex = aPages.findIndex((oPage) => {
 				return oPage.sId === sActivePageId;
 			});
-			return this._items[iIndex];
+			return this._oCarouselItems[iIndex];
 		},
 		isFileSizeWithinMaxLimit: function(oItem) {
 			let maxFileSize = this.getMaxFileSizeforPreview();

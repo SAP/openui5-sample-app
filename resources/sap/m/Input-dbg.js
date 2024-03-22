@@ -160,7 +160,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public
@@ -229,6 +229,7 @@ function(
 				 * <strong>Note:</strong> The property is deprecated, as it creates unnecessary usability and accessibility restrictions. The decision to deprecate it is based on the fact that it serves no purpose to have an input field where the user cannot type.
 				 * This property restricts even the paste functionality, which can be useful, e.g. the needed info is already in the clipboard.
 				 * If the user's input needs to match specific predefined values, the application should validate the input against the set of values and provide feedback to the user or use other mechanism for selection, where freestyle input is not allowed by design (Select, SelectDialog, etc).
+				 * <strong>Note:</strong> Please note that there is no direct replacement for this property.
 				 * @since 1.21.0
 				 * @deprecated As of version 1.119 The property valueHelpOnly should not be used anymore
 				 */
@@ -240,8 +241,9 @@ function(
 				filterSuggests : {type : "boolean", group : "Behavior", defaultValue : true},
 
 				/**
-				 * If set, the value of this parameter will control the horizontal size of the suggestion list to display more data. This allows suggestion lists to be wider than the input field if there is enough space available. By default, the suggestion list is always as wide as the input field.
-				 * <b>Note:</b> The value will be ignored if the actual width of the input field is larger than the specified parameter value.
+				 * If set, this parameter will control the horizontal size of the suggestion list to display more data. By default, the suggestion list has a minimum width equal to the input field's width and a maximum width of 640px.
+				 * This property allows the suggestion list to contract or expand based on available space, potentially exceeding 640px.
+				 * <b>Note:</b> If the actual width of the input field exceeds the specified parameter value, the value will be ignored.
 				 * @since 1.21.1
 				 */
 				maxSuggestionWidth : {type : "sap.ui.core.CSSSize", group : "Appearance", defaultValue : null},

@@ -23,10 +23,11 @@ sap.ui.define([
 	 * @class This element is used within the TileAttribute control that generates either a link or text
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @constructor
-	 * @private
-	 * @since 1.121
+	 * @public
+	 * @experimental since 1.122
+	 * @since 1.122
 	 * @alias sap.m.ContentConfig
 	 */
 	const ContentConfig = Element.extend("sap.m.ContentConfig",{

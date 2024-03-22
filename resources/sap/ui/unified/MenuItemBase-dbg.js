@@ -5,8 +5,8 @@
  */
 
 // Provides control sap.ui.unified.MenuItemBase.
-sap.ui.define(['sap/ui/core/Element', './library', 'sap/ui/core/IconPool'],
-	function(Element, library, IconPool) {
+sap.ui.define(['sap/ui/core/Element', './library', 'sap/ui/core/IconPool', 'sap/m/Image'],
+	function(Element, library, IconPool, Image) {
 	"use strict";
 
 
@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/Element', './library', 'sap/ui/core/IconPool'],
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -164,7 +164,7 @@ sap.ui.define(['sap/ui/core/Element', './library', 'sap/ui/core/IconPool'],
 		return IconPool.createControlByURI({
 			src: this.getIcon(),
 			useIconTooltip: false
-		});
+		}, Image);
 	};
 
 	MenuItemBase.prototype.onsaphide = MenuItemBase.prototype.onsapshow;

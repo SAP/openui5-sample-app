@@ -117,7 +117,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.121.0
+		 * @version 1.122.0
 		 *
 		 * @constructor
 		 * @private
@@ -1301,15 +1301,6 @@ sap.ui.define([
 			this._fireSelectionEvent(oEvent);
 		};
 
-		/**
-		 * Handles the <code>tap</code> event on the grid.
-		 *
-		 * @param {jQuery.Event} oEvent The event object
-		 */
-		SinglePlanningCalendarGrid.prototype.ontap = function (oEvent) {
-			this._fireSelectionEvent(oEvent);
-		};
-
 		SinglePlanningCalendarGrid.prototype.removeAllSelectedDates = function(oEvent) {
 			this.removeAllAggregation("selectedDates");
 		};
@@ -1479,27 +1470,25 @@ sap.ui.define([
 		};
 
 		SinglePlanningCalendarGrid.prototype._toggleMarkCell = function (oStartDate, oColumnGridHeaderCell) {
-			var oUTCDate = oStartDate.toUTCJSDate();
 			if (!this._checkDateSelected(oStartDate)){
 				if (oColumnGridHeaderCell && !oColumnGridHeaderCell.classList.contains("sapUiCalItemSel")) {
 					oColumnGridHeaderCell.classList.add("sapUiCalItemSel");
 				}
-				this.addAggregation("selectedDates", new DateRange({startDate: oUTCDate}));
-			} else {
-				var aSelectedDates = this.getAggregation("selectedDates");
-				oColumnGridHeaderCell && oColumnGridHeaderCell.classList.remove("sapUiCalItemSel");
-				if (!aSelectedDates) {
-					return;
-				}
+				this.addAggregation("selectedDates", new DateRange({startDate: oStartDate.toLocalJSDate()}));
+				return;
+			}
 
-				for (var i = 0; i < aSelectedDates.length; i++){
-					var oUTCStartDate = UI5Date.getInstance(Date.UTC(0, 0, 1));
-					var oSlectStartDate = aSelectedDates[i].getStartDate();
-					oUTCStartDate.setUTCFullYear(oSlectStartDate.getFullYear(), oSlectStartDate.getMonth(), oSlectStartDate.getDate());
-					if (oUTCStartDate.getTime() === oUTCDate.getTime()) {
-						this.removeAggregation("selectedDates", i);
-						break;
-					}
+			var aSelectedDates = this.getAggregation("selectedDates");
+			oColumnGridHeaderCell && oColumnGridHeaderCell.classList.remove("sapUiCalItemSel");
+			if (!aSelectedDates) {
+				return;
+			}
+
+			for (var i = 0; i < aSelectedDates.length; i++){
+				var oSelectStartDate = aSelectedDates[i].getStartDate();
+				if (CalendarDate.fromLocalJSDate(oSelectStartDate).isSame(CalendarDate.fromLocalJSDate(oStartDate))) {
+					this.removeAggregation("selectedDates", i);
+					break;
 				}
 			}
 		};

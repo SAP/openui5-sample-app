@@ -78,7 +78,7 @@ function(
 	 * @implements sap.ui.core.Toolbar,sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public
@@ -370,7 +370,7 @@ function(
 
 	// handle tap for active toolbar, do nothing if already handled
 	Toolbar.prototype.ontap = function(oEvent) {
-		if (this.getActive() && !oEvent.isMarked() || oEvent.srcControl === this._getActiveButton()) {
+		if (this.getActive() && !oEvent.isMarked() || oEvent.srcControl === this._activeButton) {
 			oEvent.setMarked();
 			this.firePress({
 				srcControl : oEvent.srcControl
@@ -381,7 +381,7 @@ function(
 
 	// fire press event when enter is hit on the active toolbar
 	Toolbar.prototype.onsapenter = function(oEvent) {
-		if (this.getActive() && !oEvent.isMarked() || oEvent.srcControl === this._getActiveButton()) {
+		if (this.getActive() && !oEvent.isMarked() || oEvent.srcControl === this._activeButton) {
 			oEvent.setMarked();
 			this.firePress({
 				srcControl : this

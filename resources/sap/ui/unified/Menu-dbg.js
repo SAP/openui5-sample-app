@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IContextMenu
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -82,7 +82,7 @@ sap.ui.define([
 
 				/**
 				 * When a menu is disabled none of its items can be selected by the user.
-				 * The enabled property of an item (@link sap.ui.unified.MenuItemBase#getEnabled) has no effect when the menu of the item is disabled.
+				 * The enabled property of an item {@link sap.ui.unified.MenuItemBase#getEnabled} has no effect when the menu of the item is disabled.
 				 */
 				enabled : {type : "boolean", group : "Behavior", defaultValue : true},
 

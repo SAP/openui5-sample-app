@@ -83,7 +83,7 @@ sap.ui.define([
 	 * If used inside the calendar the properties and aggregation are directly taken from the parent
 	 * (To not duplicate and sync DateRanges and so on...)
 	 * @extends sap.ui.core.Control
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public
@@ -985,7 +985,7 @@ sap.ui.define([
 
 	/*
 	 * Checks if a given date is enabled
-	 * beside the disabledDates aggregation the min. and max. date of the Calendar are used
+	 * aside from the disabledDates aggregation the min. and max. dates are also checked
 	 * @param {sap.ui.unified.calendar.CalendarDate} oDate the date to check
 	 * @returns {boolean} Flag if enabled
 	 * @private
@@ -998,12 +998,9 @@ sap.ui.define([
 		var aDisabledDates = this.getDisabledDates();
 		var oTimeStamp = oDate.toUTCJSDate().getTime();
 		var sCalendarType = this._getPrimaryCalendarType();
-		var oParent = this.getParent();
 
-		if (oParent && oParent._oMinDate && oParent._oMaxDate) {
-			if (oTimeStamp < oParent._oMinDate.valueOf() || oTimeStamp > oParent._oMaxDate.valueOf()) {
-				return false;
-			}
+		if ((this._oMinDate && oTimeStamp < this._oMinDate) || (this._oMaxDate && oTimeStamp > this._oMaxDate)) {
+			return false;
 		}
 
 		for ( var i = 0; i < aDisabledDates.length; i++) {
@@ -1470,7 +1467,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Month.prototype._getVisibleDays = function (oStartDate, bIncludeBCDates) {
-		var iNextMonth,
+		var iDaysInSixWeeks = 42,
 			oDay,
 			oCalDate,
 			iDaysOldMonth,
@@ -1500,8 +1497,7 @@ sap.ui.define([
 		}
 
 		oDay = new CalendarDate(oFirstDay);
-		iNextMonth = (oStartDate.getMonth() + 1) % 12;
-		do {
+		for (let i = 0; i < iDaysInSixWeeks; i++) {
 			iYear = oDay.getYear();
 			oCalDate = new CalendarDate(oDay, this._getPrimaryCalendarType());
 			if (bIncludeBCDates && iYear < 1) {
@@ -1512,7 +1508,7 @@ sap.ui.define([
 				this._aVisibleDays.push(oCalDate);
 			}
 			oDay.setDate(oDay.getDate() + 1);
-		} while (oDay.getMonth() !== iNextMonth || oDay.getDay() !== iFirstDayOfWeek);
+		}
 
 		return this._aVisibleDays;
 	};
@@ -1669,7 +1665,7 @@ sap.ui.define([
 
 		const bIsRegionUS = oLocaleData.firstDayStartsFirstWeek();
 
-		const bStartsInFirstMonth = this._oDate.getMonth() === 0;
+		const bStartsInFirstMonth = this._getDate().getMonth() === 0;
 		const bEndsInFirstMonth = oEndDate.getMonth() === 0;
 		const bEndsInSecondMonth = oEndDate.getMonth() === 1;
 

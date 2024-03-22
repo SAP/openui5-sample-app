@@ -13,7 +13,6 @@ sap.ui.define([
 	'sap/ui/core/format/DateFormat',
 	'sap/ui/core/format/NumberFormat',
 	'sap/ui/core/format/TimezoneUtil',
-	'sap/ui/core/Core',
 	'./calendar/CalendarUtils',
 	'./library',
 	"sap/base/Log",
@@ -27,7 +26,6 @@ sap.ui.define([
 		DateFormat,
 		NumberFormat,
 		TimezoneUtil,
-		Core,
 		CalendarUtils,
 		library,
 		Log,
@@ -47,7 +45,7 @@ sap.ui.define([
 	 *
 	 * Applications could inherit from this element to add own fields.
 	 * @extends sap.ui.unified.DateTypeRange
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @constructor
 	 * @public

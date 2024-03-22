@@ -27,7 +27,8 @@ sap.ui.define([
 	"sap/ui/core/library",
 	"sap/ui/core/InvisibleText",
 	"sap/ui/core/Core",
-	"sap/ui/core/Theming"
+	"sap/ui/core/Theming",
+	"./LinkTileContent"
 ], function(
 	library,
 	Localization,
@@ -51,7 +52,8 @@ sap.ui.define([
 	coreLibrary,
 	InvisibleText,
 	Core,
-	Theming
+	Theming,
+	LinkTileContent
 ) {
 	"use strict";
 	var frameTypes = library.FrameType;
@@ -87,7 +89,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @since 1.34.0
 	 *
 	 * @public
@@ -273,7 +275,7 @@ sap.ui.define([
 				 * LinkTileContent is being added to the GenericTile, it is advised to use in TwoByOne frameType
 				 * @since 1.120
 				 */
-				linkTileContents: {type: "sap.m.LinkTileContent", multiple: true, singularName: "linkTileContent"},
+				linkTileContents: {type: "sap.m.LinkTileContent", multiple: true, singularName: "linkTileContent", defaultClass: LinkTileContent},
 				/**
 				 * An icon or image to be displayed in the control.
 				 * This aggregation is deprecated since version 1.36.0, to display an icon or image use sap.m.ImageContent control instead.
@@ -964,7 +966,6 @@ sap.ui.define([
 				this._applyExtraHeight();
 			}
 		}.bind(this);
-
 		jQuery(window).on("resize", fnCheckMedia);
 		fnCheckMedia();
 	};

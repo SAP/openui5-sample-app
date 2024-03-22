@@ -22,7 +22,8 @@ sap.ui.define([
 		iEmptyRowCount = parseInt(oSearchParams.get("emptyRows") || "2"),
 		LayoutType = library.LayoutType,
 		MessageType = coreLibrary.MessageType,
-		bLegacy;
+		bLegacy,
+		oSelectedProduct;
 
 	return Controller.extend("sap.ui.core.sample.odata.v4.MultipleInlineCreationRowsGrid.Main", {
 		createAndSetDraft : function (oContext) {
@@ -252,6 +253,10 @@ sap.ui.define([
 				oProductsBinding ? oProductsBinding.getHeaderContext() : null,
 				"headerContext0"
 			);
+			this.byId("productsSelect").setBindingContext(
+				oProductsBinding ? oProductsBinding.getHeaderContext() : null,
+				"headerContext0"
+			);
 		},
 
 		onRefresh : function () {
@@ -285,20 +290,22 @@ sap.ui.define([
 
 		onSelectProduct : function (oEvent) {
 			var oItem = oEvent.getParameter("listItem"),
-				oProduct,
-				oProductContext;
+				oProduct;
+
+			oSelectedProduct?.setSelected(false);
 
 			if (oItem) {
-				oProductContext = oItem.getBindingContext();
-				oProduct = oProductContext.getObject();
-				if (oProductContext.isInactive()
-					|| oProductContext.isTransient()
+				oSelectedProduct = oItem.getBindingContext();
+				oProduct = oSelectedProduct.getObject();
+				oSelectedProduct.setSelected(true);
+				if (oSelectedProduct.isInactive()
+					|| oSelectedProduct.isTransient()
 					|| !oProduct) {
 					this.setPartsContext(null);
 				} else if (oProduct.IsActiveEntity) {
-					this.createAndSetDraft(oProductContext);
+					this.createAndSetDraft(oSelectedProduct);
 				} else {
-					this.setPartsContext(oProductContext);
+					this.setPartsContext(oSelectedProduct);
 				}
 			}
 		},

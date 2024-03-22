@@ -15,7 +15,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior"],
 	 * Menu renderer.
 	 * @author SAP - TD Core UI&AM UI Infra
 	 *
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @namespace
 	 */
 	var MenuRenderer = {

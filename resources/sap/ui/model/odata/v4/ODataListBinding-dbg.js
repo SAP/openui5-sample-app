@@ -57,7 +57,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.121.0
+		 * @version 1.122.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -934,7 +934,7 @@ sap.ui.define([
 				return;
 			}
 
-			oContext.setSelected(false);
+			oContext.doSetSelected(false);
 			that.removeCreated(oContext);
 			return Promise.resolve().then(function () {
 				// Fire the change asynchronously so that Cache#delete is finished and #getContexts
@@ -1073,9 +1073,10 @@ sap.ui.define([
 				sPredicate = _Helper.getPrivateAnnotation(aResults[i], "predicate");
 				sContextPath = sPath + (sPredicate || "/" + i$skipIndex);
 				oContext = this.mPreviousContextsByPath[sContextPath];
-				if (oContext && (!oContext.created() || oContext.isEffectivelyKeptAlive())) {
+				if (oContext && (!oContext.created() || oContext.isEffectivelyKeptAlive()
+						|| this.mParameters.$$aggregation?.hierarchyQualifier)) {
 					// reuse the previous context, unless it is created (and persisted), but not
-					// kept alive
+					// kept alive; always reuse created contexts in a recursive hierarchy
 					delete this.mPreviousContextsByPath[sContextPath];
 					oContext.iIndex = i$skipIndex;
 					oContext.checkUpdate();
@@ -1885,7 +1886,7 @@ sap.ui.define([
 	  * @param {boolean} [bAllowRequest]
 	 *   Whether it is allowed to send a GET request to fetch the parent node's data
 	 * @returns {sap.ui.model.odata.v4.Context|null|undefined|
-	 *     Promise<sap.ui.model.odata.v4.Context>}
+	 *     Promise<sap.ui.model.odata.v4.Context>|sap.ui.base.SyncPromise}
 	 *   <ul>
 	 *     <li> The parent node if already known,
 	 *     <li> <code>null</code> if the given node is a root node and thus has no parent,
@@ -2721,7 +2722,8 @@ sap.ui.define([
 	};
 
 	/**
-	 * Returns the header context which allows binding to <code>$count</code>.
+	 * Returns the header context which allows binding to <code>$count</code> or
+	 * <code>@$ui5.context.isSelected</code>.
 	 *
 	 * @returns {sap.ui.model.odata.v4.Context|null}
 	 *   The header context or <code>null</code> if the binding is relative and has no context
@@ -3479,7 +3481,8 @@ sap.ui.define([
 				} else {
 					that.fetchCache(that.oContext, false, /*bKeepQueryOptions*/true,
 						bKeepCacheOnError ? sGroupId : undefined);
-					oKeptElementsPromise = that.refreshKeptElements(sGroupId);
+					oKeptElementsPromise = that.refreshKeptElements(sGroupId,
+						/*bIgnorePendingChanges*/ bKeepCacheOnError);
 					if (that.iCurrentEnd > 0) {
 						oPromise = that.createRefreshPromise(
 							/*bPreventBubbling*/bKeepCacheOnError
@@ -3538,13 +3541,15 @@ sap.ui.define([
 	 *
 	 * @param {string} sGroupId
 	 *   The effective group ID
+	 * @param {boolean} bIgnorePendingChanges
+	 *   Whether kept elements are refreshed although there are pending changes.
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise which is resolved without a defined result, or rejected with an error if the
 	 *   refresh fails.
 	 *
 	 * @private
 	 */
-	ODataListBinding.prototype.refreshKeptElements = function (sGroupId) {
+	ODataListBinding.prototype.refreshKeptElements = function (sGroupId, bIgnorePendingChanges) {
 		var that = this;
 
 		return this.oCachePromise.then(function (oCache) {
@@ -3558,7 +3563,7 @@ sap.ui.define([
 					if (iIndex >= 0) { // Note: implies oContext.created()
 						that.removeCreated(oContext);
 					}
-				});
+				}, false, bIgnorePendingChanges);
 		}).catch(function (oError) {
 			that.oModel.reportError("Failed to refresh kept-alive elements", sClassName, oError);
 			throw oError;

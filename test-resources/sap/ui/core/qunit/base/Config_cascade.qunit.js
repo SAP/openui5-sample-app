@@ -84,7 +84,12 @@ sap.ui.require([
 	});
 
 	QUnit.test("Type Conversion: Convert all types", function(assert) {
+		assert.expect(18);
+		/**
+		 * @deprecated
+		 */
 		assert.expect(20);
+
 		var myEnum = {
 			enumKey: "enumValue"
 		};
@@ -120,11 +125,17 @@ sap.ui.require([
 			},
 			external: true
 		}), "stringModifiedByFunction", "BaseConfiguration.get for param 'sapUiParamString' returns correct value 'stringModifiedByFunction'");
+		/**
+		 * @deprecated
+		 */
 		assert.strictEqual(BaseConfiguration.get({
 			name: "sapUiParamCode",
 			type: BaseConfiguration.Type.Code,
 			external: true
 		})(), "code", "BaseConfiguration.get for param 'sapUiParamCode' returns correct function");
+		/**
+		 * @deprecated
+		 */
 		assert.strictEqual(BaseConfiguration.get({
 			name: "sapUiParamCodeAsString",
 			type: BaseConfiguration.Type.Code,

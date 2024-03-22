@@ -110,7 +110,7 @@ function(
 	* @extends sap.m.Input
 	*
 	* @author SAP SE
-	* @version 1.121.0
+	* @version 1.122.0
 	*
 	* @constructor
 	* @public
@@ -259,10 +259,7 @@ function(
 
 		this._bIsValidating = false;
 
-		var oTokenizer = new Tokenizer({
-			renderMode: TokenizerRenderMode.Narrow,
-			tokenDelete: this._tokenDelete.bind(this)
-		});
+		var oTokenizer = this._initTokenizer();
 
 		/* Backward compatibility */
 		oTokenizer.updateTokens = function () {
@@ -439,6 +436,20 @@ function(
 		}
 
 		this.bTokensUpdated = false;
+	};
+
+	/**
+	 * Creates an instance of sap.m.Tokenizer
+	 *
+	 * @returns {sap.m.Tokenizer}
+	 * @private
+	 * @ui5-restricted sap.ui.comp.smartfilterbar
+	 */
+	MultiInput.prototype._initTokenizer = function () {
+		return new Tokenizer({
+			renderMode: TokenizerRenderMode.Narrow,
+			tokenDelete: this._tokenDelete.bind(this)
+		});
 	};
 
 	/**

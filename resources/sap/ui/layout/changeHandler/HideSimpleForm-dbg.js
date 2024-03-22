@@ -19,7 +19,7 @@ sap.ui.define([
 	 * Change handler for hiding of a control.
 	 * @alias sap.ui.fl.changeHandler.HideControl
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @experimental Since 1.27.0
 	 */
 	var HideForm = { };
@@ -276,12 +276,9 @@ sap.ui.define([
 			});
 	};
 
-	HideForm.getChangeVisualizationInfo = function(oChange, oAppComponent) {
+	HideForm.getChangeVisualizationInfo = function(oChange) {
 		var oSelector = oChange.getContent().elementSelector;
-		var oElement = JsControlTreeModifier.bySelector(oSelector, oAppComponent);
-		var oDisplaySelector = oChange.getChangeType() === "removeSimpleFormGroup"
-			? oElement.getParent().getId()
-			: oElement.getParent().getParent().getId();
+		var oDisplaySelector = oChange.getSelector();
 		return {
 			affectedControls: [oSelector],
 			displayControls: [oDisplaySelector],

@@ -17,7 +17,7 @@ sap.ui.define(["sap/ui/base/Object", "sap/m/p13n/Popup", "sap/ui/core/Lib"], fun
 	 * @alias sap.m.upload.p13n.modules.PersPopupManager
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @experimental
 	 * @internal
 	 * @private

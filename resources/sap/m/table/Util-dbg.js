@@ -25,7 +25,7 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m.table.Util
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 * @since 1.96.0
 	 * @private
 	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp
@@ -78,7 +78,6 @@ sap.ui.define([
 	 * @private
 	 */
 	Util.calcTypeWidth = (function() {
-		const oTimezones = LocaleData.getInstance(new Locale(Localization.getLanguageTag())).getTimezoneTranslations();
 		let sLongestTimezone;
 		var fBooleanWidth = 0;
 		var aDateParameters = [2023, 9, 26, 22, 47, 58, 999];
@@ -89,6 +88,7 @@ sap.ui.define([
 
 		const getLongestTimezone = function() {
 			if (!sLongestTimezone) {
+				const oTimezones = LocaleData.getInstance(new Locale(Localization.getLanguageTag())).getTimezoneTranslations();
 				[sLongestTimezone] = Object.entries(oTimezones).reduce(([sTimezone, iLength], [sKey, sValue]) => {
 					return typeof sValue === "string" && sValue.length > iLength ? [sKey, sValue.length] : [sTimezone, iLength];
 				}, ["", 0]);
@@ -451,6 +451,19 @@ sap.ui.define([
 				oInvisibleMessage.announce(oResourceBundle.getText("table.ANNOUNCEMENT_TABLE_UPDATED_NOITEMS", [sText]));
 			}
 		}
+	};
+
+	/**
+	 * Provides an announcement for the screen reader to inform the user that there are no settings available for the column.
+	 *
+	 * @private
+	 * @ui5-restricted sap.ui.mdc
+	 * @since 1.122
+	 */
+	Util.announceEmptyColumnMenu = function() {
+		var oInvisibleMessage = InvisibleMessage.getInstance();
+		var oResourceBundle = Library.getResourceBundleFor("sap.m");
+		oInvisibleMessage.announce(oResourceBundle.getText("table.ANNOUNCEMENT_EMPTY_COLUMN_MENU"));
 	};
 
 	/**

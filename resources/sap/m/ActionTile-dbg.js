@@ -31,10 +31,11 @@ sap.ui.define([
 	* @extends sap.m.GenericTile
 	*
 	* @author SAP SE
-	* @version 1.121.0
-	* @since 1.107.0
+	* @version 1.122.0
 	*
-	* @private
+	* @public
+	* @experimental since 1.122
+	* @since 1.122
 	* @alias sap.m.ActionTile
 	*/
 

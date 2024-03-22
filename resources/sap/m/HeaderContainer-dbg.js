@@ -8,7 +8,6 @@ sap.ui.define([
 		'./Button',
 		'./ScrollContainer',
 		"sap/base/i18n/Localization",
-		'sap/ui/core/Core',
 		'sap/ui/core/Control',
 		'sap/ui/core/Element',
 		'sap/ui/Device',
@@ -32,7 +31,6 @@ sap.ui.define([
 		Button,
 		ScrollContainer,
 		Localization,
-		Core,
 		Control,
 		Element,
 		Device,
@@ -126,7 +124,7 @@ sap.ui.define([
 		 * @since 1.44.0
 		 *
 		 * @author SAP SE
-		 * @version 1.121.0
+		 * @version 1.122.0
 		 *
 		 * @public
 		 * @alias sap.m.HeaderContainer

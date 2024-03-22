@@ -177,7 +177,7 @@ sap.ui.define([
 	 * @see {@link sap.f.dnd.GridDropInfo}
 	 *
 	 * @author SAP SE
-	 * @version 1.121.0
+	 * @version 1.122.0
 	 *
 	 * @extends sap.ui.core.Control
 	 *
@@ -355,7 +355,8 @@ sap.ui.define([
 					}
 				}
 			},
-			dnd: { draggable: false, droppable: true }
+			dnd: { draggable: false, droppable: true },
+			designtime: "sap/f/designtime/GridContainer.designtime"
 		},
 
 		renderer: GridContainerRenderer

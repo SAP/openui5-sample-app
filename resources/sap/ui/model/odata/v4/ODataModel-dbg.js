@@ -235,7 +235,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.121.0
+		 * @version 1.122.0
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
@@ -1073,7 +1073,8 @@ sap.ui.define([
 	};
 
 	/**
-	 * Method not supported
+	 * Method not supported, use {@link #bindList} with <code>mParameters.$$aggregation</code>
+	 * instead.
 	 *
 	 * @param {string} _sPath
 	 * @param {sap.ui.model.Context} [_oContext]
@@ -1772,6 +1773,8 @@ sap.ui.define([
 	 *   A list of all dependent bindings, never <code>null</code>
 	 *
 	 * @private
+	 * @since 1.122.0
+	 * @ui5-restricted sap.fe
 	 */
 	ODataModel.prototype.getDependentBindings = function (oParent) {
 		return this.aAllBindings.filter(function (oBinding) {
@@ -2850,6 +2853,28 @@ sap.ui.define([
 	 */
 	ODataModel.prototype.toString = function () {
 		return sClassName + ": " + this.sServiceUrl;
+	};
+
+	/**
+	 * Waits until the temporary keep-alive binding matching the given binding has created its
+	 * cache, if required and there is such a binding.
+	 *
+	 * @param {sap.ui.model.odata.v4.ODataBinding} oBinding
+	 *   The binding that possibly needs the cache of a temporary keep-alive binding
+	 * @returns {sap.ui.base.SyncPromise}
+	 *   A promise which is resolved without a defined result when that cache is available
+	 *
+	 * @private
+	 */
+	ODataModel.prototype.waitForKeepAliveBinding = function (oBinding) {
+		if (oBinding.mParameters?.$$getKeepAliveContext) {
+			// $$canonicalPath is not allowed, binding path and resource path are (almost) identical
+			const oTemporaryBinding = this.mKeepAliveBindingsByPath[oBinding.getResolvedPath()];
+			if (oTemporaryBinding) {
+				return oTemporaryBinding.oCachePromise;
+			}
+		}
+		return SyncPromise.resolve();
 	};
 
 	/**
