@@ -1,1 +1,1 @@
-{"version":3,"file":"isMouseEventDelayed.js","names":["sap","ui","define","Device","isMouseEventDelayed","oNavigator"],"sources":["isMouseEventDelayed-dbg.js"],"mappings":";;;;;AASAA,IAAIC,GAAGC,OAAO,CAAC,iBAAkB,SAASC,GACzC,aAkBA,IAAIC,EAAsB,SAASC,GAClC,OAAO,KACR,EAEA,OAAOD,CAER"}
+{"version":3,"file":"isMouseEventDelayed.js","names":["sap","ui","define","Device","isMouseEventDelayed","oNavigator"],"sources":["isMouseEventDelayed-dbg.js"],"mappings":";;;;;AASAA,IAAIC,GAAGC,OAAO,CAAC,iBAAkB,SAASC,GACzC,aAkBA,IAAIC,EAAsB,SAASC,GAClC,OAAO,KACR,EAEA,OAAOD,CAER","ignoreList":[]}

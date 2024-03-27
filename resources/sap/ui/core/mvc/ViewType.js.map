@@ -1,1 +1,1 @@
-{"version":3,"file":"ViewType.js","names":["sap","ui","define","ViewType","JSON","XML","HTML","JS","Template"],"sources":["ViewType-dbg.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,GAAI,WACjB,aAaA,IAAIC,EAAW,CAQdC,KAAM,OAMNC,IAAK,MAQLC,KAAM,OAONC,GAAI,KAOJC,SAAU,YAIX,OAAOL,CACR"}
+{"version":3,"file":"ViewType.js","names":["sap","ui","define","ViewType","JSON","XML","HTML","JS","Template"],"sources":["ViewType-dbg.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,GAAI,WACjB,aAaA,IAAIC,EAAW,CAQdC,KAAM,OAMNC,IAAK,MAQLC,KAAM,OAONC,GAAI,KAOJC,SAAU,YAIX,OAAOL,CACR","ignoreList":[]}

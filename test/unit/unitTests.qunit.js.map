@@ -1,1 +1,1 @@
-{"version":3,"file":"unitTests.qunit.js","names":["sap","ui","define"],"sources":["unitTests.qunit-dbg.js"],"mappings":"AAAAA,IAAIC,GAAGC,OAAO,CACb"}
+{"version":3,"file":"unitTests.qunit.js","names":["sap","ui","define"],"sources":["unitTests.qunit-dbg.js"],"mappings":"AAAAA,IAAIC,GAAGC,OAAO,CACb","ignoreList":[]}
