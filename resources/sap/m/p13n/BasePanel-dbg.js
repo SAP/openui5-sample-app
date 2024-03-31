@@ -80,7 +80,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.0
+	 * @version 1.122.1
 	 *
 	 * @public
 	 * @abstract

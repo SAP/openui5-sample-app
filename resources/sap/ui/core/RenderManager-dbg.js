@@ -236,7 +236,7 @@ sap.ui.define([
 	 *
 	 * @extends Object
 	 * @author SAP SE
-	 * @version 1.122.0
+	 * @version 1.122.1
 	 * @alias sap.ui.core.RenderManager
 	 * @hideconstructor
 	 * @public

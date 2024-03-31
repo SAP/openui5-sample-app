@@ -45,7 +45,7 @@ sap.ui.define([
 	 *
 	 * Applications could inherit from this element to add own fields.
 	 * @extends sap.ui.unified.DateTypeRange
-	 * @version 1.122.0
+	 * @version 1.122.1
 	 *
 	 * @constructor
 	 * @public

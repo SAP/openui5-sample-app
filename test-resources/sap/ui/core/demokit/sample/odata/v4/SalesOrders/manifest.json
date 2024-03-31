@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR",
 		"applicationVersion" : {
-			"version" : "1.122.0"
+			"version" : "1.122.1"
 		},
 		"description" : "Example for OData V4 EPM Sales Orders",
 		"dataSources" : {

@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR-MOD",
 		"applicationVersion" : {
-			"version" : "1.122.0"
+			"version" : "1.122.1"
 		},
 		"description" : "Example for the two field solution for unit and currency",
 		"id" : "sap.ui.core.internal.samples.odata.twoFields",

@@ -49,7 +49,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.SelectionController
 	 *
 	 * @author SAP SE
-	 * @version 1.122.0
+	 * @version 1.122.1
 	 * @since 1.121
 	 * @public
 	 * @alias sap.m.p13n.FilterController
