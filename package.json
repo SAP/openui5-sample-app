@@ -9,7 +9,7 @@
 	},
 	"scripts": {
 		"start": "ui5 serve",
-		"lint": "eslint webapp",
+		"lint": "eslint webapp && ui5lint",
 		"karma": "karma start",
 		"karma-ci": "rimraf coverage && karma start karma-ci.conf.js",
 		"watch": "npm run karma",
@@ -20,6 +20,7 @@
 	},
 	"devDependencies": {
 		"@ui5/cli": "^3.9.2",
+		"@ui5/linter": "^0.2.0",
 		"@ui5/middleware-code-coverage": "^1.1.1",
 		"eslint": "^8.57.0",
 		"karma": "^6.4.3",
