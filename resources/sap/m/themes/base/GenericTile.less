@@ -53,18 +53,6 @@
 	border-color:  @sapUiNegativeText;
 }
 
-.sapMGTCriticalHdrTxt.Good > .sapMText {
-	color: @sapUiPositiveText;
-}
-
-.sapMGTCriticalHdrTxt.Critical > .sapMText {
-	color: @sapUiCriticalText;
-}
-
-.sapMGTCriticalHdrTxt.Error > .sapMText {
-	color: @sapUiNegativeText;
-}
-
 .sapMGTContentPlaceholder {
 	outline: none;
 	width: 300px;
@@ -732,12 +720,14 @@ border-radius: 0.25rem;
 	display: inline-block;
 }
 
-.sapMGTContent {
-	height: 6.375rem;
-	display: inline-block;
-	white-space: nowrap;
-	width: 100%;
-	overflow: hidden;
+.sapMGT {
+	.sapMGTContent {
+		height: 6.375rem;
+		display: inline-block;
+		white-space: nowrap;
+		width: 100%;
+		overflow: hidden;
+	}
 }
 
 .sapMGTHdrTxt {
@@ -1851,11 +1841,6 @@ html[data-sap-ui-browser*='ff'] {
 					font-size: 0.875rem;
 					margin-top: 1rem;
 				}
-				.sapMGTActionModeContainer {
-					margin: 0 1rem 1rem 0.5rem;
-					display: inline-flex;
-					column-gap: 0.5rem;
-				}
 			}
 			.sapMTileCntFtrTxt {
 				margin: 0 1rem 1rem 1rem;
@@ -1882,6 +1867,11 @@ html[data-sap-ui-browser*='ff'] {
 		}
 
 	}
+	.sapMGTActionModeContainer {
+		position: absolute;
+		bottom: 0.9em;
+		right: 1rem;
+    }
 }
 
 .TwoByOne.sapMTileSmallPhone.sapMGTActionMode {
@@ -2483,5 +2473,402 @@ html.sap-desktop .sapMGT.sapMGTTwoByHalf.sapMGTIconMode.HighContrastTile:not(.sa
 .sapMGT.sapMGTOneByOne.HighContrastTile:hover {
 	.sapMGTFocusDiv {
 		outline-offset: 0 !important;
+	}
+}
+
+//Badge Styles
+
+//Styles when Icon and Text are present
+
+.sapMGT {
+	.sapMGTBadge {
+		position: absolute;
+		top: -0.6rem;
+		right: 0.5rem;
+		border-radius: 0.5rem;
+		font-weight: bold;
+		font-size: 0.75rem;
+		padding: 0 0.5rem;
+		font-size: @sapFontSmallSize;
+		height: 1rem;
+		line-height: 1rem;
+		z-index: 2;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		gap: 0.3125rem;
+		border: 0.0625rem solid transparent;
+		box-sizing: border-box;
+		.sapMGTBadgeText {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		&.sapMGTBadgeOnlyIcon{
+			border-radius: 1.375rem;
+			padding: 0;
+			height: 1.375rem;
+			width: 1.375rem;
+			top: -0.75rem;
+			.sapUiIcon {
+				top: 0.0625rem;
+			}
+		}
+		.sapMGTBadgeOverlay {
+			position: absolute;
+			inset: -1px;
+			border-radius: 0.5rem;
+			opacity: 0.8;
+		}
+		&.sapMGTBadgeTextPresent {
+			.sapUiIcon {
+				line-height: 0;
+			}
+		}
+	}
+	&.OneByOne {
+		.sapMGTBadge {
+			.sapMGTBadgeText{
+				max-width: 7.9rem;
+			}
+		}
+	}
+	&.TwoByOne {
+		.sapMGTBadge {
+			.sapMGTBadgeText {
+				max-width: 19.55rem;
+			}
+		}
+	}
+	&.TwoByHalf {
+		.sapMGTBadge {
+			.sapMGTBadgeText {
+				max-width: 19.55rem;
+			}
+		}
+	}
+	&.OneByHalf {
+		.sapMGTBadge {
+			.sapMGTBadgeText{
+				max-width: 7.9rem;
+			}
+		}
+	}
+}
+
+.sapMGT.sapMTileSmallPhone {
+	&.OneByOne {
+		.sapMGTBadge {
+			.sapMGTBadgeText {
+				max-width: 6.25rem;
+			}
+		}
+	}
+	&.TwoByOne {
+		.sapMGTBadge {
+			.sapMGTBadgeText {
+				max-width: 15.85rem;
+			}
+		}
+	}
+	&.TwoByHalf {
+		.sapMGTBadge {
+			.sapMGTBadgeText {
+				max-width: 15.85rem;
+			}
+		}
+	}
+	&.OneByHalf {
+		.sapMGTBadge {
+			.sapMGTBadgeText {
+				max-width: 6.25rem;
+			}
+		}
+	}
+}
+
+//Styles when only text is present
+.sapMGT {
+	&.OneByOne {
+		.sapMGTBadge.sapMGTBadgeOnlyText {
+			.sapMGTBadgeText {
+				max-width: 9.0625rem;
+			}
+		}
+	}
+
+	&.TwoByOne {
+		.sapMGTBadge.sapMGTBadgeOnlyText {
+			.sapMGTBadgeText {
+				max-width: 20.5625rem;
+			}
+		}
+	}
+
+	&.OneByHalf {
+		.sapMGTBadge.sapMGTBadgeOnlyText {
+			.sapMGTBadgeText {
+				max-width: 9.0625rem;
+			}
+		}
+	}
+
+	&.TwoByHalf {
+		.sapMGTBadge.sapMGTBadgeOnlyText {
+			.sapMGTBadgeText {
+				max-width: 20.5625rem;
+			}
+		}
+	}
+}
+
+.sapMGT.sapMTileSmallPhone {
+	&.OneByOne {
+		.sapMGTBadge.sapMGTBadgeOnlyText {
+			.sapMGTBadgeText {
+				max-width: 7.3125rem;
+			}
+		}
+	}
+
+	&.TwoByOne {
+		.sapMGTBadge.sapMGTBadgeOnlyText {
+			.sapMGTBadgeText {
+				max-width: 17.0625rem;
+			}
+		}
+	}
+
+	&.OneByHalf {
+		.sapMGTBadge.sapMGTBadgeOnlyText {
+			.sapMGTBadgeText {
+				max-width: 7.3125rem;
+			}
+		}
+	}
+
+	&.TwoByHalf {
+		.sapMGTBadge.sapMGTBadgeOnlyText {
+			.sapMGTBadgeText {
+				max-width: 17.0625rem;
+			}
+		}
+	}
+}
+
+//Styles in IconMode tile when size is TwoByHalf
+
+.sapMGT.sapMGTIconMode.TwoByHalf {
+	.sapMGTBadge.sapMGTBadgeOnlyIcon {
+		top: -0.125rem;
+		left: 2.125rem;
+	}
+	&.sapMTileSmallPhone {
+		.sapMGTBadge.sapMGTBadgeOnlyIcon {
+			top: 0.3125rem;
+		}
+	}
+}
+
+.sapMGT {
+	.sapMGTBadgeBackgroundColorIndication1 {
+		background-color: @sapUiIndication1;
+	}
+	.sapMGTBadgeBackgroundColorIndication2 {
+		background-color: @sapUiIndication2;
+	}
+	.sapMGTBadgeBackgroundColorIndication3 {
+		background-color: @sapUiIndication3;
+	}
+	.sapMGTBadgeBackgroundColorIndication4 {
+		background-color: @sapUiIndication4;
+	}
+	.sapMGTBadgeBackgroundColorIndication5 {
+		background-color: @sapUiIndication5;
+	}
+	.sapMGTBadgeBackgroundColorIndication6 {
+		background-color: @sapUiIndication6;
+	}
+	.sapMGTBadgeBackgroundColorIndication7 {
+		background-color: @sapUiIndication7;
+	}
+	.sapMGTBadgeBackgroundColorIndication8 {
+		background-color: @sapUiIndication8;
+	}
+	.sapMGTBadgeBackgroundColorIndication9 {
+		background-color: @sapUiIndication9;
+	}
+	.sapMGTBadgeBackgroundColorIndication10 {
+		background-color: @sapUiIndication10;
+	}
+	.sapMGTBadgeBackgroundColorCriticalTextColor {
+		background-color: @sapCriticalTextColor;
+	}
+	.sapMGTBadgeBackgroundColorWarningBackground {
+		background-color: @sapWarningBackground;
+	}
+	.sapMGTBadgeBackgroundColorWarningBorderColor {
+		background-color: @sapWarningBorderColor;
+	}
+	.sapMGTBadgeBackgroundColorBrandColor {
+		background-color: @sapBrandColor;
+	}
+	.sapMGTBadgeBackgroundColorInformationBorderColor {
+		background-color: @sapInformationBorderColor;
+	}
+	.sapMGTBadgeBackgroundColorInformationBackgroundColor {
+		background-color: @sapInformationBackground;
+	}
+
+	.sapMGTBadgeColorIndication1 {
+		color: @sapUiIndication1;
+	}
+	.sapMGTBadgeColorIndication2 {
+		color: @sapUiIndication2;
+	}
+	.sapMGTBadgeColorIndication3 {
+		color: @sapUiIndication3;
+	}
+	.sapMGTBadgeColorIndication4 {
+		color: @sapUiIndication4;
+	}
+	.sapMGTBadgeColorIndication5 {
+		color: @sapUiIndication5;
+	}
+	.sapMGTBadgeColorIndication6 {
+		color: @sapUiIndication6;
+	}
+	.sapMGTBadgeColorIndication7 {
+		color: @sapUiIndication7;
+	}
+	.sapMGTBadgeColorIndication8 {
+		color: @sapUiIndication8;
+	}
+	.sapMGTBadgeColorIndication9 {
+		color: @sapUiIndication9;
+	}
+	.sapMGTBadgeColorIndication10 {
+		color: @sapUiIndication10;
+	}
+	.sapMGTBadgeColorCriticalTextColor {
+		color: @sapCriticalTextColor;
+	}
+	.sapMGTBadgeColorWarningBackground {
+		color: @sapWarningBackground;
+	}
+	.sapMGTBadgeColorWarningBorderColor {
+		color: @sapWarningBorderColor;
+	}
+	.sapMGTBadgeColorBrandColor {
+		color: @sapBrandColor;
+	}
+	.sapMGTBadgeColorInformationBorderColor {
+		color: @sapInformationBorderColor;
+	}
+	.sapMGTBadgeColorInformationBackgroundColor {
+		color: @sapInformationBackground
+	}
+
+	.sapMGTBadgeBorderColorIndication1 {
+		border-color: @sapUiIndication1;
+	}
+	.sapMGTBadgeBorderColorIndication2 {
+		border-color: @sapUiIndication2;
+	}
+	.sapMGTBadgeBorderColorIndication3 {
+		border-color: @sapUiIndication3;
+	}
+	.sapMGTBadgeBorderColorIndication4 {
+		border-color: @sapUiIndication4;
+	}
+	.sapMGTBadgeBorderColorIndication5 {
+		border-color: @sapUiIndication5;
+	}
+	.sapMGTBadgeBorderColorIndication6 {
+		border-color: @sapUiIndication6;
+	}
+	.sapMGTBadgeBorderColorIndication7 {
+		border-color: @sapUiIndication7;
+	}
+	.sapMGTBadgeBorderColorIndication8 {
+		border-color: @sapUiIndication8;
+	}
+	.sapMGTBadgeBorderColorIndication9 {
+		border-color: @sapUiIndication9;
+	}
+	.sapMGTBadgeBorderColorIndication10 {
+		border-color: @sapUiIndication10;
+	}
+	.sapMGTBadgeBorderColorCriticalTextColor {
+		border-color: @sapCriticalTextColor;
+	}
+	.sapMGTBadgeBorderColorWarningBackground {
+		border-color: @sapWarningBackground;
+	}
+	.sapMGTBadgeBorderColorWarningBorderColor {
+		border-color: @sapWarningBorderColor;
+	}
+	.sapMGTBadgeBorderColorBrandColor {
+		border-color: @sapBrandColor;
+	}
+	.sapMGTBadgeBorderColorInformationBorderColor {
+		border-color: @sapInformationBorderColor;
+	}
+	.sapMGTBadgeBorderColorInformationBackgroundColor {
+		border-color: @sapInformationBackground
+	}
+
+	.sapMGTBadge {
+		.sapMGTBadgeOverlay {
+			&.sapMGTBadgeBackgroundColorIndication1 {
+				background-color: @sapUiIndication1;
+			}
+			&.sapMGTBadgeBackgroundColorIndication2 {
+				background-color: @sapUiIndication2;
+			}
+			&.sapMGTBadgeBackgroundColorIndication3 {
+				background-color: @sapUiIndication3;
+			}
+			&.sapMGTBadgeBackgroundColorIndication4 {
+				background-color: @sapUiIndication4;
+			}
+			&.sapMGTBadgeBackgroundColorIndication5 {
+				background-color: @sapUiIndication5;
+			}
+			&.sapMGTBadgeBackgroundColorIndication6 {
+				background-color: @sapUiIndication6;
+			}
+			&.sapMGTBadgeBackgroundColorIndication7 {
+				background-color: @sapUiIndication7;
+			}
+			&.sapMGTBadgeBackgroundColorIndication8 {
+				background-color: @sapUiIndication8;
+			}
+			&.sapMGTBadgeBackgroundColorIndication9 {
+				background-color: @sapUiIndication9;
+			}
+			&.sapMGTBadgeBackgroundColorIndication10 {
+				background-color: @sapUiIndication10;
+			}
+			&.sapMGTBadgeBackgroundColorCriticalTextColor {
+				background-color: @sapCriticalTextColor;
+			}
+			&.sapMGTBadgeBackgroundColorWarningBackground {
+				background-color: @sapWarningBackground;
+			}
+			&.sapMGTBadgeBackgroundColorWarningBorderColor {
+				background-color: @sapWarningBorderColor;
+			}
+			&.sapMGTBadgeBackgroundColorBrandColor {
+				background-color: @sapBrandColor;
+			}
+			&.sapMGTBadgeBackgroundColorInformationBorderColor {
+				background-color: @sapInformationBorderColor;
+			}
+			&.sapMGTBadgeBackgroundColorInformationBackgroundColor {
+				background-color: @sapInformationBackground;
+			}
+		}
 	}
 }

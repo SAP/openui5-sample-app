@@ -13,10 +13,10 @@ sap.ui.define([
 	"sap/ui/base/ManagedObjectObserver",
 	"sap/ui/base/SyncPromise",
 	"sap/ui/core/Lib",
-	"sap/ui/core/library",
 	"sap/ui/core/Messaging",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/message/Message",
+	"sap/ui/core/message/MessageType",
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/core/mvc/View",
 	"sap/ui/core/Rendering",
@@ -40,7 +40,7 @@ sap.ui.define([
 	// load Table resources upfront to avoid loading times > 1 second for the first test using Table
 	// "sap/ui/table/Table"
 ], function (Log, Localization, merge, uid, Input, Device, ManagedObjectObserver, SyncPromise,
-		Library, coreLibrary, Messaging, UI5Date, Message, Controller, View, Rendering, BindingMode, Filter,
+		Library, Messaging, UI5Date, Message, MessageType, Controller, View, Rendering, BindingMode, Filter,
 		FilterOperator, FilterType, Model, Sorter, JSONModel, MessageModel, CountMode, MessageScope, Decimal,
 		Context, ODataModel, XMLModel, TestUtils, datajs, XMLHelper) {
 	/*global QUnit, sinon*/
@@ -49,7 +49,6 @@ sap.ui.define([
 
 	var sDefaultLanguage = Localization.getLanguage(),
 		sDefaultTimezone = Localization.getTimezone(),
-		MessageType = coreLibrary.MessageType, // shortcut for sap.ui.core.MessageType
 		NO_CONTENT = {/*204 no content*/},
 		sODataListBindingClassName = "sap.ui.model.odata.v2.ODataListBinding",
 		sODataMessageParserClassName = "sap.ui.model.odata.ODataMessageParser",
@@ -58,7 +57,7 @@ sap.ui.define([
 		rRowIndex = /~(\d+)~/,
 		/**
 		 * Maps back-end response severity values to the values defined in the enumeration
-		 * <code>sap.ui.core.MessageType</code>.
+		 * <code>sap/ui/core/message/MessageType</code>.
 		 */
 		mSeverityMap = {
 			error : MessageType.Error,
@@ -310,7 +309,7 @@ sap.ui.define([
 	function getTableContent(oTable) {
 		return oTable.getRows().map(function(oRow) {
 			return oRow.getCells().map(function (oCell) {
-				return oCell.getText();
+				return oCell.getText ? oCell.getText() : oCell.getValue();
 			});
 		});
 	}
@@ -4731,6 +4730,8 @@ usePreliminaryContext : false}}">\
 			oObjectPage = that.oView.byId("objectPage");
 
 			assert.deepEqual(oMessage.getControlIds(), []);
+			that.expectValueState("note1", "Error", oSalesOrder1NoteError.message)
+				.expectValueState("note2", "Error", oSalesOrder1NoteError.message);
 
 			oObjectPage.setBindingContext(
 				that.oView.byId("table").getItems()[0].getBindingContext());
@@ -11317,73 +11318,256 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 
 	//*********************************************************************************************
 	// Scenario: Do not show more decimal places than available for the amount/quantity part
+	// Observe different formats if the scale of the amount part type's changes
 	// JIRA: CPOUI5MODELS-1600
-	QUnit.test("OData UnitType with unit decimals places > measure scale", function (assert) {
-		const oModel = createModel("/sap/opu/odata/sap/ZUI5_GWSAMPLE_BASIC/?CPOUI5MODELS-1600=true",
+	QUnit.test("CPOUI5MODELS-1600: UnitType with unit decimals places > measure scale", function (assert) {
+		const URLParameter = "CPOUI5MODELS-1600=true"; // unqiue URL for each test needed
+		const oModel = createModel(`/sap/opu/odata/sap/ZUI5_GWSAMPLE_BASIC/?${URLParameter}`,
 				{defaultBindingMode : "TwoWay", tokenHandling : false});
-		const sView = '\
-<FlexBox binding="{/ProductSet(\'P1\')}">\
-	<Input id="weight" value="{\
-		parts : [{\
-			constraints : {precision : 13, scale : 3},\
-			path : \'WeightMeasure\',\
-			type : \'sap.ui.model.odata.type.Decimal\'\
-		}, {\
-			path : \'WeightUnit\',\
-			type : \'sap.ui.model.odata.type.String\'\
-		}, {\
-			mode : \'OneTime\',\
-			path : \'/##@@requestUnitsOfMeasure\',\
-			targetType : \'any\'\
-		}],\
-		mode : \'TwoWay\',\
-		type : \'sap.ui.model.odata.type.Unit\'\
-	}" />\
-</FlexBox>';
-		let oControl;
-
-		this.expectRequest("ProductSet('P1')?CPOUI5MODELS-1600=true", {
+		const sView = `\
+<FlexBox binding="{/ProductSet('P1')}">
+	<Input id="weight" value="{
+		parts : [{
+			constraints : {precision : 13, scale : 3},
+			path : 'WeightMeasure',
+			type : 'sap.ui.model.odata.type.Decimal'
+		}, {
+			path : 'WeightUnit',
+			type : 'sap.ui.model.odata.type.String'
+		}, {
+			mode : 'OneTime',
+			path : '/##@@requestUnitsOfMeasure',
+			targetType : 'any'
+		}],
+		mode : 'TwoWay',
+		type : 'sap.ui.model.odata.type.Unit',
+		formatOptions : {preserveDecimals : false}
+	}"/>
+</FlexBox>`;
+		let oBindingPart;
+		this.expectRequest(`ProductSet('P1')?${URLParameter}`, {
 				ProductID : "P1",
-				WeightMeasure : "12.34",
+				WeightMeasure : "12.341",
 				WeightUnit : "KWH"
 			})
-			.expectRequest("SAP__UnitsOfMeasure?CPOUI5MODELS-1600=true&$skip=0&$top=5000", {
+			.expectRequest(`SAP__UnitsOfMeasure?${URLParameter}&$skip=0&$top=5000`, {
 				results : [{
-					DecimalPlaces : 99, // more decimals than WeightMeasure's scale
+					DecimalPlaces : 7, // more decimals than WeightMeasure's scale
+					ExternalCode : "KWH"
+				}]
+			})
+			.expectValue("weight", "12.341 KWH"); // amount type's scale wins
+
+		return this.createView(assert, sView, oModel).then(() => {
+			oBindingPart = this.oView.byId("weight").getBinding("value").getBindings()[0];
+			this.expectValue("weight", "12.3410000 KWH");
+
+			// code under test
+			oBindingPart.setType(new Decimal(undefined, {precision : 13, scale : "variable"}));
+
+			return this.waitForChanges(assert, "change scale to variable -> unit's decimals wins");
+		}).then(() => {
+			this.expectValue("weight", "12.34 KWH");
+
+			// code under test
+			oBindingPart.setType(new Decimal(undefined, {precision : 13, scale : 2}));
+
+			return this.waitForChanges(assert, "change scale to 2 -> amount type's scale wins");
+		}).then(() => {
+			this.expectValue("weight", "12.3410000 KWH");
+
+			// code under test
+			oBindingPart.setType(new Decimal(undefined, {precision : 13}));
+
+			return this.waitForChanges(assert, "change scale to undefined -> unit's decimals wins");
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: Do not show more decimal places than available for the amount/quantity part
+	// Show that the Unit amount is formatted properly regarding the decimal places depending on:
+	// a) the maxFractionDigits formatOption for the unit type
+	// b) the amount part data type's scale and
+	// with a fix unit decimal places of 7 for the used unit code
+	// JIRA: CPOUI5MODELS-1600
+[
+	{iMaxFractionDigits: 1, iScale: 3, sExpected: "12.3 KWH"},  // maxFractionDigits wins
+	{iMaxFractionDigits: 9, iScale: 3, sExpected: "12.3410000 KWH"}, // unit's decimal places wins
+	{iMaxFractionDigits: undefined, iScale: 3, sExpected: "12.341 KWH"}, // scale wins
+	{iMaxFractionDigits: undefined, iScale: "'variable'", sExpected: "12.3410000 KWH"}, // unit's decimal places wins
+	{iMaxFractionDigits: undefined, iScale: undefined, sExpected: "12.3410000 KWH"} // unit's decimal places wins
+].forEach(({iMaxFractionDigits, iScale, sExpected}, i) => {
+	QUnit.test(`CPOUI5MODELS-1600: UnitType with unit maxFractionDigits, ${i}`, function (assert) {
+		const sURLParameter = "CPOUI5MODELS-1600=true" + i; // unqiue URL for each test needed
+		const oModel = createModel(`/sap/opu/odata/sap/ZUI5_GWSAMPLE_BASIC/?${sURLParameter}`,
+			{defaultBindingMode : "TwoWay", tokenHandling : false});
+		const sScaleConstraint = iScale ? `, scale : ${iScale}` : "";
+		const sMaxFractionDigitsOption = iMaxFractionDigits ? `, maxFractionDigits : ${iMaxFractionDigits}` : "";
+		const sView = `\
+<FlexBox binding="{/ProductSet('P1')}">
+	<Input id="weight" value="{
+		parts : [{
+			constraints : {precision : 13${sScaleConstraint}},
+			path : 'WeightMeasure',
+			type : 'sap.ui.model.odata.type.Decimal'
+		}, {
+			path : 'WeightUnit',
+			type : 'sap.ui.model.odata.type.String'
+		}, {
+			mode : 'OneTime',
+			path : '/##@@requestUnitsOfMeasure',
+			targetType : 'any'
+		}],
+		mode : 'TwoWay',
+		type : 'sap.ui.model.odata.type.Unit',
+		formatOptions : {preserveDecimals : false${sMaxFractionDigitsOption}}
+	}"/>\
+</FlexBox>`;
+
+		this.expectRequest(`ProductSet('P1')?${sURLParameter}`, {
+				ProductID : "P1",
+				WeightMeasure : "12.341",
+				WeightUnit : "KWH"
+			})
+			.expectRequest(`SAP__UnitsOfMeasure?${sURLParameter}&$skip=0&$top=5000`, {
+				results : [{
+					DecimalPlaces : 7, // more decimals than WeightMeasure's scale
 					ExternalCode : "KWH",
 					ISOCode : "KWH",
 					Text : "Kilowatt hour",
 					UnitCode : "KWH"
 				}]
 			})
-			.expectValue("weight", "12.340 KWH");
+			.expectValue("weight", sExpected);
+
+		return this.createView(assert, sView, oModel);
+	});
+});
+
+	//*********************************************************************************************
+	// Scenario: Do not show more decimal places than available for the amount/quantity part.
+	// Observe different formats if the scale of the amount part type changes
+	// JIRA: CPOUI5MODELS-1619
+	QUnit.test("CPOUI5MODELS-1619: CurrencyType with currency decimals places > measure scale", function (assert) {
+		const sURLParameter = "CPOUI5MODELS-1619=true"; // unqiue URL for each test needed
+		const oModel = createModel(`/sap/opu/odata/sap/ZUI5_GWSAMPLE_BASIC/?${sURLParameter}`,
+			{defaultBindingMode : "TwoWay", tokenHandling : false});
+		const sView = `\
+<FlexBox binding="{/ProductSet('P1')}">
+	<Input id="price" value="{
+		parts : [{
+			constraints : {precision : 5, scale : 3},
+			path : 'Price',
+			type : 'sap.ui.model.odata.type.Decimal'
+		}, {
+			path : 'CurrencyCode',
+			type : 'sap.ui.model.odata.type.String'
+		}, {
+			mode : 'OneTime',
+			path : '/##@@requestCurrencyCodes',
+			targetType : 'any'
+		}],
+		mode : 'TwoWay',
+		type : 'sap.ui.model.odata.type.Currency',
+		formatOptions : {preserveDecimals : false}
+	}"/>
+</FlexBox>`;
+		let oBindingPart;
+		this.expectRequest(`ProductSet('P1')?${sURLParameter}`, {
+				ProductID : "P1",
+				Price : "12.341",
+				CurrencyCode : "FOO"
+			})
+			.expectRequest(`SAP__Currencies?${sURLParameter}&$skip=0&$top=5000`, {
+				results : [{
+					CurrencyCode : "FOO",
+					DecimalPlaces : 7 // more decimals than Price's scale
+				}]
+			})
+			.expectValue("price", "12.341\u00a0FOO");
 
 		return this.createView(assert, sView, oModel).then(() => {
-			oControl = this.oView.byId("weight");
-
-			this.expectValue("weight", "23.456 KWH");
-
-			// code under test
-			oControl.setValue("23.456 KWH");
-
-			return this.waitForChanges(assert);
-		}).then(() => {
-			this.expectValue("weight", "0.000 KWH")
-				.expectValue("weight", "0.000 KWH"); // twice because 2 parts changed
+			oBindingPart = this.oView.byId("price").getBinding("value").getBindings()[0];
+			this.expectValue("price", "12.3410000\u00a0FOO");
 
 			// code under test
-			oControl.setValue("");
+			oBindingPart.setType(new Decimal(undefined, {precision : 13, scale : "variable"}));
 
-			return this.waitForChanges(assert);
+			return this.waitForChanges(assert, "change scale to variable -> currency's decimals wins");
 		}).then(() => {
-			this.expectValue("weight", "0.00 KWH");
+			this.expectValue("price", "12.34\u00a0FOO");
 
-			// code under test (change WeightMeasure's type, scale is now 2)
-			oControl.getBinding("value").getBindings()[0].setType(new Decimal(undefined, {precision : 13, scale : 2}));
+			// code under test
+			oBindingPart.setType(new Decimal(undefined, {precision : 13, scale : 2}));
 
-			return this.waitForChanges(assert);
+			return this.waitForChanges(assert, "change scale to 2 -> amount type's scale wins");
+		}).then(() => {
+			this.expectValue("price", "12.3410000\u00a0FOO");
+
+			// code under test
+			oBindingPart.setType(new Decimal(undefined, {precision : 13}));
+
+			return this.waitForChanges(assert, "change scale to undefined -> currency's decimals wins");
 		});
 	});
+
+	//*********************************************************************************************
+	// Scenario: Do not show more decimal places than available for the amount/quantity part.
+	// Show that the currency amount is formatted properly regarding the decimal places depending on:
+	// a) the maxFractionDigits formatOption for the unit type
+	// b) the amount part data type's scale and
+	// with a fix currency decimal places of 7 for the used currency
+	// JIRA: CPOUI5MODELS-1600
+[
+	{iMaxFractionDigits: 1, iScale: 3, sExpected: "12.3\u00a0FOO"},  // maxFractionDigits wins
+	{iMaxFractionDigits: 9, iScale: 3, sExpected: "12.3410000\u00a0FOO"}, // currency's decimal places wins
+	{iMaxFractionDigits: undefined, iScale: 3, sExpected: "12.341\u00a0FOO"}, // scale wins
+	{iMaxFractionDigits: undefined, iScale: "'variable'", sExpected: "12.3410000\u00a0FOO"}, // currency's decimal places wins
+	{iMaxFractionDigits: undefined, iScale: undefined, sExpected: "12.3410000\u00a0FOO"} // currency's decimal places wins
+].forEach(({iMaxFractionDigits, iScale, sExpected}, i) => {
+	QUnit.test(`CPOUI5MODELS-1619: CurrencyType with unit maxFractionDigits: ${i}`, function (assert) {
+		const sURLParameter = "CPOUI5MODELS-1619=" + i; // unqiue URL for each test needed
+		const oModel = createModel(`/sap/opu/odata/sap/ZUI5_GWSAMPLE_BASIC/?${sURLParameter}`,
+			{defaultBindingMode : "TwoWay", tokenHandling : false});
+		const sScaleConstraint = iScale ? `, scale : ${iScale}` : "";
+		const sMaxFractionDigitsOption = iMaxFractionDigits ? `, maxFractionDigits : ${iMaxFractionDigits}` : "";
+		const sView = `\
+<FlexBox binding="{/ProductSet('P1')}">
+	<Input id="price" value="{
+		parts : [{
+			constraints : {precision : 13${sScaleConstraint}},
+			path : 'Price',
+			type : 'sap.ui.model.odata.type.Decimal'
+		}, {
+			path : 'CurrencyCode',
+			type : 'sap.ui.model.odata.type.String'
+		}, {
+			mode : 'OneTime',
+			path : '/##@@requestCurrencyCodes',
+			targetType : 'any'
+		}],
+		mode : 'TwoWay',
+		type : 'sap.ui.model.odata.type.Currency',
+		formatOptions : {preserveDecimals : false${sMaxFractionDigitsOption}}
+	}" />
+</FlexBox>`;
+
+		this.expectRequest(`ProductSet('P1')?${sURLParameter}`, {
+				ProductID : "P1",
+				Price : "12.341",
+				CurrencyCode : "FOO"
+			})
+			.expectRequest(`SAP__Currencies?${sURLParameter}&$skip=0&$top=5000`, {
+				results : [{
+					CurrencyCode : "FOO",
+					DecimalPlaces : 7 // more decimals than Price's scale
+				}]
+			})
+			.expectValue("price", sExpected);
+
+		return this.createView(assert, sView, oModel);
+	});
+});
 
 	//*********************************************************************************************
 	// Scenario: If the OData service has no customizing for currencies, the OData Currency type
@@ -22683,5 +22867,170 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			.expectValue("City", ["Foo", ""]);
 
 		return this.createView(assert, sView, oModel);
+	});
+
+	//*********************************************************************************************
+	// Scenario: If a context of a property binding is changed during an asynchronous validation, the validated value is
+	// saved for the correct entity in the model.
+	// JIRA: CPOUI5MODELS-1618
+	QUnit.test("ODataPropertyBinding with asynchronous type validation", function (assert) {
+		const oModel = createSalesOrdersModel({defaultBindingMode: BindingMode.TwoWay});
+		const sView = `
+<t:Table id="table" rows="{path: '/SalesOrderSet'}" visibleRowCount="2">
+	<Input id="Note" value="{path: 'Note', type: 'sap.ui.model.type.String'}"/>
+</t:Table>`;
+		this.expectHeadRequest()
+			.expectRequest("SalesOrderSet?$skip=0&$top=102", {
+				results: [{
+					__metadata: {uri: "/SalesOrderSet('1')"},
+					SalesOrderID: "1",
+					Note: "Note1"
+				},
+				{
+					__metadata: {uri: "/SalesOrderSet('2')"},
+					SalesOrderID: "2",
+					Note: "Note2"
+				},
+				{
+					__metadata: {uri: "/SalesOrderSet('3')"},
+					SalesOrderID: "3",
+					Note: "Note3"
+				},
+				{
+					__metadata: {uri: "/SalesOrderSet('4')"},
+					SalesOrderID: "4",
+					Note: "Note4"
+				}]
+			})
+			.expectValue("Note", ["Note1", "Note2"]);
+		let fnResolveValidateValue1, fnResolveValidateValue2, oTable, pSetExternalValue1, pSetExternalValue2, oTypeMock;
+
+		return this.createView(assert, sView, oModel).then(() => {
+			this.expectValue("Note", "Note2", 1);
+			this.expectValue("Note", "Note3", 2);
+
+			oTable = this.oView.byId("table");
+			const oBinding = oTable.getRows()[0].getCells()[0].getBinding("value");
+			oTypeMock = this.mock(oBinding.getType());
+			oTypeMock.expects("validateValue").withExactArgs("NewNote1").returns(new Promise((fnResolve) => {
+				fnResolveValidateValue1 = fnResolve;
+			}));
+			pSetExternalValue1 = oBinding.setExternalValue("NewNote1");
+			oTable.setFirstVisibleRow(1);
+
+			return this.waitForChanges(assert, "Change first entry and scroll");
+		}).then(() => {
+			this.expectValue("Note", "Note3", 2);
+			this.expectValue("Note", "Note4", 3);
+
+			const oBinding = oTable.getRows()[0].getCells()[0].getBinding("value");
+			oTypeMock.expects("validateValue").withExactArgs("NewNote2").returns(new Promise((fnResolve) => {
+				fnResolveValidateValue2 = fnResolve;
+			}));
+			pSetExternalValue2 = oBinding.setExternalValue("NewNote2");
+			oTable.setFirstVisibleRow(2);
+
+			return this.waitForChanges(assert, "Change second entry and scroll again");
+		}).then(() => {
+			fnResolveValidateValue1();
+			fnResolveValidateValue2();
+
+			return Promise.all([pSetExternalValue1, pSetExternalValue2,
+				this.waitForChanges(assert, "Validation of the changes finished")]);
+		}).then(() => {
+			this.expectValue("Note", "NewNote1", 0);
+			this.expectValue("Note", "NewNote2", 1);
+
+			oTable.setFirstVisibleRow(0);
+
+			return this.waitForChanges(assert, "Scroll back up and see correct values");
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: If a context of a composite binding is changed during an asynchronous validation, the validated value
+	// is saved for the correct entity in the model.
+	// JIRA: CPOUI5MODELS-1618
+	QUnit.test("CompositeBinding with asynchronous type validation", function (assert) {
+		const oModel = createSalesOrdersModel({defaultBindingMode: BindingMode.TwoWay});
+		const sView = `
+<t:Table id="table" rows="{path: '/SalesOrderSet'}" visibleRowCount="2">
+<Input id="GrossAmount" value="{
+	parts: [{path: 'GrossAmount'}, {path: 'CurrencyCode'}],
+	type: 'sap.ui.model.type.Currency'}"/>
+</t:Table>`;
+
+		this.expectHeadRequest()
+			.expectRequest("SalesOrderSet?$skip=0&$top=102", {
+				results: [{
+					__metadata: {uri: "/SalesOrderSet('1')"},
+					SalesOrderID: "1",
+					GrossAmount: "10",
+					CurrencyCode: "EUR"
+				},
+				{
+					__metadata: {uri: "/SalesOrderSet('2')"},
+					SalesOrderID: "2",
+					GrossAmount: "5",
+					CurrencyCode: "JPY"
+				},
+				{
+					__metadata: {uri: "/SalesOrderSet('3')"},
+					SalesOrderID: "3",
+					GrossAmount: "15",
+					CurrencyCode: "USD"
+				},
+				{
+					__metadata: {uri: "/SalesOrderSet('4')"},
+					SalesOrderID: "4",
+					GrossAmount: "20",
+					CurrencyCode: "USDN"
+				}]
+			});
+
+		let fnResolveValidateValue1;
+		let fnResolveValidateValue2;
+		let oTable;
+		let pSetExternalValue1;
+		let pSetExternalValue2;
+		let oTypeMock;
+
+		return this.createView(assert, sView, oModel).then(() => {
+			oTable = this.oView.byId("table");
+			assert.deepEqual(getTableContent(oTable), [["10.00\u00a0EUR"], ["5\u00a0JPY"]]);
+
+			const oBinding = oTable.getRows()[0].getCells()[0].getBinding("value");
+			oTypeMock = this.mock(oBinding.getType());
+			oTypeMock.expects("validateValue").withExactArgs([16, "EUR"]).returns(new Promise((fnResolve) => {
+				fnResolveValidateValue1 = fnResolve;
+			}));
+			pSetExternalValue1 = oBinding.setExternalValue("16 EUR");
+			oTable.setFirstVisibleRow(1);
+
+			return this.waitForChanges(assert, "Change first entry and scroll");
+		}).then(() => {
+			assert.deepEqual(getTableContent(oTable), [["5\u00a0JPY"], ["15.00\u00a0USD"]]);
+
+			const oBinding = oTable.getRows()[0].getCells()[0].getBinding("value");
+			oTypeMock.expects("validateValue").withExactArgs([29, "JPY"]).returns(new Promise((fnResolve) => {
+				fnResolveValidateValue2 = fnResolve;
+			}));
+			pSetExternalValue2 = oBinding.setExternalValue("29 JPY");
+			oTable.setFirstVisibleRow(2);
+
+			return this.waitForChanges(assert, "Change second entry and scroll again");
+		}).then(() => {
+			fnResolveValidateValue1();
+			fnResolveValidateValue2();
+
+			return Promise.all([pSetExternalValue1, pSetExternalValue2,
+				this.waitForChanges(assert, "Validation of the changes finished")]);
+		}).then(() => {
+			oTable.setFirstVisibleRow(0);
+
+			return this.waitForChanges(assert, "Scroll back up and see correct values");
+		}).then(() => {
+			assert.deepEqual(getTableContent(oTable), [["16.00\u00a0EUR"], ["29\u00a0JPY"]]);
+		});
 	});
 });

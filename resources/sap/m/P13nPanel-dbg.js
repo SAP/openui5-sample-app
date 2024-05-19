@@ -17,12 +17,13 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class An abstract base type for <code>panels</code> aggregation in <code>P13nDialog</code> control.
 	 * @extends sap.ui.core.Control
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @constructor
 	 * @public
 	 * @abstract
 	 * @since 1.26.0
 	 * @alias sap.m.P13nPanel
+	 * @deprecated As of 1.124, replaced by the artifacts in {@link sap.m.p13n}.
 	 */
 	var P13nPanel = Control.extend("sap.m.P13nPanel", /** @lends sap.m.P13nPanel.prototype */
 	{

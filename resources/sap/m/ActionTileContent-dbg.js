@@ -27,7 +27,7 @@ sap.ui.define([
      * @extends sap.m.TileContent
      *
      * @author SAP SE
-     * @version 1.122.1
+     * @version 1.124.0
      * @since 1.122
      *
      * @public
@@ -38,7 +38,12 @@ sap.ui.define([
     var ActionTileContent = TileContent.extend("sap.m.ActionTileContent", /** @lends sap.m.ActionTileContent.prototype */{
         metadata: {
             library: "sap.m",
+            defaultAggregation: "attributes",
             aggregations : {
+                /**
+                 * Adds header link for the tile content.
+                 */
+                headerLink: { type: "sap.m.Link", multiple: false, singularName: "headerLink" },
                 /**
                  * Holds detail of an attribute used in the ActionTile.
                  */
@@ -135,13 +140,18 @@ sap.ui.define([
     ActionTileContent.prototype.getAltText = function() {
         var sAltText = "";
         var sPriorityText = this.getPriorityText();
-        var aTileAttributes = this.getAggregation("attributes");
-        if (this.getPriority() !== Priority.None && sPriorityText) {
+        var oHeaderLink = this.getHeaderLink();
+        var sHeaderLinkText = oHeaderLink && oHeaderLink.getText();
+        var aTileAttributes = this.getAggregation("attributes") || [];
+
+        if (oHeaderLink) {
+            sAltText += (sHeaderLinkText) + "\n";
+        } else if (this.getPriority() !== Priority.None && sPriorityText) {
             sAltText += (sPriorityText) + "\n";
         }
-        // Returns the first four attributes to display in the tooltip,aria-label on the ActionTile
+        // Returns the attributes to display in the tooltip,aria-label on the ActionTile
         var aText = [];
-        for (var iIndex = 0; iIndex < aTileAttributes.length && iIndex < 4; iIndex++) {
+        for (var iIndex = 0; iIndex < aTileAttributes.length; iIndex++) {
             aText.push(aTileAttributes[iIndex].getLabel());
             aText.push(aTileAttributes[iIndex].getContentConfig()?.getText());
         }

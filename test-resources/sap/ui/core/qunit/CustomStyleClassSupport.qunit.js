@@ -6,15 +6,26 @@ sap.ui.define([
 	"sap/ui/core/theming/Parameters",
 	"sap/ui/qunit/utils/createAndAppendDiv",
 	"sap/ui/qunit/utils/nextUIUpdate"
-], function(Control, Theming, Parameters, createAndAppendDiv, nextUIUpdate) {
+], async function(Control, Theming, Parameters, createAndAppendDiv, nextUIUpdate) {
 	"use strict";
 
 	var oMyControl, aCurrentDOMClasses, aCurrentAPIClasses;
 	createAndAppendDiv("content");
 
-	// trigger parameter loading to enable event
+	// initiate parameter loading to enable event
 	// this should normally happen in the control which listens to the event
-	Parameters.get();
+	// also wait for the result so that the scope check in CustomStyleClassSupport can work
+	await new Promise((resolve) => {
+		Theming.attachApplied(() => {
+			const value = Parameters.get({
+				name : "sapUiTstTextColor", // a parameter which is defined by sap.ui.testlib only
+				callback: resolve
+			});
+			if ( value !== undefined ) {
+				resolve();
+			}
+		});
+	});
 
 	// define control
 	var MyControlClass = Control.extend("my.lib.MyControl", {

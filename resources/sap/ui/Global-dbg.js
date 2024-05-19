@@ -18,7 +18,7 @@
  * sap.ui.lazyRequire("sap.ui.core.Control");
  * sap.ui.lazyRequire("sap.m.Button");
  *
- * @version 1.122.1
+ * @version 1.124.0
  * @author  SAP SE
  * @public
  */
@@ -48,7 +48,7 @@ sap.ui.define([
 	 * The <code>sap</code> namespace is automatically registered with the
 	 * OpenAjax hub if it exists.
 	 *
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @namespace
 	 * @public
 	 * @name sap
@@ -58,7 +58,7 @@ sap.ui.define([
 	 * The <code>sap.ui</code> namespace is the central OpenAjax compliant entry
 	 * point for UI related JavaScript functionality provided by SAP.
 	 *
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @namespace
 	 * @name sap.ui
 	 * @public
@@ -69,9 +69,9 @@ sap.ui.define([
 		 * The version of the SAP UI Library
 		 * @type string
 		 */
-		version: "1.122.1",
+		version: "1.124.0",
 		// buildinfo.lastchange is deprecated and is therefore defaulted to empty string
-		buildinfo : { lastchange : "", buildtime : "20240517-0809" }
+		buildinfo : { lastchange : "", buildtime : "20240519-0226" }
 	};
 
 	/**
@@ -81,6 +81,9 @@ sap.ui.define([
 	 */
 	Global = Object.assign(sap.ui, Global);
 
+	/**
+	 * @deprecated As of version 1.120
+	 */
 	var syncCallBehavior = sap.ui.loader._.getSyncCallBehavior();
 
 	/**

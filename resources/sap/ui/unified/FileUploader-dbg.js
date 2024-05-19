@@ -73,7 +73,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IFormContent, sap.ui.unified.IProcessableBlobs
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -388,7 +388,7 @@ sap.ui.define([
 					 * Required for receiving a <code>status</code> is to set the property <code>sendXHR</code> to true.
 					 * This property is not supported by Internet Explorer 9.
 					 */
-					status : {type : "string"},
+					status : {type : "int"},
 
 					/**
 					 * Http-Response which comes from the server.
@@ -697,6 +697,12 @@ sap.ui.define([
 			});
 		}
 
+		return this;
+	};
+
+	FileUploader.prototype.setName = function (sName) {
+		this.setProperty("name", sName, false);
+		this._rerenderInputField();
 		return this;
 	};
 
@@ -1325,7 +1331,7 @@ sap.ui.define([
 			var iHeaderIdx;
 			var sReadyState;
 			sReadyState = oXhr.xhr.readyState;
-			var sStatus = oXhr.xhr.status;
+			var iStatus = oXhr.xhr.status;
 
 			if (oXhr.xhr.readyState == 4) {
 				//this check is needed, because (according to the xhr spec) the readyState is set to OPEN (4)
@@ -1352,7 +1358,7 @@ sap.ui.define([
 					"response": sResponse,
 					"responseRaw": sResponseRaw,
 					"readyStateXHR": sReadyState,
-					"status": sStatus,
+					"status": iStatus,
 					"requestHeaders": oRequestHeaders
 				});
 			}

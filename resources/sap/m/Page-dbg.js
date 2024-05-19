@@ -7,6 +7,7 @@
 // Provides control sap.m.Page.
 sap.ui.define([
 	"./library",
+	"sap/ui/core/AnimationMode",
 	"sap/ui/core/Control",
 	"sap/ui/core/ControlBehavior",
 	"sap/ui/core/Lib",
@@ -21,11 +22,11 @@ sap.ui.define([
 	"sap/ui/core/InvisibleText",
 	"./TitlePropagationSupport",
 	"./PageRenderer",
-	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Configuration"
+	"sap/ui/thirdparty/jquery"
 ],
 function(
 	library,
+	AnimationMode,
 	Control,
 	ControlBehavior,
 	Library,
@@ -40,8 +41,7 @@ function(
 	InvisibleText,
 	TitlePropagationSupport,
 	PageRenderer,
-	jQuery,
-	Configuration
+	jQuery
 ) {
 		"use strict";
 
@@ -97,7 +97,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 * @mixes sap.ui.core.ContextMenuSupport
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @public
 		 * @alias sap.m.Page
@@ -416,11 +416,17 @@ function(
 				this._navBtn = new Button(this.getId() + "-navButton", {
 					press: function () {
 						this.fireNavButtonPress();
+						/**
+						 * @deprecated As of version 1.12.2
+						 */
 						this.fireNavButtonTap();
 					}.bind(this)
 				});
 			}
 
+			/**
+			 * @deprecated As of version 1.20
+			 */
 			this._navBtn.setType(this.getNavButtonType());
 			this._navBtn.setTooltip(sBackText);
 		};
@@ -454,7 +460,7 @@ function(
 
 			var $footer = jQuery(this.getDomRef()).find(".sapMPageFooter").last(),
 				sAnimationMode = ControlBehavior.getAnimationMode(),
-				bHasAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
+				bHasAnimations = sAnimationMode !== AnimationMode.none && sAnimationMode !== AnimationMode.minimal;
 
 			if (!this.getFloatingFooter()) {
 				this.setProperty("showFooter", bShowFooter);

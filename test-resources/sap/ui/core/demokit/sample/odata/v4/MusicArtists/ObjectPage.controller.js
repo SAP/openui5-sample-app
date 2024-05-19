@@ -50,11 +50,9 @@ sap.ui.define([
 			// object page. Make the action bindings for "Edit" and "Save" dependents of this
 			// binding. The view gets a binding with empty path and its parent context will always
 			// be the element context of the latest binding in this hidden chain.
-			if (!this.oHiddenBinding) {
-				// Note: This cannot be done in onInit because the model is not yet available then
-				this.oHiddenBinding = this.oView.getModel().bindContext("", null,
-					{$$patchWithoutSideEffects : true});
-			}
+			// Note: This cannot be done in onInit because the model is not yet available then
+			this.oHiddenBinding ??= this.oView.getModel().bindContext("", null,
+				{$$patchWithoutSideEffects : true});
 			if (History.getInstance().getDirection() !== "Backwards") {
 				if (this.oArtistContext) { // used for return value contexts or in Discard
 					oArtistContext = this.oArtistContext;
@@ -146,7 +144,7 @@ sap.ui.define([
 			oView.getModel().bindContext(sNamespace + "Edit(...)", this.oActiveArtistContext,
 					{$$inheritExpandSelect : true, $$patchWithoutSideEffects : true})
 				.setParameter("PreserveChanges", false)
-				.execute()
+				.invoke()
 				.then(function (oInactiveArtistContext) {
 					oView.setBusy(false);
 					that.oArtistContext = oInactiveArtistContext;
@@ -185,7 +183,7 @@ sap.ui.define([
 			this.byId("draftIndicator").clearDraftState();
 			oView.getModel().bindContext(sNamespace + "Activation(...)", oOldBindingContext,
 					{$$inheritExpandSelect : true, $$patchWithoutSideEffects : true})
-				.execute()
+				.invoke()
 				.then(function (oActiveArtistContext) {
 					oView.setBusy(false);
 					that._detachPatchEventHandlers(oOldBindingContext.getBinding());

@@ -181,7 +181,7 @@ function(
 		 * @extends sap.m.DateTimeField
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @public
@@ -245,14 +245,15 @@ function(
 					mask: {type: "string", group: "Misc", defaultValue: null},
 
 					/**
-					 * Defines whether the mask is enabled. When disabled, there are no restrictions and
-					 * validation for the user and no placeholders are displayed.
+					 * Defines the state of the mask. The available mask modes are:
+					 * <code>On</code> - The mask is automatically enabled for fixed-length time formats, and disabled when the time format does not have a fixed length.
+					 * <code>Off</code> - The mask is disabled. In this mode, there are no restrictions or validations for the user input.
+					 * <code>Enforce</code> - The mask will always be enforced, regardless of the length of the time format.
 					 *
-					 * <b>Note:</b> A disabled mask does not reset any validation rules that are already
-					 * set. You can update the <code>mask</code> property and add new <code>rules</code>
-					 * while it is disabled. When <code>maskMode</code> is set to <code>On</code> again,
-					 * the <code>rules</code> and the updated <code>mask</code> will be applied.
-					 *
+					 * <b>Note:</b> The mask functions correctly only with fixed-length time formats.
+					 * The mask is always disabled when using a mobile device
+					 * Using the <code>Enforce</code> value with time formats that do not have a fixed length may lead to unpredictable behavior.
+					 * Changing the mask mode does not reset any pre-set validation rules. These rules will be applied according to the selected mask mode.
 					 * @since 1.54
 					 */
 					maskMode: {type: "sap.m.TimePickerMaskMode", group: "Misc", defaultValue: TimePickerMaskMode.On},
@@ -1910,11 +1911,21 @@ function(
 		/**
 		 * Returns if the mask is enabled. If value is not valid we should set initialFocusedDateValue.
 		 *
-		 * @returns {boolean}
+		 * @returns {boolean} Returns <code>True</code> when the mask can be used.
 		 * @private
 		 */
 		TimePicker.prototype._isMaskEnabled = function () {
-			return this.getMaskMode() === TimePickerMaskMode.On && !this._isMobileDevice();
+			if (this._isMobileDevice() || this.getMaskMode() === TimePickerMaskMode.Off) {
+				return false;
+			}
+
+			if (this.getMaskMode() === TimePickerMaskMode.Enforce) {
+				return true;
+			}
+
+			const sTrimmedPattern = this._getDisplayFormatPattern().replace(/hh|mm|ss/gi, "").replace(/a/i, "");
+
+			return !/h|m|s|a|b/gi.test(sTrimmedPattern);
 		};
 
 		/**
@@ -2209,7 +2220,7 @@ function(
 		 * @returns {*} the stripped value
 		 */
 		TimeSemanticMaskHelper.prototype.stripValueOfLeadingSpaces = function(value) {
-			if (value[this.iHourNumber1Index] === " ") {
+			if (value[this.iHourNumber1Index] === " " && this._oTimePicker.getDisplayFormat().indexOf("B") === -1) {
 				value = [value.slice(0, this.iHourNumber1Index), value.slice(this.iHourNumber1Index + 1)].join('');
 			}
 			return value;

@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define([], function() {
+sap.ui.define(["sap/ui/base/DataType"], function(DataType) {
 	"use strict";
 
 	/**
@@ -27,6 +27,8 @@ sap.ui.define([], function() {
 		 */
 		Contain: "Contain"
 	};
+
+	DataType.registerEnum("sap.m.AvatarImageFitType", AvatarImageFitType);
 
 	return AvatarImageFitType;
 });

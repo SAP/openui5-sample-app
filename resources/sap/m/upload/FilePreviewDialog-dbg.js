@@ -49,7 +49,7 @@ sap.ui.define([
    * <h3>Overview</h3>
    *
    * Dialog with a carousel to preview files uploaded using the UploadSetwithTable control.
-   * This Element should only be used within the {@link sap.m.upload.UploadSetwithTable UploadSetwithTable} control as an association.
+   * This Element should only be used within the {@link sap.m.upload.UploadSetwithTable UploadSetwithTable} control or {@link sap.m.plugins.UploadSetwithTable UploadSetwithTable} Plugin as an association.
    *
    * <h3>Supported File Types for Preview</h3>
    *
@@ -68,7 +68,7 @@ sap.ui.define([
    * @public
    * @experimental since 1.120
    * @since 1.120
-   * @version 1.122.1
+   * @version 1.124.0
    * @extends sap.ui.core.Element
    * @name sap.m.upload.FilePreviewDialog
    */
@@ -191,7 +191,7 @@ sap.ui.define([
 
 		/**
 		 * Creates a viewer for .vds files
-		 * @param {sap.m.upload.UploadSetwithTableItem} oItem The UploadSetwithTableItem to be previewed
+		 * @param {sap.m.upload.UploadSetwithTableItem | sap.m.upload.UploadItem} oItem The UploadSetwithTableItem or UploadItem to be previewed
 		 * @return {sap.ui.vk.Viewer} A vds viewer instance or undefined if dependency unavailable
 		 * @private
 		 */
@@ -221,7 +221,7 @@ sap.ui.define([
 
 		/**
 		 * Creates a rich text viewer
-		 * @param {sap.m.upload.UploadSetwithTableItem} oItem The UploadSetwithTableItem to be previewed
+		 * @param {sap.m.upload.UploadSetwithTableItem | sap.m.upload.UploadItem} oItem The UploadSetwithTableItem or UploadItem to be previewed
 		 * @return {sap.ui.richtexteditor.RichTextEditor} A rich text editor instance or undefined if dependency unavailable
 		 * @private
 		 */
@@ -265,7 +265,7 @@ sap.ui.define([
 			const oPreviewItem = this._previewItem;
 			let aItems = this._oCarouselItems = !this.getShowCarouselArrows() ? [this._previewItem] : this._items;
 			let sActivePageId = "";
-			aItems = aItems?.filter((oItem) => oItem?.isA("sap.m.upload.UploadSetwithTableItem"));
+			aItems = aItems?.filter((oItem) => oItem?.isA("sap.m.upload.UploadSetwithTableItem") || oItem?.isA("sap.m.upload.UploadItem"));
 			const aPagePromises = aItems.map(async (oItem) => {
 				const sMediaType = oItem.getMediaType();
 
@@ -392,7 +392,7 @@ sap.ui.define([
 
 		/**
      	* Creates a {@link sap.m.Carousel} of uploaded files.
-		* @return {sap.m.upload.UploadSetwithTableItem} The currently active UploadSetwithTableItem.
+		* @return {sap.m.upload.UploadSetwithTableItem | sap.m.upload.UploadItem} The currently active UploadSetwithTableItem.
      	* @private
      	*/
 		_getActiveUploadSetwithTableItem: function () {

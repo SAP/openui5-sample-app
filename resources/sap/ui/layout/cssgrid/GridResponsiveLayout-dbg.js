@@ -22,7 +22,7 @@ sap.ui.define([
 	 * Have to possibility to hold multiple sap.ui.layout.cssgrid.GridSettings and apply the currently active GridSettings.
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @extends sap.ui.layout.cssgrid.GridLayoutBase
 	 *

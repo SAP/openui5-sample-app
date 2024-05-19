@@ -45,7 +45,7 @@ sap.ui.define([
 	 *
 	 * @param {object} mSettings Initial settings for the new controller
 	 * @param {sap.ui.core.Control} mSettings.control The control instance that is personalized by this controller
-	 * @param {function} [mSettings.getKeyForItem] By default the SelectionController tries to identify the existing item through the
+	 * @param {function(sap.ui.core.Element):string} [mSettings.getKeyForItem] By default the SelectionController tries to identify the existing item through the
 	 * key by checking if there is an existing item with this id. This behaviour can be overruled by implementing this method which will
 	 * provide the according item of the <code>targetAggregation</code> to return the according key associated to this item.
 	 * @param {string} mSettings.targetAggregation The name of the aggregation that is now managed by this controller
@@ -58,7 +58,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @public
 	 * @alias sap.m.p13n.SelectionController
@@ -197,19 +197,24 @@ sap.ui.define([
 
 		const oXConfig = xConfigAPI.readConfig(this.getAdaptationControl()) || {};
 		const oItemXConfig = oXConfig.hasOwnProperty("aggregations") ? oXConfig.aggregations[this._sTargetAggregation] : {};
+		const aItemXConfig = [];
+		Object.entries(oItemXConfig).forEach(([sKey, oConfig]) => {
+			aItemXConfig.push({key: sKey, position: oConfig.position, visible: oConfig.visible});
+		});
+		aItemXConfig.sort((a,b) => a.position - b.position);
 
-		for (const sKey in oItemXConfig) {
+		aItemXConfig.forEach(({key}) => {
 			const aStateKeys = aState.map((o) => {
 				return o.key;
 			});
-			let iCurrentIndex = aStateKeys.indexOf(sKey);
-			const iNewIndex = oItemXConfig[sKey].position;
-			const bVisible = oItemXConfig[sKey].visible !== false;
+			let iCurrentIndex = aStateKeys.indexOf(key);
+			const iNewIndex = oItemXConfig[key].position;
+			const bVisible = oItemXConfig[key].visible !== false;
 			const bReordered = iNewIndex !== undefined;
 
 			if (bVisible && iCurrentIndex === -1) {
 				aState.push({
-					key: sKey
+					key: key
 				});
 			}
 
@@ -218,11 +223,11 @@ sap.ui.define([
 				aState.splice(iNewIndex, 0, oItem);
 				iCurrentIndex = iNewIndex;
 			}
-			if (oItemXConfig[sKey].visible === false && iCurrentIndex > -1) {
+			if (oItemXConfig[key].visible === false && iCurrentIndex > -1) {
 				aState.splice(iCurrentIndex, 1);
 			}
 
-		}
+		});
 		return aState;
 	};
 

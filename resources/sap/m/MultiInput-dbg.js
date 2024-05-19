@@ -110,7 +110,7 @@ function(
 	* @extends sap.m.Input
 	*
 	* @author SAP SE
-	* @version 1.122.1
+	* @version 1.124.0
 	*
 	* @constructor
 	* @public
@@ -311,6 +311,9 @@ function(
 				case "insert":
 					oToken.attachEvent("_change", this.invalidate, this);
 
+					/**
+					 * @deprecated As of version 1.46
+					 */
 					this.fireTokenChange({
 						type: Tokenizer.TokenChangeType.Added,
 						token: oToken,
@@ -322,6 +325,9 @@ function(
 					var sType = oChange.object.getTokens().length ? Tokenizer.TokenChangeType.Removed : Tokenizer.TokenChangeType.RemovedAll;
 					oToken.detachEvent("_change", this.invalidate, this);
 
+					/**
+					 * @deprecated As of version 1.46
+					 */
 					this.fireTokenChange({
 						type: sType,
 						token: oToken,
@@ -702,7 +708,7 @@ function(
 	 *
 	 * @since 1.28
 	 * @public
-	 * @deprecated Since version 1.58.
+	 * @deprecated As of version 1.58, replaced by N-more/N-items labels.
 	 */
 	MultiInput.prototype.openMultiLine = function () {
 		// the multiline functionality is deprecated
@@ -714,7 +720,7 @@ function(
 	 *
 	 * @since 1.28
 	 * @public
-	 * @deprecated Since version 1.58.
+	 * @deprecated As of version 1.58, replaced by N-more/N-items labels.
 	 */
 	MultiInput.prototype.closeMultiLine = function () {
 		// the multiline functionality is deprecated
@@ -843,6 +849,24 @@ function(
 	};
 
 	/**
+	 * Called when the user presses the right arrow key
+	 *
+	 * @param {jQuery.Event} oEvent The event object
+	 * @private
+	 */
+	MultiInput.prototype.onsapright = function (oEvent) {
+		const aTokens = this.getAggregation("tokenizer").getTokens();
+
+		if (!aTokens.length) {
+			return;
+		}
+
+		if (oEvent.isMarked("forwardFocusToParent")) {
+			oEvent.preventDefault();
+		}
+	};
+
+	/**
 	 * Handles the key down event.
 	 *
 	 * @param {jQuery.Event} oEvent The event object
@@ -941,6 +965,9 @@ function(
 							type: Tokenizer.TokenUpdateType.Added
 						});
 
+						/**
+						 * @deprecated As of version 1.46
+						 */
 						this.fireTokenChange({
 							addedTokens : aAddedTokens,
 							removedTokens : [],
@@ -1385,6 +1412,9 @@ function(
 		}, this);
 
 		// compatibility
+		/**
+		 * @deprecated As of version 1.46
+		 */
 		this.fireTokenChange({
 			type: Tokenizer.TokenChangeType.TokensChanged,
 			addedTokens: aTokens,
@@ -1877,6 +1907,9 @@ function(
 				type : Tokenizer.TokenUpdateType.Added
 			});
 
+			/**
+			 * @deprecated As of version 1.46
+			 */
 			// added for backward compatibility
 			this.fireTokenChange({
 				addedTokens : [oToken],

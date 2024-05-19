@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.122.1"
+      "version": "1.124.0"
     },
     "title": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
     "description": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
@@ -29,17 +29,17 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.122",
+      "minUI5Version": "1.124",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.122.1"
+          "minVersion": "1.124.0"
         },
         "sap.ui.layout": {
-          "minVersion": "1.122.1",
+          "minVersion": "1.124.0",
           "lazy": true
         },
         "sap.ui.unified": {
-          "minVersion": "1.122.1",
+          "minVersion": "1.124.0",
           "lazy": true
         }
       }
@@ -350,6 +350,7 @@
           "sap.m.TabContainerItem",
           "sap.m.TabStripItem",
           "sap.m.ToolbarLayoutData",
+          "sap.m.TileInfo",
           "sap.m.UploadCollectionItem",
           "sap.m.UploadCollectionParameter",
           "sap.m.upload.FilePreviewDialog",
@@ -403,7 +404,10 @@
           "sap.m.table.columnmenu.Item",
           "sap.m.table.columnmenu.ItemBase",
           "sap.m.table.columnmenu.QuickAction",
-          "sap.m.table.columnmenu.QuickActionBase"
+          "sap.m.table.columnmenu.QuickActionBase",
+          "sap.m.plugins.UploadSetwithTable",
+          "sap.m.upload.UploadItemConfiguration",
+          "sap.m.upload.UploadItem"
         ],
         "types": [
           "sap.m.AvatarImageFitType",
@@ -471,6 +475,7 @@
           "sap.m.ObjectMarkerType",
           "sap.m.ObjectMarkerVisibility",
           "sap.m.OverflowToolbarPriority",
+          "sap.m.P13nPopupMode",
           "sap.m.P13nPanelType",
           "sap.m.P13nConditionOperation",
           "sap.m.PageBackgroundDesign",
@@ -488,6 +493,7 @@
           "sap.m.SelectColumnRatio",
           "sap.m.SelectionDetailsActionLevel",
           "sap.m.SelectListKeyboardNavigationMode",
+          "sap.m.SelectDialogInitialFocus",
           "sap.m.SelectType",
           "sap.m.Size",
           "sap.m.SplitAppMode",
@@ -501,9 +507,11 @@
           "sap.m.SwitchType",
           "sap.m.TabsOverflowMode",
           "sap.m.ContentConfigType",
+          "sap.m.TileInfoColor",
           "sap.m.TileSizeBehavior",
           "sap.m.TimePickerMaskMode",
           "sap.m.TitleAlignment",
+          "sap.m.ExpandableTextOverflowMode",
           "sap.m.TokenizerRenderMode",
           "sap.m.ToolbarDesign",
           "sap.m.ToolbarStyle",
@@ -513,7 +521,10 @@
           "sap.m.ValueCSSColor",
           "sap.m.VerticalPlacementType",
           "sap.m.WrappingType",
+          "sap.m.SinglePlanningCalendarSelectionMode",
           "sap.m.WizardRenderMode",
+          "sap.m.ResetAllMode",
+          "sap.m.SharingMode",
           "sap.m.plugins.CopyPreference",
           "sap.m.plugins.ContextMenuScope",
           "sap.m.semantic.SemanticRuleSetType",

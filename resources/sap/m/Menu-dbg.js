@@ -72,7 +72,7 @@ sap.ui.define([
 		 * @implements sap.ui.core.IContextMenu
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @public
@@ -513,6 +513,7 @@ sap.ui.define([
 				id: sUfMenuItemId,
 				icon: oItem.getIcon(),
 				text: oItem.getText(),
+				shortcutText: oItem.getShortcutText(),
 				startsSection: oItem.getStartsSection(),
 				tooltip: oItem.getTooltip(),
 				visible: oItem.getVisible(),

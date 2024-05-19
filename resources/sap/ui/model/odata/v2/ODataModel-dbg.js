@@ -33,10 +33,10 @@ sap.ui.define([
 	"sap/base/util/merge",
 	"sap/base/util/uid",
 	"sap/ui/base/SyncPromise",
-	"sap/ui/core/library",
 	"sap/ui/core/Messaging",
 	"sap/ui/core/message/Message",
 	"sap/ui/core/message/MessageParser",
+	"sap/ui/core/message/MessageType",
 	"sap/ui/core/Supportability",
 	"sap/ui/model/_Helper",
 	"sap/ui/model/BindingMode",
@@ -57,7 +57,7 @@ sap.ui.define([
 	"sap/ui/util/isCrossOriginURL"
 ], function(_CreatedContextsCache, Context, ODataAnnotations, ODataContextBinding, ODataListBinding, ODataTreeBinding,
 		assert, Log, Localization, encodeURL, deepEqual, deepExtend, each, extend, isEmptyObject, isPlainObject, merge,
-		uid, SyncPromise, coreLibrary, Messaging, Message, MessageParser, Supportability,  _Helper, BindingMode,
+		uid, SyncPromise, Messaging, Message, MessageParser, MessageType, Supportability, _Helper, BindingMode,
 		BaseContext, FilterProcessor, Model, CountMode, MessageScope, ODataMetadata, ODataMetaModel, ODataMessageParser,
 		ODataPropertyBinding, ODataUtils, OperationMode, UpdateMethod, OData, URI, isCrossOriginURL
 ) {
@@ -66,7 +66,6 @@ sap.ui.define([
 
 	var sClassName = "sap.ui.model.odata.v2.ODataModel",
 		aDeepCreateParametersAllowlist = ["context", "properties"],
-		MessageType = coreLibrary.MessageType,
 		mMessageType2Severity = {},
 		aRequestSideEffectsParametersAllowList = ["groupId", "urlParameters"];
 
@@ -214,7 +213,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -1008,18 +1007,13 @@ sap.ui.define([
 
 	/**
 	 * Refreshes the metadata for this model, for example when the request for metadata has failed.
-	 *
-	 * <b>Note</b>: Do not use <code>refreshMetadata</code> if the metadata is outdated or should be
-	 * updated. This will lead to inconsistent data in the application.
-	 *
-	 * Returns a new promise which can be resolved or rejected depending on the metadata loading
-	 * state.
+	 * Returns a new promise which can be resolved or rejected depending on the metadata loading state.
 	 *
 	 * @returns {Promise|undefined}
-	 *   A promise on metadata loaded state or <code>undefined</code> if metadata is not initialized
-	 *   or currently refreshed
+	 *   A promise on metadata loaded state or <code>undefined</code> if metadata is not initialized or currently
+	 *   refreshed
 	 *
-	 * @deprecated As of version 1.42.
+	 * @deprecated As of version 1.42, this API may cause data inconsistencies and should not be used.
 	 *
 	 * @public
 	 */
@@ -2190,14 +2184,12 @@ sap.ui.define([
 	 *     OperationMode.Client}, and</li>
 	 *   <li>the {@link sap.ui.table.TreeTable} is used.</li>
 	 *   </ul>
-	 *   The feature is only available when using the <code>ODataTreeBindingAdapter</code>, which is
-	 *   automatically applied when using the <code>sap.ui.table.TreeTable</code>. The tree state
-	 *   handle will contain all necessary information to expand the tree to the given state.
+	 *   The feature is only available when using the {@link sap.ui.table.TreeTable}. The tree
+	 *   state handle will contain all necessary information to expand the tree to the given state.
 	 *
 	 *   This feature is not supported if
 	 *   {@link sap.ui.model.odata.OperationMode.Server OperationMode.Server} or
-	 *   {@link sap.ui.model.odata.OperationMode.Auto OperationMode.Auto} is used. See also
-	 *   {@link sap.ui.model.odata.ODataTreeBindingAdapter#getCurrentTreeState}
+	 *   {@link sap.ui.model.odata.OperationMode.Auto OperationMode.Auto} is used.
 	 *  @param {sap.ui.model.odata.CountMode} [mParameters.countMode]
 	 *    Defines the count mode of this binding; if not specified, the default count mode of the
 	 *    binding's model is applied. The resulting count mode must not be
@@ -7727,12 +7719,12 @@ sap.ui.define([
 
 	/**
 	 * Setting request groups as deferred. <b>Note:</b> This will overwrite existing deferred
-	 * groups, including the default group "changes".
+	 * groups, including the default deferred group "changes".
 	 *
 	 * Requests that belong to a deferred group will be sent by explicitly calling
 	 * {@link #submitChanges}.
 	 *
-	 * @param {array} aGroupIds Array of group IDs that should be set as deferred
+	 * @param {array} aGroupIds The array of deferred group IDs; the default is: <code>["changes"]</code>
 	 * @public
 	 */
 	ODataModel.prototype.setDeferredGroups = function(aGroupIds) {
@@ -7768,31 +7760,18 @@ sap.ui.define([
 	 * Definition of a change group.
 	 *
 	 * @typedef {object} sap.ui.model.odata.v2.ODataModel.ChangeGroupDefinition
-	 * @property {string} groupId Id of the batch group
-	 * @property {string} [changeSetId] ID of a <code>ChangeSet</code> which bundles the changes for the entity type.
-	 * @property {boolean} [single=true] Defines if every change will get an own change set
+	 * @property {string} groupId The ID of the batch group
+	 * @property {string} [changeSetId] The ID of a change set which bundles the changes for the entity type
+	 * @property {boolean} [single=false] Defines whether every change is put in a change set of its own
 	 * @public
 	 */
 
 	/**
 	 * Definition of batch groups per entity type for two-way binding changes.
 	 *
-	 * @param {Object<string,sap.ui.model.odata.v2.ODataModel.ChangeGroupDefinition>} mGroups A map containing the definition of batch groups for two-way binding changes. The map has the
-	 * following format:
-	 * <pre>
-	 * {
-	 *   "EntityTypeName": {
-	 *     batchGroupId: "ID",
-	 *     [changeSetId: "ID",]
-	 *     [single: true/false,]
-	 *   }
-	 * }
-	 * </pre>
-	 * <ul>
-	 * <li><code>batchGroupId</code>: Defines the batch group for changes of the defined <i>EntityTypeName</i></li>
-	 * <li><code>changeSetId</code>: ID of a <code>ChangeSet</code> which bundles the changes for the entity type.</li>
-	 * <li><code>single</code>: Defines if every change will get an own change set (defaults to <code>true</code>)</li>
-	 * </ul>
+	 * @param {Object<string,sap.ui.model.odata.v2.ODataModel.ChangeGroupDefinition>} mGroups
+	 *   A map containing the definition of batch groups for two-way binding changes, see {@link #setChangeGroups}
+	 *
 	 * @deprecated Since 1.32 Use {@link #setChangeGroups} instead
 	 * @public
 	 */
@@ -7804,25 +7783,12 @@ sap.ui.define([
 	};
 
 	/**
-	 * Definition of groups per entity type for two-way binding changes.
+	 * Definition of groups per entity type for two-way binding changes. <b>Note:</b> This will overwrite the existing
+	 * change group definition, including the default <code>{"*":{groupId: "changes"}}</code>.
 	 *
 	 * @param {Object<string,sap.ui.model.odata.v2.ODataModel.ChangeGroupDefinition>} mGroups
-	 *   A map containing the definition of batch groups for two-way binding changes, keyed by entity names.
-	 *   The map has the following format:
-	 * <pre>
-	 * {
-	 *   "EntityTypeName": {
-	 *     groupId: "ID",
-	 *     [changeSetId: "ID",]
-	 *     [single: true/false,]
-	 *   }
-	 * }
-	 * </pre>
-	 * <ul>
-	 * <li><code>groupId</code>: Defines the group for changes of the defined <i>EntityTypeName</i></li>
-	 * <li><code>changeSetId</code>: ID of a <code>ChangeSet</code> which bundles the changes for the entity type.</li>
-	 * <li><code>single</code>: Defines if every change will get an own change set (defaults to <code>true</code>)</li>
-	 * </ul>
+	 *   Maps an entity name to the definition of the batch group for two-way binding changes; use "*" as entity name to
+	 *   define a default for all entities not contained in the map
 	 * @public
 	 */
 	ODataModel.prototype.setChangeGroups = function(mGroups) {

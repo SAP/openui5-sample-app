@@ -54,7 +54,7 @@ sap.ui.define([
 			} else {
 				oDraftContext.getModel().bindContext("SiblingEntity(...)", oDraftContext,
 						{$$inheritExpandSelect : true})
-					.execute("$auto", false, null, true).then(gotoActiveContext);
+					.invoke("$auto", false, null, true).then(gotoActiveContext);
 			}
 		},
 
@@ -118,7 +118,7 @@ sap.ui.define([
 
 			return oContext.getModel().bindContext("SampleService." + sAction + "(...)",
 					oContext, {$$inheritExpandSelect : true})
-				.execute("$auto", false, null, true)
+				.invoke("$auto", false, null, true)
 				.then(function (oSiblingContext) {
 					that.oActiveContext
 						= oSiblingContext.getProperty("IsActiveEntity") ? null : oContext;

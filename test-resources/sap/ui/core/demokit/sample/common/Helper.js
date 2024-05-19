@@ -138,8 +138,8 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 		 * @param {boolean} bSearchOpenDialogs
 		 *  If set to true, Opa5 will only search in open dialogs
 		 */
-		changeStepInputValue : function (oOpa5, sViewName, sId, sValue, sExpectedValue,
-				bSearchOpenDialogs) {
+		changeStepInputValue : function (oOpa5, sViewName, sId, sValue, sExpectedValue = sValue,
+				bSearchOpenDialogs = false) {
 			// The StepInput control behaves different than e.g. Input: Changing and checking of the
 			// new value have to be done via separate waitFor(...) promises, e.g. the check for the
 			// value would fail if it is done in the success function of the first waitFor.
@@ -155,7 +155,6 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 				id : sId,
 				searchOpenDialogs : bSearchOpenDialogs,
 				success : function (oControl) {
-					sExpectedValue = sExpectedValue || sValue;
 					Opa5.assert.strictEqual(oControl.getValue().toString(), sExpectedValue,
 						"Control: " + sId + " Value is: " + sExpectedValue);
 				},
@@ -260,12 +259,12 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 		/**
 		 * Checks the text of the 'More' button for a sap.m.Table.
 		 *
-		 * @param {sap.m.Button} oTrigger - The 'More' trigger button
+		 * @param {sap.m.Button} oMore - The 'More' button
 		 * @param {string} sExpectedCount - The expected count as text w/o "More" without spaces,
 		 *    e.g. "[5/10]"
 		 */
-		checkMoreButtonCount : function (oTrigger, sExpectedCount) {
-			Opa5.assert.strictEqual(oTrigger.getDomRef().innerText.replace(/\s/g, ""),
+		checkMoreButtonCount : function (oMore, sExpectedCount) {
+			Opa5.assert.strictEqual(oMore.getDomRef().innerText.replace(/\s/g, ""),
 				"More" + sExpectedCount, "'More' button has text " + sExpectedCount);
 		},
 
@@ -357,7 +356,7 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 		},
 
 		/**
-		 * Executes the Press() action on a "sap.m.Button" and adds a useful success message
+		 * Invokes the Press() action on a "sap.m.Button" and adds a useful success message
 		 *
 		 * @param {sap.ui.test.Opa5} oOpa5
 		 *  An instance of Opa5 to access the current page object
@@ -384,7 +383,7 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 		},
 
 		/**
-		 * Executes the Press() action on the (one and only) sap.m.CustomListItem in the view
+		 * Invokes the Press() action on the (one and only) sap.m.CustomListItem in the view
 		 *
 		 * @param {sap.ui.test.Opa5} oOpa5
 		 *  An instance of Opa5 to access the current page object
@@ -454,7 +453,7 @@ sap.ui.define("sap/ui/core/sample/common/Helper", [
 		},
 
 		/**
-		 * Executes QUnit.module() with the given <code>sName</code>.
+		 * Invokes QUnit.module() with the given <code>sName</code>.
 		 * Sets the language fix to "en-US" and restores back to the language before.
 		 * For a given <code>iTestTimeout</code) and TestUtils.isRealOData() === true
 		 * the QUnit.config.testTimeout for a single QUnit.test within this module is set to

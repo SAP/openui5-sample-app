@@ -12,7 +12,7 @@ sap.ui.define([
 	'sap/ui/core/EnabledPropagator',
 	'./DialogRenderer',
 	"sap/ui/core/Lib",
-	'sap/ui/core/library',
+	'sap/ui/core/message/MessageType',
 	'sap/ui/Device',
 	'./Bar',
 	'./Button',
@@ -22,7 +22,7 @@ sap.ui.define([
 	"sap/ui/thirdparty/jquery",
 	"sap/base/Log",
 	"sap/base/util/isEmptyObject"
-], function(Dialog, library, Element, EnabledPropagator, DialogRenderer, Library, coreLibrary, Device, Bar, Button, Title, OverflowToolbarLayoutData, ManagedObjectObserver, jQuery, Log, isEmptyObject) {
+], function(Dialog, library, Element, EnabledPropagator, DialogRenderer, Library, MessageType, Device, Bar, Button, Title, OverflowToolbarLayoutData, ManagedObjectObserver, jQuery, Log, isEmptyObject) {
 	"use strict";
 
 	// shortcut for sap.m.OverflowToolbarPriority
@@ -36,9 +36,6 @@ sap.ui.define([
 
 	// shortcut for sap.m.ListMode
 	var ListMode = library.ListMode;
-
-	// shortcut for sap.ui.core.MessageType
-	var MessageType = coreLibrary.MessageType;
 
 	// shortcut for sap.m.ButtonType
 	var ButtonType = library.ButtonType;
@@ -75,9 +72,9 @@ sap.ui.define([
 	 *        tables.
 	 * @extends sap.m.Dialog
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @constructor
-	 * @deprecated as of version 1.98. Use the {@link sap.m.p13n.Popup} instead.
+	 * @deprecated As of version 1.98. Use the {@link sap.m.p13n.Popup} instead.
 	 * @public
 	 * @since 1.26.0
 	 * @alias sap.m.P13nDialog

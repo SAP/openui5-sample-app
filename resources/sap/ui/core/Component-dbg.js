@@ -209,6 +209,8 @@ sap.ui.define([
 			return 2; // instance specific manifest => metadata version 2!
 		};
 
+		oMetadataProxy[Symbol("isProxy")] = true;
+
 		return oMetadataProxy;
 
 	}
@@ -238,7 +240,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -997,15 +999,22 @@ sap.ui.define([
 			var EventBus = sap.ui.require("sap/ui/core/EventBus");
 			if (!EventBus) {
 				var sClassName = this.getMetadata().getName();
-				Log.warning("Synchronous loading of EventBus, due to #getEventBus() call on Component '" + sClassName + "'.", "SyncXHR", null, function() {
-					return {
-						type: "SyncXHR",
-						name: sClassName
-					};
-				});
-				// We don't expect the application to use this API anymore (see Dev-Guide)
-				// For the application it is recommended to declare the EventBus via sap.ui.require or sap.ui.define
-				EventBus = sap.ui.requireSync("sap/ui/core/EventBus"); // legacy-relevant
+				future.warningThrows("The module 'sap/ui/core/EventBus' needs to be required before calling #getEventBus() on Component '" + sClassName + "'.");
+
+				/**
+				 * @deprecated
+				 */
+				(() => {
+					Log.warning("Synchronous loading of EventBus, due to #getEventBus() call on Component '" + sClassName + "'.", "SyncXHR", null, function() {
+						return {
+							type: "SyncXHR",
+							name: sClassName
+						};
+					});
+					// We don't expect the application to use this API anymore (see Dev-Guide)
+					// For the application it is recommended to declare the EventBus via sap.ui.require or sap.ui.define
+					EventBus = sap.ui.requireSync("sap/ui/core/EventBus"); // legacy-relevant
+				})();
 			}
 
 			this._oEventBus = new EventBus();
@@ -1248,6 +1257,7 @@ sap.ui.define([
 	 * @param {boolean} bAsyncMode Whether or not the component is loaded in async mode
 	 * @returns {Promise[]|null} An array of promises from then loaded services
 	 * @private
+	 * @ui5-transform-hint replace-param bAsyncMode true
 	 */
 	function activateServices(oComponent, bAsyncMode) {
 		var oServices = oComponent._getManifestEntry("/sap.ui5/services", true);
@@ -1524,6 +1534,7 @@ sap.ui.define([
 	 *
 	 * @private
 	 * @ui5-restricted sap.ui.core.ComponentContainer
+	 * @ui5-transform-hint replace-param mConfig.async true
 	 */
 	Component._createComponent = function(mConfig, oOwnerComponent) {
 
@@ -1662,9 +1673,9 @@ sap.ui.define([
 									oModelConfig.type = 'sap.ui.model.odata.v2.ODataModel';
 								} else {
 									future.errorThrows('Component Manifest: Provided OData version "' + sODataVersion + '" in ' +
-									'dataSource "' + oModelConfig.dataSource + '" for model "' + sModelName + '" is unknown. ' +
-									'Falling back to default model type "sap.ui.model.odata.v2.ODataModel".',
-									'["sap.app"]["dataSources"]["' + oModelConfig.dataSource + '"]', sLogComponentName);
+										'dataSource "' + oModelConfig.dataSource + '" for model "' + sModelName + '" is unknown.',
+										{ suffix: 'Falling back to default model type "sap.ui.model.odata.v2.ODataModel".' },
+										'["sap.app"]["dataSources"]["' + oModelConfig.dataSource + '"]', sLogComponentName);
 									oModelConfig.type = 'sap.ui.model.odata.v2.ODataModel';
 								}
 								break;
@@ -2085,6 +2096,10 @@ sap.ui.define([
 		return mModelConfigurations;
 	};
 
+	/**
+	 * @private
+	 * @ui5-transform-hint replace-param bSync false
+	 */
 	Component._loadManifestModelClasses = function(mModelConfigurations, sLogComponentName, bSync) {
 		const aLoadPromises = [];
 
@@ -2597,59 +2612,6 @@ sap.ui.define([
 	};
 
 	/**
-	 * Collects the module names of the routing related classes from the given manifest:
-	 *   - Router (e.g. sap.m.routing.Router)
-	 *   - Targets (e.g. sap.ui.core.routing.Targets)
-	 *   - sap.ui.core.routing.Views
-	 *   - The base class of the root view (e.g. sap.ui.core.mvc.XMLView)
-	 * @param {sap.ui.core.Manifest} oManifest the manifest from which the routing config is read
-	 * @returns {string[]} an array containing the module names of all relevant routing classes
-	 */
-	function collectRoutingClasses(oManifest) {
-		const aModuleNames = [];
-
-		// lookup rootView class
-		let sRootViewType;
-		const oRootView = oManifest.getEntry("/sap.ui5/rootView");
-		if (typeof oRootView === "string") {
-			// String as rootView defaults to ViewType XML
-			// See: UIComponent#createContent and UIComponentMetadata#_convertLegacyMetadata
-			sRootViewType = "XML";
-		} else if (oRootView && typeof oRootView === "object" && oRootView.type) {
-			sRootViewType = oRootView.type;
-		}
-		if (sRootViewType && ViewType[sRootViewType]) {
-			const sViewClass = "sap/ui/core/mvc/" + ViewType[sRootViewType] + "View";
-			aModuleNames.push(sViewClass);
-		}
-
-		// lookup of the router / targets and views class
-		// ASYNC Only: prevents lazy synchronous loading in UIComponent#init (regardless of manifirst or manilast)
-		const oRouting = oManifest.getEntry("/sap.ui5/routing");
-		if (oRouting) {
-			if (oRouting.routes) {
-				// the "sap.ui5/routing/config/routerClass" entry can also contain a Router constructor
-				// See the typedef "sap.ui.core.UIComponent.RoutingMetadata" in sap/ui/core/UIComponent.js
-				const vRouterClass = oManifest.getEntry("/sap.ui5/routing/config/routerClass") || "sap.ui.core.routing.Router";
-				if (typeof vRouterClass === "string") {
-					const sRouterClassModule = vRouterClass.replace(/\./g, "/");
-					aModuleNames.push(sRouterClassModule);
-				}
-			} else if (oRouting.targets) {
-				// Same as with "routes", see comment above.
-				const vTargetClass = oManifest.getEntry("/sap.ui5/routing/config/targetsClass") || "sap.ui.core.routing.Targets";
-				if (typeof vTargetClass === "string") {
-					const sTargetClassModule = vTargetClass.replace(/\./g, "/");
-					aModuleNames.push(sTargetClassModule);
-				}
-				aModuleNames.push("sap/ui/core/routing/Views");
-			}
-		}
-
-		return aModuleNames;
-	}
-
-	/**
 	 * Loads a module and logs a potential loading error as a warning.
 	 *
 	 * @param {string} sModuleName the module to be loaded
@@ -2660,15 +2622,18 @@ sap.ui.define([
 		const def = new Deferred();
 
 		sap.ui.require([sModuleName], def.resolve, (err) => {
-			future.warningThrows(`Cannot load module '${sModuleName}'. ` +
-				"This will most probably cause an error once the module is used later on.",
+			future.warningRejects(def.resolve, def.reject, `Cannot load module '${sModuleName}'.`,
 				sComponentName, "sap.ui.core.Component");
 			Log.warning(err);
-
-			def.resolve();
 		});
 
 		return def.promise;
+	}
+
+	function findRoutingClasses(oClassMetadata) {
+		const fnCollectRoutingClasses = oClassMetadata.getStaticProperty("collectRoutingClasses");
+		const mRoutingClasses = typeof fnCollectRoutingClasses == "function" ? fnCollectRoutingClasses.call(oClassMetadata.getClass()) : {};
+		return Object.values(mRoutingClasses);
 	}
 
 	/*
@@ -2818,9 +2783,15 @@ sap.ui.define([
 
 					// [1] after evaluating the manifest & loading the necessary dependencies,
 					//     we make sure the routing related classes are required before instantiating the Component
-					const aRoutingClassNames = collectRoutingClasses(oManifest);
-					const aModuleLoadingPromises = aRoutingClassNames.map((sClassName) => {
-						return loadModuleAndLog(sClassName, sComponentName);
+					const aRoutingClassNames = findRoutingClasses(oClassMetadata);
+					const aModuleLoadingPromises = aRoutingClassNames.map((vClass) => {
+						let pClass;
+						if (typeof vClass === 'function') {
+							pClass = Promise.resolve(vClass);
+						} else {
+							pClass = loadModuleAndLog(vClass, sComponentName);
+						}
+						return pClass;
 					});
 
 					// [2] Async require for all(!) manifests models ("preload: true" models might be required already)
@@ -3230,6 +3201,13 @@ sap.ui.define([
 					return oInstance;
 
 				};
+
+				oMetadataProxy.getClass = function() {
+					return oClassProxy;
+				};
+
+				oClassProxy[Symbol("isProxy")] = true;
+
 				// overload the getMetadata function
 				oClassProxy.getMetadata = function() {
 					return oMetadataProxy;
@@ -3265,6 +3243,10 @@ sap.ui.define([
 			return vObj;
 		}
 
+		/**
+		 * @private
+		 * @ui5-transform-hint replace-param bAsync true
+		 */
 		function preload(sComponentName, bAsync) {
 
 			var sController = sComponentName + '.Component',
@@ -3302,19 +3284,23 @@ sap.ui.define([
 						sPreloadName = sController.replace(/\./g, "/") + (http2 ? '-h2-preload.js' : '-preload.js'); // URN
 						return sap.ui.loader._.loadJSResourceAsync(sPreloadName).catch(errorLogging(sPreloadName, true));
 					}
-				}
-
-				try {
-					sPreloadName = sController + '-preload'; // Module name
-					sap.ui.requireSync(sPreloadName.replace(/\./g, "/")); // legacy-relevant: Sync path
-				} catch (e) {
-					errorLogging(sPreloadName, false)(e);
+				} else {
+					try {
+						sPreloadName = sController + '-preload'; // Module name
+						sap.ui.requireSync(sPreloadName.replace(/\./g, "/")); // legacy-relevant: Sync path
+					} catch (e) {
+						errorLogging(sPreloadName, false)(e);
+					}
 				}
 			} else if (bAsync) {
 				return Promise.resolve();
 			}
 		}
 
+		/**
+		 * @private
+		 * @ui5-transform-hint replace-param bAsync true
+		 */
 		function preloadDependencies(sComponentName, oManifest, bAsync) {
 
 			var aPromises = [];
@@ -3633,8 +3619,7 @@ sap.ui.define([
 							return Component._fnLoadComponentCallback(oConfigCopy, oLoadedManifest);
 						} catch (oError) {
 							future.errorThrows("Callback for loading the component \"" + oLoadedManifest.getComponentName() +
-								"\" run into an error. The callback was skipped and the component loading resumed.",
-								oError, "sap.ui.core.Component");
+								"\" run into an error.", { cause: oError , suffix: "The callback was skipped and the component loading resumed." }, oError, "sap.ui.core.Component");
 						}
 					}
 				};
@@ -3755,7 +3740,8 @@ sap.ui.define([
 				}
 
 				// collect routing related class names for async loading
-				const aModuleNames = collectRoutingClasses(oManifest);
+				const oClassMetadata = oControllerClass.getMetadata();
+				const aModuleNames = findRoutingClasses(oClassMetadata);
 
 				// lookup model classes
 				var mManifestModels = merge({}, oManifest.getEntry("/sap.ui5/models"));
@@ -3843,12 +3829,6 @@ sap.ui.define([
 		return prepareControllerClass(
 			sap.ui.requireSync( getControllerModuleName() ) // legacy-relevant: Sync path
 		);
-	}
-
-	if ( Math.sqrt(2) < 1 ) {
-		// the following code will never be executed, but it helps the build tooling to
-		// detect the (now hidden) dependency to the Core.
-		sap.ui.require(["sap/ui/core/Core"], function() {});
 	}
 
 	/**

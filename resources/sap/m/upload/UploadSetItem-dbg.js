@@ -21,11 +21,10 @@ sap.ui.define([
 	"sap/m/ProgressIndicator",
 	"sap/m/VBox",
 	"sap/m/HBox",
-	"sap/ui/core/Lib",
-	"sap/ui/core/Core"
+	"sap/ui/core/Lib"
 ], function (Log, CoreLibrary, Element, Icon, IconPool, HTML,
 			 MobileLibrary, Button, CustomListItem, Image, Input,
-			 Label, Link, ProgressIndicator, VBox, HBox, CoreLib, Core) {
+			 Label, Link, ProgressIndicator, VBox, HBox, CoreLib) {
 	"use strict";
 
 	var UploadType = MobileLibrary.UploadType;
@@ -38,7 +37,7 @@ sap.ui.define([
 	 * @class Item that represents one file to be uploaded using the {@link sap.m.upload.UploadSet} control.
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -186,7 +185,7 @@ sap.ui.define([
 			apiVersion: 2,
 			render: function (oRm, oControl) {
 				var sItemId = oControl.getAssociation("item");
-				var oItem = Core.byId(sItemId);
+				var oItem = Element.getElementById(sItemId);
 				oRm.openStart("div");
 				oRm.class("sapMUCTextContainer");
 				if (this._bInEditMode) {

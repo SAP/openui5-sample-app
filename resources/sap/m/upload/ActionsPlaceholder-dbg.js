@@ -20,7 +20,7 @@ sap.ui.define(["sap/ui/core/Control"], function (Control) {
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -37,11 +37,21 @@ sap.ui.define(["sap/ui/core/Control"], function (Control) {
 				 * Defines the enum value that determines which control gets substituted.
 				 */
 				placeholderFor : {type: "sap.m.UploadSetwithTableActionPlaceHolder"}
+			},
+			aggregations: {
+				/**
+				 * The action control to be rendered in the placeholder.
+				 */
+				_actionButton: {type: "sap.ui.core.Control", multiple: false, visibility: "hidden"}
 			}
 		},
 		renderer: {
 			apiVersion: 2,
-			render: function () {}
+			render: function (oRm, oControl) {
+				if (oControl?.getPlaceholderFor()) {
+					oRm.renderControl(oControl.getAggregation("_actionButton"));
+				}
+			}
 		}
 	});
 

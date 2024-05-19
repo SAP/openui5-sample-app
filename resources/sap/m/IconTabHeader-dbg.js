@@ -85,7 +85,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -132,7 +132,7 @@ sap.ui.define([
 				 *
 				 * The overflow select list represents a list, where all tab filters are displayed,
 				 * so the user can select specific tab filter easier.
-				 * @deprecated as of 1.75
+				 * @deprecated As of version 1.75, the concept has been discarded. All tab filters that don't fit in the header, will be displayed in overflow menu.
 				 */
 				showOverflowSelectList : {type : "boolean", group : "Appearance", defaultValue : false, deprecated: true},
 

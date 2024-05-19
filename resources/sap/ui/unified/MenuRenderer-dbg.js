@@ -15,7 +15,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior"],
 	 * Menu renderer.
 	 * @author SAP - TD Core UI&AM UI Infra
 	 *
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @namespace
 	 */
 	var MenuRenderer = {
@@ -64,14 +64,6 @@ sap.ui.define(["sap/ui/core/ControlBehavior"],
 
 		if (oRootMenu.bUseTopStyle) {
 			oRm.class("sapUiMnuTop");
-		}
-
-		if (oRootMenu.isCozy()) {
-			oRm.class("sapUiSizeCozy");
-		}
-
-		if (oMenu.bCozySupported) {
-			oRm.class("sapUiMnuCozySupport");
 		}
 
 		oRm.openEnd();

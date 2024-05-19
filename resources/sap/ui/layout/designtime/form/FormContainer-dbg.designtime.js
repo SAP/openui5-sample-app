@@ -119,8 +119,7 @@ sap.ui.define([
 							if (fnIsLayoutSupported(oFormContainer)) {
 								return {
 									changeType: "addFormField",
-									changeOnRelevantContainer: true,
-									supportsDefaultDelegate: true
+									changeOnRelevantContainer: true
 								};
 							}
 						}

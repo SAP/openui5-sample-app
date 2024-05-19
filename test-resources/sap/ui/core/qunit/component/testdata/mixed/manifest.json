@@ -15,18 +15,10 @@
 
 		"resourceRoots": {
 			"x.y.z": "anypath",
-			"foo.bar": "../../foo/bar",
-			"absolute": "http://absolute/uri",
-			"server.absolute": "/server/absolute/uri"
+			"foo.bar": "../../foo/bar"
 		},
 
 		"resources": {
-			"js": [
-				{
-					"uri": "script.js"
-				},
-				{}
-			],
 			"css": [
 				{
 					"uri": "style.css",
@@ -57,8 +49,8 @@
 				"uri": "i18n/i18n.properties"
 			},
 			"sfapi": {
-				"type": "sap.ui.model.odata.ODataModel",
-				"uri": "./some/odata/service"
+				"type": "sap.ui.model.odata.v2.ODataModel",
+				"uri": "./some/odata/service/"
 			}
 		},
 

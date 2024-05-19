@@ -11,6 +11,12 @@
 		background-color: transparent;
 	}
 }
+
+.sapFShellBar.sapFShellBarFCLFPHeader,
+.sapMPageHeader .sapFShellBar {
+	box-shadow: @sapUiShellShadow;
+}
+
 .sapFButtonNotifications[data-notifications],
 .sapFShellBarOverflowButton[data-notifications] {
 	&:after {
@@ -106,9 +112,6 @@ html.sap-desktop .sapMTB-Transparent-CTX .sapMBtnInner.sapMToggleBtnPressed{
 	}
 
 	// Avatar
-	.sapFShellBarProfile:focus {
-		border: none;
-	}
 	.sapFShellBarProfile:not(:focus):hover {
 		box-shadow: 0 0 0.125rem 0 fade(@sapContent_ShadowColor, 72);
 		background-color: none;

@@ -54,11 +54,12 @@ sap.ui.define([
 	 * @class The P13nSelectionPanel control is used to define selection settings like the visibility or the order of items.
 	 * @extends sap.m.P13nPanel
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @constructor
 	 * @private
 	 * @since 1.46.0
 	 * @alias sap.m.P13nSelectionPanel
+	 * @deprecated As of version 1.124, replaced by the artifacts in {@link sap.m.p13n}.
 	 */
 	var P13nSelectionPanel = P13nPanel.extend("sap.m.P13nSelectionPanel", /** @lends sap.m.P13nSelectionPanel.prototype */
 	{

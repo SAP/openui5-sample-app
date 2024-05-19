@@ -7,7 +7,6 @@
 sap.ui.define([
 	"sap/ui/core/Element",
 	'sap/ui/unified/calendar/CalendarUtils',
-	'sap/ui/core/format/TimezoneUtil',
 	'sap/ui/core/date/UniversalDate',
 	'sap/ui/unified/CalendarLegendRenderer',
 	"sap/ui/core/date/UI5Date",
@@ -17,7 +16,6 @@ sap.ui.define([
 	function(
 		Element,
 		CalendarUtils,
-		TimezoneUtil,
 		UniversalDate,
 		CalendarLegendRenderer,
 		UI5Date,

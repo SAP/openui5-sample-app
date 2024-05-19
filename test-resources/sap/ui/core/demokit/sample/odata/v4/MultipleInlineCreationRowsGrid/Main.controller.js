@@ -6,26 +6,26 @@
 sap.ui.define([
 	"sap/f/library",
 	"sap/m/MessageBox",
-	"sap/ui/core/library",
 	"sap/ui/core/Messaging",
 	"sap/ui/core/message/Message",
+	"sap/ui/core/message/MessageType",
 	"sap/ui/core/sample/common/Controller",
 	"sap/ui/model/Sorter",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/model/odata/v4/SubmitMode",
 	"sap/ui/test/TestUtils"
-], function (library, MessageBox, coreLibrary, Messaging, Message, Controller, Sorter, JSONModel,
+], function (library, MessageBox, Messaging, Message, MessageType, Controller, Sorter, JSONModel,
 		SubmitMode, TestUtils) {
 	"use strict";
 
 	var oSearchParams = new URLSearchParams(window.location.search),
 		iEmptyRowCount = parseInt(oSearchParams.get("emptyRows") || "2"),
 		LayoutType = library.LayoutType,
-		MessageType = coreLibrary.MessageType,
-		bLegacy,
-		oSelectedProduct;
+		bLegacy;
 
 	return Controller.extend("sap.ui.core.sample.odata.v4.MultipleInlineCreationRowsGrid.Main", {
+		oSelectedProduct : undefined,
+
 		createAndSetDraft : function (oContext) {
 			var oView = this.getView(),
 				that = this;
@@ -34,7 +34,7 @@ sap.ui.define([
 			oView.getModel()
 				.bindContext("SampleService.draftEdit(...)", oContext,
 					{$$inheritExpandSelect : true})
-				.execute(undefined, false, false, true)
+				.invoke(undefined, false, false, true)
 				.then(function (oRVC) {
 					that.setPartsContext(oRVC);
 				}).finally(function () {
@@ -126,7 +126,7 @@ sap.ui.define([
 			if (oContext.getProperty("ID") === null) {
 				// do not activate context if no ID is given
 				oEvent.preventDefault();
-				if (!oMessage) {
+				if (!oMessage) { // eslint-disable-line logical-assignment-operators
 					oMessage = this.mCreateActivateMessages[oContext.getPath()] = new Message({
 						message : "ID must not be empty",
 						type : MessageType.Warning,
@@ -253,7 +253,7 @@ sap.ui.define([
 				oProductsBinding ? oProductsBinding.getHeaderContext() : null,
 				"headerContext0"
 			);
-			this.byId("productsSelect").setBindingContext(
+			this.byId("productsSelectAll").setBindingContext(
 				oProductsBinding ? oProductsBinding.getHeaderContext() : null,
 				"headerContext0"
 			);
@@ -292,20 +292,20 @@ sap.ui.define([
 			var oItem = oEvent.getParameter("listItem"),
 				oProduct;
 
-			oSelectedProduct?.setSelected(false);
+			this.oSelectedProduct?.setSelected(false);
 
 			if (oItem) {
-				oSelectedProduct = oItem.getBindingContext();
-				oProduct = oSelectedProduct.getObject();
-				oSelectedProduct.setSelected(true);
-				if (oSelectedProduct.isInactive()
-					|| oSelectedProduct.isTransient()
+				this.oSelectedProduct = oItem.getBindingContext();
+				oProduct = this.oSelectedProduct.getObject();
+				this.oSelectedProduct.setSelected(true);
+				if (this.oSelectedProduct.isInactive()
+					|| this.oSelectedProduct.isTransient()
 					|| !oProduct) {
 					this.setPartsContext(null);
 				} else if (oProduct.IsActiveEntity) {
-					this.createAndSetDraft(oSelectedProduct);
+					this.createAndSetDraft(this.oSelectedProduct);
 				} else {
-					this.setPartsContext(oSelectedProduct);
+					this.setPartsContext(this.oSelectedProduct);
 				}
 			}
 		},

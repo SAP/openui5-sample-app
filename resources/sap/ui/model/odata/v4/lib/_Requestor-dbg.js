@@ -589,7 +589,7 @@ sap.ui.define([
 			} else {
 				aRequests[i] = aChangeSet;
 			}
-			bHasChanges = bHasChanges || aChangeSet.length > 0;
+			bHasChanges ||= aChangeSet.length > 0;
 		}
 
 		return bHasChanges;
@@ -1366,7 +1366,7 @@ sap.ui.define([
 		this.bBatchSent = true;
 		aRequests = this.mergeGetRequests(aRequests);
 		this.batchRequestSent(sGroupId, aRequests, bHasChanges);
-		return this.sendBatch(aRequests, sGroupId)
+		return this.sendBatch(aRequests, sGroupId, bHasChanges)
 			.then(function (aResponses) {
 				visit(aRequests, aResponses);
 			}).catch(function (oError) {
@@ -1578,23 +1578,28 @@ sap.ui.define([
 			}
 
 			this.oSecurityTokenPromise = new Promise(function (fnResolve, fnReject) {
-				jQuery.ajax(that.sServiceUrl + that.sQueryParams, {
+				const oAjaxSettings = {
 					method : "HEAD",
 					headers : Object.assign({}, that.mHeaders, {"X-CSRF-Token" : "Fetch"})
-				}).then(function (_oData, _sTextStatus, jqXHR) {
-					var sCsrfToken = jqXHR.getResponseHeader("X-CSRF-Token");
+				};
+				if (that.bWithCredentials) {
+					oAjaxSettings.xhrFields = {withCredentials : true};
+				}
+				jQuery.ajax(that.sServiceUrl + that.sQueryParams, oAjaxSettings)
+					.then(function (_oData, _sTextStatus, jqXHR) {
+						var sCsrfToken = jqXHR.getResponseHeader("X-CSRF-Token");
 
-					if (sCsrfToken) {
-						that.mHeaders["X-CSRF-Token"] = sCsrfToken;
-					} else {
-						delete that.mHeaders["X-CSRF-Token"];
-					}
-					that.oSecurityTokenPromise = null;
-					fnResolve();
-				}, function (jqXHR) {
-					that.oSecurityTokenPromise = null;
-					fnReject(_Helper.createError(jqXHR, "Could not refresh security token"));
-				});
+						if (sCsrfToken) {
+							that.mHeaders["X-CSRF-Token"] = sCsrfToken;
+						} else {
+							delete that.mHeaders["X-CSRF-Token"];
+						}
+						that.oSecurityTokenPromise = null;
+						fnResolve();
+					}, function (jqXHR) {
+						that.oSecurityTokenPromise = null;
+						fnReject(_Helper.createError(jqXHR, "Could not refresh security token"));
+					});
 			});
 		}
 
@@ -1603,7 +1608,7 @@ sap.ui.define([
 
 	/**
 	 * Finds the request identified by the given group and body, removes it from that group and
-	 * triggers a new request with the new group ID, based on the found request.
+	 * initiates a new request with the new group ID, based on the found request.
 	 * The result of the new request is delegated to the found request.
 	 *
 	 * @param {string} sCurrentGroupId
@@ -1636,9 +1641,9 @@ sap.ui.define([
 
 	/**
 	 * Finds all requests identified by the given group and entity, removes them from that group
-	 * and triggers new requests with the new group ID, based on each found request.
+	 * and initiates new requests with the new group ID, based on each found request.
 	 * The result of each new request is delegated to the corresponding found request. If no entity
-	 * is given, all requests for that group are triggered again.
+	 * is given, all requests for that group are initiated again.
 	 *
 	 * @param {string} sCurrentGroupId
 	 *   The ID of the group in which to search
@@ -1832,7 +1837,7 @@ sap.ui.define([
 			iRequestSerialNumber = oGroupLock.getSerialNumber();
 		}
 		sResourcePath = this.convertResourcePath(sResourcePath);
-		sOriginalResourcePath = sOriginalResourcePath || sResourcePath;
+		sOriginalResourcePath ??= sResourcePath;
 		if (this.getGroupSubmitMode(sGroupId) !== "Direct") {
 			if (sGroupId === "$single" && this.mBatchQueue[sGroupId]) {
 				throw new Error("Cannot add new request to already existing $single queue");
@@ -1863,7 +1868,7 @@ sap.ui.define([
 					aRequests.push(oRequest);
 				} else if (bAtFront) { // add at front of first change set
 					aRequests[0].unshift(oRequest);
-				} else { // push into change set which was current when the request was triggered
+				} else { // push into change set which was current when the request was initiated
 					iChangeSetNo = aRequests.iChangeSet;
 					while (aRequests[iChangeSetNo].iSerialNumber > iRequestSerialNumber) {
 						iChangeSetNo -= 1;
@@ -1891,7 +1896,8 @@ sap.ui.define([
 			fnSubmit();
 		}
 		return this.sendRequest(sMethod, sResourcePath,
-			Object.assign({}, mHeaders, this.mFinalHeaders),
+			Object.assign({}, mHeaders, this.mFinalHeaders,
+				sMethod === "GET" ? {"sap-cancel-on-close" : "true"} : undefined),
 			JSON.stringify(oPayload), sOriginalResourcePath
 		).then(function (oResponse) {
 			that.reportHeaderMessages(oResponse.resourcePath, oResponse.messages);
@@ -1907,11 +1913,12 @@ sap.ui.define([
 	 *
 	 * @param {object[]} aRequests The requests
 	 * @param {string} sGroupId The group ID
+	 * @param {boolean} bHasChanges Whether the batch contains change requests
 	 * @returns {Promise} A promise on the responses
 	 *
 	 * @private
 	 */
-	_Requestor.prototype.sendBatch = function (aRequests, sGroupId) {
+	_Requestor.prototype.sendBatch = function (aRequests, sGroupId, bHasChanges) {
 		var oBatchRequest = _Batch.serializeBatchRequest(aRequests,
 				this.getGroupSubmitMode(sGroupId) === "Auto"
 					? "Group ID: " + sGroupId
@@ -1921,7 +1928,9 @@ sap.ui.define([
 
 		return this.processOptimisticBatch(aRequests, sGroupId)
 			|| this.sendRequest("POST", "$batch" + this.sQueryParams,
-				Object.assign(oBatchRequest.headers, mBatchHeaders), oBatchRequest.body
+				Object.assign(oBatchRequest.headers, mBatchHeaders,
+					bHasChanges ? undefined : {"sap-cancel-on-close" : "true"}),
+				oBatchRequest.body
 			).then(function (oResponse) {
 				if (oResponse.messages !== null) {
 					throw new Error("Unexpected 'sap-messages' response header for batch request");
@@ -2023,11 +2032,9 @@ sap.ui.define([
 
 					// Note: string response appears only for $batch and thus cannot be empty;
 					// for 204 "No Content", vResponse === undefined
-					if (!vResponse) {
-						// With GET it must be visible that there is no content, with the other
-						// methods it must be possible to insert the ETag from the header
-						vResponse = sMethod === "GET" ? null : {};
-					}
+					// With GET it must be visible that there is no content, with the other
+					// methods it must be possible to insert the ETag from the header
+					vResponse ||= sMethod === "GET" ? null : {};
 					if (sETag && typeof vResponse === "object") {
 						vResponse["@odata.etag"] = sETag;
 					}
@@ -2097,25 +2104,32 @@ sap.ui.define([
 		if (sContextId) {
 			// start a new session and a new timer with the current header values (should be the
 			// same as before)
-			that.mHeaders["SAP-ContextId"] = sContextId;
+			this.mHeaders["SAP-ContextId"] = sContextId;
 			if (iTimeoutSeconds >= 60) {
 				this.iSessionTimer = setInterval(function () {
 					if (Date.now() >= iSessionTimeout) { // 30 min have passed
 						that.clearSessionContext(/*bTimeout*/true); // give up
-					} else {
-						jQuery.ajax(that.sServiceUrl + that.sQueryParams, {
-							method : "HEAD",
-							headers : {
-								"SAP-ContextId" : that.mHeaders["SAP-ContextId"]
-							}
-						}).fail(function (jqXHR) {
+
+						return;
+					}
+
+					const oAjaxSettings = {
+						method : "HEAD",
+						headers : {
+							"SAP-ContextId" : that.mHeaders["SAP-ContextId"]
+						}
+					};
+					if (that.bWithCredentials) {
+						oAjaxSettings.xhrFields = {withCredentials : true};
+					}
+					jQuery.ajax(that.sServiceUrl + that.sQueryParams, oAjaxSettings)
+						.fail(function (jqXHR) {
 							if (jqXHR.getResponseHeader("SAP-Err-Id") === "ICMENOSESSION") {
 								// The server could not find the context ID ("ICM Error NO SESSION")
 								Log.error("Session not found on server", undefined, sClassName);
 								that.clearSessionContext(/*bTimeout*/true);
 							} // else keep the timer running
 						});
-					}
 				}, (iTimeoutSeconds - 5) * 1000);
 			} else if (sSAPHttpSessionTimeout !== null) {
 				Log.warning("Unsupported SAP-Http-Session-Timeout header", sSAPHttpSessionTimeout,
@@ -2127,8 +2141,8 @@ sap.ui.define([
 	/**
 	 * Waits until all group locks for the given group ID have been unlocked and submits the
 	 * requests associated with this group ID in one batch request. If only PATCH requests are
-	 * enqueued (see {@link #hasOnlyPatchesWithoutSideEffects}), this will delay the execution to
-	 * wait for potential side effect requests triggered by a
+	 * enqueued (see {@link #hasOnlyPatchesWithoutSideEffects}), this will delay the invocation to
+	 * wait for potential side effect requests initiated by a
 	 * {@link sap.ui.core.Control#event:validateFieldGroup 'validateFieldGroup'} event.
 	 *
 	 * @param {string} sGroupId

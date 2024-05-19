@@ -31,7 +31,7 @@ sap.ui.define([
 	 *
 	 * @class Metadata for a class.
 	 * @author Frank Weigel
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @since 0.8.6
 	 * @public
 	 * @alias sap.ui.base.Metadata
@@ -42,19 +42,17 @@ sap.ui.define([
 		assert(typeof oClassInfo === "object", "Metadata: oClassInfo must be empty or an object");
 
 		/**
-		 * @deprecated
+		 * Support for old usage of Metadata.
+		 * @deprecated Since 1.3.1
 		 */
-		(() => {
-			// support for old usage of Metadata
-			if ( !oClassInfo || typeof oClassInfo.metadata !== "object" ) {
-				oClassInfo = {
-					metadata : oClassInfo || {},
-					// retrieve class by its name. Using a lookup costs time but avoids the need for redundant arguments to this function
-					constructor : ObjectPath.get(sClassName) // legacy-relevant, code path not used by extend call
-				};
-				oClassInfo.metadata.__version = 1.0;
-			}
-		})();
+		if ( !oClassInfo || typeof oClassInfo.metadata !== "object" ) {
+			oClassInfo = {
+				metadata : oClassInfo || {},
+				// retrieve class by its name. Using a lookup costs time but avoids the need for redundant arguments to this function
+				constructor : ObjectPath.get(sClassName) // legacy-relevant, code path not used by extend call
+			};
+			oClassInfo.metadata.__version = 1.0;
+		}
 
 		oClassInfo.metadata ??= {};
 		oClassInfo.metadata.__version = oClassInfo.metadata.__version || 2.0;
@@ -433,6 +431,24 @@ sap.ui.define([
 	};
 
 	/**
+	 * Traverse up through the parent chain to find the static property on the class.
+	 *
+	 * @param {string} sStaticName The name of the static property
+	 * @returns {any} If found, returns the static property
+	 * @private
+	 * @ui5-restricted sap.ui.core
+	 */
+	Metadata.prototype.getStaticProperty = function(sStaticName) {
+		let oMetadata = this;
+		while (oMetadata && !(sStaticName in oMetadata.getClass())) {
+			oMetadata = oMetadata.getParent();
+		}
+		const oClass = oMetadata?.getClass();
+
+		return oClass?.[sStaticName];
+	};
+
+	/**
 	 * @since 1.3.1
 	 * @private
 	 */
@@ -450,8 +466,14 @@ sap.ui.define([
 		assert(!oClassInfo || typeof oClassInfo === "object");
 		assert(!FNMetaImpl || isFunction(FNMetaImpl));
 
-		// allow metadata class to preprocess
 		FNMetaImpl = FNMetaImpl || Metadata;
+
+		/**
+		 * allow metadata class to preprocess
+		 * Component- and UIComponentMetadata uses this to derive if "component.json"
+		 * must be loaded synchronously.
+		 * @deprecated
+		 */
 		if ( isFunction(FNMetaImpl.preprocessClassInfo) ) {
 			oClassInfo = FNMetaImpl.preprocessClassInfo(oClassInfo);
 		}
@@ -496,7 +518,10 @@ sap.ui.define([
 		}
 		oClassInfo.constructor = fnClass;
 
-		// make the class visible as JS Object
+		/**
+		 * make the class visible as JS Object
+		 * @deprecated
+		 */
 		ObjectPath.set(sClassName, fnClass);
 
 		// add metadata

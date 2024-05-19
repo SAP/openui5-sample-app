@@ -34,6 +34,9 @@ sap.ui.define(['sap/ui/core/library'],
 			oRm.attr("title", sTooltip);
 		}
 		oRm.class("sapMHdrCntr");
+		if (oControl.getSnapToRow()) {
+			oRm.class("sapMHdrCntrSnapToRow");
+		}
 		oRm.class(sOrientationClass);
 		if (oControl.getShowDividers()) {
 			oRm.class("sapMHrdrCntrDvdrs");

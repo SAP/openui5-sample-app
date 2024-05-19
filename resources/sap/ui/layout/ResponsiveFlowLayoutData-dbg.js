@@ -22,7 +22,7 @@ sap.ui.define(['sap/ui/core/LayoutData', './library', "sap/base/Log"],
 	 * @extends sap.ui.core.LayoutData
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public

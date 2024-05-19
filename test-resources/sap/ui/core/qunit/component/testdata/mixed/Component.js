@@ -6,7 +6,9 @@ sap.ui.define([
 
 	var Component = UIComponent.extend("sap.ui.test.mixed.Component", {
 
-		metadata: "json"
+		metadata: {
+			manifest: "json"
+		}
 
 	});
 

@@ -111,7 +111,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -187,6 +187,25 @@ function(
 				 * The drag and drop interaction is visualized by a placeholder highlighting the area where the
 				 * appointment can be dropped by the user.
 				 *
+				 * <b>Note:</b> Additional application-level code will be needed to provide a keyboard alternative to drag and drop mouse interactions.
+				 * One possible option is by handling {@link sap.m.SinglePlanningCalendar#event:appointmentSelect appointmentSelect} event of the
+				 * <code>sap.m.SinglePlanningCalendar</code>, as shown in the following simplified example:
+				 *
+				 * <pre>
+				 * 	new sap.m.SinglePlanningCalendar({
+				 * 		...
+		 		 *		enableAppointmentsDragAndDrop: true,
+		 		 * 		...
+				 *		appointmentSelect: function(event) {
+				 *			// Open edit {@link sap.m.Dialog Dialog} to modify the appointment properties
+				 *			new sap.m.Dialog({ ... }).openBy(event.getParameter("appointment"));
+				 *		}
+				 *	});
+				 * </pre>
+				 *
+				 * For a complete example, you can check out the following Demokit sample:
+				 * {@link https://ui5.sap.com/#/entity/sap.m.SinglePlanningCalendar/sample/sap.m.sample.SinglePlanningCalendarCreateApp Single Planning Calendar - Create and Modify Appointments}
+				 *
 				 * @since 1.64
 				 */
 				enableAppointmentsDragAndDrop: { type: "boolean", group: "Misc", defaultValue: false },
@@ -200,6 +219,9 @@ function(
 				 * of 30 minutes. After the resize is finished, the {@link #event:appointmentResize appointmentResize} event is fired, containing
 				 * the new start and end UI5Date or JavaScript Date objects.
 				 *
+				 * <b>Note:</b> Additional application-level code will be needed to provide a keyboard alternative to appointments resizing interactions with mouse.
+				 * It can be done in a similar way as described in the <code>enableAppointmentsDragAndDrop</code> property documentation.
+				 *
 				 * @since 1.65
 				 */
 				enableAppointmentsResize: { type: "boolean", group: "Misc", defaultValue: false },
@@ -207,7 +229,7 @@ function(
 				/**
 				 * Determines whether the appointments can be created by dragging on empty cells.
 				 *
-				 * See {@link #property:enableAppointmentsResize enableAppointmentsResize} for the specific points for events snapping
+				 * See <code>enableAppointmentsResize</code> property documentation for the specific points for events snapping.
 				 *
 				 * @since 1.65
 				 */
@@ -534,7 +556,38 @@ function(
 				 * The view was changed by user interaction.
 				 * @since 1.71.0
 				 */
-				viewChange : {}
+				viewChange : {},
+
+				/**
+				 * Fired when the week number selection changes. If <code>dateSelectionMode</code> is <code>SinglePlanningCalendarSelectionMode.Multiselect</code>, clicking on the week number will select the corresponding week.
+				 * If the week has already been selected, clicking the week number will deselect it.
+				 *
+				 * @since 1.123
+				 */
+				weekNumberPress : {
+					parameters: {
+						/**
+						 * Тhe number of the pressed calendar week.
+						 */
+						weekNumber: {type: "int"}
+					}
+				},
+				/**
+				 * Fired when the selected dates change.
+				 * The default behavior can be prevented using the <code>preventDefault</code> method.
+				 *
+				 * <b>Note:</b> If the event is prevented, the changes in the aggregation <code>selectedDates</code> will be canceled and it will revert to its previous state.
+				 * @since 1.123
+				 */
+				selectedDatesChange : {
+					allowPreventDefault: true,
+					parameters: {
+						/**
+						 * The array of all selected days.
+						 */
+						selectedDates: {type: "sap.ui.unified.DateRange[]"}
+					}
+				}
 			}
 
 		},
@@ -1301,6 +1354,18 @@ function(
 				date: oEvent.getParameter("date")
 			});
 		};
+		var fnHandleWeekNumberPress = function(oEvent) {
+			this.fireEvent("weekNumberPress", {
+				weekNumber: oEvent.getParameter("weekNumber")
+			});
+		};
+		var fnHandleSelectedDatesChange = function(oEvent) {
+			const bExecuteDefault = this.fireSelectedDatesChange({ selectedDates: oEvent.getParameter("selectedDates")});
+			if (!bExecuteDefault) {
+				oEvent.preventDefault();
+			}
+		};
+
 		var fnHandleBorderReached = function(oEvent) {
 			var oGrid = this.getAggregation("_grid"),
 				oFormat = oGrid._getDateFormatter(),
@@ -1352,6 +1417,8 @@ function(
 		oGrid.attachEvent("cellPress", fnHandleCellPress, this);
 		oGridMV.attachEvent("cellPress", fnHandleCellPress, this);
 		oGridMV.attachEvent("moreLinkPress", fnHandleMoreLinkPress, this);
+		oGridMV.attachEvent("weekNumberPress", fnHandleWeekNumberPress, this);
+		oGridMV.attachEvent("selectedDatesChange", fnHandleSelectedDatesChange, this);
 
 		oGrid.attachEvent("borderReached", fnHandleBorderReached, this);
 		oGridMV.attachEvent("borderReached", fnHandleBorderReachedMonthView, this);

@@ -20,7 +20,6 @@ sap.ui.define([
 	'sap/ui/Device',
 	'sap/ui/core/format/DateFormat',
 	'sap/ui/core/LocaleData',
-	'sap/ui/core/format/TimezoneUtil',
 	'./TimePickerClocks',
 	'./DateTimePickerRenderer',
 	'./SegmentedButton',
@@ -47,7 +46,6 @@ sap.ui.define([
 	Device,
 	DateFormat,
 	LocaleData,
-	TimezoneUtil,
 	TimePickerClocks,
 	DateTimePickerRenderer,
 	SegmentedButton,
@@ -183,7 +181,7 @@ sap.ui.define([
 	 * mobile devices, it opens in full screen.
 	 *
 	 * @extends sap.m.DatePicker
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public

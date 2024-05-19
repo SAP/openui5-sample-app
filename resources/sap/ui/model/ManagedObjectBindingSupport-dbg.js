@@ -17,6 +17,7 @@ sap.ui.define([
 	"sap/base/future",
 	"sap/base/Log",
 	"sap/base/assert",
+	"sap/ui/base/BindingInfo",
 	"sap/ui/base/Object",
 	"sap/base/util/ObjectPath",
 	"sap/ui/base/SyncPromise",
@@ -32,6 +33,7 @@ sap.ui.define([
 	future,
 	Log,
 	assert,
+	BindingInfo,
 	BaseObject,
 	ObjectPath,
 	SyncPromise,
@@ -161,30 +163,6 @@ sap.ui.define([
 			}
 
 			/*
-			 * Checks whether a binding can be created for the given oBindingInfo.
-			 *
-			 * @param {object} oBindingInfo
-			 * @returns {boolean} Whether a binding can be created
-			 * @private
-			 */
-			function canCreate(oBindingInfo) {
-				var aParts = oBindingInfo.parts,
-					i;
-
-				if (aParts) {
-					for (i = 0; i < aParts.length; i++) {
-						// check if model exists - ignore static bindings
-						if ( !that.getModel(aParts[i].model) && aParts[i].value === undefined) {
-							return false;
-						}
-					}
-					return true;
-				} else { // List or object binding
-					return !!that.getModel(oBindingInfo.model);
-				}
-			}
-
-			/*
 			 * Remove binding, detach all events and destroy binding object
 			 */
 			function removeBinding(oBindingInfo) {
@@ -210,7 +188,7 @@ sap.ui.define([
 			// create object bindings if they don't exist yet
 			for ( sName in this.mObjectBindingInfos ) {
 				oBindingInfo = this.mObjectBindingInfos[sName];
-				bCanCreate = canCreate(oBindingInfo);
+				bCanCreate = BindingInfo.isReady(oBindingInfo, this);
 				// if there is a binding and if it became invalid through the current model change, then remove it
 				if ( oBindingInfo.binding && becameInvalid(oBindingInfo) ) {
 					removeBinding(oBindingInfo);
@@ -242,7 +220,7 @@ sap.ui.define([
 				}
 
 				// if there is no binding and if all required information is available, create a binding object
-				if ( !oBindingInfo.binding && canCreate(oBindingInfo) ) {
+				if ( !oBindingInfo.binding && BindingInfo.isReady(oBindingInfo, this) ) {
 					if (oBindingInfo.factory) {
 						this._bindAggregation(sName, oBindingInfo);
 					} else {
@@ -662,10 +640,14 @@ sap.ui.define([
 						that.refreshDataState(sName, oDataState);
 					}
 				},
-				fnResolveTypeClass = function(sTypeName) {
+				fnResolveTypeClass = function(sTypeName, oInstance) {
 					var sModulePath = sTypeName.replace(/\./g, "/");
 					// 1. require probing
 					var TypeClass = sap.ui.require(sModulePath);
+
+					/**
+					 * @deprecated
+					 */
 					if (!TypeClass) {
 						// 2. Global lookup
 						TypeClass = ObjectPath.get(sTypeName);
@@ -677,6 +659,11 @@ sap.ui.define([
 							TypeClass = sap.ui.requireSync(sModulePath); // legacy-relevant
 						}
 					}
+
+					if (typeof TypeClass !== "function") {
+						throw new Error(`Cannot find type "${sTypeName}" used in control "${oInstance.getId()}"!`);
+					}
+
 					return TypeClass;
 				};
 
@@ -688,10 +675,7 @@ sap.ui.define([
 				// Create type instance if needed
 				oType = oPart.type;
 				if (typeof oType == "string") {
-					clType = fnResolveTypeClass(oType);
-					if (typeof clType !== "function") {
-						throw new Error("Cannot find type \"" + oType + "\" used in control \"" + that.getId() + "\"!");
-					}
+					clType = fnResolveTypeClass(oType, that);
 					oType = new clType(oPart.formatOptions, oPart.constraints);
 				}
 
@@ -713,7 +697,7 @@ sap.ui.define([
 				if (sMode !== BindingMode.TwoWay) {
 					sCompositeMode = BindingMode.OneWay;
 				}
-
+				oBinding.attachEvents(oPart.events);
 				aBindings.push(oBinding);
 			});
 
@@ -722,7 +706,7 @@ sap.ui.define([
 				// Create type instance if needed
 				oType = oBindingInfo.type;
 				if (typeof oType == "string") {
-					clType = fnResolveTypeClass(oType);
+					clType = fnResolveTypeClass(oType, this);
 					oType = new clType(oBindingInfo.formatOptions, oBindingInfo.constraints);
 				}
 				oBinding = new CompositeBinding(aBindings, oBindingInfo.useRawValues, oBindingInfo.useInternalValues);
@@ -789,6 +773,11 @@ sap.ui.define([
 						oBinding.detachAggregatedDataStateChange(oBindingInfo.dataStateChangeHandler);
 					}
 				}
+				// For CompositeBindings the part bindings are kept in aBindings not in the BindingInfos.
+				const aBindings = oBindingInfo.aBindings;
+				aBindings?.forEach(function(oPartBinding, i) {
+					oPartBinding.detachEvents(oBindingInfo.parts[i].events);
+				});
 			}
 		},
 

@@ -66,7 +66,7 @@ sap.ui.define(function() {
 				},
 				ui5: {
 					libs: "sap.ui.testlib", // only required to establish a CSS scope 'sapTestScope'
-					theme: "sap_hcb"
+					theme: "test_theme_scoped"
 				}
 			},
 			DuplicateIds: {
@@ -87,6 +87,16 @@ sap.ui.define(function() {
 					paths:{
 						"testdata/core": "test-resources/sap/ui/core/qunit/"
 					}
+				},
+				qunit: {
+					versions : {
+						"2.18" : {
+							module : "test-resources/sap/ui/core/qunit/thirdparty/qunit-2.18",
+							css : "test-resources/sap/ui/core/qunit/thirdparty/qunit-2.18.css"
+						}
+					},
+					version : "2.18",
+					reorder : false
 				},
 				module: [
 					"testdata/core/Element_base.qunit",

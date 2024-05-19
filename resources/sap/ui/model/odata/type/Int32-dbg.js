@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.Int
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @alias sap.ui.model.odata.type.Int32
 	 * @param {object} [oFormatOptions]

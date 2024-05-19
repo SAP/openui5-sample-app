@@ -7,7 +7,9 @@
 /**
  * Initialization Code and shared classes of library sap.f.
  */
-sap.ui.define(["sap/ui/base/DataType",
+sap.ui.define([
+	"sap/ui/core/Lib",
+	"sap/ui/base/DataType",
 	"sap/m/AvatarShape",
 	"sap/m/AvatarSize",
 	"sap/m/AvatarType",
@@ -19,7 +21,8 @@ sap.ui.define(["sap/ui/base/DataType",
 	"sap/ui/Global",
 	"sap/ui/core/library",
 	"sap/ui/layout/library"], // library dependency
-	function(DataType,
+	function(Library,
+			 DataType,
 			 AvatarShape,
 			 AvatarSize,
 			 AvatarType,
@@ -36,13 +39,14 @@ sap.ui.define(["sap/ui/base/DataType",
 	 * @namespace
 	 * @alias sap.f
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @since 1.44
 	 * @public
 	 */
-	var thisLib = sap.ui.getCore().initLibrary({
+	var thisLib = Library.init({
+		apiVersion: 2,
 		name : "sap.f",
-		version: "1.122.1",
+		version: "1.124.0",
 		dependencies : ["sap.ui.core", "sap.m", "sap.ui.layout"],
 		designtime: "sap/f/designtime/library.designtime",
 		interfaces: [
@@ -65,7 +69,9 @@ sap.ui.define(["sap/ui/base/DataType",
 			"sap.f.DynamicPageTitleShrinkRatio",
 			"sap.f.IllustratedMessageSize",
 			"sap.f.IllustratedMessageType",
-			"sap.f.LayoutType"
+			"sap.f.LayoutType",
+			"sap.f.SidePanelPosition",
+			"sap.f.NavigationDirection"
 		],
 		controls: [
 			"sap.f.Avatar",
@@ -175,6 +181,11 @@ sap.ui.define(["sap/ui/base/DataType",
 		*/
 		Middle: "Middle"
 	};
+
+	/**
+	 * @deprecated As of version 1.54
+	 */
+	DataType.registerEnum("sap.f.DynamicPageTitleArea", thisLib.DynamicPageTitleArea);
 
 	/**
 	* @classdesc A string type that represents the shrink ratios of the areas within the <code>sap.f.DynamicPageTitle</code>.
@@ -346,6 +357,11 @@ sap.ui.define(["sap/ui/base/DataType",
 	thisLib.AvatarShape = AvatarShape;
 
 	/**
+	 * @deprecated As of version 1.73
+	 */
+	DataType.registerEnum("sap.f.AvatarShape", thisLib.AvatarShape);
+
+	/**
 	 * Predefined sizes for the {@link sap.f.Avatar} control.
 	 *
 	 * This is an alias for {@link sap.m.AvatarSize} and only kept for compatibility reasons.
@@ -356,6 +372,11 @@ sap.ui.define(["sap/ui/base/DataType",
 	 * @since 1.46
 	 */
 	thisLib.AvatarSize = AvatarSize;
+
+	/**
+	 * @deprecated As of version 1.73
+	 */
+	DataType.registerEnum("sap.f.AvatarSize", thisLib.AvatarSize);
 
 	/**
 	 * Interface for controls suitable for the <code>stickySubheaderProvider</code>
@@ -381,6 +402,44 @@ sap.ui.define(["sap/ui/base/DataType",
 	 */
 
 	/**
+	 * Returns the content (control) used in the subheader.
+	 *
+	 * @function
+	 * @name sap.f.IDynamicPageStickyContent._getStickyContent
+	 * @returns {sap.ui.core.Control} the content (control) used in the subheader
+	 * @private
+	 */
+
+	/**
+	 * Ensures that the content (control) returned by <code>_getStickyContent</code>,
+	 * is placed back in its place in the provider
+	 *
+	 * @function
+	 * @name sap.f.IDynamicPageStickyContent._returnStickyContent
+	 * @private
+	 */
+
+	/**
+	 * Returns boolean value that shows where the sticky content is placed
+	 * (in its provider or in the code>DynamicPage</code>)
+	 *
+	 * @function
+	 * @name sap.f.IDynamicPageStickyContent._getStickySubHeaderSticked
+	 * @returns {boolean} true if content is in <code>DynamicPage</code> (sticked), false if in provider
+	 * @private
+	 */
+
+	/**
+	 * Accepts a boolean argument to notify the provider where its sticky
+	 * content is placed
+	 *
+	 * @function
+	 * @name sap.f.IDynamicPageStickyContent._setStickySubHeaderSticked
+	 * @param {boolean} bIsInStickyContainer
+	 * @private
+	 */
+
+	/**
 	 * Types of {@link sap.f.Avatar} based on the displayed content.
 	 *
 	 * This is an alias for {@link sap.m.AvatarType} and only kept for compatibility reasons.
@@ -391,6 +450,11 @@ sap.ui.define(["sap/ui/base/DataType",
 	 * @since 1.46
 	 */
 	thisLib.AvatarType = AvatarType;
+
+	/**
+	 * @deprecated As of version 1.73
+	 */
+	DataType.registerEnum("sap.f.AvatarType", thisLib.AvatarType);
 
 	/**
 	 * Possible background color options for the {@link sap.f.Avatar} control.
@@ -413,6 +477,11 @@ sap.ui.define(["sap/ui/base/DataType",
 	thisLib.AvatarColor = AvatarColor;
 
 	/**
+	 * @deprecated As of version 1.73
+	 */
+	DataType.registerEnum("sap.f.AvatarColor", thisLib.AvatarColor);
+
+	/**
 	 * Types of image size and position that determine how an image fits in the {@link sap.f.Avatar} control area.
 	 *
 	 * This is an alias for {@link sap.m.AvatarImageFitType} and only kept for compatibility reasons.
@@ -423,6 +492,11 @@ sap.ui.define(["sap/ui/base/DataType",
 	 * @since 1.46
 	 */
 	thisLib.AvatarImageFitType = AvatarImageFitType;
+
+	/**
+	 * @deprecated As of version 1.73
+	 */
+	DataType.registerEnum("sap.f.AvatarImageFitType", thisLib.AvatarImageFitType);
 
 	/**
 	 * Group modes for the {@link sap.f.AvatarGroup} control.
@@ -601,6 +675,8 @@ sap.ui.define(["sap/ui/base/DataType",
 		Right: "Right"
 	};
 
+	DataType.registerEnum("sap.f.NavigationDirection", thisLib.NavigationDirection);
+
 	/**
 	 * Enumeration for different SidePanel position.
 	 *
@@ -623,6 +699,8 @@ sap.ui.define(["sap/ui/base/DataType",
 		Right: "Right"
 	};
 
+	DataType.registerEnum("sap.f.SidePanelPosition", thisLib.SidePanelPosition);
+
 	/**
 	 * Available <code>Illustration</code> types for the {@link sap.f.IllustratedMessage} control.
 	 *
@@ -636,6 +714,11 @@ sap.ui.define(["sap/ui/base/DataType",
 	thisLib.IllustratedMessageType = IllustratedMessageType;
 
 	/**
+	 * @deprecated As of version 1.98
+	 */
+	DataType.registerEnum("sap.f.IllustratedMessageType", thisLib.IllustratedMessageType);
+
+	/**
 	 * Available <code>Illustration</code> sizes for the {@link sap.f.IllustratedMessage} control.
 	 *
 	 * This is an alias for {@link sap.m.IllustratedMessageSize} and only kept for compatibility reasons.
@@ -647,6 +730,11 @@ sap.ui.define(["sap/ui/base/DataType",
 	 */
 	thisLib.IllustratedMessageSize = IllustratedMessageSize;
 
+	/**
+	 * @deprecated As of version 1.98
+	 */
+	DataType.registerEnum("sap.f.IllustratedMessageSize", thisLib.IllustratedMessageSize);
+
 
 	/**
 	 * @deprecated since 1.56 as lazy loading implies sync loading
@@ -657,6 +745,14 @@ sap.ui.define(["sap/ui/base/DataType",
 		sap.ui.lazyRequire("sap.f.routing.TargetHandler");
 		sap.ui.lazyRequire("sap.f.routing.Targets");
 	}());
+
+	/*
+	* Register all of the above defined enums.
+	*/
+	DataType.registerEnum("sap.f.AvatarGroupType", thisLib.AvatarGroupType);
+	DataType.registerEnum("sap.f.cards.HeaderPosition", thisLib.cards.HeaderPosition);
+	DataType.registerEnum("sap.f.cards.NumericHeaderSideIndicatorsAlignment", thisLib.cards.NumericHeaderSideIndicatorsAlignment);
+	DataType.registerEnum("sap.f.LayoutType", thisLib.LayoutType);
 
 	return thisLib;
 

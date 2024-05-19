@@ -73,7 +73,7 @@ function(
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -425,8 +425,6 @@ function(
 			this.setErrorMessageAnnouncementState(false);
 		}
 
-		this.$("message").text(this.getValueStateText());
-
 		// now dom value is up-to-date
 		this._bCheckDomValue = false;
 
@@ -544,6 +542,10 @@ function(
 	 * @private
 	 */
 	InputBase.prototype.ontap = function(oEvent) {
+		if (!this.isMobileDevice()) {
+			this.openValueStateMessage();
+		}
+
 		// in order to stay backward compatible - we need to implement the tap
 		return;
 	};
@@ -636,6 +638,16 @@ function(
 			// backwards compatibility
 			newValue: sValue
 		});
+	};
+
+	/**
+	 * Indicates whether the control should use <code>sap.m.Dialog</code> or not.
+	 *
+	 * @returns {boolean} Boolean.
+	 * @protected
+	 */
+	InputBase.prototype.isMobileDevice = function () {
+		return Device.system.phone;
 	};
 
 	/* ----------------------------------------------------------- */
@@ -964,12 +976,10 @@ function(
 		// To avoid execution of the opening logic after the closing one,
 		// when closing the suggestions dialog on mobile devices, due to race condition,
 		// the value state message should be closed with timeout because it's opened that way
-		setTimeout(function() {
-			if (this._oValueStateMessage) {
-				this._detachValueStateLinkPress();
-				this._oValueStateMessage.close();
-			}
-		}.bind(this), 0);
+		if (this._oValueStateMessage) {
+			this._detachValueStateLinkPress();
+			this._oValueStateMessage.close();
+		}
 	};
 
 	/**

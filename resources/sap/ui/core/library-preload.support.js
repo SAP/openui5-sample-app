@@ -54,17 +54,6 @@ sap.ui.predefine("sap/ui/core/rules/App.support", [
 	var Severity = SupportLib.Severity; // Hint, Warning, Error
 	var Audiences = SupportLib.Audiences; // Control, Internal, Application
 
-	var aObsoleteFunctionNames = ["jQuery.sap.require", "$.sap.require", "sap.ui.requireSync", "jQuery.sap.sjax"];
-
-	// avoid spoiling the globalAPIRule by using Object.getOwnPropertyDescriptor
-	if (jQuery && jQuery.sap && Object.getOwnPropertyDescriptor(jQuery.sap, "sjax").value) {
-		aObsoleteFunctionNames.push("jQuery.sap.syncHead",
-			"jQuery.sap.syncGet",
-			"jQuery.sap.syncPost",
-			"jQuery.sap.syncGetText",
-			"jQuery.sap.syncGetJSON");
-	}
-
 	//**********************************************************
 	// Rule Definitions
 	//**********************************************************
@@ -102,6 +91,17 @@ sap.ui.predefine("sap/ui/core/rules/App.support", [
 					}
 				}
 			});
+
+			const aObsoleteFunctionNames = ["jQuery.sap.require", "$.sap.require", "sap.ui.requireSync", "jQuery.sap.sjax"];
+			// avoid spoiling the globalAPIRule by using Object.getOwnPropertyDescriptor
+			if (jQuery && jQuery.sap && Object.getOwnPropertyDescriptor(jQuery.sap, "sjax").value) {
+				aObsoleteFunctionNames.push(
+					"jQuery.sap.syncHead",
+					"jQuery.sap.syncGet",
+					"jQuery.sap.syncPost",
+					"jQuery.sap.syncGetText",
+					"jQuery.sap.syncGetJSON");
+			}
 
 			// checks the given module's functions code for invalidContent
 			// returns an array which contains the functions with invalid content
@@ -1075,8 +1075,8 @@ sap.ui.predefine("sap/ui/core/rules/Config.support", [
 /**
  * Helper for core functionality in Support Tool infrastructure.
  */
-sap.ui.predefine("sap/ui/core/rules/CoreHelper.support", ["sap/ui/core/Element", "sap/ui/core/Theming", "sap/ui/thirdparty/jquery"],
-	function(Element, Theming, jQuery) {
+sap.ui.predefine("sap/ui/core/rules/CoreHelper.support", ["sap/ui/core/Element", "sap/ui/core/Theming"],
+	function(Element, Theming) {
 		"use strict";
 
 		var CoreHelper = {
@@ -1091,7 +1091,6 @@ sap.ui.predefine("sap/ui/core/rules/CoreHelper.support", ["sap/ui/core/Element",
 				/**
 				 * Here we list all controls that can contain DOM elements with style different than the framework style
 				 */
-				// jQuery Plugin "control"
 				var skipParents = ["sap.ui.core.HTML"],
 					parentNode = Element.closestTo(node);
 
@@ -1107,7 +1106,7 @@ sap.ui.predefine("sap/ui/core/rules/CoreHelper.support", ["sap/ui/core/Element",
 
 			},
 
-			/***
+			/**
 			 * Search and filter all style sheets that are not loaded by the default theme and controls.
 			 * @returns {array} List of all custom CSS files paths.
 			 */
@@ -1122,7 +1121,7 @@ sap.ui.predefine("sap/ui/core/rules/CoreHelper.support", ["sap/ui/core/Element",
 				});
 			},
 
-			/***
+			/**
 			 * Gets the right path to the style sheet.
 			 * @param styleSheet Style sheet that need to be checked.
 			 * @returns {string} Full path to the file if its loaded externally and "Inline" if applied style is added by <style> tag
@@ -1131,7 +1130,7 @@ sap.ui.predefine("sap/ui/core/rules/CoreHelper.support", ["sap/ui/core/Element",
 				return styleSheet.href || "Inline";
 			},
 
-			/***
+			/**
 			 * Gets the only the style sheet name from source.
 			 * @param styleSheet
 			 * @returns {string} Name of the file source or "<style> tag" if style sheet is inline.
@@ -1162,20 +1161,11 @@ sap.ui.predefine("sap/ui/core/rules/CoreHelper.support", ["sap/ui/core/Element",
  * Defines miscellaneous support rules.
  */
 sap.ui.predefine("sap/ui/core/rules/Misc.support", [
+	"sap/base/Log",
 	"sap/ui/core/ComponentRegistry",
-	"sap/ui/support/library",
-	"./CoreHelper.support",
-	"sap/ui/thirdparty/jquery",
-	"sap/ui/dom/jquery/control" // jQuery Plugin "control"
-], function(ComponentRegistry, SupportLib, CoreHelper, jQuery) {
+	"sap/ui/support/library"
+], function(Log, ComponentRegistry, SupportLib) {
 	"use strict";
-
-	// support rules can get loaded within a ui5 version which does not have module "sap/base/Log" yet
-	// therefore load the jQuery.sap.log fallback if not available
-	var Log = sap.ui.require("sap/base/Log");
-	if (!Log) {
-		Log = jQuery.sap.log;
-	}
 
 	// shortcuts
 	var Categories = SupportLib.Categories; // Accessibility, Performance, Memory, ...
@@ -1643,16 +1633,12 @@ sap.ui.predefine("sap/ui/core/rules/Rendering.support", [
 /**
  * Defines miscellaneous support rules.
  */
-sap.ui.predefine("sap/ui/core/rules/Theming.support", ["sap/ui/core/Element", "sap/ui/support/library", "./CoreHelper.support", "sap/ui/thirdparty/jquery"],
-	function(Element, SupportLib, CoreHelper, jQuery) {
+sap.ui.predefine("sap/ui/core/rules/Theming.support", [
+	"sap/ui/core/Element",
+	"sap/ui/support/library",
+	"./CoreHelper.support"
+], function(Element, SupportLib, CoreHelper) {
 	"use strict";
-
-	// support rules can get loaded within a ui5 version which does not have module "sap/base/Log" yet
-	// therefore load the jQuery.sap.log fallback if not available
-	var Log = sap.ui.require("sap/base/Log");
-	if (!Log) {
-		Log = jQuery.sap.log;
-	}
 
 	// shortcuts
 	var Categories = SupportLib.Categories; // Accessibility, Performance, Memory, ...
@@ -1663,7 +1649,7 @@ sap.ui.predefine("sap/ui/core/rules/Theming.support", ["sap/ui/core/Element", "s
 	// Rule Definitions
 	//**********************************************************
 
-	/***
+	/**
 	 * Checks for custom css files
 	 */
 	var oCssCheckCustomStyles = {
@@ -1720,7 +1706,7 @@ sap.ui.predefine("sap/ui/core/rules/Theming.support", ["sap/ui/core/Element", "s
 		}
 	};
 
-	/***
+	/**
 	 * Checks for custom styles applied on UI elements
 	 */
 	var oCssCheckCustomStylesThatAffectControls = {
@@ -1779,7 +1765,7 @@ sap.ui.predefine("sap/ui/core/rules/Theming.support", ["sap/ui/core/Element", "s
 		}
 	};
 
-	/***
+	/**
 	 * Checks for custom styles applied on UI elements
 	 *
 	 * @deprecated Since 1.119

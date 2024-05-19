@@ -25,8 +25,8 @@ sap.ui.define([
 		// maps predicate to node id and number of levels to expand
 		mPredicate2ExpandLevels = {};
 
-		// @see #getOutOfPlaceGroupedByParent
-		mParentPredicate2OutOfPlace = {};
+		// @see #getOutOfPlace
+		mPredicate2OutOfPlace = {};
 
 		/**
 		 * Constructor for a new _TreeState.
@@ -67,7 +67,8 @@ sap.ui.define([
 		}
 
 		/**
-		 * Delete a node.
+		 * Delete all tree state information for the given node and all known descendants. Expects
+		 * that the node is collapsed.
 		 *
 		 * @param {object} oNode - The node
 		 *
@@ -80,6 +81,39 @@ sap.ui.define([
 
 			const sPredicate = _Helper.getPrivateAnnotation(oNode, "predicate");
 			delete this.mPredicate2ExpandLevels[sPredicate];
+			this.deleteOutOfPlace(sPredicate);
+			_Helper.getPrivateAnnotation(oNode, "spliced", []).forEach((oChild) => {
+				this.delete(oChild);
+			});
+		}
+
+		/**
+		 * Deletes a node and all its descendants from the out-of-place list (making them in-place).
+		 *
+		 * @param {string} sPredicate - The node's key predicate
+		 * @param {boolean} [bUpAndDown] - Whether to start from top-most out-of-place ancestor
+		 *
+		 * @public
+		 */
+		deleteOutOfPlace(sPredicate, bUpAndDown) {
+			if (!this.isOutOfPlace(sPredicate)) {
+				return; // already in place
+			}
+			if (bUpAndDown) {
+				for (;;) { // find top-most out-of-place ancestor
+					const sParentPredicate = this.mPredicate2OutOfPlace[sPredicate].parentPredicate;
+					if (!this.isOutOfPlace(sParentPredicate)) {
+						break;
+					}
+					sPredicate = sParentPredicate;
+				}
+			}
+			delete this.mPredicate2OutOfPlace[sPredicate];
+			Object.values(this.mPredicate2OutOfPlace).forEach((oOutOfPlace) => {
+				if (oOutOfPlace.parentPredicate === sPredicate) {
+					this.deleteOutOfPlace(oOutOfPlace.nodePredicate);
+				}
+			});
 		}
 
 		/**
@@ -119,6 +153,30 @@ sap.ui.define([
 		}
 
 		/**
+		 * Returns the out-of-place information for the node with the given key predicate.
+		 *
+		 * @param {string} sPredicate - The node's key predicate
+		 * @returns {{nodeFilter : string, nodePredicate : string, parentFilter : string?, parentPredicate : string?}|undefined}
+		 *   The out-of-place information or undefined if the node is in place
+		 *
+		 * @public
+		 */
+		getOutOfPlace(sPredicate) {
+			return this.mPredicate2OutOfPlace[sPredicate];
+		}
+
+		/**
+		 * Returns the number of out-of-place nodes.
+		 *
+		 * @returns {number} The number of out-of-place nodes
+		 *
+		 * @public
+		 */
+		getOutOfPlaceCount() {
+			return this.getOutOfPlacePredicates().length;
+		}
+
+		/**
 		 * Returns information about the out-of-place nodes grouped by parent.
 		 *
 		 * @returns {Array<{nodeFilters : string[], nodePredicates : string[], parentFilter : string?, parentPredicate : string?}>}
@@ -129,19 +187,42 @@ sap.ui.define([
 		 * @public
 		 */
 		getOutOfPlaceGroupedByParent() {
-			return Object.values(this.mParentPredicate2OutOfPlace);
+			const mOutOfPlaceGroupedByParent = {};
+			for (const oOutOfPlace of Object.values(this.mPredicate2OutOfPlace)) {
+				const sParentPredicate = oOutOfPlace.parentPredicate;
+				const oOutOfPlaceByParent = mOutOfPlaceGroupedByParent[sParentPredicate] ??= {
+					nodeFilters : [],
+					nodePredicates : [],
+					parentFilter : oOutOfPlace.parentFilter,
+					parentPredicate : sParentPredicate
+				};
+				oOutOfPlaceByParent.nodeFilters.push(oOutOfPlace.nodeFilter);
+				oOutOfPlaceByParent.nodePredicates.push(oOutOfPlace.nodePredicate);
+			}
+			return Object.values(mOutOfPlaceGroupedByParent);
 		}
 
 		/**
-		 * Returns the number of out-of-place nodes.
-		 * @returns {number} The number of out-of-place nodes
+		 * Returns the key predicates of all out-of-place nodes.
+		 *
+		 * @returns {string[]} The key predicates of all out-of-place nodes
 		 *
 		 * @public
 		 */
-		getOutOfPlaceCount() {
-			return Object.values(this.mParentPredicate2OutOfPlace).reduce(
-				(iCount, oOutOfPlace) => iCount + oOutOfPlace.nodeFilters.length,
-			    0);
+		getOutOfPlacePredicates() {
+			return Object.keys(this.mPredicate2OutOfPlace);
+		}
+
+		/**
+		 * Tells whether the node with the given key predicate is currently out of place.
+		 *
+		 * @param {string} sPredicate - The node's key predicate
+		 * @returns {boolean} Whether the node is out of place
+		 *
+		 * @public
+		 */
+		isOutOfPlace(sPredicate) {
+			return sPredicate in this.mPredicate2OutOfPlace;
 		}
 
 		/**
@@ -151,7 +232,16 @@ sap.ui.define([
 		 */
 		reset() {
 			this.mPredicate2ExpandLevels = {};
-			this.mParentPredicate2OutOfPlace = {};
+			this.resetOutOfPlace();
+		}
+
+		/**
+		 * Resets all out-of-place information.
+		 *
+		 * @public
+		 */
+		resetOutOfPlace() {
+			this.mPredicate2OutOfPlace = {};
 		}
 
 		/**
@@ -163,20 +253,15 @@ sap.ui.define([
 		 * @public
 		 */
 		setOutOfPlace(oNode, oParent) {
-			const sParentPredicate = oParent && _Helper.getPrivateAnnotation(oParent, "predicate");
-			let oOutOfPlace = this.mParentPredicate2OutOfPlace[sParentPredicate];
-			if (!oOutOfPlace) {
-				this.mParentPredicate2OutOfPlace[sParentPredicate] = oOutOfPlace = {
-					nodeFilters : [],
-					nodePredicates : []
-				};
-				if (oParent) {
-					oOutOfPlace.parentFilter = this.fnGetKeyFilter(oParent);
-					oOutOfPlace.parentPredicate = sParentPredicate;
-				}
+			const oOutOfPlace = {
+				nodeFilter : this.fnGetKeyFilter(oNode),
+				nodePredicate : _Helper.getPrivateAnnotation(oNode, "predicate")
+			};
+			if (oParent) {
+				oOutOfPlace.parentFilter = this.fnGetKeyFilter(oParent);
+				oOutOfPlace.parentPredicate = _Helper.getPrivateAnnotation(oParent, "predicate");
 			}
-			oOutOfPlace.nodeFilters.push(this.fnGetKeyFilter(oNode));
-			oOutOfPlace.nodePredicates.push(_Helper.getPrivateAnnotation(oNode, "predicate"));
+			this.mPredicate2OutOfPlace[oOutOfPlace.nodePredicate] = oOutOfPlace;
 		}
 	}
 

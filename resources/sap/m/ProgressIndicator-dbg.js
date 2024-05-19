@@ -61,7 +61,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -246,6 +246,12 @@ sap.ui.define([
 				oPopover.openBy(this);
 			}
 		}
+	};
+
+	ProgressIndicator.prototype.setShowValue = function (bShowValue) {
+		this.toggleStyleClass("sapMPINoValue", !bShowValue);
+
+		return this.setProperty("showValue", bShowValue);
 	};
 
 	/**

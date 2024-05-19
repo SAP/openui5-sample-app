@@ -124,7 +124,7 @@ sap.ui.define([
 		 * @since 1.44.0
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @public
 		 * @alias sap.m.HeaderContainer
@@ -206,7 +206,13 @@ sap.ui.define([
         			* @since 1.99
 					* @experimental since 1.99
 					*/
-					gridLayout: {type: "boolean", defaultValue: false}
+					gridLayout: {type: "boolean", defaultValue: false},
+					/**
+					 * The height of all the items is stretched to match the largest item in the row within the HeaderContainer.
+					 *
+					 * If set to <code>true</code>, the items are going to get stretched.
+					 */
+					snapToRow: {type: "boolean", group: "Appearance", defaultValue: false}
 				},
 				defaultAggregation: "content",
 				aggregations: {

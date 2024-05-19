@@ -6,13 +6,13 @@
 sap.ui.define([
 	"sap/base/Log",
 	"sap/ui/core/library",
+	"sap/ui/core/message/MessageType",
 	"sap/ui/test/Opa5",
 	"sap/ui/test/TestUtils"
-], function (Log, library, Opa5, TestUtils) {
+], function (Log, library, MessageType, Opa5, TestUtils) {
 	"use strict";
 
-	var MessageType = library.MessageType, // shortcut for sap.ui.core.MessageType
-		ValueState = library.ValueState; // shortcut for sap.ui.core.ValueState
+	var ValueState = library.ValueState; // shortcut for sap.ui.core.ValueState
 
 	return {
 		checkMessages : function (Given, When, Then, sUIComponent) {
@@ -309,15 +309,15 @@ sap.ui.define([
 			Then.onTheSimulateDiscountDialog
 				.checkInputValue("SimulateDiscountResult::Result", "");
 			When.onTheSimulateDiscountDialog.enterDiscount("25");
-			When.onTheSimulateDiscountDialog.executeSimulateDiscount();
+			When.onTheSimulateDiscountDialog.invokeSimulateDiscount();
 			Then.onTheSimulateDiscountDialog
 				.checkInputValue("SimulateDiscountResult::Result", "188.05");
 			When.onTheSimulateDiscountDialog.enterDiscount("75");
-			When.onTheSimulateDiscountDialog.executeSimulateDiscount();
+			When.onTheSimulateDiscountDialog.invokeSimulateDiscount();
 			aExpectedLogs.push({
 				component : "sap.ui.model.odata.v4.ODataContextBinding",
 				level : Log.Level.ERROR,
-				message : "Failed to execute /SalesOrderList('0500000002')/"
+				message : "Failed to invoke /SalesOrderList('0500000002')/"
 					+ "com.sap.gateway.default.zui5_epm_sample.v0002."
 					+ "SalesOrderSimulateDiscount(...)",
 				details : sDiscountFailure

@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @class Provides configuration options and an extended behavior for the context menu that is applied to the related control.
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @public
 	 * @since 1.121
 	 * @alias sap.m.plugins.ContextMenuSetting

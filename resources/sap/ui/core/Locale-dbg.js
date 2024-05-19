@@ -20,7 +20,7 @@ sap.ui.define(['sap/base/assert', 'sap/ui/base/Object', "sap/base/i18n/Localizat
 	 *
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @public
 	 * @alias sap.ui.core.Locale
 	 */

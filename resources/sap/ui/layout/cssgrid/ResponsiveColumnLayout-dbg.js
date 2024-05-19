@@ -44,7 +44,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @extends sap.ui.layout.cssgrid.GridLayoutBase
 	 *

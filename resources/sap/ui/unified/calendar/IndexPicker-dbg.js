@@ -32,7 +32,7 @@ sap.ui.define([
 	 * This control serves for picking an item from a grid with items which are relative periods in Plannig Calendar.
 	 * This is used inside the sap.m.PlanningCalendar relative views. Not for stand alone usage.
 	 * @extends sap.ui.core.Control
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @private

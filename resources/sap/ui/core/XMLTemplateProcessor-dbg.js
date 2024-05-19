@@ -212,12 +212,13 @@ function(
 
 	/**
 	 * Creates a function based on the passed mode and callback which applies a callback to each child of a node.
-	 * @param {boolean} bAsync The strategy to choose
 	 * @param {function} fnCallback The callback to apply
+	 * @param {boolean} bAsync The strategy to choose
 	 * @returns {function} The created function
 	 * @private
+	 * @ui5-transform-hint replace-param bAsync true
 	 */
-	function getHandleChildrenStrategy(bAsync, fnCallback) {
+	function getHandleChildrenStrategy(fnCallback, bAsync) {
 
 		// sync strategy ensures processing order by just being sync
 		function syncStrategy(node, mOptions) {
@@ -327,9 +328,10 @@ function(
 	 * @param {boolean} bAsync Whether or not to perform the template processing asynchronously
 	 * @returns {Promise} which resolves with the xmlNode
 	 * @private
+	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	XMLTemplateProcessor.enrichTemplateIdsPromise = function (xmlNode, oView, bAsync) {
-		return parseTemplate(xmlNode, oView, true, bAsync).then(function() {
+		return parseTemplate(xmlNode, oView, true, undefined, bAsync).then(function() {
 			return xmlNode;
 		});
 	};
@@ -355,9 +357,11 @@ function(
 	 * @param {object} oParseConfig parse configuration options, e.g. settings pre-processor
 	 * @return {Promise} with an array containing Controls and/or plain HTML element strings
 	 * @private
+	 * @ui5-restricted sap.ui.core.Fragment, sap.ui.core.mvc.XMLView
+	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	XMLTemplateProcessor.parseTemplatePromise = function(xmlNode, oView, bAsync, oParseConfig) {
-		return parseTemplate(xmlNode, oView, false, bAsync, oParseConfig).then(function(vResult) {
+		return parseTemplate(xmlNode, oView, false, oParseConfig, bAsync).then(function(vResult) {
 			// vResult is the result array of the XMLTP's parsing.
 			// Elements in vResult can be:
 			//  * RenderManager Call (Array)
@@ -431,6 +435,7 @@ function(
 	 *
 	 * @return {Promise|undefined} The promise resolves after all modules are loaded. If the given xml node
 	 *  doesn't have require context defined, undefined is returned.
+	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	function parseAndLoadRequireContext(xmlNode, bAsync) {
 		var sCoreContext = xmlNode.getAttributeNS(CORE_NAMESPACE, "require"),
@@ -484,7 +489,11 @@ function(
 		}
 	}
 
-	function fnTriggerExtensionPointProvider(bAsync, oTargetControl, mAggregationsWithExtensionPoints) {
+	/**
+	 * @private
+	 * @ui5-transform-hint replace-param bAsync true
+	 */
+	function fnTriggerExtensionPointProvider(oTargetControl, mAggregationsWithExtensionPoints, bAsync) {
 		var pProvider = SyncPromise.resolve();
 
 		// if no extension points are given, we don't have to do anything here
@@ -559,8 +568,9 @@ function(
 	 * @param {object} oParseConfig parse configuration options, e.g. settings pre-processor
 	 *
 	 * @return {Promise} with an array containing Controls and/or plain HTML element strings
+	 * @ui5-transform-hint replace-param bAsync true
 	 */
-	function parseTemplate(xmlNode, oView, bEnrichFullIds, bAsync, oParseConfig) {
+	function parseTemplate(xmlNode, oView, bEnrichFullIds, oParseConfig, bAsync) {
 		// the output of the template parsing, containing strings and promises which resolve to control or control arrays
 		// later this intermediate state with promises gets resolved to a flat array containing only strings and controls
 		var aResult = [],
@@ -752,11 +762,11 @@ function(
 					return createRegularControls(node, oView.getMetadata().getClass(), pChain, null, { rootArea: true, rootNode: true });
 				});
 			} else {
-				var handleChildren = getHandleChildrenStrategy(bAsync, function(node, childNode, mOptions) {
+				var handleChildren = getHandleChildrenStrategy(function(node, childNode, mOptions) {
 					if (childNode.nodeType === 1 /* Element Node*/) {
 						return createControls(childNode, mOptions.chain, null /*closest binding*/, undefined /* aggregation info*/, { rootArea: true });
 					}
-				});
+				}, bAsync);
 
 				pResultChain = pChain.then(function() {
 					return handleChildren(node, {
@@ -874,6 +884,7 @@ function(
 			if ( node.nodeType === 1 /* ELEMENT_NODE */ ) {
 				// differentiate between SAPUI5 and plain-HTML children
 				if (node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE ) {
+					future.warningThrows(`Using native HTML content in XMLViews is deprecated.`, oView.getId());
 					if (bRootArea) {
 						if (oAggregation && oAggregation.name !== "content") {
 							Log.error(createErrorInfo(node, "XHTML nodes can only be added to the 'content' aggregation and not to the '" + oAggregation.name + "' aggregation."));
@@ -965,9 +976,9 @@ function(
 							// For HTMLTemplateElement nodes, skip the associated DocumentFragment node
 							var oContent = node instanceof HTMLTemplateElement ? node.content : node;
 
-							var handleChildren = getHandleChildrenStrategy(bAsync, function (node, childNode, mOptions) {
+							var handleChildren = getHandleChildrenStrategy(function (node, childNode, mOptions) {
 								return createControls(childNode, mOptions.chain, mOptions.closestBinding, mOptions.aggregation, mOptions.config);
-							});
+							}, bAsync);
 
 							pResult = handleChildren(oContent, {
 								chain: pRequireContext,
@@ -1435,7 +1446,7 @@ function(
 			 * @private
 			 */
 			// the actual handleChildren function depends on the processing mode
-			var handleChildren = getHandleChildrenStrategy(bAsync, handleChild);
+			var handleChildren = getHandleChildrenStrategy(handleChild, bAsync);
 
 			/**
 			 * @return {Promise} resolving to an array with 0..n controls created from a node
@@ -1485,6 +1496,18 @@ function(
 									wrapperId: sControlId,
 									fnCreate: function(bSync) {
 										var bPrevAsync = bAsync;
+
+										/**
+										 * To stay compatible with legacy factories in 1.x, if the view was originally created sync,
+										 * we don't switch to async processing here, even if the unstash() is called async.
+										 * @deprecated
+										 */
+										if (bAsync === false) {
+											bSync = true;
+										}
+
+										// temporarily switch the stashed subtree to async=false in case the unstash() operation is triggered sync.
+										// the scoped var bAsync applies to everything contained in this view, the original value is restored after the unstash operation
 										bAsync = !bSync;
 
 										try {
@@ -1738,7 +1761,7 @@ function(
 						}
 
 						// check if we need to hand the ExtensionPoint info to the ExtensionProvider
-						pProvider = fnTriggerExtensionPointProvider(bAsync, oInstance, mAggregationsWithExtensionPoints);
+						pProvider = fnTriggerExtensionPointProvider(oInstance, mAggregationsWithExtensionPoints, bAsync);
 
 						return oInstance;
 					};

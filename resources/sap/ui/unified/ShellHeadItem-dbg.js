@@ -28,13 +28,13 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
 	 * @since 1.15.1
 	 * @alias sap.ui.unified.ShellHeadItem
-	 * @deprecated Since version 1.44.0.
+	 * @deprecated As of version 1.44.0, the concept has been discarded.
 	 */
 	var ShellHeadItem = Element.extend("sap.ui.unified.ShellHeadItem", /** @lends sap.ui.unified.ShellHeadItem.prototype */ { metadata : {
 

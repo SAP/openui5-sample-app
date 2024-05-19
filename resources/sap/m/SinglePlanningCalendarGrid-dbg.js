@@ -18,7 +18,6 @@ sap.ui.define([
 	'sap/ui/core/Locale',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/core/format/DateFormat',
-	'sap/ui/core/format/TimezoneUtil',
 	'sap/ui/core/Core',
 	'sap/ui/core/date/UniversalDate',
 	'sap/ui/core/dnd/DragDropInfo',
@@ -50,7 +49,6 @@ sap.ui.define([
 		Locale,
 		InvisibleText,
 		DateFormat,
-		TimezoneUtil,
 		Core,
 		UniversalDate,
 		DragDropInfo,
@@ -117,7 +115,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @private

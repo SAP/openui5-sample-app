@@ -152,13 +152,14 @@ sap.ui.define([
 	 *     {@link sap.ui.model.odata.v4.ODataListBinding#updateAnalyticalInfo} (but without
 	 *     validation here)
 	 *   <li> '$$canonicalPath' with value <code>true</code>
+	 *   <li> '$$clearSelectionOnFilter' with value <code>true</code>
 	 *   <li> '$$groupId' with allowed values as specified in {@link #checkGroupId}
-	 *   <li> '$$updateGroupId' with allowed values as specified in {@link #checkGroupId}
 	 *   <li> '$$inheritExpandSelect' with allowed values <code>false</code> and <code>true</code>
-	 *   <li> "$$noPatch" with value <code>true</code>
+	 *   <li> '$$noPatch' with value <code>true</code>
 	 *   <li> '$$operationMode' with value {@link sap.ui.model.odata.OperationMode.Server}
 	 *   <li> '$$ownRequest' with value <code>true</code>
 	 *   <li> '$$patchWithoutSideEffects' with value <code>true</code>
+	 *   <li> '$$updateGroupId' with allowed values as specified in {@link #checkGroupId}
 	 * </ul>
 	 *
 	 * @param {object} mParameters
@@ -233,6 +234,7 @@ sap.ui.define([
 						});
 					// falls through
 				case "$$canonicalPath":
+				case "$$clearSelectionOnFilter":
 				case "$$noPatch":
 				case "$$ownRequest":
 				case "$$patchWithoutSideEffects":
@@ -357,7 +359,7 @@ sap.ui.define([
 				oCache = this.doCreateCache(sResourcePath, this.mCacheQueryOptions, oContext,
 					sDeepResourcePath, sGroupId, oOldCache);
 				if (!(this.mParameters && this.mParameters.$$sharedRequest)) {
-					this.mCacheByResourcePath = this.mCacheByResourcePath || {};
+					this.mCacheByResourcePath ??= {};
 					this.mCacheByResourcePath[sResourcePath] = oCache;
 				}
 				oCache.$deepResourcePath = sDeepResourcePath;
@@ -703,9 +705,8 @@ sap.ui.define([
 				.then(function (sReducedPath) {
 					if (sReducedPath) {
 						vQueryOptions = undefined;
-					} else if (!vQueryOptions) {
-						// fetchCache only creates a cache if there are query options
-						vQueryOptions = {};
+					} else { // fetchCache only creates a cache if there are query options
+						vQueryOptions ??= {};
 					}
 					return wrapQueryOptions(false, sReducedPath);
 				});
@@ -743,7 +744,7 @@ sap.ui.define([
 		if (!this.bRelative) {
 			return SyncPromise.resolve(this.sPath.slice(1));
 		}
-		oContext = oContext || this.oContext;
+		oContext ??= this.oContext;
 		if (!oContext) {
 			return SyncPromise.resolve();
 		}
@@ -981,8 +982,8 @@ sap.ui.define([
 	/**
 	 * Returns <code>true</code> if this binding or its dependent bindings have property changes,
 	 * created entities, or entity deletions which have not been sent successfully to the server.
-	 * This function does not take the execution of OData operations
-	 * (see {@link sap.ui.model.odata.v4.ODataContextBinding#execute}) into account. Since 1.98.0,
+	 * This function does not take the invocation of OData operations
+	 * (see {@link sap.ui.model.odata.v4.ODataContextBinding#invoke}) into account. Since 1.98.0,
 	 * {@link sap.ui.model.odata.v4.Context#isInactive inactive} contexts are ignored, unless
 	 * (since 1.100.0) their
 	 * {@link sap.ui.model.odata.v4.ODataListBinding#event:createActivate activation} has been
@@ -1159,7 +1160,7 @@ sap.ui.define([
 	 * @see sap.ui.model.odata.v4.ODataModel#lockGroup
 	 */
 	ODataBinding.prototype.lockGroup = function (sGroupId, bLocked, bModifying, fnCancel) {
-		sGroupId = sGroupId || (bModifying ? this.getUpdateGroupId() : this.getGroupId());
+		sGroupId ??= (bModifying ? this.getUpdateGroupId() : this.getGroupId());
 		return this.oModel.lockGroup(sGroupId, this, bLocked, bModifying, fnCancel);
 	};
 
@@ -1213,7 +1214,7 @@ sap.ui.define([
 	 * <code>$$ownRequest</code> parameter (see {@link sap.ui.model.odata.v4.ODataModel#bindList}
 	 * and {@link sap.ui.model.odata.v4.ODataModel#bindContext})
 	 *
-	 * Note: When calling {@link #refresh} multiple times, the result of the request triggered by
+	 * Note: When calling {@link #refresh} multiple times, the result of the request initiated by
 	 * the last call determines the binding's data; it is <b>independent</b> of the order of calls
 	 * to {@link sap.ui.model.odata.v4.ODataModel#submitBatch} with the given group ID.
 	 *
@@ -1572,12 +1573,12 @@ sap.ui.define([
 	 *
 	 * @private
 	 */
-	ODataBinding.prototype.withCache = function (fnProcessor, sPath, bSync, bWithOrWithoutCache) {
+	ODataBinding.prototype.withCache = function (fnProcessor, sPath = "", bSync = false,
+			bWithOrWithoutCache = false) {
 		var oCachePromise = bSync ? SyncPromise.resolve(this.oCache) : this.oCachePromise,
 			sRelativePath,
 			that = this;
 
-		sPath = sPath || "";
 		return oCachePromise.then(function (oCache) {
 			if (oCache) {
 				sRelativePath = that.getRelativePath(sPath);

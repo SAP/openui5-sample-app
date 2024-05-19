@@ -7,18 +7,15 @@
 // Provides control sap.m.MessageListItem.
 sap.ui.define([
 	"sap/ui/core/Lib",
-	"sap/ui/core/library",
 	"sap/ui/core/InvisibleText",
+	"sap/ui/core/message/MessageType",
 	"./library",
 	'./StandardListItem',
 	'./Link',
 	"./MessageListItemRenderer"
 ],
-	function(Library, coreLibrary, InvisibleText, library, StandardListItem, Link, MessageListItemRenderer) {
+	function(Library, InvisibleText, MessageType, library, StandardListItem, Link, MessageListItemRenderer) {
 		"use strict";
-
-		// shortcut for sap.ui.core.MessageType
-		var MessageType = coreLibrary.MessageType;
 
 		// shortcut for sap.m.ListType
 		var ListType = library.ListType;
@@ -34,7 +31,7 @@ sap.ui.define([
 		 * @extends sap.m.StandardListItem
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @private

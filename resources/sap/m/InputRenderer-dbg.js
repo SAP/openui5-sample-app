@@ -114,15 +114,6 @@ sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/ControlBehavior", 'sap
 		if (oControl.getDescription()) {
 			this.writeDescription(oRm, oControl);
 		}
-
-		if (ControlBehavior.isAccessibilityEnabled()) {
-			if (oControl.getShowSuggestion() && oControl.getEnabled() && oControl.getEditable()) {
-				oRm.openStart("span", oControl.getId() + "-SuggDescr").class("sapUiPseudoInvisibleText")
-					.attr("role", "status").attr("aria-live", "polite")
-					.openEnd()
-					.close("span");
-			}
-		}
 	};
 
 	/**
@@ -176,6 +167,12 @@ sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/ControlBehavior", 'sap
 	 */
 	InputRenderer.getAriaRole = function (oControl) {
 		return "";
+	};
+
+	InputRenderer.writeInnerValue = function(oRm, oControl) {
+		if (oControl.getType() !== InputType.Password) {
+			oRm.attr("value", oControl.getValue());
+		}
 	};
 
 	InputRenderer.getAccessibilityState = function (oControl) {

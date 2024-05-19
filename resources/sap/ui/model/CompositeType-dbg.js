@@ -39,7 +39,7 @@ sap.ui.define(['./SimpleType'],
 	 *   <code>true</code>.
 	 * @extends sap.ui.model.SimpleType
 	 * @public
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 */
 	var CompositeType = SimpleType.extend("sap.ui.model.CompositeType", /** @lends sap.ui.model.CompositeType.prototype */ {
 
@@ -135,9 +135,9 @@ sap.ui.define(['./SimpleType'],
 	};
 
 	/**
-	 * Gets the indices of the binding parts for which this type requires the binding's type for formatting
-	 * or parsing. An empty array is returned by default. Subclasses need to overwrite this function if they
-	 * are interested in type changes of the corresponding binding part.
+	 * Gets the indices of the binding parts of this composite type in order to determine those parts
+	 * whose types are required for formatting. An empty array is returned by default. Subclasses need
+	 * to overwrite this function if they are interested in type changes of the corresponding binding part.
 	 *
 	 * @returns {int[]}
 	 *   The indices of the parts with a relevant type for this composite type

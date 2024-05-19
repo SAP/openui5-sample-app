@@ -6,8 +6,8 @@
 /**
  * Helper for core functionality in Support Tool infrastructure.
  */
-sap.ui.define(["sap/ui/core/Element", "sap/ui/core/Theming", "sap/ui/thirdparty/jquery"],
-	function(Element, Theming, jQuery) {
+sap.ui.define(["sap/ui/core/Element", "sap/ui/core/Theming"],
+	function(Element, Theming) {
 		"use strict";
 
 		var CoreHelper = {
@@ -22,7 +22,6 @@ sap.ui.define(["sap/ui/core/Element", "sap/ui/core/Theming", "sap/ui/thirdparty/
 				/**
 				 * Here we list all controls that can contain DOM elements with style different than the framework style
 				 */
-				// jQuery Plugin "control"
 				var skipParents = ["sap.ui.core.HTML"],
 					parentNode = Element.closestTo(node);
 
@@ -38,7 +37,7 @@ sap.ui.define(["sap/ui/core/Element", "sap/ui/core/Theming", "sap/ui/thirdparty/
 
 			},
 
-			/***
+			/**
 			 * Search and filter all style sheets that are not loaded by the default theme and controls.
 			 * @returns {array} List of all custom CSS files paths.
 			 */
@@ -53,7 +52,7 @@ sap.ui.define(["sap/ui/core/Element", "sap/ui/core/Theming", "sap/ui/thirdparty/
 				});
 			},
 
-			/***
+			/**
 			 * Gets the right path to the style sheet.
 			 * @param styleSheet Style sheet that need to be checked.
 			 * @returns {string} Full path to the file if its loaded externally and "Inline" if applied style is added by <style> tag
@@ -62,7 +61,7 @@ sap.ui.define(["sap/ui/core/Element", "sap/ui/core/Theming", "sap/ui/thirdparty/
 				return styleSheet.href || "Inline";
 			},
 
-			/***
+			/**
 			 * Gets the only the style sheet name from source.
 			 * @param styleSheet
 			 * @returns {string} Name of the file source or "<style> tag" if style sheet is inline.

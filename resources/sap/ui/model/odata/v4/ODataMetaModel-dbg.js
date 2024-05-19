@@ -156,7 +156,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
@@ -1058,7 +1058,7 @@ sap.ui.define([
 			 * @returns {boolean}
 			 *   Whether further steps are needed
 			 */
-			function annotationAtOperationOrParameter(sSegment, sTerm, sSuffix) {
+			function annotationAtOperationOrParameter(sSegment, sTerm, sSuffix = "") {
 				var mAnnotationsXAllOverloads,
 					iIndexOfAtAt,
 					sIndividualOverloadTarget,
@@ -1078,7 +1078,6 @@ sap.ui.define([
 					sTerm = sSegment;
 				}
 
-				sSuffix = sSuffix || "";
 				if (vBindingParameterType) {
 					oSchemaChild = aOverloads = vResult.filter(isRightOverload);
 					if (aOverloads.length !== 1) {
@@ -1284,8 +1283,7 @@ sap.ui.define([
 				 * Sets <code>vLocation</code> and delegates to {@link log}.
 				 */
 				function logWithLocation() {
-					vLocation = vLocation
-						|| sTarget && sPropertyName && sTarget + "/" + sPropertyName;
+					vLocation ??= sTarget && sPropertyName && sTarget + "/" + sPropertyName;
 					return log.apply(this, arguments);
 				}
 
@@ -1406,8 +1404,8 @@ sap.ui.define([
 								// "17.2 SimpleIdentifier" (or placeholder):
 								// lookup inside schema child (which is determined lazily)
 								sTarget = sName = sSchemaChildName
-									= sSchemaChildName || mScope.$EntityContainer;
-								vResult = oSchemaChild = oSchemaChild || mScope[sSchemaChildName];
+									??= mScope.$EntityContainer;
+								vResult = oSchemaChild ??= mScope[sSchemaChildName];
 								if (Array.isArray(vResult)) {
 									if (vBindingParameterType) {
 										vResult = vResult.filter(isRightOverload);
@@ -1612,7 +1610,7 @@ sap.ui.define([
 			that = this;
 
 		if (sPath.endsWith("/$count")) {
-			oCountType = oCountType || new Int64();
+			oCountType ??= new Int64();
 			return SyncPromise.resolve(oCountType);
 		}
 		// Note: undefined is more efficient than "" here
@@ -2178,7 +2176,7 @@ sap.ui.define([
 		 */
 		function setConstraint(sKey, vValue) {
 			if (vValue !== undefined) {
-				mConstraints = mConstraints || {};
+				mConstraints ??= {};
 				mConstraints[sKey] = vValue;
 			}
 		}
@@ -2943,7 +2941,7 @@ sap.ui.define([
 	 *     type lookup, for example "/TEAMS/acme.NewAction//Team_ID".
 	 *
 	 *     For primitive return types, the special segment "value" can be used to refer to the
-	 *     return type itself (see {@link sap.ui.model.odata.v4.ODataContextBinding#execute}). This
+	 *     return type itself (see {@link sap.ui.model.odata.v4.ODataContextBinding#invoke}). This
 	 *     way, "/GetOldestAge/value" addresses the same object as "/GetOldestAge/$ReturnType"
 	 *     or "/GetOldestAge/$Function/0/$ReturnType" or
 	 *     "/GetOldestAge/@$ui5.overload/0/$ReturnType" (which is needed for automatic type
@@ -3506,7 +3504,7 @@ sap.ui.define([
 		this.mETags[sUrl] = mScope.$ETag ? mScope.$ETag : oLastModified;
 		// no need to use UI5Date.getInstance as only the timestamp is relevant
 		oDate = mScope.$Date ? new Date(mScope.$Date) : new Date();
-		oLastModified = oLastModified || oDate; // @see #getLastModified
+		oLastModified ??= oDate; // @see #getLastModified
 		if (this.oLastModified < oLastModified) {
 			this.oLastModified = oLastModified;
 		}

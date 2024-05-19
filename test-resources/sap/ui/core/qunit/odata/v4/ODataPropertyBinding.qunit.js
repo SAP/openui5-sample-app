@@ -398,6 +398,18 @@ sap.ui.define([
 	//TODO cache promise is NOT always fulfilled
 
 	//*********************************************************************************************
+	QUnit.test("doSetType", function () {
+		const oBinding = this.oModel.bindProperty("Name");
+		oBinding.sInternalType = "~sInternalType~";
+
+		this.mock(PropertyBinding.prototype).expects("setType").on(oBinding)
+			.withExactArgs("~type~", "~sInternalType~");
+
+		// code under test
+		oBinding.doSetType("~type~");
+	});
+
+	//*********************************************************************************************
 ["A", "B"].forEach(function (sResolvedMetaPath) {
 	[false, true].forEach(function (bHasDeclaredType) {
 		var sTitle = "setContext: reset type, " + sResolvedMetaPath
@@ -410,7 +422,7 @@ sap.ui.define([
 			oType = new TypeString();
 
 		oBinding.sReducedPath = "~reduced~";
-		oBinding.setType(oType, "~sInternalType~");
+		oBinding.setType(oType);
 		oBinding.bHasDeclaredType = bHasDeclaredType;
 		this.mock(oBinding).expects("checkSuspended").withExactArgs(true);
 		this.mock(oBinding).expects("deregisterChangeListener").withExactArgs();
@@ -420,9 +432,9 @@ sap.ui.define([
 			.withExactArgs("/TEAMS('1')").returns(sResolvedMetaPath);
 		oHelperMock.expects("getMetaPath").exactly(bHasDeclaredType ? 0 : 1)
 			.withExactArgs("~reduced~").returns("A");
-		this.mock(PropertyBinding.prototype).expects("setType").on(oBinding)
+		this.mock(oBinding).expects("doSetType")
 			.exactly(bHasDeclaredType || sResolvedMetaPath === "A" ? 0 : 1)
-			.withExactArgs(undefined, "~sInternalType~")
+			.withExactArgs(undefined)
 			.callThrough();
 		this.mock(oBinding).expects("fetchCache").withExactArgs("~oTargetContext~");
 		this.mock(oBinding).expects("checkUpdateInternal")
@@ -448,7 +460,6 @@ sap.ui.define([
 			oBinding = this.oModel.bindProperty("relative", oContext),
 			oDataState = {getControlMessages : function () {}};
 
-		oBinding.sInternalType = "~sInternalType~";
 		oBinding.vValue = 42; // internal value in the model
 
 		this.mock(oBinding).expects("getDataState").withExactArgs()
@@ -462,8 +473,7 @@ sap.ui.define([
 		this.mock(oContext).expects("fetchValue")
 			.withExactArgs("/.../relative", sinon.match.same(oBinding))
 			.returns(SyncPromise.resolve(42)); // no change
-		this.mock(PropertyBinding.prototype).expects("setType").on(oBinding)
-			.withExactArgs("~UI5Type~", "~sInternalType~");
+		this.mock(oBinding).expects("doSetType").withExactArgs("~UI5Type~");
 		this.mock(oBinding).expects("_fireChange").exactly(bHasMessages ? 1 : 0)
 			.withExactArgs({reason : ChangeReason.Change});
 		// checkDataState is called independently of bForceUpdate
@@ -555,8 +565,8 @@ sap.ui.define([
 			.returns(SyncPromise.resolve("foo"));
 		this.mock(this.oModel.getMetaModel()).expects("fetchUI5Type").withExactArgs("/.../relative")
 			.returns(SyncPromise.resolve(oType));
-		this.mock(PropertyBinding.prototype).expects("setType").on(oBinding).twice()
-			.withExactArgs(sinon.match.same(oType), "~sInternalType~").callThrough();
+		this.mock(oBinding).expects("doSetType").twice().withExactArgs(sinon.match.same(oType))
+			.callThrough();
 		this.mock(oType).expects("formatValue").withExactArgs("foo", "~sInternalType~")
 			.returns("*foo*");
 		this.mock(oBinding).expects("setType").never();
@@ -707,9 +717,8 @@ sap.ui.define([
 			this.oLogMock.expects("error")
 				.withExactArgs("Accessed value is not primitive",
 					sResolvedPath, sClassName);
-			this.mock(PropertyBinding.prototype).expects("setType").on(oBinding)
-				.withExactArgs(oFixture.internalType !== "any" ? "~UI5Type~" : null,
-					oFixture.internalType);
+			this.mock(oBinding).expects("doSetType")
+				.withExactArgs(oFixture.internalType !== "any" ? "~UI5Type~" : null);
 
 			// code under test
 			return oBinding.checkUpdateInternal().then(function () {
@@ -760,12 +769,10 @@ sap.ui.define([
 			oPromise0,
 			oPromise1;
 
-		oBinding.sInternalType = "~sInternalType~";
 		this.mock(oModel.getMetaModel()).expects("fetchUI5Type")
 			.withExactArgs("/.../relative")
 			.returns(SyncPromise.resolve("~UI5Type~"));
-		this.mock(PropertyBinding.prototype).expects("setType").on(oBinding)
-			.withExactArgs(undefined, "~sInternalType~");
+		this.mock(oBinding).expects("doSetType").withExactArgs(undefined);
 		// checkDataState is called only once even if checkUpdateInternal is called twice
 		this.mock(oBinding).expects("checkDataState").withExactArgs();
 
@@ -801,7 +808,7 @@ sap.ui.define([
 			oBinding.attachChange(fnChangeHandler, oBinding);
 
 			// code under test
-			oBinding.setContext(); // reset context triggers checkUpdate
+			oBinding.setContext(); // reset context invokes checkUpdate
 		});
 	});
 
@@ -900,13 +907,11 @@ sap.ui.define([
 		var oContext = Context.create(this.oModel, {/*oParentBinding*/}, "/Me"),
 			oBinding = this.oModel.bindProperty("property", oContext);
 
-		oBinding.sInternalType = "~sInternalType~";
 		oBinding.sReducedPath = "~reduced~";
 		this.mock(this.oModel.getMetaModel()).expects("fetchUI5Type")
 			.withExactArgs("~reduced~")
 			.returns(SyncPromise.resolve("~UI5Type~"));
-		this.mock(PropertyBinding.prototype).expects("setType").on(oBinding)
-			.withExactArgs("~UI5Type~", "~sInternalType~");
+		this.mock(oBinding).expects("doSetType").withExactArgs("~UI5Type~");
 		this.mock(oContext).expects("fetchValue")
 			.withExactArgs(oBinding.sReducedPath, oBinding)
 			.returns(SyncPromise.resolve());
@@ -925,9 +930,7 @@ sap.ui.define([
 			this.mock(this.oModel.getMetaModel()).expects("fetchUI5Type")
 				.withExactArgs("/absolute")
 				.returns(SyncPromise.resolve("~UI5Type~"));
-			this.mock(PropertyBinding.prototype).expects("setType").on(oBinding)
-				.withExactArgs("~UI5Type~", "~sInternalType~").callThrough();
-			oBinding.sInternalType = "~sInternalType~";
+			this.mock(oBinding).expects("doSetType").withExactArgs("~UI5Type~").callThrough();
 			oBinding.vValue = ""; // simulate a read
 			oBinding.attachChange(function () {
 				assert.strictEqual(oBinding.getType(), "~UI5Type~");
@@ -1138,7 +1141,7 @@ sap.ui.define([
 
 		// This creates and initializes a context binding at the control. The change handler of the
 		// context binding calls setContext at the property's binding which completes the path and
-		// triggers a checkUpdate (resulting in the read). This then fires a change event at the
+		// invokes a checkUpdate (resulting in the read). This then fires a change event at the
 		// property binding.
 		oControl.bindObject("/EntitySet('foo')");
 	});
@@ -1880,7 +1883,7 @@ sap.ui.define([
 		assert.strictEqual(oPropertyBinding.getValue(), "foo");
 
 		// code under test
-		oPropertyBinding.setValue("foo"); // must not trigger a 2nd PATCH
+		oPropertyBinding.setValue("foo"); // must not invoke a 2nd PATCH
 
 		// set a different value via API
 		oPropertyBindingCacheMock.expects("update")

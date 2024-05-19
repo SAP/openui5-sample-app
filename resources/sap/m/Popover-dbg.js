@@ -122,7 +122,7 @@ sap.ui.define([
 		* @extends sap.ui.core.Control
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.122.1
+		* @version 1.124.0
 		*
 		* @public
 		* @alias sap.m.Popover
@@ -199,7 +199,7 @@ sap.ui.define([
 
 					/**
 					 * This property is deprecated. Please use properties verticalScrolling and horizontalScrolling instead. If you still use this property it will be mapped on the new properties verticalScrolling and horizontalScrolling.
-					 * @deprecated Since version 1.15.0.
+					 * @deprecated As of version 1.15.0, replaced by verticalScrolling and horizontalScrolling properties.
 					 */
 					enableScrolling: {type: "boolean", group: "Misc", defaultValue: true, deprecated: true},
 

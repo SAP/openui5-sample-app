@@ -75,6 +75,7 @@ sap.ui.define(["sap/base/future", "sap/base/Log", "sap/ui/core/mvc/View", "sap/u
 	 * @param {boolean} [bAsync=false] whether the ExtensionPoint content should be loaded asynchronously, defaults to sync
 	 *
 	 * @private
+	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	ExtensionPoint._factory = function(oContainer, sExtName, fnCreateDefaultContent, oTargetControl, sAggregationName, bAsync) {
 		var oExtensionConfig, oView, vResult, sViewOrFragmentName;
@@ -158,8 +159,8 @@ sap.ui.define(["sap/base/future", "sap/base/Log", "sap/ui/core/mvc/View", "sap/u
 					}
 				} else {
 					// unknown extension class
-					future.warningThrows("Customizing: Unknown extension className configured (and ignored) in Component.js for extension point '" + sExtName
-							+ "' in View '" + oView.sViewName + "': " + oExtensionConfig.className);
+					future.warningThrows("Customizing: Unknown extension className configured in Component.js for extension point '" + sExtName
+							+ "' in View '" + oView.sViewName + "': " + oExtensionConfig.className + ".", { suffix: "Extension className will be ignored."});
 				}
 			} else {
 				future.warningThrows("Customizing: no extension className configured in Component.js for extension point '" + sExtName
@@ -340,6 +341,7 @@ sap.ui.define(["sap/base/future", "sap/base/Log", "sap/ui/core/mvc/View", "sap/u
 	 * @since 1.56.0
 	 * @public
 	 * @static
+	 * @ui5-transform-hint replace-param mOptions.async true
 	 */
 	ExtensionPoint.load = function(mOptions) {
 		return Promise.resolve(

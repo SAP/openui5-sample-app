@@ -37,7 +37,7 @@ sap.ui.define([
 	 * The <code>sap.m.PlanningCalendarRow</code> allows you to modify appointments at row level.
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -132,6 +132,32 @@ sap.ui.define([
 			 * <b>Note:</b> In "One month" view, the appointments are not draggable on small screen (as there they are
 			 * displayed as a list below the dates). Group appointments are also not draggable.
 			 *
+			 * <b>Note:</b> Additional application-level code will be needed to provide a keyboard alternative to drag and drop mouse interactions.
+			 * One possible option is by handling {@link sap.m.PlanningCalendar#event:appointmentSelect appointmentSelect} event of the
+			 * <code>sap.m.PlanningCalendar</code>, as shown in the following simplified example:
+			 *
+			 * <pre>
+			 * 	new sap.m.PlanningCalendar({
+			 * 		...
+   			 *		rows: [
+      		 *			new sap.m.PlanningCalendarRow({
+         	 *				...
+         	 *				enableAppointmentsDragAndDrop: true,
+			 *         		...
+      		 *			}),
+      		 *			...
+   			 *		],
+   			 *		...
+   			 *		appointmentSelect: function(event) {
+      		 *			// Open edit {@link sap.m.Dialog Dialog} to modify the appointment properties
+      		 *			new sap.m.Dialog({ ... }).openBy(event.getParameter("appointment"));
+   			 *		}
+			 *	});
+			 * </pre>
+			 *
+			 * For a complete example, you can check out the following Demokit sample:
+			 * {@link https://ui5.sap.com/#/entity/sap.m.PlanningCalendar/sample/sap.m.sample.PlanningCalendarModifyAppointments Planning Calendar - with appointments modification}
+			 *
 			 * @since 1.54
 			 */
 			enableAppointmentsDragAndDrop : {type : "boolean", group : "Misc", defaultValue : false},
@@ -162,6 +188,9 @@ sap.ui.define([
 			 * In "One month" view, the appointments are not resizable on small screen (as there they are
 			 * displayed as a list below the dates). Group appointments are also not resizable
 			 *
+			 * <b>Note:</b> Additional application-level code will be needed to provide a keyboard alternative to appointments resizing interactions with mouse.
+			 * It can be done in a similar way as described in the <code>enableAppointmentsDragAndDrop</code> property documentation.
+			 *
 			 * @since 1.56
 			 */
 			enableAppointmentsResize : {type : "boolean", group : "Misc", defaultValue : false},
@@ -169,7 +198,7 @@ sap.ui.define([
 			/**
 			 * Determines whether the appointments can be created by dragging on empty cells.
 			 *
-			 * See {@link #property:enableAppointmentsResize enableAppointmentsResize} for the specific points for events snapping
+			 * See <code>enableAppointmentsResize</code> property documentation for the specific points for events snapping.
 			 *
 			 * <b>Notes:</b>
 			 * In "One month" view, the appointments cannot be created on small screen (as there they are

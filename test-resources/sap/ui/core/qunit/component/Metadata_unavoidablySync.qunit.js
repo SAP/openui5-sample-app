@@ -103,8 +103,8 @@ sap.ui.define([
 					"uri": "i18n/i18n.properties"
 				},
 				"sfapi": {
-					"type": "sap.ui.model.odata.ODataModel",
-					"uri": "./some/odata/service"
+					"type": "sap.ui.model.odata.v2.ODataModel",
+					"uri": "./some/odata/service/"
 				}
 			},
 			"rootView": {
@@ -230,8 +230,8 @@ sap.ui.define([
 						"uri": "i18n/i18n.properties"
 					},
 					"sfapi": {
-						"type": "sap.ui.model.odata.ODataModel",
-						"uri": "./some/odata/service"
+						"type": "sap.ui.model.odata.v2.ODataModel",
+						"uri": "./some/odata/service/"
 					}
 				},
 				"rootView": {
@@ -309,6 +309,17 @@ sap.ui.define([
 		this.oExpectedRawManifest["sap.ui5"]["extends"]["extensions"]["sap.ui.viewModification"]
 			["sap.ui.test.view.Main"]["myControlId"]["text"] = "{{mytext}}";
 
+		// some manifest.json files are shared with the modern tests
+		// we need to adapt the expectations for these manifest.json files
+		// We remove the invalid absolute URLs which are tested separately (see "mixed_legacyAPIs")
+		if (["v2", "mixed"].includes(sComponentName)) {
+			this.oExpectedManifest["sap.ui5"].resourceRoots = {
+				"x.y.z": "anypath",
+				"foo.bar": "../../foo/bar"
+			};
+			this.oExpectedRawManifest["sap.ui5"].resourceRoots = deepExtend({}, this.oExpectedManifest["sap.ui5"].resourceRoots);
+		}
+
 	}
 
 	function moduleTeardown() {
@@ -366,16 +377,6 @@ sap.ui.define([
 					sap.ui.require.toUrl("foo/bar"),
 					getCompUrl(this.oMetadata.getComponentName()) + "/../../foo/bar",
 					"ResourceRoot 'foo.bar' registered (" + sap.ui.require.toUrl("foo/bar") + ")");
-
-				// (server-)absolute resource roots are not allowed and therefore won't be registered!
-				assert.notSameUrl(
-					sap.ui.require.toUrl("absolute"),
-					"http://absolute/uri",
-					"ResourceRoot 'absolute' not registered (" + sap.ui.require.toUrl("absolute") + ")");
-				assert.notSameUrl(
-					sap.ui.require.toUrl("server/absolute"),
-					"/server/absolute/uri",
-					"ResourceRoot 'server.absolute' not registered (" + sap.ui.require.toUrl("server/absolute") + ")");
 			}
 		});
 
@@ -553,12 +554,12 @@ sap.ui.define([
 
 
 	/*
-	 * TEST CODE: Component Metadata v1 & v2 (mixed)
+	 * TEST CODE: Component Metadata v1 & v2 (mixed_legacyAPIs)
 	 */
 
-	QUnit.module("Component Metadata v1 & v2 (mixed)", {
+	QUnit.module("Component Metadata v1 & v2 (mixed_legacyAPIs)", {
 		beforeEach: function() {
-			moduleSetup.call(this, "mixed", 2);
+			moduleSetup.call(this, "mixed_legacyAPIs", 2);
 		},
 		afterEach: function() {
 			moduleTeardown.call(this);
@@ -646,6 +647,14 @@ sap.ui.define([
 				};
 
 			});
+
+			// The most specific Component in the inheritance chain only should contain a server relative URL,
+			// absolute URLs are tested in the following Component variants: "v2", "mixed_legacyAPIs"
+			// Additionally the parent components bring absolute URLs with them.
+			this.oExpectedManifest["sap.ui5"].resourceRoots = {
+				"foo.bar": "../../foo/bar"
+			};
+			this.oExpectedRawManifest["sap.ui5"].resourceRoots = deepExtend({}, this.oExpectedManifest["sap.ui5"].resourceRoots);
 		},
 		afterEach: function() {
 			moduleTeardown.call(this);
@@ -703,4 +712,40 @@ sap.ui.define([
 
 	});
 
+	QUnit.test("Absolute resource roots not allowed", function(assert) {
+		const oManifest = {
+			"name": "sap.ui.test.absoluteUrl.Component",
+			"sap.app": {
+				"id": "sap.ui.test.absoluteUrl",
+				"applicationVersion": {
+					"version": "1.0.0"
+				},
+				"title": "App Title",
+				"description": "App Description"
+			},
+			"sap.ui5": {
+				"resourceRoots": {
+					"absolute": "http://absolute/uri",
+					"server.absolute": "/server/absolute/uri"
+				}
+			}
+		};
+
+		const myComp = sap.ui.getCore().createComponent({
+			name: "sap.ui.test.absoluteUrl",
+			manifest: oManifest
+		});
+
+		assert.ok(myComp, "Component should be created");
+
+		// (server-)absolute resource roots are not allowed and therefore won't be registered!
+		assert.notSameUrl(
+			sap.ui.require.toUrl("absolute"),
+			"http://absolute/uri",
+			"ResourceRoot 'absolute' not registered (" + sap.ui.require.toUrl("absolute") + ")");
+		assert.notSameUrl(
+			sap.ui.require.toUrl("server/absolute"),
+			"/server/absolute/uri",
+			"ResourceRoot 'server.absolute' not registered (" + sap.ui.require.toUrl("server/absolute") + ")");
+	});
 });

@@ -27,9 +27,9 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class The P13nSortPanel control is used to define settings for sorting in table personalization.
 	 * @extends sap.m.P13nPanel
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @constructor
-	 * @deprecated as of version 1.98. Use the {@link sap.m.p13n.SortPanel} instead.
+	 * @deprecated As of version 1.98. Use the {@link sap.m.p13n.SortPanel} instead.
 	 * @public
 	 * @since 1.26.0
 	 * @alias sap.m.P13nSortPanel

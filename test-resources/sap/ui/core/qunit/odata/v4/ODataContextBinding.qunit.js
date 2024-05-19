@@ -38,7 +38,7 @@ sap.ui.define([
 			this.oModel = new ODataModel({serviceUrl : "/service/?sap-client=111"});
 			this.oModel.bSharedRequests = {/*false,true*/};
 			this.oRequestorMock = this.mock(this.oModel.oRequestor);
-			// ensure that the requestor does not trigger requests
+			// ensure that the requestor does not invoke requests
 			this.oRequestorMock.expects("request").never();
 			// avoid that the cache requests actual metadata for faked responses
 			this.mock(this.oModel.oRequestor.oModelInterface)
@@ -275,7 +275,7 @@ sap.ui.define([
 			});
 		this.mock(oBinding).expects("refreshInternal").never();
 		this.mock(oBinding).expects("checkUpdate").never();
-		this.mock(oBinding).expects("execute").never();
+		this.mock(oBinding).expects("invoke").never();
 
 		// code under test
 		oBinding.applyParameters(mParameters);
@@ -293,7 +293,7 @@ sap.ui.define([
 			QUnit.test(sTitle, function (assert) {
 				var oBinding = this.bindContext("/OperationImport(...)"),
 					oBindingMock = this.mock(oBinding),
-					bExecuteOperation = !bSuspended && bAction === false,
+					bInvokeOperation = !bSuspended && bAction === false,
 					oError = new Error(),
 					oModelMock = this.mock(this.oModel),
 					mParameters = {},
@@ -309,9 +309,9 @@ sap.ui.define([
 				oBindingMock.expects("fetchCache").never();
 				oBindingMock.expects("refreshInternal").never();
 				oBindingMock.expects("checkUpdate").never();
-				oBindingMock.expects("execute").exactly(bExecuteOperation ? 1 : 0)
+				oBindingMock.expects("invoke").exactly(bInvokeOperation ? 1 : 0)
 					.withExactArgs().returns(oPromise);
-				oModelMock.expects("getReporter").exactly(bExecuteOperation ? 1 : 0)
+				oModelMock.expects("getReporter").exactly(bInvokeOperation ? 1 : 0)
 					.withExactArgs().returns(fnReporter);
 				// code under test (as called by ODataParentBinding#changeParameters)
 				oBinding.applyParameters(mParameters, ChangeReason.Filter);
@@ -321,7 +321,7 @@ sap.ui.define([
 				assert.strictEqual(oBinding.sResumeChangeReason, undefined);
 
 				return oPromise.catch(function () {
-					if (bExecuteOperation) {
+					if (bInvokeOperation) {
 						sinon.assert.calledOnceWithExactly(fnReporter, sinon.match.same(oError));
 					}
 				});
@@ -355,7 +355,7 @@ sap.ui.define([
 				oModelMock.expects("getReporter").withExactArgs().returns(fnReporter);
 			}
 			oBindingMock.expects("checkUpdate").never();
-			oBindingMock.expects("execute").never();
+			oBindingMock.expects("invoke").never();
 
 			// code under test (as called by ODataParentBinding#changeParameters)
 			oBinding.applyParameters(mParameters, ChangeReason.Change);
@@ -696,7 +696,7 @@ sap.ui.define([
 		oBindingMock.expects("fireDataReceived").withExactArgs({data : {}}, null);
 		this.mock(oGroupLock1).expects("unlock").withExactArgs(true);
 
-		// trigger read before refresh
+		// invoke read before refresh
 		oPromise = oBinding.fetchValue("/EMPLOYEES(ID='1')/ID").then(function () {
 			assert.ok(false, "First read has to be canceled");
 		}, function (oError1) {
@@ -1224,7 +1224,13 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("execute: absolute", function (assert) {
+	QUnit.test("execute", function (assert) {
+		assert.strictEqual(ODataContextBinding.prototype.execute,
+			ODataContextBinding.prototype.invoke);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("invoke: absolute", function (assert) {
 		var sPath = "/OperationImport(...)",
 			oBinding,
 			oGroupLock = {},
@@ -1240,20 +1246,20 @@ sap.ui.define([
 		this.mock(_Helper).expects("publicClone")
 			.withExactArgs(sinon.match.same(oBinding.oOperation.mParameters), true)
 			.returns(mParameters);
-		this.mock(oBinding).expects("_execute")
+		this.mock(oBinding).expects("_invoke")
 			.withExactArgs(sinon.match.same(oGroupLock), sinon.match.same(mParameters),
 				"~bIgnoreETag~", "~fnOnStrictHandlingFailed~", false)
 			.returns(oPromise);
 
 		assert.strictEqual(
 			// code under test
-			oBinding.execute("groupId", "~bIgnoreETag~", "~fnOnStrictHandlingFailed~", false),
+			oBinding.invoke("groupId", "~bIgnoreETag~", "~fnOnStrictHandlingFailed~", false),
 			oPromise);
 	});
 
 	//*********************************************************************************************
 	[false, true].forEach(function (bBaseContext) {
-		QUnit.test("execute: relative, bBaseContext=" + bBaseContext, function (assert) {
+		QUnit.test("invoke: relative, bBaseContext=" + bBaseContext, function (assert) {
 			var oContext = {
 					getBinding : function () {},
 					getPath : function () { return "/Employees('42')"; },
@@ -1283,7 +1289,7 @@ sap.ui.define([
 			this.mock(_Helper).expects("publicClone")
 				.withExactArgs(sinon.match.same(oBinding.oOperation.mParameters), true)
 				.returns(mParameters);
-			this.mock(oBinding).expects("_execute")
+			this.mock(oBinding).expects("_invoke")
 				.withExactArgs(sinon.match.same(oGroupLock), sinon.match.same(mParameters),
 					"~bIgnoreETag~", "~fnOnStrictHandlingFailed~",
 					bBaseContext ? false : "~bReplaceWithRVC~")
@@ -1291,14 +1297,14 @@ sap.ui.define([
 
 			assert.strictEqual(
 				// code under test
-				oBinding.execute("groupId", "~bIgnoreETag~", "~fnOnStrictHandlingFailed~",
+				oBinding.invoke("groupId", "~bIgnoreETag~", "~fnOnStrictHandlingFailed~",
 					bBaseContext ? false : "~bReplaceWithRVC~"),
 				oPromise);
 		});
 	});
 
 	//*********************************************************************************************
-	QUnit.test("execute: relative, bReplaceWithRVC, checkKeepAlive throws", function (assert) {
+	QUnit.test("invoke: relative, bReplaceWithRVC, checkKeepAlive throws", function (assert) {
 		var oContext = {
 				getBinding : function () {},
 				getPath : function () { return "/Employees('42')"; },
@@ -1315,47 +1321,47 @@ sap.ui.define([
 		this.mock(oContext).expects("getBinding").withExactArgs().returns(oParentBinding);
 		this.mock(oParentBinding).expects("checkKeepAlive")
 			.withExactArgs(sinon.match.same(oContext), true).throws(oError);
-		this.mock(oBinding).expects("_execute").never();
+		this.mock(oBinding).expects("_invoke").never();
 
 		assert.throws(function () {
 			// code under test
-			oBinding.execute("groupId", false, null, true);
+			oBinding.invoke("groupId", false, null, true);
 		}, function (oError0) {
 			return oError0 === oError;
 		});
 	});
 
 	//*********************************************************************************************
-	QUnit.test("execute: bReplaceWithRVC throws because of base context", function (assert) {
+	QUnit.test("invoke: bReplaceWithRVC throws because of base context", function (assert) {
 		var oContext = this.oModel.createBindingContext("/EMPLOYEES('42')"),
 			oBinding = this.bindContext("schema.Operation(...)", oContext);
 
 		this.mock(oBinding).expects("checkSuspended").withExactArgs();
 		this.mock(_Helper).expects("checkGroupId").withExactArgs("groupId", false, true);
-		this.mock(oBinding).expects("_execute").never();
+		this.mock(oBinding).expects("_invoke").never();
 
 		assert.throws(function () {
 			// code under test
-			oBinding.execute("groupId", false, null, true);
+			oBinding.invoke("groupId", false, null, true);
 		}, new Error("Cannot replace this parent context: /EMPLOYEES('42')"));
 	});
 
 	//*********************************************************************************************
-	QUnit.test("execute: bReplaceWithRVC throws because of absolute binding", function (assert) {
+	QUnit.test("invoke: bReplaceWithRVC throws because of absolute binding", function (assert) {
 		var oBinding = this.bindContext("/OperationImport(...)");
 
 		this.mock(oBinding).expects("checkSuspended").withExactArgs();
 		this.mock(_Helper).expects("checkGroupId").withExactArgs("groupId", false, true);
-		this.mock(oBinding).expects("_execute").never();
+		this.mock(oBinding).expects("_invoke").never();
 
 		assert.throws(function () {
 			// code under test
-			oBinding.execute("groupId", false, null, true);
+			oBinding.invoke("groupId", false, null, true);
 		}, new Error("Cannot replace when operation is not relative"));
 	});
 
 	//*********************************************************************************************
-	QUnit.test("execute: invalid group ID", function (assert) {
+	QUnit.test("invoke: invalid group ID", function (assert) {
 		var oBinding = this.bindContext("/OperationImport(...)"),
 			oError = new Error("Invalid");
 
@@ -1363,21 +1369,21 @@ sap.ui.define([
 			.withExactArgs("$invalid", false, true).throws(oError);
 
 		assert.throws(function () {
-			oBinding.execute("$invalid");
+			oBinding.invoke("$invalid");
 		}, oError);
 	});
 
 	//*********************************************************************************************
-	QUnit.test("execute: unresolved relative binding", function (assert) {
+	QUnit.test("invoke: unresolved relative binding", function (assert) {
 		var oBinding = this.bindContext("schema.Operation(...)");
 
 		assert.throws(function () {
-			oBinding.execute();
+			oBinding.invoke();
 		}, new Error("Unresolved binding: schema.Operation(...)"));
 	});
 
 	//*********************************************************************************************
-	QUnit.test("execute: relative binding with deferred parent", function (assert) {
+	QUnit.test("invoke: relative binding with deferred parent", function (assert) {
 		var oBinding,
 			oParentBinding = this.bindContext("/OperationImport(...)");
 
@@ -1385,13 +1391,13 @@ sap.ui.define([
 		oBinding = this.bindContext("schema.Operation(...)", oParentBinding.getBoundContext());
 
 		assert.throws(function () {
-			oBinding.execute();
+			oBinding.invoke();
 		}, new Error("Nested deferred operation bindings not supported: "
 			+ "/OperationImport(...)/schema.Operation(...)"));
 	});
 
 	//*********************************************************************************************
-	QUnit.test("execute: relative binding on transient context", function (assert) {
+	QUnit.test("invoke: relative binding on transient context", function (assert) {
 		var oBinding,
 			oContext = {
 				isTransient : function () { return true; },
@@ -1402,8 +1408,8 @@ sap.ui.define([
 
 		assert.throws(function () {
 			// code under test
-			oBinding.execute();
-		}, new Error("Execute for transient context not allowed: "
+			oBinding.invoke();
+		}, new Error("Invoke for transient context not allowed: "
 			+ "/Employees($uid=id-1-23)/schema.Operation(...)"));
 	});
 
@@ -1442,7 +1448,7 @@ sap.ui.define([
 		error : "Expected a single overload, but found 2 for"
 			+ " /EntitySet(ID='1')/schema.OverloadedFunction(...)"
 	}].forEach(function (oFixture, i) {
-		QUnit.test("_execute: #" + i + " - " + oFixture.error, function (assert) {
+		QUnit.test("_invoke: #" + i + " - " + oFixture.error, function (assert) {
 			var oGroupLock = {
 					getGroupId : function () {},
 					unlock : function () {}
@@ -1458,13 +1464,13 @@ sap.ui.define([
 			this.mock(oGroupLock).expects("getGroupId").withExactArgs().returns("groupId");
 			this.mock(oGroupLock).expects("unlock").withExactArgs(true);
 			this.mock(this.oModel).expects("reportError").withExactArgs(
-				"Failed to execute " + oFixture.path, sClassName, sinon.match.instanceOf(Error));
+				"Failed to invoke " + oFixture.path, sClassName, sinon.match.instanceOf(Error));
 			this.mock(_Helper).expects("adjustTargetsInError")
 				.withExactArgs(sinon.match.instanceOf(Error), oFixture.metadata2,
 					oFixture.path + "/$Parameter", undefined);
 
 			return this.bindContext(oFixture.path)
-				._execute(oGroupLock) // code under test
+				._invoke(oGroupLock) // code under test
 				.then(function () {
 					assert.ok(false);
 				}, function (oError) {
@@ -1474,7 +1480,7 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("function, no execute", function (assert) {
+	QUnit.test("function, no invoke", function (assert) {
 		var oBinding, oCachePromise;
 
 		this.mock(_Cache).expects("createSingle").never();
@@ -1499,7 +1505,7 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("function, base context, no execute", function (assert) {
+	QUnit.test("function, base context, no invoke", function (assert) {
 		var oBaseContext = this.oModel.createBindingContext("/"),
 			oBinding = this.bindContext("FunctionImport(...)", oBaseContext);
 
@@ -1518,7 +1524,7 @@ sap.ui.define([
 
 	//*********************************************************************************************
 	[false, true].forEach(function (bRelative) {
-		var sTitle = "_execute: OperationImport, relative (to base context): " + bRelative;
+		var sTitle = "_invoke: OperationImport, relative (to base context): " + bRelative;
 
 		QUnit.test(sTitle, function (assert) {
 			var oBaseContext = this.oModel.createBindingContext("/"),
@@ -1548,7 +1554,7 @@ sap.ui.define([
 				.returns(undefined);
 
 			// code under test
-			oPromise = oBinding._execute(oGroupLock, "~mParameters~", "~bIgnoreETag~",
+			oPromise = oBinding._invoke(oGroupLock, "~mParameters~", "~bIgnoreETag~",
 				"~fnOnStrictHandlingFailed~");
 
 			assert.ok(oPromise instanceof Promise, "a Promise, not a SyncPromise");
@@ -1564,7 +1570,7 @@ sap.ui.define([
 	[false, true].forEach(function (bBaseContext) {
 		["", "navigation2/navigation3"].forEach(function (sPathPrefix) {
 			var sOperation = sPathPrefix ? sPathPrefix + "/schema.Operation" : "schema.Operation",
-				sTitle = "_execute: bound operation, relative binding " + sOperation
+				sTitle = "_invoke: bound operation, relative binding " + sOperation
 					+ (bBaseContext ? ", baseContext" : "");
 
 			QUnit.test(sTitle, function (assert) {
@@ -1632,13 +1638,13 @@ sap.ui.define([
 					.returns(undefined);
 
 				// code under test
-				return oBinding._execute(oGroupLock0, "~mParameters~", "~bIgnoreETag~")
+				return oBinding._invoke(oGroupLock0, "~mParameters~", "~bIgnoreETag~")
 				.then(function (oReturnValueContext) {
 					var oGroupLock1 = {getGroupId : function () {}};
 
 					assert.strictEqual(oReturnValueContext, undefined);
 					if (oExpectation) {
-						//TODO avoid to trigger a request via getObject, which does not wait for
+						//TODO avoid to invoke a request via getObject, which does not wait for
 						// results anyway!
 						assert.strictEqual(oExpectation.args[0][4](), oEntity);
 					}
@@ -1669,9 +1675,9 @@ sap.ui.define([
 						.withExactArgs("~oOperationMetadata~", undefined, undefined)
 						.returns(undefined);
 
-					// code under test: execute creates a new cache with the new path
+					// code under test: invoke creates a new cache with the new path
 					return oBinding.setParameter("foo", "bar")
-						._execute(oGroupLock1, "~mParameters~", "~bIgnoreETag~")
+						._invoke(oGroupLock1, "~mParameters~", "~bIgnoreETag~")
 						.then(function (oReturnValueContext) {
 							assert.strictEqual(oReturnValueContext, undefined);
 							if (oExpectation) {
@@ -1685,7 +1691,7 @@ sap.ui.define([
 
 	//*********************************************************************************************
 	[false, true].forEach(function (bOnCollection) {
-		var sTitle = "_execute: bound operation " + (bOnCollection ? "on a collection " : "")
+		var sTitle = "_invoke: bound operation " + (bOnCollection ? "on a collection " : "")
 				+ "with return value context";
 
 		QUnit.test(sTitle, function (assert) {
@@ -1737,12 +1743,12 @@ sap.ui.define([
 				.returns(asyncRefresh());
 			oBindingMock.expects("handleOperationResult")
 				.withExactArgs("~oOperationMetadata~", "~ResponseEntity0~", undefined)
-				.returns("~oReturnValueContextFirstExecute~");
+				.returns("~oReturnValueContextFirstInvoke~");
 
 			// code under test
-			return oBinding._execute(oGroupLock, "~mParameters~", "~bIgnoreETag~")
+			return oBinding._invoke(oGroupLock, "~mParameters~", "~bIgnoreETag~")
 			.then(function (oReturnValueContext0) {
-				assert.strictEqual(oReturnValueContext0, "~oReturnValueContextFirstExecute~");
+				assert.strictEqual(oReturnValueContext0, "~oReturnValueContextFirstInvoke~");
 				assert.strictEqual(bDependentsRefreshed, true);
 
 				oMetaModelMock.expects("fetchObject")
@@ -1759,12 +1765,12 @@ sap.ui.define([
 					.withExactArgs("", "groupId", true).returns(asyncRefresh());
 				oBindingMock.expects("handleOperationResult")
 					.withExactArgs("~oOperationMetadata~", "~ResponseEntity1~", undefined)
-					.returns("~oReturnValueContextSecondExecute~");
+					.returns("~oReturnValueContextSecondInvoke~");
 
 				// code under test
-				return oBinding._execute(oGroupLock, "~mParameters~", "~bIgnoreETag~");
+				return oBinding._invoke(oGroupLock, "~mParameters~", "~bIgnoreETag~");
 			}).then(function (oReturnValueContext1) {
-				assert.strictEqual(oReturnValueContext1, "~oReturnValueContextSecondExecute~");
+				assert.strictEqual(oReturnValueContext1, "~oReturnValueContextSecondInvoke~");
 
 				oMetaModelMock.expects("fetchObject")
 					.withExactArgs("/TEAMS/name.space.Operation/@$ui5.overload")
@@ -1787,7 +1793,7 @@ sap.ui.define([
 				oModelMock.expects("reportError");
 
 				// code under test
-				return oBinding._execute(oGroupLock, "~mParameters~", "~bIgnoreETag~")
+				return oBinding._invoke(oGroupLock, "~mParameters~", "~bIgnoreETag~")
 				.then(function () {
 					assert.ok(false, "unexpected success");
 				}, function (oError0) {
@@ -1799,7 +1805,7 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [false, true].forEach(function (bNavigationProperty) {
-	var sTitle = "_execute: bReplaceWithRVC, bNavigationProperty=" + bNavigationProperty;
+	var sTitle = "_invoke: bReplaceWithRVC, bNavigationProperty=" + bNavigationProperty;
 
 	QUnit.test(sTitle, function (assert) {
 		var oGroupLock = {
@@ -1838,7 +1844,7 @@ sap.ui.define([
 			.returns("~oResult~");
 
 		// code under test
-		return oBinding._execute(oGroupLock, "~mParameters~", "~bIgnoreETag~",
+		return oBinding._invoke(oGroupLock, "~mParameters~", "~bIgnoreETag~",
 			"~fnOnStrictHandlingFailed~", /*bReplaceWithRVC*/true)
 		.then(function (oResultingContext) {
 			assert.strictEqual(oResultingContext, "~oResult~");
@@ -1849,7 +1855,7 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
-	QUnit.test("_execute: bReplaceWithRVC w/o r.v.c.", function (assert) {
+	QUnit.test("_invoke: bReplaceWithRVC w/o r.v.c.", function (assert) {
 		var oError = new Error("Cannot replace w/o return value context"),
 			oGroupLock = {
 				getGroupId : function () {},
@@ -1878,11 +1884,11 @@ sap.ui.define([
 			.throws(oError);
 		this.mock(oGroupLock).expects("unlock").withExactArgs(true);
 		oReportErrorExpectation = this.mock(this.oModel).expects("reportError").withExactArgs(
-			"Failed to execute /TEAMS('42')/name.space.Operation(...)", sClassName,
+			"Failed to invoke /TEAMS('42')/name.space.Operation(...)", sClassName,
 			sinon.match.typeOf("error")); // Note: sinon.match.object does not match here :-(
 
 		// code under test
-		return oBinding._execute(oGroupLock, "~mParameters~", "~bIgnoreETag~",
+		return oBinding._invoke(oGroupLock, "~mParameters~", "~bIgnoreETag~",
 			"~fnOnStrictHandlingFailed~", /*bReplaceWithRVC*/true)
 		.then(function () {
 			assert.ok(false);
@@ -1893,7 +1899,7 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("_execute: OperationImport, failure", function (assert) {
+	QUnit.test("_invoke: OperationImport, failure", function (assert) {
 		var bDependentsRefreshed = false,
 			sPath = "/OperationImport(...)",
 			oBinding = this.bindContext(sPath),
@@ -1920,14 +1926,14 @@ sap.ui.define([
 				});
 			}));
 		this.mock(this.oModel).expects("reportError").withExactArgs(
-			"Failed to execute " + sPath, sClassName, sinon.match.same(oError));
+			"Failed to invoke " + sPath, sClassName, sinon.match.same(oError));
 		this.mock(oGroupLock).expects("unlock").withExactArgs(true);
 		this.mock(_Helper).expects("adjustTargetsInError")
 			.withExactArgs(sinon.match.same(oError), "~oOperationMetadata~",
 				"/OperationImport(...)/$Parameter", undefined);
 
 		// code under test
-		return oBinding._execute(oGroupLock, "~mParameters~", "~bIgnoreETag~").then(function () {
+		return oBinding._invoke(oGroupLock, "~mParameters~", "~bIgnoreETag~").then(function () {
 			assert.ok(false);
 		}, function (oError0) {
 			assert.strictEqual(oError0, oError);
@@ -1936,7 +1942,7 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("_execute: OperationImport, error in change handler", function (assert) {
+	QUnit.test("_invoke: OperationImport, error in change handler", function (assert) {
 		var sPath = "/OperationImport(...)",
 			oBinding = this.bindContext(sPath),
 			oError = new Error("deliberate failure"),
@@ -1954,14 +1960,14 @@ sap.ui.define([
 		this.mock(oBinding).expects("refreshDependentBindings").never();
 		this.mock(oGroupLock).expects("unlock").withExactArgs(true);
 		oModelMock.expects("reportError").withExactArgs(
-			"Failed to execute " + sPath, sClassName, sinon.match.same(oError));
+			"Failed to invoke " + sPath, sClassName, sinon.match.same(oError));
 
 		oBinding.attachChange(function () {
 			throw oError;
 		});
 
 		// code under test
-		return oBinding._execute(oGroupLock, "~mParameters~", "~bIgnoreETag~").then(function () {
+		return oBinding._invoke(oGroupLock, "~mParameters~", "~bIgnoreETag~").then(function () {
 			assert.ok(false);
 		}, function (oError0) {
 			assert.strictEqual(oError0, oError);
@@ -1974,7 +1980,7 @@ sap.ui.define([
 }, {
 	// no error -> nothing reported
 }].forEach(function (oFixture, i) {
-	QUnit.test("_execute: bound operation failure with messages #" + i, function (assert) {
+	QUnit.test("_invoke: bound operation failure with messages #" + i, function (assert) {
 		var oParentContext = Context.create(this.oModel, {/*binding*/}, "/TEAMS('42')"),
 			oBinding = this.bindContext("name.space.Operation(...)", oParentContext,
 				{$$groupId : "groupId"}),
@@ -2010,14 +2016,14 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(oError), sinon.match.same(oOperationMetadata),
 				"/TEAMS('42')/name.space.Operation(...)/$Parameter", "/TEAMS('42')");
 		this.mock(this.oModel).expects("reportError")
-			.withExactArgs("Failed to execute /TEAMS('42')/name.space.Operation(...)",
+			.withExactArgs("Failed to invoke /TEAMS('42')/name.space.Operation(...)",
 				sClassName, sinon.match.same(oError))
 			.callsFake(function (_sLogMessage, _sReportingClassName, oError) {
 				assert.strictEqual(oError.resourcePath, "~"); // unchanged
 			});
 
 		// code under test
-		return oBinding._execute(oGroupLock, "~mParameters~", "~bIgnoreETag~").then(function () {
+		return oBinding._invoke(oGroupLock, "~mParameters~", "~bIgnoreETag~").then(function () {
 			assert.ok(false);
 		}, function (oError0) {
 			assert.strictEqual(oError0, oError);
@@ -2031,7 +2037,7 @@ sap.ui.define([
 }, {
 	// no error -> nothing reported
 }].forEach(function (oFixture, i) {
-	QUnit.test("_execute: unbound operation failure with messages #" + i, function (assert) {
+	QUnit.test("_invoke: unbound operation failure with messages #" + i, function (assert) {
 		var oBinding = this.bindContext("/ActionImport(...)", null, {$$groupId : "groupId"}),
 			oError = new Error("Operation failed"),
 			oGroupLock = {
@@ -2063,14 +2069,14 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(oError), sinon.match.same(oOperationMetadata),
 			"/ActionImport(...)/$Parameter", undefined);
 		this.mock(this.oModel).expects("reportError")
-			.withExactArgs("Failed to execute /ActionImport(...)",
+			.withExactArgs("Failed to invoke /ActionImport(...)",
 				sClassName, sinon.match.same(oError))
 			.callsFake(function (_sLogMessage, _sReportingClassName, oError) {
 				assert.strictEqual(oError.resourcePath, "~"); // unchanged
 			});
 
 		// code under test
-		return oBinding._execute(oGroupLock, "~mParameters~", "~bIgnoreETag~").then(function () {
+		return oBinding._invoke(oGroupLock, "~mParameters~", "~bIgnoreETag~").then(function () {
 			assert.ok(false);
 		}, function (oError0) {
 			assert.strictEqual(oError0, oError);
@@ -3098,7 +3104,7 @@ sap.ui.define([
 		oModelMock.expects("createUI5Message").withExactArgs(aRawMessages[3])
 			.returns("~ui5message3");
 
-		// code under test - trigger onStrictHandlingFailed callback
+		// code under test - invoke onStrictHandlingFailed callback
 		if (bCallbackReturnsPromise) {
 			assert.strictEqual(oExpectation.args[0][4](oError), oPromise);
 		} else {
@@ -3113,14 +3119,14 @@ sap.ui.define([
 	});
 });
 	//*********************************************************************************************
-	QUnit.test("setParameter, execute: not deferred", function (assert) {
+	QUnit.test("setParameter, invoke: not deferred", function (assert) {
 		var oBinding = this.bindContext("/OperationImport()");
 
 		assert.throws(function () {
 			oBinding.setParameter();
 		}, new Error("The binding must be deferred: /OperationImport()"));
 		assert.throws(function () {
-			oBinding.execute();
+			oBinding.invoke();
 		}, new Error("The binding must be deferred: /OperationImport()"));
 	});
 
@@ -3221,7 +3227,7 @@ sap.ui.define([
 			oParent = {
 				_fireChange : function () {},
 				oElementContext : oParentContext,
-				execute : {},
+				invoke : {},
 				getContext : function () {},
 				isRelative : function () { return false; }
 			},
@@ -3296,7 +3302,7 @@ sap.ui.define([
 			oParentBinding = {
 				delete : function () {},
 				getContext : function () {}
-				// no #execute
+				// no #invoke
 			},
 			oPromise,
 			oRowContext = Context.create(this.oModel, null, "/SalesOrders('42')"),
@@ -3521,7 +3527,7 @@ sap.ui.define([
 
 		assert.strictEqual(oBinding.bHasFetchedExpandSelectProperties, false);
 		sinon.assert.callOrder(fnHasChangeListeners, fnFetchCache);
-		if (bHasChangeListeners) { // simulate fetchValue triggered by a property binding
+		if (bHasChangeListeners) { // simulate fetchValue invoked by a property binding
 			oBinding.resolveRefreshPromise(Promise.resolve());
 		}
 		return oRefreshResult;
@@ -3883,10 +3889,10 @@ sap.ui.define([
 	[undefined, false, true].forEach(function (bAction) {
 		QUnit.test("refreshInternal, bAction=" + bAction, function (assert) {
 			var oBinding = this.bindContext("/FunctionImport(...)"),
-				bExecuted = false,
-				oExecutePromise = new Promise(function (resolve) {
+				bInvoked = false,
+				oInvokePromise = new Promise(function (resolve) {
 					setTimeout(function () {
-						bExecuted = true;
+						bInvoked = true;
 						resolve({/*oReturnValueContext*/});
 					});
 				}),
@@ -3903,10 +3909,10 @@ sap.ui.define([
 					oBinding.oReadGroupLock = oGroupLock;
 				});
 			this.mock(oBinding).expects("getDependentBindings").never();
-			this.mock(oBinding).expects("_execute").exactly(bAction === false ? 1 : 0)
+			this.mock(oBinding).expects("_invoke").exactly(bAction === false ? 1 : 0)
 				.withExactArgs(sinon.match.same(oGroupLock),
 					sinon.match.same(oBinding.oOperation.mRefreshParameters))
-				.returns(oExecutePromise);
+				.returns(oInvokePromise);
 
 			// code under test
 			oPromise = oBinding.refreshInternal("", "myGroup");
@@ -3914,7 +3920,7 @@ sap.ui.define([
 			assert.strictEqual(oBinding.oReadGroupLock, undefined);
 
 			return oPromise.then(function () {
-				assert.strictEqual(bExecuted, bAction === false);
+				assert.strictEqual(bInvoked, bAction === false);
 			});
 		});
 	});
@@ -4202,7 +4208,7 @@ sap.ui.define([
 			this.mock(oDependent1).expects("resumeInternal")
 				.withExactArgs(sinon.match.same(bCheckUpdate), false);
 			oBindingMock.expects("_fireChange").never();
-			oBindingMock.expects("execute").never();
+			oBindingMock.expects("invoke").never();
 
 			// code under test
 			oBinding.resumeInternal(bCheckUpdate);
@@ -4322,7 +4328,7 @@ sap.ui.define([
 		// code under test
 		assert.notOk(oBinding.isReturnValueLikeBindingParameter(oOperationMetadata));
 	});
-	// Note: bReplaceWithRVC triggers #checkKeepAlive which requires a "row context", thus
+	// Note: bReplaceWithRVC invokes #checkKeepAlive which requires a "row context", thus
 	// this.sPath = "(...)" cannot work; also v4.ODataModel#resolve would add a slash in between!
 
 	//*********************************************************************************************
@@ -4790,7 +4796,7 @@ sap.ui.define([
 				}
 
 				oCanceledError.canceled = true;
-				oBinding.oCache = oCache; // simulate execute
+				oBinding.oCache = oCache; // simulate invoke
 				switch (iOperation) {
 					case 0:
 						oBinding.oOperation = null;
@@ -4873,7 +4879,7 @@ sap.ui.define([
 			oGroupLock = {},
 			aPaths = [];
 
-		oBinding.oCache = oCache; // simulate execute
+		oBinding.oCache = oCache; // simulate invoke
 		this.mock(oBinding).expects("lockGroup").withExactArgs(sGroupId).returns(oGroupLock);
 		this.mock(oContext).expects("getPath").withExactArgs().returns("/Me");
 		this.mock(oCache).expects("requestSideEffects")
@@ -4912,7 +4918,7 @@ sap.ui.define([
 					oRefreshInternalPromise = {},
 					oRefreshPromise = bReturnValueContext ? SyncPromise.resolve() : null;
 
-				oBinding.oCache = oCache; // simulate execute
+				oBinding.oCache = oCache; // simulate invoke
 				oBinding.oReturnValueContext = "~truthy~";
 				if (sPath === "") {
 					this.mock(oCache).expects("requestSideEffects").never();
@@ -4991,7 +4997,7 @@ sap.ui.define([
 			oGroupLock = {},
 			aPaths = [];
 
-		oBinding.oCache = oCache; // simulate execute
+		oBinding.oCache = oCache; // simulate invoke
 		this.mock(oBinding).expects("lockGroup").withExactArgs(sGroupId).returns(oGroupLock);
 		this.mock(oContext).expects("getPath").withExactArgs().returns("/Me");
 		this.mock(oCache).expects("requestSideEffects")

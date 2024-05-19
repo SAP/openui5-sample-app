@@ -70,7 +70,7 @@ sap.ui.define([
 		 * @abstract
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @public
@@ -96,7 +96,7 @@ sap.ui.define([
 
 					/**
 					 * Indicates whether the picker is opened.
-					 * @deprecated since version 1.110
+					 * @deprecated since version 1.110 Please check the <code>showItems</code> functionality if you need to open the picker programmatically.
 					 * @private
 					 */
 					 open: {
@@ -1151,6 +1151,7 @@ sap.ui.define([
 		 *
 		 */
 		ComboBoxBase.prototype.onBeforeOpen = function () {
+			this.closeValueStateMessage();
 			this._updateSuggestionsPopoverValueState();
 			if (!this._getItemsShownWithFilter()) {
 				this.toggleIconPressedStyle(true);

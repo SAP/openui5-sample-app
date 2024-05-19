@@ -49,6 +49,7 @@ sap.ui.define([
 
 			rm.accessibilityState(oControl, {
 				role: "option",
+				roledescription: oRB.getText("GENERIC_TILE_ROLE_DESCRIPTION"),
 				posinset: oTileContainer._indexOfVisibleTile(oControl, aVisibleTiles) + 1,
 				setsize: aVisibleTiles.length
 			});

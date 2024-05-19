@@ -2528,8 +2528,7 @@ sap.ui.define([
 		this._clearRenamedItems();
 
 		this._bRebindRequired = true;
-		this.oManagementTable.unbindItems();
-
+		//this.oManagementTable.unbindItems();
 
 		if (this._oManagedObjectModel) {
 			this._oManagedObjectModel.checkUpdate();

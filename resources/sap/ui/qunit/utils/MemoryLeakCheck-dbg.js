@@ -10,6 +10,9 @@ sap.ui.define([ 'sap/ui/core/ElementRegistry', 'sap/ui/core/Control', "sap/ui/qu
 		function(ElementRegistry, Control, nextUIUpdate) {
 	"use strict";
 
+	/**
+	 * @deprecated As of version 1.120, as sync code loading has been deprecated. The calling context must provide QUnit.
+	 */
 	if ( typeof QUnit === "undefined" ) {
 		sap.ui.requireSync("sap/ui/qunit/qunit-css"); // legacy-relevant - sync fallback when caller did not load QUnit
 		sap.ui.requireSync("sap/ui/thirdparty/qunit"); // legacy-relevant - sync fallback when caller did not load QUnit
@@ -27,7 +30,7 @@ sap.ui.define([ 'sap/ui/core/ElementRegistry', 'sap/ui/core/Control', "sap/ui/qu
 	 * @namespace
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @public
 	 * @since 1.48.0

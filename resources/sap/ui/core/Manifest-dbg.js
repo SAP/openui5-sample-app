@@ -46,14 +46,31 @@ sap.ui.define([
 
 	/*global Promise */
 
+	function noMultipleMajorVersionsCheck(aVersions) {
+		const aSeen = [];
+		aVersions.forEach((sVersion) => {
+			const oVersion = Version(sVersion);
+			if (aSeen.includes(oVersion.getMajor())) {
+				throw new Error(`The minimal UI5 versions defined in the manifest must not include multiple versions with the same major version, Component: ${this.getComponentName()}.`);
+			} else {
+				aSeen.push(oVersion.getMajor());
+			}
+		});
+	}
+
 	/**
 	 * Removes the version suffix
 	 *
 	 * @param {string} sVersion Version
 	 * @return {string} Version without suffix
 	 */
-	function getVersionWithoutSuffix(sVersion) {
-		var oVersion = Version(sVersion);
+	function getVersionWithoutSuffix(vVersion) {
+		let sVersion = vVersion;
+		if (Array.isArray(vVersion)) {
+			sVersion = vVersion.sort()[0];
+			noMultipleMajorVersionsCheck.call(this, vVersion);
+		}
+		const oVersion = Version(sVersion);
 		return oVersion.getSuffix() ? Version(oVersion.getMajor() + "." + oVersion.getMinor() + "." + oVersion.getPatch()) : oVersion;
 	}
 
@@ -148,7 +165,7 @@ sap.ui.define([
 	 * @class The Manifest class.
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @alias sap.ui.core.Manifest
 	 * @since 1.33.0
 	 */
@@ -384,24 +401,25 @@ sap.ui.define([
 		 *
 		 * @private
 		 */
-		checkUI5Version: function() {
-
+		checkUI5Version: async function() {
 			// version check => only if minVersion is available a warning
 			// will be logged and the debug mode is turned on
 			// TODO: enhance version check also for libraries and components
-			var sMinUI5Version = this.getEntry("/sap.ui5/dependencies/minUI5Version");
-			if (sMinUI5Version &&
+			var vMinUI5Version = this.getEntry("/sap.ui5/dependencies/minUI5Version");
+			if (vMinUI5Version &&
 				Log.isLoggable(Log.Level.WARNING) &&
 				Supportability.isDebugModeEnabled()) {
-				VersionInfo.load().then(function(oVersionInfo) {
-					var oMinVersion = getVersionWithoutSuffix(sMinUI5Version);
-					var oVersion = getVersionWithoutSuffix(oVersionInfo && oVersionInfo.version);
-					if (oMinVersion.compareTo(oVersion) > 0) {
-						Log.warning("Component \"" + this.getComponentName() + "\" requires at least version \"" + oMinVersion.toString() + "\" but running on \"" + oVersion.toString() + "\"!");
-					}
-				}.bind(this), function(e) {
+
+				const oVersionInfo = await VersionInfo.load().catch((e) => {
 					Log.warning("The validation of the version for Component \"" + this.getComponentName() + "\" failed! Reason: " + e);
-				}.bind(this));
+				});
+
+				const oMinVersion = getVersionWithoutSuffix.call(this, vMinUI5Version);
+				const oVersion = getVersionWithoutSuffix.call(this, oVersionInfo?.version);
+
+				if (oMinVersion.compareTo(oVersion) > 0) {
+				  Log.warning("Component \"" + this.getComponentName() + "\" requires at least version \"" + oMinVersion.toString() + "\" but running on \"" + oVersion.toString() + "\"!");
+				}
 			}
 		},
 
@@ -414,6 +432,7 @@ sap.ui.define([
 		 * @return {Promise<void>|undefined} Promise for required *.js resources
 		 *
 		 * @private
+		 * @ui5-transform-hint replace-param bAsync true
 		 */
 		_loadIncludes: function(bAsync) {
 			var mResources = this.getEntry("/sap.ui5/resources"), oPromise;
@@ -424,10 +443,12 @@ sap.ui.define([
 
 			var sComponentName = this.getComponentName();
 
-			// [Deprecated since 1.94]: Load JS files.
-			//                          Standard dependencies should be used instead.
-			var aJSResources = mResources["js"];
-			if (aJSResources) {
+			/**
+			 * Load JS files.
+			 * @eprecated As of version 1.94, standard dependencies should be used instead.
+			 */
+			if (mResources["js"]) {
+				var aJSResources = mResources["js"];
 				var requireAsync = function (sModule) {
 					// Wrap promise within function because OPA waitFor (sap/ui/test/autowaiter/_promiseWaiter.js)
 					// can't deal with a promise instance in the wrapped then handler
@@ -515,6 +536,7 @@ sap.ui.define([
 		 * @return {Promise<void>} Promise containing further promises of dependent libs and components requests
 		 *
 		 * @private
+		 * @ui5-transform-hint replace-param bAsync true
 		 */
 		_loadDependencies: function(bAsync) {
 			var aPromises = [];
@@ -706,7 +728,7 @@ sap.ui.define([
 			}
 			// version check => only if minVersion is available a warning
 			// will be logged and the debug mode is turned on
-			this.checkUI5Version();
+			const pCheckUI5Version = this.checkUI5Version();
 
 			// define the resource roots
 			// => if not loaded via manifest first approach the resource roots
@@ -723,7 +745,8 @@ sap.ui.define([
 
 			this._pDependenciesAndIncludes = Promise.all([
 				this._loadDependencies(bAsync), // load the component dependencies (other UI5 libraries)
-				this._loadIncludes(bAsync) // load the custom scripts and CSS files
+				this._loadIncludes(bAsync), // load the custom scripts and CSS files
+				pCheckUI5Version
 			]);
 
 			return this._pDependenciesAndIncludes;

@@ -58,7 +58,7 @@ sap.ui.define([
 		 *
 		 * @protected
 		 * @alias sap.ui.core.delegate.ScrollEnablement
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 * @author SAP SE
 		 */
 		var ScrollEnablement = BaseObject.extend("sap.ui.core.delegate.ScrollEnablement", /** @lends sap.ui.core.delegate.ScrollEnablement.prototype */ {
@@ -136,7 +136,7 @@ sap.ui.define([
 			 * @param {boolean} bBounce new value for property <code>bounce</code>.
 			 * @protected
 			 * @since 1.17
-			 * @deprecated since 1.42
+			 * @deprecated since 1.42 without replacement.
 			 */
 			setBounce: function(bBounce) {
 			},

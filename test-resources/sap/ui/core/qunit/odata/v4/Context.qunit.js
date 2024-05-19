@@ -90,8 +90,8 @@ sap.ui.define([
 
 		assert.throws(function () {
 			// code under test
-			oContext.setCreatedPersisted();
-		}, new Error("Already 'created', currently transient: true"));
+			oContext.setPersisted();
+		}, new Error("Not 'created persisted'"));
 
 		fnResolve("bar");
 		return oCreatedPromise.then(function () {
@@ -100,23 +100,22 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("setCreatedPersisted", function (assert) {
-		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/foo", 42);
+	QUnit.test("setPersisted", function (assert) {
+		const oContext
+			= Context.create({/*oModel*/}, {/*oBinding*/}, "/foo", 42, SyncPromise.resolve());
+		oContext.bInactive = false; // "was created in an inactive state and has been activated"
 
 		// code under test
-		oContext.setCreatedPersisted();
+		oContext.setPersisted();
 
-		assert.strictEqual(oContext.isTransient(), false);
-		assert.ok(oContext.created() instanceof Promise);
+		assert.strictEqual(oContext.isInactive(), undefined);
+		assert.strictEqual(oContext.isTransient(), undefined);
+		assert.strictEqual(oContext.created(), undefined);
 
 		assert.throws(function () {
 			// code under test
-			oContext.setCreatedPersisted();
-		}, new Error("Already 'created', currently transient: false"));
-
-		return oContext.created().then(function (vResult) {
-			assert.strictEqual(vResult, undefined);
-		});
+			oContext.setPersisted();
+		}, new Error("Not 'created persisted'"));
 	});
 
 	//*********************************************************************************************
@@ -221,6 +220,16 @@ sap.ui.define([
 		// simulate a kept-alive context not in the collection
 		assert.strictEqual(Context.create(null/*oModel*/, oBinding, "/foo", undefined).getIndex(),
 			undefined);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("getIndex/getModelIndex: return index after destroy", function (assert) {
+		const oContext = Context.create(undefined/*oModel*/, undefined/*oBinding*/, "/foo", 42);
+
+		// code under test
+		assert.strictEqual(oContext.getIndex(), 42);
+		// code under test
+		assert.strictEqual(oContext.getModelIndex(), 42);
 	});
 
 	//*********************************************************************************************
@@ -1214,7 +1223,8 @@ sap.ui.define([
 [
 	{transient : false, groupId : "myGroup"},
 	{transient : true, groupId : "myGroup"},
-	{transient : true, groupId : null}
+	{transient : true, groupId : null},
+	{transient : true, groupId : null, hierarchy : true}
 ].forEach(function (oFixture) {
 	QUnit.test("delete: success " + JSON.stringify(oFixture), function (assert) {
 		var oBinding = {
@@ -1223,7 +1233,7 @@ sap.ui.define([
 				getHeaderContext : function () {},
 				lockGroup : function () {},
 				onKeepAliveChanged : function () {},
-				mParameters : "~mParameters~"
+				mParameters : {}
 			},
 			oContext = Context.create("~oModel~", oBinding, "/Foo/Bar('42')", 42,
 				oFixture.transient ? new SyncPromise(function () {}) : /*oCreatePromise*/undefined),
@@ -1231,9 +1241,12 @@ sap.ui.define([
 			oExpectation,
 			bSelected = !!oFixture.groupId;
 
+		if (oFixture.hierarchy) {
+			oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
+		}
 		oContext.bSelected = bSelected;
 		this.mock(_Helper).expects("isDataAggregation")
-			.withExactArgs("~mParameters~").returns(false);
+			.withExactArgs(sinon.match.same(oBinding.mParameters)).returns(false);
 		this.mock(oBinding).expects("checkSuspended").withExactArgs();
 		this.mock(_Helper).expects("checkGroupId").exactly(oFixture.transient ? 0 : 1)
 			.withExactArgs("myGroup", false, true);
@@ -1319,16 +1332,20 @@ sap.ui.define([
 				checkSuspended : function () {},
 				delete : function () {},
 				lockGroup : function () {},
-				mParameters : "~mParameters~"
+				mParameters : {$$aggregation : {hierarchyQualifier : "X"}}
 			},
-			oContext = Context.create("~oModel~", oBinding, "/Foo/Bar('42')", 42),
+			oModel = {
+				isApiGroup : mustBeMocked
+			},
+			oContext = Context.create(oModel, oBinding, "/Foo/Bar('42')", 42),
 			oGroupLock = {
 				unlock : function () {}
 			};
 
 		this.mock(_Helper).expects("isDataAggregation")
-			.withExactArgs("~mParameters~").returns(false);
+			.withExactArgs(sinon.match.same(oBinding.mParameters)).returns(false);
 		this.mock(oBinding).expects("checkSuspended").withExactArgs();
+		this.mock(oModel).expects("isApiGroup").withExactArgs("myGroup").returns(false);
 		this.mock(_Helper).expects("checkGroupId").withExactArgs("myGroup", false, true);
 		this.mock(oContext).expects("fetchCanonicalPath").withExactArgs()
 			.returns(SyncPromise.reject("~oError~"));
@@ -1359,6 +1376,40 @@ sap.ui.define([
 			// code under test
 			oContext.delete();
 		}, new Error("Cannot delete " + oContext + " when using data aggregation"));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("delete: recursive hierarchy, restrictions not met", function (assert) {
+		const oBinding = {
+			checkSuspended : function () {},
+			getUpdateGroupId : mustBeMocked,
+			mParameters : {$$aggregation : {hierarchyQualifier : "X"}}
+		};
+		const oModel = {
+			isApiGroup : mustBeMocked
+		};
+
+		const oContext = Context.create(oModel, oBinding, "/EMPLOYEES/42");
+		assert.throws(function () {
+			// code under test
+			oContext.delete();
+		}, new Error("Unsupported kept-alive context: " + oContext));
+
+		oContext.iIndex = 42;
+		this.mock(oBinding).expects("getUpdateGroupId").withExactArgs().returns("~groupId~");
+		this.mock(oModel).expects("isApiGroup").twice().withExactArgs("~groupId~").returns(true);
+
+		assert.throws(function () {
+			// code under test
+			oContext.delete();
+		}, new Error("Unsupported group ID: ~groupId~"));
+
+		oContext.iIndex = 0;
+
+		assert.throws(function () {
+			// code under test
+			oContext.delete("~groupId~");
+		}, new Error("Unsupported group ID: ~groupId~"));
 	});
 
 	//*********************************************************************************************
@@ -2123,17 +2174,34 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-[0, 1, 2, 3].forEach((i) => { // 0: w/ parent, 1: null parent, 2: no parent, 3: no args
-	QUnit.test(`move: #${i}`, function (assert) {
+[undefined, {}, {parent : undefined}, {nextSibling : undefined},
+	{nextSibling : undefined, parent : undefined}].forEach(function (mParameters, i) {
+	QUnit.test("move: no move happens, " + i, async function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('42')", 42);
+
+		// code under test
+		const oPromise = oContext.move(mParameters);
+
+		assert.ok(oPromise instanceof Promise);
+		assert.strictEqual(await oPromise, undefined);
+	});
+});
+
+	//*********************************************************************************************
+[null, Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('23')", 23)].forEach((oParent) => {
+	[undefined, null, Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('24')", 24)]
+		.forEach((oSibling) => {
+	QUnit.test(`move: parent=${oParent}, nextSibling=${oSibling}`, function (assert) {
 		const oBinding = {
 			move : mustBeMocked
 		};
-		const oContext = Context.create({/*oModel*/}, oBinding, "/EMPLOYEES('42')");
+		const oContext = Context.create({/*oModel*/}, oBinding, "/EMPLOYEES('42')", 42);
+		this.mock(oContext).expects("isAncestorOf")
+			.withExactArgs(sinon.match.same(oParent)).returns(false);
 		let bResolved = false;
-		this.mock(oContext).expects("isAncestorOf").withExactArgs(i ? null : "~oParent~")
-			.returns(false);
 		this.mock(oBinding).expects("move")
-			.withExactArgs(sinon.match.same(oContext), i ? null : "~oParent~")
+			.withExactArgs(sinon.match.same(oContext), sinon.match.same(oParent),
+				sinon.match.same(oSibling))
 			.returns(new SyncPromise(function (resolve) {
 				setTimeout(function () {
 					bResolved = true;
@@ -2141,56 +2209,45 @@ sap.ui.define([
 				}, 0);
 			}));
 
-		let oPromise;
-		switch (i) {
-			case 0:
-				// code under test
-				oPromise = oContext.move({parent : "~oParent~"});
-				break;
-
-			case 1:
-				// code under test
-				oPromise = oContext.move({parent : null});
-				break;
-
-			case 2:
-				// code under test
-				oPromise = oContext.move({});
-				break;
-
-			default:
-				// code under test
-				oPromise = oContext.move();
-		}
+		// code under test
+		const oPromise = oContext.move({nextSibling : oSibling, parent : oParent});
 
 		assert.ok(oPromise instanceof Promise);
 		return oPromise.then(function () {
 			assert.ok(bResolved, "not too soon");
 		});
 	});
+	});
 });
+
+	//*********************************************************************************************
+	QUnit.test("move: Unsupported parent context", function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('42')", 42);
+		const oParent = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('23')", 23);
+		this.mock(oContext).expects("isAncestorOf").withExactArgs(sinon.match.same(oParent))
+			.returns(true);
+
+		assert.throws(function () {
+			// code under test
+			oContext.move({parent : oParent});
+		}, new Error("Unsupported parent context: " + oParent));
+	});
 
 	//*********************************************************************************************
 	QUnit.test("move: fails", function (assert) {
 		const oBinding = {
 			move : mustBeMocked
 		};
-		const oContext = Context.create({/*oModel*/}, oBinding, "/EMPLOYEES('42')");
-
-		const oContextMock = this.mock(oContext);
-		oContextMock.expects("isAncestorOf").withExactArgs("~oParent~").returns(true);
-
-		assert.throws(function () {
-			// code under test
-			oContext.move({parent : "~oParent~"});
-		}, new Error("Unsupported parent context: ~oParent~"));
-
-		oContextMock.expects("isAncestorOf").withExactArgs("~oParent~").returns(false);
-		this.mock(oBinding).expects("move").withExactArgs(sinon.match.same(oContext), "~oParent~")
+		const oContext = Context.create({/*oModel*/}, oBinding, "/EMPLOYEES('42')", 42);
+		const oParent = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('23')", 23);
+		this.mock(oContext).expects("isAncestorOf").withExactArgs(sinon.match.same(oParent))
+			.returns(false);
+		this.mock(oBinding).expects("move")
+			.withExactArgs(sinon.match.same(oContext), sinon.match.same(oParent), undefined)
 			.returns(SyncPromise.reject("~error~"));
 
 		// code under test
-		const oPromise = oContext.move({parent : "~oParent~"});
+		const oPromise = oContext.move({parent : oParent});
 
 		assert.ok(oPromise instanceof Promise);
 		return oPromise.then(function () {
@@ -2198,6 +2255,85 @@ sap.ui.define([
 		}, function (vError) {
 			assert.strictEqual(vError, "~error~");
 		});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("move: Cannot move; deleted", function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('42')", 42);
+		// Note: cannot easily mock #toString which calls #isDeleted etc.
+		this.mock(oContext).expects("isDeleted").withExactArgs().atLeast(1).returns(true);
+
+		assert.throws(function () {
+			// code under test
+			oContext.move({parent : null});
+		}, new Error("Cannot move " + oContext));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("move: Cannot move; transient", function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('42')", 42);
+		// Note: cannot easily mock #toString which calls #isDeleted etc.
+		this.mock(oContext).expects("isDeleted").withExactArgs().atLeast(1).returns(false);
+		this.mock(oContext).expects("isTransient").withExactArgs().atLeast(1).returns(true);
+
+		assert.throws(function () {
+			// code under test
+			oContext.move({parent : null});
+		}, new Error("Cannot move " + oContext));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("move: Cannot move; outside collection", function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('42')");
+		// Note: cannot easily mock #toString which calls #isDeleted etc.
+		this.mock(oContext).expects("isDeleted").withExactArgs().atLeast(1).returns(false);
+		this.mock(oContext).expects("isTransient").withExactArgs().atLeast(1).returns(false);
+
+		assert.throws(function () {
+			// code under test
+			oContext.move({parent : null});
+		}, new Error("Cannot move " + oContext));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("move: Cannot move; parent deleted", function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('42')", 42);
+		const oParent = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('23')", 23);
+		// Note: cannot easily mock #toString which calls #isDeleted etc.
+		this.mock(oParent).expects("isDeleted").withExactArgs().atLeast(1).returns(true);
+
+		assert.throws(function () {
+			// code under test
+			oContext.move({parent : oParent});
+		}, new Error("Cannot move to " + oParent));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("move: Cannot move; parent transient", function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('42')", 42);
+		const oParent = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('23')", 23);
+		// Note: cannot easily mock #toString which calls #isDeleted etc.
+		this.mock(oParent).expects("isDeleted").withExactArgs().atLeast(1).returns(false);
+		this.mock(oParent).expects("isTransient").withExactArgs().atLeast(1).returns(true);
+
+		assert.throws(function () {
+			// code under test
+			oContext.move({parent : oParent});
+		}, new Error("Cannot move to " + oParent));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("move: Cannot move; parent outside collection", function (assert) {
+		const oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('42')", 42);
+		const oParent = Context.create({/*oModel*/}, {/*oBinding*/}, "/EMPLOYEES('23')");
+		// Note: cannot easily mock #toString which calls #isDeleted etc.
+		this.mock(oParent).expects("isDeleted").withExactArgs().atLeast(1).returns(false);
+		this.mock(oParent).expects("isTransient").withExactArgs().atLeast(1).returns(false);
+
+		assert.throws(function () {
+			// code under test
+			oContext.move({parent : oParent});
+		}, new Error("Cannot move to " + oParent));
 	});
 
 	//*********************************************************************************************
@@ -4457,22 +4593,41 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-[false, true].forEach(function (bHasChangeListeners) {
-	QUnit.test("setSelected: with change listeners=" + bHasChangeListeners, function () {
-		const oCache = {setProperty : mustBeMocked};
-		const oBinding = {getHeaderContext : "~function~"};
+[false, true].forEach(function (bIsHeaderContext) {
+	[false, true].forEach(function (bHasChangeListeners) {
+		if (!bIsHeaderContext && bHasChangeListeners) {
+			return; // unrealistic
+		}
+		const sTitle = `setSelected: is header context=${bIsHeaderContext},
+			with change listeners=${bHasChangeListeners}`;
+
+	QUnit.test(sTitle, function () {
+		const oBinding = {getHeaderContext : mustBeMocked, _getAllExistingContexts : mustBeMocked};
 		// Note: oBinding is optional, it might already be missing in certain cases!
 		const oContext = Context.create({/*oModel*/}, oBinding, "/some/path", 42);
+
 		if (bHasChangeListeners) {
 			oContext.mChangeListeners = "~mChangeListeners~";
 		}
-
 		this.mock(oContext).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oBinding).expects("getHeaderContext").returns(bIsHeaderContext ? oContext : null);
+		if (bIsHeaderContext) {
+			const aRowContexts = [
+				{setSelected : mustBeMocked},
+				{setSelected : mustBeMocked}
+			];
+			this.mock(oBinding).expects("_getAllExistingContexts").withExactArgs()
+				.returns(aRowContexts);
+			aRowContexts.forEach((oRowContext) => {
+				this.mock(oRowContext).expects("setSelected").withExactArgs("~selected~");
+			});
+		}
 		this.mock(_Helper).expects("fireChange").exactly(bHasChangeListeners ? 1 : 0)
 			.withExactArgs("~mChangeListeners~", "", "~selected~");
 		this.mock(oContext).expects("withCache")
 			.withExactArgs(sinon.match.func, "")
 			.callsFake((fnProcessor) => {
+				const oCache = {setProperty : mustBeMocked};
 				this.mock(oCache).expects("setProperty")
 					.withExactArgs("@$ui5.context.isSelected", "~selected~", "~sPath~");
 
@@ -4483,35 +4638,59 @@ sap.ui.define([
 		// code under test
 		oContext.setSelected("~selected~");
 	});
+	});
 });
 
 	//*********************************************************************************************
-	QUnit.test("setSelected: special cases", function () {
+	QUnit.test("setSelected: binding destroyed", function () {
 		const oBinding = {
-			getHeaderContext : function () {}
+			getHeaderContext : mustBeMocked
 		};
-		const oCache = {};
 		const oContext = Context.create({/*oModel*/}, oBinding, "/some/path", 42);
-		const oContextMock = this.mock(oContext);
 
-		oContextMock.expects("isDeleted").withExactArgs().returns(false);
-		oContextMock.expects("withCache")
+		this.mock(oContext).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oBinding).expects("getHeaderContext").returns(undefined);
+		this.mock(oContext).expects("withCache")
 			.withExactArgs(sinon.match.func, "")
 			.callsFake((fnProcessor) => {
 				oContext.oBinding = undefined;
 
-				return fnProcessor(oCache, "~sPath~");
+				return fnProcessor({}, "~sPath~");
 			});
-		oContextMock.expects("doSetSelected").withExactArgs(true);
+		this.mock(oContext).expects("doSetSelected").withExactArgs(true);
 
 		// code under test - binding destroyed
 		oContext.setSelected(true);
+	});
 
-		// no additional calls to withCache
-		oContextMock.expects("doSetSelected").withExactArgs(false);
+	//*********************************************************************************************
+	QUnit.test("setSelected: flag already set", function () {
+		const oBinding = {
+			getHeaderContext : mustBeMocked,
+			onKeepAliveChanged : mustBeMocked
+		};
+		const oContext = Context.create({/*oModel*/}, oBinding, "/some/path", 42);
 
-		// code under test - flag unchanged
-		oContext.setSelected(false);
+		oContext.mChangeListeners = "~mChangeListeners~";
+		this.mock(oContext).expects("isDeleted").twice().withExactArgs().returns(false);
+		this.mock(oBinding).expects("getHeaderContext").twice().returns(undefined);
+		this.mock(_Helper).expects("fireChange").withExactArgs("~mChangeListeners~", "", true);
+		this.mock(oContext).expects("withCache")
+			.withExactArgs(sinon.match.func, "")
+			.callsFake((fnProcessor) => {
+				const oCache = {setProperty : mustBeMocked};
+				this.mock(oCache).expects("setProperty")
+					.withExactArgs("@$ui5.context.isSelected", true, "~sPath~");
+
+				return fnProcessor(oCache, "~sPath~");
+			});
+		this.mock(oBinding).expects("onKeepAliveChanged").twice().withExactArgs(oContext);
+
+		// code under test
+		oContext.setSelected(true);
+
+		// code under test
+		oContext.setSelected(true);
 	});
 
 	//*********************************************************************************************

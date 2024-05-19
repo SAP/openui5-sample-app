@@ -41,7 +41,7 @@ sap.ui.define([
 	 *
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @extends sap.f.delegate.GridItemNavigation
 	 *
@@ -146,14 +146,24 @@ sap.ui.define([
 	GridContainerItemNavigation.prototype.onmousedown = function(oEvent) {
 
 		this._bIsMouseDown = true;
+		this._oMouseDownTarget = oEvent.target;
+
+		document.addEventListener("mouseup", this._onMouseUp.bind(this), {once:true});
 
 		ItemNavigation.prototype.onmousedown.call(this, oEvent);
 	};
 
 	GridContainerItemNavigation.prototype.onmouseup = function(oEvent) {
+		this._onMouseUp();
+	};
 
-		var $listItem = jQuery(oEvent.target).closest('.sapFGridContainerItemWrapperNoVisualFocus'),
+	GridContainerItemNavigation.prototype._onMouseUp = function () {
+		var $listItem = jQuery(this._oMouseDownTarget).closest('.sapFGridContainerItemWrapperNoVisualFocus'),
 			oControl;
+
+		if (!this._bIsMouseDown) {
+			return;
+		}
 
 		if ($listItem.length) {
 			oControl = Element.closestTo($listItem.children()[0]);
@@ -168,6 +178,7 @@ sap.ui.define([
 		}
 
 		this._bIsMouseDown = false;
+		this._oMouseDownTarget = null;
 	};
 
 	/**
@@ -176,6 +187,7 @@ sap.ui.define([
 	 */
 	GridContainerItemNavigation.prototype.ondragend = function() {
 		this._bIsMouseDown = false;
+		this._oMouseDownTarget = null;
 	};
 
 	/**
@@ -184,6 +196,7 @@ sap.ui.define([
 	 */
 	GridContainerItemNavigation.prototype.ondrop = function() {
 		this._bIsMouseDown = false;
+		this._oMouseDownTarget = null;
 	};
 
 	/**

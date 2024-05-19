@@ -19,7 +19,8 @@ sap.ui.define([
 
 		var FrameType = library.FrameType,
 			GenericTileMode = library.GenericTileMode,
-			LoadState = library.LoadState;
+			LoadState = library.LoadState,
+			Priority = library.Priority;
 	/**
 	* Constructor for a new sap.m.ActionTile control.
 	*
@@ -31,7 +32,7 @@ sap.ui.define([
 	* @extends sap.m.GenericTile
 	*
 	* @author SAP SE
-	* @version 1.122.1
+	* @version 1.124.0
 	*
 	* @public
 	* @experimental since 1.122
@@ -41,12 +42,38 @@ sap.ui.define([
 
 	var ActionTile = GenericTile.extend("sap.m.ActionTile", /** @lends sap.m.ActionTile.prototype */{
 		metadata: {
-			library: "sap.m"
+			library: "sap.m",
+			properties: {
+				/**
+				 * The height of the tile changes dynamically to accommodate the content inside it
+				 *
+				 * @experimental Since 1.124
+				 */
+				enableDynamicHeight: { type: "boolean", group: "Appearance", defaultValue: false },
+				/**
+				 * Decides whether the headerImage should have a frame or not.
+				 *
+				 * @experimental Since 1.124
+				 */
+				enableIconFrame: { type: "boolean", group: "Appearance", defaultValue: false },
+				/**
+				 * Adds a priority indicator for the Action Tile.
+				 *
+				 * @experimental Since 1.124
+				 */
+				"priority": { type: "sap.m.Priority", group: "Data", defaultValue: Priority.None },
+				/**
+				 * Sets the text inside the priority indicator for the Action Tile.
+				 *
+				 * @experimental Since 1.124
+				 */
+				"priorityText": { type: "string", group: "Data", defaultValue: null }
+			}
 		},
 		renderer: {
 			apiVersion: 2,
 			render: function (oRm, oControl) {
-				if (!oControl.getHeaderImage() || oControl.getState() === LoadState.Loading) {
+				if (oControl.getState() === LoadState.Loading) {
 					ToDoCardRenderer.render(oRm, oControl);
 				} else {
 					GenericTileRenderer.render(oRm, oControl);
@@ -66,18 +93,15 @@ sap.ui.define([
 
 	ActionTile.prototype.onBeforeRendering = function() {
 		if (this.getHeaderImage()) {
-			this.addStyleClass("sapMATSituationCard");
+			this.addStyleClass("sapMATHeaderImage");
 		}
-		if (this.getEnableNavigationButton()) {
-			this.removeStyleClass("sapMATHideActionButton");
-		} else {
-			this.addStyleClass("sapMATHideActionButton");
-		}
+		this.toggleStyleClass("sapMATDynamicHeight", this.getEnableDynamicHeight());
+		this.toggleStyleClass("sapMATHideActionButton", !this.getEnableNavigationButton());
 		GenericTile.prototype.onBeforeRendering.apply(this, arguments);
 	};
 
 	ActionTile.prototype.onAfterRendering = function() {
-		if (this.getHeaderImage() && this.getDomRef()) {
+		if (this.getDomRef()) {
 			this._removeStyleClasses();
 		}
 		GenericTile.prototype.onAfterRendering.apply(this, arguments);

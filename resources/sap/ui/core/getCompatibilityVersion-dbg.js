@@ -16,7 +16,7 @@ sap.ui.define([
 
 	const BASE_CVERS = Version("1.14");
 
-	const VERSION = "1.122.1";
+	const VERSION = "1.124.0";
 
 	var M_COMPAT_FEATURES = {
 		"xx-test"               : "1.15", //for testing purposes only
@@ -37,7 +37,11 @@ sap.ui.define([
 	 * @param {string} sFeature the key of desired feature
 	 * @return {module:sap/base/util/Version} the used compatibility version
 	 * @public
-	 * @deprecated As of version 1.119.0
+	 * @deprecated As of version 1.119, without a replacement. All features that have been
+	 *   controlled by a compatibility version in UI5 1.x will abandon their legacy behavior,
+	 *   starting with the next major version. In other words, they will behave as if compatibility
+	 *   version "edge" was configured. Due to this, no more access to the compatibility
+	 *   version will be required starting with the next major version.
 	 */
 	const fnGetCompatibilityVersion = (sFeature) => {
 		const PARAM_CVERS = "sapUiCompatVersion";

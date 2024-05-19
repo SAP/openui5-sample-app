@@ -75,13 +75,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
+		apiVersion: 2,
 		name : "sap.m",
-		version: "1.122.1",
+		version: "1.124.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -150,6 +151,7 @@ sap.ui.define([
 			"sap.m.ObjectMarkerType",
 			"sap.m.ObjectMarkerVisibility",
 			"sap.m.OverflowToolbarPriority",
+			"sap.m.P13nPopupMode",
 			"sap.m.P13nPanelType",
 			"sap.m.P13nConditionOperation",
 			"sap.m.PageBackgroundDesign",
@@ -167,6 +169,7 @@ sap.ui.define([
 			"sap.m.SelectColumnRatio",
 			"sap.m.SelectionDetailsActionLevel",
 			"sap.m.SelectListKeyboardNavigationMode",
+			"sap.m.SelectDialogInitialFocus",
 			"sap.m.SelectType",
 			"sap.m.Size",
 			"sap.m.SplitAppMode",
@@ -180,9 +183,11 @@ sap.ui.define([
 			"sap.m.SwitchType",
 			"sap.m.TabsOverflowMode",
 			"sap.m.ContentConfigType",
+			"sap.m.TileInfoColor",
 			"sap.m.TileSizeBehavior",
 			"sap.m.TimePickerMaskMode",
 			"sap.m.TitleAlignment",
+			"sap.m.ExpandableTextOverflowMode",
 			"sap.m.TokenizerRenderMode",
 			"sap.m.ToolbarDesign",
 			"sap.m.ToolbarStyle",
@@ -192,7 +197,10 @@ sap.ui.define([
 			"sap.m.ValueCSSColor",
 			"sap.m.VerticalPlacementType",
 			"sap.m.WrappingType",
+			"sap.m.SinglePlanningCalendarSelectionMode",
 			"sap.m.WizardRenderMode",
+			"sap.m.ResetAllMode",
+			"sap.m.SharingMode",
 			"sap.m.plugins.CopyPreference",
 			"sap.m.plugins.ContextMenuScope",
 			"sap.m.semantic.SemanticRuleSetType",
@@ -292,7 +300,7 @@ sap.ui.define([
 			"sap.m.MessageView",
 			"sap.m.MessageStrip",
 			"sap.m.MultiComboBox",
-			/** @deprecated since 1.121 */
+			/** @deprecated since 1.120 */
 			"sap.m.MultiEditField",
 			"sap.m.MultiInput",
 			"sap.m.NavContainer",
@@ -465,6 +473,7 @@ sap.ui.define([
 			"sap.m.TabContainerItem",
 			"sap.m.TabStripItem",
 			"sap.m.ToolbarLayoutData",
+			"sap.m.TileInfo",
 			"sap.m.UploadCollectionItem",
 			"sap.m.UploadCollectionParameter",
 			"sap.m.upload.FilePreviewDialog",
@@ -518,7 +527,10 @@ sap.ui.define([
 			"sap.m.table.columnmenu.Item",
 			"sap.m.table.columnmenu.ItemBase",
 			"sap.m.table.columnmenu.QuickAction",
-			"sap.m.table.columnmenu.QuickActionBase"
+			"sap.m.table.columnmenu.QuickActionBase",
+			"sap.m.plugins.UploadSetwithTable",
+			"sap.m.upload.UploadItemConfiguration",
+			"sap.m.upload.UploadItem"
 		],
 		extensions: {
 			flChangeHandlers: {
@@ -693,11 +705,13 @@ sap.ui.define([
 	thisLib.UploadSetwithTableActionPlaceHolder = {
 	   /**
 		* Placeholder for variant management.
+		* @deprecated As of version 1.124, the concept has been discarded.
 		* @public
 		*/
 	   VariantManagementPlaceholder: "VariantManagementPlaceholder",
 	   /**
 		* Placeholder for personalization settings button.
+		* @deprecated As of version 1.124, the concept has been discarded.
 		* @public
 		*/
 	   PersonalizationSettingsPlaceholder: "PersonalizationSettingsPlaceholder",
@@ -1181,6 +1195,11 @@ sap.ui.define([
 		Time : "Time"
 
 	};
+
+	/**
+	 * @deprecated As of version 1.32.8
+	 */
+	DataType.registerEnum("sap.m.DateTimeInputType", thisLib.DateTimeInputType);
 
 
 	/**
@@ -1961,6 +1980,110 @@ sap.ui.define([
 	};
 
 	/**
+	 * Colors to highlight certain UI elements.
+	 *
+	 * In contrast to the <code>ValueState</code>, the semantic meaning must be defined by the application.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.124
+	 * @see {@link fiori:/how-to-use-semantic-colors/ Semantic Colors}
+	 */
+	thisLib.TileInfoColor = {
+
+		/**
+		 * Indication Color 1
+		 * @public
+		 */
+		Indication1 : "Indication1",
+
+		/**
+		 * Indication Color 2
+		 * @public
+		 */
+		Indication2 : "Indication2",
+
+		/**
+		 * Indication Color 3
+		 * @public
+		 */
+		Indication3 : "Indication3",
+
+		/**
+		 * Indication Color 4
+		 * @public
+		 */
+		Indication4 : "Indication4",
+
+		/**
+		 * Indication Color 5
+		 * @public
+		 */
+		Indication5 : "Indication5",
+
+		/**
+		 * Indication Color 6
+		 * @public
+		 */
+		Indication6 : "Indication6",
+
+		/**
+		 * Indication Color 7
+		 * @public
+		 */
+		Indication7 : "Indication7",
+
+		/**
+		 * Indication Color 8
+		 * @public
+		 */
+		Indication8 : "Indication8",
+
+		/**
+		 * Indication Color 9
+		 * @public
+		 */
+		Indication9 : "Indication9",
+
+		/**
+		 * Indication Color 10
+		 * @public
+		 */
+		Indication10 : "Indication10",
+		/**
+		 * Critical Text Color
+		 * @public
+		 */
+		CriticalTextColor: "CriticalTextColor",
+		/**
+		 * Warning Background Color
+		 * @public
+		 */
+		WarningBackground: "WarningBackground",
+		/**
+		 * Warning Border Color
+		 * @public
+		 */
+		WarningBorderColor: "WarningBorderColor",
+		/**
+		 * SAP Brand Color
+		 * @public
+		 */
+		BrandColor: "BrandColor",
+		/**
+		 * Information Border Color
+		 * @public
+		 */
+		InformationBorderColor: "InformationBorderColor",
+		/**
+		 * Information Background Color
+		 * @public
+		 */
+		InformationBackgroundColor: "InformationBackgroundColor"
+
+	};
+
+	/**
 	 * Defines the priority for the TileContent in ActionMode
 	 *
 	 * @enum {string}
@@ -2035,7 +2158,7 @@ sap.ui.define([
 	/**
 	 * Specifies <code>IconTabBar</code> tab overflow mode.
 	 * @enum {string}
- 	 * @since 1.90.0
+	  * @since 1.90.0
 	 * @public
 	 */
 	thisLib.TabsOverflowMode = {
@@ -2835,6 +2958,11 @@ sap.ui.define([
 		Plain : "Plain"
 
 	};
+
+	/**
+	 * @deprecated As of version 1.16
+	 */
+	DataType.registerEnum("sap.m.ListHeaderDesign", thisLib.ListHeaderDesign);
 
 
 	/**
@@ -4761,13 +4889,20 @@ sap.ui.define([
 	 */
 	thisLib.TimePickerMaskMode = {
 		/**
-		 * <code>MaskInput</code> is enabled for the <code>sap.m.TimePicker</code>.
+		 * The mask is automatically enabled for all valid fixed-length time patterns, and it is disabled when the time format does not have a fixed length.
 		 * @public
 		 */
 		On: "On",
 
 		/**
-		 * <code>MaskInput</code> is disabled for the <code>sap.m.TimePicker</code>.
+		 * The mask will always be enforced for any time patterns.
+		 * <b>Note:</b> The mask functions correctly only with fixed-length time formats.
+		 * Using the <code>Enforce</code> value with time formats that do not have a fixed length may lead to unpredictable behavior.
+		 */
+		Enforce: "Enforce",
+
+		/**
+		 * The mask is disabled for the <code>sap.m.TimePicker</code>.
 		 * @public
 		 */
 		Off: "Off"
@@ -5090,6 +5225,9 @@ sap.ui.define([
 		Popover: "Popover"
 	};
 
+	/*
+	 * Enums defined in separate modules
+	 */
 	thisLib.AvatarShape = AvatarShape;
 	thisLib.AvatarSize = AvatarSize;
 	thisLib.AvatarType = AvatarType;
@@ -6207,6 +6345,124 @@ sap.ui.define([
 	if (!Number.MAX_SAFE_INTEGER) {
 		Number.MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
 	}
+
+	/*
+	 * Register all of the above defined enums.
+	 * Some enums of the sap.m library are contained in a dedicated module
+	 * and are registered there (e.g. "sap.m.IllustratedMessageType").
+	 */
+	DataType.registerEnum("sap.m.BackgroundDesign", thisLib.BackgroundDesign);
+	DataType.registerEnum("sap.m.BadgeState", thisLib.BadgeState);
+	DataType.registerEnum("sap.m.BadgeAnimationType", thisLib.BadgeAnimationType);
+	DataType.registerEnum("sap.m.BarDesign", thisLib.BarDesign);
+	DataType.registerEnum("sap.m.BorderDesign", thisLib.BorderDesign);
+	DataType.registerEnum("sap.m.BreadcrumbsSeparatorStyle", thisLib.BreadcrumbsSeparatorStyle);
+	DataType.registerEnum("sap.m.ButtonAccessibleRole", thisLib.ButtonAccessibleRole);
+	DataType.registerEnum("sap.m.ButtonType", thisLib.ButtonType);
+	DataType.registerEnum("sap.m.CarouselArrowsPlacement", thisLib.CarouselArrowsPlacement);
+	DataType.registerEnum("sap.m.DeviationIndicator", thisLib.DeviationIndicator);
+	DataType.registerEnum("sap.m.DialogRoleType", thisLib.DialogRoleType);
+	DataType.registerEnum("sap.m.DialogType", thisLib.DialogType);
+	DataType.registerEnum("sap.m.DraftIndicatorState", thisLib.DraftIndicatorState);
+	DataType.registerEnum("sap.m.DynamicDateRangeGroups", thisLib.DynamicDateRangeGroups);
+	DataType.registerEnum("sap.m.EmptyIndicatorMode", thisLib.EmptyIndicatorMode);
+	DataType.registerEnum("sap.m.FacetFilterListDataType", thisLib.FacetFilterListDataType);
+	DataType.registerEnum("sap.m.FacetFilterType", thisLib.FacetFilterType);
+	DataType.registerEnum("sap.m.FilterPanelField", thisLib.FilterPanelField);
+	DataType.registerEnum("sap.m.FlexAlignContent", thisLib.FlexAlignContent);
+	DataType.registerEnum("sap.m.FlexAlignItems", thisLib.FlexAlignItems);
+	DataType.registerEnum("sap.m.FlexAlignSelf", thisLib.FlexAlignSelf);
+	DataType.registerEnum("sap.m.FlexDirection", thisLib.FlexDirection);
+	DataType.registerEnum("sap.m.FlexJustifyContent", thisLib.FlexJustifyContent);
+	DataType.registerEnum("sap.m.FlexRendertype", thisLib.FlexRendertype);
+	DataType.registerEnum("sap.m.FlexWrap", thisLib.FlexWrap);
+	DataType.registerEnum("sap.m.FrameType", thisLib.FrameType);
+	DataType.registerEnum("sap.m.GenericTagDesign", thisLib.GenericTagDesign);
+	DataType.registerEnum("sap.m.GenericTagValueState", thisLib.GenericTagValueState);
+	DataType.registerEnum("sap.m.GenericTileMode", thisLib.GenericTileMode);
+	DataType.registerEnum("sap.m.Priority", thisLib.Priority);
+	DataType.registerEnum("sap.m.GenericTileScope", thisLib.GenericTileScope);
+	DataType.registerEnum("sap.m.HeaderLevel", thisLib.HeaderLevel);
+	DataType.registerEnum("sap.m.IBarHTMLTag", thisLib.IBarHTMLTag);
+	DataType.registerEnum("sap.m.IconTabDensityMode", thisLib.IconTabDensityMode);
+	DataType.registerEnum("sap.m.IconTabFilterDesign", thisLib.IconTabFilterDesign);
+	DataType.registerEnum("sap.m.IconTabFilterInteractionMode", thisLib.IconTabFilterInteractionMode);
+	DataType.registerEnum("sap.m.IconTabHeaderMode", thisLib.IconTabHeaderMode);
+	DataType.registerEnum("sap.m.ImageMode", thisLib.ImageMode);
+	DataType.registerEnum("sap.m.InputTextFormatMode", thisLib.InputTextFormatMode);
+	DataType.registerEnum("sap.m.SelectDialogInitialFocus", thisLib.SelectDialogInitialFocus);
+	DataType.registerEnum("sap.m.InputType", thisLib.InputType);
+	DataType.registerEnum("sap.m.LabelDesign", thisLib.LabelDesign);
+	DataType.registerEnum("sap.m.LightBoxLoadingStates", thisLib.LightBoxLoadingStates);
+	DataType.registerEnum("sap.m.LinkConversion", thisLib.LinkConversion);
+	DataType.registerEnum("sap.m.LinkAccessibleRole", thisLib.LinkAccessibleRole);
+	DataType.registerEnum("sap.m.ListGrowingDirection", thisLib.ListGrowingDirection);
+	DataType.registerEnum("sap.m.ListKeyboardMode", thisLib.ListKeyboardMode);
+	DataType.registerEnum("sap.m.ListMode", thisLib.ListMode);
+	DataType.registerEnum("sap.m.ListSeparators", thisLib.ListSeparators);
+	DataType.registerEnum("sap.m.ListType", thisLib.ListType);
+	DataType.registerEnum("sap.m.LoadState", thisLib.LoadState);
+	DataType.registerEnum("sap.m.MenuButtonMode", thisLib.MenuButtonMode);
+	DataType.registerEnum("sap.m.MultiSelectMode", thisLib.MultiSelectMode);
+	DataType.registerEnum("sap.m.ObjectHeaderPictureShape", thisLib.ObjectHeaderPictureShape);
+	DataType.registerEnum("sap.m.ObjectMarkerType", thisLib.ObjectMarkerType);
+	DataType.registerEnum("sap.m.ObjectMarkerVisibility", thisLib.ObjectMarkerVisibility);
+	DataType.registerEnum("sap.m.OverflowToolbarPriority", thisLib.OverflowToolbarPriority);
+	DataType.registerEnum("sap.m.P13nPopupMode", thisLib.P13nPopupMode);
+	DataType.registerEnum("sap.m.P13nPanelType", thisLib.P13nPanelType);
+	DataType.registerEnum("sap.m.P13nConditionOperation", thisLib.P13nConditionOperation);
+	DataType.registerEnum("sap.m.PageBackgroundDesign", thisLib.PageBackgroundDesign);
+	DataType.registerEnum("sap.m.PanelAccessibleRole", thisLib.PanelAccessibleRole);
+	DataType.registerEnum("sap.m.PDFViewerDisplayType", thisLib.PDFViewerDisplayType);
+	DataType.registerEnum("sap.m.PlacementType", thisLib.PlacementType);
+	DataType.registerEnum("sap.m.PlanningCalendarBuiltInView", thisLib.PlanningCalendarBuiltInView);
+	DataType.registerEnum("sap.m.PlanningCalendarStickyMode", thisLib.PlanningCalendarStickyMode);
+	DataType.registerEnum("sap.m.PopinDisplay", thisLib.PopinDisplay);
+	DataType.registerEnum("sap.m.PopinLayout", thisLib.PopinLayout);
+	DataType.registerEnum("sap.m.QuickViewGroupElementType", thisLib.QuickViewGroupElementType);
+	DataType.registerEnum("sap.m.RatingIndicatorVisualMode", thisLib.RatingIndicatorVisualMode);
+	DataType.registerEnum("sap.m.ScreenSize", thisLib.ScreenSize);
+	DataType.registerEnum("sap.m.CarouselScrollMode", thisLib.CarouselScrollMode);
+	DataType.registerEnum("sap.m.SelectColumnRatio", thisLib.SelectColumnRatio);
+	DataType.registerEnum("sap.m.SelectionDetailsActionLevel", thisLib.SelectionDetailsActionLevel);
+	DataType.registerEnum("sap.m.SelectListKeyboardNavigationMode", thisLib.SelectListKeyboardNavigationMode);
+	DataType.registerEnum("sap.m.SelectType", thisLib.SelectType);
+	DataType.registerEnum("sap.m.Size", thisLib.Size);
+	DataType.registerEnum("sap.m.SplitAppMode", thisLib.SplitAppMode);
+	DataType.registerEnum("sap.m.StandardDynamicDateRangeKeys", thisLib.StandardDynamicDateRangeKeys);
+	DataType.registerEnum("sap.m.StandardTileType", thisLib.StandardTileType);
+	DataType.registerEnum("sap.m.StepInputStepModeType", thisLib.StepInputStepModeType);
+	DataType.registerEnum("sap.m.StepInputValidationMode", thisLib.StepInputValidationMode);
+	DataType.registerEnum("sap.m.Sticky", thisLib.Sticky);
+	DataType.registerEnum("sap.m.StringFilterOperator", thisLib.StringFilterOperator);
+	DataType.registerEnum("sap.m.SwipeDirection", thisLib.SwipeDirection);
+	DataType.registerEnum("sap.m.SwitchType", thisLib.SwitchType);
+	DataType.registerEnum("sap.m.TabsOverflowMode", thisLib.TabsOverflowMode);
+	DataType.registerEnum("sap.m.ContentConfigType", thisLib.ContentConfigType);
+	DataType.registerEnum("sap.m.TileSizeBehavior", thisLib.TileSizeBehavior);
+	DataType.registerEnum("sap.m.TimePickerMaskMode", thisLib.TimePickerMaskMode);
+	DataType.registerEnum("sap.m.TitleAlignment", thisLib.TitleAlignment);
+	DataType.registerEnum("sap.m.ExpandableTextOverflowMode", thisLib.ExpandableTextOverflowMode);
+	DataType.registerEnum("sap.m.TokenizerRenderMode", thisLib.TokenizerRenderMode);
+	DataType.registerEnum("sap.m.ToolbarDesign", thisLib.ToolbarDesign);
+	DataType.registerEnum("sap.m.ToolbarStyle", thisLib.ToolbarStyle);
+	DataType.registerEnum("sap.m.UploadState", thisLib.UploadState);
+	DataType.registerEnum("sap.m.UploadType", thisLib.UploadType);
+	DataType.registerEnum("sap.m.ValueColor", thisLib.ValueColor);
+	DataType.registerEnum("sap.m.ValueCSSColor", thisLib.ValueCSSColor);
+	DataType.registerEnum("sap.m.VerticalPlacementType", thisLib.VerticalPlacementType);
+	DataType.registerEnum("sap.m.WrappingType", thisLib.WrappingType);
+	DataType.registerEnum("sap.m.SinglePlanningCalendarSelectionMode", thisLib.SinglePlanningCalendarSelectionMode);
+	DataType.registerEnum("sap.m.WizardRenderMode", thisLib.WizardRenderMode);
+	DataType.registerEnum("sap.m.ResetAllMode", thisLib.ResetAllMode);
+	DataType.registerEnum("sap.m.SharingMode", thisLib.SharingMode);
+	DataType.registerEnum("sap.m.plugins.CopyPreference", thisLib.plugins.CopyPreference);
+	DataType.registerEnum("sap.m.plugins.ContextMenuScope", thisLib.plugins.ContextMenuScope);
+	DataType.registerEnum("sap.m.semantic.SemanticRuleSetType", thisLib.semantic.SemanticRuleSetType);
+	DataType.registerEnum("sap.m.table.columnmenu.Category", thisLib.table.columnmenu.Category);
+	DataType.registerEnum("sap.m.upload.UploaderHttpRequestMethod", thisLib.upload.UploaderHttpRequestMethod);
+	DataType.registerEnum("sap.m.UploadSetwithTableActionPlaceHolder", thisLib.UploadSetwithTableActionPlaceHolder);
+	DataType.registerEnum("sap.m.TileInfoColor", thisLib.TileInfoColor);
 
 	return thisLib;
 });

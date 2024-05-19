@@ -99,7 +99,7 @@ function(
 	 * @class
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @public
 	 * @alias sap.ui.core.Fragment
 	 */
@@ -184,7 +184,7 @@ function(
 	 */
 	Fragment.registerType = function(sType, oFragmentImpl) {
 		if (typeof (sType) !== "string") {
-			future.errorThrows("Ignoring non-string Fragment type: " + sType);
+			future.errorThrows("Invalid non-string Fragment type: '" + sType + "'.", { suffix: "It will be ignored." });
 			return;
 		}
 
@@ -905,10 +905,15 @@ function(
 				// Mixin fragmentContent into Fragment instance
 				merge(this, mSettings.fragmentContent);
 			} else {
-				/*** require fragment definition if not yet done... ***/
-				if (!mRegistry[mSettings.fragmentName]) {
-					sap.ui.requireSync(mSettings.fragmentName.replace(/\./g, "/") + ".fragment"); // legacy-relevant: Sync path
-				}
+				/**
+				 * @deprecated
+				 */
+				(() => {
+					/*** require fragment definition if not yet done... ***/
+					if (!mRegistry[mSettings.fragmentName]) {
+						sap.ui.requireSync(mSettings.fragmentName.replace(/\./g, "/") + ".fragment"); // legacy-relevant: Sync path
+					}
+				})();
 				/*** Step 2: merge() ***/
 				merge(this, mRegistry[mSettings.fragmentName]);
 			}

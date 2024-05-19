@@ -31,14 +31,14 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
 	 * @since 1.16.0
 	 * @experimental Since version 1.16.0.
 	 * API is not yet finished and might change completely
-	 * @deprecated Since version 1.44.0.
+	 * @deprecated As of version 1.44.0, the concept has been discarded.
 	 * @alias sap.ui.unified.ContentSwitcher
 	 */
 	var ContentSwitcher = Control.extend("sap.ui.unified.ContentSwitcher", /** @lends sap.ui.unified.ContentSwitcher.prototype */ { metadata : {

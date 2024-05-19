@@ -62,7 +62,7 @@ sap.ui.define([
 	 * @borrows sap.ui.core.IFormContent.getFormDoNotAdjustWidth as #getFormDoNotAdjustWidth
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @public
 	 * @alias sap.m.Image
@@ -240,8 +240,8 @@ sap.ui.define([
 			events : {
 
 				/**
-				 * Event is fired when the user clicks on the control. (This event is deprecated, use the press event instead)
-				 * @deprecated As of version 1.107.0
+				 * Event is fired when the user clicks on the control.
+				 * @deprecated As of version 1.107.0. Use the {@link #event:press press} event instead.
 				 */
 				tap : {},
 

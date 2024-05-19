@@ -85,7 +85,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -301,16 +301,32 @@ sap.ui.define([
 
 		//Reference to badge hidden aggregation
 		this._badgeRef = null;
+
+		this._bImageLoadError = false;
 	};
 
 	Avatar.prototype.onBeforeRendering = function () {
 		if (this._getImageCustomData() && !this._iCacheBustingValue) {
 			this._setNewCacheBustingValue();
+			this._validateSrc(this._getAvatarSrc());
 		}
 	};
 
 	Avatar.prototype.onAfterRendering = function() {
 		this._checkInitialsHolderWidth();
+
+		if (this._bImageLoadError) {
+			this._cleanCSS();
+		}
+	};
+
+	Avatar.prototype.setSrc = function (sSrc) {
+		this._bImageLoadError = false;
+
+		this.setProperty("src", sSrc);
+		this._validateSrc(this._getAvatarSrc());
+
+		return this;
 	};
 
 	Avatar.prototype.onThemeChanged = function() {
@@ -492,7 +508,7 @@ sap.ui.define([
 	};
 
 	Avatar.prototype._handlePress = function () {
-		if (!this.getEnabled()) {
+		if (!this.getEnabled() || (this._bIsDefaultIcon && this.getDetailBox())) {
 			return;
 		}
 		this.firePress({/* no parameters */});
@@ -526,11 +542,14 @@ sap.ui.define([
 	 * @private
 	 */
 	Avatar.prototype._validateSrc = function (sSrc) {
+		if (!sSrc) {
+			return this;
+		}
+
 		if (IconPool.isIconURI(sSrc)) {
 			this._sActualType = AvatarType.Icon;
 			this._bIsDefaultIcon = IconPool.getIconInfo(sSrc) ? false : true;
 		} else {
-			this._bIsDefaultIcon = true;
 			this._sActualType = AvatarType.Image;
 
 			// we perform this action in order to validate the image source and
@@ -538,7 +557,7 @@ sap.ui.define([
 			this.preloadedImage = new window.Image();
 			this.preloadedImage.src = sSrc;
 			this.preloadedImage.onload = this._onImageLoad.bind(this);
-			this.preloadedImage.onerror = this._onImageError.bind(this);
+			this.preloadedImage.onerror = this._onImageError.bind(this, sSrc);
 		}
 
 		return this;
@@ -570,7 +589,7 @@ sap.ui.define([
 			sInitials = this.getInitials();
 
 		if (sSrc) {
-			this._validateSrc(sSrc);
+			return this._sActualType;
 		} else if (sInitials && this._areInitialsValid(sInitials)) {
 			this._sActualType = AvatarType.Initials;
 		} else {
@@ -629,19 +648,21 @@ sap.ui.define([
 	Avatar.prototype._getIcon = function () {
 		var sSrc = this.getSrc(),
 			oIcon = this.getAggregation("_icon"),
-			sDisplayShape = this.getDisplayShape();
+			sDisplayShape = this.getDisplayShape(),
+			bIsIconURI = IconPool.isIconURI(sSrc),
+			sDefaultIconPath = this._getDefaultIconPath(sDisplayShape);
 
 		if (this._bIsDefaultIcon) {
-			sSrc = this._getDefaultIconPath(sDisplayShape);
+			sSrc = sDefaultIconPath;
 		}
 
 		if (!oIcon) {
 			oIcon = IconPool.createControlByURI({
 				alt: "Image placeholder",
-				src: sSrc
+				src: bIsIconURI ? sSrc : sDefaultIconPath
 			});
 			this.setAggregation("_icon", oIcon);
-		} else if (oIcon.getSrc() !== sSrc) {
+		} else if (oIcon.getSrc() !== sSrc && (bIsIconURI || sSrc === sDefaultIconPath)) {
 			oIcon.setSrc(sSrc);
 		}
 
@@ -706,6 +727,11 @@ sap.ui.define([
 	 */
 	Avatar.prototype._onImageLoad = function() {
 		//we need to remove fallback content
+		if (this._bIsDefaultIcon) {
+			this._bIsDefaultIcon = false;
+			this.getDetailBox() && this.invalidate();
+		}
+		this._bImageLoadError = false;
 		delete this.preloadedImage;
 	};
 
@@ -714,13 +740,26 @@ sap.ui.define([
 	 *
 	 * @private
 	 */
-	 Avatar.prototype._onImageError = function() {
-		 var sFallBackType = this._getImageFallbackType();
+	 Avatar.prototype._onImageError = function(sSrc) {
+		if (this.getSrc() !== sSrc) {
+			return;
+		}
 
-		 this.$().removeClass("sapFAvatarImage")
-				.addClass("sapFAvatar" + sFallBackType);
+		this._cleanCSS();
 
+		if (!this._bIsDefaultIcon) {
+			this._bIsDefaultIcon = true;
+			this.getDetailBox() && this.invalidate();
+		}
 		delete this.preloadedImage;
+		this._bImageLoadError = true;
+	};
+
+	Avatar.prototype._cleanCSS = function () {
+		var sFallBackType = this._getImageFallbackType();
+
+		this.$().removeClass("sapFAvatarImage")
+			.addClass("sapFAvatar" + sFallBackType);
 	};
 
 	/**
@@ -873,6 +912,7 @@ sap.ui.define([
 	 */
 	Avatar.prototype.refreshAvatarCacheBusting = function () {
 		this._setNewCacheBustingValue();
+		this._validateSrc(this._getAvatarSrc());
 		this.invalidate();
 	};
 

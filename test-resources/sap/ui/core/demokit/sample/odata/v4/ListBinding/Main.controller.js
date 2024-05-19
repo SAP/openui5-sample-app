@@ -26,7 +26,7 @@ sap.ui.define([
 			var oView = this.getView(),
 				oDialog = oView.byId("ChangeTeamBudgetDialog");
 
-			oDialog.getObjectBinding().execute().then(function () {
+			oDialog.getObjectBinding().invoke().then(function () {
 					var oBinding = oView.byId("Budget").getBinding("text");
 
 					oBinding.setContext(null);
@@ -41,7 +41,7 @@ sap.ui.define([
 			var oView = this.getView(),
 				that = this;
 
-			this.oChangeManager.execute().then(function () {
+			this.oChangeManager.invoke().then(function () {
 					var oControl = oView.byId("ManagerID");
 
 					// set text to the operation result
@@ -59,7 +59,7 @@ sap.ui.define([
 
 			oOperation.setParameter("EmployeeID",
 					this.getView().getModel("ui").getProperty("/EmployeeID"))
-				.execute()
+				.invoke()
 				.catch(function (oError) {
 					MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR,
 						title : "Error"});
@@ -67,7 +67,7 @@ sap.ui.define([
 		},
 
 		getEmployeeMaxAge : function () {
-			this.byId("GetEmployeeMaxAge").getObjectBinding().execute();
+			this.byId("GetEmployeeMaxAge").getObjectBinding().invoke();
 		},
 
 		onCancel : function () {
@@ -216,10 +216,8 @@ sap.ui.define([
 			var oView = this.getView(),
 				oTeamContext = oView.byId("TeamDetails").getBindingContext();
 
-			if (!this.oChangeManager) {
-				this.oChangeManager = oView.getModel("parameterContext").bindContext(
+			this.oChangeManager ??= oView.getModel("parameterContext").bindContext(
 					"com.sap.gateway.default.iwbep.tea_busi.v0001.AcChangeManagerOfTeam(...)");
-			}
 
 			// operation is bound switch the context
 			this.oChangeManager.setContext(oTeamContext);

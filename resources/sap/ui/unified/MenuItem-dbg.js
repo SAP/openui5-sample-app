@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 	 * @extends sap.ui.unified.MenuItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -43,7 +43,16 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 			/**
 			 * Defines the icon of the {@link sap.ui.core.IconPool sap.ui.core.IconPool} or an image which should be displayed on the item.
 			 */
-			icon : {type : "sap.ui.core.URI", group : "Appearance", defaultValue : ''}
+			icon : {type : "sap.ui.core.URI", group : "Appearance", defaultValue : ''},
+
+			/**
+			 * Defines the shortcut text that should be displayed on the menu item on non-mobile devices.
+			 * <b>Note:</b> The text is only displayed and set as а value of the <code>aria-keyshortcuts</code> attribute.
+			 * There is no built-in functionality that selects the item when the corresponding shortcut is pressed.
+			 * This should be implemented by the application developer.
+			 */
+			shortcutText : {type : "string", group : "Appearance", defaultValue : ''}
+
 		},
 		associations : {
 
@@ -60,9 +69,14 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 		var rm = oRenderManager,
 			oSubMenu = oItem.getSubmenu(),
 			bIsEnabled = oItem.getEnabled(),
+			sShortcutText = oItem.getShortcutText(),
 			oIcon;
 
 		rm.openStart("li", oItem);
+
+		if (!oSubMenu && sShortcutText) {
+			rm.attr("aria-keyshortcuts", sShortcutText);
+		}
 
 		if (oItem.getVisible()) {
 			rm.attr("tabindex", "0");
@@ -100,24 +114,17 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 			}
 		}
 
-		// Left border
 		rm.openEnd();
+
 		rm.openStart("div");
-		rm.class("sapUiMnuItmL");
+		rm.class("sapUiMnuItmIco");
 		rm.openEnd();
-		rm.close("div");
 
 		if (oItem.getIcon()) {
-			// icon/check column
-			rm.openStart("div");
-			rm.class("sapUiMnuItmIco");
-			rm.openEnd();
-
 			oIcon = oItem._getIcon();
 			rm.renderControl(oIcon);
-
-			rm.close("div");
 		}
+		rm.close("div");
 
 		// Text column
 		rm.openStart("div", this.getId() + "-txt");
@@ -130,25 +137,22 @@ sap.ui.define(['sap/ui/core/IconPool', './MenuItemBase', './library', 'sap/ui/co
 		rm.openStart("div", this.getId() + "-scuttxt");
 		rm.class("sapUiMnuItmSCut");
 		rm.openEnd();
+		if (!oSubMenu && sShortcutText) {
+			rm.text(sShortcutText);
+		}
 		rm.close("div");
 
 		// Submenu column
-		rm.openStart("div");
-		rm.class("sapUiMnuItmSbMnu");
-		rm.openEnd();
 		if (oSubMenu) {
+			rm.openStart("div");
+			rm.class("sapUiMnuItmSbMnu");
+			rm.openEnd();
 			rm.openStart("div");
 			rm.class("sapUiIconMirrorInRTL");
 			rm.openEnd();
 			rm.close("div");
+			rm.close("div");
 		}
-		rm.close("div");
-
-		// Right border
-		rm.openStart("div");
-		rm.class("sapUiMnuItmR");
-		rm.openEnd();
-		rm.close("div");
 
 		rm.close("li");
 	};

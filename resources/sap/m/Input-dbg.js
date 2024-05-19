@@ -11,6 +11,7 @@ sap.ui.define([
 	'sap/ui/core/Item',
 	'sap/ui/core/LabelEnablement',
 	'sap/ui/core/AccessKeysEnablement',
+	'sap/ui/core/library',
 	'./ColumnListItem',
 	'./GroupHeaderListItem',
 	'sap/ui/core/SeparatorItem',
@@ -48,6 +49,7 @@ function(
 	Item,
 	LabelEnablement,
 	AccessKeysEnablement,
+	CoreLibrary,
 	ColumnListItem,
 	GroupHeaderListItem,
 	SeparatorItem,
@@ -160,7 +162,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -623,6 +625,7 @@ function(
 		// even though there is no user input (check Input.prototype.onsapright).
 		this._setTypedInValue("");
 		this._bDoTypeAhead = false;
+		this._isValueInitial = false;
 
 		// indicates whether input is clicked (on mobile) or the clear button
 		// used for identifying whether dialog should be open.
@@ -702,6 +705,10 @@ function(
 
 		InputBase.prototype.onBeforeRendering.call(this);
 
+		if (!this.getDomRef() && this.getValue()) {
+			this._isValueInitial = true;
+		}
+
 		if (this.getShowClearIcon()) {
 			this._getClearIcon().setProperty("visible", bShowClearIcon);
 		} else if (this._oClearButton) {
@@ -753,6 +760,15 @@ function(
 			If the input has FormattedText aggregation while the suggestions popover is open then
 			it's new, because the old is already switched to have the value state header as parent */
 			this._updateSuggestionsPopoverValueState();
+		}
+	};
+
+	Input.prototype.onAfterRendering = function() {
+		InputBase.prototype.onAfterRendering.call(this);
+
+		if (this._isValueInitial && this.getType() === InputType.Password) {
+			this.getDomRef("inner").value = this.getProperty("value");
+			this._isValueInitial = false;
 		}
 	};
 
@@ -1443,31 +1459,32 @@ function(
 	 * @param {jQuery.Event} oEvent Keyboard event.
 	 */
 	Input.prototype.onsapenter = function(oEvent) {
-		var bPopupOpened = this._isSuggestionsPopoverOpen(),
-			bFocusInPopup = !this.hasStyleClass("sapMFocus") && bPopupOpened,
-			aItems = this._hasTabularSuggestions() ? this.getSuggestionRows() : this.getSuggestionItems(),
-			bFireSubmit = this.getEnabled() && this.getEditable(),
-			iValueLength, oSuggestionsPopover, oSelectedItem, oFocusedItem;
+		const bPopupOpened = this._isSuggestionsPopoverOpen();
+		const bFocusInPopup = !this.hasStyleClass("sapMFocus") && bPopupOpened;
+		const aItems = this._hasTabularSuggestions() ? this.getSuggestionRows() : this.getSuggestionItems();
+		const oSuggestionsPopover = this._getSuggestionsPopover();
+		const oSelectedItem = oSuggestionsPopover?.getItemsContainer()?.getSelectedItem();
+		const oFocusedItem = bFocusInPopup && oSuggestionsPopover.getFocusedListItem();
+		const sText = oSelectedItem?.getTitle?.() || oSelectedItem?.getCells?.()[0]?.getText?.() || "";
+		const bPendingSuggest = !!this._iSuggestDelay && !sText.toLowerCase().includes(this._getTypedInValue().toLowerCase());
+		let bFireSubmit = this.getEnabled() && this.getEditable();
+		let iValueLength;
 
 		// when enter is pressed before the timeout of suggestion delay, suggest event is cancelled
 		this.cancelPendingSuggest();
 
 		bFocusInPopup && this.setSelectionUpdatedFromList(true);
 
-		if (this.getShowSuggestion() && this._bDoTypeAhead && bPopupOpened && !this.isComposingCharacter()) {
-			oSuggestionsPopover = this._getSuggestionsPopover();
-			oSelectedItem = oSuggestionsPopover.getItemsContainer().getSelectedItem();
-			oFocusedItem = oSuggestionsPopover.getFocusedListItem();
+		// prevent closing of popover, when Enter is pressed on a group header
+		if (this._bDoTypeAhead && oFocusedItem && oFocusedItem.isA("sap.m.GroupHeaderListItem")) {
+			return;
+		}
 
+		if (this._bDoTypeAhead && bPopupOpened && !this.isComposingCharacter() && !bPendingSuggest) {
 			if (this._hasTabularSuggestions()) {
 				oSelectedItem && this.setSelectionRow(oSelectedItem, true);
 			} else {
 				oSelectedItem && this.setSelectionItem(ListHelpers.getItemByListItem(aItems, oSelectedItem), true);
-			}
-
-			// prevent closing of popover, when Enter is pressed on a group header
-			if (oFocusedItem && oFocusedItem.isA("sap.m.GroupHeaderListItem")) {
-				return;
 			}
 		}
 
@@ -1656,6 +1673,11 @@ function(
 	Input.prototype.updateSuggestionItems = function() {
 		this._bSuspendInvalidate = true;
 		this.updateAggregation("suggestionItems");
+
+		if (this.checkMatchingSuggestionItems(this.getValue()) && this._isSuggestionsPopoverOpen()) {
+			this._handleTypeAhead(this);
+		}
+
 		this._synchronizeSuggestions();
 		this._bSuspendInvalidate = false;
 		return this;
@@ -1911,7 +1933,6 @@ function(
 			oList.addStyleClass("sapMInputSuggestionTableHidden");
 		}
 
-		this.$("SuggDescr").text(""); // clear suggestion text
 		this.$("inner").removeAttr("aria-activedescendant");
 	};
 
@@ -1954,10 +1975,6 @@ function(
 		// In that case the second DOM update of the invisible text element
 		// do not occur if it is synchronous. BCP #2070466087
 		setTimeout(function () {
-			if (!this.getSuggestionItems().length && !this._hasTabularSuggestions()) {
-				return this.$("SuggDescr").text("");
-			}
-
 			// add items to list
 			if (iNumItems === 1) {
 				sAriaText = oRb.getText("INPUT_SUGGESTIONS_ONE_HIT");
@@ -1968,7 +1985,7 @@ function(
 			}
 
 			// update Accessibility text for suggestion
-			this.$("SuggDescr").text(sAriaText);
+			this._oInvisibleMessage?.announce(sAriaText, CoreLibrary.InvisibleMessageMode.Polite);
 		}.bind(this), 0);
 	};
 
@@ -2038,6 +2055,11 @@ function(
 		this._bSuspendInvalidate = true;
 		this.updateAggregation("suggestionRows");
 		this._synchronizeSuggestions();
+
+		if (this.checkMatchingTabularSuggestionItems(this.getValue()) && this._isSuggestionsPopoverOpen()) {
+			this._handleTypeAhead(this);
+		}
+
 		this._bSuspendInvalidate = false;
 		return this;
 	};
@@ -2120,7 +2142,6 @@ function(
 		if (!this.isMobileDevice() && this.$().hasClass("sapMInputFocused")) {
 			this.openValueStateMessage();
 		}
-		this.$("SuggDescr").text(""); // initialize suggestion ARIA text
 		this.$("inner").removeAttr("aria-activedescendant");
 
 		this._sPrevSuggValue = null;
@@ -2259,7 +2280,9 @@ function(
 
 		oInput._setProposedItemText(null);
 
-		if (!bDoTypeAhead) {
+		const bExactMatch = this._hasTabularSuggestions() ? this.checkMatchingTabularSuggestionItems(sValue) : this.checkMatchingSuggestionItems(sValue);
+
+		if (!bDoTypeAhead && !bExactMatch) {
 			return;
 		}
 
@@ -2335,6 +2358,10 @@ function(
 			return;
 		}
 
+		if (!this._getTypedInValue().length) {
+			return;
+		}
+
 		if (this._getTypedInValue() !== sValue) {
 			this._setTypedInValue(oDomRef.value.substring(0, oDomRef.selectionStart));
 
@@ -2403,7 +2430,6 @@ function(
 	Input.prototype.onfocusout = function (oEvent) {
 		InputBase.prototype.onfocusout.apply(this, arguments);
 		this.removeStyleClass("sapMInputFocused");
-		this.$("SuggDescr").text(""); // clear suggestion text, if any
 	};
 
 	/**
@@ -3027,6 +3053,7 @@ function(
 
 		oPopover = oSuggPopover.getPopover();
 		oPopover.attachBeforeOpen(function () {
+			this.closeValueStateMessage();
 			this._updateSuggestionsPopoverValueState();
 		}, this);
 
@@ -3093,7 +3120,7 @@ function(
 					this._refreshListItems();
 				}, this)
 				.attachBeforeOpen(function() {
-					var oSuggestionsInput = oSuggPopover.getInput();
+						var oSuggestionsInput = oSuggPopover.getInput();
 					// set the same placeholder and maxLength as the original input
 					["placeholder",
 						"maxLength",
@@ -3107,9 +3134,16 @@ function(
 		} else {
 			oPopover
 				.attachAfterClose(function() {
-					var oList = oSuggPopover.getItemsContainer();
-					var oSelectedItem = oList && oList.getSelectedItem();
-					var oDomRef = this.getDomRef();
+					const oList = oSuggPopover.getItemsContainer();
+					const oDomRef = this.getDomRef();
+					const oSuggestionsPopover = this._getSuggestionsPopover();
+					const oSelectedItem = oSuggestionsPopover?.getItemsContainer()?.getSelectedItem();
+					const sText = oSelectedItem?.getTitle?.() || oSelectedItem?.getCells?.()[0]?.getText?.() || "";
+					const bPendingSuggest = !!this._iSuggestDelay && !sText.toLowerCase().includes(this.getValue().toLowerCase());
+
+					if (bPendingSuggest) {
+						return;
+					}
 
 					if (this.getSelectionUpdatedFromList()) {
 						this.updateSelectionFromList(oSelectedItem);
@@ -3123,7 +3157,7 @@ function(
 
 					// only destroy items in simple suggestion mode
 					if (oList instanceof Table) {
-						oSelectedItem && oSelectedItem.removeStyleClass("sapMLIBFocused");
+						oSelectedItem?.removeStyleClass("sapMLIBFocused");
 						oList.removeSelections(true);
 					} else {
 						oList.destroyItems();
@@ -3258,18 +3292,7 @@ function(
 	 * @private
 	 */
 	Input.prototype._isSuggestionsPopoverOpen = function () {
-		return this._getSuggestionsPopover() &&
-			this._getSuggestionsPopover().isOpen();
-	};
-
-	/**
-	 * Indicates whether the control should use <code>sap.m.Dialog</code> or not.
-	 *
-	 * @returns {boolean} Boolean.
-	 * @protected
-	 */
-	Input.prototype.isMobileDevice = function () {
-		return Device.system.phone;
+		return this._getSuggestionsPopover()?.isOpen();
 	};
 
 	/**
@@ -3585,6 +3608,25 @@ function(
 
 	Input.prototype.getFormObservingProperties = function() {
 		return ["value", "description"];
+	};
+
+
+	/**
+	 * Check if the current value is matching with a suggestion item.
+	 *
+	 * @private
+	 */
+	Input.prototype.checkMatchingSuggestionItems =  function(sCurrentValue) {
+		return this.getSuggestionItems().some((item) => (item.getText?.().toLowerCase() === sCurrentValue.toLowerCase()) && !item.isA("sap.ui.core.SeparatorItem"));
+	};
+
+	/**
+	 * Check if the current value is matching with a tabular suggestion item.
+	 *
+	 * @private
+	 */
+	Input.prototype.checkMatchingTabularSuggestionItems =  function(sCurrentValue) {
+		return this.getSuggestionRows().some((row) => row.getCells?.()[0]?.getText?.().toLowerCase() === sCurrentValue.toLowerCase() && !row.isA("sap.m.GroupHeaderListItem"));
 	};
 
 	return Input;

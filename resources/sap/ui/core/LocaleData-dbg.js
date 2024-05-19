@@ -53,17 +53,17 @@ sap.ui.define([
 	const aSupportedWidths = ["narrow", "abbreviated", "wide"];
 
 	/**
-	 * Creates an instance of LocaleData for the given locale.
+	 * DO NOT call the constructor for <code>LocaleData</code>; use <code>LocaleData.getInstance</code> instead.
 	 *
-	 * @class Provides access to locale-specific data, such as, date formats, number formats, and currencies.
+	 * @param {sap.ui.core.Locale} oLocale The locale
 	 *
-	 * @param {sap.ui.core.Locale} oLocale the locale
-	 *
-	 * @extends sap.ui.base.Object
-	 * @author SAP SE
-	 * @version 1.122.1
-	 * @public
 	 * @alias sap.ui.core.LocaleData
+	 * @author SAP SE
+	 * @extends sap.ui.base.Object
+	 * @class Provides access to locale-specific data, such as date formats, number formats, and currencies.
+	 * @hideconstructor
+	 * @public
+	 * @version 1.124.0
 	 */
 	var LocaleData = BaseObject.extend("sap.ui.core.LocaleData", /** @lends sap.ui.core.LocaleData.prototype */ {
 
@@ -1505,7 +1505,8 @@ sap.ui.define([
 		 * </pre>
 		 *
 		 * @param {string[]} aScales The scales for which the available patterns should be returned
-		 * @param {string} [sStyle="wide"] @since 1.32.10, 1.34.4 The style of the scale patterns. The valid values are "wide", "short" and "narrow".
+		 * @param {string} [sStyle="wide"]
+		 *   Since 1.32.10 and 1.34.4, the style of the scale patterns; valid values are "wide", "short" and "narrow"
 		 * @returns {object[]} An array of all relative time patterns
 		 * @public
 		 * @since 1.34
@@ -1565,7 +1566,8 @@ sap.ui.define([
 		 * @param {string} sScale the scale the relative pattern is needed for
 		 * @param {int} iDiff the difference in the given scale unit
 		 * @param {boolean} [bFuture] whether a future or past pattern should be used
-		 * @param {string} [sStyle="wide"] @since 1.32.10, 1.34.4 the style of the pattern. The valid values are "wide", "short" and "narrow"
+		 * @param {string} [sStyle="wide"]
+		 *   Since 1.32.10 and 1.34.4, the style of the pattern; valid values are "wide", "short" and "narrow"
 		 * @returns {string} the relative format pattern
 		 * @public
 		 * @since 1.34
@@ -1608,7 +1610,8 @@ sap.ui.define([
 		 * difference value (0 means now, positive value means in the future and negative value means in the past).
 		 *
 		 * @param {int} iDiff the difference in seconds
-		 * @param {string} [sStyle="wide"] @since 1.32.10, 1.34.4 the style of the pattern. The valid values are "wide", "short" and "narrow"
+		 * @param {string} [sStyle="wide"]
+		 *   Since 1.32.10 and 1.34.4, the style of the pattern; valid values are "wide", "short" and "narrow"
 		 * @returns {string} the relative resource pattern in unit 'second'
 		 * @public
 		 * @since 1.31.0
@@ -1625,7 +1628,8 @@ sap.ui.define([
 		 * function to format the difference using unit 'second'.
 		 *
 		 * @param {int} iDiff the difference in minutes
-		 * @param {string} [sStyle="wide"] @since 1.32.10, 1.34.4 the style of the pattern. The valid values are "wide", "short" and "narrow"
+		 * @param {string} [sStyle="wide"]
+		 *   Since 1.32.10 and 1.34.4, the style of the pattern; valid values are "wide", "short" and "narrow"
 		 * @returns {string|null} the relative resource pattern in unit 'minute'. The method returns null if 0 is given as parameter.
 		 * @public
 		 * @since 1.31.0
@@ -1645,7 +1649,8 @@ sap.ui.define([
 		 * function to format the difference using unit 'minute' or 'second'.
 		 *
 		 * @param {int} iDiff the difference in hours
-		 * @param {string} [sStyle="wide"] @since 1.32.10, 1.34.4 the style of the pattern. The valid values are "wide", "short" and "narrow"
+		 * @param {string} [sStyle="wide"]
+		 *   Since 1.32.10 and 1.34.4, the style of the pattern; valid values are "wide", "short" and "narrow"
 		 * @returns {string|null} the relative resource pattern in unit 'hour'. The method returns null if 0 is given as parameter.
 		 * @public
 		 * @since 1.31.0
@@ -1662,7 +1667,8 @@ sap.ui.define([
 		 * difference of days (0 means today, 1 means tomorrow, -1 means yesterday, ...).
 		 *
 		 * @param {int} iDiff the difference in days
-		 * @param {string} [sStyle="wide"] @since 1.32.10, 1.34.4 the style of the pattern. The valid values are "wide", "short" and "narrow"
+		 * @param {string} [sStyle="wide"]
+		 *   Since 1.32.10 and 1.34.4, the style of the pattern; valid values are "wide", "short" and "narrow"
 		 * @returns {string} the relative day resource pattern
 		 * @public
 		 * @since 1.25.0
@@ -1676,7 +1682,8 @@ sap.ui.define([
 		 * difference of weeks (0 means this week, 1 means next week, -1 means last week, ...).
 		 *
 		 * @param {int} iDiff the difference in weeks
-		 * @param {string} [sStyle="wide"] @since 1.32.10, 1.34.4 the style of the pattern. The valid values are "wide", "short" and "narrow"
+		 * @param {string} [sStyle="wide"]
+		 *   Since 1.32.10 and 1.34.4, the style of the pattern; valid values are "wide", "short" and "narrow"
 		 * @returns {string} the relative week resource pattern
 		 * @public
 		 * @since 1.31.0
@@ -1690,7 +1697,8 @@ sap.ui.define([
 		 * difference of months (0 means this month, 1 means next month, -1 means last month, ...).
 		 *
 		 * @param {int} iDiff the difference in months
-		 * @param {string} [sStyle="wide"] @since 1.32.10, 1.34.4 the style of the pattern. The valid values are "wide", "short" and "narrow"
+		 * @param {string} [sStyle="wide"]
+		 *   Since 1.32.10 and 1.34.4, the style of the pattern; valid values are "wide", "short" and "narrow"
 		 * @returns {string} the relative month resource pattern
 		 * @public
 		 * @since 1.25.0
@@ -1703,8 +1711,9 @@ sap.ui.define([
 		 * Returns the display name for a time unit (second, minute, hour, day, week, month, year).
 		 *
 		 * @param {string} sType Type (second, minute, hour, day, week, month, year)
-		 * @param {string} [sStyle="wide"] @since 1.32.10, 1.34.4 the style of the pattern. The valid values are "wide", "short" and "narrow"
-		 * returns {string} display name
+		 * @param {string} [sStyle="wide"]
+		 *   Since 1.32.10 and 1.34.4, the style of the pattern; valid values are "wide", "short" and "narrow"
+		 * @returns {string} display name
 		 * @public
 		 * @since 1.34.0
 		 */
@@ -1730,7 +1739,8 @@ sap.ui.define([
 		 * difference of years (0 means this year, 1 means next year, -1 means last year, ...).
 		 *
 		 * @param {int} iDiff the difference in years
-		 * @param {string} [sStyle="wide"] @since 1.32.10, 1.34.4 the style of the pattern. The valid values are "wide", "short" and "narrow"
+		 * @param {string} [sStyle="wide"]
+		 *   Since 1.32.10 and 1.34.4, the style of the pattern; valid values are "wide", "short" and "narrow"
 		 * @returns {string} the relative year resource pattern
 		 * @public
 		 * @since 1.25.0
@@ -2712,11 +2722,17 @@ sap.ui.define([
 	});
 
 	/**
+	 * Creates an instance of <code>LocaleData</code> for the given locale.
 	 *
+	 * @param {sap.ui.core.Locale|sap.base.i18n.LanguageTag} vLocale The locale or language tag
+	 * @returns {sap.ui.core.LocaleData} An instance of <code>LocaleData</code>
+	 *
+	 * @public
+	 * @since 1.123
 	 */
-	LocaleData.getInstance = function(oLocale) {
-		oLocale = Locale._getCoreLocale(oLocale);
-		return oLocale.hasPrivateUseSubtag("sapufmt") ? new CustomLocaleData(oLocale) : new LocaleData(oLocale);
+	LocaleData.getInstance = function(vLocale) {
+		vLocale = Locale._getCoreLocale(vLocale);
+		return vLocale.hasPrivateUseSubtag("sapufmt") ? new CustomLocaleData(vLocale) : new LocaleData(vLocale);
 	};
 
 	LocaleData._cldrLocales = _cldrLocales;

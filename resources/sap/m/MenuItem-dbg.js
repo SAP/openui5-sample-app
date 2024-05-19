@@ -23,7 +23,7 @@ sap.ui.define(['./library', "sap/ui/core/Element", 'sap/ui/core/Item', 'sap/ui/b
 		 * @extends sap.ui.core.Item
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @public
@@ -46,6 +46,14 @@ sap.ui.define(['./library', "sap/ui/core/Element", 'sap/ui/core/Item', 'sap/ui/b
 				 * a placeholder is rendered instead of the real item.
 				 */
 				visible : {type: "boolean", group : "Appearance", defaultValue: true},
+
+				/**
+				 * Defines the shortcut text that should be displayed on the menu item on non-mobile devices.
+				 * <b>Note:</b> The text is only displayed and set as а value of the <code>aria-keyshortcuts</code> attribute.
+				 * There is no built-in functionality that selects the item when the corresponding shortcut is pressed.
+				 * This should be implemented by the application developer.
+				 */
+				shortcutText : {type : "string", group : "Appearance", defaultValue : ''},
 
 				/**
 				 * Defines whether a visual separator should be rendered before the item.

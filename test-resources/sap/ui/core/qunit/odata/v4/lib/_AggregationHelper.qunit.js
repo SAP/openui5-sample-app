@@ -1228,6 +1228,7 @@ sap.ui.define([
 			sQueryOptionsJSON = JSON.stringify(mQueryOptions);
 
 		if (bStored) {
+			oAggregation.$Actions = "~actions~";
 			oAggregation.$DrillState = "myDrillState";
 			oAggregation.$NodeProperty = "SomeNodeID";
 			oAggregation.$ParentNavigationProperty = "SomeParentNavigation";
@@ -1261,12 +1262,16 @@ sap.ui.define([
 		oAggregationMock.expects("$fetchMetadata").exactly(bStored ? 0 : 1)
 			.withExactArgs("/meta/@com.sap.vocabularies.Hierarchy.v1.RecursiveHierarchy#X")
 			.returns(SyncPromise.resolve(oRecursiveHierarchy));
+		oAggregationMock.expects("$fetchMetadata").exactly(bStored ? 0 : 1)
+			.withExactArgs("/meta/@com.sap.vocabularies.Hierarchy.v1.RecursiveHierarchyActions#X")
+			.returns(SyncPromise.resolve("~actions~"));
 		oExpectedAggregation = Object.assign({
 			expandTo : iExpandTo || 1,
 			hierarchyQualifier : "X",
 			$fetchMetadata : oAggregation.$fetchMetadata, // remember the mock(!)
 			$metaPath : "/meta",
 			$path : "/Foo",
+			$Actions : "~actions~",
 			$DrillState : "myDrillState",
 			$NodeProperty : "SomeNodeID",
 			$ParentNavigationProperty : "SomeParentNavigation"
@@ -1335,7 +1340,7 @@ sap.ui.define([
 	].forEach((oRecursiveHierarchy, j) => {
 		[false, true].forEach((bStored) => {
 			const sTitle = "buildApply4Hierarchy: children of a given parent, #" + i + ", #" + j
-				+ ", $LimitedRank already stored" + bStored;
+				+ ", $LimitedRank already stored: " + bStored;
 
 	QUnit.test(sTitle, function (assert) {
 		var oAggregation = Object.assign({
@@ -1365,6 +1370,10 @@ sap.ui.define([
 		oAggregationMock.expects("$fetchMetadata")
 			.withExactArgs("/meta/path/@com.sap.vocabularies.Hierarchy.v1.RecursiveHierarchy#XYZ")
 			.returns(SyncPromise.resolve(oRecursiveHierarchy));
+		oAggregationMock.expects("$fetchMetadata")
+			.withExactArgs(
+				"/meta/path/@com.sap.vocabularies.Hierarchy.v1.RecursiveHierarchyActions#XYZ")
+			.returns(SyncPromise.resolve("~actions~"));
 
 		// code under test
 		assert.deepEqual(_AggregationHelper.buildApply4Hierarchy(oAggregation, mQueryOptions), {
@@ -1381,6 +1390,7 @@ sap.ui.define([
 			assert.strictEqual(oAggregation.$LimitedRank, "path/to/LimitedRank",
 				"derived from DrillState");
 		}
+		assert.strictEqual(oAggregation.$Actions, "~actions~");
 		assert.strictEqual(oAggregation.$NodeProperty, "myID");
 		assert.strictEqual(oAggregation.$ParentNavigationProperty, "myParentNavigation");
 	});
@@ -1921,6 +1931,56 @@ sap.ui.define([
 		assert.strictEqual(_Helper.getPrivateAnnotation(oPlaceholder, "parent"), oParentCache);
 		assert.strictEqual(_Helper.getPrivateAnnotation(oPlaceholder, "placeholder"), true);
 	});
+
+	//*********************************************************************************************
+[undefined, "~filterBeforeAggregate~"].forEach((sFilterBeforeAggregate) => {
+	QUnit.test(`dropFilter: sFilterBeforeAggregate=${sFilterBeforeAggregate}`, function (assert) {
+		const oAggregation = {
+			$fetchMetadata : function () {},
+			$metaPath : "/meta",
+			$path : "/Foo",
+			expandTo : 42,
+			hierarchyQualifier : "X",
+			search : "covfefe"
+		};
+		const sAggregationJSON = JSON.stringify(oAggregation);
+		const mQueryOptions = {
+			$$filterBeforeAggregate : "n/a",
+			$count : "~count~",
+			$expand : "~expand~",
+			$filter : "~filter~",
+			$orderby : "~orderby~",
+			$select : "~select~",
+			custom : "~custom~",
+			foo : "bar"
+		};
+		const sQueryOptionsJSON = JSON.stringify(mQueryOptions);
+		const mExpectedQueryOptions = {
+			custom : "~custom~",
+			foo : "bar"
+		};
+		if (sFilterBeforeAggregate) {
+			mExpectedQueryOptions.$$filterBeforeAggregate = sFilterBeforeAggregate;
+		}
+		this.mock(_AggregationHelper).expects("buildApply4Hierarchy")
+			.withExactArgs({
+				$fetchMetadata : sinon.match.func,
+				$metaPath : "/meta",
+				$path : "/Foo",
+				expandTo : 42,
+				hierarchyQualifier : "X"
+			}, mExpectedQueryOptions)
+			.returns("~result~");
+
+		assert.strictEqual(
+			// code under test
+			_AggregationHelper.dropFilter(oAggregation, mQueryOptions, sFilterBeforeAggregate),
+			"~result~");
+
+		assert.strictEqual(JSON.stringify(oAggregation), sAggregationJSON, "unchanged");
+		assert.strictEqual(JSON.stringify(mQueryOptions), sQueryOptionsJSON, "unchanged");
+	});
+});
 
 	//*********************************************************************************************
 [false, true].forEach(function (bSubtotalsAtBottomOnly) {

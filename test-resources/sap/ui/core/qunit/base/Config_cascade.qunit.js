@@ -4,6 +4,9 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*global QUnit */
+QUnit.config.autostart = false;
+QUnit.config.reorder = false;
+
 sap.ui.require([
 	"sap/base/config",
 	"sap/base/Log",
@@ -16,10 +19,8 @@ sap.ui.require([
 	sinon
 ) {
 	"use strict";
+
 	sap.ui.loader._.logger = Log.getLogger("test", 6);
-
-	QUnit.config.reorder = false;
-
 	QUnit.module("Base Configuration", {
 		beforeEach: function() {
 			BaseConfiguration._.invalidate();
@@ -499,4 +500,6 @@ sap.ui.require([
 			oWritableInstance1.set("sap-ui-param1", true);
 		}, new TypeError("Invalid configuration key 'sap-ui-param1'!"), "oWritableInstance1.set for param 'sap-ui-param1' throws error 'Invalid configuration key 'sap-ui-param1'!'");
 	});
+
+	QUnit.start();
 });

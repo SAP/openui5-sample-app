@@ -46,7 +46,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -114,7 +114,7 @@ sap.ui.define([
 				/**
 				 * Setting this property will not have any effect on the appearance of the BusyIndicator
 				 * in versions greater than or equal to 1.32.1
-				 * @deprecated Since version 1.32.1
+				 * @deprecated As of version 1.32.1, the concept has been discarded.
 				 */
 				design : {type : "string", group : "Appearance", defaultValue : "auto", deprecated: true}
 			},

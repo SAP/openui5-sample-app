@@ -17,7 +17,7 @@ sap.ui.define(["sap/ui/base/Object", "sap/m/p13n/Popup", "sap/ui/core/Lib"], fun
 	 * @alias sap.m.upload.p13n.modules.PersPopupManager
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @experimental
 	 * @internal
 	 * @private
@@ -31,10 +31,10 @@ sap.ui.define(["sap/ui/base/Object", "sap/m/p13n/Popup", "sap/ui/core/Lib"], fun
 		}
 	});
 
-	/***
+	/**
 	 *
 	 * Returns singleton instance of PersPopupManager
-	 * @internal
+	 * @private
 	 */
 
 	PersPopupManager.getInstance = function () {

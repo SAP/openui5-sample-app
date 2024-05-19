@@ -112,7 +112,7 @@ sap.ui.define([
 	 * bound content aggregation. An error will be thrown when the above combination is detected.
 	 *
 	 * @extends sap.ui.core.mvc.View
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.XMLView
@@ -156,8 +156,13 @@ sap.ui.define([
 				 * Only used for HTML embedded in an XMLView. This kind of HTML is processed synchronously only
 				 * and needs access to 'core:require' modules from outside.
 				 * Normally 'core:require' modules are NOT passed into nested Views and Fragments.
+				 *
+				 * The visibility is set to hidden because this is set only in internal code to propagate the
+				 * 'core:require' context into the nested XMLView which is created for the HTML or SVG node and
+				 * its sub-nodes. This isn't needed for nested Views/Fragments because 'core:require' context
+				 * isn't propagated across View/Fragment borders.
 				 */
-				requireContext : 'Object'
+				requireContext: { type: 'Object', visibility: "hidden" }
 			},
 
 			designtime: "sap/ui/core/designtime/mvc/XMLView.designtime"

@@ -30,7 +30,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @private
@@ -674,6 +674,8 @@ sap.ui.define([
 		 */
 		TimePickerClock.prototype._calculateDimensions = function() {
 			var oCover = this._getClockCoverContainerDomRef(),
+				scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
+				scrollTop = window.pageYOffset || document.documentElement.scrollTop,
 				iRadius = Math.round(oCover.offsetHeight / 2),
 				iDotHeight = jQuery('.sapMTPCDot').first().outerHeight(true),
 				iNumberHeight = jQuery('.sapMTPCNumber').first().outerHeight(true),
@@ -689,8 +691,8 @@ sap.ui.define([
 				'outerMin': iRadius - iNumberHeight,
 				'innerMax': iRadius - iNumberHeight - 1,
 				'innerMin': iRadius - iNumberHeight * 2 - 1,
-				'offsetX': oOffset.left,
-				'offsetY': oOffset.top
+				'offsetX': oOffset.left + scrollLeft,
+				'offsetY': oOffset.top + scrollTop
 			};
 		};
 

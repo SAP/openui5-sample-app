@@ -111,7 +111,7 @@ sap.ui.define([
 	 * @author SAP SE
 	 * @public
 	 * @since 1.58.0
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @namespace
 	 * @alias module:sap/ui/core/ComponentSupport
 	 */
@@ -180,7 +180,7 @@ sap.ui.define([
 					var oProperty = ComponentContainerMetadata.getProperty(sKey);
 					var oEvent = !oProperty && ComponentContainerMetadata.getEvent(sKey);
 					if (!oProperty && !oEvent) {
-						future.warningThrows("Property or event \"" + sKey + "\" will be ignored as it does not exist in sap.ui.core.ComponentContainer");
+						future.warningThrows("Property or event \"" + sKey + "\" does not exist in sap.ui.core.ComponentContainer.", { suffix: "It will be ignored."});
 						continue;
 					}
 					if (oProperty) {
@@ -229,8 +229,8 @@ sap.ui.define([
 		if (mSettings.manifest === undefined || mSettings.manifest === "true") {
 			mSettings.manifest = true;
 		} else if (mSettings.manifest === "false") {
-			future.errorThrows("Ignoring \"manifest=false\" for ComponentContainer of component \"" + mSettings.name + "\" as it is not supported by ComponentSupport. " +
-				"Forcing \"manifest=true\"", "", "sap/ui/core/ComponentSupport");
+			future.errorThrows("Defining \"manifest=false\" for ComponentContainer of component \"" + mSettings.name + "\" is not supported by ComponentSupport.", {
+				suffix: "Forcing \"manifest=true\""}, "", "sap/ui/core/ComponentSupport");
 			mSettings.manifest = true;
 		}
 

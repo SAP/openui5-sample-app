@@ -17,12 +17,13 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Type for <code>selectionItems</code> aggregation in <code>P13nSelectionPanel</code> control.
 	 * @extends sap.ui.core.Item
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @constructor
 	 * @author SAP SE
 	 * @private
 	 * @since 1.46.0
 	 * @alias sap.m.P13nSelectionItem
+	 * @deprecated As of version 1.124, replaced by the artifacts in {@link sap.m.p13n}.
 	 */
 	var P13nSelectionItem = Item.extend("sap.m.P13nSelectionItem", /** @lends sap.m.P13nSelectionItem.prototype */
 	{

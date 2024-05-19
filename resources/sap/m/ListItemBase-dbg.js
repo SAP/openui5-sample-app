@@ -9,11 +9,11 @@ sap.ui.define([
 	"sap/ui/base/DataType",
 	"sap/ui/model/BindingMode",
 	"sap/ui/Device",
-	"sap/ui/core/library",
 	"sap/ui/core/Control",
 	"sap/ui/core/IconPool",
 	"sap/ui/core/Icon",
 	"sap/ui/core/InvisibleText",
+	"sap/ui/core/message/MessageType",
 	"sap/ui/core/theming/Parameters",
 	"sap/ui/core/ShortcutHintsMixin",
 	"./library",
@@ -31,11 +31,11 @@ function(
 	DataType,
 	BindingMode,
 	Device,
-	coreLibrary,
 	Control,
 	IconPool,
 	Icon,
 	InvisibleText,
+	MessageType,
 	ThemeParameters,
 	ShortcutHintsMixin,
 	library,
@@ -59,9 +59,6 @@ function(
 	// shortcut for sap.m.ButtonType
 	var ButtonType = library.ButtonType;
 
-	// shortcut for sap.ui.core.MessageType
-	var MessageType = coreLibrary.MessageType;
-
 
 	/**
 	 * Constructor for a new ListItemBase.
@@ -75,7 +72,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -1178,8 +1175,8 @@ function(
 			return;
 		}
 
-		// F2 fire detail event or handle editing
-		if (oEvent.code == "KeyE" && (oEvent.metaKey || oEvent.ctrlKey)) {
+		// Ctrl+E fires detail event or handle editing
+		if (this.getType().startsWith("Detail") && oEvent.code == "KeyE" && (oEvent.metaKey || oEvent.ctrlKey)) {
 			if (oEvent.target === this.getDomRef() && (this.hasListeners("detailPress") || this.hasListeners("detailTap"))) {
 				this.fireDetailTap();
 				this.fireDetailPress();
@@ -1272,7 +1269,7 @@ function(
 
 		// allow the context menu to open on the SingleSelect or MultiSelect control
 		if (oEvent.srcControl == this.getModeControl() ||
-			document.activeElement.matches(".sapMLIB,.sapMListTblCell,.sapMListTblSubRow")) {
+			document.activeElement.matches(".sapMLIB,.sapMListTblCell,.sapMListTblSubRow,.sapMListTblSubCnt")) {
 			this.informList("ContextMenu", oEvent);
 		}
 	};

@@ -40,7 +40,7 @@ sap.ui.define([
 	 * @constructor
 	 * @alias sap.m.changeHandler.AddTableColumn
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @private
 	 * @since 1.51.0
 	 */
@@ -55,7 +55,6 @@ sap.ui.define([
 			return !!(oChangeODataInformation && oChangeODataInformation.entityType);
 		},
 		skipCreateLayout: true,
-		supportsDefault: true,
 
 		/**
 		 * Add a new column

@@ -28,7 +28,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @private
 	 *
@@ -120,6 +120,12 @@ sap.ui.define([
 									oP13nContainer.destroy();
 								});
 							}
+						});
+
+						oP13nContainer._getContainer().attachAfterViewSwitch((oEvt) => {
+							const affectedKey = oEvt.getParameter("target");
+							const affectedPanel = aInitializedPanels[aPanelKeys.indexOf(affectedKey)];
+							that.oAdaptationProvider.validateP13n(oControl, affectedKey, affectedPanel);
 						});
 
 						if (mSettings.showReset !== false) {

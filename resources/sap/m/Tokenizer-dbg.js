@@ -13,7 +13,6 @@ sap.ui.define([
 	'sap/m/StandardListItem',
 	'sap/m/ResponsivePopover',
 	"sap/ui/core/ControlBehavior",
-	'sap/ui/core/Core',
 	'sap/ui/core/Control',
 	'sap/ui/core/Element',
 	"sap/ui/core/Lib",
@@ -39,7 +38,6 @@ sap.ui.define([
 		StandardListItem,
 		ResponsivePopover,
 		ControlBehavior,
-		Core,
 		Control,
 		Element,
 		Library,
@@ -84,7 +82,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public

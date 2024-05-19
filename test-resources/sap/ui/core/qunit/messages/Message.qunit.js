@@ -2,13 +2,11 @@
 sap.ui.define([
 	'sap/ui/core/library',
 	'sap/ui/core/message/Message',
-	'sap/ui/core/message/MessageProcessor'
-], function(coreLibrary, Message, MessageProcessor) {
+	'sap/ui/core/message/MessageProcessor',
+	'sap/ui/core/message/MessageType'
+], function(coreLibrary, Message, MessageProcessor, MessageType) {
 	/*eslint max-nested-callbacks: 0 */
 	"use strict";
-
-	// shortcut for sap.ui.core.MessageType
-	var MessageType = coreLibrary.MessageType;
 
 	QUnit.module("sap/ui/core/message/Message");
 
@@ -220,6 +218,10 @@ sap.ui.define([
 ].forEach(function (sType0, i0, aTypes) {
 	var oMessage0 = new Message({type : sType0});
 
+	/**
+	 * Creating Messages with an unknown type will not be possible in UI5 2.x
+	 * @deprecated
+	 */
 	QUnit.test("compare " + sType0 + " with unknown", function (assert) {
 		var oMessageUnknown = new Message({type : "unknown"});
 

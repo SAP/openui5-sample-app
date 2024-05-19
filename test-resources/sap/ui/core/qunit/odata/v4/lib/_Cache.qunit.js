@@ -443,7 +443,7 @@ sap.ui.define([
 				.withExactArgs(undefined, oFixture.iStatus < 0
 					? [oMessage1, oMessage2] : [oMessage1]);
 			oRestoreExpectation = that.mock(oCache).expects("restoreElement").exactly(iOnFailure)
-				.withExactArgs("~insert~", sinon.match.same(aCacheData[1]), 2, undefined,
+				.withExactArgs("~insert~", sinon.match.same(aCacheData[1]), 2,
 					sinon.match.same(aCacheData), sPath)
 				.callsFake(() => {
 					assert.deepEqual(aCacheData.$deleted.length, 4);
@@ -532,7 +532,7 @@ sap.ui.define([
 });
 
 	//TODO adjust paths in mChangeRequests?
-	//TODO trigger update in case of isConcurrentModification?!
+	//TODO invoke update in case of isConcurrentModification?!
 	//TODO do it anyway? what and when to return, result of remove vs. re-read?
 
 	//*********************************************************************************************
@@ -829,12 +829,12 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-[false, true].forEach(function (bCreated) {
+// undefined: not transient; false: transient predicate, but reinserted; true: transient
+[undefined, false, true].forEach(function (bTransient) {
 	["", "EMPLOYEE_2_EQUIPMENTS"].forEach(function (sPath) {
 		[false, true].forEach(function (bDeleted) {
-			var sTitle = "_Cache#removeElement, bCreated = " + bCreated + ", bDeleted=" + bDeleted
-					+ ", sPath = " + sPath;
-
+			const sTitle = "_Cache#removeElement, bTransient = " + bTransient + ", bDeleted="
+				+ bDeleted + ", sPath = " + sPath;
 			QUnit.test(sTitle, function (assert) {
 				var sByPredicate,
 					oCache = new _Cache(this.oRequestor, "EMPLOYEES('42')"),
@@ -851,16 +851,16 @@ sap.ui.define([
 					// Assume there is no more data on the server; if element at index 1 is created
 					// on the client, then 1 element has been read from server otherwise all 3 are
 					// read from the server
-					iLimit = bCreated ? 1 : 3;
+					iLimit = bTransient ? 1 : 3;
 
-				oCache.adjustIndexes = function () {};
+				oCache.adjustIndexes = mustBeMocked;
 				if (sPath === "") {
 					oCache.iLimit = iLimit;
 				}
 				aCacheData.$byPredicate = {"('1')" : oElement};
-				aCacheData.$created = bCreated ? 2 : 0;
-				oCache.iActiveElements = bCreated && !sPath ? 1 : 0;
-				if (bCreated) {
+				aCacheData.$created = bTransient ? 2 : 0;
+				oCache.iActiveElements = bTransient && !sPath ? 1 : 0;
+				if (bTransient !== undefined) {
 					aCacheData[1]["@$ui5._"].transientPredicate = "($uid=id-1-23)";
 					aCacheData.$byPredicate["($uid=id-1-23)"] = oElement;
 				}
@@ -880,7 +880,7 @@ sap.ui.define([
 				// code under test
 				iIndex = oCache.removeElement(2, "('1')", aCacheData, sPath);
 
-				assert.strictEqual(aCacheData.$created, bCreated ? 1 : 0);
+				assert.strictEqual(aCacheData.$created, bTransient ? 1 : 0);
 				assert.strictEqual(oCache.iActiveElements, 0);
 				assert.strictEqual(iIndex, 1);
 				assert.deepEqual(aCacheData, [{
@@ -892,7 +892,7 @@ sap.ui.define([
 					JSON.stringify(aCacheData.$byPredicate),
 					bDeleted ? sByPredicate : "{}");
 				if (sPath === "") {
-					assert.strictEqual(oCache.iLimit, bCreated ? 1 : 2);
+					assert.strictEqual(oCache.iLimit, bTransient ? 1 : 2);
 				} else {
 					assert.notOk("iLimit" in oCache);
 				}
@@ -1082,7 +1082,7 @@ sap.ui.define([
 		this.mock(oCache).expects("adjustIndexes")
 			.withExactArgs(sPath0, sinon.match.same(aElements), 42, 1, "~iDeletedIndex~");
 		const oHelperMock = this.mock(_Helper);
-		oHelperMock.expects("getPrivateAnnotation").exactly(bDefault && bTransient ? 0 : 1)
+		oHelperMock.expects("getPrivateAnnotation")
 			.withExactArgs("~oElement~", "transientPredicate")
 			.returns(bTransient ? "($uid=id-1-23)" : undefined);
 		oHelperMock.expects("addToCount")
@@ -1094,8 +1094,7 @@ sap.ui.define([
 			.returns("~predicate~");
 
 		// code under test
-		oCache.restoreElement(42, "~oElement~", "~iDeletedIndex~",
-			bDefault && bTransient ? "($uid=id-1-23)" : undefined, bDefault ? undefined : aElements,
+		oCache.restoreElement(42, "~oElement~", "~iDeletedIndex~", bDefault ? undefined : aElements,
 			sPath);
 
 		assert.strictEqual(oCache.iLimit, bTransient || sPath ? 234 : 235);
@@ -6074,7 +6073,7 @@ sap.ui.define([
 				}
 				that.mock(oReadGroupLock1).expects("unlock").withExactArgs();
 
-				// ensure that the same read does not trigger another request, but unlocks
+				// ensure that the same read does not invoke another request, but unlocks
 				oPromise2 = oCache.read(oFixture.index, oFixture.length, 0, oReadGroupLock1);
 
 				return oPromise2.then(function (oResult) {
@@ -10161,7 +10160,7 @@ sap.ui.define([
 						});
 					oCacheMock.expects("keepOnlyGivenElements").exactly(bSingle ? 0 : 1)
 						.withExactArgs(aPredicates).callThrough(); // too hard to refactor :-(
-					// Note: fetchTypes() would have been triggered by read() already
+					// Note: fetchTypes() would have been invoked by read() already
 					oCacheMock.expects("getTypes").withExactArgs().returns(mTypeForMetaPath);
 					oCache.beforeUpdateSelected = function () {};
 					for (i = 0; i < iReceivedLength; i += 1) { // prepare request/response

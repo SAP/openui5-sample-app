@@ -277,7 +277,7 @@ sap.ui.define(["sap/base/assert"], function (assert) {
 	 *
 	 * @enum {string}
 	 * @public
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 */
 	Storage.Type = {
 		/**

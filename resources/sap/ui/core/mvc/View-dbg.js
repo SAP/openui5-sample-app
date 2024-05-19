@@ -144,7 +144,7 @@ sap.ui.define([
 	 * The default implementation of this method returns <code>false</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.View
@@ -321,6 +321,7 @@ sap.ui.define([
 	 * @param {boolean} bAsync Whether processing is async or not
 	 * @return {object} oPreprocessorImpl
 	 * @private
+	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	function initPreprocessor(oPreprocessor, bAsync) {
 		var oPreprocessorImpl;
@@ -436,6 +437,7 @@ sap.ui.define([
 	 * @returns {Promise|undefined} A promise for asynchronous or undefined for synchronous controllers
 	 * @throws {Error}
 	 * @private
+	 * @ui5-transform-hint replace-param mSettings.async true
 	 */
 	var createAndConnectController = function(oThis, mSettings) {
 		var bAsync = mSettings.async;
@@ -563,7 +565,7 @@ sap.ui.define([
 							// only 'visible' property can be customized
 							for (var sProperty in oCustomSetting) {
 								if (sProperty !== "visible") {
-									future.warningThrows("Customizing: custom value for property '" + sProperty + "' of control '" + sId + "' in View '" + that.sViewName + "' ignored: only the 'visible' property can be customized.");
+									future.warningThrows(`Customizing: property '${sProperty}' of control '${sId}' in View '${that.sViewName}' cannot be customized, only 'visible' can.`, { suffix: "Property will be ignored" });
 									delete oCustomSetting[sProperty];
 								}
 							}
@@ -575,6 +577,10 @@ sap.ui.define([
 			}
 		}
 
+		/**
+		 * @private
+		 * @ui5-transform-hint replace-param bAsync true
+		 */
 		var fnPropagateOwner = function(fnCallback, bAsync) {
 			assert(typeof fnCallback === "function", "fn must be a function");
 			var oOwnerComponent = Component && Component.getOwnerComponentFor(that);
@@ -1305,11 +1311,17 @@ sap.ui.define([
 	function createView(sViewClass, oViewSettings) {
 		var ViewClass = sap.ui.require(sViewClass);
 		if (!ViewClass) {
-			ViewClass = sap.ui.requireSync(sViewClass);// legacy-relevant: sync fallback for missing dependency
-			if (oViewSettings.async) {
-				//not supported
-				Log.warning("sap.ui.view was called without requiring the according view class.");
-			}
+			future.warningThrows(`The view class '${sViewClass}' needs to be required before an instance of the view can be created.`);
+			/**
+			 * @deprecated
+			 */
+			(() => {
+				ViewClass = sap.ui.requireSync(sViewClass);// legacy-relevant: sync fallback for missing dependency
+				if (oViewSettings.async) {
+					//not supported
+					Log.warning("sap.ui.view was called without requiring the according view class.");
+				}
+			})();
 		}
 		return new ViewClass(oViewSettings);
 	}
@@ -1322,7 +1334,6 @@ sap.ui.define([
 	 *
 	 * @since 1.30
 	 * @public
-	 * @deprecated since 1.66: Use {@link sap.ui.core.mvc.View.create View.create} instead
 	 * @return {Promise<sap.ui.core.mvc.View>} resolves with the complete view instance, rejects with any thrown error
 	 */
 	View.prototype.loaded = function() {
@@ -1356,7 +1367,6 @@ sap.ui.define([
 	 * where it is the executed only for this instance, or by the registerPreprocessor method of the view type. Currently this is
 	 * available only for XMLViews (as of version 1.30).
 	 *
-	 * @see sap.ui.view
 	 * @see sap.ui.core.mvc.View.registerPreprocessor (the method is available specialized for view types, so use the following)
 	 * @see sap.ui.core.mvc.XMLView.registerPreprocessor
 	 *
@@ -1481,6 +1491,10 @@ sap.ui.define([
 		}.bind(this), mPreprocessorSettings);
 	};
 
+	/**
+	 * @private
+	 * @ui5-transform-hint replace-param mSettings.async true
+	 */
 	View.prototype.initViewSettings = function(mSettings) {
 		// check if renderer exists, otherwise default it
 		if (!this.getMetadata()._oRenderer) {

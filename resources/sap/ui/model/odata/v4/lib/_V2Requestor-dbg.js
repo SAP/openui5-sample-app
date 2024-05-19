@@ -160,13 +160,11 @@ sap.ui.define([
 		if (iPrecision > 0) {
 			sPattern += "." + "".padEnd(iPrecision, "S");
 		}
-		if (!mPattern2Formatter[sPattern]) {
-			mPattern2Formatter[sPattern] = DateFormat.getDateTimeInstance({
+		mPattern2Formatter[sPattern] ??= DateFormat.getDateTimeInstance({
 				calendarType : CalendarType.Gregorian,
 				pattern : sPattern,
 				UTC : true
 			});
-		}
 		// no need to use UI5Date.getInstance as only UTC is relevant
 		return mPattern2Formatter[sPattern].format(new Date(iTicks)) + sOffset;
 	};
@@ -910,15 +908,9 @@ sap.ui.define([
 	 * @private
 	 */
 	_V2Requestor.getTypeForName = function (sName) {
-		var oType;
-
-		this.mTypesByName = this.mTypesByName || {};
-		oType = this.mTypesByName[sName];
-		if (!oType) {
-			oType = this.mTypesByName[sName]
-				= this.oModelInterface.fetchMetadata("/" + sName).getResult();
-		}
-		return oType;
+		this.mTypesByName ??= {};
+		this.mTypesByName[sName] ??= this.oModelInterface.fetchMetadata("/" + sName).getResult();
+		return this.mTypesByName[sName];
 	};
 
 	/**

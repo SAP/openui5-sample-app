@@ -229,6 +229,32 @@ sap.ui.define([
 	};
 
 	/**
+	 * Derives the maximal possible decimals from the given format option's <code>maxFractionDigits</code>
+	 * and <code>decimals</code> properties.
+	 *
+	 * If <code>decimals</code> and <code>maxFractionDigits</code> are >= 0, then the minimum of
+	 * <code>maxFractionDigits</code> and <code>decimals</code> is returned, - otherwise
+	 * <code>decimals</code> is returned.
+	 *
+	 * @param {object} oFormatOptions
+	 * @param {int} [oFormatOptions.decimals]
+	 *   The number of decimal digits
+	 * @param {int} [oFormatOptions.maxFractionDigits]
+	 *   The maximum number of decimal digits
+	 * @returns {int}
+	 *   The maximum decimals to be used
+	 *
+	 * @private
+	 * @static
+	 */
+	NumberFormat.getMaximalDecimals = function ({decimals, maxFractionDigits}) {
+		if (maxFractionDigits >= 0 && decimals > 0 && maxFractionDigits < decimals) {
+			return maxFractionDigits;
+		}
+		return decimals;
+	};
+
+	/**
 	 * Rounds the given number up to the smallest integer greater than or equal to the given number.
 	 *
 	 * @param {number|string} vNumber
@@ -784,7 +810,7 @@ sap.ui.define([
 	 * @param {boolean} [oFormatOptions.strictGroupingValidation=false] whether the positions of grouping separators are validated. Space characters used as grouping separators are not validated.
 	 * @param {string} [oFormatOptions.style=standard] defines the style of format. Valid values are
 	 *   'short, 'long' or 'standard' (based on the CLDR decimalFormat). When set to 'short' or 'long',
-	 *   numbers are formatted into compact forms. When this option is set, the default value of the
+	 *   numbers are formatted into the 'short' form only. When this option is set, the default value of the
 	 *   'precision' option is set to 2. This can be changed by setting either min/maxFractionDigits,
 	 *   decimals, shortDecimals, or the 'precision' option itself.
 	 * @param {boolean} [oFormatOptions.trailingCurrencyCode] overrides the global configuration
@@ -1457,9 +1483,7 @@ sap.ui.define([
 
 			// either take the decimals/precision on the custom units or fallback to the given format-options
 			oOptions.decimals = (mUnitPatterns && (typeof mUnitPatterns.decimals === "number" && mUnitPatterns.decimals >= 0)) ? mUnitPatterns.decimals : oOptions.decimals;
-			// if decimals and maxFractionDigits are set, then maxFractionDigits of the amount wins over the decimals
-			oOptions.decimals = oOptions.maxFractionDigits < oOptions.decimals
-				? oOptions.maxFractionDigits : oOptions.decimals;
+			oOptions.decimals = NumberFormat.getMaximalDecimals(oOptions);
 			oOptions.precision = (mUnitPatterns && (typeof mUnitPatterns.precision === "number" && mUnitPatterns.precision >= 0)) ? mUnitPatterns.precision : oOptions.precision;
 		}
 
@@ -1501,6 +1525,7 @@ sap.ui.define([
 				// we either take the custom decimals or use decimals defined in the format-options
 				// we check for undefined here, since 0 is an accepted value
 				oOptions.decimals = oOptions.customCurrencies[sMeasure].decimals !== undefined ? oOptions.customCurrencies[sMeasure].decimals : oOptions.decimals;
+				oOptions.decimals = NumberFormat.getMaximalDecimals(oOptions);
 			}
 		}
 

@@ -103,7 +103,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -139,7 +139,7 @@ sap.ui.define([
 
 				/**
 				 * Specifies the application which provides target and param configuration for cross-application navigation from the 'page header'.
-				 * @deprecated As of version 1.111. Attach avatar <code>press</code> event instead.
+				 * @deprecated As of version 1.111. Attach listener to the avatar <code>press</code> event and perform navigation as appropriate in your environment instead.
 				 */
 				crossAppNavCallback: { type: "object", group: "Misc", deprecated: true },
 
@@ -190,7 +190,7 @@ sap.ui.define([
 	 * Specifies the application which provides target and param configuration for cross-application navigation from the 'page header'.
 	 *
 	 * When called with a value of <code>null</code> or <code>undefined</code>, the default value of the property will be restored.
-	 * @deprecated As of version 1.111.
+	 * @deprecated As of version 1.111. Attach listener to the avatar <code>press</code> event and perform navigation as appropriate in your environment instead.
 	 * @method
 	 * @param {function(): {target: object, params: object}} [oCrossAppNavCallback] New value for property <code>crossAppNavCallback</code>
 	 * @public
@@ -202,7 +202,7 @@ sap.ui.define([
 	 * Gets current value of property {@link #getCrossAppNavCallback crossAppNavCallback}.
 	 *
 	 * Specifies the application which provides target and param configuration for cross-application navigation from the 'page header'.
-	 * @deprecated As of version 1.111.
+	 * @deprecated As of version 1.111. Attach listener to the avatar <code>press</code> event and perform navigation as appropriate in your environment instead.
 	 * @method
 	 * @returns {function(): {target: object, params: object}} Value of property <code>crossAppNavCallback</code>
 	 * @public

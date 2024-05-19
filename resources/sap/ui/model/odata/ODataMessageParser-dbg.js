@@ -8,20 +8,18 @@ sap.ui.define([
 	"sap/ui/core/Lib",
 	"sap/ui/model/odata/ODataMetadata",
 	"sap/ui/model/odata/ODataUtils",
-	"sap/ui/core/library",
 	"sap/ui/thirdparty/URI",
 	"sap/ui/core/Messaging",
 	"sap/ui/core/message/MessageParser",
 	"sap/ui/core/message/Message",
+	"sap/ui/core/message/MessageType",
 	"sap/base/Log"
 ],
-	function(Library, ODataMetadata, ODataUtils, coreLibrary, URI, Messaging, MessageParser, Message, Log) {
+	function(Library, ODataMetadata, ODataUtils, URI, Messaging, MessageParser, Message, MessageType,  Log) {
 	"use strict";
 
 var sClassName = "sap.ui.model.odata.ODataMessageParser",
 	rEnclosingSlashes = /^\/+|\/$/g,
-	// shortcuts for enums
-	MessageType = coreLibrary.MessageType,
 	// This map is used to translate back-end response severity values to the values defined in the
 	// enumeration sap.ui.core.message.MessageType
 	mSeverity2MessageType = {
@@ -86,7 +84,7 @@ var sClassName = "sap.ui.model.odata.ODataMessageParser",
  * @extends sap.ui.core.message.MessageParser
  *
  * @author SAP SE
- * @version 1.122.1
+ * @version 1.124.0
  * @public
  * @alias sap.ui.model.odata.ODataMessageParser
  */

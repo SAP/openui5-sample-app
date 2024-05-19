@@ -20,12 +20,12 @@ sap.ui.define(['./Select', "sap/ui/core/Element", 'sap/ui/core/InvisibleText', '
 		 * @extends sap.m.Select
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @public
 		 * @since 1.16
-		 * @deprecated as of version 1.111.
+		 * @deprecated As of version 1.111 with no replacement. The control is no longer considered part of the Fiori concept.
 		 * @alias sap.m.ActionSelect
 		 */
 		var ActionSelect = Select.extend("sap.m.ActionSelect", /** @lends sap.m.ActionSelect.prototype */ {

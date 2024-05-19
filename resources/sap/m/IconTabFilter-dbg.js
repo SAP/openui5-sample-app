@@ -92,7 +92,7 @@ sap.ui.define([
 	 * @implements sap.m.IconTab
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -599,7 +599,7 @@ sap.ui.define([
 			oRM.openStart("div", sId + "-text")
 				.class("sapMITBText");
 
-			if (!oIcon && !bShowAll) {
+			if (!bShowAll) {
 				oRM.class("sapMITBBadgeHolder");
 			}
 

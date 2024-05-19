@@ -7,6 +7,7 @@
 // Provides control sap.m.MessageStrip.
 sap.ui.define([
 	"./library",
+	"sap/ui/core/AnimationMode",
 	"sap/ui/core/Control",
 	"./MessageStripUtilities",
 	"./Text",
@@ -18,10 +19,10 @@ sap.ui.define([
 	"./MessageStripRenderer",
 	"sap/base/Log",
 	"sap/m/Button",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/InvisibleText"
 ], function(
 	library,
+	AnimationMode,
 	Control,
 	MSUtils,
 	Text,
@@ -33,7 +34,6 @@ sap.ui.define([
 	MessageStripRenderer,
 	Log,
 	Button,
-	Configuration,
 	InvisibleText
 ) {
 	"use strict";
@@ -87,7 +87,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -224,7 +224,7 @@ sap.ui.define([
 	 */
 	MessageStrip.prototype.close = function () {
 		var sAnimationMode = ControlBehavior.getAnimationMode(),
-			bHasAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
+			bHasAnimations = sAnimationMode !== AnimationMode.none && sAnimationMode !== AnimationMode.minimal;
 
 		var fnClosed = function () {
 			this.setVisible(false);

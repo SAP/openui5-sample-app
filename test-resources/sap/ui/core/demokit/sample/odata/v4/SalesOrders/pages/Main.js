@@ -264,7 +264,7 @@ sap.ui.define([
 						controlType : "sap.m.SearchField",
 						id : "filterGrossAmount",
 						success : function () {
-							sFilterValue = sFilterValue || Opa.getContext().GrossAmount;
+							sFilterValue ??= Opa.getContext().GrossAmount;
 							this.waitFor({
 								actions :
 									new EnterText({clearTextFirst : true, text : sFilterValue}),
@@ -333,7 +333,7 @@ sap.ui.define([
 						controlType : "sap.m.Table",
 						id : "SO_2_SOITEM",
 						success : function (oSalesOrderItemsTable) {
-							// Note: filter cannot be triggered via UI; field is disabled
+							// Note: filter cannot be invoked via UI; field is disabled
 							oSalesOrderItemsTable.getBinding("items")
 								.filter(new Filter("ProductID", FilterOperator.EQ, sValue));
 						},
@@ -889,7 +889,7 @@ sap.ui.define([
 						success : function (oSalesOrderTable) {
 							var oRow = oSalesOrderTable.getItems()[iRow];
 
-							sExpectedNote = sExpectedNote || sLastNewNoteValue;
+							sExpectedNote ??= sLastNewNoteValue;
 							Opa5.assert.strictEqual(oRow.getCells()[NOTE_COLUMN_INDEX].getValue(),
 								sExpectedNote,
 								"Note of row " + iRow + " as expected " + sExpectedNote);
@@ -943,10 +943,8 @@ sap.ui.define([
 
 							// if called without 2nd and 3rd parameter use previously stored values
 							// for comparison
-							sExpectedSalesOrderID = sExpectedSalesOrderID
-								|| Opa.getContext().sExpectedSalesOrderID;
-							sExpectedItem = sExpectedItem
-								|| Opa.getContext().sExpectedItem;
+							sExpectedSalesOrderID ??= Opa.getContext().sExpectedSalesOrderID;
+							sExpectedItem ??= Opa.getContext().sExpectedItem;
 
 							if (oRow) {
 								sSalesOrderId = oRow.getCells()[ID_COLUMN_INDEX].getText();
@@ -1127,8 +1125,8 @@ sap.ui.define([
 					Helper.changeStepInputValue(this, sViewName,
 						"SimulateDiscountForm::Discount", sDiscount, sDiscount, true);
 				},
-				executeSimulateDiscount : function () {
-					pressButton(this, "executeSimulateDiscount", true);
+				invokeSimulateDiscount : function () {
+					pressButton(this, "invokeSimulateDiscount", true);
 				}
 			},
 			assertions : {

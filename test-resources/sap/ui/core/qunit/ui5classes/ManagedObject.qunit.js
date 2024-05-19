@@ -323,14 +323,6 @@ sap.ui.define([
 						enumValue: {
 							type: "MyEnum",
 							defaultValue: null
-						},
-						noType: {
-							type: "noType",
-							defaultValue: 42
-						},
-						noTypeNoDefault: {
-							type: "noType",
-							defaultValue: null
 						}
 					}
 				}
@@ -349,8 +341,6 @@ sap.ui.define([
 		assert.strictEqual(obj.getPropWithUndefinedDefault(), undefined, "a property with a default value 'undefined' should have that default value");
 		assert.strictEqual(obj.getPropWithNoDefault(), undefined, "a property with no default value should have 'undefined' as default value");
 		assert.strictEqual(obj.getEnumValue(), MyEnum.Good, "a property with enum type and no own default value should inherit a default from the enum");
-		assert.strictEqual(obj.getNoType(), 42, "a property with invalid type should keep a configured default value");
-		assert.strictEqual(obj.getNoTypeNoDefault(), null, "a property with invalid type and without default should default to null");
 
 		// set 'other' values and restore default
 		obj.setPropWithoutOwnDefault('other').setPropWithoutOwnDefault();
@@ -359,8 +349,6 @@ sap.ui.define([
 		obj.setPropWithUndefinedDefault('other').setPropWithUndefinedDefault();
 		obj.setPropWithNoDefault('other').setPropWithNoDefault();
 		obj.setEnumValue('Better').setEnumValue();
-		obj.setNoType('other').setNoType();
-		obj.setNoTypeNoDefault('other').setNoTypeNoDefault();
 
 		// restored default values
 		assert.strictEqual(obj.getPropWithoutOwnDefault(), '', "a property without own default value should inherit the default value of the type");
@@ -369,6 +357,39 @@ sap.ui.define([
 		assert.strictEqual(obj.getPropWithUndefinedDefault(), undefined, "a property with a default value 'undefined' should have that default value");
 		assert.strictEqual(obj.getPropWithNoDefault(), undefined, "a property with no default value should have 'undefined' as default value");
 		assert.strictEqual(obj.getEnumValue(), MyEnum.Good, "a property with enum type and no own default value should inherit a default from the enum");
+	});
+
+	/**
+	 * @deprecated As of version 1.120
+	 */
+	QUnit.test("Property default values with invalid types", function(assert) {
+		const MyClazz = ManagedObject.extend("sap.test.InvalidMetadataTestClass", {
+			metadata: {
+				library: "sap.test",
+				properties: {
+					noType: {
+						type: "noType",
+						defaultValue: 42
+					},
+					noTypeNoDefault: {
+						type: "noType",
+						defaultValue: null
+					}
+				}
+			}
+		});
+
+		const obj = new MyClazz();
+
+		// initial default values  (from default property bag)
+		assert.strictEqual(obj.getNoType(), 42, "a property with invalid type should keep a configured default value");
+		assert.strictEqual(obj.getNoTypeNoDefault(), null, "a property with invalid type and without default should default to null");
+
+		// set 'other' values and restore default
+		obj.setNoType('other').setNoType();
+		obj.setNoTypeNoDefault('other').setNoTypeNoDefault();
+
+		// restored default values
 		assert.strictEqual(obj.getNoType(), 42, "a property with invalid type should keep a configured default value");
 		assert.strictEqual(obj.getNoTypeNoDefault(), null, "a property with invalid type and without default should default to null");
 	});
@@ -390,6 +411,8 @@ sap.ui.define([
 		beforeEach: function() {
 			this.obj = new TestManagedObject();
 			this.obj.setModel(oModel);
+		}, afterEach: function() {
+			this.obj.destroy();
 		}
 	});
 
@@ -840,6 +863,30 @@ sap.ui.define([
 		changed = false;
 	});
 
+	QUnit.test("Bind property with CompositeBinding/pass event handler", function(assert) {
+		assert.expect(4);
+		this.obj.bindProperty("value", {
+			parts: [
+				{
+					path: "/value",
+					events: {
+						change: () => {assert.ok(true, "Part handler attached/change event fired");}
+					}
+				},
+				{
+					path: "/value"
+				}
+			],
+			events: {
+				change: fnChange
+			}
+		});
+		assert.equal(this.obj.isBound("value"), true, "isBound must return true for bound properties");
+		assert.equal(this.obj.getProperty("value"), "testvalue testvalue", "Property must return model value");
+		assert.equal(changed, true, "handler attached/change event fired");
+		changed = false;
+	});
+
 	QUnit.test("Unbind property", function(assert) {
 		this.obj.bindProperty("value", "/value");
 		this.obj.unbindProperty("value");
@@ -849,13 +896,34 @@ sap.ui.define([
 
 	QUnit.test("Unbind property composite binding", function(assert) {
 		var oPartBinding;
-		this.obj.bindProperty("value", {parts: ["/value", "/value"]});
+		this.obj.bindProperty("value", {
+			parts: [
+				{
+					path: "/value",
+					events: {
+						change: () => {assert.ok(true, "Part handler attached/change event fired");}
+					}
+				},
+				{
+					path: "/value"
+				}
+			],
+			events: {
+				change: fnChange
+			}
+		});
+		assert.equal(this.obj.isBound("value"), true, "isBound must return true for bound properties");
+		assert.equal(this.obj.getProperty("value"), "testvalue testvalue", "Property must return model value");
+		assert.equal(changed, true, "handler attached/change event fired");
+		changed = false;
 		oPartBinding = this.obj.getBinding("value").getBindings()[0];
 		var oPartSpy = sinon.spy(oPartBinding, "destroy");
+		assert.ok(oPartBinding.hasListeners("change"), "PartBinding has listeners attached");
 		this.obj.unbindProperty("value");
 		assert.equal(this.obj.isBound("value"), false, "isBound must return false for unbound properties");
 		assert.equal(this.obj.getProperty("value"), "", "Property value must be reset to default");
 		assert.ok(oPartSpy.calledOnce, "Destructor of part binding has been called");
+		assert.notOk(oPartBinding.hasListeners("change"), "PartBinding has listeners detached");
 	});
 
 	QUnit.test("Bind unknown property", function(assert) {
@@ -1568,6 +1636,9 @@ sap.ui.define([
 		assert.equal(typeof this.obj.unbindSingleAggr, "undefined", "No named unbind function for non-bindable single aggregation available");
 	});
 
+	/**
+	 * @deprecated As of version 1.120
+	 */
 	QUnit.test("Bind single aggregation", function(assert) {
 		// This worked in the past so I add a test to not break it accidentally
 		this.obj.bindAggregation("singleAggr", "/list", this.template);
@@ -3287,7 +3358,11 @@ sap.ui.define([
 
 	QUnit.module("init/exit");
 
-	QUnit.test("Ensure that hooks do not return a value", async function(assert) {
+	/**
+	 * @deprecated As of version 1.120
+	 */
+	QUnit.test("Ensure that hooks do not return a value (future=false)", async function(assert) {
+		future.active = false;
 		const oFutureFatalSpy = sinon.spy(Log, "fatal");
 		const aPromises = [];
 
@@ -3300,29 +3375,91 @@ sap.ui.define([
 			init: function() {
 				return "init() shouldn't return a value.";
 			},
-			exit: async function() {
+			exit: function() {
 				const oPromise = Promise.reject(new Error("exit() failed."));
 				aPromises.push(oPromise);
-				await oPromise;
+				return oPromise;
 			}
 		});
 
 		// init
-		const oMySample = new MySampleManagedObject();
+		const oMySample = new MySampleManagedObject({
+			id: "sample1"
+		});
 		assert.ok(oFutureFatalSpy.getCall(0).calledWith("[FUTURE FATAL] The registered Event Listener 'init' must not have a return value."), "init() should be logged correctly.");
 
-		// exit
+		/**
+		 * @deprecated
+		 */
 		const oErrorLogSpy = sinon.spy(Log, "error");
+
+		// exit
 		oMySample.destroy();
 
 		await Promise.allSettled(aPromises);
 		assert.ok(oFutureFatalSpy.getCall(1).calledWith("[FUTURE FATAL] The registered Event Listener 'exit' must not have a return value."), "exit() should be logged correctly.");
 
-		await Promise.resolve(() => {
-			assert.ok(oErrorLogSpy.getCall(0).calledWith("The registered Event Listener 'exit' of '__object0' failed."), "Promise rejection caught successfully.");
-
-			oFutureFatalSpy.restore();
+		/**
+		 * @deprecated
+	     */
+		await (async () => {
+			await Promise.allSettled(aPromises);
+			assert.ok(oErrorLogSpy.getCall(0).calledWith("The registered Event Listener 'exit' of 'sample1' failed."), "Promise rejection caught successfully.");
 			oErrorLogSpy.restore();
+		})();
+
+		oFutureFatalSpy.restore();
+
+		future.active = undefined;
+	});
+
+	QUnit.test("Ensure that hooks do not return a value - init (future=true)", function(assert) {
+		future.active = true;
+
+		const MySampleManagedObject = ManagedObject.extend("sap.ui.core.MySampleManagedObject", {
+			metadata: {
+				properties: {
+					name: { type: "string", defaultValue: "hello" }
+				}
+			},
+			init: function() {
+				return "init() shouldn't return a value.";
+			}
 		});
+		assert.throws(() => {
+			new MySampleManagedObject({
+				id: "sample2"
+			});
+		}, new Error("The registered Event Listener 'init' must not have a return value."), "Error thrown because 'init' hook has a return value.");
+
+		future.active = undefined;
+	});
+
+	QUnit.test("Ensure that hooks do not return a value - exit (future=true)", function(assert) {
+		future.active = true;
+
+		const aPromises = [];
+		const MySampleManagedObject = ManagedObject.extend("sap.ui.core.MySampleManagedObject", {
+			metadata: {
+				properties: {
+					name: { type: "string", defaultValue: "hello" }
+				}
+			},
+			exit: function() {
+				const oPromise = Promise.reject(new Error("exit() failed."));
+				aPromises.push(oPromise);
+				return oPromise;
+			}
+		});
+
+		const oMySample = new MySampleManagedObject({
+			id: "sample3"
+		});
+
+		assert.throws(() => {
+			oMySample.destroy();
+		}, new Error("The registered Event Listener 'exit' must not have a return value."), "Error thrown because 'exit' hook has a return value.");
+
+		future.active = undefined;
 	});
 });

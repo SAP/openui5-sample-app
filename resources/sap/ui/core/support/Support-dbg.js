@@ -31,7 +31,7 @@ sap.ui.define([
 	 * @class This class provides the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 	 *
 	 * @extends sap.ui.base.EventProvider
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @private
 	 * @alias sap.ui.core.support.Support
 	 */
@@ -634,7 +634,6 @@ sap.ui.define([
 		 * @param {object} oInfo
 		 *    oInfo.context : the context of the info, is not set the info is added to the last known context
 		 *    oInfo.env : { any environmental information that is needed by toold to be interpreted }
-		 * @experimental
 		 * @private
 		 */
 		Support.info = function(oInfo) {
@@ -670,7 +669,6 @@ sap.ui.define([
 
 		/**
 		 * Returns all support information optionally filtered by a caller name
-		 * @experimental
 		 * @private
 		 */
 		Support.info.getAll = function(sCaller) {
@@ -685,7 +683,6 @@ sap.ui.define([
 
 		/**
 		 * Returns the support info for all given indices
-		 * @experimental
 		 * @private
 		 */
 		Support.info.getInfos = function(aIndices) {
@@ -706,7 +703,6 @@ sap.ui.define([
 		/**
 		 * Returns the support info by index
 		 * @param {int} iIndex the index of the info
-		 * @experimental
 		 * @private
 		 */
 		Support.info.byIndex = function(iIndex) {
@@ -715,7 +711,6 @@ sap.ui.define([
 
 		/**
 		 * Returns all current breakpoints
-		 * @experimental
 		 * @private
 		 */
 		Support.info.getAllBreakpoints = function() {
@@ -724,7 +719,6 @@ sap.ui.define([
 
 		/**
 		 * Checks whether there is a breakpoint for the given index
-		 * @experimental
 		 * @private
 		 */
 		Support.info.hasBreakpointAt = function(iIndex) {
@@ -733,7 +727,6 @@ sap.ui.define([
 
 		/**
 		 * Adds a breakpoint for the given index
-		 * @experimental
 		 * @private
 		 */
 		Support.info.addBreakpointAt = function(iIndex) {
@@ -746,7 +739,6 @@ sap.ui.define([
 
 		/**
 		 * Removes a breakpoint for the given index
-		 * @experimental
 		 * @private
 		 */
 		Support.info.removeBreakpointAt = function(iIndex) {
@@ -759,7 +751,6 @@ sap.ui.define([
 
 		/**
 		 * Removes all breakpoints
-		 * @experimental
 		 * @private
 		 */
 		Support.info.removeAllBreakpoints = function() {
@@ -770,7 +761,6 @@ sap.ui.define([
 		/**
 		 * Adds control related support data by id of a control
 		 * This is used in the support tools to identify a control based on the support data gathered before a control tree was even created
-		 * @experimental
 		 * @private
 		 */
 		Support.info.addSupportInfo = function(sId, sSupportData) {
@@ -785,7 +775,6 @@ sap.ui.define([
 
 		/**
 		 * Returns the support data for a given id.
-		 * @experimental
 		 * @private
 		 */
 		Support.info.byId = function(sId) {
@@ -795,7 +784,6 @@ sap.ui.define([
 		/**
 		 * Returns the id for given support data
 		 * This is used in the support tools to identify a control based on the support data gathered before a control tree was even created
-		 * @experimental
 		 * @private
 		 */
 		Support.info.getIds = function(sSupportData) {
@@ -813,7 +801,6 @@ sap.ui.define([
 		 * Returns the list of elements that reported the given support data.
 		 * @param {string} sSupportData Comma separated list of indices that should be looked up
 		 * @returns {sap.ui.core.Element[]} list of elements
-		 * @experimental
 		 * @private
 		 */
 		Support.info.getElements = function(sSupportData) {
@@ -833,7 +820,6 @@ sap.ui.define([
 		/**
 		 * Returns the list of all XML modifications.
 		 * @returns {object[]} the list of modifications
-		 * @experimental
 		 * @private
 		 */
 		Support.info.getAllXMLModifications = function() {
@@ -843,7 +829,6 @@ sap.ui.define([
 		/**
 		 * Returns whether there are XML modifications.
 		 * @returns {boolean} the list of modifications
-		 * @experimental
 		 * @private
 		 */
 		Support.info.hasXMLModifications = function() {
@@ -855,7 +840,6 @@ sap.ui.define([
 		 * @param {string} sId the id of that is used to identify the change after a reload
 		 * @param {int} iIdx the index of node within the XML document (can be determined by root.querySelectorAll('*')
 		 * @param {object} oChange containing the change as {setAttribute: [attributeName,newValue]}
-		 * @experimental
 		 * @private
 		 */
 		Support.info.addXMLModification = function(sId, iIdx, oChange) {
@@ -869,7 +853,6 @@ sap.ui.define([
 
 		/**
 		 * Removes the XML modification with the given index.
-		 * @experimental
 		 * @private
 		 */
 		Support.info.removeXMLModification = function(iIdx) {
@@ -882,7 +865,6 @@ sap.ui.define([
 
 		/**
 		 * Removes all XML modification.
-		 * @experimental
 		 * @private
 		 */
 		Support.info.removeAllXMLModification = function() {
@@ -893,7 +875,6 @@ sap.ui.define([
 		/**
 		 * Modifies the XML where the id matches the id used when the modification was added
 		 * @see Support.info.addXMLModification
-		 * @experimental
 		 * @private
 		 */
 		Support.info.modifyXML = function(sId, oXML) {

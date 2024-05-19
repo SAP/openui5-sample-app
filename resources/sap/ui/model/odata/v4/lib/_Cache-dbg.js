@@ -162,7 +162,7 @@ sap.ui.define([
 					iIndex = oDeleted.index;
 					const iDeletedIndex = vCacheData.$deleted.indexOf(oDeleted);
 					if (iIndex !== undefined) {
-						that.restoreElement(iIndex, oEntity, iDeletedIndex, undefined, vCacheData,
+						that.restoreElement(iIndex, oEntity, iDeletedIndex, vCacheData,
 							sParentPath);
 					}
 					vCacheData.$deleted.splice(iDeletedIndex, 1);
@@ -275,7 +275,7 @@ sap.ui.define([
 			},
 			i;
 
-		aElements.$deleted = aElements.$deleted || [];
+		aElements.$deleted ??= [];
 		if (iIndex === undefined) {
 			aElements.$deleted.unshift(oDeleted);
 		} else {
@@ -339,7 +339,7 @@ sap.ui.define([
 		}
 
 		this.checkSharedRequest();
-		aElements = oParent[sName] = oParent[sName] || [];
+		aElements = oParent[sName] ??= [];
 		aElements.$count = aElements.$created = aElements.length;
 		aElements.$byPredicate = {};
 		aPostBodyCollection = oPostBody[sName] || [];
@@ -660,7 +660,7 @@ sap.ui.define([
 		}
 		aCollection.$created += 1;
 		// if the nested collection is empty $byPredicate is not available, create it on demand
-		aCollection.$byPredicate = aCollection.$byPredicate || {};
+		aCollection.$byPredicate ??= {};
 		aCollection.$byPredicate[sTransientPredicate] = oEntityData;
 		that.adjustIndexes(sPath, aCollection, 0, 1, 0, true);
 		if (aCollection.$postBodyCollection) { // within a deep create
@@ -864,16 +864,15 @@ sap.ui.define([
 					iEntityPathLength = i;
 				}
 				oParentValue = vValue;
-				bTransient = bTransient || vValue["@$ui5.context.isTransient"];
+				bTransient ||= vValue["@$ui5.context.isTransient"];
 				aMatches = rSegmentWithPredicate.exec(sSegment);
 				if (aMatches) {
 					if (aMatches[1]) { // e.g. "TEAM_2_EMPLOYEES('42')
 						vValue = vValue[aMatches[1]]; // there is a navigation property, follow it
 					}
-					if (vValue) { // ensure that we do not fail on a missing navigation property
-						vValue = vValue.$byPredicate // not available on empty collections!
-							&& vValue.$byPredicate[aMatches[2]]; // search the key predicate
-					}
+					// ensure that we do not fail on a missing navigation property
+					vValue &&= vValue.$byPredicate // not available on empty collections!
+						&& vValue.$byPredicate[aMatches[2]]; // search the key predicate
 				} else {
 					vIndex = _Cache.from$skip(sSegment, vValue);
 					if (bCreateOnDemand && vIndex === sSegment
@@ -962,9 +961,7 @@ sap.ui.define([
 				oEntityType = mTypeForMetaPath[sMetaPath],
 				sExpand;
 
-			if (!oEntityType) {
-				oEntityType = that.oRequestor.fetchType(mTypeForMetaPath, sMetaPath).getResult();
-			}
+			oEntityType ??= that.oRequestor.fetchType(mTypeForMetaPath, sMetaPath).getResult();
 			if (sBasePath) {
 				// The key properties must only be copied from the result for nested entities. The
 				// root entity is already loaded and has them already. We check that they are
@@ -1702,22 +1699,18 @@ sap.ui.define([
 			// the element might have moved due to parallel insert/delete
 			iIndex = _Cache.getElementIndex(aElements, sPredicate, iIndex);
 		}
-		const bDeleted = oElement?.["@$ui5.context.isDeleted"];
-		if (!bDeleted) {
+		if (oElement && !oElement["@$ui5.context.isDeleted"]) {
 			delete aElements.$byPredicate[sPredicate];
+			delete aElements.$byPredicate[
+				_Helper.getPrivateAnnotation(oElement, "transientPredicate")];
 		}
 		if (iIndex >= 0) {
 			aElements.splice(iIndex, 1);
 			_Helper.addToCount(this.mChangeListeners, sPath, aElements, -1);
-			const sTransientPredicate
-				= oElement && _Helper.getPrivateAnnotation(oElement, "transientPredicate");
-			if (sTransientPredicate) {
+			if (iIndex < aElements.$created) {
 				aElements.$created -= 1;
 				if (!sPath) {
 					this.iActiveElements -= 1;
-				}
-				if (!bDeleted) {
-					delete aElements.$byPredicate[sTransientPredicate];
 				}
 			} else if (!sPath) {
 				this.iLimit -= 1; // this doesn't change Infinity
@@ -1864,7 +1857,7 @@ sap.ui.define([
 	/**
 	 * Resets all pending changes below the given path.
 	 *
-	 * @param {string} [sPath]
+	 * @param {string} sPath
 	 *   The relative path within the cache
 	 * @throws {Error}
 	 *   If there is a change which has been sent to the server and for which there is no response
@@ -1931,8 +1924,6 @@ sap.ui.define([
 	 * @param {object} oElement - The element to restore
 	 * @param {int} [iDeletedIndex]
 	 *   The index of the entry in <code>aElements.$deleted</code> if any
-	 * @param {string} [sTransientPredicate]
-	 *  The element's (future) transient predicate, defaults to its current one
 	 * @param {object[]} [aElements]
 	 *   The array of elements, defaults to a collection cache's own elements
 	 * @param {string} [sPath=""]
@@ -1942,9 +1933,9 @@ sap.ui.define([
 	 * @protected
 	 */
 	_Cache.prototype.restoreElement = function (iIndex, oElement, iDeletedIndex,
-			sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate"),
 			aElements = this.aElements, sPath = "") {
 		this.adjustIndexes(sPath, aElements, iIndex, 1, iDeletedIndex);
+		const sTransientPredicate = _Helper.getPrivateAnnotation(oElement, "transientPredicate");
 		if (sTransientPredicate) {
 			aElements.$created += 1;
 			if (!sPath) {
@@ -2410,10 +2401,8 @@ sap.ui.define([
 				that.checkSharedRequest();
 				mPathToODataMessages[sInstancePath] = aMessages;
 				aMessages.forEach(function (oMessage) {
-					if (oMessage.longtextUrl) {
-						oMessage.longtextUrl
-							= _Helper.makeAbsolute(oMessage.longtextUrl, sContextUrl);
-					}
+					oMessage.longtextUrl
+						&&= _Helper.makeAbsolute(oMessage.longtextUrl, sContextUrl);
 				});
 			}
 		}
@@ -2820,7 +2809,7 @@ sap.ui.define([
 		function addKeyFilter(oElement) {
 			var sKeyFilter;
 
-			mTypeForMetaPath = mTypeForMetaPath || that.getTypes(); // Note: $metadata already read
+			mTypeForMetaPath ??= that.getTypes(); // Note: $metadata already read
 			sKeyFilter = _Helper.getKeyFilter(oElement, that.sMetaPath, mTypeForMetaPath);
 			if (sKeyFilter) {
 				aKeyFilters.push(sKeyFilter);
@@ -3721,7 +3710,7 @@ sap.ui.define([
 		aKeptElementPredicates.forEach(function (sPredicate) {
 			that.aElements.$byPredicate[sPredicate] = mByPredicate[sPredicate];
 		});
-		// Beware: fireChange can trigger a read which must not be obsoleted
+		// Beware: fireChange can initiate a read which must not be obsoleted
 		this.aReadRequests?.forEach((oReadRequest) => {
 			oReadRequest.bObsolete = true;
 		});
@@ -3937,7 +3926,7 @@ sap.ui.define([
 	 *   The cache's original resource path to be used to build the target path for bound messages
 	 * @param {boolean} [bPost]
 	 *   Whether the cache uses POST requests. If <code>true</code>, the initial request must be
-	 *   done via {@link #post}. {@link #fetchValue} expects to have cache data, but may trigger
+	 *   done via {@link #post}. {@link #fetchValue} expects to have cache data, but may initiate
 	 *   requests for late properties. If <code>false<code>, {@link #post} throws an error.
 	 * @param {string} [sMetaPath]
 	 *   Optional meta path in case it cannot be derived from the given resource path
@@ -4337,22 +4326,17 @@ sap.ui.define([
 		var aSegments = sResourcePath.split("/"),
 			sSingleton = aSegments[0],
 			sSingletonKey = sSingleton + JSON.stringify(mQueryOptions),
-			mSingletonCacheByPath = oRequestor.$mSingletonCacheByPath;
+			mSingletonCacheByPath;
 
 		_PropertyCache.call(this, oRequestor, sResourcePath,
 			{/*mQueryOptions will be passed to the _SingleCache*/});
 
-		if (!mSingletonCacheByPath) {
-			mSingletonCacheByPath = oRequestor.$mSingletonCacheByPath = {};
-		}
-		this.oSingleton = mSingletonCacheByPath[sSingletonKey];
-		if (!this.oSingleton) {
-			this.oSingleton = mSingletonCacheByPath[sSingletonKey]
-				= new _SingleCache(oRequestor, sSingleton, mQueryOptions,
-					/*bSortExpandSelect*/ undefined, /*bSharedRequest*/ undefined,
-					/*sOriginalResourcePath*/ undefined, /*bPost*/ undefined,
-					/*sMetaPath*/ undefined, /*bEmpty*/ true);
-		}
+		mSingletonCacheByPath = oRequestor.$mSingletonCacheByPath ??= {};
+		this.oSingleton = mSingletonCacheByPath[sSingletonKey]
+			??= new _SingleCache(oRequestor, sSingleton, mQueryOptions,
+				/*bSortExpandSelect*/ undefined, /*bSharedRequest*/ undefined,
+				/*sOriginalResourcePath*/ undefined, /*bPost*/ undefined,
+				/*sMetaPath*/ undefined, /*bEmpty*/ true);
 		this.sRelativePath = sResourcePath.split(sSingleton + "/")[1];
 	}
 
@@ -4458,10 +4442,7 @@ sap.ui.define([
 			sPath = sResourcePath
 				+ oRequestor.buildQueryString(_Helper.getMetaPath("/" + sResourcePath),
 					mQueryOptions, false, bSortExpandSelect);
-			mSharedCollectionCacheByPath = oRequestor.$mSharedCollectionCacheByPath;
-			if (!mSharedCollectionCacheByPath) {
-				mSharedCollectionCacheByPath = oRequestor.$mSharedCollectionCacheByPath = {};
-			}
+			mSharedCollectionCacheByPath = oRequestor.$mSharedCollectionCacheByPath ??= {};
 			oSharedCollectionCache = mSharedCollectionCacheByPath[sPath];
 			if (oSharedCollectionCache) {
 				oSharedCollectionCache.setActive(true);

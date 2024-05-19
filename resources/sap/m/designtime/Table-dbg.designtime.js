@@ -53,8 +53,7 @@ sap.ui.define([
 						delegate: function (oTable) {
 							if (!fCheckPersoEnabled(oTable)){
 								return {
-									changeType: "addTableColumn",
-									supportsDefaultDelegate: true
+									changeType: "addTableColumn"
 								};
 							}
 						}

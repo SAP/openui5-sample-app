@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @classdesc Base Class for a Renderer.
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @namespace
 	 * @public
 	 * @alias sap.ui.core.Renderer
@@ -227,6 +227,9 @@ sap.ui.define([
 		// lazy require sap.ui.core library
 		sapUiCore = sap.ui.require("sap/ui/core/library");
 
+		/**
+		 * @deprecated
+		 */
 		if (!sapUiCore) {
 			Log.warning("Synchronous loading of a library.js. Ensure that 'sap/ui/core/library.js' is loaded" +
 				" before sap.ui.core.Renderer#getTextAlign is called.", "SyncXHR", null, function() {

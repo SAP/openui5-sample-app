@@ -77,7 +77,7 @@ sap.ui.define([
 	 *
 	 * @author SAP SE
 	 *
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @experimental Since 1.49.0 This class is experimental and provides only limited functionality. Also the API might be
 	 *               changed in future.
@@ -151,8 +151,7 @@ sap.ui.define([
 		},
 		parentAlias: "_", //ensure to take the fallback
 		fieldSuffix: "", //no suffix needed
-		skipCreateLayout: true, //simple form needs field and label separately
-		supportsDefault: true
+		skipCreateLayout: true //simple form needs field and label separately
 	});
 
 	AddSimpleFormField.getChangeVisualizationInfo = function(oChange, oAppComponent) {

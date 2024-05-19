@@ -2,6 +2,7 @@ sap.ui.define([
 	'sap/ui/qunit/utils/createAndAppendDiv',
 	"sap/ui/qunit/utils/nextUIUpdate",
 	'sap/ui/core/Component',
+	'sap/ui/core/Supportability',
 	'sap/ui/core/ComponentContainer',
 	'sap/ui/core/ComponentRegistry',
 	'sap/ui/core/Messaging',
@@ -12,8 +13,9 @@ sap.ui.define([
 	'sap/base/util/deepExtend',
 	'sap/base/util/LoaderExtensions',
 	'sap/ui/core/Manifest',
-	'sap/base/i18n/ResourceBundle'
-], function (createAndAppendDiv, nextUIUpdate, Component, ComponentContainer, ComponentRegistry, Messaging, UIComponentMetadata, SamplesRoutingComponent, SamplesRouterExtension, Log, deepExtend, LoaderExtensions, Manifest, ResourceBundle) {
+	'sap/base/i18n/ResourceBundle',
+	'sap/ui/VersionInfo'
+], function (createAndAppendDiv, nextUIUpdate, Component, Supportability, ComponentContainer, ComponentRegistry, Messaging, UIComponentMetadata, SamplesRoutingComponent, SamplesRouterExtension, Log, deepExtend, LoaderExtensions, Manifest, ResourceBundle, VersionInfo) {
 
 	"use strict";
 	/*global sinon, QUnit, foo*/
@@ -1541,6 +1543,32 @@ sap.ui.define([
 
 	});
 
+	/**
+	 * Legacy tests with an already loaded manifest.json for a Component with metadata based on a "component.json".
+	 * @deprecated
+	 */
+	QUnit.test("Component.create with loaded manifest content (legacy, component.json)", function(assert) {
+		var oProcessI18nSpy = this.spy(Manifest.prototype, "_processI18n");
+
+		return LoaderExtensions.loadResource(
+			"sap/ui/test/mixed_legacyAPIs/manifest.json",
+			{async: true}
+		).then(function(oManifest) {
+			return Component.create({
+				manifest: oManifest
+			});
+		}).then(function(oComponent) {
+			assert.ok(oComponent, "Component instance is created");
+			var iSyncCall = oProcessI18nSpy.getCalls().reduce(function(acc, oCall) {
+				if (oCall.args.length === 0 || !oCall.args[0]) {
+					acc++;
+				}
+				return acc;
+			}, 0);
+			assert.equal(iSyncCall, 0, "No sync loading of i18n is done");
+		});
+	});
+
 	QUnit.test("Component.create with loaded manifest content", function(assert) {
 		var oProcessI18nSpy = this.spy(Manifest.prototype, "_processI18n");
 
@@ -1563,8 +1591,11 @@ sap.ui.define([
 		});
 	});
 
-
-	QUnit.test("Check the loading of i18n of a component and its inheriting parent", function(assert) {
+	/**
+	 * Legacy tests with an inheritance chain that contains a "component.json" based parent.
+	 * @deprecated
+	 */
+	QUnit.test("Check the loading of i18n of a component and its inheriting parent (legacy, component.json)", function(assert) {
 		var oProcessI18nSpy = this.spy(Manifest.prototype, "_processI18n");
 
 		return Component.create({
@@ -1575,8 +1606,34 @@ sap.ui.define([
 			// _processI18n are called 3 times:
 			//  1. for the oComponent instance itself
 			//  2. for the sap.ui.test.inherit ComponentMetadata
-			//  3. for the inheriting parent sap.ui.test.inherit.parent ComponentMetadata
+			//  3. for the inheriting parent sap.ui.test.inherit.parent ComponentMetadata (component.json based)
 			assert.equal(oProcessI18nSpy.callCount, 3, "_processI18n is called for the expected times");
+
+			var iSyncCall = oProcessI18nSpy.getCalls().reduce(function(acc, oCall) {
+				if (oCall.args.length === 0 || !oCall.args[0]) {
+					acc++;
+				}
+				return acc;
+			}, 0);
+
+			assert.equal(iSyncCall, 0, "No sync loading of i18n is done");
+		});
+	});
+
+	QUnit.test("Check the loading of i18n of a component and its inheriting parent", function(assert) {
+		var oProcessI18nSpy = this.spy(Manifest.prototype, "_processI18n");
+
+		return Component.create({
+			name: "sap.ui.test.inheritAsync"
+		}).then(function(oComponent) {
+			assert.ok(oComponent, "Component instance is created");
+
+			// _processI18n are called 4 times:
+			//  1. for the oComponent instance itself
+			//  2. for the sap.ui.test.inheritAsync ComponentMetadata
+			//  3. for the inheriting parent sap.ui.test.inheritAsync.parentB ComponentMetadata
+			//  4. for the inheriting parent sap.ui.test.inheritAsync.parentA ComponentMetadata
+			assert.equal(oProcessI18nSpy.callCount, 4, "_processI18n is called for the expected times");
 
 			var iSyncCall = oProcessI18nSpy.getCalls().reduce(function(acc, oCall) {
 				if (oCall.args.length === 0 || !oCall.args[0]) {
@@ -2031,8 +2088,8 @@ sap.ui.define([
 				},
 				"models": {
 					"myModel": {
-						"type": "sap.ui.model.odata.ODataModel",
-						"uri": "./some/odata/service"
+						"type": "sap.ui.model.odata.v2.ODataModel",
+						"uri": "./some/odata/service/"
 					}
 				}
 			}
@@ -2040,8 +2097,8 @@ sap.ui.define([
 
 		Component._fnPreprocessManifest = function(oManifestJSON) {
 			// To test if the modification is correctly passed back to the
-			// Component's manifest processing, we just change the class of a given model v1 -> v2
-			oManifestJSON["sap.ui5"]["models"]["myModel"].type = "sap.ui.model.odata.v2.ODataModel";
+			// Component's manifest processing, we just change the class of a given model v2 -> v4
+			oManifestJSON["sap.ui5"]["models"]["myModel"].type = "sap.ui.model.odata.v4.ODataModel";
 
 			return Promise.resolve(oManifestJSON);
 		};
@@ -2052,7 +2109,7 @@ sap.ui.define([
 		}).then(function(oComponent) {
 			// check if the modification was correctly taken over
 			var oModel = oComponent.getModel("myModel");
-			assert.ok(oModel.isA("sap.ui.model.odata.v2.ODataModel"), "Manifest was modified to use v2 instead of v1 ODataModel.");
+			assert.ok(oModel.isA("sap.ui.model.odata.v4.ODataModel"), "Manifest was modified to use v4 instead of v2 ODataModel.");
 		});
 	});
 
@@ -2119,8 +2176,8 @@ sap.ui.define([
 		// register hook and modify the manifest
 		Component._fnPreprocessManifest = function(oManifestJSON) {
 			// To test if the modification is correctly passed back to the
-			// Component's manifest processing, we just change the class of a given model v1 -> v2
-			oManifestJSON["sap.ui5"]["models"]["sfapi"].type = "sap.ui.model.odata.v2.ODataModel";
+			// Component's manifest processing, we just change the class of a given model v2 -> v4
+			oManifestJSON["sap.ui5"]["models"]["sfapi"].type = "sap.ui.model.odata.v4.ODataModel";
 
 			return Promise.resolve(oManifestJSON);
 		};
@@ -2131,7 +2188,7 @@ sap.ui.define([
 		}).then(function(oComponent) {
 			// check if the modification was correctly taken over
 			var oModel = oComponent.getModel("sfapi");
-			assert.ok(oModel.isA("sap.ui.model.odata.v2.ODataModel"), "Manifest was modified to use v2 instead of v1 ODataModel.");
+			assert.ok(oModel.isA("sap.ui.model.odata.v4.ODataModel"), "Manifest was modified to use v4 instead of v2 ODataModel.");
 		});
 	});
 
@@ -2178,8 +2235,8 @@ sap.ui.define([
 		// register hook and modify the manifest
 		Component._fnPreprocessManifest = function(oManifestJSON) {
 			// To test if the modification is correctly passed back to the
-			// Component's manifest processing, we just change the class of a given model v1 -> v2
-			oManifestJSON["sap.ui5"]["models"]["sfapi"].type = "sap.ui.model.odata.v2.ODataModel";
+			// Component's manifest processing, we just change the class of a given model v2 -> v4
+			oManifestJSON["sap.ui5"]["models"]["sfapi"].type = "sap.ui.model.odata.v4.ODataModel";
 
 			return Promise.resolve(oManifestJSON);
 		};
@@ -2190,7 +2247,7 @@ sap.ui.define([
 		}).then(function(oComponent) {
 			// check if the modification was correctly taken over
 			var oModel = oComponent.getModel("sfapi");
-			assert.ok(oModel.isA("sap.ui.model.odata.v2.ODataModel"), "Manifest was modified to use v2 instead of v1 ODataModel.");
+			assert.ok(oModel.isA("sap.ui.model.odata.v4.ODataModel"), "Manifest was modified to use v4 instead of v2 ODataModel.");
 		});
 	});
 
@@ -2747,4 +2804,19 @@ sap.ui.define([
 		}.bind(this));
 	});
 
+	QUnit.module("Multiple minUI5Version");
+
+	QUnit.test("Ensure that each major version can only be included once", async function (assert) {
+		assert.expect(1);
+		const oStub = sinon.stub(Supportability, "isDebugModeEnabled").callsFake(() => { return true; });
+	    const oLogStub = sinon.stub(Log, "isLoggable").callsFake(() => { return true; });
+
+		await Component.create({
+			name: "testdata.minUI5Version"
+		}).catch((error) => {
+			assert.equal(error.message, "The minimal UI5 versions defined in the manifest must not include multiple versions with the same major version, Component: testdata.minUI5Version.", "Error thrown because manifest contains multiple minUI5Versions with the same major version");
+			oStub.restore();
+			oLogStub.restore();
+		});
+	});
 });

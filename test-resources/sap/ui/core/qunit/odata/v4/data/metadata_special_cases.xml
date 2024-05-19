@@ -26,6 +26,14 @@
 				<NavigationProperty Name="_Publication" Type="Collection(special.cases.PublicationsType)" Partner="_Artist"/>
 				<NavigationProperty Name="BestFriend" Type="special.cases.ArtistsType" />
 				<NavigationProperty Name="_Friend" Type="Collection(special.cases.ArtistsType)" />
+				<NavigationProperty Name="_Event" Type="Collection(special.cases.EventsType)" />
+			</EntityType>
+			<EntityType Name="EventsType">
+				<Key>
+					<PropertyRef Name="TimeStamp"/>
+				</Key>
+				<Property Name="TimeStamp" Type="Edm.DateTimeOffset" Nullable="false"/>
+				<Property Name="Name" Type="Edm.String"/>
 			</EntityType>
 			<EntityType Name="DraftAdministrativeDataType">
 				<Key>
@@ -126,6 +134,13 @@
 				<Property Name="numericSeverity" Type="Edm.Byte" Nullable="false" />
 				<Property Name="longtextUrl" Type="Edm.String" Nullable="true" />
 			</ComplexType>
+			<ComplexType Name="NextSiblingType">
+				<Property Name="ArtistID" Type="Edm.String" Nullable="false"/>
+				<!-- IsActiveEntity is not a realistic property here -->
+				<!-- <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false"/> -->
+				<!-- add a non-key property for demonstrating the multi key scenario -->
+				<Property Name="Name" Type="Edm.String" MaxLength="255"/>
+			</ComplexType>
 			<ComplexType Name="Person">
 				<Property Name="Address" Type="special.cases.Address" />
 				<Property Name="Name" Type="Edm.String" Nullable="false" />
@@ -166,6 +181,10 @@
 				<Parameter Name="CurrencyCode" Type="Edm.String" MaxLength="5"/>
 				<ReturnType Type="special.cases.PublicationsType" Nullable="false"/>
 			</Action>
+			<Action Name="ChangeNextSibling" IsBound="true">
+				<Parameter Name="_it" Type="special.cases.ArtistsType" Nullable="false"/>
+				<Parameter Name="NextSibling" Type="special.cases.NextSiblingType" Nullable="true"/>
+			</Action>
 			<Function Name="GetDefaults" EntitySetPath="_it" IsBound="true">
 				<Parameter Name="_it" Type="Collection(special.cases.ArtistsType)" Nullable="false"/>
 				<ReturnType Type="special.cases.ArtistsType" Nullable="false"/>
@@ -185,6 +204,7 @@
 					<NavigationPropertyBinding Path="BestFriend" Target="Artists"/>
 					<NavigationPropertyBinding Path="SiblingEntity" Target="Artists" />
 				</EntitySet>
+				<EntitySet Name="Events" EntityType="special.cases.EventsType"/>
 				<EntitySet Name="As" EntityType="special.cases.A">
 					<NavigationPropertyBinding Path="AtoEntityWithComplexKey"
 						Target="EntitiesWithComplexKey"/>
@@ -367,6 +387,11 @@
 						<PropertyValue Property="LimitedDescendantCount" Path="_/DescendantCount"/>
 						<!--Edm.Int64-->
 						<PropertyValue Property="LimitedRank" Path="_/Limited_Rank"/>
+					</Record>
+				</Annotation>
+				<Annotation Qualifier="OrgChart" Term="com.sap.vocabularies.Hierarchy.v1.RecursiveHierarchyActions">
+					<Record>
+						<PropertyValue Property="ChangeNextSiblingAction" String="special.cases.ChangeNextSibling"/>
 					</Record>
 				</Annotation>
 			</Annotations>

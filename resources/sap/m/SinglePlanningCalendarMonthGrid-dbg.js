@@ -97,7 +97,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @private
@@ -225,6 +225,36 @@ sap.ui.define([
 						}
 					},
 					/**
+					 * Fired when the week number selection changes. If <code>dateSelectionMode</code> is <code>SinglePlanningCalendarSelectionMode.Multiselect</code>, clicking on the week number will select the corresponding week.
+					 * If the week has already been selected, clicking the week number will deselect it.
+					 *
+					 * @since 1.123
+					 */
+					weekNumberPress : {
+						parameters: {
+							/**
+							 * Тhe number of the pressed calendar week.
+							 */
+							weekNumber: {type: "int"}
+						}
+					},
+					/**
+					 * Fired when the selected dates change.
+					 * The default behavior can be prevented using the <code>preventDefault</code> method.
+					 *
+					 * <b>Note:</b> If the event is prevented, the changes in the aggregation <code>selectedDates</code> will be canceled and it will revert to its previous state.
+					 * @since 1.123
+					 */
+					selectedDatesChange : {
+						allowPreventDefault: true,
+						parameters: {
+							/**
+							 * The array of all selected days.
+							 */
+							selectedDates: {type: "sap.ui.unified.DateRange[]"}
+						}
+					},
+					/**
 					 * Fired when a 'more' button is pressed.
 					 * <b>Note:</b> The 'more' button appears when multiple appointments
 					 * exist and the available space is not sufficient to display all of them.
@@ -290,7 +320,6 @@ sap.ui.define([
 
 		SinglePlanningCalendarMonthGrid.prototype.init = function() {
 			const iCellsInView = 42;
-
 			this._aLinks = [];
 			this._handleMorePress = this._handleMorePress.bind(this);
 			this._oDateFormat = DateFormat.getDateTimeInstance({ pattern: "YYYYMMdd" });
@@ -465,10 +494,15 @@ sap.ui.define([
 		 * @param {jQuery.Event} oEvent The event object
 		 */
 		SinglePlanningCalendarMonthGrid.prototype.onmouseup = function(oEvent) {
-			var bMultiDateSelection = SinglePlanningCalendarSelectionMode.MultiSelect === this.getDateSelectionMode();
-			if (!bMultiDateSelection && !(oEvent.metaKey || oEvent.ctrlKey)) {
-				this.removeAllSelectedDates();
+			if (oEvent.target.classList.contains("sapMSPCMonthWeekNumber")) {
+				const iWeekNumber = Number(oEvent.target.textContent);
+
+				this.fireWeekNumberPress({weekNumber: iWeekNumber});
+				if (SinglePlanningCalendarSelectionMode.SingleSelect === this.getDateSelectionMode()) {
+					return;
+				}
 			}
+
 			this._bMultiDateSelect = true;
 			this._fireSelectionEvent(oEvent);
 		};
@@ -515,10 +549,6 @@ sap.ui.define([
 			}
 		};
 
-		SinglePlanningCalendarMonthGrid.prototype.removeAllSelectedDates = function() {
-			this.removeAllAggregation("selectedDates");
-		};
-
 		/**
 		 * Handles the <code>keydown</code> event when any key is pressed.
 		 *
@@ -530,7 +560,6 @@ sap.ui.define([
 			if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER || oEvent.which === KeyCodes.ARROW_UP ||
 				oEvent.which === KeyCodes.ARROW_DOWN || oEvent.which === KeyCodes.ARROW_LEFT || oEvent.which === KeyCodes.ARROW_RIGHT) {
 				if (oEvent.which === KeyCodes.SPACE && !oEvent.shiftKey) {
-					this.removeAllSelectedDates();
 					this._bMultiDateSelect = true;
 				} else if (oEvent.which === KeyCodes.SPACE && oEvent.shiftKey && bMultiDateSelection) {
 					this._bCurrentWeekSelection = true;
@@ -601,6 +630,12 @@ sap.ui.define([
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype._handelMultiDateSelection = function (oTarget, oStartDate,  oEndDate, oEvent) {
+			const aOldSelectedDateState = this.getAggregation("selectedDates");
+			const bMultiDateSelection = SinglePlanningCalendarSelectionMode.MultiSelect === this.getDateSelectionMode();
+
+			if ((oEvent.which === KeyCodes.SPACE && !oEvent.shiftKey) || (!bMultiDateSelection && !(oEvent.metaKey || oEvent.ctrlKey))) {
+				this.removeAllAggregation("selectedDates");
+			}
 
 			if (this._bMultiDateSelect) {
 				this._bMultiDateSelect = false;
@@ -611,8 +646,8 @@ sap.ui.define([
 				var oDate = UI5Date.getInstance(CalendarDate.fromLocalJSDate(oStartDate));
 
 				switch (oEvent.which) {
-					case KeyCodes.ARROW_UP : oDate.setDate(oDate.getDate() - 7); break;
-					case KeyCodes.ARROW_DOWN : oDate.setDate(oDate.getDate() + 7); break;
+					case KeyCodes.ARROW_UP: oDate.setDate(oDate.getDate() - 7); break;
+					case KeyCodes.ARROW_DOWN: oDate.setDate(oDate.getDate() + 7); break;
 					case KeyCodes.ARROW_LEFT: oDate.setDate(oDate.getDate() - 1); break;
 					case KeyCodes.ARROW_RIGHT: oDate.setDate(oDate.getDate() + 1); break;
 					default: break;
@@ -650,6 +685,19 @@ sap.ui.define([
 				oEndDate.setDate(oStartDate.getDate() + 6);
 				this._rangeSelection(oStartDate, oEndDate);
 			}
+			this._fireSelectionChange(aOldSelectedDateState);
+
+		};
+
+		SinglePlanningCalendarMonthGrid.prototype._fireSelectionChange = function (aOldSelectedDateState) {
+			const bExecuteDefault = this.fireSelectedDatesChange({
+				selectedDates: this.getAggregation("selectedDates")
+			});
+
+			if (!bExecuteDefault) {
+				this.removeAllAggregation("selectedDates");
+				aOldSelectedDateState.forEach((oRange) => this.addAggregation("selectedDates", oRange));
+			}
 		};
 
 		/**
@@ -679,7 +727,6 @@ sap.ui.define([
 				oEndDate.setDate(oEndDate.getDate() + 1);
 				if (this._bMultiDateSelect || this._bCurrentWeekSelection || this._bMultiDateSelectWithArrow) {
 					this._handelMultiDateSelection(oSelectedCell, oStartDate, oEndDate, oEvent);
-					this.fireEvent("selectDate", {startDate: oStartDate, endDate: oEndDate});
 				}
 
 				this.fireEvent("cellPress", {startDate: oStartDate, endDate: oEndDate});
@@ -698,7 +745,6 @@ sap.ui.define([
 				this._bCurrentWeekSelection = true;
 				this._bMultiDateSelect = false;
 				this._handelMultiDateSelection(oSelectedCell, oStartDate, oEndDate, oEvent);
-				this.fireEvent("selectDate", {startDate: oStartDate, endDate: oEndDate});
 
 			} else if (oSrcControl && oSrcControl.isA("sap.ui.unified.CalendarAppointment")) {
 				// add suffix in appointment

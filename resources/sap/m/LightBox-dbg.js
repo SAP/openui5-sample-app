@@ -96,7 +96,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -236,10 +236,17 @@ sap.ui.define([
 		this._isRendering = false;
 		this._$lightBox = this.$();
 
+		// when we have error message on desktop, but the viewport is small or we have big zoom (for example 200%)
+		const isLightBoxIsHigherThanTheViewPort = this.getDomRef().scrollHeight > window.innerHeight;
+
 		if (!this._iResizeListenerId) {
 			this._fnResizeListener = this._onResize.bind(this);
 			Device.resize.attachHandler(this._fnResizeListener);
 			this._iResizeListenerId = ResizeHandler.register(this, this._fnResizeListener);
+		}
+
+		if (isLightBoxIsHigherThanTheViewPort) {
+			this.getAggregation("_errorMessage").setIllustrationSize(IllustratedMessageSize.Auto);
 		}
 	};
 

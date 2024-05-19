@@ -93,7 +93,7 @@ sap.ui.define([
 	 * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout MDN web docs: CSS Grid Layout}
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @extends sap.m.ListBase
 	 * @implements sap.ui.layout.cssgrid.IGridConfigurable
@@ -239,7 +239,7 @@ sap.ui.define([
 	 * <b>Note:</b>Should be called after the rendering of <code>GridList</code> is ready.
 	 *
 	 * @public
-	 * @experimental Since 1.87. Behavior might change.
+	 * @since 1.87
 	 * @param {sap.f.NavigationDirection} sDirection The navigation direction.
 	 * @param {int} iRow The row index of the starting position.
 	 * @param {int} iColumn The column index of the starting position.

@@ -17,11 +17,12 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Base type for <code>items</code> aggregation in <code>P13nPanel</code> control.
 	 * @extends sap.ui.core.Element
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @constructor
 	 * @public
 	 * @since 1.26.0
 	 * @alias sap.m.P13nItem
+	 * @deprecated As of version 1.124, replaced by the artifacts in {@link sap.m.p13n}.
 	 */
 	var P13nItem = Element.extend("sap.m.P13nItem", /** @lends sap.m.P13nItem.prototype */
 	{

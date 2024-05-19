@@ -146,7 +146,7 @@ sap.ui.define([
 		 * @public
 		 */
 		addToSelect : function (mQueryOptions, aSelectPaths) {
-			mQueryOptions.$select = mQueryOptions.$select || [];
+			mQueryOptions.$select ??= [];
 			aSelectPaths.forEach(function (sPath) {
 				if (!mQueryOptions.$select.includes(sPath)) {
 					mQueryOptions.$select.push(sPath);
@@ -238,7 +238,7 @@ sap.ui.define([
 				_Helper.addToSelect(mAggregatedQueryOptions, mQueryOptions.$select);
 			}
 			if (mQueryOptions.$expand) {
-				mAggregatedQueryOptions.$expand = mAggregatedQueryOptions.$expand || {};
+				mAggregatedQueryOptions.$expand ??= {};
 				Object.keys(mQueryOptions.$expand).forEach(function (sPath) {
 					if (mAggregatedQueryOptions.$expand[sPath]) {
 						_Helper.aggregateExpandSelect(mAggregatedQueryOptions.$expand[sPath],
@@ -368,7 +368,7 @@ sap.ui.define([
 					if (oSubSelect[sSegment] === true) {
 						return true; // no need to descend when the complex property is selected
 					}
-					oSubSelect = oSubSelect[sSegment] = oSubSelect[sSegment] || {};
+					oSubSelect = oSubSelect[sSegment] ??= {};
 				});
 			});
 
@@ -591,9 +591,7 @@ sap.ui.define([
 				oResult.message = "Network error";
 				return oResult;
 			}
-			if (sContentType) {
-				sContentType = sContentType.split(";")[0];
-			}
+			sContentType &&= sContentType.split(";")[0];
 			if (jqXHR.status === 412) {
 				sPreference = jqXHR.getResponseHeader("Preference-Applied");
 
@@ -743,11 +741,9 @@ sap.ui.define([
 				Object.defineProperty(oTechnicalDetails, "originalMessage", {
 					enumerable : true,
 					get : function () {
-						if (!oClonedMessage) {
-							// use publicClone to ensure that private "@$ui5._" instance annotations
-							// never become public
-							oClonedMessage = _Helper.publicClone(oOriginalMessage);
-						}
+						// use publicClone to ensure that private "@$ui5._" instance annotations
+						// never become public
+						oClonedMessage ??= _Helper.publicClone(oOriginalMessage);
 						return oClonedMessage;
 					}
 				});
@@ -819,11 +815,9 @@ sap.ui.define([
 				if (oError.strictHandlingFailed) {
 					oClone.strictHandlingFailed = true;
 				}
-				if (oClone.error.details) {
-					oClone.error.details = oClone.error.details.filter(function (oDetail, j) {
-						return isRelevant(oDetail, aDetailContentIDs[j]);
-					});
-				}
+				oClone.error.details &&= oClone.error.details.filter(function (oDetail, j) {
+					return isRelevant(oDetail, aDetailContentIDs[j]);
+				});
 
 				return oClone;
 			});
@@ -1496,7 +1490,7 @@ sap.ui.define([
 			var bFailed,
 				mKey2Value = {};
 
-			aKeyProperties = aKeyProperties || mTypeForMetaPath[sMetaPath].$Key;
+			aKeyProperties ??= mTypeForMetaPath[sMetaPath].$Key;
 			bFailed = aKeyProperties.some(function (vKey) {
 				var sKey, sKeyPath, oObject, sPropertyName, aSegments, oType, vValue;
 
@@ -1663,7 +1657,7 @@ sap.ui.define([
 			sPath = _Helper.getMetaPath(sPath);
 			if (sPath) {
 				sPath.split("/").some(function (sSegment) {
-					mQueryOptions = mQueryOptions && mQueryOptions.$expand
+					mQueryOptions &&= mQueryOptions.$expand
 						&& mQueryOptions.$expand[sSegment];
 					if (!mQueryOptions || mQueryOptions === true) {
 						mQueryOptions = {};
@@ -2200,9 +2194,7 @@ sap.ui.define([
 
 			function set(sProperty, sValue) {
 				if (sValue && (!mQueryOptions || mQueryOptions[sProperty] !== sValue)) {
-					if (!mResult) {
-						mResult = mQueryOptions ? _Helper.clone(mQueryOptions) : {};
-					}
+					mResult ??= mQueryOptions ? _Helper.clone(mQueryOptions) : {};
 					mResult[sProperty] = sValue;
 				}
 			}
@@ -2543,9 +2535,7 @@ sap.ui.define([
 		setPrivateAnnotation : function (oObject, sAnnotation, vValue) {
 			var oPrivateNamespace = oObject["@$ui5._"];
 
-			if (!oPrivateNamespace) {
-				oPrivateNamespace = oObject["@$ui5._"] = {};
-			}
+			oPrivateNamespace ??= oObject["@$ui5._"] = {};
 			oPrivateNamespace[sAnnotation] = vValue;
 		},
 
@@ -2990,7 +2980,7 @@ sap.ui.define([
 
 				// Create annotations for a property which was selected but no data was received
 				Object.keys(vSelect).forEach(function (sProperty) {
-					if (!(sProperty in oTarget) && sProperty !== "*") {
+					if (oTarget[sProperty] === undefined && sProperty !== "*") {
 						oTarget[sProperty + "@$ui5.noData"] = true;
 						// Fire change event (useful for Edm.Stream in case of the URL stays the
 						// same, but the content was changed)
@@ -3100,8 +3090,7 @@ sap.ui.define([
 					if (i === aMetaPathSegments.length - 1) {
 						// avoid that mChildQueryOptions.$select is modified by selectKeyProperties
 						mChildQueryOptions = Object.assign({}, mChildQueryOptions);
-						mChildQueryOptions.$select = mChildQueryOptions.$select
-							&& mChildQueryOptions.$select.slice();
+						mChildQueryOptions.$select &&= mChildQueryOptions.$select.slice();
 					}
 					mQueryOptionsForPathPrefix
 						= mQueryOptionsForPathPrefix.$expand[sExpandSelectPath]

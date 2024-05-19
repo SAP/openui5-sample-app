@@ -2152,15 +2152,14 @@ sap.ui.predefine("sap/m/rules/StepInput.support", ["sap/ui/support/library"], fu
 /**
  * Defines support rules of the Link control of sap.m Table.
  */
-sap.ui.predefine("sap/m/rules/Table.support", ["sap/ui/support/library", "sap/m/ListBase", "sap/ui/core/library"],
-	function(SupportLib, ListBase, coreLibrary) {
+sap.ui.predefine("sap/m/rules/Table.support", ["sap/ui/support/library", "sap/m/ListBase", "sap/ui/core/message/MessageType"],
+	function(SupportLib, ListBase, MessageType) {
 		"use strict";
 
 		// shortcuts
 		var Categories = SupportLib.Categories, // Accessibility, Performance, Memory, ...
 			Severity = SupportLib.Severity,	// Hint, Warning, Error
 			Audiences = SupportLib.Audiences; // Control, Internal, Application
-		var MessageType = coreLibrary.MessageType;
 
 		//**********************************************************
 		// Rule Definitions

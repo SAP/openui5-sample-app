@@ -21,7 +21,6 @@ sap.ui.define([
 	'sap/ui/core/LabelEnablement',
 	"sap/ui/core/date/UniversalDate",
 	'sap/ui/core/format/DateFormat',
-	'sap/ui/core/format/TimezoneUtil',
 	'sap/ui/base/ManagedObjectObserver',
 	'sap/ui/Device',
 	'./Label',
@@ -58,7 +57,6 @@ sap.ui.define([
 	LabelEnablement,
 	UniversalDate,
 	DateFormat,
-	TimezoneUtil,
 	ManagedObjectObserver,
 	Device,
 	Label,
@@ -260,7 +258,7 @@ sap.ui.define([
 		 * is opened. The dialog is closed via a date time period value selection or by pressing the "Cancel" button.
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @public
@@ -1243,13 +1241,11 @@ sap.ui.define([
 				this._oPopup.attachAfterOpen(function() {
 					var oToPage = this._oNavContainer.getPages()[0];
 					this._applyNavContainerPageFocus(oToPage);
-					this.invalidate();
 				}, this);
 
 				this._oPopup.attachAfterClose(function() {
 					this._oPreviousSelectedOption = this._oSelectedOption;
 					this._setFooterVisibility(false);
-					this.invalidate();
 				}, this);
 
 				this._oPopup.setBeginButton(new Button({
@@ -1526,7 +1522,7 @@ sap.ui.define([
 				oPopover.getFooter().setVisible(bVisible);
 			}
 
-			oPopover.invalidate();
+			bVisible && oPopover.invalidate();
 
 			return this;
 		};

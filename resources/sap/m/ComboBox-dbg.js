@@ -106,7 +106,7 @@ sap.ui.define([
 		 * </ul>
 		 *
 		 * @author SAP SE
-		 * @version 1.122.1
+		 * @version 1.124.0
 		 *
 		 * @constructor
 		 * @extends sap.m.ComboBoxBase
@@ -753,7 +753,9 @@ sap.ui.define([
 				this.setSelection(null);
 			}
 
-			if (!bEmptyValue && oControl && oControl._bDoTypeAhead) {
+			const bExactMatch = aCommonStartsWithItems.some((item) => item.getText() === sValue);
+
+			if (!bEmptyValue && oControl && (oControl._bDoTypeAhead || bExactMatch)) {
 				this.handleTypeAhead(oControl, aVisibleItems, sValue);
 			} else if (!bEmptyValue && aCommonStartsWithItems[0] && sValue === aCommonStartsWithItems[0].getText()) {
 				this.setSelection(aCommonStartsWithItems[0]);
@@ -1305,6 +1307,10 @@ sap.ui.define([
 		ComboBox.prototype.ontap = function(oEvent) {
 			if (!this.getEnabled()) {
 				return;
+			}
+
+			if (!this.isMobileDevice()) {
+				this.openValueStateMessage();
 			}
 
 			this.updateFocusOnClose();

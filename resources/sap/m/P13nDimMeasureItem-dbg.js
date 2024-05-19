@@ -16,52 +16,52 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Type for <code>columnsItems</code> aggregation in <code>P13nDimMeasurePanel</code> control.
 	 * @extends sap.ui.core.Item
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @constructor
 	 * @author SAP SE
 	 * @public
 	 * @since 1.34.0
 	 * @alias sap.m.P13nDimMeasureItem
-     * @deprecated since 1.120
+     * @deprecated As of 1.120, replaced by the artifacts in {@link sap.m.p13n}.
 	 */
 	var P13nDimMeasureItem = Item.extend("sap.m.P13nDimMeasureItem", /** @lends sap.m.P13nDimMeasureItem.prototype */
-	{
-		metadata: {
+		{
+			metadata: {
 
-			library: "sap.m",
-			properties: {
+				library: "sap.m",
+				properties: {
 
-				/**
-				 * Specifies the unique chart column key. In this context a column refers to dimensions or measures of a chart.
-				 */
-				columnKey: {
-					type: "string"
-				},
+					/**
+					 * Specifies the unique chart column key. In this context a column refers to dimensions or measures of a chart.
+					 */
+					columnKey: {
+						type: "string"
+					},
 
-				/**
-				 * Specifies the order of visible dimensions or measures of a chart.
-				 */
-				index: {
-					type: "int",
-					defaultValue: -1
-				},
+					/**
+					 * Specifies the order of visible dimensions or measures of a chart.
+					 */
+					index: {
+						type: "int",
+						defaultValue: -1
+					},
 
-				/**
-				 * Specifies the visibility of dimensions or measures.
-				 */
-				visible: {
-					type: "boolean"
-				},
+					/**
+					 * Specifies the visibility of dimensions or measures.
+					 */
+					visible: {
+						type: "boolean"
+					},
 
-				/**
-				 * Specifies the role of dimensions or measures. The role determines how dimensions and measures influence the chart.
-				 */
-				role: {
-					type: "string"
+					/**
+					 * Specifies the role of dimensions or measures. The role determines how dimensions and measures influence the chart.
+					 */
+					role: {
+						type: "string"
+					}
 				}
 			}
-		}
-	});
+		});
 
 	return P13nDimMeasureItem;
 

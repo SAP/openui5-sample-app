@@ -17,7 +17,8 @@ sap.ui.define([
 	"sap/m/library",
 	"sap/ui/core/Element",
 	"sap/ui/core/Lib",
-	"sap/ui/core/library"
+	"sap/ui/core/library",
+	"sap/ui/core/syncStyleClass"
 ], (
 	Control,
 	Button,
@@ -32,7 +33,8 @@ sap.ui.define([
 	mLibrary,
 	Element,
 	Library,
-	coreLibrary
+	coreLibrary,
+	syncStyleClass
 ) => {
 	"use strict";
 
@@ -54,7 +56,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @public
 	 * @since 1.97
@@ -217,6 +219,11 @@ sap.ui.define([
 			this._oPopup.open();
 		} else {
 			this._oPopup.openBy(oSource);
+		}
+
+		const oParent = this.getParent();
+		if (oParent && oParent.hasStyleClass instanceof Function && oParent.hasStyleClass("sapUiSizeCompact") && !this._oPopup.hasStyleClass("sapUiSizeCompact")) {
+			this._oPopup.addStyleClass("sapUiSizeCompact");
 		}
 
 		const oResetBtn = this.getResetButton();

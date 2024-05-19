@@ -28,6 +28,7 @@ sap.ui.define([
 	"./GroupHeaderListItem",
 	'sap/ui/core/InvisibleText',
 	"sap/ui/core/library",
+	"sap/ui/core/message/MessageType",
 	"sap/ui/base/ManagedObject",
 	"./MessageViewRenderer",
 	"sap/ui/events/KeyCodes",
@@ -58,6 +59,7 @@ sap.ui.define([
 	GroupHeaderListItem,
 	InvisibleText,
 	coreLibrary,
+	MessageType,
 	ManagedObject,
 	MessageViewRenderer,
 	KeyCodes,
@@ -68,9 +70,6 @@ sap.ui.define([
 
 	// shortcut for sap.ui.core.ValueState
 	var ValueState = coreLibrary.ValueState;
-
-	// shortcut for sap.ui.core.MessageType
-	var MessageType = coreLibrary.MessageType;
 
 	// shortcut for sap.m.ListType
 	var ListType = library.ListType;
@@ -118,7 +117,7 @@ sap.ui.define([
 	 * The responsiveness of the <code>MessageView</code> is determined by the container in which it is embedded. For that reason the control could not be visualized if the
 	 * container’s sizes are not defined.
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @extends sap.ui.core.Control
 	 * @constructor

@@ -49,7 +49,7 @@ sap.ui.define([
 	 *
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @public
 	 * @param {object} [oFormatOptions]
@@ -139,7 +139,7 @@ sap.ui.define([
 
 		if (this.iScale >= 0) {
 			// ensures that amount scale wins over the decimals for the unit
-			oFormatOptionsMerged = extend({}, oFormatOptionsMerged, {maxFractionDigits: this.iScale});
+			oFormatOptionsMerged = extend({}, {maxFractionDigits: this.iScale}, oFormatOptionsMerged);
 		}
 		// Only subclasses of the Unit type use a NumberFormat instance cache.
 		// By default a new NumberFormat instance is created everytime.
@@ -247,14 +247,15 @@ sap.ui.define([
 	};
 
 	/**
-	 * Gets the indices of the binding parts for which this type requires the binding's type for formatting or parsing.
+	 * Gets the indices of the binding parts of this composite type in order to determine those parts
+	 * whose types are required for formatting.
 	 * If for example the type of the amount part is a {@link sap.ui.model.odata.type.Decimal} with a
 	 * <code>scale</scale> constraint less than the unit part's decimal places, then the amount's scale is
 	 * used.
 	 *
 	 * @returns {int[]}
 	 *   The indices of the parts with a relevant type for this composite type, or an empty array if
-	 *   the format option <code>showNumber</code> is falsy
+	 *   the format option <code>showNumber</code> is <code>false</code>
 	 *
 	 * @override sap.ui.model.CompositeType#getPartsListeningToTypeChanges
 	 * @see #processPartTypes

@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.DataState
@@ -92,7 +92,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * @deprecated Likely unused method
+	 * @deprecated As of version 1.74, the concept has been discarded.
 	 * @returns {this} <code>this</code> to allow method chaining
 	 * @private
 	 */

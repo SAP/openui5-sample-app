@@ -31,7 +31,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @public
 	 * @since 1.8.0
 	 * @alias sap.ui.core.EventBus
@@ -230,7 +230,11 @@ sap.ui.define([
 			var oInfo;
 			for (var i = 0, iL = aEventListeners.length; i < iL; i++) {
 				oInfo = aEventListeners[i];
-				this._callListener(oInfo.fFunction, oInfo.oListener || this, sChannelId, sEventId, oData);
+				try {
+					this._callListener(oInfo.fFunction, oInfo.oListener || this, sChannelId, sEventId, oData);
+				} catch (error) {
+					Log.error("Error occurred in calling the listener with index " + i + " in channel '" + sChannelId + "' for event '" + sEventId + "' (ignored). ", error, "sap.ui.core.EventBus");
+				}
 			}
 		} else if (Log.isLoggable(Log.Level.DEBUG, "sap.ui.core.EventBus")) {
 			// no listeners

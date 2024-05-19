@@ -57,9 +57,7 @@ sap.ui.define([
 		Promise.resolve().then(function () {
 			jqXHR.resolve(oPayload, sTextStatus, { // mock jqXHR for success handler
 				getResponseHeader : function (sName) {
-					mResponseHeaders = mResponseHeaders || {
-							"OData-Version" : "4.0"
-						};
+					mResponseHeaders ??= {"OData-Version" : "4.0"};
 					// Note: getResponseHeader treats sName case insensitive!
 					switch (sName) {
 						case "Content-Type":
@@ -936,24 +934,25 @@ sap.ui.define([
 		result : {
 			Accept : "application/json;odata.metadata=full;IEEE754Compatible=true",
 			"OData-MaxVersion" : "5.0",
-			"OData-Version" : "4.1"
+			"OData-Version" : "4.1",
+			"sap-cancel-on-close" : "true"
 		}
 	}, {
 		defaultHeaders : undefined,
 		requestHeaders : undefined,
-		result : {}
+		result : {"sap-cancel-on-close" : "true"}
 	}, {
 		defaultHeaders : {"Accept-Language" : "ab-CD"},
 		requestHeaders : undefined,
-		result : {"Accept-Language" : "ab-CD"}
+		result : {"Accept-Language" : "ab-CD", "sap-cancel-on-close" : "true"}
 	}, {
 		defaultHeaders : undefined,
 		requestHeaders : {"Accept-Language" : "ab-CD"},
-		result : {"Accept-Language" : "ab-CD"}
+		result : {"Accept-Language" : "ab-CD", "sap-cancel-on-close" : "true"}
 	}, {
 		defaultHeaders : {"Accept-Language" : "ab-CD"},
 		requestHeaders : {foo : "bar"},
-		result : {"Accept-Language" : "ab-CD", foo : "bar"}
+		result : {"Accept-Language" : "ab-CD", foo : "bar", "sap-cancel-on-close" : "true"}
 	}].forEach(function (mHeaders) {
 		QUnit.test("request, headers: " + JSON.stringify(mHeaders), function (assert) {
 			var mDefaultHeaders = clone(mHeaders.defaultHeaders),
@@ -1161,9 +1160,10 @@ sap.ui.define([
 		this.mock(oRequestor).expects("convertResourcePath").withExactArgs("Employees")
 			.returns("~sResourcePath~");
 		this.mock(oRequestor).expects("sendRequest")
-			.withExactArgs("GET", "~sResourcePath~",
-				{"Content-Type" : "application/json;charset=UTF-8;IEEE754Compatible=true"},
-				undefined, "~sResourcePath~")
+			.withExactArgs("GET", "~sResourcePath~", {
+					"Content-Type" : "application/json;charset=UTF-8;IEEE754Compatible=true",
+					"sap-cancel-on-close" : "true"
+				}, undefined, "~sResourcePath~")
 			.resolves(oResponse);
 		this.mock(oRequestor).expects("reportHeaderMessages")
 			.withExactArgs("~resourcePath~", "~messages~");
@@ -1429,19 +1429,29 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+[false, true].forEach(function (bWithCredentials) {
 	[false, true].forEach(function (bSuccess) {
-		QUnit.test("refreshSecurityToken: success = " + bSuccess, function (assert) {
+		const sTitle = "refreshSecurityToken, success=" + bSuccess + ", withCredentials="
+			+ bWithCredentials;
+		QUnit.test(sTitle, function (assert) {
 			var oError = {},
 				oPromise,
 				mHeaders = {},
-				mRequestHeaders = {},
+				oAjaxSettings = {
+					headers : "~requestHeaders~",
+					method : "HEAD"
+				},
 				oRequestor = _Requestor.create("/Service/", oModelInterface, mHeaders,
-					{"sap-client" : "123"}),
+					{"sap-client" : "123"}, /*sODataVersion*/undefined, bWithCredentials),
 				oTokenRequiredResponse = {};
+
+			if (bWithCredentials) {
+				oAjaxSettings.xhrFields = {withCredentials : true};
+			}
 
 			this.mock(Object).expects("assign").twice()
 				.withExactArgs({}, sinon.match.same(mHeaders), {"X-CSRF-Token" : "Fetch"})
-				.returns(mRequestHeaders);
+				.returns("~requestHeaders~");
 			this.mock(_Helper).expects("createError")
 				.exactly(bSuccess ? 0 : 2)
 				.withExactArgs(sinon.match.same(oTokenRequiredResponse),
@@ -1449,10 +1459,7 @@ sap.ui.define([
 				.returns(oError);
 
 			this.mock(jQuery).expects("ajax").twice()
-				.withExactArgs("/Service/?sap-client=123", sinon.match({
-					headers : sinon.match.same(mRequestHeaders),
-					method : "HEAD"
-				}))
+				.withExactArgs("/Service/?sap-client=123", oAjaxSettings)
 				.callsFake(function () {
 					var jqXHR;
 
@@ -1505,6 +1512,7 @@ sap.ui.define([
 			});
 		});
 	});
+});
 
 	//*********************************************************************************************
 	QUnit.test("refreshSecurityToken: keep fetching even if none is sent", function (assert) {
@@ -1858,7 +1866,7 @@ sap.ui.define([
 		oSendBatchExpectation = oRequestorMock.expects("sendBatch")
 			.withExactArgs(sinon.match(function (aRequests) {
 				return aRequests === aMergedRequests;
-			}), sGroupId)
+			}), sGroupId, "~bHasChanges~")
 			.resolves(aBatchResults);
 		oBatchResponseReceivedExpectation = oRequestorMock.expects("batchResponseReceived")
 			.withExactArgs(sGroupId, sinon.match(function (aRequests) {
@@ -1907,7 +1915,7 @@ sap.ui.define([
 		oRequestor.request("GET", "Products", this.createGroupLock());
 		aExpectedRequests.iChangeSet = 0;
 		this.mock(oRequestor).expects("sendBatch")
-			.withExactArgs(aExpectedRequests, "groupId").resolves([
+			.withExactArgs(aExpectedRequests, "groupId", false).resolves([
 				createResponse({})
 			]);
 
@@ -2041,7 +2049,7 @@ sap.ui.define([
 			undefined, undefined, undefined, fnMergePatch8));
 		aExpectedRequests.iChangeSet = 0;
 		this.mock(oRequestor).expects("sendBatch")
-			.withExactArgs(aExpectedRequests, "groupId").resolves([
+			.withExactArgs(aExpectedRequests, "groupId", true).resolves([
 				[
 					createResponse({Name : "bar2", Note : "hello, world"}),
 					createResponse({Name : "p1"}),
@@ -2148,7 +2156,7 @@ sap.ui.define([
 
 			aExpectedRequests.iChangeSet = 0;
 			this.mock(oRequestor).expects("sendBatch")
-				.withExactArgs(aExpectedRequests, "groupId")
+				.withExactArgs(aExpectedRequests, "groupId", false)
 				.resolves([createResponse(oFixture.mProductsResponse)]);
 
 			return Promise.all([
@@ -2522,63 +2530,72 @@ sap.ui.define([
 	//*********************************************************************************************
 [true, false].forEach(function (bSubmitModeIsAuto) {
 	[null, "[{code : 42}]"].forEach(function (sMessage) {
-		QUnit.test("sendBatch(...), message=" + sMessage, function (assert) {
-			var oBatchRequest = {
-					body : "abcd",
-					headers : {
-						"Content-Type" : "multipart/mixed; boundary=batch_id-0123456789012-345",
-						"MIME-Version" : "1.0"
-					}
-				},
-				aBatchRequests = [{}],
-				sEpilogue = bSubmitModeIsAuto ? "Group ID: groupId" : "Group ID (API): groupId",
-				aExpectedResponses = [],
-				sGroupId = "groupId",
-				oRequestor = _Requestor.create("/Service/", oModelInterface, undefined,
-					{"sap-client" : "123"}),
-				oResult = "abc",
-				sResponseContentType = "multipart/mixed; boundary=foo";
+		[false, true].forEach(function (bHasChanges) {
+	const sTitle = "sendBatch(...), message=" + sMessage + ", bHasChanges=" + bHasChanges;
+	QUnit.test(sTitle, function (assert) {
+		var oBatchRequest = {
+				body : "~body~",
+				headers : {
+					"Content-Type" : "multipart/mixed; boundary=batch_id-0123456789012-345",
+					"MIME-Version" : "1.0"
+				}
+			},
+			aBatchRequests = [{}],
+			sEpilogue = bSubmitModeIsAuto ? "Group ID: groupId" : "Group ID (API): groupId",
+			mExpectedBatchHeaders = {
+				"Content-Type" : oBatchRequest.headers["Content-Type"],
+				"MIME-Version" : oBatchRequest.headers["MIME-Version"],
+				Accept : "multipart/mixed"
+			},
+			aExpectedResponses = [],
+			sGroupId = "groupId",
+			oRequestor = _Requestor.create("/Service/", oModelInterface, undefined,
+				{"sap-client" : "123"}),
+			oResult = "abc",
+			sResponseContentType = "multipart/mixed; boundary=foo";
 
-			this.mock(oRequestor).expects("getGroupSubmitMode")
-				.withExactArgs(sGroupId)
-				.returns(bSubmitModeIsAuto ? "Auto" : "API");
-			this.mock(oModelInterface).expects("isIgnoreETag").withExactArgs()
-				.returns("~bIgnoreETag~");
-			this.mock(_Batch).expects("serializeBatchRequest")
-				.withExactArgs(sinon.match.same(aBatchRequests), sEpilogue, "~bIgnoreETag~")
-				.returns(oBatchRequest);
+		if (!bHasChanges) {
+			mExpectedBatchHeaders["sap-cancel-on-close"] = "true";
+		}
 
-			this.mock(oRequestor).expects("processOptimisticBatch")
-				.withExactArgs(sinon.match.same(aBatchRequests), sGroupId);
-			this.mock(oRequestor).expects("sendRequest")
-				.withExactArgs("POST", "$batch?sap-client=123", sinon.match({
-						"Content-Type" : oBatchRequest.headers["Content-Type"],
-						"MIME-Version" : oBatchRequest.headers["MIME-Version"]
-					}), sinon.match.same(oBatchRequest.body))
-				.resolves({contentType : sResponseContentType, body : oResult,
-					messages : sMessage});
+		this.mock(oRequestor).expects("getGroupSubmitMode")
+			.withExactArgs(sGroupId)
+			.returns(bSubmitModeIsAuto ? "Auto" : "API");
+		this.mock(oModelInterface).expects("isIgnoreETag").withExactArgs()
+			.returns("~bIgnoreETag~");
+		this.mock(_Batch).expects("serializeBatchRequest")
+			.withExactArgs(sinon.match.same(aBatchRequests), sEpilogue, "~bIgnoreETag~")
+			.returns(oBatchRequest);
 
-			this.mock(_Batch).expects("deserializeBatchResponse").exactly(sMessage === null ? 1 : 0)
-				.withExactArgs(sResponseContentType, oResult)
-				.returns(aExpectedResponses);
+		this.mock(oRequestor).expects("processOptimisticBatch")
+			.withExactArgs(sinon.match.same(aBatchRequests), sGroupId);
+		this.mock(oRequestor).expects("sendRequest")
+			.withExactArgs("POST", "$batch?sap-client=123", mExpectedBatchHeaders, "~body~")
+			.resolves({contentType : sResponseContentType, body : oResult,
+				messages : sMessage});
 
-			return oRequestor.sendBatch(aBatchRequests, sGroupId)
-				.then(function (oPayload) {
-					assert.ok(sMessage === null, "unexpected success");
-					assert.strictEqual(oPayload, aExpectedResponses);
-				}, function (oError) {
-					assert.ok(sMessage !== null, "unexpected error");
-					assert.ok(oError instanceof Error);
-					assert.strictEqual(oError.message,
-						"Unexpected 'sap-messages' response header for batch request");
-				});
+		this.mock(_Batch).expects("deserializeBatchResponse").exactly(sMessage === null ? 1 : 0)
+			.withExactArgs(sResponseContentType, oResult)
+			.returns(aExpectedResponses);
+
+		return oRequestor.sendBatch(aBatchRequests, sGroupId, bHasChanges)
+			.then(function (oPayload) {
+				assert.ok(sMessage === null, "unexpected success");
+				assert.strictEqual(oPayload, aExpectedResponses);
+			}, function (oError) {
+				assert.ok(sMessage !== null, "unexpected error");
+				assert.ok(oError instanceof Error);
+				assert.strictEqual(oError.message,
+					"Unexpected 'sap-messages' response header for batch request");
+			});
+	});
 		});
 	});
 });
 
 	//*****************************************************************************************
 	QUnit.test("sendBatch(...), consume optimisticBatch result", function (assert) {
-		var aBatchRequests = {},
+		var aBatchRequests = [],
 			sGroupId = "foo",
 			oOptimisticBatchResult = {},
 			oRequestor = _Requestor.create("/Service/", oModelInterface);
@@ -2996,7 +3013,7 @@ sap.ui.define([
 
 		aExpectedRequests.iChangeSet = 1;
 		this.mock(oRequestor).expects("sendBatch")
-			.withExactArgs(aExpectedRequests, "groupId")
+			.withExactArgs(aExpectedRequests, "groupId", true)
 			.resolves([createResponse(), createResponse(), createResponse()]);
 
 		oRequestor.processBatch("groupId");
@@ -3209,7 +3226,7 @@ sap.ui.define([
 
 		aExpectedRequests.iChangeSet = 0;
 		this.mock(oRequestor).expects("sendBatch")
-			.withExactArgs(aExpectedRequests, "groupId")
+			.withExactArgs(aExpectedRequests, "groupId", true)
 			.resolves([createResponse({}), createResponse({})]);
 
 		// code under test
@@ -3279,7 +3296,7 @@ sap.ui.define([
 
 		aExpectedRequests.iChangeSet = 0;
 		this.mock(oRequestor).expects("sendBatch")
-			.withExactArgs(aExpectedRequests, "groupId").resolves([createResponse()]);
+			.withExactArgs(aExpectedRequests, "groupId", true).resolves([createResponse()]);
 
 		// code under test
 		oRequestor.processBatch("groupId");
@@ -3358,7 +3375,7 @@ sap.ui.define([
 		this.mock(oRequestor).expects("isChangeSetOptional").withExactArgs().returns(true);
 		aExpectedRequests.iChangeSet = 0;
 		this.mock(oRequestor).expects("sendBatch")
-			.withExactArgs(aExpectedRequests, "groupId").resolves([createResponse()]);
+			.withExactArgs(aExpectedRequests, "groupId", true).resolves([createResponse()]);
 
 		// code under test
 		return oRequestor.processBatch("groupId");
@@ -4426,28 +4443,35 @@ sap.ui.define([
 	});
 
 	//*****************************************************************************************
-	QUnit.test("setSessionContext: successful ping", function (assert) {
-		var oExpectation,
-			oRequestor = _Requestor.create(sServiceUrl, oModelInterface, {}, {
-				"sap-client" : "120"
-			});
+[false, true].forEach(function (bWithCredentials) {
+	const sTitle = "setSessionContext: successful ping, bWithCredentials: " + bWithCredentials;
+	QUnit.test(sTitle, function (assert) {
+		var oAjaxSettings = {
+				headers : {
+					"SAP-ContextId" : "context"
+				},
+				method : "HEAD"
+			},
+			oExpectation,
+			oRequestor = _Requestor.create(sServiceUrl, oModelInterface, {}, {"sap-client" : "120"},
+				/*sODataVersion*/undefined, bWithCredentials);
 
+		if (bWithCredentials) {
+			oAjaxSettings.xhrFields = {withCredentials : true};
+		}
 		oExpectation = this.mock(window).expects("setInterval")
 			.withExactArgs(sinon.match.func, 115000);
 
 		oRequestor.setSessionContext("context", "120");
 
-		this.mock(jQuery).expects("ajax").withExactArgs(sServiceUrl + "?sap-client=120", {
-				headers : sinon.match({
-					"SAP-ContextId" : "context"
-				}),
-				method : "HEAD"
-			})
+		this.mock(jQuery).expects("ajax")
+			.withExactArgs(sServiceUrl + "?sap-client=120", oAjaxSettings)
 			.returns(createMock(assert, undefined, "OK", {}));
 
 		// code under test - call setInterval function
 		oExpectation.callArg(0);
 	});
+});
 
 	//*****************************************************************************************
 	[false, true].forEach(function (bErrorId) {
@@ -4497,7 +4521,7 @@ sap.ui.define([
 
 	//*****************************************************************************************
 	// Tests the case that the setInterval timer is active for more than 30 minutes without having
-	// been restarted by an application-triggered request. During this time the setInterval function
+	// been restarted by an application-invoked request. During this time the setInterval function
 	// may have been called several times sending pings. Here we test the first call after the 30
 	// minutes which is expected to terminate the session.
 	QUnit.test("setSessionContext: session termination", function () {

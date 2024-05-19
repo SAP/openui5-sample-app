@@ -89,7 +89,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @since 1.34.0
 	 *
 	 * @public
@@ -288,6 +288,11 @@ sap.ui.define([
 				 */
 				actionButtons: {type: "sap.m.Button", multiple: true, bindable: "bindable"},
 				/**
+				 *  A badge that is attached to the GenericTile.
+				 * @experimental since 1.124
+				 */
+				badge: {type: "sap.m.TileInfo",multiple:false,bindable: "bindable"},
+				/**
 				 * The hidden aggregation for the title.
 				 */
 				_titleText: {type: "sap.m.Text", multiple: false, visibility: "hidden"},
@@ -407,6 +412,9 @@ sap.ui.define([
 			size: "1.375rem"
 		});
 
+		this._oBadgeIcon = new Icon(this.getId() + '-badgeIcon');
+		this.addDependent(this._oBadgeIcon);
+
 		this._oErrorIcon.addStyleClass("sapMGTFtrFldIcnMrk");
 		 //If parameter is not available synchronously it will be available through callback
 
@@ -424,8 +432,6 @@ sap.ui.define([
 		this._oBusy.setBusyIndicatorDelay(0);
 
 		this._bTilePress = true;
-
-		this._sBGColor = DEFAULT_BG_COLOR;
 		this._bThemeApplied = false;
 		Core.ready(this._handleCoreInitialized.bind(this));
 
@@ -433,6 +439,10 @@ sap.ui.define([
 		this._oNavigateAction = new Button(this.getId() + "-navigateAction");
 		this._oNavigateAction._bExcludeFromTabChain = true;
 		this.addDependent(this._oNavigateAction);
+		jQuery(window).on("resize", this._setupResizeClassHandler.bind(this));
+		this._oBadgeColors = {
+			backgroundColor: DEFAULT_BG_COLOR
+		};
 	};
 
 	GenericTile.prototype.setWrappingType = function (sWrappingType) {
@@ -613,10 +623,12 @@ sap.ui.define([
 		if (this._oNavigateAction) {
 			this._oNavigateAction.destroy();
 		}
+		jQuery(window).off("resize", this._setupResizeClassHandler);
 	};
 
 	GenericTile.prototype.onBeforeRendering = function () {
 		var bSubheader = !!this.getSubheader();
+		var oBadge = this.getBadge();
 		if (this.getMode() === GenericTileMode.HeaderMode || this.getMode() === GenericTileMode.IconMode) {
 			this._applyHeaderMode(bSubheader);
 		} else {
@@ -669,9 +681,12 @@ sap.ui.define([
 		}
 		//Validates the color that is getting applied on icon mode tiles so that it changes by theme
 		if (this._isIconMode()) {
-			this._validateBackgroundColor();
+			this._applyColors("backgroundColor",this.getBackgroundColor());
 		}
 		this._isLinkTileContentPresent = this.getLinkTileContents().length > 0;
+		if (oBadge) {
+			this._oBadgeIcon.setSrc(oBadge.getSrc());
+		}
 	};
 
 	GenericTile.prototype.onAfterRendering = function () {
@@ -825,27 +840,32 @@ sap.ui.define([
 			i--;
 		}
 	};
+
 	/**
-	 * If the given background color is not from the parameters then the default color is applied
+	 * It saves the color inside the _oBadgeColors object with the respective key
+	 *
+	 * @param {string} sKey The key to which the color is mapped
+	 * @param {string} sColor The color that is being fetched, it can be any css color or parameter color
 	 * @private
 	 */
-	GenericTile.prototype._validateBackgroundColor = function() {
-		var sBGColor = this.getBackgroundColor();
-		if (CSSColor.isValid(sBGColor)) {
-			this._sBGColor = sBGColor;
+	GenericTile.prototype._applyColors = function(sKey,sColor) {
+		if (CSSColor.isValid(sColor)) {
+			this._oBadgeColors[sKey] = sColor;
 		} else {
 			//Fetching the color from the parameters asynchronously if its not loaded initially
-			var sColor = Parameters.get({
-				name:sBGColor,
+			var sFetchedColor = Parameters.get({
+				name: sColor,
 				callback: function(sParamColor) {
-					this._sBGColor = sParamColor ? sParamColor : DEFAULT_BG_COLOR;
+					this._oBadgeColors[sKey] = sParamColor;
+					this.invalidate();
 				}.bind(this)
 			});
-			if (sColor) {
-				this._sBGColor = sColor;
+			if (sFetchedColor) {
+				this._oBadgeColors[sKey] = sFetchedColor;
 			}
 		}
 	};
+
 	GenericTile.prototype._setMaxLines = function() {
 		var sFrameType = this.getFrameType(),
 			iLines = sFrameType === FrameType.OneByOne || sFrameType === FrameType.TwoByHalf ? 1 : 2;
@@ -948,7 +968,6 @@ sap.ui.define([
 	 * @private
 	 */
 	GenericTile.prototype._setupResizeClassHandler = function () {
-		var fnCheckMedia = function () {
 			var oParent = this.getParent();
 			if (oParent && oParent.isA("sap.f.GridContainer")) {
 				this._applyNewDim();
@@ -965,9 +984,6 @@ sap.ui.define([
 			if (this.__isLinkTileContentPresent) {
 				this._applyExtraHeight();
 			}
-		}.bind(this);
-		jQuery(window).on("resize", fnCheckMedia);
-		fnCheckMedia();
 	};
 
 	/**
@@ -1518,7 +1534,8 @@ sap.ui.define([
 				this._oTitle.setMaxLines(2);
 			}
 		} else if (frameType === FrameType.TwoByOne && (this.getLinkTileContents().length > 0 || this.getMode() === GenericTileMode.ActionMode)) {
-			if (bSubheader) {
+			var bIsPriorityPresent = this.isA("sap.m.ActionTile") && this.getProperty("priority") && this.getProperty("priorityText");
+			if (bSubheader && !bIsPriorityPresent) {
 				this._oTitle.setMaxLines(1);
 			} else {
 				this._oTitle.setMaxLines(2);
@@ -1566,7 +1583,10 @@ sap.ui.define([
 			bIsFirst = false;
 		}
 
-		if (this.getSubheader()) {
+		if (this.isA("sap.m.ActionTile") && this.getProperty("priority") && this.getProperty("priorityText")) {
+			sText += (bIsFirst ? "" : "\n") + this.getProperty("priorityText");
+			bIsFirst = false;
+		} else if (this.getSubheader()) {
 			sText += (bIsFirst ? "" : "\n") + this.getSubheader();
 			bIsFirst = false;
 		}
@@ -1615,7 +1635,8 @@ sap.ui.define([
 	 * @returns {string} The ARIA label text
 	 */
 	GenericTile.prototype._getAriaAndTooltipText = function () {
-		var sAriaText = this._getHeaderAriaAndTooltipText() + "\n" + this._getContentAriaAndTooltipText();
+		var sBadgeText = this.getBadge()?.getText();
+		var sAriaText = ((sBadgeText) ? sBadgeText + " " + this._oRb.getText("GENERICTILE_BADGE_APP") + "\n" : "") + this._getHeaderAriaAndTooltipText() + "\n" + this._getContentAriaAndTooltipText();
 		switch (this.getState()) {
 			case LoadState.Disabled:
 				return "";
@@ -2069,7 +2090,7 @@ GenericTile.prototype._isNavigateActionEnabled = function() {
 	 * @returns {boolean} - true if the GenericTile is in ActionMode
 	 */
 	GenericTile.prototype._isActionMode = function () {
-		return this.getFrameType() === FrameType.TwoByOne && this.getMode() === GenericTileMode.ActionMode && this.getActionButtons().length;
+		return this.getFrameType() === FrameType.TwoByOne && this.getMode() === GenericTileMode.ActionMode;
 	};
 
 	/**
@@ -2144,7 +2165,7 @@ GenericTile.prototype._isNavigateActionEnabled = function() {
 		var bIsActionButtonPressed = false,
 		bIsNavigateActionPressed = false;
 
-		if (oTile._isActionMode()) {
+		if (oTile._isActionMode() && oTile.getActionButtons().length > 0) {
             var oActionsContainerNode = document.querySelector('[id="'  + oTile.getId() + "-actionButtons" + '"]');
             bIsActionButtonPressed = oActionsContainerNode && oActionsContainerNode !== event.target &&  oActionsContainerNode.contains(event.target);
         }

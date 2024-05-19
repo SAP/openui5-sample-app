@@ -438,6 +438,7 @@ sap.ui.define([
 		 * @param {boolean} [bJSON] Whether the "json" file type is set
 		 * @returns {string} The determined file type. It can be "js", "json", "none", or "both".
 		 * @private
+		 * @ui5-transform-hint replace-param bJSON false
 		 */
 		_getFileType: function (bJSON) {
 			var sFileType;
@@ -481,10 +482,10 @@ sap.ui.define([
 		 */
 		preload: function(mOptions) {
 			if (mOptions && (mOptions.hasOwnProperty("async") || mOptions.hasOwnProperty("sync"))) {
-				future.errorThrows("The 'preload' function of class sap/ui/core/Lib only support preloading a library asynchronously. The given 'async' or 'sync' setting is ignored.");
+				future.errorThrows("The 'preload' function of class sap/ui/core/Lib only supports preloading a library asynchronously.", { suffix: "The given 'async' or 'sync' setting is ignored."});
 			}
 			if (mOptions && mOptions.hasOwnProperty("json")) {
-				future.errorThrows("The 'preload' function of class sap/ui/core/Lib only support preloading in JS Format. The given 'json' setting is ignored.");
+				future.errorThrows("The 'preload' function of class sap/ui/core/Lib only supports preloading in JS Format.", { suffix: "The given 'json' setting is ignored."});
 			}
 
 			return this._preload(["url", "lazy"].reduce(function(acc, sProperty) {
@@ -495,7 +496,8 @@ sap.ui.define([
 			}, {}));
 		},
 
-		/* Internal function for preloading a library which still supports the legacy parameters:
+		/**
+		 * Internal function for preloading a library which still supports the legacy parameters:
 		 *
 		 * <ul>
 		 * <li><code>mOptions.sync</code>: load the preload file in sync mode</li>
@@ -506,11 +508,13 @@ sap.ui.define([
 		 * @param [mOptions.url] URL to load the library from
 		 * @param [mOptions.lazy] Whether the library-preload-lazy bundle should be loaded instead of the
 		 *  library-preload bundle
-		 * @param @deprecated [mOptions.sync] Whether to load the preload bundle in sync mode
-		 * @param @deprecated [mOptions.json] Whether to load the preload in JSON format
+		 * @param [mOptions.sync] @deprecated Whether to load the preload bundle in sync mode
+		 * @param [mOptions.json] @deprecated Whether to load the preload in JSON format
 		 * @returns {Promise<Lib>|Lib} A promise that resolves with the library instance in async mode and the library
 		 *  instance itself in sync mode
 		 * @private
+		 * @ui5-transform-hint replace-param mOptions.sync false
+		 * @ui5-transform-hint replace-param mOptions.json false
 		 */
 		_preload: function(mOptions) {
 			mOptions = mOptions || {};
@@ -675,6 +679,7 @@ sap.ui.define([
 		 * @returns {Promise|object} A promise that resolves with the dependency information of the library in async
 		 *  mode or the dependency information directly in sync mode
 		 * @private
+		 * @ui5-transform-hint replace-param mOptions.sync false
 		 */
 		_preloadJSFormat: function(mOptions) {
 			mOptions = mOptions || {};
@@ -729,6 +734,7 @@ sap.ui.define([
 		 * @returns {Promise|object} A promise that resolves with the dependency information of the library in async
 		 *  mode or the dependency information directly in sync mode
 		 * @private
+		 * @deprecated
 		 */
 		_preloadJSONFormat: function(mOptions) {
 			mOptions = mOptions || {};
@@ -1429,6 +1435,17 @@ sap.ui.define([
 		// register interface types
 		DataType.registerInterfaceTypes(oLib.interfaces);
 
+		function createHintForType(sTypeName) {
+			const typeObj = ObjectPath.get(sTypeName);
+			if ( typeObj instanceof DataType ) {
+				return ` to ensure that the type is defined. You can then access it by calling 'DataType.getType("${sTypeName}")'.`;
+			} else if ( isPlainObject(typeObj) ) {
+				return `. You can then reference this type via the library's module export.`;
+			} else {
+				return `.`; // no further hint
+			}
+		}
+
 		/**
 		 * Declare a module for each (non-builtin) simple type.
 		 * Only needed for backward compatibility: some code 'requires' such types although they never have been modules on their own.
@@ -1436,12 +1453,17 @@ sap.ui.define([
 		 */
 		for (i = 0; i < oLib.types.length; i++) {
 			if ( !/^(any|boolean|float|int|string|object|void)$/.test(oLib.types[i]) ) {
-				// register a wrapper module that logs a deprecation warning
+				// register a pseudo module that logs a deprecation warning
 				const sTypeName = oLib.types[i];
-				const sLibraryJsPath = oLib.name.replace(/\./g, "/") + "/library";
-				sap.ui.loader._.declareModule(sTypeName.replace(/\./g, "/") + ".js",
-					`Deprecation: Importing the type '${sTypeName}' as a pseudo module is deprecated. Please import the type from the module '${sLibraryJsPath}'. You can then reference this type via the library's module export. ` +
-					`For more information, see documentation under 'Best Practices for Loading Modules'.`);
+				sap.ui.loader._.declareModule(
+					sTypeName.replace(/\./g, "/") + ".js",
+					() => (
+						`Importing the pseudo module '${sTypeName.replace(/\./g, "/")}' is deprecated.`
+						+ ` To access the type '${sTypeName}', please import '${oLib.name.replace(/\./g, "/")}/library'`
+						+ createHintForType(sTypeName)
+						+ ` For more information, see documentation under 'Best Practices for Loading Modules'.`
+					)
+				);
 
 				// ensure parent namespace of the type
 				var sNamespacePrefix = sTypeName.substring(0, sTypeName.lastIndexOf("."));
@@ -1756,7 +1778,10 @@ sap.ui.define([
 
 		// if library has not been loaded yet, create a library
 		if (!oLibrary) {
-			// ensure namespace
+			/**
+             * Ensure namespace.
+             * @deprecated since 1.120
+             */
 			ObjectPath.create(sLibraryName);
 			oLibrary = Library._get(sLibraryName, true /* bCreate */);
 		}

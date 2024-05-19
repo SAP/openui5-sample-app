@@ -25,7 +25,7 @@ sap.ui.define([
 	 *
 	 * @public
 	 * @typedef {object} sap.m.p13n.FilterStateItem
-	 * @property {string} operator The operator of the condition
+	 * @property {sap.ui.model.FilterOperator} operator The operator of the condition
 	 * @property {string[]} values The values of the condition
 	 * @property {boolean} [filtered] Defines whether the item is filtered (if a filter state is provided, it's filtered automatically)
 	 *
@@ -49,20 +49,20 @@ sap.ui.define([
 	 * @extends sap.m.p13n.SelectionController
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 * @since 1.121
 	 * @public
 	 * @alias sap.m.p13n.FilterController
 	 */
 	const FilterController = BaseController.extend("sap.m.p13n.FilterController", {
-		constructor: function (mSettings) {
+		constructor: function(mSettings) {
 			BaseController.apply(this, arguments);
 			this._itemFactory = mSettings?.itemFactory;
 			this._bResetEnabled = true;
 		}
 	});
 
-	FilterController.prototype.getCurrentState = function () {
+	FilterController.prototype.getCurrentState = function() {
 		const oXConfig = xConfigAPI.readConfig(this.getAdaptationControl()) || {};
 		const aConditions = oXConfig.hasOwnProperty("properties") ? oXConfig.properties.filterConditions : [];
 
@@ -85,7 +85,7 @@ sap.ui.define([
 		return "active";
 	};
 
-	FilterController.prototype.initAdaptationUI = function (oPropertyHelper, oWrapper) {
+	FilterController.prototype.initAdaptationUI = function(oPropertyHelper, oWrapper) {
 
 		return new Promise((resolve, reject) => {
 			sap.ui.require(["sap/m/p13n/FilterPanel", "sap/m/Input"], (FilterPanel, Input) => {
@@ -133,7 +133,7 @@ sap.ui.define([
 		return aConditions.indexOf(oExistingCondition);
 	};
 
-	FilterController.prototype._createConditionChange = function (sChangeType, oControl, sFieldPath, oCondition) {
+	FilterController.prototype._createConditionChange = function(sChangeType, oControl, sFieldPath, oCondition) {
 		delete oCondition.filtered; //Consider moving this to the delta calculation instead
 
 		const oConditionChange = {
@@ -165,7 +165,7 @@ sap.ui.define([
 	*
 	* @returns {array} Array containing the delta based created changes
 	*/
-	FilterController.prototype._diffConditionPath = function(sFieldPath, aConditions, aOrigShadowConditions, oControl, bAbsoluteAppliance){
+	FilterController.prototype._diffConditionPath = function(sFieldPath, aConditions, aOrigShadowConditions, oControl, bAbsoluteAppliance) {
 		let oChange;
 		const aChanges = [];
 		const aOrigConditions = merge([], aConditions);
@@ -266,9 +266,9 @@ sap.ui.define([
 		return aConditionChanges;
 	};
 
-	FilterController.prototype.getDelta = function (mPropertyBag) {
-		const {existingState} = mPropertyBag;
-		let {changedState} = mPropertyBag;
+	FilterController.prototype.getDelta = function(mPropertyBag) {
+		const { existingState } = mPropertyBag;
+		let { changedState } = mPropertyBag;
 
 		if (deepEqual(existingState, changedState)) {
 			return [];
@@ -306,7 +306,7 @@ sap.ui.define([
 		return oChangeContent;
 	};
 
-	FilterController.prototype.mixInfoAndState = function (oPropertyHelper) {
+	FilterController.prototype.mixInfoAndState = function(oPropertyHelper) {
 
 		const mExistingFilters = this.getCurrentState() || {};
 

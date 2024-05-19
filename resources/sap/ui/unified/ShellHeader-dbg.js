@@ -18,6 +18,12 @@ sap.ui.define([
 	"use strict";
 
 
+	/**
+	 * Internal helper control for the <code>sap.ui.unified.Shell</code>.
+	 *
+	 * @deprecated As of version 1.44.0, the concept has been discarded.
+	 * @private
+	 */
 	var ShellHeader = Control.extend("sap.ui.unified.ShellHeader", {
 
 		metadata: {

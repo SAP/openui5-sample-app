@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.122.1
+	 * @version 1.124.0
 	 *
 	 * @constructor
 	 * @public
@@ -744,6 +744,7 @@ sap.ui.define([
 		var aItemDomRefs = oNavigationRoot.querySelectorAll(".sapMListTblRow,.sapMGHLI,.sapMTblCellFocusable,.sapMTblItemNav");
 		oItemNavigation.setItemDomRefs(Array.from(aItemDomRefs));
 
+		var iItemNavigationColumns = oItemNavigation.iColumns;
 		var iColumns = this._colHeaderAriaOwns.length + 1;
 		var iPageSize = Math.min(this.getVisibleItems().length, this.getGrowingThreshold());
 		oItemNavigation.setTableMode(true, false);
@@ -763,6 +764,8 @@ sap.ui.define([
 			} else {
 				oItemNavigation.setFocusedIndex(this._headerHidden ? 0 : iColumns);
 			}
+		} else if (oItemNavigation.getFocusedIndex() >= iItemNavigationColumns) {
+			oItemNavigation.setFocusedIndex(oItemNavigation.getFocusedIndex() + iColumns - iItemNavigationColumns);
 		}
 	};
 
@@ -1157,7 +1160,7 @@ sap.ui.define([
 	Table.prototype.onpaste = function(oEvent) {
 
 		// Check whether the paste event is already handled by input enabled control and avoid pasting into this input-enabled control when focus is in there.
-		if (oEvent.isMarked() || (/^(input|textarea)$/i.test(oEvent.target.tagName))) {
+		if (oEvent.isMarked() || (/^(input|textarea)$/i.test(document.activeElement.tagName)) /*see DINC0096526*/) {
 			return;
 		}
 
@@ -1403,8 +1406,8 @@ sap.ui.define([
 		var oResult = ListBase.prototype.validateAggregation.apply(this, arguments);
 
 		/*
-         * @deprecated as of version 1.120
-        */
+		 * @deprecated as of version 1.120
+		*/
 		if (sAggregationName === "items" && !BaseObject.isA(oObject, "sap.m.ITableItem")) {
 			Log.error(oObject + " is not a valid items aggregation of " + this + ". Items aggregation in ResponsiveTable control only supports ITableItem.");
 			return oResult;
