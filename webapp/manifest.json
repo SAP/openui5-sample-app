@@ -10,13 +10,13 @@
 			"libs": {
 				"sap.ui.core": {},
 				"sap.m": {},
-				"sap.f": {}
+				"sap.f": {},
+				"sap.ui.commons": {}
 			}
 		},
 		"rootView": {
 			"viewName": "sap.ui.demo.todo.view.App",
 			"type": "XML",
-			"async": true,
 			"id": "app"
 		},
 		"models": {

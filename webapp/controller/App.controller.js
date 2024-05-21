@@ -3,8 +3,10 @@ sap.ui.define([
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
-	"sap/ui/model/json/JSONModel"
-], (Device, Controller, Filter, FilterOperator, JSONModel) => {
+	"sap/ui/model/json/JSONModel",
+	"sap/ui/core/BarColor",
+	"sap/ui/demo/todo/util/Helper",
+], (Device, Controller, Filter, FilterOperator, JSONModel, BarColor, Helper) => {
 	"use strict";
 
 	return Controller.extend("sap.ui.demo.todo.controller.App", {
@@ -12,11 +14,30 @@ sap.ui.define([
 		onInit() {
 			this.aSearchFilters = [];
 			this.aTabFilters = [];
+			this.BarColor = BarColor;
 
 			this.getView().setModel(new JSONModel({
 				isMobile: Device.browser.mobile,
 				filterText: undefined
 			}), "view");
+		},
+		
+		onAfterRendering() {
+			const avatarDOM = jQuery("#container-todo---app--avatar-profile");
+			const avatarCtr = avatarDOM.control(0);
+			avatarCtr.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
+			
+			sap.ui.require(["sap/m/Button"], (Button) => {
+				const clearBtn = new Button({
+					id: "clearCompleted",
+					enabled: "{/itemsRemovable}",
+					icon: "sap-icon://delete",
+					text: "{i18n>CLEAR_COMPLETED}",
+					tap: this.clearCompleted.bind(this),
+				});
+				
+				this.byId("toolbar").addContent(clearBtn);
+			});
 		},
 
 		/**
@@ -112,7 +133,8 @@ sap.ui.define([
 		},
 
 		_applyListFilters() {
-			const oList = this.byId("todoList");
+			const oList = sap.ui.getCore().byId("container-todo---app--todoList");
+			// const oList = this.byId("todoList");
 			const oBinding = oList.getBinding("items");
 
 			oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");
