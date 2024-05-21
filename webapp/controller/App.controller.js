@@ -1,11 +1,11 @@
 sap.ui.define([
-	"sap/ui/Device",
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
-	"sap/ui/model/json/JSONModel",
-	"sap/base/strings/formatMessage"
-], (Device, Controller, Filter, FilterOperator, JSONModel, formatMessage) => {
+	"sap/base/strings/formatMessage",
+	"sap/ui/core/BarColor",
+	"sap/ui/demo/todo/util/Helper",
+], (Controller, Filter, FilterOperator, formatMessage, BarColor, Helper) => {
 	"use strict";
 
 	return Controller.extend("sap.ui.demo.todo.controller.App", {
@@ -13,10 +13,29 @@ sap.ui.define([
 		onInit() {
 			this.aSearchFilters = [];
 			this.aTabFilters = [];
+			this.BarColor = BarColor;
 
-			this.getView().setModel(new JSONModel({
-				isMobile: Device.browser.mobile
+			this.getView().setModel(new sap.ui.model.json.JSONModel({
+				isMobile: sap.ui.Device.browser.mobile
 			}), "view");
+		},
+
+		onAfterRendering() {
+			const avatarDOM = jQuery("#container-todo---app--avatar-profile");
+			const avatarCtr = avatarDOM.control(0);
+			avatarCtr.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
+
+			sap.ui.require(["sap/m/Button"], (Button) => {
+				const clearBtn = new Button({
+					id: "clearCompleted",
+					enabled: "{/itemsRemovable}",
+					icon: "sap-icon://delete",
+					text: "{i18n>CLEAR_COMPLETED}",
+					tap: this.onClearCompleted.bind(this),
+				});
+
+				this.byId("toolbar").addContent(clearBtn);
+			});
 		},
 
 		/**
@@ -132,7 +151,8 @@ sap.ui.define([
 		},
 
 		_applyListFilters() {
-			const oList = this.byId("todoList");
+			const oList = sap.ui.getCore().byId("container-todo---app--todoList");
+			// const oList = this.byId("todoList");
 			const oBinding = oList.getBinding("items");
 
 			oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");

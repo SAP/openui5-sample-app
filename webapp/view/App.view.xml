@@ -2,7 +2,11 @@
 		<App>
 			<Page>
 				<customHeader>
-					<f:ShellBar core:require="{ Helper: 'sap/ui/demo/todo/util/Helper' }" title="{i18n>TITLE}" homeIcon="{:= Helper.resolvePath('./img/logo_ui5.png') }" />
+					<f:ShellBar core:require="{ Helper: 'sap/ui/demo/todo/util/Helper' }" title="{i18n>TITLE}">
+						<f:profile>
+							<f:Avatar id="avatar-profile" />
+						</f:profile>
+					</f:ShellBar>
 				</customHeader>
 				<content>
 					<f:DynamicPage>
@@ -31,7 +35,7 @@
 												<SegmentedButtonItem text="{i18n>LABEL_COMPLETED}" key="completed"/>
 											</items>
 										</SegmentedButton>
-										<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".onClearCompleted"/>
+										<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" tap=".onClearCompleted"/>
 									</OverflowToolbar>
 								</headerToolbar>
 								<infoToolbar>
