@@ -23,6 +23,7 @@
 		"@ui5/linter": "^0.3.1",
 		"@ui5/middleware-code-coverage": "^2.0.0",
 		"eslint": "^9.3.0",
+		"globals": "^15.3.0",
 		"karma": "^6.4.4",
 		"karma-chrome-launcher": "^3.2.0",
 		"karma-coverage": "^2.2.1",

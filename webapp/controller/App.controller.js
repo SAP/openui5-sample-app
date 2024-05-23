@@ -95,7 +95,6 @@ sap.ui.define([
 			// add filter for search
 			this.sFilterKey = oEvent.getParameter("item").getKey();
 
-			// eslint-disable-line default-case
 			switch (this.sFilterKey) {
 				case "active":
 					this.aTabFilters.push(new Filter("completed", FilterOperator.EQ, false));
