@@ -19,6 +19,20 @@ sap.ui.define([
 			}), "view");
 		},
 
+		onAfterRendering() {
+            sap.ui.require(["sap/m/Button"], (Button) => {
+                const clearBtn = new Button({
+                    id: "clearCompleted",
+                    enabled: "{/itemsRemovable}",
+                    icon: "sap-icon://delete",
+                    text: "{i18n>CLEAR_COMPLETED}",
+                    tap: this.clearCompleted.bind(this),
+                });
+
+                this.byId("toolbar").addContent(clearBtn);
+            });
+        },
+
 		/**
 		 * Adds a new todo item to the bottom of the list.
 		 */
