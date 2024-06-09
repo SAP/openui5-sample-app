@@ -57,7 +57,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.124.0
+		 * @version 1.124.1
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -3575,7 +3575,8 @@ sap.ui.define([
 			).then(function () {
 				// Update after refresh event, otherwise $count is fetched before the request.
 				// Avoid update in case bKeepCacheOnError needs to roll back.
-				return that.oHeaderContext.checkUpdateInternal(); // this is NOT done by refreshAll!
+				// Note: The binding may already have been destroyed
+				return that.oHeaderContext?.checkUpdateInternal(); // NOT done by refreshAll!
 			});
 		});
 	};

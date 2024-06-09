@@ -21,7 +21,7 @@ sap.ui.define([
 	 * @public
 	 * @since 1.15.0
 	 * @deprecated since 1.56, use an {@link sap.ui.core.mvc.XMLView} or a {@link topic:e6bb33d076dc4f23be50c082c271b9f0 Typed View} instead
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 * @alias sap.ui.core.plugin.TemplatingSupport
 	 */
 	var TemplatingSupport = function() {

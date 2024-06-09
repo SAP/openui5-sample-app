@@ -49,7 +49,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 *
 	 * @constructor
 	 * @public

@@ -57,7 +57,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Component
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 * @alias sap.ui.core.UIComponent
 	 * @since 1.9.2
 	 */
@@ -945,7 +945,7 @@ sap.ui.define([
 				mRoutingClasses["routerClass"] = vRouterClass;
 			} else if (oRouting.targets) {
 				// Same as with "routes", see comment above.
-				let vTargetClass = oRouting.config.targetsClass || "sap.ui.core.routing.Targets";
+				let vTargetClass = oRouting.config?.targetsClass || "sap.ui.core.routing.Targets";
 				if (typeof vTargetClass === "string") {
 					vTargetClass = vTargetClass.replace(/\./g, "/");
 				}

@@ -18,7 +18,7 @@ sap.ui.define(['sap/ui/core/LayoutData', './library'],
 	 * @class
 	 * Holds layout data for the BlockLayoutCells contents.
 	 * @extends sap.ui.core.LayoutData
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 * @constructor
 	 * @public
 	 * @since 1.50.0

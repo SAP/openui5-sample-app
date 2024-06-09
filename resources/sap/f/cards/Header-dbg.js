@@ -48,7 +48,7 @@ sap.ui.define([
 	 * @implements sap.f.cards.IHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 *
 	 * @constructor
 	 * @public
@@ -301,6 +301,10 @@ sap.ui.define([
 
 		if (this.getStatusText()) {
 			aIds.push(this.getId() + "-status");
+		}
+
+		if (this.getDataTimestamp()) {
+			aIds.push(this.getId() + "-dataTimestamp");
 		}
 
 		if (this.getIconSrc() || this.getIconInitials()) {

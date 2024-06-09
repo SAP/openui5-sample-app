@@ -24,7 +24,7 @@ sap.ui.define(['sap/m/semantic/SemanticSelect'], function(SemanticSelect) {
 	 * @implements sap.m.semantic.IGroup
 	 *
 	 * @author SAP SE
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 *
 	 * @constructor
 	 * @public

@@ -144,7 +144,7 @@ sap.ui.define([
 	 * The default implementation of this method returns <code>false</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.View

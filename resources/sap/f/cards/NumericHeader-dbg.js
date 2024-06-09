@@ -57,7 +57,7 @@ sap.ui.define([
 	 * @extends sap.f.cards.BaseHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 *
 	 * @constructor
 	 * @public
@@ -524,6 +524,10 @@ sap.ui.define([
 
 		if (this.getStatusText()) {
 			aIds.push(this.getId() + "-status");
+		}
+
+		if (this.getDataTimestamp()) {
+			aIds.push(this.getId() + "-dataTimestamp");
 		}
 
 		aIds.push(this._getUnitOfMeasurement().getId());

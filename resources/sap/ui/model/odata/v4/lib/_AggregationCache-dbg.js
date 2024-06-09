@@ -1352,8 +1352,10 @@ sap.ui.define([
 					oSiblingNode = null;
 				}
 
-				return this.oRequestor.request("POST", sActionPath, oGroupLock.getUnlockedCopy(),
-					{Prefer : "return=minimal"}, {NextSibling : oSiblingNode});
+				return this.oRequestor.request("POST", sActionPath, oGroupLock.getUnlockedCopy(), {
+						"If-Match" : oChildNode,
+						Prefer : "return=minimal"
+					}, {NextSibling : oSiblingNode});
 			}
 		};
 

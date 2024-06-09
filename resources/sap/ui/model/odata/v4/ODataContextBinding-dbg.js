@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.124.0
+		 * @version 1.124.1
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
@@ -801,21 +801,6 @@ sap.ui.define([
 
 	/**
 	 * @override
-	 * @see sap.ui.model.odata.v4.ODataBinding#doDeregisterChangeListener
-	 */
-	ODataContextBinding.prototype.doDeregisterChangeListener = function (sPath, oListener) {
-		if (this.oOperation) {
-			const sRelativePath = _Helper.getRelativePath(sPath, this.oParameterContext.getPath());
-			if (sRelativePath !== undefined) {
-				_Helper.removeByPath(this.oOperation.mChangeListeners, sRelativePath, oListener);
-				return;
-			}
-		}
-		asODataParentBinding.prototype.doDeregisterChangeListener.apply(this, arguments);
-	};
-
-	/**
-	 * @override
 	 * @see sap.ui.model.odata.v4.ODataBinding#doFetchOrGetQueryOptions
 	 */
 	ODataContextBinding.prototype.doFetchOrGetQueryOptions = function (oContext) {
@@ -932,7 +917,7 @@ sap.ui.define([
 					if (aSegments.length === 1) {
 						return undefined;
 					}
-					_Helper.addByPath(that.oOperation.mChangeListeners,
+					_Helper.registerChangeListener(that.oOperation,
 						sRelativePath.slice(/*"$Parameter/".length*/11), oListener);
 
 					vValue = _Helper.drillDown(that.oOperation.mParameters, aSegments.slice(1));
@@ -1582,9 +1567,12 @@ sap.ui.define([
 					bKeepCacheOnError ? sGroupId : undefined);
 				// Do not fire a change event, or else ManagedObject destroys and recreates the
 				// binding hierarchy causing a flood of events.
-				oPromise = bHasChangeListeners
-					? that.createRefreshPromise(/*bPreventBubbling*/bKeepCacheOnError)
-					: undefined;
+				if (bHasChangeListeners) {
+					oPromise = that.createRefreshPromise(/*bPreventBubbling*/bKeepCacheOnError);
+				} else {
+					oReadGroupLock.unlock();
+					that.oReadGroupLock = undefined;
+				}
 				if (bKeepCacheOnError && oPromise) {
 					oPromise = oPromise.catch(function (oError) {
 						return that.fetchResourcePath(that.oContext).then(function (sResourcePath) {

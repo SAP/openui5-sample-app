@@ -2,7 +2,7 @@
 	"_version": "1.49.0",
 	"sap.app": {
 		"applicationVersion": {
-			"version": "1.124.0"
+			"version": "1.124.1"
 		},
 		"description": "Example how to use OData V4 Edm.TimeOfDay in SAPUI5 applications",
 		"dataSources": {

@@ -50,7 +50,7 @@ sap.ui.define([
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 *
 	 * @constructor
 	 * @public
@@ -315,6 +315,7 @@ sap.ui.define([
 
 		if (!oDataTimestamp) {
 			oDataTimestamp = new Text({
+				id: this.getId() + "-dataTimestamp",
 				wrapping: false,
 				textAlign: "End"
 			});

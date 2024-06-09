@@ -72,7 +72,7 @@ sap.ui.define([
 	 * </pre>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 * @author SAP SE
 	 * @experimental Since 1.124
 	 * @public
@@ -718,14 +718,14 @@ sap.ui.define([
 	 * @param {sap.ui.model.Context} oBindingContext Context of the item to be renamed.
 	 * @public
 	 */
-	UploadSetwithTable.prototype.renameItem = function (oBindingContext) {
+	UploadSetwithTable.prototype.renameItem = async function (oBindingContext) {
 		const oRowConfiguration = this.getRowConfiguration();
 		if (!oRowConfiguration) {
 			Log.error("Row configuration is not set for the plugin. Rename action is not possible.");
 			return;
 		}
 		if (oBindingContext) {
-			const oItem = this.getConfig("getItemForContext", oBindingContext);
+			const oItem = await this.getItemForContext(oBindingContext);
 			const oDialog = this._getFileRenameDialog(oItem);
 			oDialog.open();
 		}
@@ -1429,6 +1429,136 @@ sap.ui.define([
 		return oIllustratedMessage;
 	};
 
+	/**
+	 * @param {sap.ui.model.Context[]} aItemContexts array of item contexts.
+	 * @returns {Promise<sap.m.upload.UploadItem[]>} Promise on resolved returns the items array.
+	 * @private
+	 */
+	UploadSetwithTable.prototype.getItemsMap = function(aItemContexts) {
+		return new Promise((resolve, reject) => {
+			const aItemsmap = aItemContexts.map(async (oItemContext) => {
+				const oItem = await this.getItemForContext(oItemContext);
+				return oItem;
+			});
+			Promise.all(aItemsmap).then((aItems) => resolve(aItems));
+		});
+	};
+
+	/**
+	 * @param {Object} oBindingContext binding context for the item.
+	 * @param {boolean} createStaticBinding flag to create static binding.
+	 * @returns {Promise<sap.m.upload.UploadItem>} Promise on resolved returns the item with bound properties.
+	 * @private
+	 */
+	UploadSetwithTable.prototype.getItemForContext = async function(oBindingContext, createStaticBinding = false) {
+			const sModelName = this.getConfig("getModelName");
+			const oRowConfiguration = this.getRowConfiguration();
+
+			const oUploadSetItem = new UploadItem({
+				customData: [
+					new sap.ui.core.CustomData({
+					key: "path",
+					value: oBindingContext.getPath()
+				}),
+				new sap.ui.core.CustomData({
+					key: "context",
+					value: oBindingContext
+				})
+			]
+			});
+
+			// Setting plugin as parent to the item to maintain the reference and access to plugin methods.
+			oUploadSetItem.setParent(this);
+
+			if (sModelName) {
+			oUploadSetItem.setBindingContext(oBindingContext, sModelName);
+			} else {
+				oUploadSetItem.setBindingContext(oBindingContext);
+			}
+
+			// BindProperties only if the types are valid else skip the binding to default value
+			if (oRowConfiguration?._fileNameValidator(oBindingContext)) {
+				await this.bindItemProperty(oUploadSetItem, {
+					property: "fileName",
+					propertyPath: oRowConfiguration.getFileNamePath(),
+					modelName: sModelName,
+					value: oBindingContext?.getProperty(oRowConfiguration.getFileNamePath())
+				}, createStaticBinding);
+			}
+			if (oRowConfiguration?._urlValidator(oBindingContext)) {
+				await this.bindItemProperty(oUploadSetItem, {
+					property: "url",
+					propertyPath: oRowConfiguration.getUrlPath(),
+					modelName: sModelName,
+					value: oBindingContext?.getProperty(oRowConfiguration.getUrlPath())
+				}, createStaticBinding);
+			}
+			if (oRowConfiguration?._mediaTypeValidator(oBindingContext)) {
+				await this.bindItemProperty(oUploadSetItem, {
+					property: "mediaType",
+					propertyPath: oRowConfiguration.getMediaTypePath(),
+					modelName: sModelName,
+					value: oBindingContext?.getProperty(oRowConfiguration.getMediaTypePath())
+				}, createStaticBinding);
+			}
+			if (oRowConfiguration?._uploadUrlValidator(oBindingContext)) {
+				await this.bindItemProperty(oUploadSetItem, {
+					property: "uploadUrl",
+					propertyPath: oRowConfiguration.getUploadUrlPath(),
+					modelName: sModelName,
+					value: oBindingContext?.getProperty(oRowConfiguration.getUploadUrlPath())
+				}, createStaticBinding);
+			}
+			if (oRowConfiguration?._previewableValidator(oBindingContext)) {
+				await this.bindItemProperty(oUploadSetItem, {
+					property: "previewable",
+					propertyPath: oRowConfiguration.getPreviewablePath(),
+					modelName: sModelName,
+					value: oBindingContext?.getProperty(oRowConfiguration.getPreviewablePath())
+				}, createStaticBinding);
+			}
+			if (oRowConfiguration?._fileSizeValidator(oBindingContext)) {
+				await this.bindItemProperty(oUploadSetItem, {
+					property: "fileSize",
+					propertyPath: oRowConfiguration.getFileSizePath(),
+					modelName: sModelName,
+					value: oBindingContext?.getProperty(oRowConfiguration.getFileSizePath())
+				}, createStaticBinding);
+			}
+			return oUploadSetItem;
+	};
+
+	/**
+	 * @param {sap.m.upload.UploadItem} oItem item to be bound.
+	 * @param {Object} mBindingInfo binding information for the property.
+	 * @param {boolean} createStaticBinding flag to create static binding.
+	 * @returns {Promise} Promise on resolved returns the bound property.
+	 * @private
+	 */
+	UploadSetwithTable.prototype.bindItemProperty = function (oItem, mBindingInfo, createStaticBinding = false) {
+
+		const {property, propertyPath, modelName} = mBindingInfo;
+
+		return new Promise((resolve, reject) => {
+			let oBindingInfo = {
+				path: modelName ? `${modelName}>${propertyPath}` : propertyPath,
+				mode: sap.ui.model.BindingMode.TwoWay,
+				events: {
+					change: function () {
+						oItem?.getBinding(property)?.detachChange((oEvent) => {
+							// change event detached after the first change.
+						});
+						resolve();
+					}
+				}
+			};
+			oBindingInfo = createStaticBinding ? Object.assign(oBindingInfo, {value: mBindingInfo?.value}) : oBindingInfo;
+
+			oItem.bindProperty(property, oBindingInfo);
+		});
+
+	};
+
 
     PluginBase.setConfigs({
 	 "sap.ui.mdc.Table": {
@@ -1526,7 +1656,7 @@ sap.ui.define([
 			}
 		},
 		// Handles preview of the context passed. Requires access to all the contexts of inner table to setup the preview along with carousel.
-		openFilePreview: function(oBindingContext) {
+		openFilePreview: async function(oBindingContext) {
 			const oPlugin = this.getPluginInstance();
 			const oControl = this.getControlInstance();
 
@@ -1534,20 +1664,20 @@ sap.ui.define([
 			const oContexts = this.getTableContexts(oControl?._oTable);
 			let aUploadSetItems = [];
 			if (oContexts?.length) {
-				aUploadSetItems = this.getItemsMap(oContexts, oRowConfiguration);
+				aUploadSetItems = await oPlugin.getItemsMap(oContexts, oRowConfiguration);
+				const oPreviewUploaditem = aUploadSetItems.find((oItem) => oItem?.data("path") === oBindingContext.getPath());
+
+				if (oPreviewUploaditem) {
+					oPlugin._initiateFilePreview(oPreviewUploaditem, aUploadSetItems);
+				}
 			}
 
-			const oPreviewUploaditem = aUploadSetItems.find((oItem) => oItem?.data("path") === oBindingContext.getPath());
-
-			if (oPreviewUploaditem) {
-				oPlugin._initiateFilePreview(oPreviewUploaditem, aUploadSetItems);
-			}
 		},
 		// Handles download of the file through the context passed.
-		download: function(mDownloadInfo) {
+		download: async function(mDownloadInfo) {
 			const {oBindingContext, bAskForLocation} = mDownloadInfo;
 			const oPlugin = this.getPluginInstance();
-			const oItem = this.getItemForContext(oBindingContext);
+			const oItem = await oPlugin.getItemForContext(oBindingContext);
 			if (oItem && oItem.getUrl()) {
 				return oPlugin._initiateFileDownload(oItem, bAskForLocation);
 			}
@@ -1560,91 +1690,6 @@ sap.ui.define([
 				return oTable?.getBinding("rows")?.getContexts();
 			}
 			return null;
-		},
-		getItemsMap: function(aItemContexts) {
-			return aItemContexts.map((oItemContext) => {
-				return this.getItemForContext(oItemContext);
-			});
-		},
-		bindItemProperty: function(oItem, mBindingInfo) {
-			const {property, propertyPath, modelName} = mBindingInfo;
-
-			oItem.bindProperty(property, {
-				path: modelName ? `${modelName}>${propertyPath}` : propertyPath,
-				mode: sap.ui.model.BindingMode.TwoWay
-			});
-		},
-		getItemForContext: function(oBindingContext) {
-			const oPlugin = this.getPluginInstance();
-			const sModelName = this.getModelName();
-			const oRowConfiguration = oPlugin.getRowConfiguration();
-
-			const oUploadSetItem = new UploadItem({
-				customData: [
-					new sap.ui.core.CustomData({
-					key: "path",
-					value: oBindingContext.getPath()
-				}),
-				new sap.ui.core.CustomData({
-					key: "context",
-					value: oBindingContext
-				})
-			]
-			});
-
-			// Setting plugin as parent to the item to maintain the reference and access to plugin methods.
-			oUploadSetItem.setParent(oPlugin);
-
-			if (sModelName) {
-			oUploadSetItem.setBindingContext(oBindingContext, sModelName);
-			} else {
-				oUploadSetItem.setBindingContext(oBindingContext);
-			}
-
-			// BindProperties only if the types are valid else skip the binding to default value
-			if (oRowConfiguration?._fileNameValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "fileName",
-					propertyPath: oRowConfiguration.getFileNamePath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._urlValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "url",
-					propertyPath: oRowConfiguration.getUrlPath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._mediaTypeValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "mediaType",
-					propertyPath: oRowConfiguration.getMediaTypePath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._uploadUrlValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "uploadUrl",
-					propertyPath: oRowConfiguration.getUploadUrlPath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._previewableValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "previewable",
-					propertyPath: oRowConfiguration.getPreviewablePath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._fileSizeValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "fileSize",
-					propertyPath: oRowConfiguration.getFileSizePath(),
-					modelName: sModelName
-				});
-			}
-			return oUploadSetItem;
 		}
 	 },
 	 "sap.m.Table": {
@@ -1738,7 +1783,7 @@ sap.ui.define([
 			}
 		},
 		// Handles preview of the context passed. Requires access to all the contexts of inner table to setup the preview along with carousel.
-		openFilePreview: function(oBindingContext) {
+		openFilePreview: async function(oBindingContext) {
 			const oPlugin = this.getPluginInstance();
 			const oControl = this.getControlInstance();
 
@@ -1746,7 +1791,7 @@ sap.ui.define([
 			const oContexts = this.getTableContexts(oControl);
 			let aUploadSetItems = [];
 			if (oContexts?.length) {
-				aUploadSetItems = this.getItemsMap(oContexts, oRowConfiguration);
+				aUploadSetItems = await oPlugin.getItemsMap(oContexts, oRowConfiguration);
 			}
 
 			const oPreviewUploaditem = aUploadSetItems.find((oItem) => oItem?.data("path") === oBindingContext.getPath());
@@ -1756,10 +1801,10 @@ sap.ui.define([
 			}
 		},
 		// Handles download of the file through the context passed.
-		download: function(mDownloadInfo) {
+		download: async function(mDownloadInfo) {
 			const {oBindingContext, bAskForLocation} = mDownloadInfo;
 			const oPlugin = this.getPluginInstance();
-			const oItem = this.getItemForContext(oBindingContext);
+			const oItem = await oPlugin.getItemForContext(oBindingContext);
 			if (oItem && oItem.getUrl()) {
 				return oPlugin._initiateFileDownload(oItem, bAskForLocation);
 			}
@@ -1767,91 +1812,6 @@ sap.ui.define([
 		},
 		getTableContexts: function(oTable) {
 			return oTable?.getBinding("items")?.getContexts() || null;
-		},
-		getItemsMap: function(aItemContexts) {
-			return aItemContexts.map((oItemContext) => {
-				return this.getItemForContext(oItemContext);
-			});
-		},
-		bindItemProperty: function(oItem, mBindingInfo) {
-			const {property, propertyPath, modelName} = mBindingInfo;
-
-			oItem.bindProperty(property, {
-				path: modelName ? `${modelName}>${propertyPath}` : propertyPath,
-				mode: sap.ui.model.BindingMode.TwoWay
-			});
-		},
-		getItemForContext: function(oBindingContext) {
-			const oPlugin = this.getPluginInstance();
-			const sModelName = this.getModelName();
-			const oRowConfiguration = oPlugin.getRowConfiguration();
-
-			const oUploadSetItem = new UploadItem({
-				customData: [
-					new sap.ui.core.CustomData({
-					key: "path",
-					value: oBindingContext.getPath()
-				}),
-				new sap.ui.core.CustomData({
-					key: "context",
-					value: oBindingContext
-				})
-			]
-			});
-
-			// Setting plugin as parent to the item to maintain the reference and access to plugin methods.
-			oUploadSetItem.setParent(oPlugin);
-
-			if (sModelName) {
-			oUploadSetItem.setBindingContext(oBindingContext, sModelName);
-			} else {
-				oUploadSetItem.setBindingContext(oBindingContext);
-			}
-
-			// BindProperties only if the types are valid else skip the binding to default value
-			if (oRowConfiguration?._fileNameValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "fileName",
-					propertyPath: oRowConfiguration.getFileNamePath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._urlValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "url",
-					propertyPath: oRowConfiguration.getUrlPath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._mediaTypeValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "mediaType",
-					propertyPath: oRowConfiguration.getMediaTypePath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._uploadUrlValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "uploadUrl",
-					propertyPath: oRowConfiguration.getUploadUrlPath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._previewableValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "previewable",
-					propertyPath: oRowConfiguration.getPreviewablePath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._fileSizeValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "fileSize",
-					propertyPath: oRowConfiguration.getFileSizePath(),
-					modelName: sModelName
-				});
-			}
-			return oUploadSetItem;
 		}
 	 },
 	 "sap.ui.table.Table": {
@@ -1945,7 +1905,7 @@ sap.ui.define([
 			}
 		},
 		// Handles preview of the context passed. Requires access to all the contexts of inner table to setup the preview along with carousel.
-		openFilePreview: function(oBindingContext) {
+		openFilePreview: async function(oBindingContext) {
 			const oPlugin = this.getPluginInstance();
 			const oControl = this.getControlInstance();
 
@@ -1953,20 +1913,21 @@ sap.ui.define([
 			const oContexts = this.getTableContexts(oControl);
 			let aUploadSetItems = [];
 			if (oContexts?.length) {
-				aUploadSetItems = this.getItemsMap(oContexts, oRowConfiguration);
+				aUploadSetItems = await oPlugin.getItemsMap(oContexts, oRowConfiguration);
+
+				const oPreviewUploaditem = aUploadSetItems.find((oItem) => oItem?.data("path") === oBindingContext.getPath());
+
+				if (oPreviewUploaditem) {
+					oPlugin._initiateFilePreview(oPreviewUploaditem, aUploadSetItems);
+				}
 			}
 
-			const oPreviewUploaditem = aUploadSetItems.find((oItem) => oItem?.data("path") === oBindingContext.getPath());
-
-			if (oPreviewUploaditem) {
-				oPlugin._initiateFilePreview(oPreviewUploaditem, aUploadSetItems);
-			}
 		},
 		// Handles download of the file through the context passed.
-		download: function(mDownloadInfo) {
+		download: async function(mDownloadInfo) {
 			const {oBindingContext, bAskForLocation} = mDownloadInfo;
 			const oPlugin = this.getPluginInstance();
-			const oItem = this.getItemForContext(oBindingContext);
+			const oItem = await oPlugin.getItemForContext(oBindingContext);
 			if (oItem && oItem.getUrl()) {
 				return oPlugin._initiateFileDownload(oItem, bAskForLocation);
 			}
@@ -1974,91 +1935,6 @@ sap.ui.define([
 		},
 		getTableContexts: function(oTable) {
 			return oTable?.getBinding("rows")?.getContexts() || null;
-		},
-		getItemsMap: function(aItemContexts) {
-			return aItemContexts.map((oItemContext) => {
-				return this.getItemForContext(oItemContext);
-			});
-		},
-		bindItemProperty: function(oItem, mBindingInfo) {
-			const {property, propertyPath, modelName} = mBindingInfo;
-
-			oItem.bindProperty(property, {
-				path: modelName ? `${modelName}>${propertyPath}` : propertyPath,
-				mode: sap.ui.model.BindingMode.TwoWay
-			});
-		},
-		getItemForContext: function(oBindingContext) {
-			const oPlugin = this.getPluginInstance();
-			const sModelName = this.getModelName();
-			const oRowConfiguration = oPlugin.getRowConfiguration();
-
-			const oUploadSetItem = new UploadItem({
-				customData: [
-					new sap.ui.core.CustomData({
-					key: "path",
-					value: oBindingContext.getPath()
-				}),
-				new sap.ui.core.CustomData({
-					key: "context",
-					value: oBindingContext
-				})
-			]
-			});
-
-			// Setting plugin as parent to the item to maintain the reference and access to plugin methods.
-			oUploadSetItem.setParent(oPlugin);
-
-			if (sModelName) {
-			oUploadSetItem.setBindingContext(oBindingContext, sModelName);
-			} else {
-				oUploadSetItem.setBindingContext(oBindingContext);
-			}
-
-			// BindProperties only if the types are valid else skip the binding to default value
-			if (oRowConfiguration?._fileNameValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "fileName",
-					propertyPath: oRowConfiguration.getFileNamePath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._urlValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "url",
-					propertyPath: oRowConfiguration.getUrlPath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._mediaTypeValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "mediaType",
-					propertyPath: oRowConfiguration.getMediaTypePath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._uploadUrlValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "uploadUrl",
-					propertyPath: oRowConfiguration.getUploadUrlPath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._previewableValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "previewable",
-					propertyPath: oRowConfiguration.getPreviewablePath(),
-					modelName: sModelName
-				});
-			}
-			if (oRowConfiguration?._fileSizeValidator(oBindingContext)) {
-				this.bindItemProperty(oUploadSetItem, {
-					property: "fileSize",
-					propertyPath: oRowConfiguration.getFileSizePath(),
-					modelName: sModelName
-				});
-			}
-			return oUploadSetItem;
 		}
 	 }
     }, UploadSetwithTable);

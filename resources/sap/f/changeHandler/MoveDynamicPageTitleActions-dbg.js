@@ -16,7 +16,7 @@ sap.ui.define([
 		 *
 		 * @alias sap.f.changeHandler.MoveDynamicPageTitleActions
 		 * @author SAP SE
-		 * @version 1.124.0
+		 * @version 1.124.1
 		 * @experimental Since 1.52
 		 */
 		var MoveActions = { };

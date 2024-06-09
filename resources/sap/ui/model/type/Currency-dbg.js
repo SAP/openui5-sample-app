@@ -34,7 +34,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.CompositeType
 	 *
 	 * @author SAP SE
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 *
 	 * @public
 	 * @param {object} [oFormatOptions]
@@ -310,11 +310,14 @@ sap.ui.define([
 	 *
 	 * @override sap.ui.model.CompositeType#processPartTypes
 	 * @protected
-	 * @since 1.123.0
+	 * @since 1.120.0
 	 */
 	Currency.prototype.processPartTypes = function (aPartTypes) {
 		const iOldScale = this.iScale;
-		this.iScale = aPartTypes[0]?.oConstraints?.scale;
+		const oAmountType = aPartTypes[0];
+		if (oAmountType?.isA("sap.ui.model.odata.type.Decimal")) {
+			this.iScale = oAmountType.oConstraints?.scale || 0;
+		}
 		if (iOldScale !== this.iScale) {
 			this._createFormats();
 		}

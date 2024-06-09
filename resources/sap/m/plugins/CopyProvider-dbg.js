@@ -37,7 +37,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 *
 	 * @public
 	 * @since 1.110
@@ -624,7 +624,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	PluginBase.setConfigs({
 		"sap.m.Table": {
 			_oWM: new WeakMap(),
-			allowForCopySelector: ".sapMLIBFocusable,.sapMLIBSelectM,.sapMLIBSelectS",
+			allowForCopySelector: ".sapMLIBFocusable,.sapMLIBSelectM,.sapMLIBSelectS,.sapMListTblCell",
 			selectedContexts: function(oTable, bSparse) {
 				const aSelectedContexts = [];
 				const oBindingInfo = oTable.getBindingInfo("items");

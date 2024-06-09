@@ -5181,12 +5181,6 @@ sap.ui.define([
 
 			oContext.setSelected(true);
 
-			// This error is unavoidable as #fetchValue runs right after creating the context, but
-			// fails as the context is deleted already.
-			that.oLogMock.expects("error")
-				.withArgs(sinon.match("Failed to drill-down into ($uid="),
-					sSalesOrderService + "SalesOrderList", "sap.ui.model.odata.v4.lib._Cache");
-
 			assert.ok(oModel.hasPendingChanges());
 			assert.ok(oListBindingWithoutUI.hasPendingChanges());
 			assert.strictEqual(oListBindingWithoutUI.getLength(), 1 + 10/*length is not final*/);
@@ -23408,12 +23402,6 @@ sap.ui.define([
 
 			assert.strictEqual(oTable.getBinding("rows").getContexts().length, 2);
 
-			that.oLogMock.expects("error").withExactArgs("Failed to drill-down into"
-				+ " (Country='UK',Region='Z')/Region, invalid segment: (Country='UK',Region='Z')",
-				"/aggregation/BusinessPartners"
-				+ "?$apply=groupby((Country,Region),aggregate(SalesAmount))",
-				"sap.ui.model.odata.v4.lib._Cache");
-
 			// code under test
 			assert.strictEqual(oThirdRow.getProperty("Region"), undefined,
 				"$byPredicate has been cleaned up");
@@ -36883,6 +36871,7 @@ make root = ${bMakeRoot}`;
 					ID : "3",
 					Name : "Gamma"
 				}, {
+					"@odata.etag" : "Delta's ETag",
 					DescendantCount : "0",
 					DistanceFromRoot : "0",
 					DrillState : "leaf",
@@ -36914,6 +36903,7 @@ make root = ${bMakeRoot}`;
 		this.expectRequest({
 				batchNo : 2,
 				headers : {
+					"If-Match" : "Delta's ETag",
 					Prefer : "return=minimal"
 				},
 				method : "PATCH",
@@ -36925,6 +36915,7 @@ make root = ${bMakeRoot}`;
 			.expectRequest({
 				batchNo : 2,
 				headers : {
+					"If-Match" : "Delta's ETag",
 					Prefer : "return=minimal"
 				},
 				method : "POST",
@@ -67100,6 +67091,36 @@ make root = ${bMakeRoot}`;
 				that.waitForChanges(assert, "no patch request")
 			]);
 		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: setBindingContext of a table w/o cache below a context binding w/o own properties.
+	// See that this context binding can refresh properly afterwards.
+	// SNOW: DINC0117588
+	QUnit.test("DINC0117588", async function (assert) {
+		const oModel = this.createTeaBusiModel({autoExpandSelect : true});
+		const sView = `
+<FlexBox id="root" binding="{/TEAMS('0')}">
+	<Table id="table" items="{TEAM_2_EMPLOYEES}">
+		<Text id="id" text="{ID}"/>
+	</Table>
+</FlexBox>`;
+
+		this.expectRequest("TEAMS('0')?$select=Team_Id&$expand=TEAM_2_EMPLOYEES($select=ID)", {
+				TeamId : "0",
+				TEAM_2_EMPLOYEES : [
+					{ID : "1"}
+				]
+			})
+			.expectChange("id", ["1"]);
+
+		await this.createView(assert, sView, oModel);
+
+		this.oView.byId("table").setBindingContext(null);
+
+		await this.waitForChanges(assert);
+
+		await this.oView.byId("root").getBindingContext().requestRefresh();
 	});
 
 	//*********************************************************************************************

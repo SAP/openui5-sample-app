@@ -1114,8 +1114,8 @@ sap.ui.define([
 	QUnit.test("_Cache#registerChangeListener", function () {
 		var oCache = new _Cache(this.oRequestor, "TEAMS");
 
-		this.mock(_Helper).expects("addByPath")
-			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "path", "listener");
+		this.mock(_Helper).expects("registerChangeListener")
+			.withExactArgs(sinon.match.same(oCache), "path", "listener");
 
 		oCache.registerChangeListener("path", "listener");
 	});
@@ -1124,47 +1124,28 @@ sap.ui.define([
 	QUnit.test("_Cache#registerChangeListener: $$sharedRequest", function () {
 		var oCache = new _Cache(this.oRequestor, "TEAMS", undefined, false, undefined, true);
 
-		this.mock(_Helper).expects("addByPath")
-			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "", "listener2");
+		this.mock(_Helper).expects("registerChangeListener")
+			.withExactArgs(sinon.match.same(oCache), "", "listener2");
 
 		oCache.registerChangeListener("path", "listener1");
 		oCache.registerChangeListener("", "listener2");
 	});
 
 	//*********************************************************************************************
-	QUnit.test("_Cache#deregisterChangeListener", function () {
-		var oCache = new _Cache(this.oRequestor, "TEAMS");
-
-		this.mock(_Helper).expects("removeByPath")
-			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "path", "listener");
-
-		oCache.deregisterChangeListener("path", "listener");
-	});
-
-	//*********************************************************************************************
-	QUnit.test("_Cache#deregisterChangeListener: $$sharedRequest", function () {
-		var oCache = new _Cache(this.oRequestor, "TEAMS", undefined, false, undefined, true);
-
-		this.mock(_Helper).expects("removeByPath")
-			.withExactArgs(sinon.match.same(oCache.mChangeListeners), "", "listener2");
-
-		oCache.deregisterChangeListener("path", "listener1");
-		oCache.deregisterChangeListener("", "listener2");
-	});
-
-	//*********************************************************************************************
 	QUnit.test("_Cache#hasChangeListeners", function (assert) {
-		var oCache = new _Cache(this.oRequestor, "TEAMS");
+		const oCache = new _Cache(this.oRequestor, "TEAMS");
+		const oHelperMock = this.mock(_Helper);
 
-		// code under test
-		assert.strictEqual(oCache.hasChangeListeners(), false);
-
-		oCache.registerChangeListener("path", "listener");
+		oHelperMock.expects("isEmptyObject")
+			.withExactArgs(sinon.match.same(oCache.mChangeListeners))
+			.returns(false);
 
 		// code under test
 		assert.strictEqual(oCache.hasChangeListeners(), true);
 
-		oCache.deregisterChangeListener("path", "listener");
+		oHelperMock.expects("isEmptyObject")
+			.withExactArgs(sinon.match.same(oCache.mChangeListeners))
+			.returns(true);
 
 		// code under test
 		assert.strictEqual(oCache.hasChangeListeners(), false);
@@ -1783,6 +1764,20 @@ sap.ui.define([
 			});
 	});
 });
+
+	//*********************************************************************************************
+	QUnit.test("_Cache#drillDown: unexpected missing predicate", function (assert) {
+		const oCache = new _Cache(this.oRequestor, "Products");
+
+		this.oLogMock.expects("info").withExactArgs(
+			"Failed to drill-down into ('42')/entity/foo/bar/baz, invalid segment: ('42')",
+			"/~/Products", sClassName);
+
+		return oCache.drillDown([], "('42')/entity/foo/bar/baz")
+			.then(function (vValue) {
+				assert.strictEqual(vValue, undefined);
+			});
+	});
 
 	//*********************************************************************************************
 [0, "None"].forEach(function (vPermissions) {
@@ -8287,7 +8282,10 @@ sap.ui.define([
 			oCache = this.createCache(sResourcePath),
 			fnCancelCallback = sinon.spy(),
 			iCountAfterCreate = bInactive ? 26 : 27,
-			oCountChangeListener = {onChange : function () {}},
+			oCountChangeListener = {
+				onChange : function () {},
+				setDeregisterChangeListener : function () {}
+			},
 			oCountChangeListenerMock = this.mock(oCountChangeListener),
 			oGroupLock = {
 				cancel : function () {},
@@ -8513,7 +8511,8 @@ sap.ui.define([
 			oListener = {
 				onChange : function () {
 					assert.ok(false);
-				}
+				},
+				setDeregisterChangeListener : function () {}
 			},
 			that = this;
 
@@ -8555,7 +8554,10 @@ sap.ui.define([
 				oCacheMock = this.mock(oCache),
 				oCancelNestedExpectation,
 				aCollection = [],
-				oCountChangeListener = {onChange : function () {}},
+				oCountChangeListener = {
+					onChange : function () {},
+					setDeregisterChangeListener : function () {}
+				},
 				oCreatePromise,
 				oGroupLock = {getGroupId : function () {}},
 				oHelperMock = this.mock(_Helper),
@@ -8687,7 +8689,8 @@ sap.ui.define([
 			oCache.registerChangeListener(sPathInCache + sTransientPredicate + "/Name", {
 				onChange : function () {
 					assert.ok(false, "No change event for Name");
-				}
+				},
+				setDeregisterChangeListener : function () {}
 			});
 
 			if (bDropTransientElement) { // side-effects refresh might drop transient element
@@ -9467,7 +9470,10 @@ sap.ui.define([
 
 	QUnit.test(sTitle, function (assert) {
 		var oCache = _Cache.create(this.oRequestor, "Employees"),
-			oCountChangeListener = {onChange : function () {}},
+			oCountChangeListener = {
+				onChange : function () {},
+				setDeregisterChangeListener : function () {}
+			},
 			oCreateGroupLock = {getGroupId : function () {}},
 			oHelperMock = this.mock(_Helper),
 			oPromise,

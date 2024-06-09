@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR",
 		"applicationVersion" : {
-			"version" : "1.124.0"
+			"version" : "1.124.1"
 		},
 		"id" : "sap.ui.core.sample.odata.v4.SalesOrdersRTATest",
 		"title" : "EPM Sales Orders (RTA Test)",

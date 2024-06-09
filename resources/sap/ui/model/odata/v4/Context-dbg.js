@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.124.0
+		 * @version 1.124.1
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -357,24 +357,6 @@ sap.ui.define([
 				throw oError;
 			})
 		);
-	};
-
-	/**
-	 * Deregisters the given change listener if it is registered for its path. Note: This
-	 * method is for special cases with a header context and the path "@$ui5.context.isSelected"
-	 * and should not be confused with <code>Cache#deregisterChangeListener</code>.
-	 *
-	 * @param {sap.ui.model.odata.v4.ODataPropertyBinding} oListener - The listener to be removed
-	 * @returns {boolean} - If this function has handled the deregistering
-	 *
-	 * @private
-	 */
-	Context.prototype.deregisterChangeListener = function (oListener) {
-		if (this.mChangeListeners && oListener.getPath() === "@$ui5.context.isSelected") {
-			_Helper.removeByPath(this.mChangeListeners, "", oListener);
-			return true;
-		}
-		return false;
 	};
 
 	/**
@@ -755,7 +737,7 @@ sap.ui.define([
 				// of the cache (in contrast to row contexts, where it is saved in the cache).
 				// Therefore, change listeners are saved and fired via the header context
 				this.mChangeListeners ??= {};
-				_Helper.addByPath(this.mChangeListeners, "", oListener);
+				_Helper.registerChangeListener(this, "", oListener);
 
 				return SyncPromise.resolve(this.bSelected);
 			} else if (sPath !== "$count" && sPath !== "@$ui5.context.isSelected") {

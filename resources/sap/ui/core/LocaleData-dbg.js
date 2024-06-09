@@ -63,7 +63,7 @@ sap.ui.define([
 	 * @class Provides access to locale-specific data, such as date formats, number formats, and currencies.
 	 * @hideconstructor
 	 * @public
-	 * @version 1.124.0
+	 * @version 1.124.1
 	 */
 	var LocaleData = BaseObject.extend("sap.ui.core.LocaleData", /** @lends sap.ui.core.LocaleData.prototype */ {
 
