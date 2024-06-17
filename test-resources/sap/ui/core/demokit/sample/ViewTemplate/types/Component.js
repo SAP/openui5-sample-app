@@ -23,7 +23,11 @@ sap.ui.define([
 	"use strict";
 
 	return BaseComponent.extend("sap.ui.core.sample.ViewTemplate.types.Component", {
-		metadata : "json",
+		metadata : {
+			interfaces : ["sap.ui.core.IAsyncContentCreation"],
+			manifest : "json"
+		},
+
 		createContent : function () {
 			var pIdentificationViewV2, pIdentificationViewV4, oModelV2, oModelV4,
 				bRealOData = TestUtils.isRealOData(),

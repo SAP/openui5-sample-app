@@ -103,7 +103,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @constructor
 	 * @public
@@ -1063,7 +1063,7 @@ function(
 		var iSelectableItemCount = this.getItems().filter(function(oListItem) {
 			return oListItem.isSelectable();
 		}).length;
-		if (bFireEvent && this.getGrowing() && this.getMultiSelectMode() === "SelectAll" && this.getBinding("items").getLength() > iSelectableItemCount) {
+		if (bFireEvent && this.getGrowing() && this.getMultiSelectMode() === "SelectAll" && this.getBinding("items")?.getLength() > iSelectableItemCount) {
 			var oSelectAllDomRef = this._getSelectAllCheckbox ? this._getSelectAllCheckbox() : undefined;
 			if (oSelectAllDomRef) {
 				Util.showSelectionLimitPopover(iSelectableItemCount, oSelectAllDomRef);

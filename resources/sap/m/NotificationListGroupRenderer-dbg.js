@@ -50,6 +50,7 @@ sap.ui.define(["sap/ui/core/library", "sap/ui/core/InvisibleRenderer"], function
 
 		rm.openStart('li', control)
 			.attr('tabindex', '-1')
+			.class('sapMLIBFocusable')
 			.class('sapMLIB')
 			.class('sapMNLIB')
 			.class('sapMNLGroup');

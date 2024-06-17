@@ -163,8 +163,9 @@ sap.ui.define([
 		 * @param {object} oOperationMetadata
 		 *   The operation metadata to determine whether a given message target is a parameter
 		 *   of the operation
-		 * @param {string} sParameterContextPath
-		 *   The parameter context path
+		 * @param {string} [sParameterContextPath]
+		 *   The parameter context path, needed for adjusting a message target in case it is an
+		 *   operation parameter, except the binding parameter
 		 * @param {string} [sContextPath]
 		 *   The context path for a bound operation
 		 *
@@ -172,7 +173,9 @@ sap.ui.define([
 		 */
 		adjustTargets : function (oMessage, oOperationMetadata, sParameterContextPath,
 				sContextPath) {
-			var sAdditionalTargetsKey = _Helper.getAnnotationKey(oMessage, ".additionalTargets"),
+			var sAdditionalTargetsKey = "additionalTargets" in oMessage
+					? "additionalTargets"
+					: _Helper.getAnnotationKey(oMessage, ".additionalTargets"),
 				aTargets;
 
 			aTargets = [oMessage.target].concat(oMessage[sAdditionalTargetsKey])
@@ -525,6 +528,21 @@ sap.ui.define([
 				}
 				_Helper.setPrivateAnnotation(oTarget, sAnnotation,
 					_Helper.getPrivateAnnotation(oSource, sAnnotation));
+			}
+		},
+
+		/**
+		 * Sets "@$ui5.context.isSelected" in <code>oTarget</code> to true if it is true in
+		 * <code>oSource</code>.
+		 *
+		 * @param {object} oSource - The source object
+		 * @param {object} oTarget - The target object
+		 *
+		 * @public
+		 */
+		copySelected : function (oSource, oTarget) {
+			if (oSource["@$ui5.context.isSelected"] === true) {
+				oTarget["@$ui5.context.isSelected"] = true;
 			}
 		},
 
@@ -960,6 +978,32 @@ sap.ui.define([
 		},
 
 		/**
+		 * Extracts the mergeable query options "$expand" and "$select" from the given ones, returns
+		 * them as a new map while replacing their value with "~" in the old map.
+		 *
+		 * @param {object} mQueryOptions
+		 *   The original query options, will be modified
+		 * @returns {object}
+		 *   The extracted query options
+		 *
+		 * @public
+		 */
+		extractMergeableQueryOptions : function (mQueryOptions) {
+			var mExtractedQueryOptions = {};
+
+			if ("$expand" in mQueryOptions) {
+				mExtractedQueryOptions.$expand = mQueryOptions.$expand;
+				mQueryOptions.$expand = "~";
+			}
+			if ("$select" in mQueryOptions) {
+				mExtractedQueryOptions.$select = mQueryOptions.$select;
+				mQueryOptions.$select = "~";
+			}
+
+			return mExtractedQueryOptions;
+		},
+
+		/**
 		 * Extracts all (top and detail) messages from the given error instance.
 		 *
 		 * @param {Error} oError
@@ -1043,32 +1087,6 @@ sap.ui.define([
 				addMessage(oError, 4 /*Error*/, true);
 			}
 			return aMessages;
-		},
-
-		/**
-		 * Extracts the mergeable query options "$expand" and "$select" from the given ones, returns
-		 * them as a new map while replacing their value with "~" in the old map.
-		 *
-		 * @param {object} mQueryOptions
-		 *   The original query options, will be modified
-		 * @returns {object}
-		 *   The extracted query options
-		 *
-		 * @public
-		 */
-		extractMergeableQueryOptions : function (mQueryOptions) {
-			var mExtractedQueryOptions = {};
-
-			if ("$expand" in mQueryOptions) {
-				mExtractedQueryOptions.$expand = mQueryOptions.$expand;
-				mQueryOptions.$expand = "~";
-			}
-			if ("$select" in mQueryOptions) {
-				mExtractedQueryOptions.$select = mQueryOptions.$select;
-				mQueryOptions.$select = "~";
-			}
-
-			return mExtractedQueryOptions;
 		},
 
 		/**
@@ -1264,8 +1282,9 @@ sap.ui.define([
 		 * @param {object} oOperationMetadata
 		 *   The operation metadata to determine whether a given message target is a parameter
 		 *   of the operation
-		 * @param {string} sParameterContextPath
-		 *   The parameter context path
+		 * @param {string} [sParameterContextPath]
+		 *   The parameter context path, needed for adjusting a message target in case it is an
+		 *   operation parameter, except the binding parameter
 		 * @param {string} [sContextPath]
 		 *   The context path for a bound operation
 		 * @returns {string|undefined} The adjusted target, or <code>undefined</code> if the target
@@ -1274,7 +1293,7 @@ sap.ui.define([
 		 * @private
 		 */
 		getAdjustedTarget : function (sTarget, oOperationMetadata, sParameterContextPath,
-					sContextPath) {
+				sContextPath) {
 			var bIsParameterName,
 				sParameterName,
 				aSegments;
@@ -1288,6 +1307,9 @@ sap.ui.define([
 			if (oOperationMetadata.$IsBound
 					&& sParameterName === oOperationMetadata.$Parameter[0].$Name) {
 				sTarget = _Helper.buildPath(sContextPath, aSegments.join("/"));
+				return sTarget;
+			}
+			if (!sParameterContextPath) {
 				return sTarget;
 			}
 			bIsParameterName = oOperationMetadata.$Parameter.some(function (oParameter) {
@@ -1571,6 +1593,27 @@ sap.ui.define([
 		},
 
 		/**
+		 * Returns the index of the key predicate in the last segment of the given path.
+		 *
+		 * @param {string} sPath - The path
+		 * @returns {number} The index of the key predicate
+		 * @throws {Error} If no path is given or the last segment contains no key predicate
+		 *
+		 * @public
+		 */
+		getPredicateIndex : function (sPath) {
+			var iPredicateIndex = sPath
+				? sPath.indexOf("(", sPath.lastIndexOf("/"))
+				: -1;
+
+			if (iPredicateIndex < 0 || !sPath.endsWith(")")) {
+				throw new Error("Not a list context path to an entity: " + sPath);
+			}
+
+			return iPredicateIndex;
+		},
+
+		/**
 		 * Returns the list of predicates corresponding to the given list of contexts, or
 		 * <code>null</code if at least one predicate is missing.
 		 *
@@ -1593,27 +1636,6 @@ sap.ui.define([
 			}
 
 			return bMissingPredicate ? null : aPredicates;
-		},
-
-		/**
-		 * Returns the index of the key predicate in the last segment of the given path.
-		 *
-		 * @param {string} sPath - The path
-		 * @returns {number} The index of the key predicate
-		 * @throws {Error} If no path is given or the last segment contains no key predicate
-		 *
-		 * @public
-		 */
-		getPredicateIndex : function (sPath) {
-			var iPredicateIndex = sPath
-				? sPath.indexOf("(", sPath.lastIndexOf("/"))
-				: -1;
-
-			if (iPredicateIndex < 0 || !sPath.endsWith(")")) {
-				throw new Error("Not a list context path to an entity: " + sPath);
-			}
-
-			return iPredicateIndex;
 		},
 
 		/**
@@ -1830,6 +1852,24 @@ sap.ui.define([
 					oTarget[sSegment] = oSource[sSegment];
 				}
 			});
+		},
+
+		/**
+		 * Inserts the given element into the given array at the given index, even it is beyond the
+		 * array's current length.
+		 *
+		 * @param {any[]} aElements - Some array
+		 * @param {number} iIndex - Some index
+		 * @param {any} vElement - Some element
+		 *
+		 * @public
+		 */
+		insert : function (aElements, iIndex, vElement) {
+			if (iIndex >= aElements.length) { // Note: #splice ignores iIndex then!
+				aElements[iIndex] = vElement;
+			} else {
+				aElements.splice(iIndex, 0, vElement);
+			}
 		},
 
 		/**
@@ -3039,21 +3079,6 @@ sap.ui.define([
 					mMap[sPath.replace(sTransientPredicate, sPredicate)] = mMap[sPath];
 					delete mMap[sPath];
 				}
-			}
-		},
-
-		/**
-		 * Sets "@$ui5.context.isSelected" in <code>oTarget</code> to true if it is true in
-		 * <code>oSource</code>.
-		 *
-		 * @param {object} oSource - The source object
-		 * @param {object} oTarget - The target object
-		 *
-		 * @public
-		 */
-		copySelected : function (oSource, oTarget) {
-			if (oSource["@$ui5.context.isSelected"] === true) {
-				oTarget["@$ui5.context.isSelected"] = true;
 			}
 		},
 

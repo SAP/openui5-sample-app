@@ -112,7 +112,12 @@ sap.ui.define(["sap/base/future", "sap/base/Log", "sap/ui/core/mvc/View", "sap/u
 					type: oExtensionConfig.type
 				};
 
-				// processingMode must not be set for sync path
+				/**
+				 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
+				 * in the next major release
+				 *
+				 * processingMode must not be set for sync path
+				 */
 				if (bAsync && oView._sProcessingMode) {
 					oFactoryConfig.processingMode = oView._sProcessingMode;
 				}
@@ -147,16 +152,25 @@ sap.ui.define(["sap/base/future", "sap/base/Log", "sap/ui/core/mvc/View", "sap/u
 				} else if (oExtensionConfig.className === "sap.ui.core.mvc.View") {
 					oFactoryConfig.viewName = oExtensionConfig.viewName;
 
-					// Call View._create in order to keep the processingMode (e.g. 'SequentialLegacy')
-					// View.create always overrides the processingMode to 'Sequential'
-					var oExtensionView = View._create(oFactoryConfig);
+					/**
+					 * @ui5-transform-hint replace-local false
+					 */
+					const bLegacyCreate = true;
 
-					if (bAsync) {
-						vResult = oExtensionView.loaded();
+					if (bLegacyCreate) {
+						// Call View._create in order to keep the processingMode (e.g. 'SequentialLegacy')
+						// View.create always overrides the processingMode to 'Sequential'
+						const oExtensionView = View._create(oFactoryConfig);
+						if (bAsync) {
+							vResult = oExtensionView.loaded();
+						} else {
+							// sync view creation
+							vResult = [oExtensionView]; // vResult is now an array, even if empty - so if a Fragment is configured, the default content below is not added anymore
+						}
 					} else {
-						// sync view creation
-						vResult = [oExtensionView]; // vResult is now an array, even if empty - so if a Fragment is configured, the default content below is not added anymore
+						vResult = View.create(oFactoryConfig);
 					}
+
 				} else {
 					// unknown extension class
 					future.warningThrows("Customizing: Unknown extension className configured in Component.js for extension point '" + sExtName

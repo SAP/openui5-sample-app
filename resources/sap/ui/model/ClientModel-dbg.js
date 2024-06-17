@@ -29,7 +29,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.Model
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @param {string} [oData] URL where to load the data from
 	 * @public

@@ -206,7 +206,7 @@ sap.ui.define([
 	 * {@link sap.m.PlanningCalendarView PlanningCalendarView}'s properties.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @constructor
 	 * @public
@@ -276,6 +276,8 @@ sap.ui.define([
 
 				/**
 				 * Defines the text that is displayed when no {@link sap.m.PlanningCalendarRow PlanningCalendarRows} are assigned.
+				 * <b>Note:</b> If both <code>noDataText</code> property and <code>noData</code> aggregation are provided, the <code>noData</code> aggregation takes priority.
+				 * If the <code>noData</code> aggregation is undefined or set to null, the <code>noDataText</code> property is used instead.
 				 */
 				noDataText : {type : "string", group : "Misc", defaultValue : null},
 
@@ -506,7 +508,18 @@ sap.ui.define([
 				/**
 				 * Hidden, for internal use only.
 				 */
-				header : {type : "sap.ui.core.Control", multiple : false, visibility : "hidden"}
+				header : {type : "sap.ui.core.Control", multiple : false, visibility : "hidden"},
+
+				/**
+				 * Defines the custom visualization if there is no data available.
+				 * <b>Note:</b> If both <code>noDataText</code> property and <code>noData</code> aggregation are provided, the <code>noData</code> aggregation takes priority.
+				 * If the <code>noData</code> aggregation is undefined or set to null, the <code>noDataText</code> property is used instead.
+				 * @since 1.125.0
+				 */
+				noData : {type: "sap.ui.core.Control", multiple: false, altTypes: ["string"], forwarding: {
+					idSuffix: "-Table",
+					aggregation: "noData"
+				}}
 
 			},
 			associations: {
@@ -524,6 +537,7 @@ sap.ui.define([
 				 * @since 1.40.0
 				 */
 				legend: { type: "sap.ui.unified.CalendarLegend", multiple: false}
+
 			},
 			events : {
 
@@ -1522,6 +1536,33 @@ sap.ui.define([
 			this._oHeaderObserver = null;
 		}
 	};
+
+	/**
+	 * Gets current value of property <code>startDate</code>.
+	 *
+	 * @method
+	 * @public
+	 * @name sap.m.PlanningCalendar#getStartDate
+	 * @returns {Date|module:sap/ui/core/date/UI5Date} The startDate as a UI5Date or JavaScript Date object
+	 */
+
+	/**
+	 * Gets current value of property <code>minDate</code>.
+	 *
+	 * @method
+	 * @public
+	 * @name sap.m.PlanningCalendar#getMinDate
+	 * @returns {Date|module:sap/ui/core/date/UI5Date} The minDate as a UI5Date or JavaScript Date object
+	 */
+
+	/**
+	 * Gets current value of property <code>maxDate</code>.
+	 *
+	 * @method
+	 * @public
+	 * @name sap.m.PlanningCalendar#getMaxDate
+	 * @returns {Date|module:sap/ui/core/date/UI5Date} The maxDate as a UI5Date or JavaScript Date object
+	 */
 
 	/**
 	 * Sets the given date as start date. The current date is used as default.

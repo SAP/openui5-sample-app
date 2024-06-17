@@ -576,55 +576,66 @@ function(
 		var aResult = [],
 			sInternalPrefix = findNamespacePrefix(xmlNode, UI5_INTERNAL_NAMESPACE, "__ui5"),
 			pResultChain = parseAndLoadRequireContext(xmlNode, bAsync) || SyncPromise.resolve(),
-			rm = {
-				openStart: function(tagName, sId) {
-					aResult.push(["openStart", [tagName, sId]]);
-				},
-				voidStart: function(tagName, sId) {
-					aResult.push(["voidStart", [tagName, sId]]);
-				},
-				style: function(name, value) {
-					aResult.push(["style", [name, value]]);
-				},
-				"class": function(clazz) {
-					aResult.push(["class", [clazz]]);
-				},
-				attr: function(name, value) {
-					aResult.push(["attr", [name, value]]);
-				},
-				openEnd: function() {
-					aResult.push(["openEnd"]);
-				},
-				voidEnd: function() {
-					aResult.push(["voidEnd"]);
-				},
-				text: function(str) {
-					aResult.push(["text", [str]]);
-				},
-				unsafeHtml: function(str) {
-					aResult.push(["unsafeHtml", [str]]);
-				},
-				close: function(tagName) {
-					aResult.push(["close", [tagName]]);
-				},
-				renderControl: function(pContent) {
-					aResult.push(pContent);
-				}
-			};
+			collectControl = (pContent) => aResult.push(pContent);
 
-		// We might have a set of already resolved "core:require" modules given from outside.
-		// This only happens when a new XMLView instance is used as a wrapper for HTML nodes, in this case
-		// the "core:require" modules need to be propagated down into the nested XMLView.
-		// We now need to merge the set of passed "core:require" modules with the ones defined on our root element,
-		// with our own modules having priority in case of duplicate aliases.
+		/**
+		 * @deprecated since version 1.120 because the support of HTML and SVG nodes is deprecated
+		 */
+		const rm = {
+			openStart: function(tagName, sId) {
+				aResult.push(["openStart", [tagName, sId]]);
+			},
+			voidStart: function(tagName, sId) {
+				aResult.push(["voidStart", [tagName, sId]]);
+			},
+			style: function(name, value) {
+				aResult.push(["style", [name, value]]);
+			},
+			"class": function(clazz) {
+				aResult.push(["class", [clazz]]);
+			},
+			attr: function(name, value) {
+				aResult.push(["attr", [name, value]]);
+			},
+			openEnd: function() {
+				aResult.push(["openEnd"]);
+			},
+			voidEnd: function() {
+				aResult.push(["voidEnd"]);
+			},
+			text: function(str) {
+				aResult.push(["text", [str]]);
+			},
+			unsafeHtml: function(str) {
+				aResult.push(["unsafeHtml", [str]]);
+			},
+			close: function(tagName) {
+				aResult.push(["close", [tagName]]);
+			}
+		};
+
+		/**
+		 * @deprecated since 1.120 because the support of HTML and SVG in XMLView is deprecated
+		 */
 		if (oParseConfig?.settings?.requireContext) {
+			// We might have a set of already resolved "core:require" modules given from outside.
+			// This only happens when a new XMLView instance is used as a wrapper for HTML nodes, in this case
+			// the "core:require" modules need to be propagated down into the nested XMLView.
+			// We now need to merge the set of passed "core:require" modules with the ones defined on our root element,
+			// with our own modules having priority in case of duplicate aliases.
 			pResultChain = pResultChain.then((mRequireContext) => {
 				return Object.assign({}, oParseConfig.settings.requireContext, mRequireContext);
 			});
 		}
 
-		bAsync = bAsync && !!oView._sProcessingMode;
-		Log.debug("XML processing mode is " + (oView._sProcessingMode || "default") + ".", "", "XMLTemplateProcessor");
+		/**
+		 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
+		 * in the next major release
+		 */
+		(() => {
+			bAsync = bAsync && !!oView._sProcessingMode;
+			Log.debug("XML processing mode is " + (oView._sProcessingMode || "default") + ".", "", "XMLTemplateProcessor");
+		})();
 		Log.debug("XML will be processed " + (bAsync ? "asynchronously" : "synchronously") + ".", "", "XMLTemplateProcessor");
 
 		var bDesignMode = DesignTime.isDesignModeEnabled();
@@ -711,7 +722,11 @@ function(
 
 			// Normalize the view content by wrapping it with either a "View" tag or a "FragmentDefinition" tag to
 			// simplify the parsing process
-			if (oView.isA("sap.ui.core.mvc.XMLView") && (node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE)) {
+			/**
+			 * @ui5-transform-hint replace-local false
+			 */
+			const bCreateViewWrapper = oView.isA("sap.ui.core.mvc.XMLView") && (node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE);
+			if (bCreateViewWrapper) {
 				// XHTML or SVG nodes are placed into a sub view without having "View" as root tag
 				// Wrap the content into a "View" node
 				oWrapper = node.ownerDocument.createElementNS(CORE_MVC_NAMESPACE, "View");
@@ -881,10 +896,22 @@ function(
 				bRenderingRelevant = bRootArea && (oView.isA("sap.ui.core.Fragment") || (oAggregation && oAggregation.name === "content")),
 				pResult, i;
 
+			/**
+			 * @ui5-transform-hint replace-local false
+			 */
+			const bRenderText = node.nodeType === 3 /* TEXT_NODE */ && bRenderingRelevant;
+
 			if ( node.nodeType === 1 /* ELEMENT_NODE */ ) {
-				// differentiate between SAPUI5 and plain-HTML children
-				if (node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE ) {
+				// Using native HTML in future is not allowed. We need to check explicitely in order to throw
+				if (node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE) {
 					future.warningThrows(`Using native HTML content in XMLViews is deprecated.`, oView.getId());
+				}
+				/**
+				 * Differentiate between SAPUI5 and plain-HTML children
+				 * @ui5-transform-hint replace-local false
+				 */
+				const isNativeContent = node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE;
+				if (isNativeContent) {
 					if (bRootArea) {
 						if (oAggregation && oAggregation.name !== "content") {
 							Log.error(createErrorInfo(node, "XHTML nodes can only be added to the 'content' aggregation and not to the '" + oAggregation.name + "' aggregation."));
@@ -1021,9 +1048,16 @@ function(
 									id: id ? getId(oView, node, id) : undefined,
 									xmlNode: node,
 									requireContext: oRequireContext,
-									containingView: oView._oContainingView,
-									processingMode: oView._sProcessingMode // add processing mode, so it can be propagated to subviews inside the HTML block
+									containingView: oView._oContainingView
 								};
+
+								/**
+								 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
+								 * in the next major release
+								 *
+								 * add processing mode, so it can be propagated to subviews inside the HTML block
+								 */
+								mViewParameters.processingMode = oView._sProcessingMode;
 
 								// running with owner component
 								return scopedRunWithOwner(function() {
@@ -1049,14 +1083,14 @@ function(
 				} else  {
 					pResult = createControlOrExtension(node, pRequireContext, oClosestBinding);
 					if (bRenderingRelevant) {
-						rm.renderControl(pResult);
+						collectControl(pResult);
 					}
 					// non-HTML (SAPUI5) control
 					// we must return the result in either bRootArea=true or the bRootArea=false case because we use the result
 					// to add the control to the aggregation of its parent control
 					return pResult;
 				}
-			} else if (node.nodeType === 3 /* TEXT_NODE */ && bRenderingRelevant) {
+			} else if (bRenderText) {
 				if (!oConfig || !oConfig.contentBound) {
 					// content aggregation isn't bound
 					rm.text(node.textContent);
@@ -1431,10 +1465,15 @@ function(
 					Log.error(oError);
 				}
 
+				/**
+				 * @ui5-transform-hint replace-local false
+				 */
+				const bSequentialLegacyMode = oView._sProcessingMode === XMLProcessingMode.SequentialLegacy;
+
 				// [COMPATIBILITY]
 				// sync: we just log the error and keep on processing
 				// asnyc: throw the error, so the parseTemplate Promise will reject
-				if (bAsync && oView._sProcessingMode !== XMLProcessingMode.SequentialLegacy) {
+				if (bAsync && !bSequentialLegacyMode) {
 					throw oError;
 				}
 			});
@@ -1654,10 +1693,9 @@ function(
 
 					mSettings.type = oClass._sType || sType;
 
-					// If the view is owned by an async-component we can propagate the asynchronous creation behavior to the nested views
-					if (bIsAsyncComponent && bAsync) {
+					if (bAsync) {
 						// legacy check: async=false is not supported with an async-component
-						if (mSettings.async === false) {
+						if (bIsAsyncComponent && mSettings.async === false) {
 							throw new Error(
 								"A nested view contained in a Component implementing 'sap.ui.core.IAsyncContentCreation' is processed asynchronously by default and cannot be processed synchronously.\n" +
 								"Affected Component '" + oOwnerComponent.getMetadata().getComponentName() + "' and View '" + mSettings.viewName + "'."
@@ -1668,33 +1706,31 @@ function(
 							return View.create(mSettings);
 						});
 					} else {
-						// Pass processingMode to nested XMLViews
+						/**
+						 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
+						 * in the next major release
+						 *
+						 * Pass processingMode to nested XMLViews
+						 */
 						if (oClass.getMetadata().isA("sap.ui.core.mvc.XMLView") && oView._sProcessingMode) {
 							mSettings.processingMode = oView._sProcessingMode;
 						}
 
-						var sViewClass = View._getViewClassName(mSettings, true /* skip error log*/);
-						if (bAsync && sViewClass) {
-							pInstanceCreated = new Promise(function(resolve, reject) {
-								sap.ui.require([sViewClass], resolve, reject);
-							}).then(function() {
-								return scopedRunWithOwner(function() {
-									return View._create(mSettings);
-								});
-							});
-						} else {
-							vNewControlInstance = scopedRunWithOwner(function() {
-								return View._create(mSettings);
-							});
-						}
+						vNewControlInstance = scopedRunWithOwner(function() {
+							return View._create(mSettings);
+						});
 					}
 				} else if (oClass.getMetadata().isA("sap.ui.core.Fragment") && bAsync) {
-
-					// Pass processingMode to any fragments except JS
-					// XML / HTML fragments: might include nested views / fragments,
-					//  which are processed asynchronously. Therefore the processingMode is needed
-					// JS fragments: might include synchronously or asynchronously created content. Nevertheless, the execution of the
-					//  content creation is not in the scope of the xml template processor, therefore the processing mode is not needed
+					/**
+					 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
+					 * in the next major release
+					 *
+					 * Pass processingMode to any fragments except JS
+					 * XML / HTML fragments: might include nested views / fragments,
+					 *  which are processed asynchronously. Therefore the processingMode is needed
+					 * JS fragments: might include synchronously or asynchronously created content. Nevertheless, the execution of the
+					 *  content creation is not in the scope of the xml template processor, therefore the processing mode is not needed
+					 */
 					if (sType !== ViewType.JS) {
 						mSettings.processingMode = oView._sProcessingMode;
 					}

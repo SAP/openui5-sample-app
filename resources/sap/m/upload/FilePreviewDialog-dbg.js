@@ -68,7 +68,7 @@ sap.ui.define([
    * @public
    * @experimental since 1.120
    * @since 1.120
-   * @version 1.124.1
+   * @version 1.125.0
    * @extends sap.ui.core.Element
    * @name sap.m.upload.FilePreviewDialog
    */
@@ -294,7 +294,8 @@ sap.ui.define([
 						case PreviewableMediaType.ChromePdf: {
 							oPage = new PDFViewer({
 								source: oItem.getUrl(),
-								showDownloadButton: false
+								showDownloadButton: false,
+								isTrustedSource: oItem?.getIsTrustedSource()
 							});
 							oPage.setBusy(true);
 							break;

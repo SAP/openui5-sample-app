@@ -22,7 +22,7 @@ sap.ui.define(function () {
 	WizardStepRenderer.startWizardStep = function (oRm, oStep) {
 		oRm.openStart("div", oStep)
 			.accessibilityState(oStep, {
-				labelledby: oStep.getId() + "-Title",
+				labelledby: oStep._getNumberInvisibleText().getId(),
 				role: "region"
 			})
 			.class("sapMWizardStep")

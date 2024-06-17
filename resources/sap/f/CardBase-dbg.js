@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @constructor
 	 * @public
@@ -244,18 +244,45 @@ sap.ui.define([
 	 */
 	CardBase.prototype._getAriaLabelledIds = function () {
 		var oHeader = this.getCardHeader();
+		const sBlockingMessageAriaLabelsIds = this._getBlockingMessageAriaLabelledByIds();
 
 		if (oHeader) {
 			if (this._isInsideGridContainer()) {
+				if (sBlockingMessageAriaLabelsIds) {
+					return oHeader._getAriaLabelledBy() + " " + sBlockingMessageAriaLabelsIds;
+				}
 				return oHeader._getAriaLabelledBy();
 			}
 
 			if (oHeader._getTitle && oHeader._getTitle()) {
+				if (sBlockingMessageAriaLabelsIds) {
+					return oHeader._getTitle().getId() + " " + sBlockingMessageAriaLabelsIds;
+				}
 				return oHeader._getTitle().getId();
 			}
 		}
 
 		return this._ariaText.getId();
+	};
+
+	/**
+	 * Gets the ids of the elements in the illustrated message that have to be labelled.
+	 *
+	 * @return {string} sAriaLabelledBy ids of elements that have to be labelled
+	 * @private
+	 */
+	CardBase.prototype._getBlockingMessageAriaLabelledByIds = function () {
+		if (!this.getCardContent()?.getAggregation("_blockingMessage")) {
+			return "";
+		}
+		const oIllustration = this.getCardContent().getAggregation("_blockingMessage")._getIllustratedMessage();
+		const sTitleId = oIllustration._getTitle().sId;
+		const sDescriptionId = oIllustration._getDescription()?.sId;
+
+		if (oIllustration._getDescription().getText()) {
+			return sTitleId + " " + sDescriptionId;
+		}
+		return sTitleId;
 	};
 
 	/**

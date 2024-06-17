@@ -56,7 +56,7 @@ sap.ui.define([
 		 * With this plugIn the performance measurements are displayed
 		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.124.1
+		 * @version 1.125.0
 		 * @private
 		 * @alias sap.ui.core.support.plugins.Performance
 		 */

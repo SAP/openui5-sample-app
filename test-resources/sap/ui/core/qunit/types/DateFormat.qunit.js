@@ -7,6 +7,7 @@ sap.ui.define([
 	"sap/ui/core/format/FormatUtils",
 	"sap/ui/core/Locale",
 	"sap/ui/core/LocaleData",
+	"sap/ui/core/date/Buddhist",
 	"sap/ui/core/date/UniversalDate",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/library",
@@ -14,21 +15,20 @@ sap.ui.define([
 	"sap/ui/core/date/CalendarWeekNumbering",
 	"sap/ui/test/TestUtils",
 	// load all required calendars in advance
-	"sap/ui/core/date/Buddhist",
 	"sap/ui/core/date/Gregorian",
 	"sap/ui/core/date/Islamic",
 	"sap/ui/core/date/Japanese",
 	"sap/ui/core/date/Persian"
-], function(Log, Formatting, Localization, extend, DateFormat, FormatUtils, Locale, LocaleData,
-		UniversalDate, UI5Date, library, Supportability, CalendarWeekNumbering, TestUtils) {
+], function(Log, Formatting, Localization, extend, DateFormat, FormatUtils, Locale, LocaleData, Buddhist, UniversalDate,
+		UI5Date, library, Supportability, CalendarWeekNumbering, TestUtils) {
 	"use strict";
 	/* eslint-disable max-nested-callbacks */
 	/*global QUnit, sinon */
 
 	// shortcut for sap.ui.core.CalendarType
 	const CalendarType = library.CalendarType;
-	const oDateTime = UI5Date.getInstance("Tue Sep 23 06:46:13 2000 GMT+0000");
-	const oTZDateTime = UI5Date.getInstance("Tue Sep 23 03:46:13 2000 GMT+0530");
+	const oDateTime = UI5Date.getInstance("2000-09-23T06:46:13Z");
+	const oTZDateTime = UI5Date.getInstance("2000-09-23T03:46:13+05:30");
 	const oDefaultDate = DateFormat.getInstance();
 	const oDefaultDateTime = DateFormat.getDateTimeInstance();
 	const oDefaultTime = DateFormat.getTimeInstance();
@@ -697,7 +697,7 @@ sap.ui.define([
 		});
 
 		QUnit.test("format custom date timezone UTC+2 (EET)", function (assert) {
-			var oDate = UI5Date.getInstance("Tue Oct 9 11:37:56 2018 GMT+0000"),
+			var oDate = UI5Date.getInstance("2018-10-09T11:37:56Z"),
 				oCustomDateFormat, sFormatted;
 			oDate.setMilliseconds(235);
 
@@ -1646,7 +1646,7 @@ sap.ui.define([
 		});
 
 		QUnit.test("parse short format without delimiter", function (assert) {
-			var oDate = UI5Date.getInstance("Mon Apr 7 00:00:00 2014"),
+			var oDate = UI5Date.getInstance("2014-04-07T00:00:00"),
 				oFormat = DateFormat.getDateInstance(),
 				sDateIn = "040714", oDateOut = oFormat.parse(sDateIn);
 
@@ -1706,7 +1706,7 @@ sap.ui.define([
 		});
 
 		QUnit.test("parse and format quarters", function (assert) {
-			var oDate = UI5Date.getInstance("Wed Jul 4 2001"),
+			var oDate = UI5Date.getInstance(2001, 6, 4),
 				oQuarter1 = DateFormat.getDateInstance({ pattern: "qq" }),
 				oQuarter2 = DateFormat.getDateInstance({ pattern: "qqq" }),
 				oQuarter3 = DateFormat.getDateInstance({ pattern: "qqqq" }),
@@ -2980,7 +2980,7 @@ sap.ui.define([
 		QUnit.module("Islamic Date in locale en");
 
 		QUnit.test("format date to Islamic type with locale en", function (assert) {
-			var oDate = UI5Date.getInstance("Wed Jul 4 2001"),
+			var oDate = UI5Date.getInstance(2001, 6, 4),
 				oDateFormat = DateFormat.getDateInstance({
 					calendarType: CalendarType.Islamic
 				});
@@ -3056,7 +3056,7 @@ sap.ui.define([
 
 		["ar", "ar_EG", "ar_SA", "he"].forEach(function (sLocale, index) {
 			QUnit.test("format Islamic date " + sLocale, function (assert) {
-				var oDate = UI5Date.getInstance("Wed Jul 4 2001"),
+				var oDate = UI5Date.getInstance(2001, 6, 4),
 					oDateFormat = DateFormat.getDateInstance(new Locale(sLocale));
 
 				assert.strictEqual(oDateFormat.format(oDate), aResultLocal[index], "Date is formatted to Islamic Date in " + sLocale + " locale");
@@ -3088,7 +3088,7 @@ sap.ui.define([
 		QUnit.module("Japanese Date");
 
 		QUnit.test("format date to Japanese type", function (assert) {
-			var oDate = UI5Date.getInstance("Wed Jul 4 2001"),
+			var oDate = UI5Date.getInstance(2001, 6, 4),
 				oDateFormat = DateFormat.getDateInstance({
 					calendarType: CalendarType.Japanese
 				}, new Locale("ja_JP"));
@@ -3123,7 +3123,7 @@ sap.ui.define([
 		});
 
 		QUnit.test("format/parse date with Gannen instead of Ichinen", function (assert) {
-			var oDate = UI5Date.getInstance("May 1 2019"),
+			var oDate = UI5Date.getInstance(2019, 4, 1),
 				sDate = "令和元年5月1日",
 				oDateFormat = DateFormat.getDateInstance({
 					calendarType: CalendarType.Japanese
@@ -3134,7 +3134,7 @@ sap.ui.define([
 			assert.strictEqual(sFormatted, sDate, "Date is formatted correctly with Gannen year");
 			assert.deepEqual(oParsed, oDate, "Date with Gannen year is parsed correctly");
 
-			oDate = UI5Date.getInstance("Apr 1 2019");
+			oDate = UI5Date.getInstance(2019, 3, 1);
 			sDate = "平成31年4月1日";
 			sFormatted = oDateFormat.format(oDate);
 			oParsed = oDateFormat.parse(sDate);
@@ -3142,7 +3142,7 @@ sap.ui.define([
 			assert.strictEqual(sFormatted, sDate, "Year ending with 1 is formatted as a number");
 			assert.deepEqual(oParsed, oDate, "Date with numeric year is parsed correctly");
 
-			oDate = UI5Date.getInstance("May 1 2019");
+			oDate = UI5Date.getInstance(2019, 4, 1);
 			sDate = "R1/5/1";
 			oDateFormat = DateFormat.getDateInstance({
 				calendarType: CalendarType.Japanese,
@@ -3154,7 +3154,7 @@ sap.ui.define([
 			assert.strictEqual(sFormatted, sDate, "Date is formatted correctly with numeric year");
 			assert.deepEqual(oParsed, oDate, "Date with numeric year is parsed correctly");
 
-			oDate = [UI5Date.getInstance("May 1 2019"), UI5Date.getInstance("May 10 2019")];
+			oDate = [UI5Date.getInstance(2019, 4, 1), UI5Date.getInstance(2019, 4, 10)];
 			sDate = "令和元年5月1日～10日";
 			oDateFormat = DateFormat.getDateInstance({
 				calendarType: CalendarType.Japanese,
@@ -3167,7 +3167,7 @@ sap.ui.define([
 			assert.strictEqual(sFormatted, sDate, "Date interval is formatted correctly with Gannen year");
 			assert.deepEqual(oParsed, oDate, "Date interval with Gannen year is parsed correctly");
 
-			oDate = [UI5Date.getInstance("Apr 1 2019"), UI5Date.getInstance("May 1 2019")];
+			oDate = [UI5Date.getInstance(2019, 3, 1), UI5Date.getInstance(2019, 4, 1)];
 			sDate = "平成31年4月1日～令和元年5月1日";
 			sFormatted = oDateFormat.format(oDate);
 			oParsed = oDateFormat.parse(sDate);
@@ -3204,7 +3204,7 @@ sap.ui.define([
 		QUnit.module("Japanese Date in locale en");
 
 		QUnit.test("format date to Japanese type with locale en", function (assert) {
-			var oDate = UI5Date.getInstance("Wed Jul 4 2001"),
+			var oDate = UI5Date.getInstance(2001, 6, 4),
 				oDateFormat = DateFormat.getDateInstance({
 					calendarType: CalendarType.Japanese
 				});
@@ -3239,7 +3239,7 @@ sap.ui.define([
 		QUnit.module("Persian Date");
 
 		QUnit.test("format date to Persian type", function (assert) {
-			var oDate = UI5Date.getInstance("Wed Jul 4 2001"),
+			var oDate = UI5Date.getInstance(2001, 6, 4),
 				oDateFormat = DateFormat.getDateInstance({
 					calendarType: CalendarType.Persian
 				}, new Locale("fa_IR"));
@@ -3274,7 +3274,7 @@ sap.ui.define([
 		QUnit.module("Persian Date in locale en");
 
 		QUnit.test("format date to Persian type with locale en", function (assert) {
-			var oDate = UI5Date.getInstance("Wed Jul 4 2001"),
+			var oDate = UI5Date.getInstance(2001, 6, 4),
 				oDateFormat = DateFormat.getDateInstance({
 					calendarType: CalendarType.Persian
 				});
@@ -3309,7 +3309,7 @@ sap.ui.define([
 		QUnit.module("Buddhist Date");
 
 		QUnit.test("format date to Buddhist type", function (assert) {
-			var oDate = UI5Date.getInstance("Wed Jul 4 2001"),
+			var oDate = UI5Date.getInstance(2001, 6, 4),
 				oDateFormat = DateFormat.getDateInstance({
 					calendarType: CalendarType.Buddhist
 				}, new Locale("th_TH"));
@@ -3371,7 +3371,7 @@ sap.ui.define([
 		QUnit.module("Buddhist Date in locale en");
 
 		QUnit.test("format date to Buddhist type with locale en", function (assert) {
-			var oDate = UI5Date.getInstance("Wed Jul 4 2001"),
+			var oDate = UI5Date.getInstance(2001, 6, 4),
 				oDateFormat = DateFormat.getDateInstance({
 					calendarType: CalendarType.Buddhist
 				});
@@ -3380,7 +3380,7 @@ sap.ui.define([
 		});
 
 		QUnit.test("format date to Buddhist type with locale en and calendar week", function (assert) {
-			var oDate = UI5Date.getInstance("Wed Jul 4 2001"),
+			var oDate = UI5Date.getInstance(2001, 6, 4),
 				oDateFormat = DateFormat.getDateInstance({
 					calendarType: CalendarType.Buddhist,
 					pattern: "YYYY'/'ww"
@@ -3420,6 +3420,35 @@ sap.ui.define([
 			doTestRelative(assert, false, { style: "long", relativeRange: [1, 5], calendarType: CalendarType.Buddhist }, "en", "style long, range [1, 5], en with calendar type Buddhist");
 		});
 
+	// DINC0133323
+	[
+		{buddhistYear : 2465, date : "May 1, 2465 BE", expected : {day : 1, month : 4, year : 1922}},
+		{buddhistYear : 2482, date : "Mar 1, 2482 BE", expected : {day : 1, month : 2, year : 1940}},
+		{buddhistYear : 2483, date : "Apr 1, 2483 BE", expected : {day : 1, month : 3, year : 1940}},
+		{buddhistYear : 2484, date : "Jan 1, 2484 BE", expected : {day : 1, month : 0, year : 1941}},
+		{buddhistYear : 2484, date : "Apr 1, 2484 BE", expected : {day : 1, month : 3, year : 1941}}
+	].forEach(function (oFixture, i) {
+		QUnit.test("parse and format dates with Buddhist calendar around era change " + i, function (assert) {
+			const oDateFormat = DateFormat.getDateInstance({
+				calendarType: CalendarType.Buddhist
+			});
+			const oFullYearSpy = this.spy(Buddhist.prototype, "setUTCFullYear");
+			const oMonthSpy = this.spy(Buddhist.prototype, "setUTCMonth");
+
+			// code under test
+			const oDate = oDateFormat.parse(oFixture.date);
+
+			assert.ok(oFullYearSpy.calledOnceWithExactly(oFixture.buddhistYear, oFixture.expected.month,
+				oFixture.expected.day));
+			assert.ok(oMonthSpy.notCalled, "setMonth is not called");
+			assert.strictEqual(oDate.getFullYear(), oFixture.expected.year);
+			assert.strictEqual(oDate.getMonth(), oFixture.expected.month);
+			assert.strictEqual(oDate.getDate(), 1, oFixture.expected.day);
+
+			// code under test
+			assert.strictEqual(oDateFormat.format(oDate), oFixture.date);
+		});
+	});
 
 		QUnit.module("interval options validation", {
 			beforeEach: function (assert) {

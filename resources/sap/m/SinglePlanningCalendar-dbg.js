@@ -111,7 +111,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @constructor
 	 * @public
@@ -548,7 +548,11 @@ function(
 						 * The date as a UI5Date or JavaScript Date object of the cell with the
 						 * pressed more link.
 						 */
-						date: { type: "object" }
+						date: {type: "object"},
+						/**
+						 * The link that has been triggered
+						 */
+						sourceLink: {type: "sap.m.Link"}
 					}
 				},
 
@@ -690,6 +694,15 @@ function(
 
 		return this;
 	};
+
+	/**
+	 * Gets current value of property <code>startDate</code>.
+	 *
+	 * @method
+	 * @public
+	 * @name sap.m.SinglePlanningCalendar#getStartDate
+	 * @returns {Date|module:sap/ui/core/date/UI5Date} The startDate as a UI5Date or JavaScript Date object
+	 */
 
 	SinglePlanningCalendar.prototype.setTitle = function (sTitle) {
 		this._getHeader().setTitle(sTitle);
@@ -1351,7 +1364,8 @@ function(
 		};
 		var fnHandleMoreLinkPress = function(oEvent) {
 			this.fireEvent("moreLinkPress", {
-				date: oEvent.getParameter("date")
+				date: oEvent.getParameter("date"),
+				sourceLink: oEvent.getParameter("sourceLink")
 			});
 		};
 		var fnHandleWeekNumberPress = function(oEvent) {

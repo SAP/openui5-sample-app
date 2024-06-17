@@ -63,7 +63,7 @@ sap.ui.define([
 	 * @constructor
 	 * @public
 	 * @deprecated as of version 1.124, replaced by {@link sap.m.plugins.UploadSetwithTable}
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @alias sap.m.upload.UploadSetwithTable
 	 */
 	var UploadSetwithTable = Table.extend("sap.m.upload.UploadSetwithTable", {
@@ -125,7 +125,7 @@ sap.ui.define([
 				 * @param {sap.m.upload.UploadSetwithTable.ItemInfo} oItemInfo The info of the item queued for upload.
 				 * @returns {Promise<sap.m.upload.UploadSetwithTableItem>} oPromise, once resolved the UploadSetWithTable control initiates the upload.
 				 * @public
-				 * @deprecated as of version 1.124.
+				 * @deprecated as of version 1.124, replaced by {@link sap.m.plugins.UploadSetwithTable.itemValidationHandler}
 				**/
 
 				/**
@@ -135,7 +135,7 @@ sap.ui.define([
 				 * @property {number} iTotalItemsForUpload Total count of items queued for upload.
 				 * @property {sap.m.upload.UploadSetwithTable} oSource Source on which the callback was invoked.
 				 * @public
-				 * @deprecated as of version 1.124.
+				 * @deprecated as of version 1.124, replaced by {@link sap.m.plugins.UploadSetwithTable.ItemInfo}
 				**/
 
 				/**

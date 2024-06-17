@@ -97,7 +97,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.124.1
+		 * @version 1.125.0
 		 *
 		 * @constructor
 		 * @public
@@ -443,7 +443,6 @@ sap.ui.define([
 		 * @override
 		 */
 		DynamicSideContent.prototype.onBeforeRendering = function () {
-			this._bSuppressInitialFireBreakPointChange = true;
 			this._detachContainerResizeListener();
 
 			this._SCVisible = (this._SCVisible === undefined) ? this.getProperty("showSideContent") : this._SCVisible;
@@ -660,12 +659,11 @@ sap.ui.define([
 		 */
 		DynamicSideContent.prototype._setBreakpointFromWidth = function (iWidth) {
 			var sNewBreakpoint = this._getBreakPointFromWidth(iWidth),
-				sCurrentBreakpoint = this._currentBreakpoint;
+				sCurrentBreakpoint = this.getCurrentBreakpoint();
 
 			this._currentBreakpoint = sNewBreakpoint;
-			if (this._bSuppressInitialFireBreakPointChange) {
-				this._bSuppressInitialFireBreakPointChange = false;
-			} else {
+
+			if (sCurrentBreakpoint !== undefined) {
 				sNewBreakpoint !== sCurrentBreakpoint && this.fireBreakpointChanged({currentBreakpoint : this._currentBreakpoint});
 			}
 		};

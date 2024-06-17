@@ -20,11 +20,11 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated as of version 1.88
+	 * @deprecated as of version 1.88, the concept has been discarded.
 	 * @alias sap.m.UploadCollectionParameter
 	 */
 	var UploadCollectionParameter = Element.extend("sap.m.UploadCollectionParameter", /** @lends sap.m.UploadCollectionParameter.prototype */ {

@@ -99,7 +99,7 @@ function(
 	 * @class
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @public
 	 * @alias sap.ui.core.Fragment
 	 */
@@ -150,6 +150,9 @@ function(
 				sOwnerId : { type: 'sap.ui.core.ID', visibility: 'hidden' },
 
 				/**
+				 * @deprecated because only the "Sequential" processing mode will be supported
+				 * in the next major release
+				 *
 				 * The processing mode is not used by the Fragment itself.
 				 * It is only relevant for XMLViews nested within the Fragment.
 				 */
@@ -538,6 +541,11 @@ function(
 
 		mParameters.type = mParameters.type || "XML";
 		mParameters.async = true;
+
+		/**
+		 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
+		 * in the next major release
+		 */
 		mParameters.processingMode = mParameters.processingMode || XMLProcessingMode.Sequential;
 
 		// map new parameter names to classic API, delete new names to avoid assertion failures
@@ -831,7 +839,13 @@ function(
 				this._oContainingView.oController = (mSettings.containingView && mSettings.containingView.oController) || mSettings.oController;
 			}
 
+
+			/**
+			 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
+			 * in the next major release
+			 *
 			// If given, processingMode will be passed down to nested subviews in XMLTemplateProcessor
+			 */
 			this._sProcessingMode = mSettings.processingMode;
 
 			// take the settings preprocessor from the containing view (if any)

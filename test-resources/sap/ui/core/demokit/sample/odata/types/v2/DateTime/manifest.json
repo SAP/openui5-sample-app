@@ -2,7 +2,7 @@
 	"_version": "1.49.0",
 	"sap.app": {
 		"applicationVersion": {
-			"version": "1.124.1"
+			"version": "1.125.0"
 		},
 		"description": "Example how to use OData V2 Edm.DateTime in SAPUI5 applications",
 		"dataSources": {
@@ -55,8 +55,7 @@
 		},
 		"rootView": {
 			"viewName": "sap.ui.core.sample.odata.types.v2.DateTime.DateTime",
-			"type": "XML",
-			"async": true
+			"type": "XML"
 		}
 	}
 }

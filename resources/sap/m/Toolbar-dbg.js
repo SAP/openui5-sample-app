@@ -78,7 +78,7 @@ function(
 	 * @implements sap.ui.core.Toolbar,sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @constructor
 	 * @public
@@ -312,8 +312,7 @@ function(
 		return {
 			role: !bActive ? this._getAccessibilityRole() : undefined, // active toolbar is rendered with sap.m.Button as native button
 			haspopup: bActive ? this.getAriaHasPopup() : undefined,
-			labelledby: aAriaLabelledBy.length ? this.getAriaLabelledBy() : this.getTitleId(),
-			roledescription: this._sAriaRoleDescription
+			labelledby: aAriaLabelledBy.length ? this.getAriaLabelledBy() : this.getTitleId()
 		};
 	};
 

@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.124.1
+		 * @version 1.125.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -244,12 +244,11 @@ sap.ui.define([
 	 * model itself ensures that all bindings depending on this context become unresolved, but no
 	 * attempt is made to restore these bindings in case of reset or failure.
 	 *
-	 * Deleting a node in a recursive hierarchy
-	 * (see {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}) is supported
-	 * (@experimental as of version 1.118.0). As a precondition, the context must not be
-	 * {@link #setKeepAlive kept-alive} and hidden (for example due to a filter), and the group ID
-	 * must not have {@link sap.ui.model.odata.v4.SubmitMode.API}. Such a deletion is not a pending
-	 * change.
+	 * Since 1.125.0, deleting a node in a recursive hierarchy (see
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}) is supported. As a
+	 * precondition, the context must not be both {@link #setKeepAlive kept-alive} and hidden (for
+	 * example due to a filter), and the group ID must not have
+	 * {@link sap.ui.model.odata.v4.SubmitMode.API}. Such a deletion is not a pending change.
 	 *
 	 * @param {string} [sGroupId]
 	 *   The group ID to be used for the DELETE request; if not specified, the update group ID for
@@ -1288,18 +1287,17 @@ sap.ui.define([
 	 *
 	 * @param {object} oParameters - A parameter object
 	 * @param {sap.ui.model.odata.v4.Context|null} [oParameters.nextSibling]
-	 *   The next sibling's context, or <code>null</code> to turn this node into the last sibling
-	 *   (since 1.124.0). Omitting the sibling moves this node to a position determined by the
-	 *   server.
+	 *   The next sibling's context, or <code>null</code> to turn this node into the last sibling.
+	 *   Omitting the sibling moves this node to a position determined by the server.
 	 * @param {sap.ui.model.odata.v4.Context|null} oParameters.parent
-	 *   The new parent's context, or (since 1.121.0) <code>null</code> to turn this node into a
-	 *   root node
+	 *   The new parent's context, or <code>null</code> to turn this node into a root node
 	 * @returns {Promise<void>}
 	 *   A promise which is resolved without a defined result when the move is finished, or
 	 *   rejected in case of an error
 	 * @throws {Error} If
 	 *   <ul>
 	 *     <li> there is no recursive hierarchy,
+	 *     <li> this context's root binding is suspended,
 	 *     <li> the new parent is (a descendant of) this node,
 	 *     <li> this node or the new parent is
 	 *       <ul>
@@ -1309,8 +1307,8 @@ sap.ui.define([
 	 *     </ul>
 	 *   </ul>
 	 *
-	 * @experimental As of version 1.119.0
 	 * @public
+	 * @since 1.125.0
 	 */
 	Context.prototype.move = function ({nextSibling : oNextSibling, parent : oParent} = {}) {
 		if (oNextSibling === undefined && oParent === undefined) {
@@ -1629,6 +1627,40 @@ sap.ui.define([
 		return Promise.resolve(oPromise).then(function () {
 			// return undefined
 		});
+	};
+
+	/**
+	 * Requests this node's sibling; either the next one (via offset +1) or the previous one (via
+	 * offset -1). Resolves with <code>null</code> if no such sibling exists (because this node is
+	 * the last or first sibling, respectively). If it's not known whether the requested sibling
+	 * exists, a request is sent to the server.
+	 *
+	 * @param {number} [iOffset=+1] - An offset, either -1 or +1
+	 * @returns {Promise<sap.ui.model.odata.v4.Context|null>}
+	 *   A promise which is either resolved with the sibling's context (or <code>null</code> if no
+	 *   such sibling exists) in case of success, or rejected with an instance of <code>Error</code>
+	 *   in case of failure
+	 * @throws {Error} If
+	 *   <ul>
+	 *     <li> the given offset is unsupported,
+	 *     <li> this context's root binding is suspended,
+	 *     <li> this context is {@link #isDeleted deleted}, {@link #isTransient transient}, or not
+	 *       part of a recursive hierarchy.
+	 *   </ul>
+	 *
+	 * @private
+	 * @since 1.125.0
+	 * @ui5-restricted sap.fe
+	 */
+	Context.prototype.requestSibling = function (iOffset = +1) {
+		if (iOffset !== -1 && iOffset !== +1) {
+			throw new Error("Unsupported offset: " + iOffset);
+		}
+		if (this.isDeleted() || this.isTransient()) {
+			throw new Error("Unsupported context: " + this);
+		}
+
+		return this.oBinding.requestSibling(this, iOffset);
 	};
 
 	/**

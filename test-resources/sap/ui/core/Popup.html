@@ -59,31 +59,35 @@
 		</style>
 
 		<script>
-		var openPopup, closePopup, greenClicked, openAnim, closeAnim;
+		sap.ui.require([
+			"sap/ui/core/Popup"
+		], function(Popup) {
+			"use strict";
 
-		sap.ui.require(["sap/ui/core/Popup"], function(Popup) {
-			openAnim = function($Ref, iDuration, fnCallback) {
+			globalThis.openAnim = function($Ref, iDuration, fnCallback) {
 			  $Ref.slideDown(iDuration, fnCallback);
 			};
 
-			closeAnim = function($Ref, iDuration, fnCallback) {
+			globalThis.closeAnim = function($Ref, iDuration, fnCallback) {
 			  $Ref.slideUp(iDuration, fnCallback);
 			};
 
 			var popup = null;
 			var modal = false;
 
-			openPopup = function (iDuration, bModal, bAutoClose, fnOpenAnim, fnCloseAnim, oOf, bNotCenter) {
+			globalThis.openPopup = function (iDuration, bModal, bAutoClose, fnOpenAnim, fnCloseAnim, oOf, bNotCenter) {
 				if (bModal) {
 					modal = true;
 					var oWithinArea = Popup.getWithinAreaDomRef();
 					if (oWithinArea !== window) {
 						oOf = oWithinArea;
 					}
+					//eslint-disable-next-line no-alert -- use alert to avoid conflict with UI5 popups
 					alert("Click the green rectangle to close the popup!");
 				}
 
 				if (popup) {
+					//eslint-disable-next-line no-alert -- use alert to avoid conflict with UI5 popups
 					alert("This test page only allows one open popup at a time");
 					return;
 				}
@@ -93,7 +97,7 @@
 				popup = new Popup(element, bModal, true, bAutoClose);
 				popup.attachClosed(popupClosed);
 				if (fnOpenAnim || fnCloseAnim) {
-					popup.setAnimations(openAnim, fnCloseAnim);
+					popup.setAnimations(fnOpenAnim, fnCloseAnim);
 				}
 
 				if (bNotCenter) {
@@ -101,24 +105,24 @@
 				} else {
 					popup.open(iDuration, "center center", "center center", oOf || window, null);
 				}
-			}
+			};
 
-			closePopup = function (iDuration) {
-			  if(popup) {
-				popup.close(iDuration);
-			  }
-			}
+			globalThis.closePopup = function (iDuration) {
+				if (popup) {
+					popup.close(iDuration);
+				}
+			};
 
 			function popupClosed() {
 				popup = null;
 				modal = false;
 			}
 
-			greenClicked = function () {
+			globalThis.greenClicked = function () {
 				if (modal) {
 					popup.close();
 				}
-			}
+			};
 
 			jQuery(function() {
 				document.getElementById("check").addEventListener("click", function(event) {

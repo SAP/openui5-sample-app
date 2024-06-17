@@ -22,11 +22,11 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated as of version 1.88
+	 * @deprecated as of version 1.88, replaced by {@link sap.m.upload.UploadSetToolbarPlaceholder}.
 	 * @since 1.34.0
 	 * @alias sap.m.UploadCollectionToolbarPlaceholder
 	 */

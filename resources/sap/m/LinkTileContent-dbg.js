@@ -18,7 +18,7 @@ sap.ui.define([
 	 * @class This element is used within the GenericTile control that generates a combination of an icon and a linkl
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @constructor
 	 * @public
 	 * @since 1.120

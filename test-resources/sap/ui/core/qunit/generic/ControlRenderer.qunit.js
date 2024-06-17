@@ -1,4 +1,3 @@
-
 /*!
  * OpenUI5
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
@@ -6,6 +5,10 @@
  */
 
 /* global sinon */
+/**
+ * @fileoverview
+ * @deprecated As of version 1.120
+ */
 sap.ui.define([
 	"sap/ui/test/generic/TestBase"
 ], function(TestBase) {

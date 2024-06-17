@@ -19,6 +19,7 @@ sap.ui.define([
 
 	return UIComponent.extend("sap.ui.core.sample.odata.v4.FlatDataAggregation.Component", {
 		metadata : {
+			interfaces : ["sap.ui.core.IAsyncContentCreation"],
 			manifest : "json"
 		},
 

@@ -121,7 +121,8 @@ sap.ui.define([
 			(oNode) => _Helper.getKeyFilter(oNode, this.sMetaPath, this.getTypes()));
 		// Whether this cache is a unified cache, using oFirstLevel with ExpandLevels instead of
 		// separate group level caches
-		this.bUnifiedCache = this.oAggregation.expandTo >= Number.MAX_SAFE_INTEGER;
+		this.bUnifiedCache = this.oAggregation.expandTo >= Number.MAX_SAFE_INTEGER
+			|| !!this.oAggregation.createInPlace;
 	}
 
 	// make _AggregationCache a _Cache, but actively disinherit some critical methods
@@ -540,14 +541,45 @@ sap.ui.define([
 				[this.oAggregation.$ParentNavigationProperty + "@odata.bind"]
 					= _Helper.makeRelativeUrl("/" + sParentPath, "/" + this.sResourcePath);
 		}
-		oEntityData["@$ui5.node.level"] = iLevel; // do not send via POST!
 
-		aElements.splice(iIndex, 0, null); // create a gap
-		this.addElements(oEntityData, iIndex, oCache); // rank is undefined!
-		aElements.$count += 1;
-		if (oCache === this.oFirstLevel) {
-			this.adjustDescendantCount(oEntityData, iIndex, +1);
+		const addElement = (iIndex0, iRank) => {
+			oEntityData["@$ui5.node.level"] = iLevel; // do not send via POST!
+			aElements.splice(iIndex0, 0, null); // create a gap
+			this.addElements(oEntityData, iIndex0, oCache, iRank);
+			aElements.$count += 1;
+			if (oCache === this.oFirstLevel) {
+				this.adjustDescendantCount(oEntityData, iIndex0, +1);
+			}
+		};
+		const completeCreation = (iIndex0, iRank) => {
+			oCache.removeElement(0, sTransientPredicate);
+			_Helper.deletePrivateAnnotation(oEntityData, "transientPredicate");
+			oCache.restoreElement(iRank, oEntityData);
+
+			delete aElements.$byPredicate[sTransientPredicate];
+			_Helper.setPrivateAnnotation(oEntityData, "rank", iRank);
+			this.shiftRank(iIndex0, +1);
+		};
+
+		if (this.oAggregation.createInPlace) {
+			return oPromise.then(async () => {
+				_Helper.removeByPath(this.mPostRequests, sTransientPredicate, oEntityData);
+				const [iRank] = await Promise.all([
+					this.requestRank(oEntityData, oGroupLock),
+					this.requestNodeProperty(oEntityData, oGroupLock)
+				]);
+				if (iRank === undefined) {
+					oCache.removeElement(0, sTransientPredicate);
+				} else {
+					addElement(iRank, iRank);
+					completeCreation(iRank, iRank);
+				}
+
+				return oEntityData;
+			});
 		}
+
+		addElement(iIndex, /*iRank*/undefined);
 
 		return oPromise.then(async () => {
 			_Helper.removeByPath(this.mPostRequests, sTransientPredicate, oEntityData);
@@ -564,13 +596,7 @@ sap.ui.define([
 					this.requestNodeProperty(oEntityData, oGroupLock, /*bDropFilter*/true)
 				]);
 
-				oCache.removeElement(0, sTransientPredicate);
-				_Helper.deletePrivateAnnotation(oEntityData, "transientPredicate");
-				oCache.restoreElement(iRank, oEntityData);
-
-				delete this.aElements.$byPredicate[sTransientPredicate];
-				_Helper.setPrivateAnnotation(oEntityData, "rank", iRank);
-				this.shiftRank(iIndex, +1);
+				completeCreation(iIndex, iRank);
 			} else {
 				await this.requestNodeProperty(oEntityData, oGroupLock, /*bDropFilter*/true);
 			}
@@ -935,20 +961,23 @@ sap.ui.define([
 
 	/**
 	 * Returns the index in <code>this.aElements</code> for a given (limited preorder) rank where
-	 * either a node or placeholder with that rank is present and belongs to the first level cache.
+	 * either a node or placeholder with that rank is present and belongs to the given first level
+	 * or group level cache.
 	 *
 	 * @param {number} iRank
 	 *   The (limited preorder) rank of a node
+	 * @param {sap.ui.model.odata.v4.lib._CollectionCache} [oCache]
+	 *   A (group level) cache
 	 * @returns {number}
 	 *   The array index
 	 *
 	 * @private
 	 * @see #getInsertIndex
 	 */
-	_AggregationCache.prototype.findIndex = function (iRank) {
+	_AggregationCache.prototype.findIndex = function (iRank, oCache = this.oFirstLevel) {
 		return this.aElements.findIndex(
 			(oNode) => _Helper.getPrivateAnnotation(oNode, "rank") === iRank
-					&& _Helper.getPrivateAnnotation(oNode, "parent") === this.oFirstLevel);
+					&& _Helper.getPrivateAnnotation(oNode, "parent") === oCache);
 	};
 
 	/**
@@ -1084,6 +1113,45 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns the index of the given node's sibling, either the next one (via offset +1) or the
+	 * previous one (via offset -1).
+	 *
+	 * @param {number} iIndex - The index of a node
+	 * @param {number} iOffset - An offset, either -1 or +1
+	 * @returns {number}
+	 *   The sibling node's index, or -1 if no such sibling exists
+	 *
+	 * @public
+	 */
+	_AggregationCache.prototype.getSiblingIndex = function (iIndex, iOffset) {
+		function findSibling(aElements, iRank, iLevel) {
+			for (;;) {
+				iRank += iOffset;
+				if (iRank < 0 || iRank >= aElements.$count) {
+					return -1; // no such sibling
+				}
+				if (!aElements[iRank]) {
+					return iRank;
+				}
+				if (aElements[iRank]["@$ui5.node.level"] < iLevel) {
+					return -1; // no such sibling
+				}
+				if (aElements[iRank]["@$ui5.node.level"] === iLevel) {
+					return iRank;
+				}
+				// else: ignore descendants
+			}
+		}
+
+		const oNode = this.aElements[iIndex];
+		const oCache = _Helper.getPrivateAnnotation(oNode, "parent");
+		const iSiblingRank = findSibling(oCache.aElements,
+			_Helper.getPrivateAnnotation(oNode, "rank"), oNode["@$ui5.node.level"]);
+
+		return iSiblingRank < 0 ? -1 : this.findIndex(iSiblingRank, oCache);
+	};
+
+	/**
 	 * @override
 	 * @see sap.ui.model.odata.v4.lib._Cache#getValue
 	 */
@@ -1116,7 +1184,7 @@ sap.ui.define([
 		const getPredicate
 			= (oNode) => _Helper.getKeyPredicate(oNode, this.sMetaPath, this.getTypes());
 		const getRank
-			= (oNode) => Number.parseInt(_Helper.drillDown(oNode, this.oAggregation.$LimitedRank));
+			= (oNode) => parseInt(_Helper.drillDown(oNode, this.oAggregation.$LimitedRank));
 		const mPredicate2RankResult = {};
 		oRankResult.value.forEach((oNode) => {
 			mPredicate2RankResult[getPredicate(oNode)] = oNode;
@@ -1145,8 +1213,10 @@ sap.ui.define([
 				_Helper.merge(oNode, mPredicate2RankResult[sPredicate]);
 				// Note: overridden by _AggregationCache.calculateKeyPredicateRH
 				this.oFirstLevel.calculateKeyPredicate(oNode, this.getTypes(), this.sMetaPath);
+				const iRank = getRank(oNode);
+				_Helper.deleteProperty(oNode, this.oAggregation.$LimitedRank);
 				// insert at rank position to ensure correct placeholder is replaced
-				this.insertNode(oNode, getRank(oNode));
+				this.insertNode(oNode, iRank);
 			});
 		});
 
@@ -1943,7 +2013,7 @@ sap.ui.define([
 			mQueryOptions = getApply(
 				_AggregationHelper.buildApply4Hierarchy(oAggregation, this.mQueryOptions));
 		} else {
-			const oCache = _Helper.getPrivateAnnotation(oElement, "parent");
+			const oCache = _Helper.getPrivateAnnotation(oElement, "parent", this.oFirstLevel);
 			mQueryOptions = bDropFilter
 				? _AggregationHelper
 					.dropFilter(this.oAggregation, this.mQueryOptions, oCache.$parentFilter)

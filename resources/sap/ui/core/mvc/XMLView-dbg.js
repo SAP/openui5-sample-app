@@ -65,6 +65,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 * @alias sap.ui.core.mvc.XMLAfterRenderingNotifier
 	 * @private
+	 * @deprecated since 1.120 because the support of HTML and SVG tags is deprecated
 	 */
 	var XMLAfterRenderingNotifier = Control.extend("sap.ui.core.mvc.XMLAfterRenderingNotifier", {
 		metadata: {
@@ -112,7 +113,7 @@ sap.ui.define([
 	 * bound content aggregation. An error will be thrown when the above combination is detected.
 	 *
 	 * @extends sap.ui.core.mvc.View
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.XMLView
@@ -143,6 +144,9 @@ sap.ui.define([
 				cache : 'Object',
 
 				/**
+				 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
+				 * in the next major release
+				 *
 				 * The processing mode of the XMLView.
 				 */
 				processingMode: { type: "sap.ui.core.mvc.XMLProcessingMode", visibility: "hidden" },
@@ -161,6 +165,8 @@ sap.ui.define([
 				 * 'core:require' context into the nested XMLView which is created for the HTML or SVG node and
 				 * its sub-nodes. This isn't needed for nested Views/Fragments because 'core:require' context
 				 * isn't propagated across View/Fragment borders.
+				 *
+				 * @deprecated since 1.120 because the support of HTML and SVG in XMLView is deprecated
 				 */
 				requireContext: { type: 'Object', visibility: "hidden" }
 			},
@@ -375,6 +381,12 @@ sap.ui.define([
 		}
 	}
 
+	/**
+	 * Set the notifier for reacting to setAfterRendering
+	 *
+	 * @param {sap.ui.core.mvc.XMLView} oView The view itself
+	 * @deprecated since 1.120 because the support of HTML and SVG tags is deprecated
+	 */
 	function setAfterRenderingNotifier(oView) {
 		// Delegate for after rendering notification before onAfterRendering of child controls
 		oView.oAfterRenderingNotifier = new XMLAfterRenderingNotifier();
@@ -566,14 +578,24 @@ sap.ui.define([
 				// when used as fragment: prevent connection to controller, only top level XMLView must connect
 				delete mSettings.controller;
 			}
+			/**
+			 * @ui5-transform-hint replace-local false
+			 */
+			const bSupportHTMLAndSVG = true;
 			// vSetResourceModel is a promise if ResourceModel is created async
 			var vSetResourceModel = setResourceModel(that, mSettings);
 			if (vSetResourceModel instanceof Promise) {
-				return vSetResourceModel.then(function() {
-					setAfterRenderingNotifier(that);
-				});
+				if (bSupportHTMLAndSVG) {
+					return vSetResourceModel.then(function() {
+						setAfterRenderingNotifier(that);
+					});
+				} else {
+					return vSetResourceModel;
+				}
 			}
-			setAfterRenderingNotifier(that);
+			if (bSupportHTMLAndSVG) {
+				setAfterRenderingNotifier(that);
+			}
 		}
 
 		function runViewxmlPreprocessor(xContent, bAsync) {
@@ -633,6 +655,10 @@ sap.ui.define([
 
 		this._oContainingView = mSettings.containingView || this;
 
+		/**
+		 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
+		 * in the next major release
+		 */
 		this._sProcessingMode = mSettings.processingMode;
 
 		if (this.oAsyncState) {
@@ -743,6 +769,8 @@ sap.ui.define([
 	 * If the HTML doesn't contain own content, it tries to reproduce existing content
 	 * This is executed before the onAfterRendering of the child controls, to ensure that
 	 * the HTML is already at its final position, before additional operations are executed.
+	 *
+	 * @deprecated since 1.120 because the support of HTML and SVG tags is deprecated
 	 */
 	XMLView.prototype.onAfterRenderingBeforeChildren = function() {
 

@@ -59,7 +59,7 @@ sap.ui.define(['jquery.sap.global', 'sap/base/util/Properties'],
 	/**
 	 * @namespace jQuery.sap.util
 	 * @public
-	 * @deprecated as of version 1.120
+	 * @deprecated as of version 1.120. Use {@link module:sap/base/util/Properties} instead
 	 */
 
 	/**
@@ -73,7 +73,7 @@ sap.ui.define(['jquery.sap.global', 'sap/base/util/Properties'],
 	 * {@link #setProperty} to store or change a value for a key and {@link #getKeys}
 	 * can be used to retrieve an array of all keys that are currently stored in the collection.
 	 *
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @since 0.9.0
 	 * @name jQuery.sap.util.Properties
 	 * @public

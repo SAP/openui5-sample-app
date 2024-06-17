@@ -170,7 +170,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @param {object} [oRootNode] reference to the DOM element that should be 'hosting' the UI Area.
 	 * @public
 	 * @alias sap.ui.core.UIArea
@@ -274,7 +274,7 @@ sap.ui.define([
 	 *            the hosting DOM node for this instance of <code>UIArea</code>.
 	 * @public
 	 * @deprecated As of version 1.107, without a replacement. Applications should
-	 *    not create or modify <code>UIArea</code>s programmatically. THey should only
+	 *    not create or modify <code>UIArea</code>s programmatically. They should only
 	 *    assign controls to them, by using {@link sap.ui.core.Control.prototype.placeAt
 	 *    Control.prototype.placeAt} or use the API of a <code>UIArea</code> as reachable
 	 *    via {@link sap.ui.core.Control.prototype.getUIArea Control.prototype.getUIArea}.
@@ -1437,7 +1437,7 @@ sap.ui.define([
 	 * @public
 	 * @since 1.107
 	 * @deprecated As of version 1.120, without a replacement. Applications should
-	 *    not be interested in the set of all <code>UIArea</code>s. They should only
+	 *    not be interested in the set of <code>UIArea</code>s. They should only
 	 *    assign controls to them, by using {@link sap.ui.core.Control.prototype.placeAt
 	 *    Control.prototype.placeAt} or use the API of a <code>UIArea</code> as reachable
 	 *    via {@link sap.ui.core.Control.prototype.getUIArea Control.prototype.getUIArea}.
@@ -1452,7 +1452,7 @@ sap.ui.define([
 	 * @name sap.ui.core.UIArea.registry.size
 	 * @public
 	 * @deprecated As of version 1.120, without a replacement. Applications should
-	 *    not be interested in the set of all <code>UIArea</code>s. They should only
+	 *    not be interested in the set of <code>UIArea</code>s. They should only
 	 *    assign controls to them, by using {@link sap.ui.core.Control.prototype.placeAt
 	 *    Control.prototype.placeAt} or use the API of a <code>UIArea</code> as reachable
 	 *    via {@link sap.ui.core.Control.prototype.getUIArea Control.prototype.getUIArea}.
@@ -1493,7 +1493,7 @@ sap.ui.define([
 	 * @function
 	 * @public
 	 * @deprecated As of version 1.120, without a replacement. Applications should
-	 *    not be interested in the set of all <code>UIArea</code>s. They should only
+	 *    not be interested in a certain <code>UIArea</code>. They should only
 	 *    assign controls to them, by using {@link sap.ui.core.Control.prototype.placeAt
 	 *    Control.prototype.placeAt} or use the API of a <code>UIArea</code> as reachable
 	 *    via {@link sap.ui.core.Control.prototype.getUIArea Control.prototype.getUIArea}.

@@ -45,11 +45,11 @@ sap.ui.define([
 	 * @class
 	 * This is the base class for all template controls. Template controls are declared based on templates.
 	 * @extends sap.ui.core.Control
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @public
 	 * @since 1.15
-	 * @deprecated since 1.56
+	 * @deprecated as of version 1.56. Use an {@link sap.ui.core.mvc.XMLView XMLView} or a {@link topic:e6bb33d076dc4f23be50c082c271b9f0 Typed View} instead.
 	 * @alias sap.ui.core.tmpl.TemplateControl
 	 */
 	var TemplateControl = Control.extend("sap.ui.core.tmpl.TemplateControl", /** @lends sap.ui.core.tmpl.TemplateControl.prototype */ {

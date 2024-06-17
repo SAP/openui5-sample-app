@@ -21,7 +21,7 @@ sap.ui.define(["./DragDropBase"],
 	 * @extends sap.ui.core.dnd.DragDropBase
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @public
 	 * @since 1.56
@@ -67,6 +67,7 @@ sap.ui.define(["./DragDropBase"],
 			 * @param {object} oControlEvent.getParameters
 			 * @param {sap.ui.core.Element} oControlEvent.getParameters.target The target element on which the dragged element will be dropped
 			 * @param {sap.ui.core.dnd.DragSession} oControlEvent.getParameters.dragSession The UI5 <code>dragSession</code> object that exists only during drag and drop
+			 * @param {sap.ui.core.dnd.RelativeDropPosition} oControlEvent.getParameters.dropPosition The calculated position of the drop action relative to the <code>target</code>
 			 * @param {DragEvent} oControlEvent.getParameters.browserEvent The underlying browser event
 			 * @public
 			 */
@@ -90,6 +91,7 @@ sap.ui.define(["./DragDropBase"],
 			 * @since 1.56
 			 */
 			dragOver: {
+				allowPreventDefault: true
 			},
 
 			/**
@@ -185,7 +187,8 @@ sap.ui.define(["./DragDropBase"],
 		return this.fireEvent("dragEnter", {
 			dragSession: oEvent.dragSession,
 			browserEvent: oEvent.originalEvent,
-			target: oDragSession.getDropControl()
+			target: oDragSession.getDropControl(),
+			dropPosition: oDragSession.getDropPosition()
 		}, true);
 	};
 
@@ -200,7 +203,7 @@ sap.ui.define(["./DragDropBase"],
 			browserEvent: oEvent.originalEvent,
 			target: oDragSession.getDropControl(),
 			dropPosition: oDragSession.getDropPosition()
-		});
+		}, true);
 	};
 
 	DropInfo.prototype.fireDrop = function(oEvent) {

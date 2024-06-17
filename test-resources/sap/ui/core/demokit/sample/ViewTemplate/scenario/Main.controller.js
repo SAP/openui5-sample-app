@@ -75,7 +75,6 @@ sap.ui.define([
 				sPath = this.id2Path(sInstanceId);
 
 			this._getDetailView().bindElement(sPath);
-			//TODO keep table selection in sync!
 		},
 
 		_bindSelectInstance : function () {

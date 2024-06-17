@@ -15,6 +15,7 @@ sap.ui.define([
 
 	return UIComponent.extend("sap.ui.core.sample.odata.v4.SalesOrderTP100_V4.Component", {
 		metadata : {
+			interfaces : ["sap.ui.core.IAsyncContentCreation"],
 			manifest : "json"
 		}
 	});

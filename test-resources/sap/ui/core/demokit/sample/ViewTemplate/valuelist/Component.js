@@ -25,7 +25,10 @@ sap.ui.define([
 	// shortcut for sap.ui.core.mvc.ViewType
 
 	return BaseComponent.extend("sap.ui.core.sample.ViewTemplate.valuelist.Component", {
-		metadata : "json",
+		metadata : {
+			interfaces : ["sap.ui.core.IAsyncContentCreation"],
+			manifest : "json"
+		},
 
 		createContent : function () {
 			var sMockServerBaseUri
@@ -53,6 +56,7 @@ sap.ui.define([
 						oRequest.path = /\$metadata$/;
 						return true;
 					}
+					return false;
 				});
 				this.aMockServers[0].start();
 
@@ -74,8 +78,7 @@ sap.ui.define([
 					}].map(function (oMockData) {
 						return {
 							method : "GET",
-							//TODO: have MockServer fixed and pass just the URL!
-							path :  new RegExp(MockServer.prototype
+							path : new RegExp(MockServer.prototype
 								._escapeStringForRegExp(sServiceUri + "$metadata?sap-value-list="
 									+ oMockData.valueList)),
 							response : function (oXHR) {

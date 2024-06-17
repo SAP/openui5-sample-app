@@ -20,7 +20,7 @@ sap.ui.define(['sap/ui/base/EventProvider', './Serializer', './delegate/XML', 's
 	 * @class XMLViewSerializer class.
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @alias sap.ui.core.util.serializer.XMLViewSerializer
 	 * @private
 	 * @ui5-restricted sap.watt, com.sap.webide

@@ -12,6 +12,7 @@ sap.ui.define([
 	"sap/ui/model/odata/v4/lib/_Helper",
 	"sap/ui/thirdparty/URI"
 ], function (Log, deepEqual, merge, uid, SyncPromise, _Helper, URI) {
+	/*eslint no-sparse-arrays: 0 */
 	"use strict";
 
 	var sClassName = "sap.ui.model.odata.v4.lib._Helper";
@@ -4166,6 +4167,31 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+	QUnit.test("insert", function (assert) {
+		const aElements = [1, 2, 3];
+
+		// code under test
+		_Helper.insert(aElements, 1, 42);
+
+		assert.deepEqual(aElements, [1, 42, 2, 3]);
+
+		// code under test
+		_Helper.insert(aElements, 0, 0);
+
+		assert.deepEqual(aElements, [0, 1, 42, 2, 3]);
+
+		// code under test
+		_Helper.insert(aElements, 5, 4);
+
+		assert.deepEqual(aElements, [0, 1, 42, 2, 3, 4]);
+
+		// code under test
+		_Helper.insert(aElements, 10, 99);
+
+		assert.deepEqual(aElements, [0, 1, 42, 2, 3, 4,,,,, 99]);
+	});
+
+	//*********************************************************************************************
 	QUnit.test("decomposeError: w/o ContentID, w/o details, w/o target", function (assert) {
 		var oError = new Error("Message"),
 			aErrors;
@@ -4529,18 +4555,32 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [true, false].forEach(function (bTargetIsValid) {
-	var sTitle = "adjustTargets: with additional targets, target is valid: " + bTargetIsValid;
+	[true, false].forEach(function (bAnnotation) {
+	var sTitle = "adjustTargets: with additional targets, annotation: " + bAnnotation
+			+ ", target is valid: " + bTargetIsValid;
 
 	QUnit.test(sTitle, function (assert) {
 		var oHelperMock = this.mock(_Helper),
+			oMessage;
+
+		if (bAnnotation) {
 			oMessage = {
 				target : "target",
 				"@foo.additionalTargets" : ["additional1", "foo", "additional2"]
 			};
 
-		oHelperMock.expects("getAnnotationKey")
-			.withExactArgs(sinon.match.same(oMessage), ".additionalTargets")
-			.returns("@foo.additionalTargets");
+			oHelperMock.expects("getAnnotationKey")
+				.withExactArgs(sinon.match.same(oMessage), ".additionalTargets")
+				.returns("@foo.additionalTargets");
+		} else {
+			oMessage = {
+				target : "target",
+				additionalTargets : ["additional1", "foo", "additional2"],
+				"@foo.additionalTargets" : "n/a" // additionalTargets must win!
+			};
+
+			oHelperMock.expects("getAnnotationKey").never();
+		}
 		oHelperMock.expects("getAdjustedTarget")
 			.withExactArgs("target", "oOperationMetadata", "sParameterContextPath", "sContextPath")
 			.returns(bTargetIsValid ? "~adjusted~" : undefined);
@@ -4561,18 +4601,21 @@ sap.ui.define([
 		_Helper.adjustTargets(oMessage, "oOperationMetadata", "sParameterContextPath",
 			"sContextPath");
 
-		if (bTargetIsValid) {
-			assert.deepEqual(oMessage, {
-				target : "~adjusted~",
-				"@foo.additionalTargets" : ["~adjusted1~", "~adjusted2~"]
-			});
+		const oExpectedMessage = {
+			target : bTargetIsValid ? "~adjusted~" : "~adjusted1~",
+			"@foo.additionalTargets" : "n/a"
+		};
+		const aAdditionalTargets
+			= bTargetIsValid ? ["~adjusted1~", "~adjusted2~"] : ["~adjusted2~"];
+
+		if (bAnnotation) {
+			oExpectedMessage["@foo.additionalTargets"] = aAdditionalTargets;
 		} else {
-			assert.deepEqual(oMessage, {
-				target : "~adjusted1~",
-				"@foo.additionalTargets" : ["~adjusted2~"]
-			});
+			oExpectedMessage.additionalTargets = aAdditionalTargets;
 		}
+		assert.deepEqual(oMessage, oExpectedMessage);
 	});
+});
 });
 
 	//*********************************************************************************************
@@ -4601,6 +4644,11 @@ sap.ui.define([
 			_Helper.getAdjustedTarget("$Parameter/foo/bar", oOperationMetadata,
 				"~parameterContextPath~"),
 			"~parameterContextPath~/foo/bar");
+
+		assert.strictEqual(
+			// code under test
+			_Helper.getAdjustedTarget("foo/bar", oOperationMetadata),
+			"foo/bar");
 	});
 
 	//*********************************************************************************************

@@ -55,7 +55,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.AbstractContainer
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @private
 	 * @ui5-restricted
@@ -164,10 +164,12 @@ sap.ui.define([
 	};
 
 	Container.prototype._updateToolbarArialLabelledBy = function () {
-		const oTitle = this._getHeaderText();
-		const oBar = this.getHeader();
-		if (oTitle && oBar?.getAriaLabelledBy().indexOf(oTitle.getId()) == -1) {
-			oBar.addAriaLabelledBy(oTitle);
+		if (this.getListLayout()) {
+			const oTitle = this._getHeaderText();
+			const oBar = this.getHeader();
+			if (oTitle && oBar?.getAriaLabelledBy().indexOf(oTitle.getId()) == -1) {
+				oBar.addAriaLabelledBy(oTitle);
+			}
 		}
 	};
 

@@ -28,7 +28,7 @@ sap.ui.define([
 	 *
 	 *
 	 * @class text
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @private
 	 * @since 1.38
 	 * @alias HeaderAdapter
@@ -182,7 +182,7 @@ sap.ui.define([
 		if (HeaderAdapter._isAdaptableHeader(this._oHeader)) {
 			aBeginContent = this._oHeader.getContentLeft();
 			if (aBeginContent.length > 0 && isInstanceOf(aBeginContent[0], "sap/m/Button") &&
-				(aBeginContent[0].getType() === "Back" || aBeginContent[0].getType() === "Up" || aBeginContent[0].getIcon() === "sap-icon://nav-back")) {
+				(aBeginContent[0].getId().includes("-navButton") || aBeginContent[0].getIcon() === "sap-icon://nav-back")) {
 				oBackButton = aBeginContent[0];
 				return {
 					id: oBackButton.getId(),
@@ -228,7 +228,7 @@ sap.ui.define([
 	 * Constructor for an sap.m.Fiori20Adapter.
 	 *
 	 * @class text
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @private
 	 * @since 1.38
 	 * @alias sap.m.Fiori20Adapter

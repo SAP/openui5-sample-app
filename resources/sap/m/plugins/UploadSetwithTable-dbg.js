@@ -72,7 +72,7 @@ sap.ui.define([
 	 * </pre>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @author SAP SE
 	 * @experimental Since 1.124
 	 * @public
@@ -1523,6 +1523,14 @@ sap.ui.define([
 					propertyPath: oRowConfiguration.getFileSizePath(),
 					modelName: sModelName,
 					value: oBindingContext?.getProperty(oRowConfiguration.getFileSizePath())
+				}, createStaticBinding);
+			}
+			if (oRowConfiguration?._isTrustedSourcePathValidator(oBindingContext)) {
+				await this.bindItemProperty(oUploadSetItem, {
+					property: "isTrustedSource",
+					propertyPath: oRowConfiguration.getIsTrustedSourcePath(),
+					modelName: sModelName,
+					value: oBindingContext?.getProperty(oRowConfiguration?.getIsTrustedSourcePath())
 				}, createStaticBinding);
 			}
 			return oUploadSetItem;

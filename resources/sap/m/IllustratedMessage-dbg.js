@@ -88,7 +88,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @constructor
 	 * @public
@@ -193,7 +193,10 @@ sap.ui.define([
 				 *
 				 * @since 1.98
 				 */
-				additionalContent: {type: "sap.m.Button", multiple: true},
+				additionalContent: {
+					type: "sap.ui.core.Control",
+					multiple: true
+				},
 
 				/**
 				 * The description displayed under the title when <code>enableFormattedText</code> is <code>true</code>.

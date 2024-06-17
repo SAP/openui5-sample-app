@@ -57,7 +57,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.124.1
+		 * @version 1.125.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -178,89 +178,30 @@ sap.ui.define([
 	asODataParentBinding(ODataListBinding.prototype);
 
 	/**
-	 * Attach event handler <code>fnFunction</code> to the 'createActivate' event of this binding.
-	 *
-	 * @param {function} fnFunction The function to call when the event occurs
-	 * @param {object} [oListener] Object on which to call the given function
-	 * @returns {this} <code>this</code> to allow method chaining
-	 *
-	 * @public
-	 * @since 1.98.0
+	 * @override
+	 * @see sap.ui.model.Binding#_checkDataStateMessages
 	 */
-	ODataListBinding.prototype.attachCreateActivate = function (fnFunction, oListener) {
-		return this.attachEvent("createActivate", fnFunction, oListener);
+	ODataListBinding.prototype._checkDataStateMessages = function (oDataState, sResolvedPath) {
+		if (sResolvedPath) {
+			oDataState.setModelMessages(this.oModel.getMessagesByPath(sResolvedPath, true));
+		}
 	};
 
 	/**
-	 * Detach event handler <code>fnFunction</code> from the 'createActivate' event of this binding.
+	 * Returns all currently existing contexts of this list binding in no special order.
 	 *
-	 * @param {function} fnFunction The function to call when the event occurs
-	 * @param {object} [oListener] Object on which to call the given function
-	 * @returns {this} <code>this</code> to allow method chaining
+	 * @returns {sap.ui.model.odata.v4.Context[]}
+	 *   All currently existing contexts of this list binding, in no special order
 	 *
-	 * @public
-	 * @since 1.98.0
+	 * @private
+	 * @see #getAllCurrentContexts
 	 */
-	ODataListBinding.prototype.detachCreateActivate = function (fnFunction, oListener) {
-		return this.detachEvent("createActivate", fnFunction, oListener);
-	};
-
-	/**
-	 * Attach event handler <code>fnFunction</code> to the 'createCompleted' event of this binding.
-	 *
-	 * @param {function} fnFunction The function to call when the event occurs
-	 * @param {object} [oListener] Object on which to call the given function
-	 * @returns {this} <code>this</code> to allow method chaining
-	 *
-	 * @public
-	 * @since 1.66.0
-	 */
-	ODataListBinding.prototype.attachCreateCompleted = function (fnFunction, oListener) {
-		return this.attachEvent("createCompleted", fnFunction, oListener);
-	};
-
-	/**
-	 * Detach event handler <code>fnFunction</code> from the 'createCompleted' event of this
-	 * binding.
-	 *
-	 * @param {function} fnFunction The function to call when the event occurs
-	 * @param {object} [oListener] Object on which to call the given function
-	 * @returns {this} <code>this</code> to allow method chaining
-	 *
-	 * @public
-	 * @since 1.66.0
-	 */
-	ODataListBinding.prototype.detachCreateCompleted = function (fnFunction, oListener) {
-		return this.detachEvent("createCompleted", fnFunction, oListener);
-	};
-
-	/**
-	 * Attach event handler <code>fnFunction</code> to the 'createSent' event of this binding.
-	 *
-	 * @param {function} fnFunction The function to call when the event occurs
-	 * @param {object} [oListener] Object on which to call the given function
-	 * @returns {this} <code>this</code> to allow method chaining
-	 *
-	 * @public
-	 * @since 1.66.0
-	 */
-	ODataListBinding.prototype.attachCreateSent = function (fnFunction, oListener) {
-		return this.attachEvent("createSent", fnFunction, oListener);
-	};
-
-	/**
-	 * Detach event handler <code>fnFunction</code> from the 'createSent' event of this
-	 * binding.
-	 *
-	 * @param {function} fnFunction The function to call when the event occurs
-	 * @param {object} [oListener] Object on which to call the given function
-	 * @returns {this} <code>this</code> to allow method chaining
-	 *
-	 * @public
-	 * @since 1.66.0
-	 */
-	ODataListBinding.prototype.detachCreateSent = function (fnFunction, oListener) {
-		return this.detachEvent("createSent", fnFunction, oListener);
+	ODataListBinding.prototype._getAllExistingContexts = function () {
+		return (this.aContexts ?? []).filter(function (oContext) {
+			return oContext;
+		}).concat(Object.values(this.mPreviousContextsByPath).filter(function (oContext) {
+			return oContext.isEffectivelyKeptAlive();
+		}));
 	};
 
 	/**
@@ -607,6 +548,48 @@ sap.ui.define([
 	 */
 
 	/**
+	 * Attach event handler <code>fnFunction</code> to the 'createActivate' event of this binding.
+	 *
+	 * @param {function} fnFunction The function to call when the event occurs
+	 * @param {object} [oListener] Object on which to call the given function
+	 * @returns {this} <code>this</code> to allow method chaining
+	 *
+	 * @public
+	 * @since 1.98.0
+	 */
+	ODataListBinding.prototype.attachCreateActivate = function (fnFunction, oListener) {
+		return this.attachEvent("createActivate", fnFunction, oListener);
+	};
+
+	/**
+	 * Attach event handler <code>fnFunction</code> to the 'createCompleted' event of this binding.
+	 *
+	 * @param {function} fnFunction The function to call when the event occurs
+	 * @param {object} [oListener] Object on which to call the given function
+	 * @returns {this} <code>this</code> to allow method chaining
+	 *
+	 * @public
+	 * @since 1.66.0
+	 */
+	ODataListBinding.prototype.attachCreateCompleted = function (fnFunction, oListener) {
+		return this.attachEvent("createCompleted", fnFunction, oListener);
+	};
+
+	/**
+	 * Attach event handler <code>fnFunction</code> to the 'createSent' event of this binding.
+	 *
+	 * @param {function} fnFunction The function to call when the event occurs
+	 * @param {object} [oListener] Object on which to call the given function
+	 * @returns {this} <code>this</code> to allow method chaining
+	 *
+	 * @public
+	 * @since 1.66.0
+	 */
+	ODataListBinding.prototype.attachCreateSent = function (fnFunction, oListener) {
+		return this.attachEvent("createSent", fnFunction, oListener);
+	};
+
+	/**
 	 * See {@link sap.ui.base.EventProvider#attachEvent}
 	 *
 	 * @param {string} sEventId The identifier of the event to listen for
@@ -626,16 +609,6 @@ sap.ui.define([
 				+ "': v4.ODataListBinding#attachEvent");
 		}
 		return ListBinding.prototype.attachEvent.apply(this, arguments);
-	};
-
-	/**
-	 * @override
-	 * @see sap.ui.model.Binding#_checkDataStateMessages
-	 */
-	ODataListBinding.prototype._checkDataStateMessages = function (oDataState, sResolvedPath) {
-		if (sResolvedPath) {
-			oDataState.setModelMessages(this.oModel.getMessagesByPath(sResolvedPath, true));
-		}
 	};
 
 	/**
@@ -797,16 +770,24 @@ sap.ui.define([
 	 * the case if the complete collection has been read or if the system query option
 	 * <code>$count</code> is <code>true</code> and the binding has processed at least one request.
 	 *
-	 * Creating a new child beneath an existing and visible parent node (which must either be a leaf
-	 * or expanded, but not collapsed) is supported (@experimental as of version 1.117.0) in case of
-	 * a recursive hierarchy (see {@link #setAggregation}). The parent node must be identified via
-	 * an {@link sap.ui.model.odata.v4.Context} instance given as
+	 * Since 1.125.0, creating a new child beneath an existing and visible parent node (which must
+	 * either be a leaf or expanded, but not collapsed) is supported in case of a recursive
+	 * hierarchy (see {@link #setAggregation}). The parent node must be identified via an
+	 * {@link sap.ui.model.odata.v4.Context} instance given as
 	 * <code>oInitialData["@$ui5.node.parent"]</code> (which is immediately removed from the new
-	 * child's data). It can be <code>null</code> or absent when creating a new root node
-	 * (@experimental as of version 1.120.0). <code>bSkipRefresh</code> must be set, but both
-	 * <code>bAtEnd</code> and <code>bInactive</code> must not be set. No other creation or
+	 * child's data). It can be <code>null</code> or absent when creating a new root node.
+	 * <code>bSkipRefresh</code> must be set, but both <code>bAtEnd</code> and
+	 * <code>bInactive</code> must not be set. No other creation or
 	 * {@link sap.ui.model.odata.v4.Context#move move} must be pending, and no other modification
-	 * (including collapse of some ancestor node) must happen while this creation is pending!
+	 * (including collapse of some ancestor node) must happen while this creation is pending! When
+	 * using the <code>createInPlace</code> parameter (see {@link #setAggregation}, @experimental as
+	 * of version 1.125.0), the new {@link sap.ui.model.odata.v4.Context#isTransient transient}
+	 * child is hidden until it becomes {@link sap.ui.model.odata.v4.Context#created created}, and
+	 * then it is shown at a position determined by the back end and the current sort order. The
+	 * position of the new child can be retrieved by using its
+	 * {@link sap.ui.model.odata.v4.Context#getIndex index}. If the created child does not become
+	 * part of the hierarchy due to the search or filter criteria, the context will be destroyed and
+	 * its {@link sap.ui.model.odata.v4.Context#getIndex index} is set to <code>undefined</code>.
 	 *
 	 * @param {Object<any>} [oInitialData={}]
 	 *   The initial data for the created entity
@@ -871,6 +852,7 @@ sap.ui.define([
 		var oAggregation = this.mParameters.$$aggregation,
 			iChildIndex, // used only in case of recursive hierarchy
 			oContext,
+			bCreateInPlace = oAggregation?.createInPlace,
 			oCreatePathPromise = this.fetchResourcePath(),
 			oCreatePromise,
 			oEntityData,
@@ -879,7 +861,6 @@ sap.ui.define([
 			sResolvedPath = this.getResolvedPath(),
 			sTransientPredicate = "($uid=" + _Helper.uid() + ")",
 			sTransientPath = sResolvedPath + sTransientPredicate,
-			i,
 			that = this;
 
 		if (!sResolvedPath) {
@@ -983,6 +964,15 @@ sap.ui.define([
 				that.oModel.checkMessages();
 			}
 			that.fireEvent("createCompleted", {context : oContext, success : true});
+			if (bCreateInPlace) {
+				const iRank = _Helper.getPrivateAnnotation(oCreatedEntity, "rank");
+				if (iRank === undefined) {
+					oContext.destroy();
+					return;
+				}
+				oContext.iIndex = iRank;
+				that.insertContext(oContext, iRank);
+			}
 			bDeepCreate = _Helper.getPrivateAnnotation(oCreatedEntity, "deepCreate");
 			_Helper.deletePrivateAnnotation(oCreatedEntity, "deepCreate");
 			sGroupId = that.getGroupId();
@@ -998,12 +988,17 @@ sap.ui.define([
 			throw oError;
 		});
 
-		oContext = Context.create(this.oModel, this, sTransientPath,
-			iChildIndex ?? -this.iCreatedContexts, oCreatePromise, bInactive);
+		const iIndex = bCreateInPlace ? undefined : iChildIndex ?? -this.iCreatedContexts;
+		oContext = Context.create(this.oModel, this, sTransientPath, iIndex, oCreatePromise,
+			bInactive);
 		oContext.setSelected(this.oHeaderContext.isSelected());
 		if (this.isTransient()) {
 			oContext.created().catch(this.oModel.getReporter());
 		}
+		if (bCreateInPlace) {
+			return oContext;
+		}
+
 		// to make sure that #fetchValue does not overtake #createInCache, avoid bCached flag!
 		oContext.fetchValue().then(function (oElement) {
 			if (oElement) {
@@ -1012,23 +1007,7 @@ sap.ui.define([
 			} // else: context already destroyed
 		});
 
-		if (iChildIndex !== undefined) {
-			this.aContexts.splice(iChildIndex, 0, oContext);
-			for (i = this.aContexts.length - 1; i > iChildIndex; i -= 1) {
-				if (this.aContexts[i]) {
-					this.aContexts[i].iIndex += 1;
-				}
-			}
-			this.iMaxLength += 1;
-		} else if (this.bFirstCreateAtEnd !== bAtEnd) {
-			this.aContexts.splice(this.iCreatedContexts - 1, 0, oContext);
-			for (i = this.iCreatedContexts - 1; i >= 0; i -= 1) {
-				this.aContexts[i].iIndex = i - this.iCreatedContexts;
-			}
-		} else {
-			this.aContexts.unshift(oContext);
-		}
-		this._fireChange({reason : ChangeReason.Add});
+		this.insertContext(oContext, iChildIndex, bAtEnd);
 
 		return oContext;
 	};
@@ -1363,6 +1342,50 @@ sap.ui.define([
 			this.oModel.addPrerenderingTask(
 				this.destroyPreviousContexts.bind(this, aPathsToDelete));
 		}
+	};
+
+	/**
+	 * Detach event handler <code>fnFunction</code> from the 'createActivate' event of this binding.
+	 *
+	 * @param {function} fnFunction The function to call when the event occurs
+	 * @param {object} [oListener] Object on which to call the given function
+	 * @returns {this} <code>this</code> to allow method chaining
+	 *
+	 * @public
+	 * @since 1.98.0
+	 */
+	ODataListBinding.prototype.detachCreateActivate = function (fnFunction, oListener) {
+		return this.detachEvent("createActivate", fnFunction, oListener);
+	};
+
+	/**
+	 * Detach event handler <code>fnFunction</code> from the 'createCompleted' event of this
+	 * binding.
+	 *
+	 * @param {function} fnFunction The function to call when the event occurs
+	 * @param {object} [oListener] Object on which to call the given function
+	 * @returns {this} <code>this</code> to allow method chaining
+	 *
+	 * @public
+	 * @since 1.66.0
+	 */
+	ODataListBinding.prototype.detachCreateCompleted = function (fnFunction, oListener) {
+		return this.detachEvent("createCompleted", fnFunction, oListener);
+	};
+
+	/**
+	 * Detach event handler <code>fnFunction</code> from the 'createSent' event of this
+	 * binding.
+	 *
+	 * @param {function} fnFunction The function to call when the event occurs
+	 * @param {object} [oListener] Object on which to call the given function
+	 * @returns {this} <code>this</code> to allow method chaining
+	 *
+	 * @public
+	 * @since 1.66.0
+	 */
+	ODataListBinding.prototype.detachCreateSent = function (fnFunction, oListener) {
+		return this.detachEvent("createSent", fnFunction, oListener);
 	};
 
 	/**
@@ -1931,9 +1954,7 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataListBinding.prototype.fetchOrGetParent = function (oNode, bAllowRequest) {
-		const oAggregation = this.mParameters.$$aggregation;
-
-		if (!oAggregation || !oAggregation.hierarchyQualifier) {
+		if (!this.mParameters.$$aggregation?.hierarchyQualifier) {
 			throw new Error("Missing recursive hierarchy");
 		}
 		if (this.aContexts[oNode.iIndex] !== oNode) {
@@ -1994,31 +2015,6 @@ sap.ui.define([
 				return that.oContext.fetchValue(sPath, oListener, bCached);
 			}
 		});
-	};
-
-	/**
-	 * @override
-	 * @see sap.ui.model.odata.v4.ODataParentBinding#findContextForCanonicalPath
-	 */
-	ODataListBinding.prototype.findContextForCanonicalPath = function (sCanonicalPath) {
-		var aKeptAliveContexts = Object.values(this.mPreviousContextsByPath)
-				.filter(function (oCandidate) {
-					return oCandidate.isEffectivelyKeptAlive();
-				});
-
-		function check(aContexts) {
-			return aContexts.find(function (oCandidate) {
-				var oPromise;
-
-				if (oCandidate) {
-					oPromise = oCandidate.fetchCanonicalPath();
-					oPromise.caught();
-					return oPromise.getResult() === sCanonicalPath;
-				}
-			});
-		}
-
-		return check(aKeptAliveContexts) || check(this.aContexts);
 	};
 
 	/**
@@ -2145,6 +2141,31 @@ sap.ui.define([
 	};
 
 	/**
+	 * @override
+	 * @see sap.ui.model.odata.v4.ODataParentBinding#findContextForCanonicalPath
+	 */
+	ODataListBinding.prototype.findContextForCanonicalPath = function (sCanonicalPath) {
+		var aKeptAliveContexts = Object.values(this.mPreviousContextsByPath)
+				.filter(function (oCandidate) {
+					return oCandidate.isEffectivelyKeptAlive();
+				});
+
+		function check(aContexts) {
+			return aContexts.find(function (oCandidate) {
+				var oPromise;
+
+				if (oCandidate) {
+					oPromise = oCandidate.fetchCanonicalPath();
+					oPromise.caught();
+					return oPromise.getResult() === sCanonicalPath;
+				}
+			});
+		}
+
+		return check(aKeptAliveContexts) || check(this.aContexts);
+	};
+
+	/**
 	 * Fires the 'createActivate' event.
 	 *
 	 * @param {sap.ui.model.odata.v4.Context} oContext
@@ -2170,8 +2191,8 @@ sap.ui.define([
 	 *
 	 * @param {boolean} [bVerbose]
 	 *   Whether to additionally return the "$"-prefixed values described below which obviously
-	 *   cannot be given back to the setter (@experimental as of version 1.111.0). They are
-	 *   retrieved from the pair of "Org.OData.Aggregation.V1.RecursiveHierarchy" and
+	 *   cannot be given back to the setter (since 1.125.0). They are retrieved from the pair of
+	 *   "Org.OData.Aggregation.V1.RecursiveHierarchy" and
 	 *   "com.sap.vocabularies.Hierarchy.v1.RecursiveHierarchy" annotations at this binding's
 	 *   entity type, identified via the <code>hierarchyQualifier</code> given to
 	 *   {@link #setAggregation}.
@@ -2707,7 +2728,9 @@ sap.ui.define([
 	 *   from which the tree has been created
 	 * @returns {object} The AST of the filter tree including the static filter as string or null if
 	 *   no filters are set
+	 *
 	 * @private
+	 * @since 1.57.0
 	 * @ui5-restricted sap.ui.table, sap.ui.export
 	 */
 	// @override sap.ui.model.ListBinding#getFilterInfo
@@ -2765,28 +2788,6 @@ sap.ui.define([
 	ODataListBinding.prototype.getHeaderContext = function () {
 		// Since we never throw the header context away, we may deliver it only when valid
 		return this.isResolved() ? this.oHeaderContext : null;
-	};
-
-	/**
-	 * Converts the view index of a context to the model index in case there are contexts created at
-	 * the end.
-	 *
-	 * @param {number} iViewIndex The view index
-	 * @returns {number} The model index
-	 *
-	 * @private
-	 */
-	ODataListBinding.prototype.getModelIndex = function (iViewIndex) {
-		if (!this.bFirstCreateAtEnd) {
-			return iViewIndex;
-		}
-		if (!this.bLengthFinal) { // created at end, but the read is pending and $count unknown yet
-			return this.aContexts.length - iViewIndex - 1;
-		}
-		return iViewIndex < this.getLength() - this.iCreatedContexts
-			? iViewIndex + this.iCreatedContexts
-			// Note: the created rows are mirrored at the end
-			: this.getLength() - iViewIndex - 1;
 	};
 
 	/**
@@ -2905,6 +2906,28 @@ sap.ui.define([
 			return this.iMaxLength + this.iCreatedContexts;
 		}
 		return this.aContexts.length ? this.aContexts.length + 10 : 0;
+	};
+
+	/**
+	 * Converts the view index of a context to the model index in case there are contexts created at
+	 * the end.
+	 *
+	 * @param {number} iViewIndex The view index
+	 * @returns {number} The model index
+	 *
+	 * @private
+	 */
+	ODataListBinding.prototype.getModelIndex = function (iViewIndex) {
+		if (!this.bFirstCreateAtEnd) {
+			return iViewIndex;
+		}
+		if (!this.bLengthFinal) { // created at end, but the read is pending and $count unknown yet
+			return this.aContexts.length - iViewIndex - 1;
+		}
+		return iViewIndex < this.getLength() - this.iCreatedContexts
+			? iViewIndex + this.iCreatedContexts
+			// Note: the created rows are mirrored at the end
+			: this.getLength() - iViewIndex - 1;
 	};
 
 	/**
@@ -3075,6 +3098,39 @@ sap.ui.define([
 	};
 
 	/**
+	 * Inserts the given context at the given position into <code>this.aContexts</code>. The
+	 * position can be described either via a specific <code>iIndex</code>, or the relative position
+	 * in the creation area according to <code>bAtEnd</code>. Fires a change event with
+	 * <code>ChangeReason.Add</code>.
+	 *
+	 * @param {sap.ui.model.odata.v4.Context} oContext
+	 *   The context to be inserted
+	 * @param {number} [iIndex]
+	 *   The insertion index
+	 * @param {boolean} [bAtEnd]
+	 *   The relative position in the creation area
+	 */
+	ODataListBinding.prototype.insertContext = function (oContext, iIndex, bAtEnd) {
+		if (iIndex !== undefined) {
+			_Helper.insert(this.aContexts, iIndex, oContext);
+			for (let i = this.aContexts.length - 1; i > iIndex; i -= 1) {
+				if (this.aContexts[i]) {
+					this.aContexts[i].iIndex += 1;
+				}
+			}
+			this.iMaxLength += 1;
+		} else if (this.bFirstCreateAtEnd !== bAtEnd) {
+			this.aContexts.splice(this.iCreatedContexts - 1, 0, oContext);
+			for (let i = this.iCreatedContexts - 1; i >= 0; i -= 1) {
+				this.aContexts[i].iIndex = i - this.iCreatedContexts;
+			}
+		} else {
+			this.aContexts.unshift(oContext);
+		}
+		this._fireChange({reason : ChangeReason.Add});
+	};
+
+	/**
 	 * Inserts a new gap into <code>this.aContexts</code> just after the given index and with the
 	 * given positive length. Note that the given index may be the last within the array, but not
 	 * outside!
@@ -3119,7 +3175,7 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataListBinding.prototype.isAncestorOf = function (oAncestor, oDescendant) {
-		if (!this.mParameters.$$aggregation || !this.mParameters.$$aggregation.hierarchyQualifier) {
+		if (!this.mParameters.$$aggregation?.hierarchyQualifier) {
 			throw new Error("Missing recursive hierarchy");
 		}
 		if (!oDescendant) {
@@ -3279,7 +3335,8 @@ sap.ui.define([
 	 * @returns {sap.ui.base.SyncPromise<void>}
 	 *   A promise which is resolved without a defined result when the move is finished, or
 	 *   rejected in case of an error
-	 * @throws {Error} If there is no recursive hierarchy
+	 * @throws {Error} If there is no recursive hierarchy or if this binding's root binding is
+	 *   suspended
 	 *
 	 * @private
 	 */
@@ -3302,10 +3359,10 @@ sap.ui.define([
 			}
 		};
 
-		const oAggregation = this.mParameters.$$aggregation;
-		if (!oAggregation || !oAggregation.hierarchyQualifier) {
+		if (!this.mParameters.$$aggregation?.hierarchyQualifier) {
 			throw new Error("Missing recursive hierarchy");
 		}
+		this.checkSuspended();
 
 		const sUpdateGroupId = this.getUpdateGroupId();
 		const oGroupLock = this.lockGroup(sUpdateGroupId, true, true);
@@ -3341,12 +3398,8 @@ sap.ui.define([
 			}
 			const iOldIndex = oChildContext.getModelIndex();
 			this.aContexts.splice(iOldIndex, 1);
-			if (iNewIndex > this.aContexts.length) {
-				this.aContexts[iNewIndex] = oChildContext;
-				// Note: no need to adjust iMaxLength
-			} else {
-				this.aContexts.splice(iNewIndex, 0, oChildContext);
-			}
+			// Note: no need to adjust iMaxLength
+			_Helper.insert(this.aContexts, iNewIndex, oChildContext);
 			setIndices(iOldIndex, iNewIndex);
 
 			if (iCollapseCount) {
@@ -3974,6 +4027,39 @@ sap.ui.define([
 	};
 
 	/**
+	 * Requests the given node's sibling, either the next one (via offset +1) or the previous one
+	 * (via offset -1).
+	 *
+	 * @param {sap.ui.model.odata.v4.Context} oNode - A node
+	 * @param {number} iOffset - An offset, either -1 or +1
+	 * @returns {Promise<sap.ui.model.odata.v4.Context|null>}
+	 *   A promise which is resolved with the sibling's context (or <code>null</code> if no such
+	 *   sibling exists) in case of success, or is rejected with an instance of <code>Error</code>
+	 *   in case of failure
+	 * @throws {Error} If
+	 *   <ul>
+	 *     <li> this binding's root binding is suspended,
+	 *     <li> the given node is not part of a recursive hierarchy.
+	 *   </ul>
+	 *
+	 *  @private
+	 */
+	ODataListBinding.prototype.requestSibling = function (oNode, iOffset) {
+		if (!this.mParameters.$$aggregation?.hierarchyQualifier) {
+			throw new Error("Missing recursive hierarchy");
+		}
+		if (this.aContexts[oNode.iIndex] !== oNode) {
+			throw new Error("Unsupported context: " + oNode);
+		}
+		this.checkSuspended();
+		const iIndex = this.oCache.getSiblingIndex(oNode.iIndex, iOffset);
+
+		return iIndex < 0
+			? Promise.resolve(null)
+			: this.requestContexts(iIndex, 1).then((aResult) => aResult[0]);
+	};
+
+	/**
 	 * @override
 	 * @see sap.ui.model.odata.v4.ODataParentBinding#requestSideEffects
 	 */
@@ -4237,17 +4323,16 @@ sap.ui.define([
 	 *   used to remove the data aggregation object, which allows to set <code>$apply</code>
 	 *   explicitly afterwards. <code>null</code> is not supported.
 	 *   <br>
-	 *   Since 1.89.0, the deprecated property <code>"grandTotal like 1.84" : true</code> can be
-	 *   used to turn on the handling of grand totals like in 1.84.0, using aggregates of aggregates
-	 *   and thus allowing to filter by aggregated properties while grand totals are needed. Beware
-	 *   that methods like "average" or "countdistinct" are not compatible with this approach, and
-	 *   it cannot be combined with group levels.
+	 *   Since 1.89.0, the <b>deprecated</b> property <code>"grandTotal like 1.84" : true</code> can
+	 *   be used to turn on the handling of grand totals like in 1.84.0, using aggregates of
+	 *   aggregates and thus allowing to filter by aggregated properties while grand totals are
+	 *   needed. Beware that methods like "average" or "countdistinct" are not compatible with this
+	 *   approach, and it cannot be combined with group levels.
 	 *   <br>
-	 *   Since 1.105.0, either a recursive hierarchy or pure data aggregation is supported, but no
-	 *   mix; <code>hierarchyQualifier</code> is the leading property that decides between those two
-	 *   use cases - this is an <b>experimental API</b> and is only supported if the model uses the
-	 *   <code>autoExpandSelect</code> parameter! Since 1.117.0, it is available for read-only
-	 *   hierarchies.
+	 *   Since 1.117.0, either a read-only recursive hierarchy or pure data aggregation is
+	 *   supported, but no mix; <code>hierarchyQualifier</code> is the leading property that decides
+	 *   between those two use cases. Since 1.125.0, maintenance of a recursive hierarchy is
+	 *   supported.
 	 * @param {object} [oAggregation.aggregate]
 	 *   A map from aggregatable property names or aliases to objects containing the following
 	 *   details:
@@ -4275,10 +4360,13 @@ sap.ui.define([
 	 *       there is only one, or <code>null</code> otherwise ("multi-unit situation"). (SQL
 	 *       suggestion: <code>CASE WHEN MIN(Unit) = MAX(Unit) THEN MIN(Unit) END</code>)
 	 *   </ul>
+	 * @param {boolean} [oAggregation.createInPlace]
+	 *   Whether created nodes are shown in place at the position specified by the service
+	 *   (@experimental as of version 1.125.0); only the value <code>true</code> is allowed.
+	 *   Otherwise, created nodes are displayed out of place as the first child of their parent.
 	 * @param {number} [oAggregation.expandTo=1]
 	 *   The number (as a positive integer) of different levels initially available without calling
-	 *   {@link sap.ui.model.odata.v4.Context#expand} (@experimental as of version 1.105.0;
-	 *   available for read-only hierarchies since 1.117.0), supported only if a
+	 *   {@link sap.ui.model.odata.v4.Context#expand} (since 1.117.0), supported only if a
 	 *   <code>hierarchyQualifier</code> is given. Root nodes are on the first level. By default,
 	 *   only root nodes are available; they are not yet expanded. Since 1.120.0,
 	 *   <code>expandTo >= Number.MAX_SAFE_INTEGER</code> can be used to expand all levels
@@ -4308,14 +4396,14 @@ sap.ui.define([
 	 * @param {string} [oAggregation.hierarchyQualifier]
 	 *   The qualifier for the pair of "Org.OData.Aggregation.V1.RecursiveHierarchy" and
 	 *   "com.sap.vocabularies.Hierarchy.v1.RecursiveHierarchy" annotations at this binding's
-	 *   entity type (@experimental as of version 1.105.0; available for read-only hierarchies since
-	 *   1.117.0). If present, a recursive hierarchy without data aggregation is defined, and the
-	 *   only other supported properties are <code>expandTo</code> and <code>search</code>. A
-	 *   recursive hierarchy cannot be combined with:
+	 *   entity type (since 1.117.0). If present, a recursive hierarchy without data aggregation is
+	 *   defined, and the only other supported properties are <code>createInPlace</code>,
+	 *   <code>expandTo</code>, and <code>search</code>. A recursive hierarchy cannot be combined
+	 *   with:
 	 *   <ul>
 	 *     <li> "$search",
-	 *     <li> the <code>vGroup</code> parameter of {@link sap.ui.model.Sorter} (since 1.107.0),
-	 *     <li> shared requests (since 1.108.0).
+	 *     <li> the <code>vGroup</code> parameter of {@link sap.ui.model.Sorter},
+	 *     <li> shared requests.
 	 *   </ul>
 	 * @param {string} [oAggregation.search]
 	 *   Like the <a href=
@@ -4726,23 +4814,6 @@ sap.ui.define([
 					}))
 			};
 		}
-	};
-
-	/**
-	 * Returns all currently existing contexts of this list binding in no special order.
-	 *
-	 * @returns {sap.ui.model.odata.v4.Context[]}
-	 *   All currently existing contexts of this list binding, in no special order
-	 *
-	 * @private
-	 * @see #getAllCurrentContexts
-	 */
-	ODataListBinding.prototype._getAllExistingContexts = function () {
-		return (this.aContexts ?? []).filter(function (oContext) {
-			return oContext;
-		}).concat(Object.values(this.mPreviousContextsByPath).filter(function (oContext) {
-			return oContext.isEffectivelyKeptAlive();
-		}));
 	};
 
 	//*********************************************************************************************

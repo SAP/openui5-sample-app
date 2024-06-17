@@ -174,11 +174,11 @@ sap.ui.define([
 		 *   are supported in order to load schemas on demand from other $metadata documents and
 		 *   include them into the current service ("cross-service references").
 		 * @param {string} [mParameters.synchronizationMode]
+		 *   <b>deprecated:</b> As of Version 1.110.0, this parameter is obsolete; see also
+		 *   {@link topic:648e360fa22d46248ca783dc6eb44531 Data Reuse}
 		 *   (Controls synchronization between different bindings which refer to the same data for
 		 *   the case data changes in one binding. Must be set to 'None' which means bindings are
 		 *   not synchronized at all; all other values are not supported and lead to an error.)
-		 *   <b>deprecated:</b> As of Version 1.110.0, this parameter is obsolete; see also
-		 *   {@link topic:648e360fa22d46248ca783dc6eb44531 Data Reuse}
 		 * @param {string} [mParameters.updateGroupId]
 		 *   The group ID that is used for update requests. If no update group ID is specified,
 		 *   <code>mParameters.groupId</code> is used. Valid update group IDs are
@@ -234,7 +234,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.124.1
+		 * @version 1.125.0
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
@@ -1327,7 +1327,7 @@ sap.ui.define([
 	 *
 	 * It is possible to create binding contexts pointing to metadata. A '##' is recognized
 	 * as separator in the resolved path and splits it into two parts; note that '#' may also be
-	 * used as separator but is deprecated since 1.51.
+	 * used as separator but is <b>deprecated</b> since 1.51.
 	 * The part before the separator is transformed into a metadata context (see
 	 * {@link sap.ui.model.odata.v4.ODataMetaModel#getMetaContext}). The part following the
 	 * separator is then interpreted relative to this metadata context, even if it starts with
@@ -1454,13 +1454,16 @@ sap.ui.define([
 	 *   the longtext URL
 	 * @param {string} [sCachePath]
 	 *   The cache-relative path to the entity; used to resolve the targets
+	 * @param {object} [oOriginalMessage=oRawMessage]
+	 *   The original message object which is used to create the technical details
 	 * @returns {sap.ui.core.message.Message}
 	 *   The created UI5 message object
 	 *
 	 * @private
 	 */
 	// eslint-disable-next-line valid-jsdoc -- .@$ui5. is not understood properly
-	ODataModel.prototype.createUI5Message = function (oRawMessage, sResourcePath, sCachePath) {
+	ODataModel.prototype.createUI5Message = function (oRawMessage, sResourcePath, sCachePath,
+			oOriginalMessage = oRawMessage) {
 		var bIsBound = typeof oRawMessage.target === "string",
 			sMessageLongtextUrl = oRawMessage.longtextUrl,
 			aTargets,
@@ -1495,7 +1498,7 @@ sap.ui.define([
 			// Note: "" instead of undefined makes filtering easier (agreement with FE!)
 			target : bIsBound ? aTargets : "",
 			technical : oRawMessage.technical,
-			technicalDetails : _Helper.createTechnicalDetails(oRawMessage),
+			technicalDetails : _Helper.createTechnicalDetails(oOriginalMessage),
 			type : aMessageTypes[oRawMessage.numericSeverity] || MessageType.None
 		});
 	};
@@ -1861,115 +1864,6 @@ sap.ui.define([
 	};
 
 	/**
-	 * Takes the metadata for the given meta path and calculates the key predicate by taking the key
-	 * properties from the given entity instance.
-	 *
-	 * @param {string} sMetaPath
-	 *   An absolute metadata path to an entity set
-	 * @param {object} oEntity
-	 *   The entity instance with the key property values
-	 * @returns {string|undefined}
-	 *   The proper URI-encoded key predicate, for example "(Sector='A%2FB%26C',ID='42')" or
-	 *   "('42')", or <code>undefined</code> if at least one key property is undefined.
-	 * @throws {Error}
-	 *   If the key predicate cannot be determined synchronously
-	 *   (due to a pending metadata request), or if the metadata could not be fetched.
-	 *
-	 * @function
-	 * @public
-	 * @see #requestKeyPredicate
-	 * @since 1.107.0
-	 */
-	ODataModel.prototype.getKeyPredicate = _Helper.createGetMethod("fetchKeyPredicate", true);
-
-	/**
-	 * Returns messages of this model associated with the given context, that is messages belonging
-	 * to the object referred to by this context or a child object of that object. The messages are
-	 * sorted by their {@link sap.ui.core.message.Message#getType type} according to the type's
-	 * severity in a way that messages with highest severity come first.
-	 *
-	 * @param {sap.ui.model.Context} oContext The context to retrieve messages for
-	 * @returns {sap.ui.core.message.Message[]}
-	 *   The messages associated with this context sorted by severity; empty array in case no
-	 *   messages exist
-	 *
-	 * @public
-	 * @see sap.ui.model.Model#getMessages
-	 * @since 1.85.0
-	 */
-	// @override sap.ui.model.Model#getMessages
-	ODataModel.prototype.getMessages = function (oContext) {
-		return this.getMessagesByPath(oContext.getPath(), /*bPrefixMatch*/true)
-			.sort(Message.compare);
-	};
-
-	/**
-	 * Returns the meta model for this ODataModel.
-	 *
-	 * @returns {sap.ui.model.odata.v4.ODataMetaModel}
-	 *   The meta model for this ODataModel
-	 *
-	 * @public
-	 * @since 1.37.0
-	 */
-	// @override sap.ui.model.Model#getMetaModel
-	ODataModel.prototype.getMetaModel = function () {
-		return this.oMetaModel;
-	};
-
-	/**
-	 * Method not supported
-	 *
-	 * @throws {Error}
-	 *
-	 * @public
-	 * @since 1.37.0
-	 */
-	// @override sap.ui.model.Model#getObject
-	ODataModel.prototype.getObject = function () {
-		throw new Error("Unsupported operation: v4.ODataModel#getObject");
-	};
-
-	/**
-	 * Returns the version of the OData service.
-	 *
-	 * @returns {string}
-	 *   The version of the OData service
-	 *
-	 * @public
-	 * @since 1.49.0
-	 */
-	ODataModel.prototype.getODataVersion = function () {
-		return this.sODataVersion;
-	};
-
-	/**
-	 * Method not supported
-	 *
-	 * @throws {Error}
-	 *
-	 * @public
-	 * @since 1.37.0
-	 */
-	// @override sap.ui.model.Model#getOriginalProperty
-	ODataModel.prototype.getOriginalProperty = function () {
-		throw new Error("Unsupported operation: v4.ODataModel#getOriginalProperty");
-	};
-
-	/**
-	 * Method not supported
-	 *
-	 * @throws {Error}
-	 *
-	 * @public
-	 * @see sap.ui.model.Model#getProperty
-	 * @since 1.37.0
-	 */
-	ODataModel.prototype.getProperty = function () {
-		throw new Error("Unsupported operation: v4.ODataModel#getProperty");
-	};
-
-	/**
 	 * Returns a context with the given path belonging to a matching list binding that has been
 	 * marked with <code>$$getKeepAliveContext</code> (see {@link #bindList}). If such a matching
 	 * binding can be found, a context is returned and kept alive (see
@@ -2060,17 +1954,128 @@ sap.ui.define([
 	};
 
 	/**
-	 * Returns the model's update group ID.
+	 * Takes the metadata for the given meta path and calculates the key predicate by taking the key
+	 * properties from the given entity instance.
 	 *
-	 * @returns {string}
-	 *   The update group ID
+	 * @param {string} sMetaPath
+	 *   An absolute metadata path to an entity set
+	 * @param {object} oEntity
+	 *   The entity instance with the key property values
+	 * @returns {string|undefined}
+	 *   The proper URI-encoded key predicate, for example "(Sector='A%2FB%26C',ID='42')" or
+	 *   "('42')", or <code>undefined</code> if at least one key property is undefined.
+	 * @throws {Error}
+	 *   If the key predicate cannot be determined synchronously
+	 *   (due to a pending metadata request), or if the metadata could not be fetched.
+	 *
+	 * @function
+	 * @public
+	 * @see #requestKeyPredicate
+	 * @since 1.107.0
+	 */
+	ODataModel.prototype.getKeyPredicate = _Helper.createGetMethod("fetchKeyPredicate", true);
+
+	/**
+	 * Returns messages of this model associated with the given context, that is messages belonging
+	 * to the object referred to by this context or a child object of that object. The messages are
+	 * sorted by their {@link sap.ui.core.message.Message#getType type} according to the type's
+	 * severity in a way that messages with highest severity come first.
+	 *
+	 * @param {sap.ui.model.Context} oContext The context to retrieve messages for
+	 * @returns {sap.ui.core.message.Message[]}
+	 *   The messages associated with this context sorted by severity; empty array in case no
+	 *   messages exist
 	 *
 	 * @public
-	 * @see sap.ui.model.odata.v4.ODataModel#constructor
-	 * @since 1.41.0
+	 * @see sap.ui.model.Model#getMessages
+	 * @since 1.85.0
 	 */
-	ODataModel.prototype.getUpdateGroupId = function () {
-		return this.sUpdateGroupId;
+	// @override sap.ui.model.Model#getMessages
+	ODataModel.prototype.getMessages = function (oContext) {
+		return this.getMessagesByPath(oContext.getPath(), /*bPrefixMatch*/true)
+			.sort(Message.compare);
+	};
+
+	/**
+	 * Returns the meta model for this ODataModel.
+	 *
+	 * @returns {sap.ui.model.odata.v4.ODataMetaModel}
+	 *   The meta model for this ODataModel
+	 *
+	 * @public
+	 * @since 1.37.0
+	 */
+	// @override sap.ui.model.Model#getMetaModel
+	ODataModel.prototype.getMetaModel = function () {
+		return this.oMetaModel;
+	};
+
+	/**
+	 * Method not supported
+	 *
+	 * @throws {Error}
+	 *
+	 * @public
+	 * @since 1.37.0
+	 */
+	// @override sap.ui.model.Model#getObject
+	ODataModel.prototype.getObject = function () {
+		throw new Error("Unsupported operation: v4.ODataModel#getObject");
+	};
+
+	/**
+	 * Returns the version of the OData service.
+	 *
+	 * @returns {string}
+	 *   The version of the OData service
+	 *
+	 * @public
+	 * @since 1.49.0
+	 */
+	ODataModel.prototype.getODataVersion = function () {
+		return this.sODataVersion;
+	};
+
+	/**
+	 * Getter for the optimistic batch enabler callback function; see
+	 * {@link #setOptimisticBatchEnabler}.
+	 *
+	 *
+	 * @returns {function(string)}
+	 *   The optimistic batch enabler callback function
+	 *
+	 * @private
+	 * @since 1.100.0
+	 * @ui5-restricted sap.fe
+	 */
+	ODataModel.prototype.getOptimisticBatchEnabler = function () {
+		return this.fnOptimisticBatchEnabler;
+	};
+
+	/**
+	 * Method not supported
+	 *
+	 * @throws {Error}
+	 *
+	 * @public
+	 * @since 1.37.0
+	 */
+	// @override sap.ui.model.Model#getOriginalProperty
+	ODataModel.prototype.getOriginalProperty = function () {
+		throw new Error("Unsupported operation: v4.ODataModel#getOriginalProperty");
+	};
+
+	/**
+	 * Method not supported
+	 *
+	 * @throws {Error}
+	 *
+	 * @public
+	 * @see sap.ui.model.Model#getProperty
+	 * @since 1.37.0
+	 */
+	ODataModel.prototype.getProperty = function () {
+		throw new Error("Unsupported operation: v4.ODataModel#getProperty");
 	};
 
 	/**
@@ -2105,6 +2110,20 @@ sap.ui.define([
 	 */
 	ODataModel.prototype.getServiceUrl = function () {
 		return this.sServiceUrl;
+	};
+
+	/**
+	 * Returns the model's update group ID.
+	 *
+	 * @returns {string}
+	 *   The update group ID
+	 *
+	 * @public
+	 * @see sap.ui.model.odata.v4.ODataModel#constructor
+	 * @since 1.41.0
+	 */
+	ODataModel.prototype.getUpdateGroupId = function () {
+		return this.sUpdateGroupId;
 	};
 
 	/**
@@ -2270,6 +2289,84 @@ sap.ui.define([
 	 */
 	ODataModel.prototype.lockGroup = function (sGroupId, oOwner, bLocked, bModifying, fnCancel) {
 		return this.oRequestor.lockGroup(sGroupId, oOwner, bLocked, bModifying, fnCancel);
+	};
+
+	/**
+	 * Normalizes the key predicates of a message's target using the sort order from the metadata,
+	 * including proper URI encoding, e.g. "(Sector='A%2FB%26C',ID='42')" or "('42')".
+	 *
+	 * @param {string} sTarget
+	 *   The message target
+	 * @returns {string}
+	 *   The normalized message target
+	 *
+	 * @private
+	 */
+	ODataModel.prototype.normalizeMessageTarget = function (sTarget) {
+		var sCandidate,
+			bFailed,
+			sMetaPath = "",
+			that = this;
+
+		if (sTarget.includes("$uid=")) {
+			// target containing a transient path is ignored
+			return sTarget;
+		}
+		sCandidate = sTarget.split("/").map(function (sSegment) {
+			var sCollectionName,
+				iBracketIndex = sSegment.indexOf("("),
+				aParts,
+				mProperties,
+				oType;
+
+			/*
+			 * Normalizes the value for the given alias.
+			 * @param {string} sAlias
+			 *   The property name/alias
+			 * @returns {string|undefined}
+			 *   The normalized value
+			 */
+			function getNormalizedValue(sAlias) {
+				if (sAlias in mProperties) {
+					return encodeURIComponent(decodeURIComponent(mProperties[sAlias]));
+				}
+				bFailed = true;
+			}
+
+			if (iBracketIndex < 0) {
+				sMetaPath = _Helper.buildPath(sMetaPath, sSegment);
+				return sSegment;
+			}
+
+			sCollectionName = sSegment.slice(0, iBracketIndex);
+			sMetaPath = _Helper.buildPath(sMetaPath, sCollectionName);
+			mProperties = _Parser.parseKeyPredicate(sSegment.slice(iBracketIndex));
+
+			if ("" in mProperties) {
+				return sCollectionName + "(" + getNormalizedValue("") + ")";
+			}
+
+			// could be async, but normally in this state we should already have
+			// loaded the needed metadata
+			oType = that.oMetaModel.getObject("/" + sMetaPath + "/");
+
+			if (!(oType && oType.$Key)) {
+				bFailed = true;
+				return sSegment;
+			}
+
+			aParts = oType.$Key.map(function (sAlias) {
+				var sValue = getNormalizedValue(sAlias);
+
+				return oType.$Key.length > 1
+					? sAlias + "=" + sValue
+					: sValue;
+			});
+
+			return sCollectionName + "(" + aParts.join(",") + ")";
+		}).join("/");
+
+		return bFailed ? sTarget : sCandidate;
 	};
 
 	/**
@@ -2446,102 +2543,48 @@ sap.ui.define([
 
 	/**
 	 * Reports the given OData transition messages by firing a <code>messageChange</code> event with
-	 * the new messages.
+	 * the new messages. Takes care of adjusting message targets for bound operations' binding
+	 * parameters.
 	 *
 	 * @param {object[]} aMessages
 	 *   An array of messages suitable for {@link #createUI5Message}
 	 * @param {string} [sResourcePath]
-	 *   The resource path of the cache that saw the messages; used to resolve the longtext URL
+	 *   The resource path of the cache that saw the messages; used to resolve the longtext URL and
+	 *   for adjusting a message target in case it is an operation parameter, except the binding
+	 *   parameter
 	 *
 	 * @private
 	 */
 	ODataModel.prototype.reportTransitionMessages = function (aMessages, sResourcePath) {
-		var that = this;
+		var oOperationMetadata;
 
-		if (aMessages && aMessages.length) {
-			Messaging.updateMessages(undefined, aMessages.map(function (oMessage) {
-				oMessage.transition = true;
-				return that.createUI5Message(oMessage, sResourcePath);
-			}));
+		if (!aMessages.length) {
+			return;
 		}
-	};
 
-	/**
-	 * Normalizes the key predicates of a message's target using the sort order from the metadata,
-	 * including proper URI encoding, e.g. "(Sector='A%2FB%26C',ID='42')" or "('42')".
-	 *
-	 * @param {string} sTarget
-	 *   The message target
-	 * @returns {string}
-	 *   The normalized message target
-	 *
-	 * @private
-	 */
-	ODataModel.prototype.normalizeMessageTarget = function (sTarget) {
-		var sCandidate,
-			bFailed,
-			sMetaPath = "",
-			that = this;
-
-		if (sTarget.includes("$uid=")) {
-			// target containing a transient path is ignored
-			return sTarget;
+		if (sResourcePath) {
+			const oMetaModel = this.getMetaModel();
+			sResourcePath = sResourcePath.split("?")[0]; // remove query string
+			const sMetaPath = "/" + _Helper.getMetaPath(sResourcePath);
+			const vMetadata = oMetaModel.getObject(sMetaPath);
+			if (Array.isArray(vMetadata)) {
+				// normally, ODCB#_invoke has already checked that there is exactly one overload;
+				// in rare case w/o #invoke, such a check is missing
+				oOperationMetadata = oMetaModel.getObject(sMetaPath + "/@$ui5.overload/0");
+				sResourcePath = sResourcePath.slice(0, sResourcePath.lastIndexOf("/"));
+			}
 		}
-		sCandidate = sTarget.split("/").map(function (sSegment) {
-			var sCollectionName,
-				iBracketIndex = sSegment.indexOf("("),
-				aParts,
-				mProperties,
-				oType;
 
-			/*
-			 * Normalizes the value for the given alias.
-			 * @param {string} sAlias
-			 *   The property name/alias
-			 * @returns {string|undefined}
-			 *   The normalized value
-			 */
-			function getNormalizedValue(sAlias) {
-				if (sAlias in mProperties) {
-					return encodeURIComponent(decodeURIComponent(mProperties[sAlias]));
-				}
-				bFailed = true;
+		Messaging.updateMessages(undefined, aMessages.map((oMessage) => {
+			const oOriginalMessage = oMessage;
+			if (oOperationMetadata) {
+				oMessage = _Helper.clone(oMessage);
+				_Helper.adjustTargets(oMessage, oOperationMetadata);
 			}
+			oMessage.transition = true;
 
-			if (iBracketIndex < 0) {
-				sMetaPath = _Helper.buildPath(sMetaPath, sSegment);
-				return sSegment;
-			}
-
-			sCollectionName = sSegment.slice(0, iBracketIndex);
-			sMetaPath = _Helper.buildPath(sMetaPath, sCollectionName);
-			mProperties = _Parser.parseKeyPredicate(sSegment.slice(iBracketIndex));
-
-			if ("" in mProperties) {
-				return sCollectionName + "(" + getNormalizedValue("") + ")";
-			}
-
-			// could be async, but normally in this state we should already have
-			// loaded the needed metadata
-			oType = that.oMetaModel.getObject("/" + sMetaPath + "/");
-
-			if (!(oType && oType.$Key)) {
-				bFailed = true;
-				return sSegment;
-			}
-
-			aParts = oType.$Key.map(function (sAlias) {
-				var sValue = getNormalizedValue(sAlias);
-
-				return oType.$Key.length > 1
-					? sAlias + "=" + sValue
-					: sValue;
-			});
-
-			return sCollectionName + "(" + aParts.join(",") + ")";
-		}).join("/");
-
-		return bFailed ? sTarget : sCandidate;
+			return this.createUI5Message(oMessage, sResourcePath, undefined, oOriginalMessage);
+		}));
 	};
 
 	/**
@@ -2732,22 +2775,6 @@ sap.ui.define([
 	};
 
 	/**
-	 * Getter for the optimistic batch enabler callback function; see
-	 * {@link #setOptimisticBatchEnabler}.
-	 *
-	 *
-	 * @returns {function(string)}
-	 *   The optimistic batch enabler callback function
-	 *
-	 * @experimental As of version 1.100.0
-	 * @private
-	 * @ui5-restricted sap.fe
-	 */
-	ODataModel.prototype.getOptimisticBatchEnabler = function () {
-		return this.fnOptimisticBatchEnabler;
-	};
-
-	/**
 	 * Setter for the optimistic batch enabler callback function. Setting this callback activates
 	 * the optimistic batch feature. Via the callback the optimistic batch behavior can be enabled
 	 * or disabled by returning either a boolean or a promise resolving with a boolean.
@@ -2783,9 +2810,9 @@ sap.ui.define([
 	 *   <li> the setter is called more than once
 	 * </ul>
 	 *
-	 * @experimental As of version 1.100.0
 	 * @private
 	 * @see #cleanUpOptimisticBatch
+	 * @since 1.100.0
 	 * @ui5-restricted sap.fe
 	 */
 	ODataModel.prototype.setOptimisticBatchEnabler = function (fnOptimisticBatchEnabler) {
@@ -2916,9 +2943,9 @@ sap.ui.define([
 	 *   A promise which is resolved without a defined result, or rejected with an error if
 	 *   deletion fails.
 	 *
-	 * @experimental As of version 1.102.0
 	 * @private
 	 * @see #setOptimisticBatchEnabler
+	 * @since 1.102.0
 	 * @ui5-restricted sap.fe
 	 */
 	ODataModel.cleanUpOptimisticBatch = function (dOlderThan) {

@@ -34,8 +34,10 @@ sap.ui.define([
 	"use strict";
 
 	/**
-	 * Creates and initializes a new UIComponent with the given <code>sId</code> and
-	 * settings.
+	 * As <code>UIComponent</code> is an abstract base class for UI components, applications should not call the constructor.
+	 * For many use cases the static {@link sap.ui.core.Component.create Component.create} factory can be used to instantiate a <code>UIComponent</code>.
+	 * Depending on the requirements, the framework also provides other ways to instantiate a <code>UIComponent</code>, documented under the
+	 * {@link topic:958ead51e2e94ab8bcdc90fb7e9d53d0 "Component"} chapter.
 	 *
 	 * The set of allowed entries in the <code>mSettings</code> object depends on
 	 * the concrete subclass and is described there. See {@link sap.ui.core.Component}
@@ -57,7 +59,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Component
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @alias sap.ui.core.UIComponent
 	 * @since 1.9.2
 	 */
@@ -736,17 +738,16 @@ sap.ui.define([
 	 */
 	UIComponent.prototype.createContent = function() {
 		var oRootView = this._getManifestEntry("/sap.ui5/rootView", true);
-		if (oRootView && typeof oRootView === "string") {
-			// This is a duplication of the logic in UIComponentMetadata#_convertLegacyMetadata
-			// to convert the string into a configuration object for the view factory in
-			// case of the manifest first approach.
-			// !This should be kept in sync with the UIComponentMetadata functionality!
-			return View._create({
-				viewName: oRootView,
-				type: ViewType.XML
-			});
-		} else if (oRootView && typeof oRootView === "object") {
 
+		if (oRootView && typeof oRootView === "string") {
+			// The view type isn't written here because the 'oRootView' string could be a typed view
+			// It will be set in the next 'if'
+			oRootView = {
+				viewName: oRootView
+			};
+		}
+
+		if (oRootView && typeof oRootView === "object") {
 			// default ViewType to XML, except for typed views
 			if (!oRootView.type && !View._getModuleName(oRootView)) {
 				oRootView.type = ViewType.XML;
@@ -756,15 +757,21 @@ sap.ui.define([
 			if (oRootView.id) {
 				oRootView.id = this.createId(oRootView.id);
 			}
-			// for now the processing mode is always set to <code>XMLProcessingMode.Sequential</code> for XMLViews
+			/**
+			 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
+			 * in the next major release
+			 */
 			if (oRootView.async && oRootView.type === ViewType.XML) {
+				// for now the processing mode is always set to <code>XMLProcessingMode.Sequential</code> for XMLViews
 				oRootView.processingMode = XMLProcessingMode.Sequential;
 			}
-			if (this.isA("sap.ui.core.IAsyncContentCreation")) {
-				return View.create(oRootView);
-			}
 
-			return View._create(oRootView);
+			const bModernFactory = this.isA("sap.ui.core.IAsyncContentCreation");
+			if (bModernFactory) {
+				return View.create(oRootView);
+			} else {
+				return View._create(oRootView);
+			}
 		} else if (oRootView) {
 			throw new Error("Configuration option 'rootView' of component '" + this.getMetadata().getName() + "' is invalid! 'rootView' must be type of string or object!");
 		}

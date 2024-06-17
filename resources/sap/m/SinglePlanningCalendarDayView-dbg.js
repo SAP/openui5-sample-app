@@ -25,7 +25,7 @@ function (library, SinglePlanningCalendarView) {
 	 * @extends sap.m.SinglePlanningCalendarView
 	 *
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 *
 	 * @constructor
 	 * @public
@@ -44,7 +44,7 @@ function (library, SinglePlanningCalendarView) {
 	/**
 	 * Returns the number of columns to be displayed in the grid of the <code>sap.m.SinglePlanningCalendar</code>.
 	 *
-	 * @return {int} the number of columns to be displayed
+	 * @returns {int} the number of columns to be displayed
 	 * @override
 	 * @public
 	 */
@@ -56,7 +56,7 @@ function (library, SinglePlanningCalendarView) {
 	 * Should return a number of entities until the next/previous startDate of the
 	 * <code>sap.m.SinglePlanningCalendar</code> after navigating forward or backwards.
 	 *
-	 * @return {int} the number of entities to be skipped by scrolling
+	 * @returns {int} the number of entities to be skipped by scrolling
 	 * @override
 	 * @public
 	 */
@@ -68,13 +68,13 @@ function (library, SinglePlanningCalendarView) {
 	 * Calculates the startDate which will be displayed in the <code>sap.m.SinglePlanningCalendar</code> based
 	 * on a given date.
 	 *
-	 * @param {object} oStartDate the given date
-	 * @return {object} the startDate of the view
+	 * @param {Date|module:sap/ui/core/date/UI5Date} oDate The given date
+	 * @returns {Date|module:sap/ui/core/date/UI5Date} The startDate of the view
 	 * @override
 	 * @public
 	 */
-	SinglePlanningCalendarDayView.prototype.calculateStartDate = function (oStartDate) {
-		return oStartDate;
+	SinglePlanningCalendarDayView.prototype.calculateStartDate = function (oDate) {
+		return oDate;
 	};
 
 	return SinglePlanningCalendarDayView;

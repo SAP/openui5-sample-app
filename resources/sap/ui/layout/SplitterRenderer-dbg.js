@@ -4,17 +4,13 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	/** @deprecated As of version 1.21. */
 	"sap/ui/core/AnimationMode",
-	/** @deprecated As of version 1.21. */
 	"sap/ui/core/ControlBehavior",
 	"sap/ui/core/Lib",
 	"sap/ui/core/library",
 	"sap/ui/core/IconPool" // side effect: required when calling RenderManager#icon
 ], function(
-	/** @deprecated As of version 1.21. */
 	AnimationMode,
-	/** @deprecated As of version 1.21. */
 	ControlBehavior,
 	Library,
 	coreLibrary

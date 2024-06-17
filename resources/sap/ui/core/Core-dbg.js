@@ -360,29 +360,34 @@ sap.ui.define([
 	 */
 
 	/**
-	 * @class Core Class of the SAP UI Library.
+	 * @class Singleton Core instance of the SAP UI Library.
 	 *
-	 * This class boots the Core framework and makes it available for the application
-	 * by requiring <code>sap.ui.core.Core</code>.
-	 *
-	 * The Core provides a {@link #ready ready function} to execute code after the core was booted.
+	 * The module export of <code>sap/ui/core/Core</code> is <b>not</b> a class, but the singleton Core instance itself.
+	 * The <code>sap.ui.core.Core</code> class itself must not be instantiated, except by the framework itself.
+	*
+	 * The Core provides a {@link #ready ready function} to execute code after the Core was booted.
 	 *
 	 * Example:
 	 * <pre>
 	 *
-	 *   oCore.ready(function() {
-	 *       ...
-	 *   });
+	 *   sap.ui.require(["sap/ui/core/Core"], async function(Core) {
 	 *
-	 *   await oCore.ready();
-	 *   ...
+	 *     // Usage of a callback function
+	 *     Core.ready(function() {
+	 *       ...
+	 *     });
+	 *
+	 *     // Usage of Core.ready() as a Promise
+	 *     await Core.ready();
+	 *     ...
+	 *   });
 	 *
 	 * </pre>
 	 *
 	 * @extends sap.ui.base.Object
 	 * @final
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @alias sap.ui.core.Core
 	 * @public
 	 * @hideconstructor
@@ -554,9 +559,6 @@ sap.ui.define([
 			oFrameOptionsConfig.mode = Security.getFrameOptions();
 			oFrameOptionsConfig.allowlistService = Security.getAllowlistService();
 			this.oFrameOptions = new FrameOptions(oFrameOptionsConfig);
-
-			// let Element and Component get friend access to the respective register/deregister methods
-			this._grantFriendAccess();
 
 			// handle libraries & modules
 			this.aModules = BaseConfig.get({
@@ -952,17 +954,6 @@ sap.ui.define([
 	Core.M_EVENTS = {ControlEvent: "ControlEvent", UIUpdated: "UIUpdated", ThemeChanged: "ThemeChanged", ThemeScopingChanged: "themeScopingChanged", LocalizationChanged: "localizationChanged",
 			LibraryChanged : "libraryChanged",
 			ValidationError : "validationError", ParseError : "parseError", FormatError : "formatError", ValidationSuccess : "validationSuccess"};
-
-	/**
-	 * The core allows some friend components to register/deregister themselves
-	 * @private
-	 */
-	Core.prototype._grantFriendAccess = function() {
-		// grant ElementMetadata "friend" access to Core for registration
-		ElementMetadata.prototype.register = function(oMetadata) {
-			Library._registerElement(oMetadata);
-		};
-	};
 
 	/**
 	 * Set the body's browser-related attributes.
@@ -3244,7 +3235,9 @@ sap.ui.define([
 		Rendering.addPrerenderingTask(fnPrerenderingTask, bFirst);
 	};
 
-	/** Returns a Promise that resolves if the Core is initialized.
+	/**
+	 * Returns a Promise that resolves if the Core is initialized.
+	 * Additionally, a callback function can be passed, for use cases where using Promises is not an option.
 	 *
 	 * @param {function():void} [fnReady] If the Core is ready the function will be called immediately, otherwise when the ready Promise resolves.
 	 * @returns {Promise<undefined>} The ready promise

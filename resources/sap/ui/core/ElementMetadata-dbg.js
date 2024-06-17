@@ -9,9 +9,10 @@ sap.ui.define([
 	'sap/base/Log',
 	'sap/base/util/ObjectPath',
 	'sap/ui/base/ManagedObjectMetadata',
+	'sap/ui/core/Lib',
 	'sap/ui/core/Renderer'
 ],
-	function(Log, ObjectPath, ManagedObjectMetadata, Renderer) {
+	function(Log, ObjectPath, ManagedObjectMetadata, Library, Renderer) {
 	"use strict";
 
 	/**
@@ -36,7 +37,7 @@ sap.ui.define([
 	 *
 	 * @class
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @since 0.8.6
 	 * @alias sap.ui.core.ElementMetadata
 	 * @extends sap.ui.base.ManagedObjectMetadata
@@ -198,7 +199,7 @@ sap.ui.define([
 
 	ElementMetadata.prototype.afterApplySettings = function() {
 		ManagedObjectMetadata.prototype.afterApplySettings.apply(this, arguments);
-		this.register && this.register(this);
+		Library._registerElement(this);
 	};
 
 	ElementMetadata.prototype.isHidden = function() {

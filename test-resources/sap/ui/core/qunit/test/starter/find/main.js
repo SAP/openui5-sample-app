@@ -267,7 +267,9 @@ sap.ui.define([
 							rows: {
 								path: "/tests"
 							},
-							footer: ""
+							footer: new Label({
+								text: ""
+							})
 						})
 					]
 				})
@@ -279,7 +281,7 @@ sap.ui.define([
 
 	function progress(state) {
 		if ( oTable ) {
-			oTable.setFooter("Refresh: checking " + state + "...");
+			oTable.getFooter().setText("Refresh: checking " + state + "...");
 		}
 	}
 
@@ -333,7 +335,7 @@ sap.ui.define([
 
 		discovery.findTests( entryPage, progress ).then( (aTests) => {
 			Element.getElementById("app").setBusy(false);
-			oTable.setFooter("Refresh: done.");
+			oTable.getFooter().setText("Refresh: done.");
 			const aTestPageUrls = [];
 			// filter duplicate tests and sort them
 			aTests = aTests.filter((e,i,a) => {
@@ -349,7 +351,7 @@ sap.ui.define([
 			});
 			saveData();
 			setTimeout(function() {
-				oTable.setFooter("");
+				oTable.getFooter().setText("");
 			}, 5000);
 		});
 

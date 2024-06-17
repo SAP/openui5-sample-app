@@ -75,14 +75,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.124.1
+	 * @version 1.125.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.m",
-		version: "1.124.1",
+		version: "1.125.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -158,6 +158,7 @@ sap.ui.define([
 			"sap.m.PanelAccessibleRole",
 			"sap.m.PDFViewerDisplayType",
 			"sap.m.PlacementType",
+			"sap.m.CarouselPageIndicatorPlacementType",
 			"sap.m.PlanningCalendarBuiltInView",
 			"sap.m.PlanningCalendarStickyMode",
 			"sap.m.PopinDisplay",
@@ -1119,6 +1120,39 @@ sap.ui.define([
 		 * @public
 		 */
 		PageIndicator : "PageIndicator"
+	};
+
+	/**
+	 * Types for the placement of the page indicator of the Carousel control.
+	 *
+	 * @enum {string}
+	 * @public
+	 */
+	thisLib.CarouselPageIndicatorPlacementType = {
+
+		/**
+		 * Page indicator will be placed at the top of the Carousel.
+		 * @public
+		 */
+		Top : "Top",
+
+		/**
+		 * Page indicator will be placed at the bottom of the Carousel.
+		 * @public
+		 */
+		Bottom : "Bottom",
+
+		/**
+		 * Page indicator will be placed over the Carousel content, top aligned.
+		 * @public
+		 */
+		OverContentTop : "OverContentTop",
+
+		/**
+		 * Page indicator will be placed over the Carousel content, bottom aligned.
+		 * @public
+		 */
+		OverContentBottom : "OverContentBottom"
 	};
 
 	/**
@@ -2456,6 +2490,17 @@ sap.ui.define([
 	 * @name sap.m.IOverflowToolbarContent
 	 * @interface
 	 * @public
+	 */
+
+	/**
+	 * Returns the <code>sap.m.OverflowToolbar</code> configuration object.
+	 *
+	 * @returns {sap.m.OverflowToolbarConfig} Configuration object
+	 *
+	 * @function
+	 * @name sap.m.IOverflowToolbarContent.getOverflowToolbarConfig
+	 * @ui5-restricted
+	 * @private
 	 */
 
 	/**

@@ -1442,6 +1442,7 @@ sap.ui.define([
 
 		this.mock(_AggregationHelper).expects("checkTypeof")
 			.withExactArgs(sinon.match.same(oAggregation), {
+				createInPlace : true,
 				expandTo : /^[1-9]\d*$/,
 				hierarchyQualifier : "string",
 				search : "string"
@@ -1599,6 +1600,14 @@ sap.ui.define([
 				hierarchyQualifier : "X"
 			}, true);
 		}, new Error("Not a string value for '$$aggregation/search'"));
+
+		assert.throws(function () {
+			// code under test
+			_AggregationHelper.validateAggregation({
+				createInPlace : false,
+				hierarchyQualifier : "X"
+			}, true);
+		}, new Error("Not a true value for '$$aggregation/createInPlace'"));
 	});
 
 	//*********************************************************************************************
@@ -1746,6 +1755,17 @@ sap.ui.define([
 			// code under test
 			_AggregationHelper.checkTypeof("~value~", oRegExp, "some/path");
 		}, new Error("Not a matching value for 'some/path'"));
+	});
+
+	//*********************************************************************************************
+	QUnit.test("checkTypeof: true", function (assert) {
+		// code under test
+		_AggregationHelper.checkTypeof(true, true, "some/path");
+
+		assert.throws(function () {
+			// code under test
+			_AggregationHelper.checkTypeof(false, true, "some/path");
+		}, new Error("Not a true value for 'some/path'"));
 	});
 
 	//*********************************************************************************************

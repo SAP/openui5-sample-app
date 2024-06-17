@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.124.1
+		 * @version 1.125.0
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
@@ -523,6 +523,14 @@ sap.ui.define([
 	};
 
 	/**
+	 * @override
+	 * @see sap.ui.model.odata.v4.ODataParentBinding#checkKeepAlive
+	 */
+	ODataContextBinding.prototype.checkKeepAlive = function () {
+		throw new Error("Unsupported " + this);
+	};
+
+	/**
 	 * Returns this operation binding's cache query options.
 	 *
 	 * @returns {object} The query options
@@ -531,14 +539,6 @@ sap.ui.define([
 	 */
 	ODataContextBinding.prototype.computeOperationQueryOptions = function () {
 		return Object.assign({}, this.oModel.mUriParameters, this.getQueryOptionsFromParameters());
-	};
-
-	/**
-	 * @override
-	 * @see sap.ui.model.odata.v4.ODataParentBinding#checkKeepAlive
-	 */
-	ODataContextBinding.prototype.checkKeepAlive = function () {
-		throw new Error("Unsupported " + this);
 	};
 
 	/**
@@ -800,6 +800,35 @@ sap.ui.define([
 	};
 
 	/**
+	 * Fetches all properties described in $expand and $select of the binding parameters, unless
+	 * the binding already has fetched it. This is only done if the model uses autoExpandSelect. The
+	 * goal is that these properties are also requested as late properties.
+	 *
+	 * Expects that the binding is resolved and has no own cache (and thus a parent context). This
+	 * together with autoExpandSelect also implies that $expand contains no collection-valued
+	 * navigation properties.
+	 *
+	 * @private
+	 */
+	ODataContextBinding.prototype.doFetchExpandSelectProperties = function () {
+		var sResolvedPath,
+			that = this;
+
+		if (this.bHasFetchedExpandSelectProperties || !this.oModel.bAutoExpandSelect
+				|| !this.mParameters.$expand && !this.mParameters.$select) {
+			return;
+		}
+
+		sResolvedPath = this.getResolvedPath();
+		_Helper.convertExpandSelectToPaths(this.oModel.buildQueryOptions(this.mParameters, true))
+			.forEach(function (sPath) {
+				that.oContext.fetchValue(_Helper.buildPath(sResolvedPath, sPath))
+					.catch(that.oModel.getReporter());
+			});
+		this.bHasFetchedExpandSelectProperties = true;
+	};
+
+	/**
 	 * @override
 	 * @see sap.ui.model.odata.v4.ODataBinding#doFetchOrGetQueryOptions
 	 */
@@ -833,35 +862,6 @@ sap.ui.define([
 			// if the binding is still initial, it must fire an event in resume
 			this.sResumeChangeReason = ChangeReason.Change;
 		}
-	};
-
-	/**
-	 * Fetches all properties described in $expand and $select of the binding parameters, unless
-	 * the binding already has fetched it. This is only done if the model uses autoExpandSelect. The
-	 * goal is that these properties are also requested as late properties.
-	 *
-	 * Expects that the binding is resolved and has no own cache (and thus a parent context). This
-	 * together with autoExpandSelect also implies that $expand contains no collection-valued
-	 * navigation properties.
-	 *
-	 * @private
-	 */
-	ODataContextBinding.prototype.doFetchExpandSelectProperties = function () {
-		var sResolvedPath,
-			that = this;
-
-		if (this.bHasFetchedExpandSelectProperties || !this.oModel.bAutoExpandSelect
-				|| !this.mParameters.$expand && !this.mParameters.$select) {
-			return;
-		}
-
-		sResolvedPath = this.getResolvedPath();
-		_Helper.convertExpandSelectToPaths(this.oModel.buildQueryOptions(this.mParameters, true))
-			.forEach(function (sPath) {
-				that.oContext.fetchValue(_Helper.buildPath(sResolvedPath, sPath))
-					.catch(that.oModel.getReporter());
-			});
-		this.bHasFetchedExpandSelectProperties = true;
 	};
 
 	/**
@@ -1656,6 +1656,36 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns a promise on the value for the given path relative to this binding. The function
+	 * allows access to the complete data the binding points to (if <code>sPath</code> is "") or
+	 * any part thereof. The data is a JSON structure as described in <a href=
+	 * "https://docs.oasis-open.org/odata/odata-json-format/v4.0/odata-json-format-v4.0.html"
+	 * >"OData JSON Format Version 4.0"</a>.
+	 * Note that the function clones the result. Modify values via
+	 * {@link sap.ui.model.odata.v4.Context#setProperty}.
+	 *
+	 * If you want {@link #requestObject} to read fresh data, call
+	 * <code>oBinding.refresh()</code> first.
+	 *
+	 * @param {string} [sPath=""]
+	 *   A path relative to this context binding
+	 * @returns {Promise<any|undefined>}
+	 *   A promise on the requested value; in case there is no bound context this promise resolves
+	 *   with <code>undefined</code>
+	 * @throws {Error}
+	 *   If the context's root binding is suspended
+	 *
+	 * @public
+	 * @see sap.ui.model.odata.v4.Context#requestObject
+	 * @since 1.69.0
+	 */
+	ODataContextBinding.prototype.requestObject = function (sPath) {
+		return this.oElementContext
+			? this.oElementContext.requestObject(sPath)
+			: Promise.resolve();
+	};
+
+	/**
 	 * @override
 	 * @see sap.ui.model.odata.v4.ODataParentBinding#requestSideEffects
 	 */
@@ -1702,36 +1732,6 @@ sap.ui.define([
 		return oContext
 			&& this.refreshReturnValueContext(oContext, sGroupId, /*bKeepCacheOnError*/true)
 			|| this.refreshInternal("", sGroupId, true, true);
-	};
-
-	/**
-	 * Returns a promise on the value for the given path relative to this binding. The function
-	 * allows access to the complete data the binding points to (if <code>sPath</code> is "") or
-	 * any part thereof. The data is a JSON structure as described in <a href=
-	 * "https://docs.oasis-open.org/odata/odata-json-format/v4.0/odata-json-format-v4.0.html"
-	 * >"OData JSON Format Version 4.0"</a>.
-	 * Note that the function clones the result. Modify values via
-	 * {@link sap.ui.model.odata.v4.Context#setProperty}.
-	 *
-	 * If you want {@link #requestObject} to read fresh data, call
-	 * <code>oBinding.refresh()</code> first.
-	 *
-	 * @param {string} [sPath=""]
-	 *   A path relative to this context binding
-	 * @returns {Promise<any|undefined>}
-	 *   A promise on the requested value; in case there is no bound context this promise resolves
-	 *   with <code>undefined</code>
-	 * @throws {Error}
-	 *   If the context's root binding is suspended
-	 *
-	 * @public
-	 * @see sap.ui.model.odata.v4.Context#requestObject
-	 * @since 1.69.0
-	 */
-	ODataContextBinding.prototype.requestObject = function (sPath) {
-		return this.oElementContext
-			? this.oElementContext.requestObject(sPath)
-			: Promise.resolve();
 	};
 
 	/**
