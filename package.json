@@ -28,6 +28,6 @@
 		"karma-coverage": "^2.2.1",
 		"karma-ui5": "^4.0.0",
 		"local-web-server": "^5.3.4",
-		"rimraf": "^5.0.9"
+		"rimraf": "^6.0.1"
 	}
 }
