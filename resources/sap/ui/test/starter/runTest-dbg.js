@@ -1,4 +1,5 @@
 //@ui5-bundle sap/ui/test/starter/runTest-dbg.js
+window["sap-ui-optimized"] = true;
 //@ui5-bundle-raw-include ui5loader.js
 /*!
  * OpenUI5
