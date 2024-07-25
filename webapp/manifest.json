@@ -1,5 +1,5 @@
 {
-	"_version": "_1.61.0",
+	"_version": "1.61.0",
 	"sap.app": {
 		"id": "sap.ui.demo.todo",
 		"type": "application"
