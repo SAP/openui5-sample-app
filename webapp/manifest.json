@@ -1,12 +1,12 @@
 {
-	"_version": "1.12.0",
+	"_version": "_1.61.0",
 	"sap.app": {
 		"id": "sap.ui.demo.todo",
 		"type": "application"
 	},
 	"sap.ui5": {
 		"dependencies": {
-			"minUI5Version": "1.75.0",
+			"minUI5Version": "1.121.0",
 			"libs": {
 				"sap.ui.core": {},
 				"sap.m": {},
