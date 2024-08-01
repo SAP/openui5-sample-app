@@ -1,5 +1,4 @@
 //@ui5-bundle sap-ui-boot-dbg.js
-window["sap-ui-optimized"] = true;
 //@ui5-bundle-raw-include ui5loader.js
 /*!
  * OpenUI5
