@@ -9,7 +9,7 @@ export default [
                 ...globals.browser,
                 sap: "readonly"
             },
-            ecmaVersion: 2022,
+            ecmaVersion: 2023,
             sourceType: "script"
         },
         rules: {
