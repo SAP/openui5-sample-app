@@ -9,14 +9,16 @@ sap.ui.define([
 	"sap/m/GenericTile",
 	"sap/m/Avatar",
 	"sap/m/ToDoCardRenderer",
-	"sap/m/GenericTileRenderer"
+	"sap/m/GenericTileRenderer",
+	"sap/ui/core/library"
 ], function (
 	library,
 	GenericTile,
 	Avatar,
 	ToDoCardRenderer,
-	GenericTileRenderer
-	) {
+	GenericTileRenderer,
+	coreLibrary
+) {
 		"use strict";
 
 	var FrameType = library.FrameType,
@@ -25,7 +27,8 @@ sap.ui.define([
 		Priority = library.Priority,
 		AvatarSize = library.AvatarSize,
 		AvatarShape = library.AvatarShape,
-		AvatarColor = library.AvatarColor;
+		AvatarColor = library.AvatarColor,
+		ValueState = coreLibrary.ValueState;
 
 	/**
 	* Constructor for a new sap.m.ActionTile control.
@@ -38,7 +41,7 @@ sap.ui.define([
 	* @extends sap.m.GenericTile
 	*
 	* @author SAP SE
-	* @version 1.125.0
+	* @version 1.126.1
 	*
 	* @public
 	* @experimental since 1.122
@@ -73,7 +76,24 @@ sap.ui.define([
 				 *
 				 * @experimental Since 1.124
 				 */
-				priorityText: { type: "string", group: "Data", defaultValue: null }
+				priorityText: { type: "string", group: "Data", defaultValue: null },
+				/**
+				 * Defines what type of icon is displayed as visual affordance for the icon frame badge.
+				 *
+				 * @experimental Since 1.124
+				 */
+				badgeIcon: { type: "sap.ui.core.URI", group: "Appearance", defaultValue: "" },
+				/**
+				 * Visualizes the validation state of the icon frame badge, e.g. <code>Error</code>, <code>Warning</code>,
+				 * <code>Success</code>, <code>Information</code>.
+				 *
+				 * @experimental Since 1.124
+				 */
+				badgeValueState: {
+					type: "sap.ui.core.ValueState",
+					group: "Appearance",
+					defaultValue: ValueState.None
+				}
 			}
 		},
 		renderer: {
@@ -144,6 +164,7 @@ sap.ui.define([
 	 *
 	 * @public
 	 * @param {boolean} bValue - Determines whether the icon frame should be enabled or not.
+	 * @returns {sap.m.ActionTile} The reference to the ActionTile instance.
 	 */
 	ActionTile.prototype.setEnableIconFrame = function(bValue) {
 		if (!this._oAvatar && bValue) {
@@ -153,6 +174,7 @@ sap.ui.define([
 				displayShape: AvatarShape.Square,
 				backgroundColor: AvatarColor.Placeholder
 			}).addStyleClass("sapMATIconFrame");
+			this.addDependent(this._oAvatar);
 
 			var sHeaderImage = this.getHeaderImage();
 			if (sHeaderImage) {
@@ -161,6 +183,38 @@ sap.ui.define([
 		}
 
 		this.setProperty("enableIconFrame", bValue);
+		return this;
+	};
+
+	/**
+	 * Sets the badgeIcon property of the ActionTile.
+	 *
+	 * @public
+	 * @param {string} sIcon - The URI of the icon to be displayed as a badge.
+	 * @returns	{sap.m.ActionTile} The reference to the ActionTile instance.
+	 */
+	ActionTile.prototype.setBadgeIcon = function(sIcon) {
+		if (this._oAvatar) {
+			this._oAvatar.setBadgeIcon(sIcon);
+		}
+
+		this.setProperty("badgeIcon", sIcon);
+		return this;
+	};
+
+	/**
+	 * Sets the badgeValueState property of the ActionTile.
+	 *
+	 * @public
+	 * @param {sap.ui.core.ValueState} sValueState The value state of the badge.
+	 * @returns {sap.m.ActionTile} The reference to the ActionTile instance.
+	 */
+	ActionTile.prototype.setBadgeValueState = function(sValueState) {
+		if (this._oAvatar) {
+			this._oAvatar.setBadgeValueState(sValueState);
+		}
+
+		this.setProperty("badgeValueState", sValueState);
 		return this;
 	};
 

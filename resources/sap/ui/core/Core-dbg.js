@@ -12,7 +12,6 @@ sap.ui.define([
 	"./ControlBehavior",
 	"./Element",
 	"./ElementRegistry",
-	"./ElementMetadata",
 	"./Lib",
 	"./Rendering",
 	"./RenderManager",
@@ -26,7 +25,6 @@ sap.ui.define([
 	"sap/base/Event",
 	"sap/base/Log",
 	"sap/base/i18n/Formatting",
-	"sap/base/i18n/Localization",
 	"sap/base/util/Deferred",
 	"sap/base/util/isEmptyObject",
 	"sap/base/util/ObjectPath",
@@ -64,7 +62,6 @@ sap.ui.define([
 		ControlBehavior,
 		Element,
 		ElementRegistry,
-		ElementMetadata,
 		Library,
 		Rendering,
 		RenderManager,
@@ -78,7 +75,6 @@ sap.ui.define([
 		BaseEvent,
 		Log,
 		Formatting,
-		Localization,
 		Deferred,
 		isEmptyObject,
 		ObjectPath,
@@ -120,6 +116,19 @@ sap.ui.define([
 		jQuery.noConflict();
 	}
 
+	// set LogLevel
+	const sLogLevel = BaseConfig.get({
+		name: "sapUiLogLevel",
+		type: BaseConfig.Type.String,
+		defaultValue: undefined,
+		external: true
+	});
+
+	if (sLogLevel) {
+		Log.setLevel(Log.Level[sLogLevel.toUpperCase()] || parseInt(sLogLevel));
+	} else if (!globalThis["sap-ui-optimized"]) {
+		Log.setLevel(Log.Level.DEBUG);
+	}
 
 	const oJQVersion = Version(jQuery.fn.jquery);
 	if ( oJQVersion.compareTo("3.6.0") != 0 ) {
@@ -387,7 +396,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 * @final
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @alias sap.ui.core.Core
 	 * @public
 	 * @hideconstructor

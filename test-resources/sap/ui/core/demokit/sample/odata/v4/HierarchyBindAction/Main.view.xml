@@ -8,7 +8,13 @@
 	xmlns:rm="sap.ui.table.rowmodes">
 
 	<TreeTable id="table" ariaLabelledBy="title"
-		rows="{path : '_Hierarchy', parameters : {$count : true, $$patchWithoutSideEffects : true}}"
+		rows="{
+				path : '_Hierarchy',
+				parameters : {
+					$count : true, $$ownRequest : true,
+					$$patchWithoutSideEffects : true
+				}
+			}"
 		selectionMode="None" threshold="0">
 		<extension>
 			<m:Toolbar design="Transparent" class="sapMTBHeader-CTX">
@@ -20,9 +26,11 @@
 				</m:Select>
 				<m:ToolbarSpacer/>
 				<m:Button icon="sap-icon://create" press=".onCreateRoot" tooltip="Create New Root"/>
-				<m:Button icon="sap-icon://refresh" press="onRefresh" tooltip="Refresh"/>
-				<m:Button icon="sap-icon://synchronize" press="onSynchronize"
-					tooltip="Synchronize"/>
+				<m:Button icon="sap-icon://hide" press=".onCreateRoot($event, true)"
+					tooltip="Create New Root (filtered out)"/>
+				<m:Button icon="sap-icon://response" press=".onRefresh" tooltip="Refresh"/>
+				<m:Button icon="sap-icon://refresh" press=".onRefresh($event, true)"
+					tooltip="Refresh (keeping tree state)"/>
 			</m:Toolbar>
 		</extension>
 		<rowMode>
@@ -46,7 +54,7 @@
 				<m:Text text="{SiblingOrder}" wrapping="false"/>
 			</template>
 		</Column>
-		<Column>
+		<Column filterProperty="Description">
 			<m:Label text="Description"/>
 			<template>
 				<m:Input change="onDescriptionChanged" value="{Description}"/>
@@ -58,45 +66,28 @@
 				<m:Text text="{Hierarchy}" wrapping="false"/>
 			</template>
 		</Column>
-		<Column width="4em">
+		<Column width="27em">
 			<template>
-				<m:Button enabled="{= %{@$ui5.node.isExpanded} !== false}"
-					icon="sap-icon://create" press=".onCreate" tooltip="Create New Child"/>
-			</template>
-		</Column>
-		<Column width="4em">
-			<template>
-				<m:Button icon="sap-icon://move" press=".onMove($event, undefined)"
-					tooltip="Move To Parent..."/>
-			</template>
-		</Column>
-		<Column width="4em">
-			<template>
-				<m:Button icon="sap-icon://map" press=".onMove($event, '?')"
-					tooltip="Move Just Before Sibling..."/>
-			</template>
-		</Column>
-		<Column width="4em">
-			<template>
-				<m:Button icon="sap-icon://arrow-bottom" press=".onMove($event, null)"
-					tooltip="Move As Last Child Of..."/>
-			</template>
-		</Column>
-		<Column width="4em">
-			<template>
-				<m:Button enabled="{= %{@$ui5.node.level} > 1}" icon="sap-icon://back-to-top"
-					press=".onMakeRoot($event, undefined)" tooltip="Make Root"/>
-			</template>
-		</Column>
-		<Column width="4em">
-			<template>
-				<m:Button icon="sap-icon://pull-down" press=".onMakeRoot($event, null)"
-					tooltip="Make Last Root"/>
-			</template>
-		</Column>
-		<Column width="4em">
-			<template>
-				<m:Button icon="sap-icon://delete" press=".onDelete" tooltip="Delete"/>
+				<m:FlexBox justifyContent="SpaceBetween">
+					<m:Button enabled="{= %{@$ui5.node.isExpanded} !== false}"
+						icon="sap-icon://create" press=".onCreate" tooltip="Create New Child"/>
+					<m:Button enabled="{= %{@$ui5.node.isExpanded} !== false}"
+						icon="sap-icon://hide" press=".onCreate($event, true)"
+						tooltip="Create New Child (filtered out)"/>
+					<m:Button icon="sap-icon://up" press=".onMoveUp" tooltip="Move Up"/>
+					<m:Button icon="sap-icon://down" press=".onMoveDown" tooltip="Move Down"/>
+					<m:Button icon="sap-icon://move" press=".onMove($event, undefined)"
+						tooltip="Move To Parent..."/>
+					<m:Button icon="sap-icon://map" press=".onMove($event, '?')"
+						tooltip="Move Just Before Sibling..."/>
+					<m:Button icon="sap-icon://arrow-bottom" press=".onMove($event, null)"
+						tooltip="Move As Last Child Of..."/>
+					<m:Button enabled="{= %{@$ui5.node.level} > 1}" icon="sap-icon://back-to-top"
+						press=".onMakeRoot($event, undefined)" tooltip="Make Root"/>
+					<m:Button icon="sap-icon://pull-down" press=".onMakeRoot($event, null)"
+						tooltip="Make Last Root"/>
+					<m:Button icon="sap-icon://delete" press=".onDelete" tooltip="Delete"/>
+				</m:FlexBox>
 			</template>
 		</Column>
 	</TreeTable>
@@ -113,6 +104,7 @@
 
 	<m:FormattedText htmlText="&lt;em>Available URL parameters:&lt;/em>
 		&lt;ul>
+			&lt;li> &lt;code>createInPlace&lt;/code> Either set or unset; default unset
 			&lt;li> &lt;code>expandTo&lt;/code> Either * for &lt;em>expand all&lt;/em> or a number; default 1
 			&lt;li> &lt;code>visibleRowCount&lt;/code> A number; default 10"/>
 </mvc:View>

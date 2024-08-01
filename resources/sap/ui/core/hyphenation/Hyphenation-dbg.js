@@ -401,7 +401,7 @@ sap.ui.define([
 	 * @see {@link topic:6322164936f047de941ec522b95d7b70 Hyphenation for Text Controls}
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @hideconstructor
 	 * @public
 	 * @since 1.60
@@ -414,6 +414,7 @@ sap.ui.define([
 				/**
 				 * Fired if an error with initialization or hyphenation occurs.
 				 * @private
+				 * @ui5-restricted sap.ui.core.hyphenation.Hyphenation
 				 */
 				error: {
 					parameters: {

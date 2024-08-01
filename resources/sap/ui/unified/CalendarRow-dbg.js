@@ -88,7 +88,7 @@ sap.ui.define([
 	 * @class
 	 * A calendar row with a header and appointments. The Appointments will be placed in the defined interval.
 	 * @extends sap.ui.core.Control
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @public
@@ -1704,9 +1704,9 @@ sap.ui.define([
 				if (oApp.getId() !== oAppointment.getId() && oApp.getSelected()) {
 					oApp.setProperty("selected", false, true); // do not invalidate CalendarRow
 					oApp.$().removeClass("sapUiCalendarAppSel");
-					for (var i = 0; i < this.aSelectedAppointments.length; i++) {
-						if (this.aSelectedAppointments[i] !== oApp.getId()){
-							this.aSelectedAppointments.splice(i);
+					for (var j = 0; j < this.aSelectedAppointments.length; j++) {
+						if (this.aSelectedAppointments[j] !== oApp.getId()){
+							this.aSelectedAppointments.splice(j);
 						}
 					}
 					sAriaLabel = oApp.$().attr("aria-labelledby");

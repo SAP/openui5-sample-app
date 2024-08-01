@@ -118,7 +118,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @public
@@ -514,7 +514,7 @@ sap.ui.define([
 	};
 
 	DynamicPage.prototype.setShowFooter = function (bShowFooter) {
-		var vResult = this.setProperty("showFooter", bShowFooter);
+		var vResult = this.setProperty("showFooter", bShowFooter, /* bSuppressInvalidate */ true);
 
 		this._toggleFooter(bShowFooter);
 

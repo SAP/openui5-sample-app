@@ -96,6 +96,7 @@ sap.ui.define([
 					oRM.openStart("div", oControl);
 					oRM.class("sapMHdrCntrItemCntr");
 					oRM.class("sapMHrdrCntrInner");
+					oRM.attr("tabindex", -1);
 					oRM.attr("aria-setsize", oControl.getSetSize());
 					oRM.attr("aria-posinset", oControl.getPosition());
 					oRM.attr("role", "listitem");
@@ -124,7 +125,7 @@ sap.ui.define([
 		 * @since 1.44.0
 		 *
 		 * @author SAP SE
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 *
 		 * @public
 		 * @alias sap.m.HeaderContainer

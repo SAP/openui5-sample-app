@@ -15,9 +15,10 @@ sap.ui.define([
 	'sap/ui/base/DataType',
 	'./ObjectStatusRenderer',
 	'sap/m/ImageHelper',
-	'sap/ui/core/LabelEnablement'
+	'sap/ui/core/LabelEnablement',
+	"sap/ui/events/KeyCodes"
 ],
-	function(library, Control, Library, ValueStateSupport, IndicationColorSupport, coreLibrary, DataType, ObjectStatusRenderer, ImageHelper, LabelEnablement) {
+	function(library, Control, Library, ValueStateSupport, IndicationColorSupport, coreLibrary, DataType, ObjectStatusRenderer, ImageHelper, LabelEnablement, KeyCodes) {
 	"use strict";
 
 
@@ -46,7 +47,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
@@ -258,8 +259,10 @@ sap.ui.define([
 	 * @private
 	 * @param {object} oEvent The fired event
 	 */
-	ObjectStatus.prototype.onsapspace = function(oEvent) {
-		this.onsapenter(oEvent);
+	ObjectStatus.prototype.onkeyup = function(oEvent) {
+		if (oEvent.which === KeyCodes.SPACE) {
+			this.onsapenter(oEvent);
+		}
 	};
 
 	/**

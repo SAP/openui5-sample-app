@@ -87,7 +87,7 @@ sap.ui.define([
 			serviceUrl : true,
 			sharedRequests : true,
 			supportReferences : true,
-			// @deprecated As of Version 1.110.0
+			/** @deprecated As of Version 1.110.0 */
 			synchronizationMode : true,
 			updateGroupId : true,
 			withCredentials : true
@@ -234,7 +234,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
@@ -258,8 +258,7 @@ sap.ui.define([
 	 *   <code>odataVersion</code> is given.
 	 */
 	function constructor(mParameters = {}) {
-		var sGroupId,
-			oGroupProperties,
+		var oGroupProperties,
 			sLanguageTag = Localization.getLanguageTag().toString(),
 			sODataVersion,
 			sParameter,
@@ -272,7 +271,7 @@ sap.ui.define([
 		// do not pass any parameters to Model
 		Model.call(this);
 
-		// @deprecated As of Version 1.110.0
+		/** @deprecated As of Version 1.110.0 */
 		if ("synchronizationMode" in mParameters && mParameters.synchronizationMode !== "None") {
 			throw new Error("Synchronization mode must be 'None'");
 		}
@@ -318,7 +317,7 @@ sap.ui.define([
 		_Helper.checkGroupId(mParameters.updateGroupId, false, false, "Invalid update group ID: ");
 		this.sUpdateGroupId = mParameters.updateGroupId || this.getGroupId();
 		this.mGroupProperties = {};
-		for (sGroupId in mParameters.groupProperties) {
+		for (const sGroupId in mParameters.groupProperties) {
 			_Helper.checkGroupId(sGroupId, true);
 			oGroupProperties = mParameters.groupProperties[sGroupId];
 			if (typeof oGroupProperties !== "object"
@@ -377,6 +376,10 @@ sap.ui.define([
 					that.addPrerenderingTask(that._submitBatch.bind(that, sGroupId, true));
 				}
 			},
+			onHttpResponse : function (mHeaders) {
+				const fnHttpListener = that.fnHttpListener; // avoid "this" when calling
+				fnHttpListener?.({responseHeaders : mHeaders});
+			},
 			reportStateMessages : this.reportStateMessages.bind(this),
 			reportTransitionMessages : this.reportTransitionMessages.bind(this),
 			updateMessages : function (aOldMessages, aNewMessages) {
@@ -407,6 +410,7 @@ sap.ui.define([
 			this.mSupportedBindingModes.TwoWay = true;
 		}
 		this.aPrerenderingTasks = null; // @see #addPrerenderingTask
+		this.fnHttpListener = null;
 		this.fnOptimisticBatchEnabler = null;
 		// maps the path to the error for the next dataReceived event
 		this.mPath2DataReceivedError = {};
@@ -1002,7 +1006,10 @@ sap.ui.define([
 	 * If the target type specified in the corresponding control property's binding info is "any"
 	 * and the binding is relative or points to metadata, the binding may have an object value;
 	 * in this case and unless the binding refers to an action advertisement the binding's mode must
-	 * be {@link sap.ui.model.BindingMode.OneTime}.
+	 * be {@link sap.ui.model.BindingMode.OneTime}. {@link sap.ui.model.BindingMode.OneWay OneWay}
+	 * is also supported (@experimental as of version 1.126.0), but client-side updates of the
+	 * object are not supported and <code>$$patchWithoutSideEffects</code> should be used for the
+	 * parent entity.
 	 *
 	 * @param {string} sPath
 	 *   The binding path in the model; must not end with a slash
@@ -1370,7 +1377,6 @@ sap.ui.define([
 	ODataModel.prototype.createBindingContext = function (sPath, oContext) {
 		var sDataPath,
 			oMetaContext,
-			sMetaPath,
 			sResolvedPath,
 			iSeparator;
 
@@ -1403,7 +1409,7 @@ sap.ui.define([
 		iSeparator = sResolvedPath.indexOf("#");
 		if (iSeparator >= 0) {
 			sDataPath = sResolvedPath.slice(0, iSeparator);
-			sMetaPath = sResolvedPath.slice(iSeparator + 1);
+			let sMetaPath = sResolvedPath.slice(iSeparator + 1);
 			if (sMetaPath[0] === "#") {
 				sMetaPath = sMetaPath.slice(1);
 			} else if (sDataPath.length > 1 && sMetaPath[0] !== "@"
@@ -2759,6 +2765,27 @@ sap.ui.define([
 	 */
 	ODataModel.prototype.setIgnoreETag = function (bIgnoreETag) {
 		this.bIgnoreETag = bIgnoreETag;
+	};
+
+	/**
+	 * Sets a listener for HTTP responses which is called every time with the full set of headers
+	 * received.
+	 *
+	 * @param {function(object)} fnListener
+	 *   A function which is called with an object containing the following properties. This
+	 *   function must never fail!
+	 *   <ul>
+	 *     <li> <code>responseHeaders</code> A map from HTTP response header names (in all lower
+	 *       case) to their string values. Of course, "Set-Cookie" is not available here.
+	 *   </ul>
+	 *
+	 * @private
+	 * @see #changeHttpHeaders
+	 * @since 1.126.0
+	 * @ui5-restricted sap.payroll
+	 */
+	ODataModel.prototype.setHttpListener = function (fnListener) {
+		this.fnHttpListener = fnListener;
 	};
 
 	/**

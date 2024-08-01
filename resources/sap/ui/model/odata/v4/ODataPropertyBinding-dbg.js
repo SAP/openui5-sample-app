@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -294,7 +294,7 @@ sap.ui.define([
 								that.fireDataRequested(bPreventBubbling);
 							}, that)
 						.then(function (vResult) {
-							that.assertSameCache(oCache);
+							that.checkSameCache(oCache);
 
 							return vResult;
 						});
@@ -317,16 +317,17 @@ sap.ui.define([
 				return oMetaModel.fetchObject(sMetaPath,
 					oMetaModel.getMetaContext(that.oModel.resolve(sDataPath, that.oContext)),
 					that.mScope && {scope : that.mScope});
-			}).then(function (vValue) {
-				if (!vValue || typeof vValue !== "object") {
-					return vValue;
+			}).then(function (vValue0) {
+				if (!vValue0 || typeof vValue0 !== "object") {
+					return vValue0;
 				}
 				if (that.sInternalType === "any" && (that.getBindingMode() === BindingMode.OneTime
-						|| (that.sPath[that.sPath.lastIndexOf("/") + 1] === "#" && !bIsMeta))) {
+						|| !bIsMeta && (that.getBindingMode() === BindingMode.OneWay
+							|| that.sPath[that.sPath.lastIndexOf("/") + 1] === "#"))) {
 					if (bIsMeta) {
-						return vValue;
+						return vValue0;
 					} else if (that.bRelative) {
-						return _Helper.publicClone(vValue);
+						return _Helper.publicClone(vValue0);
 					}
 				}
 				Log.error("Accessed value is not primitive", sResolvedPath, sClassName);
@@ -351,14 +352,14 @@ sap.ui.define([
 		}
 		return SyncPromise.all([vValue, vType]).then(function (aResults) {
 			var oType = aResults[1],
-				vValue = aResults[0];
+				vValue0 = aResults[0];
 
 			if (oCallToken === that.oCheckUpdateCallToken) { // latest call to checkUpdateInternal
 				that.oCheckUpdateCallToken = undefined;
 				that.doSetType(oType);
-				if (oCallToken.forceUpdate || that.vValue !== vValue) {
+				if (oCallToken.forceUpdate || that.vValue !== vValue0) {
 					that.bInitial = false;
-					that.vValue = vValue;
+					that.vValue = vValue0;
 					that._fireChange({reason : sChangeReason || ChangeReason.Change});
 				}
 				that.checkDataState();

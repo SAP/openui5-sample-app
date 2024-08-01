@@ -88,7 +88,7 @@ function(
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @public
@@ -1934,16 +1934,16 @@ function(
 			aHeaderContent = oHeaderAggregation.aAggregationContent;
 
 		for (var i = 0; i < aHeaderContent.length; i++) {
-			if (aHeaderContent[i] instanceof Button && aHeaderContent[i].getVisible()) {
+			if (aHeaderContent[i] instanceof Button && aHeaderContent[i].getVisible() && aHeaderContent[i] !== this._oShowMasterBtn) {
 				/**
 				 * @deprecated As of version 1.120
 				 */
-				if (aHeaderContent[i].getType() !== ButtonType.Back && !(aHeaderContent[i].getType() == ButtonType.Up && aHeaderContent[i] !== this._oShowMasterBtn)) {
+				if (aHeaderContent[i].getType() !== ButtonType.Back && aHeaderContent[i].getType() !== ButtonType.Up) {
 					continue;
 				}
 				this._bDetailNavButton = true;
 				return;
-				}
+			}
 		}
 		this._bDetailNavButton = false;
 

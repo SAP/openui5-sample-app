@@ -10,7 +10,6 @@ sap.ui.define(function () {
 			ui5: {
 				support: "silent",
 				noConflict: true,
-				debug: true,
 				libs: "sap.m, sap.ui.support"
 			}
 		},
@@ -131,9 +130,15 @@ sap.ui.define(function () {
 				title: "QUnit Tests for 'silent event bus usage' rules"
 			},
 			"model/bindingPathSyntaxValidation": {
+				ui5: {
+					debug: false
+				},
 				title: "QUnit Tests for model rule: bindingPathSyntaxValidation"
 			},
 			"model/selectUsedInBoundAggregation": {
+				ui5: {
+					debug: false
+				},
 				title: "QUnit Tests for model rule: selectUsedInBoundAggregation"
 			}
 		}

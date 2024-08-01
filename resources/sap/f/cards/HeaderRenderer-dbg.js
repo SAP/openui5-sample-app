@@ -49,6 +49,10 @@ sap.ui.define([
 			oRm.class("sapFCardHeaderHasIcon");
 		}
 
+		if (oToolbar?.getVisible()) {
+			oRm.class("sapFCardHeaderHasToolbar");
+		}
+
 		oRm.openEnd();
 
 		if (bRenderAsLink) {

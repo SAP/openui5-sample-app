@@ -100,7 +100,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @private
@@ -139,6 +139,7 @@ function(
 				/**
 				 * Defines the calendar week numbering used for display.
 				 * @private
+				 * @ui5-restricted sap.m.PlanningCalendarHeader
 				 * @since 1.110.0
 				 */
 				calendarWeekNumbering : { type : "sap.ui.core.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
@@ -147,6 +148,7 @@ function(
 				 * If set, the calendar type is used for display.
 				 * If not set, the calendar type of the global configuration is used.
 				 * @private
+				 * @ui5-restricted sap.m.PlanningCalendarHeader
 				 * @since 1.108.0
 				 */
 				_primaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
@@ -154,7 +156,8 @@ function(
 				/**
 				 * If set, the days are also displayed in this calendar type
 				 * If not set, the dates are only displayed in the primary calendar type
-				 * @privates
+				 * @private
+				 * @ui5-restricted sap.m.PlanningCalendarHeader
 				 * @since 1.109.0
 				 */
 				_secondaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"}
@@ -403,6 +406,9 @@ function(
 	PlanningCalendarHeader.prototype.exit = function () {
 		this._getActionsToolbar().removeAllContent();
 		if (this._oTitle) {
+			if (this._oToolbarAfterRenderingDelegate) {
+				this._oTitle.removeDelegate(this._oToolbarAfterRenderingDelegate);
+			}
 			this._oTitle.destroy();
 			this._oTitle = null;
 		}
@@ -443,8 +449,22 @@ function(
 	};
 
 	PlanningCalendarHeader.prototype.setTitle = function (sTitle) {
-		this._getOrCreateTitleControl().setText(sTitle).setVisible(!!sTitle);
+		const oInnerTitle = this._getOrCreateTitleControl();
+		oInnerTitle.setText(sTitle).setVisible(!!sTitle);
+		if (this._oToolbarAfterRenderingDelegate) {
+			oInnerTitle.removeDelegate(this._oToolbarAfterRenderingDelegate);
+		}
+		this._oToolbarAfterRenderingDelegate = {
+			onAfterRendering: function () {
+				const oTitle = this.getActions().find((oAction) => oAction.isA("sap.m.Title"));
+				const oTitleDomRef = this.getDomRef().querySelector(`[data-sap-ui='${oInnerTitle.getId()}']`);
+				if (oTitle && oTitleDomRef) {
+					oTitleDomRef.setAttribute("id", oTitle.getId());
+				}
+			}
+		};
 
+		oInnerTitle.addDelegate(this._oToolbarAfterRenderingDelegate, this);
 		return this.setProperty("title", sTitle);
 	};
 

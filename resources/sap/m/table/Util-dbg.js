@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m.table.Util
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @since 1.96.0
 	 * @private
 	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp
@@ -536,15 +536,14 @@ sap.ui.define([
 	 * @param {object} mSettings Settings object containing various binding infos needed to create or update the popover and it's contents
 	 * @param {sap.ui.core.Control} mSettings.control Control whose style is synced to the popover
 	 * @param {sap.ui.base.ManagedObject.AggregationBindingInfo} mSettings.itemsBindingInfo Containing the binding information for the items (e. g. path, filters, selected parameters)
-	 * @param {sap.ui.base.ManagedObject.PropertyBindingInfo} mSettings.amountBindingInfo Amount value used in popover
-	 * @param {sap.ui.base.ManagedObject.PropertyBindingInfo} mSettings.unitBindingInfo Unit used in popover
+	 * @param {object} mSettings.listItemContentTemplate Template of the popover item content
 	 * @param {boolean} [mSettings.grandTotal] Whether the popover is related to a grand total. By default, the popover is configured as if it is related to a subtotal
 	 * @returns {Promise<sap.m.ResponsivePopover>} Popover control with the embedded list
 	 * @private
 	 * @ui5-restricted sap.fe
 	 */
 	Util.createOrUpdateMultiUnitPopover = async function(vPopover, mSettings) {
-		const oResourceBundle = Library.getResourceBundleFor("sap.m.table");
+		const oResourceBundle = Library.getResourceBundleFor("sap.m");
 		let oPopover;
 
 		if (typeof vPopover === "object") {
@@ -556,11 +555,14 @@ sap.ui.define([
 		}
 
 		const oDetailsList = oPopover.getContent()[0];
-		const oItemsTemplate = oDetailsList.getBindingInfo("items")?.template || createItemTemplate();
-		const oItems = oItemsTemplate.getContent()[0].getItems();
+		const oItemsTemplate = oDetailsList.getBindingInfo("items")?.template || createItemTemplate(mSettings.listItemContentTemplate);
 
-		oItems[0].bindText(mSettings.amountBindingInfo);
-		oItems[1].bindText(mSettings.unitBindingInfo);
+		if (!mSettings.listItemContentTemplate) {
+			const oItems = oItemsTemplate.getContent()[0].getItems();
+
+			oItems[0].bindText(mSettings.amountBindingInfo);
+			oItems[1].bindText(mSettings.unitBindingInfo);
+		}
 
 		oDetailsList.bindItems({
 			...mSettings.itemsBindingInfo,
@@ -594,31 +596,35 @@ sap.ui.define([
 		}).addStyleClass("sapMMultiUnitPopover");
 	}
 
-	function createItemTemplate() {
-		var oAmountText = new Text({
-			textDirection: "LTR",
-			wrapping: false,
-			textAlign: "End"
-		}).addStyleClass("sapMMultiUnitPopoverAmount");
+	function createItemTemplate(oTemplate) {
+		if (!oTemplate) {
+			var oAmountText = new Text({
+				textDirection: "LTR",
+				wrapping: false,
+				textAlign: "End"
+			}).addStyleClass("sapMMultiUnitPopoverAmount");
 
-		var oUnitText = new Text({
-			textDirection: "LTR",
-			wrapping: false,
-			textAlign: "End",
-			width: "3em"
-		}).addStyleClass("sapMMultiUnitPopoverUnit");
+			var oUnitText = new Text({
+				textDirection: "LTR",
+				wrapping: false,
+				textAlign: "End",
+				width: "3em"
+			}).addStyleClass("sapMMultiUnitPopoverUnit");
+
+			oTemplate = new HBox({
+				renderType: "Bare",
+				justifyContent: "End",
+				items: [
+					oAmountText,
+					oUnitText
+				]
+			});
+		} else {
+			oTemplate = oTemplate.clone();
+		}
 
 		return new CustomListItem({
-			content: [
-				new HBox({
-					renderType: "Bare",
-					justifyContent: "End",
-					items: [
-						oAmountText,
-						oUnitText
-					]
-				})
-			]
+			content: [oTemplate]
 		});
 	}
 

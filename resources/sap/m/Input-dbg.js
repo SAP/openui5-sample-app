@@ -162,7 +162,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @public
@@ -350,7 +350,7 @@ function(
 				/**
 				 * Specifies whether to display separators in tabular suggestions.
 				 * @private
-				 * @ui5-restricted sap.ui.comp.smartfield.SmartField
+				 * @ui5-private sap.ui.comp.smartfield.SmartField
 				 */
 				separateSuggestions: { type: "boolean", defaultValue: true, visibility: "hidden" },
 
@@ -625,6 +625,8 @@ function(
 		// even though there is no user input (check Input.prototype.onsapright).
 		this._setTypedInValue("");
 		this._bDoTypeAhead = false;
+		this._isValueInitial = false;
+		this._previousInputType = this.getType();
 
 		// indicates whether input is clicked (on mobile) or the clear button
 		// used for identifying whether dialog should be open.
@@ -704,6 +706,10 @@ function(
 
 		InputBase.prototype.onBeforeRendering.call(this);
 
+		if (!this.getDomRef() && this.getValue()) {
+			this._isValueInitial = true;
+		}
+
 		if (this.getShowClearIcon()) {
 			this._getClearIcon().setProperty("visible", bShowClearIcon);
 		} else if (this._oClearButton) {
@@ -761,9 +767,12 @@ function(
 	Input.prototype.onAfterRendering = function() {
 		InputBase.prototype.onAfterRendering.call(this);
 
-		if (this.getType() === InputType.Password) {
+		if ((this._isValueInitial || this.getType() !== this._previousInputType ) && this.getType() === InputType.Password ) {
 			this.getDomRef("inner").value = this.getProperty("value");
+			this._isValueInitial = false;
 		}
+
+		this._previousInputType = this.getType();
 	};
 
 	/**
@@ -3486,7 +3495,12 @@ function(
 			})
 			.map(function (oItem) {
 				oListItem = ListHelpers.createListItemFromCoreItem(oItem, true);
-				oList.addItem(oListItem);
+
+				if (oListItem?.isA("sap.m.GroupHeaderListItem")) {
+					oList.addItemGroup(null, oListItem);
+				} else {
+					oList.addItem(oListItem);
+				}
 
 				if (!bIsAnySuggestionAlreadySelected && this._getProposedItemText() === oItem.getText()) {
 					// Setting the item to selected only works in case the items were there prior the user's input

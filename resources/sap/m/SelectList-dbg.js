@@ -34,7 +34,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 *
 		 * @constructor
 		 * @public
@@ -144,6 +144,7 @@ sap.ui.define([
 					 * Determines whether the disabled items are hidden from the DOM structure.
 					 *
 					 * @private
+					 * @ui5-restricted sap.m.SelectList
 					 * @since 1.91
 					 */
 					hideDisabledItems: {

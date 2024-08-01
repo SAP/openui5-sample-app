@@ -97,7 +97,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 * @mixes sap.ui.core.ContextMenuSupport
 		 * @author SAP SE
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 *
 		 * @public
 		 * @alias sap.m.Page
@@ -299,6 +299,8 @@ function(
 
 		Page.FOOTER_ANIMATION_DURATION = 350;
 
+		Page.SHELLBAR_IN_HEADER_CLASS = "sapFShellBar-CTX";
+
 		Page.prototype.init = function () {
 			this._initTitlePropagationSupport();
 			this._initResponsivePaddingsEnablement();
@@ -478,8 +480,9 @@ function(
 			}
 
 			if (bHasAnimations) {
-				setTimeout(function () {
-					$footer.toggleClass("sapUiHidden", !bShowFooter);
+				setTimeout(() => {
+					// check if the footer should be hidden after the animation
+					$footer.toggleClass("sapUiHidden", !this.getShowFooter());
 				}, Page.FOOTER_ANIMATION_DURATION);
 			} else {
 				$footer.toggleClass("sapUiHidden", !bShowFooter);
@@ -711,7 +714,7 @@ function(
 
 			this.setAggregation("customHeader", oHeader);
 
-			this.toggleStyleClass("sapFShellBar-CTX", !!oHeader && oHeader.isA("sap.f.ShellBar"));
+			this.toggleStyleClass(Page.SHELLBAR_IN_HEADER_CLASS, oHeader?.isA("sap.f.ShellBar"));
 
 			/*
 			 * Runs Fiori 2.0 adaptation for the header
@@ -722,6 +725,33 @@ function(
 					"adaptableContent": oHeader
 				});
 			}
+
+			return this;
+		};
+
+		Page.prototype.setSubHeader = function(oHeader) {
+
+			this.setAggregation("subHeader", oHeader);
+
+			this.toggleStyleClass(Page.SHELLBAR_IN_HEADER_CLASS, oHeader?.isA("sap.f.ShellBar"));
+
+			return this;
+		};
+
+		Page.prototype.destroyCustomHeader = function() {
+
+			this.destroyAggregation("customHeader");
+
+			this.removeStyleClass(Page.SHELLBAR_IN_HEADER_CLASS);
+
+			return this;
+		};
+
+		Page.prototype.destroySubHeader = function() {
+
+			this.destroyAggregation("subHeader");
+
+			this.removeStyleClass(Page.SHELLBAR_IN_HEADER_CLASS);
 
 			return this;
 		};

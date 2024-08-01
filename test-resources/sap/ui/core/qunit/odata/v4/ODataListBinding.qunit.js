@@ -1408,9 +1408,11 @@ sap.ui.define([
 			this.oCachePromise = SyncPromise.resolve(Promise.resolve(oCache));
 		});
 		oBinding.setContext(oContext);
+		const oBindingMock = that.mock(oBinding);
+		oBindingMock.expects("checkSameCache").never();
 
 		this.mock(oCache).expects("hasSentRequest").withExactArgs().returns(oFixture.hasSent);
-		this.mock(oBinding).expects("isRelative").exactly(oFixture.hasSent ? 0 : 1)
+		oBindingMock.expects("isRelative").exactly(oFixture.hasSent ? 0 : 1)
 			.withExactArgs().returns(!oFixture.isAbsolute);
 		this.mock(ODataListBinding).expects("isBelowCreated")
 			.exactly(oFixture.hasSent || oFixture.isAbsolute ? 0 : 1)
@@ -1425,11 +1427,7 @@ sap.ui.define([
 		oReadMock = this.mock(oCache).expects("read")
 			.withExactArgs(1, 2, 3, sinon.match.same(oGroupLock),
 				sinon.match.same(fnDataRequested))
-			.returns(SyncPromise.resolve(Promise.resolve().then(function () {
-				that.mock(oBinding).expects("assertSameCache")
-					.withExactArgs(sinon.match.same(oCache));
-				return oData;
-			})));
+			.returns(SyncPromise.resolve(Promise.resolve(oData)));
 
 		// code under test
 		oPromise = oBinding.fetchData(1, 2, 3, oGroupLock, fnDataRequested);
@@ -1437,7 +1435,7 @@ sap.ui.define([
 		oBinding.sChangeReason = "sChangeReason";
 		oBinding.bHasPathReductionToParent = true;
 		this.oModel.bAutoExpandSelect = true;
-		this.mock(oBinding).expects("checkSuspended").never();
+		oBindingMock.expects("checkSuspended").never();
 
 		assert.strictEqual(oBinding.sChangeReason, "sChangeReason");
 
@@ -1446,6 +1444,12 @@ sap.ui.define([
 			if (oFixture.elements) {
 				assert.ok(oSetCollectionMock.calledBefore(oReadMock));
 			}
+
+			oBindingMock.expects("checkSameCache").on(oBinding)
+				.withExactArgs(sinon.match.same(oCache));
+
+			// code under test
+			oResult.$checkStillValid();
 		});
 	});
 });
@@ -1566,13 +1570,16 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [false, true].forEach(function (bFirstCreateAtEnd) {
-	QUnit.test("fetchContexts: created, atEnd=" + bFirstCreateAtEnd, function () {
+	QUnit.test("fetchContexts: created, atEnd=" + bFirstCreateAtEnd, function (assert) {
 		var oBinding = this.bindList("/EMPLOYEES"),
 			bChanged = {/*boolean*/},
 			fnDataRequested = {/*function*/},
 			oGroupLock = {},
 			iReadStart = bFirstCreateAtEnd ? 3 : 1,
-			oResult = {value : {}};
+			oResult = {
+				$checkStillValid : mustBeMocked,
+				value : {}
+			};
 
 		oBinding.bFirstCreateAtEnd = bFirstCreateAtEnd;
 		oBinding.iCreatedContexts = 2;
@@ -1580,14 +1587,45 @@ sap.ui.define([
 			.withExactArgs(iReadStart, 2, 3, sinon.match.same(oGroupLock),
 				sinon.match.same(fnDataRequested))
 			.returns(SyncPromise.resolve(oResult));
-		this.mock(oBinding).expects("createContexts")
+		const oCheckStillValidExpectation
+			= this.mock(oResult).expects("$checkStillValid").withExactArgs();
+		const oCreateContextsExpectation = this.mock(oBinding).expects("createContexts")
 			.withExactArgs(iReadStart, sinon.match.same(oResult.value))
 			.returns(SyncPromise.resolve(bChanged));
 
 		// code under test
-		return oBinding.fetchContexts(1, 2, 3, oGroupLock, false, fnDataRequested);
+		return oBinding.fetchContexts(1, 2, 3, oGroupLock, false, fnDataRequested)
+			.then(function () {
+				assert.ok(oCheckStillValidExpectation.calledBefore(oCreateContextsExpectation));
+			});
 	});
 });
+
+	//*********************************************************************************************
+	QUnit.test("fetchContexts: invalid cache", function (assert) {
+		var oBinding = this.bindList("/EMPLOYEES"),
+			fnDataRequested = {/*function*/},
+			oError = new Error(),
+			oGroupLock = "~oGroupLock~",
+			oResponse = {
+				$checkStillValid : mustBeMocked,
+				value : {}
+			};
+
+		this.mock(oBinding).expects("fetchData")
+			.withExactArgs(1, 2, 3, sinon.match.same(oGroupLock),
+				sinon.match.same(fnDataRequested))
+			.returns(SyncPromise.resolve(oResponse));
+		this.mock(oResponse).expects("$checkStillValid").withExactArgs().throws(oError);
+
+		// code under test
+		return oBinding.fetchContexts(1, 2, 3, oGroupLock, false, fnDataRequested)
+			.then(function () {
+				assert.ok(false);
+			}, function (oResultError) {
+				assert.strictEqual(oResultError, oError);
+			});
+	});
 
 	//*********************************************************************************************
 	QUnit.test("fetchContexts: fetchData returns undefined", function (assert) {
@@ -2431,7 +2469,7 @@ sap.ui.define([
 		this.mock(this.oModel).expects("resolve").exactly(oFixture.newContext ? 1 : 0)
 			.withExactArgs(oBinding.sPath, sinon.match.same(oContext))
 			.returns("/bar/Suppliers");
-		this.mock(oOldHeaderContext).expects("setSelected").exactly(oFixture.newContext ? 1 : 0)
+		this.mock(oOldHeaderContext).expects("doSetSelected").exactly(oFixture.newContext ? 1 : 0)
 			.withExactArgs(false);
 		this.mock(Context).expects("create").exactly(oFixture.newContext ? 1 : 0)
 			.withExactArgs(sinon.match.same(this.oModel), sinon.match.same(oBinding),
@@ -2472,7 +2510,7 @@ sap.ui.define([
 			oContext = {
 				getBinding : function () {}
 			},
-			oParentBinding = {
+			oParentBinding0 = {
 				isRootBindingSuspended : function () {}
 			};
 
@@ -2488,8 +2526,8 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(this.oModel), sinon.match.same(oBinding),
 				"/resolved/path")
 			.returns("~headerContext~");
-		this.mock(oContext).expects("getBinding").withExactArgs().returns(oParentBinding);
-		this.mock(oParentBinding).expects("isRootBindingSuspended").withExactArgs().returns(true);
+		this.mock(oContext).expects("getBinding").withExactArgs().returns(oParentBinding0);
+		this.mock(oParentBinding0).expects("isRootBindingSuspended").withExactArgs().returns(true);
 		this.mock(Binding.prototype).expects("setContext").never();
 		this.mock(oBinding).expects("setResumeChangeReason").withExactArgs(ChangeReason.Context);
 
@@ -2709,8 +2747,7 @@ sap.ui.define([
 			aCreatedContexts,
 			aPromises = [],
 			oReadPromise = Promise.reject(oError),
-			that = this,
-			i;
+			that = this;
 
 		function getPath(i) {
 			return "/EMPLOYEES/" + i;
@@ -2723,7 +2760,7 @@ sap.ui.define([
 		oBinding.mPreviousContextsByPath = {
 			"/EMPLOYEES/99" : 99 // not parked by #reset
 		};
-		for (i = 0; i < oBinding.iCreatedContexts; i += 1) {
+		for (let i = 0; i < oBinding.iCreatedContexts; i += 1) {
 			oBinding.aContexts[i] = { // dummy for a created context
 				// for simplicity, ignore bRelative here
 				getPath : getPath.bind(null, i)
@@ -2794,7 +2831,7 @@ sap.ui.define([
 				oBinding.iCreatedContexts = 0;
 				oBinding.aContexts = ["a", "b", "c"];
 				if (bKeepCacheOnError) {
-					for (i = 0; i < oBinding.iCreatedContexts; i += 1) {
+					for (let i = 0; i < oBinding.iCreatedContexts; i += 1) {
 						oBinding.mPreviousContextsByPath[getPath(i)] = i;
 					}
 				}
@@ -3124,7 +3161,7 @@ sap.ui.define([
 		};
 		this.mock(oBinding).expects("lockGroup").withExactArgs("myGroup").returns("~groupLock~");
 		oRefreshKeptElementsCall = this.mock(oNewCache).expects("refreshKeptElements")
-			.withExactArgs("~groupLock~", sinon.match.func, false, "~bIgnorePendingChanges~")
+			.withExactArgs("~groupLock~", sinon.match.func, "~bIgnorePendingChanges~")
 			.returns(bFail
 				? SyncPromise.reject(oError)
 				: SyncPromise.resolve("~result~"));
@@ -3362,7 +3399,8 @@ sap.ui.define([
 			"DataStateChange",
 			"patchCompleted",
 			"patchSent",
-			"refresh"
+			"refresh",
+			"selectionChanged"
 		].forEach(function (sEvent) {
 			oBindingMock.expects("attachEvent")
 				.withExactArgs(sEvent, sinon.match.same(mEventParameters)).returns(oReturn);
@@ -4110,17 +4148,16 @@ sap.ui.define([
 			QUnit.test(sTitle, function (assert) {
 				var oBinding = this.bindList("/EMPLOYEES", {/*oContext*/}),
 					aContexts = [
-						{setSelected : mustBeMocked},
-						{setSelected : mustBeMocked},
-						{setSelected : mustBeMocked}
+						{doSetSelected : mustBeMocked},
+						{doSetSelected : mustBeMocked},
+						{doSetSelected : mustBeMocked}
 					],
 					oContextMock = this.mock(Context),
-					i,
 					sPath,
 					aResults = [
-						{setSelected : mustBeMocked},
-						{setSelected : mustBeMocked},
-						{setSelected : mustBeMocked}
+						{doSetSelected : mustBeMocked},
+						{doSetSelected : mustBeMocked},
+						{doSetSelected : mustBeMocked}
 					],
 					iServerIndex,
 					iStart = 2;
@@ -4136,7 +4173,7 @@ sap.ui.define([
 				}
 				this.mock(oBinding).expects("getResolvedPath").twice().withExactArgs()
 					.returns("~resolved~");
-				for (i = iStart; i < iStart + aResults.length; i += 1) {
+				for (let i = iStart; i < iStart + aResults.length; i += 1) {
 					iServerIndex = bCreated ? i - 1 : i;
 					sPath = "~resolved~" + (bUsePredicates
 						? _Helper.getPrivateAnnotation(aResults[i - iStart], "predicate")
@@ -4145,7 +4182,7 @@ sap.ui.define([
 						.withExactArgs(sinon.match.same(this.oModel), sinon.match.same(oBinding),
 							sPath, iServerIndex)
 						.returns(aContexts[i - iStart]);
-					this.mock(aContexts[i - iStart]).expects("setSelected")
+					this.mock(aContexts[i - iStart]).expects("doSetSelected")
 						.withExactArgs("~selected~");
 				}
 				this.mock(oBinding.oHeaderContext).expects("isSelected").exactly(aContexts.length)
@@ -4154,7 +4191,7 @@ sap.ui.define([
 				// code under test
 				assert.strictEqual(oBinding.createContexts(iStart, aResults), true);
 
-				for (i = iStart; i < iStart + aResults.length; i += 1) {
+				for (let i = iStart; i < iStart + aResults.length; i += 1) {
 					assert.strictEqual(oBinding.aContexts[i], aContexts[i - iStart]);
 				}
 
@@ -4305,7 +4342,7 @@ sap.ui.define([
 		var oBinding = this.bindList("/EMPLOYEES", {/*oContext*/}),
 			oContext1 = Context.create(this.oModel, oBinding, "/EMPLOYEES/1", 1),
 			oContext2 = Context.create(this.oModel, oBinding, "/EMPLOYEES/2", 2),
-			oContext3 = {setSelected : mustBeMocked},
+			oContext3 = {doSetSelected : mustBeMocked},
 			oContextMock = this.mock(Context);
 
 		oBinding.mPreviousContextsByPath = {
@@ -4321,7 +4358,7 @@ sap.ui.define([
 			.returns(oContext3);
 		this.mock(oBinding.oHeaderContext).expects("isSelected")
 			.withExactArgs().returns("~selected~");
-		this.mock(oContext3).expects("setSelected").withExactArgs("~selected~");
+		this.mock(oContext3).expects("doSetSelected").withExactArgs("~selected~");
 		this.mock(this.oModel).expects("addPrerenderingTask")
 			.withExactArgs(sinon.match.func).callsArg(0);
 		this.mock(oBinding).expects("destroyPreviousContexts").withExactArgs(["/EMPLOYEES/0"]);
@@ -4412,7 +4449,7 @@ sap.ui.define([
 		var oBinding = this.bindList("/EMPLOYEES"),
 			oCreatedContext = Context.create(this.oModel, oBinding, "/EMPLOYEES('1')", -1,
 				SyncPromise.resolve()),
-			oNewContext = {setSelected : mustBeMocked};
+			oNewContext = {doSetSelected : mustBeMocked};
 
 		oBinding.mPreviousContextsByPath = {
 			"/EMPLOYEES('1')" : oCreatedContext
@@ -4424,11 +4461,12 @@ sap.ui.define([
 			.returns(oNewContext);
 		this.mock(oBinding.oHeaderContext).expects("isSelected")
 			.withExactArgs().returns("~selected~");
-		this.mock(oNewContext).expects("setSelected").withExactArgs("~selected~");
+		this.mock(oNewContext).expects("doSetSelected").withExactArgs("~selected~");
 		this.mock(this.oModel).expects("addPrerenderingTask")
 			.withExactArgs(sinon.match.func).callsArg(0);
 		this.mock(oCreatedContext).expects("destroy").withExactArgs();
 
+		// code under test
 		oBinding.createContexts(0, [{
 			"@$ui5._" : {predicate : "('1')"}
 		}]);
@@ -4931,7 +4969,7 @@ sap.ui.define([
 		oCreateInCacheExpectation.args[0][6](oError);
 
 		oSetSelectedExpectation = this.mock(oContext0).expects("doSetSelected")
-			.withExactArgs(false);
+			.withExactArgs(false, true);
 		oRemoveCreatedExpectation = oBindingMock.expects("removeCreated")
 			.withExactArgs(sinon.match.same(oContext0));
 
@@ -5451,14 +5489,14 @@ sap.ui.define([
 					created : function () {},
 					fetchValue : function () {},
 					getPath : function () {},
-					setSelected : mustBeMocked,
+					doSetSelected : mustBeMocked,
 					updateAfterCreate : function () {}
 				},
 				oNewContext1 = {
 					created : function () {},
 					fetchValue : function () {},
 					getPath : function () {},
-					setSelected : mustBeMocked,
+					doSetSelected : mustBeMocked,
 					updateAfterCreate : function () {}
 				},
 				bNotAllowed = aAtEnd[0] && !aAtEnd[1],
@@ -5493,7 +5531,7 @@ sap.ui.define([
 				});
 			this.mock(oBinding.oHeaderContext).expects("isSelected").exactly(bNotAllowed ? 1 : 2)
 				.withExactArgs().returns("~selected~");
-			this.mock(oNewContext0).expects("setSelected").withExactArgs("~selected~");
+			this.mock(oNewContext0).expects("doSetSelected").withExactArgs("~selected~");
 			this.mock(oNewContext0).expects("created").exactly(bTransient ? 1 : 0)
 				.withExactArgs()
 				.callsFake(function () {
@@ -5546,7 +5584,7 @@ sap.ui.define([
 						oNewContext1.oCreatedPromise = Promise.resolve(arguments[4]);
 						return oNewContext1;
 					});
-				this.mock(oNewContext1).expects("setSelected").withExactArgs("~selected~");
+				this.mock(oNewContext1).expects("doSetSelected").withExactArgs("~selected~");
 				this.mock(oNewContext1).expects("created").exactly(bTransient ? 1 : 0)
 					.withExactArgs()
 					.callsFake(function () {
@@ -5614,7 +5652,7 @@ sap.ui.define([
 				created : function () {},
 				fetchValue : function () {},
 				getPath : function () { return ""; },
-				setSelected : mustBeMocked,
+				doSetSelected : mustBeMocked,
 				refreshDependentBindings : function () {}
 			};
 
@@ -5634,7 +5672,7 @@ sap.ui.define([
 			.returns(oNewContext);
 		this.mock(oBinding.oHeaderContext).expects("isSelected")
 			.withExactArgs().returns("~selected~");
-		this.mock(oNewContext).expects("setSelected").withExactArgs("~selected~");
+		this.mock(oNewContext).expects("doSetSelected").withExactArgs("~selected~");
 		this.mock(oNewContext).expects("fetchValue").withExactArgs().resolves(undefined);
 		this.mock(_Helper).expects("setPrivateAnnotation").never();
 
@@ -5769,6 +5807,7 @@ sap.ui.define([
 		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
 		// too far :-(
 		oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
+		oBinding.oCache = {isRefreshNeededAfterCreate : mustBeMocked};
 		this.mock(oBinding).expects("fetchResourcePath").withExactArgs()
 			.returns("~oCreatePathPromise~");
 		this.mock(oBinding).expects("getUpdateGroupId").withExactArgs()
@@ -5784,7 +5823,8 @@ sap.ui.define([
 		this.mock(oBinding).expects("isRelative").never();
 		const oParentContext = {
 				getCanonicalPath : mustBeMocked,
-				isExpanded : mustBeMocked
+				isExpanded : mustBeMocked,
+				iIndex : "~parentIndex~"
 			};
 		oBinding.aContexts[2] = oParentContext;
 		const oInitialData = {"@$ui5.node.parent" : oParentContext};
@@ -5794,6 +5834,9 @@ sap.ui.define([
 		this.mock(oParentContext).expects("getCanonicalPath").withExactArgs()
 			.returns("/canonical/path");
 		this.mock(oParentContext).expects("isExpanded").withExactArgs().returns(bExpanded);
+		this.mock(oBinding.oCache).expects("isRefreshNeededAfterCreate")
+			.withExactArgs("~parentIndex~")
+			.returns(false);
 		this.mock(oBinding).expects("lockGroup")
 			.withExactArgs("~sGroupId~", true, true, sinon.match.func).returns("~oGroupLock~");
 		this.mock(oBinding).expects("createInCache")
@@ -5803,7 +5846,7 @@ sap.ui.define([
 					.and(sinon.match({"@$ui5.node.parent" : "canonical/path"})),
 				false, sinon.match.func, sinon.match.func)
 			.returns(SyncPromise.resolve(Promise.resolve("~oCreatedEntity~")));
-		const oContext = {fetchValue : mustBeMocked, setSelected : mustBeMocked};
+		const oContext = {fetchValue : mustBeMocked, doSetSelected : mustBeMocked};
 		this.mock(Context).expects("create")
 			.withExactArgs(sinon.match.same(this.oModel), sinon.match.same(oBinding),
 				"~sResolvedPath~($uid=id-1-23)", /*iChildIndex*/3,
@@ -5811,7 +5854,7 @@ sap.ui.define([
 			.returns(oContext);
 		this.mock(oBinding.oHeaderContext).expects("isSelected")
 			.withExactArgs().returns("~selected~");
-		this.mock(oContext).expects("setSelected").withExactArgs("~selected~");
+		this.mock(oContext).expects("doSetSelected").withExactArgs("~selected~");
 		this.mock(oContext).expects("fetchValue").withExactArgs()
 			.returns(SyncPromise.resolve()); //TODO
 		this.mock(oBinding).expects("insertContext")
@@ -5855,7 +5898,7 @@ sap.ui.define([
 				sinon.match(rTransientPredicate), "~oEntityData~",
 				false, sinon.match.func, sinon.match.func)
 			.returns(SyncPromise.resolve(Promise.resolve("~oCreatedEntity~")));
-		const oContext = {fetchValue : mustBeMocked, setSelected : mustBeMocked};
+		const oContext = {fetchValue : mustBeMocked, doSetSelected : mustBeMocked};
 		this.mock(Context).expects("create")
 			.withExactArgs(sinon.match.same(this.oModel), sinon.match.same(oBinding),
 				"~sResolvedPath~($uid=id-1-23)", /*iChildIndex*/0,
@@ -5863,7 +5906,7 @@ sap.ui.define([
 			.returns(oContext);
 		this.mock(oBinding.oHeaderContext).expects("isSelected")
 			.withExactArgs().returns("~selected~");
-		this.mock(oContext).expects("setSelected").withExactArgs("~selected~");
+		this.mock(oContext).expects("doSetSelected").withExactArgs("~selected~");
 		this.mock(oContext).expects("fetchValue").withExactArgs()
 			.returns(SyncPromise.resolve()); //TODO
 		this.mock(oBinding).expects("insertContext")
@@ -5880,11 +5923,16 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [undefined, 42].forEach(function (iRank) {
-	QUnit.test("create: recursive hierarchy, createInPlace, rank=" + iRank, function (assert) {
+	[false, true].forEach(function (bRefresh) {
+		const sTitle = "create: recursive hierarchy, createInPlace, rank=" + iRank
+			+ ", refresh=" + bRefresh;
+
+	QUnit.test(sTitle, function (assert) {
 		const oBinding = this.bindList("/EMPLOYEES");
 		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
 		// too far :-(
 		oBinding.mParameters.$$aggregation = {createInPlace : true, hierarchyQualifier : "X"};
+		oBinding.oCache = {isRefreshNeededAfterCreate : mustBeMocked};
 		this.mock(oBinding).expects("fetchResourcePath").withExactArgs()
 			.returns("~oCreatePathPromise~");
 		this.mock(oBinding).expects("getUpdateGroupId").withExactArgs()
@@ -5899,14 +5947,28 @@ sap.ui.define([
 		this.mock(oBinding).expects("isTransient").twice().withExactArgs().returns(false);
 		this.mock(oBinding).expects("checkDeepCreate").never();
 		this.mock(oBinding).expects("isRelative").never();
-		oHelperMock.expects("publicClone")
-			.withExactArgs(undefined, true).returns("~oEntityData~");
+		const oParentContext = {
+				getCanonicalPath : mustBeMocked,
+				isExpanded : mustBeMocked,
+				iIndex : "~parentIndex~"
+			};
+		oBinding.aContexts[2] = oParentContext;
+		const oInitialData = {"@$ui5.node.parent" : oParentContext};
+		const oEntityData = {};
+		oHelperMock.expects("publicClone").withExactArgs(sinon.match.same(oInitialData), true)
+			.returns(oEntityData);
+		this.mock(oParentContext).expects("getCanonicalPath").withExactArgs()
+			.returns("/canonical/path");
+		this.mock(oParentContext).expects("isExpanded").withExactArgs().returns(undefined);
+		this.mock(oBinding.oCache).expects("isRefreshNeededAfterCreate")
+			.withExactArgs("~parentIndex~")
+			.returns(bRefresh);
 		this.mock(oBinding).expects("lockGroup")
 			.withExactArgs("~sGroupId~", true, true, sinon.match.func).returns("~oGroupLock~");
 		const oContext = {
 			destroy : mustBeMocked,
 			fetchValue : mustBeMocked,
-			setSelected : mustBeMocked,
+			doSetSelected : mustBeMocked,
 			updateAfterCreate : mustBeMocked
 		};
 		const oCreatePromise = new SyncPromise((resolve) => {
@@ -5922,18 +5984,19 @@ sap.ui.define([
 				oHelperMock.expects("getPrivateAnnotation")
 					.withExactArgs("~oCreatedEntity~", "rank")
 					.returns(iRank);
-				this.mock(oContext).expects("destroy").exactly(iRank ? 0 : 1).withExactArgs();
-				this.mock(oBinding).expects("insertContext").exactly(iRank ? 1 : 0)
+				const bUseContext = iRank && !bRefresh;
+				this.mock(oContext).expects("destroy").exactly(bUseContext ? 0 : 1).withExactArgs();
+				this.mock(oBinding).expects("insertContext").exactly(bUseContext ? 1 : 0)
 					.withExactArgs(sinon.match.same(oContext), 42);
-				oHelperMock.expects("getPrivateAnnotation").exactly(iRank ? 1 : 0)
+				oHelperMock.expects("getPrivateAnnotation").exactly(bUseContext ? 1 : 0)
 					.withExactArgs("~oCreatedEntity~", "deepCreate").returns(false);
-				oHelperMock.expects("deletePrivateAnnotation").exactly(iRank ? 1 : 0)
+				oHelperMock.expects("deletePrivateAnnotation").exactly(bUseContext ? 1 : 0)
 					.withExactArgs("~oCreatedEntity~", "deepCreate");
-				this.mock(oBinding).expects("getGroupId").exactly(iRank ? 1 : 0)
+				this.mock(oBinding).expects("getGroupId").exactly(bUseContext ? 1 : 0)
 					.withExactArgs().returns("~sGroupId~");
-				this.mock(this.oModel).expects("isApiGroup").exactly(iRank ? 1 : 0)
+				this.mock(this.oModel).expects("isApiGroup").exactly(bUseContext ? 1 : 0)
 					.withExactArgs("~sGroupId~").returns(false);
-				this.mock(oContext).expects("updateAfterCreate").exactly(iRank ? 1 : 0)
+				this.mock(oContext).expects("updateAfterCreate").exactly(bUseContext ? 1 : 0)
 					.withExactArgs(true, "~sGroupId~");
 
 				resolve("~oCreatedEntity~");
@@ -5941,28 +6004,39 @@ sap.ui.define([
 		});
 		this.mock(oBinding).expects("createInCache")
 			.withExactArgs("~oGroupLock~", "~oCreatePathPromise~", "~sResolvedPath~",
-				sinon.match(rTransientPredicate), "~oEntityData~",
+				sinon.match(rTransientPredicate), sinon.match.same(oEntityData),
 				false, sinon.match.func, sinon.match.func)
 			.returns(oCreatePromise);
+		this.mock(oBinding).expects("requestSideEffects").exactly(bRefresh ? 1 : 0)
+			.withExactArgs("~sGroupId~", [""])
+			.resolves("~refreshResult~");
 		this.mock(Context).expects("create")
 			.withExactArgs(sinon.match.same(this.oModel), sinon.match.same(oBinding),
 				"~sResolvedPath~($uid=id-1-23)", /*iIndex*/undefined,
-				sinon.match.instanceOf(SyncPromise), undefined)
+				sinon.match(function (oCreatePromise0) {
+					oCreatePromise0.then(function (vResult) {
+						assert.deepEqual(vResult,
+							// createInCache's oCreatePromise resolves with no defined result
+							bRefresh ? [undefined, "~refreshResult~"] : undefined);
+					});
+					return oCreatePromise0 instanceof SyncPromise;
+				}), undefined)
 			.returns(oContext);
 		this.mock(oBinding.oHeaderContext).expects("isSelected")
 			.withExactArgs().returns("~selected~");
-		this.mock(oContext).expects("setSelected").withExactArgs("~selected~");
+		this.mock(oContext).expects("doSetSelected").withExactArgs("~selected~");
 		this.mock(oContext).expects("fetchValue").never();
 		this.mock(oBinding).expects("_fireChange").never();
 
 		// code under test
-		assert.strictEqual(oBinding.create(/*oInitialData*/ undefined, true), oContext);
+		assert.strictEqual(oBinding.create(oInitialData, true), oContext);
 
 		assert.strictEqual(oBinding.iActiveContexts, 0, "unchanged");
 		assert.strictEqual(oBinding.iCreatedContexts, 0, "unchanged");
 		assert.strictEqual(oBinding.bFirstCreateAtEnd, false);
 
 		return oCreatePromise;
+	});
 	});
 });
 
@@ -6098,7 +6172,7 @@ sap.ui.define([
 		oContext.created().catch(function (oError) {
 			assert.ok(oError.canceled, "create promise rejected with 'canceled'");
 		});
-		this.mock(oContext).expects("doSetSelected").withExactArgs(false);
+		this.mock(oContext).expects("doSetSelected").withExactArgs(false, true);
 		this.mock(oBinding).expects("removeCreated").withExactArgs(sinon.match.same(oContext))
 			.callThrough();
 		oBindingMock.expects("deleteFromCache").callsFake(function () {
@@ -7521,7 +7595,7 @@ sap.ui.define([
 			oRefreshSingleExpectation,
 			oRefreshSinglePromise = SyncPromise.resolve(Promise.resolve({})),
 			oRootBinding = {
-				assertSameCache : function () {},
+				checkSameCache : function () {},
 				getGroupId : function () {}
 			},
 			that = this;
@@ -7555,7 +7629,7 @@ sap.ui.define([
 
 			// these must only be called when the cache's refreshSingle is finished
 			that.mock(oBinding).expects("fireDataReceived").withExactArgs({data : {}});
-			that.mock(oRootBinding).expects("assertSameCache")
+			that.mock(oRootBinding).expects("checkSameCache")
 				.withExactArgs(sinon.match.same(oCache))
 				.callsFake(function () {
 					if (!bSameCache) {
@@ -7633,7 +7707,7 @@ sap.ui.define([
 					oRemoveCreatedExpectation,
 					oResetKeepAliveExpectation,
 					oRootBinding = {
-						assertSameCache : function () {},
+						checkSameCache : function () {},
 						getGroupId : function () {}
 					},
 					that = this;
@@ -7765,7 +7839,7 @@ sap.ui.define([
 			oExpectation,
 			oGroupLock = {getGroupId : function () {}},
 			oRootBinding = {
-				assertSameCache : function () {},
+				checkSameCache : function () {},
 				getGroupId : function () {}
 			},
 			that = this;
@@ -8528,11 +8602,11 @@ sap.ui.define([
 		function expectVisitAndRefresh(aPromises) {
 			that.mock(oBinding).expects("visitSideEffects").withExactArgs(sGroupId,
 					sinon.match.same(aPaths), bHeader ? undefined : oContext, aPromises)
-				.callsFake(function (_sGroupId, _aPaths, _oContext, aPromises) {
-					aPromises.push(Promise.resolve());
-					aPromises.push(Promise.reject(oCanceledError));
+				.callsFake(function (_sGroupId, _aPaths, _oContext, aPromises0) {
+					aPromises0.push(Promise.resolve());
+					aPromises0.push(Promise.reject(oCanceledError));
 					if (bRecursionRejects) {
-						aPromises.push(Promise.reject(oError));
+						aPromises0.push(Promise.reject(oError));
 					}
 				});
 			that.mock(oBinding).expects("refreshDependentListBindingsWithoutCache")
@@ -9606,12 +9680,13 @@ sap.ui.define([
 						+ ", count=" + iCount + ", silent=" + bSilent;
 
 	if (!bSuccess && iCount === 0 || bDataRequested && iCount < 0) {
-		return; // ignore useless combinations
+		return; // skip useless combinations
 	}
 
 	QUnit.test(sTitle, function (assert) {
 		var oBinding = this.bindList("/EMPLOYEES"),
 			oContext = {
+				iIndex : "~iIndex~",
 				getModelIndex : function () {},
 				getPath : function () {},
 				toString : function () { return "~context~"; }
@@ -9628,6 +9703,7 @@ sap.ui.define([
 		oBinding.oCache = { // simulate an aggregation cache
 			expand : function () {}
 		};
+		oBinding.aContexts["~iIndex~"] = oContext;
 
 		this.mock(oBinding).expects("checkSuspended").withExactArgs();
 		this.mock(oBinding).expects("lockGroup").withExactArgs().returns(oGroupLock);
@@ -9698,6 +9774,22 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
+	QUnit.test("expand: Not currently part of the hierarchy", function (assert) {
+		const oBinding = this.bindList("/EMPLOYEES");
+		const oContext = {
+			iIndex : 0,
+			toString : () => "~oContext~"
+		};
+
+		oBinding.aContexts = [, oContext];
+
+		assert.throws(function () {
+			// code under test
+			oBinding.expand(oContext);
+		}, new Error("Not currently part of the hierarchy: ~oContext~"));
+	});
+
+	//*********************************************************************************************
 	QUnit.test("insertGap", function (assert) {
 		const _ = undefined;
 		const oBinding = this.bindList("/EMPLOYEES");
@@ -9753,12 +9845,12 @@ sap.ui.define([
 		var oBinding = this.bindList("/EMPLOYEES"),
 			oCollapseExpectation,
 			oContext = {
+				iIndex : "~iIndex~",
 				getModelIndex : function () {},
 				getPath : function () {}
 			},
 			aContextsBefore,
-			oFireChangeExpectation,
-			i;
+			oFireChangeExpectation;
 
 		// create a context dummy object with index i
 		function createContextDummy(i) {
@@ -9776,10 +9868,11 @@ sap.ui.define([
 		oBinding.oCache = { // simulate an aggregation cache
 			collapse : function () {}
 		};
-		for (i = 0; i < 8; i += 1) {
+		for (let i = 0; i < 8; i += 1) {
 			// with gap at 6
 			oBinding.aContexts.push(i === 6 ? undefined : createContextDummy(i));
 		}
+		oBinding.aContexts["~iIndex~"] = oContext;
 		oBinding.iMaxLength = 8;
 		aContextsBefore = oBinding.aContexts.slice();
 		assert.deepEqual(oBinding.mPreviousContextsByPath, {});
@@ -9810,9 +9903,9 @@ sap.ui.define([
 			assert.strictEqual(oBinding.aContexts[4], aContextsBefore[7], "4");
 			assert.strictEqual(oBinding.aContexts.length, 5);
 			assert.strictEqual(oBinding.iMaxLength, 5);
-			oBinding.aContexts.forEach(function (oContext, iIndex) {
+			oBinding.aContexts.forEach(function (oContext0, iIndex) {
 				if (iIndex !== 3) { // 6 - iCount
-					assert.strictEqual(oContext.iIndex, iIndex);
+					assert.strictEqual(oContext0.iIndex, iIndex);
 				}
 			});
 			assert.deepEqual(oBinding.mPreviousContextsByPath, {
@@ -9823,10 +9916,10 @@ sap.ui.define([
 		} else {
 			assert.strictEqual(oBinding.iMaxLength, 8);
 			assert.strictEqual(oBinding.aContexts.length, 8);
-			oBinding.aContexts.forEach(function (oContext, iIndex) {
+			oBinding.aContexts.forEach(function (oContext0, iIndex) {
 				if (iIndex !== 6) {
-					assert.strictEqual(oContext.iIndex, iIndex);
-					assert.strictEqual(oContext.getPath(), "/EMPLOYEES/" + iIndex);
+					assert.strictEqual(oContext0.iIndex, iIndex);
+					assert.strictEqual(oContext0.getPath(), "/EMPLOYEES/" + iIndex);
 				}
 			});
 			assert.deepEqual(oBinding.mPreviousContextsByPath, {});
@@ -9835,6 +9928,22 @@ sap.ui.define([
 		});
 	});
 });
+
+	//*********************************************************************************************
+	QUnit.test("collapse: Not currently part of the hierarchy", function (assert) {
+		const oBinding = this.bindList("/EMPLOYEES");
+		const oContext = {
+			iIndex : 0,
+			toString : () => "~oContext~"
+		};
+
+		oBinding.aContexts = [, oContext];
+
+		assert.throws(function () {
+			// code under test
+			oBinding.collapse(oContext);
+		}, new Error("Not currently part of the hierarchy: ~oContext~"));
+	});
 
 	//*********************************************************************************************
 	QUnit.test("resetKeepAlive", function () {
@@ -10468,6 +10577,17 @@ sap.ui.define([
 		oBinding.fireCreateActivate("~oContext~");
 
 		assert.strictEqual(oBinding.iActiveContexts, 41);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("fireSelectionChanged", function () {
+		const oBinding = this.bindList("/EMPLOYEES");
+
+		this.mock(oBinding).expects("fireEvent")
+			.withExactArgs("selectionChanged", {context : "~oContext~"});
+
+		// code under test
+		oBinding.fireSelectionChanged("~oContext~");
 	});
 
 	//*********************************************************************************************
@@ -11156,7 +11276,7 @@ sap.ui.define([
 		};
 		oBinding.oCache = oCache;
 		this.mock(oCache).expects("move").withExactArgs("~oGroupLock~", "~child~",
-				bMakeRoot ? null : "~parent~", undefined, undefined)
+				bMakeRoot ? null : "~parent~", undefined, undefined, undefined)
 			.returns({promise : new SyncPromise((resolve) => {
 				setTimeout(() => {
 					if (oParentContext) {
@@ -11214,7 +11334,13 @@ sap.ui.define([
 	//*********************************************************************************************
 [false, true].forEach((bMakeRoot) => {
 	[undefined, null, {}].forEach((oSiblingContext) => {
-		const sTitle = `move: refresh; make root=${bMakeRoot}, with sibling=${oSiblingContext}`;
+		[false, true].forEach((bUpdateSiblingIndex) => {
+			const sTitle = `move: refresh; make root=${bMakeRoot}, with sibling=${oSiblingContext}`
+				+ `, update sibling's index=${bUpdateSiblingIndex}`;
+
+			if (bUpdateSiblingIndex && !oSiblingContext) {
+				return;
+			}
 
 	QUnit.test(sTitle, async function (assert) {
 		const oChildContext = {
@@ -11235,9 +11361,13 @@ sap.ui.define([
 		let sSiblingPath = oSiblingContext;
 		if (oSiblingContext) {
 			sSiblingPath = "~sibling~";
+			oSiblingContext.iIndex = "~old~";
 			oSiblingContext.getCanonicalPath = mustBeMocked;
+			oSiblingContext.isEffectivelyKeptAlive = mustBeMocked;
 			this.mock(oSiblingContext).expects("getCanonicalPath").withExactArgs()
 				.returns("/~sibling~");
+			this.mock(oSiblingContext).expects("isEffectivelyKeptAlive").withExactArgs()
+				.returns(bUpdateSiblingIndex);
 		}
 		const oBinding = this.bindList("/EMPLOYEES");
 		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
@@ -11253,15 +11383,16 @@ sap.ui.define([
 			move : mustBeMocked
 		};
 		oBinding.oCache = oCache;
-		const fnGetIndex = sinon.stub().returns("~index~");
+		const fnGetIndices = sinon.stub().returns(["~childIndex~", "~siblingIndex~"]);
 		this.mock(oCache).expects("move")
 			.withExactArgs("~oGroupLock~", "~child~", bMakeRoot ? null : "~parent~", sSiblingPath,
-				bHasSibling ? "~childNonCanonical~" : undefined)
+				bHasSibling ? "~childNonCanonical~" : undefined,
+				oSiblingContext ? bUpdateSiblingIndex : undefined)
 			.returns({promise : "A", refresh : true});
 		this.mock(oBinding).expects("requestSideEffects").withExactArgs("~group~", [""])
 			.returns("B");
 		this.mock(SyncPromise).expects("all").withExactArgs(["A", "B"])
-			.returns(SyncPromise.resolve(Promise.resolve([fnGetIndex])));
+			.returns(SyncPromise.resolve(Promise.resolve([fnGetIndices])));
 		this.mock(oBinding).expects("insertGap").never();
 		this.mock(oBinding).expects("_fireChange").never();
 
@@ -11270,12 +11401,17 @@ sap.ui.define([
 			oSiblingContext);
 
 		assert.strictEqual(oSyncPromise.isPending(), true);
-		assert.notOk(fnGetIndex.called);
+		assert.notOk(fnGetIndices.called);
 
 		await oSyncPromise;
 
-		assert.strictEqual(oChildContext.iIndex, "~index~");
+		assert.strictEqual(oChildContext.iIndex, "~childIndex~");
+		if (oSiblingContext) {
+			assert.strictEqual(oSiblingContext.iIndex,
+				bUpdateSiblingIndex ? "~siblingIndex~" : "~old~");
+		}
 	});
+		});
 	});
 });
 
@@ -11303,7 +11439,7 @@ sap.ui.define([
 		};
 		oBinding.oCache = oCache;
 		this.mock(oCache).expects("move")
-			.withExactArgs("~oGroupLock~", "~child~", "~parent~", undefined, undefined)
+			.withExactArgs("~oGroupLock~", "~child~", "~parent~", undefined, undefined, undefined)
 			.returns({promise : SyncPromise.reject("~error~"), refresh : false});
 		this.mock(oBinding).expects("expand").never();
 
@@ -11337,7 +11473,7 @@ sap.ui.define([
 		};
 		oBinding.oCache = oCache;
 		this.mock(oCache).expects("move")
-			.withExactArgs("~oGroupLock~", "~child~", null, undefined, undefined)
+			.withExactArgs("~oGroupLock~", "~child~", null, undefined, undefined, undefined)
 			.returns({promise : SyncPromise.resolve([1, 43, "~iCollapseCount~"]), refresh : false});
 		this.mock(oBinding).expects("requestSideEffects").never();
 		this.mock(oBinding).expects("insertGap").never();
@@ -11935,91 +12071,216 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("requestSibling: Missing recursive hierarchy", function (assert) {
+	QUnit.test("fetchOrGetSibling: Missing recursive hierarchy", function (assert) {
 		const oBinding = this.bindList("/EMPLOYEES");
 		this.mock(oBinding).expects("checkSuspended").never();
 
 		assert.throws(function () {
 			// code under test
-			oBinding.requestSibling();
+			oBinding.fetchOrGetSibling();
 		}, new Error("Missing recursive hierarchy"));
 
 		oBinding.mParameters = {$$aggregation : {}};
 
 		assert.throws(function () {
 			// code under test
-			oBinding.requestSibling();
+			oBinding.fetchOrGetSibling();
 		}, new Error("Missing recursive hierarchy"));
 	});
 
 	//*********************************************************************************************
-	QUnit.test("requestSibling: Unsupported context", function (assert) {
+[-2, +2, -3, +3, 0].forEach((iOffset) => {
+	QUnit.test(`fetchOrGetSibling: unsupported offset ${iOffset}`, function (assert) {
 		const oBinding = this.bindList("/EMPLOYEES");
 		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
 		// too far :-(
 		oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
-		const oNode = Context.create({/*oModel*/}, oBinding, "/EMPLOYEES('42')", 42);
-		oBinding.aContexts[41] = oNode; // wrong index
 		this.mock(oBinding).expects("checkSuspended").never();
 
 		assert.throws(function () {
 			// code under test
-			oBinding.requestSibling(oNode);
+			oBinding.fetchOrGetSibling(/*oNode*/null, iOffset);
+		}, new Error("Unsupported offset: " + iOffset));
+	});
+});
+
+	//*********************************************************************************************
+	QUnit.test("fetchOrGetSibling: Unsupported context (deleted)", function (assert) {
+		const oBinding = this.bindList("/EMPLOYEES");
+		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
+		// too far :-(
+		oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
+		const oNode = {
+			iIndex : "~iIndex~",
+			isDeleted : mustBeMocked
+			// NO: isTransient
+		};
+		this.mock(oNode).expects("isDeleted").withExactArgs().returns(true);
+		oBinding.aContexts["~iIndex~"] = oNode;
+		this.mock(oBinding).expects("checkSuspended").never();
+
+		assert.throws(function () {
+			// code under test
+			oBinding.fetchOrGetSibling(oNode, -1);
 		}, new Error("Unsupported context: " + oNode));
 	});
 
 	//*********************************************************************************************
-	QUnit.test("requestSibling: null", async function (assert) {
+	QUnit.test("fetchOrGetSibling: Unsupported context (transient)", function (assert) {
 		const oBinding = this.bindList("/EMPLOYEES");
 		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
 		// too far :-(
 		oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
-		const oNode = {iIndex : "~iIndex~"};
-		oBinding.aContexts["~iIndex~"] = oNode;
-		const oCheckSuspendedExpectation
-			= this.mock(oBinding).expects("checkSuspended").withExactArgs();
-		const oCache = {
-			getSiblingIndex : mustBeMocked
+		const oNode = {
+			iIndex : "~iIndex~",
+			isDeleted : mustBeMocked,
+			isTransient : mustBeMocked
 		};
-		oBinding.oCache = oCache;
-		const oGetSiblingIndexExpectation = this.mock(oCache).expects("getSiblingIndex")
-			.withExactArgs("~iIndex~", "~iOffset~").returns(-1);
-		this.mock(oBinding).expects("requestContexts").never();
+		this.mock(oNode).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oNode).expects("isTransient").withExactArgs().returns(true);
+		oBinding.aContexts["~iIndex~"] = oNode;
+		this.mock(oBinding).expects("checkSuspended").never();
 
-		// code under test
-		const oPromise = oBinding.requestSibling(oNode, "~iOffset~");
-
-		sinon.assert.callOrder(oCheckSuspendedExpectation, oGetSiblingIndexExpectation);
-		assert.ok(oPromise instanceof Promise);
-		assert.strictEqual(await oPromise, null);
+		assert.throws(function () {
+			// code under test
+			oBinding.fetchOrGetSibling(oNode, -1);
+		}, new Error("Unsupported context: " + oNode));
 	});
 
 	//*********************************************************************************************
-[0, 1, 42].forEach((iIndex) => {
-	QUnit.test(`requestSibling: non-null, index = ${iIndex}`, async function (assert) {
+	QUnit.test("fetchOrGetSibling: Unsupported context (index)", function (assert) {
 		const oBinding = this.bindList("/EMPLOYEES");
 		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
 		// too far :-(
 		oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
-		const oNode = {iIndex : "~iIndex~"};
+		const oNode = {
+			iIndex : "~iIndex~",
+			isDeleted : mustBeMocked,
+			isTransient : mustBeMocked
+		};
+		this.mock(oNode).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oNode).expects("isTransient").withExactArgs().returns(false);
+		oBinding.aContexts["wrong index"] = oNode;
+		this.mock(oBinding).expects("checkSuspended").never();
+
+		assert.throws(function () {
+			// code under test
+			oBinding.fetchOrGetSibling(oNode, -1);
+		}, new Error("Unsupported context: " + oNode));
+	});
+
+	//*********************************************************************************************
+[{in : undefined, out : +1}, {in : +1, out : +1}, {in : -1, out : -1}].forEach((oOffset, i) => {
+	[{in : -1, out : null}, {in : undefined, out : undefined}].forEach((oResult, j) => {
+	QUnit.test(`fetchOrGetSibling: null/undefined #${i},${j}`, function (assert) {
+		const oBinding = this.bindList("/EMPLOYEES");
+		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
+		// too far :-(
+		oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
+		const oNode = {
+			iIndex : "~iIndex~",
+			isDeleted : mustBeMocked,
+			isTransient : mustBeMocked
+		};
+		this.mock(oNode).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oNode).expects("isTransient").withExactArgs().returns(false);
 		oBinding.aContexts["~iIndex~"] = oNode;
 		const oCheckSuspendedExpectation
 			= this.mock(oBinding).expects("checkSuspended").withExactArgs();
+		this.mock(oBinding).expects("lockGroup").never();
 		const oCache = {
 			getSiblingIndex : mustBeMocked
 		};
 		oBinding.oCache = oCache;
 		const oGetSiblingIndexExpectation = this.mock(oCache).expects("getSiblingIndex")
-			.withExactArgs("~iIndex~", "~iOffset~").returns(iIndex);
-		this.mock(oBinding).expects("requestContexts").withExactArgs(iIndex, 1)
-			.resolves(["~oSiblingContext~"]);
+			.withExactArgs("~iIndex~", oOffset.out).returns(oResult.in);
+		this.mock(oBinding).expects("fetchContexts").never();
+		this.mock(oBinding).expects("requestContexts").never();
 
 		// code under test
-		const oPromise = oBinding.requestSibling(oNode, "~iOffset~");
+		assert.strictEqual(oBinding.fetchOrGetSibling(oNode, oOffset.in), oResult.out);
+
+		sinon.assert.callOrder(oCheckSuspendedExpectation, oGetSiblingIndexExpectation);
+	});
+	});
+});
+
+	//*********************************************************************************************
+[0, 1, 42].forEach((iIndex) => {
+	QUnit.test(`fetchOrGetSibling: no request, index = ${iIndex}`, function (assert) {
+		const oBinding = this.bindList("/EMPLOYEES");
+		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
+		// too far :-(
+		oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
+		const oNode = {
+			iIndex : "~iIndex~",
+			isDeleted : mustBeMocked,
+			isTransient : mustBeMocked
+		};
+		this.mock(oNode).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oNode).expects("isTransient").withExactArgs().returns(false);
+		oBinding.aContexts["~iIndex~"] = oNode;
+		const oCheckSuspendedExpectation
+			= this.mock(oBinding).expects("checkSuspended").withExactArgs();
+		this.mock(oBinding).expects("lockGroup").never();
+		const oCache = {
+			getSiblingIndex : mustBeMocked
+		};
+		oBinding.oCache = oCache;
+		const oGetSiblingIndexExpectation = this.mock(oCache).expects("getSiblingIndex")
+			.withExactArgs("~iIndex~", +1).returns(iIndex);
+		this.mock(oBinding).expects("fetchContexts")
+			.withExactArgs(iIndex, 1, 0, sinon.match.same(_GroupLock.$cached))
+			.callsFake(function () {
+				oBinding.aContexts[iIndex] = "~oSiblingContext~";
+				return "n/a";
+			});
+		this.mock(oBinding).expects("requestContexts").never();
+
+		// code under test
+		assert.strictEqual(oBinding.fetchOrGetSibling(oNode), "~oSiblingContext~");
+
+		sinon.assert.callOrder(oCheckSuspendedExpectation, oGetSiblingIndexExpectation);
+	});
+});
+
+	//*********************************************************************************************
+[false, true].forEach((bNull) => {
+	QUnit.test(`fetchOrGetSibling: request, null=${bNull}`, async function (assert) {
+		const oBinding = this.bindList("/EMPLOYEES");
+		// Note: autoExpandSelect at model would be required for hierarchyQualifier, but that leads
+		// too far :-(
+		oBinding.mParameters.$$aggregation = {hierarchyQualifier : "X"};
+		const oNode = {
+			iIndex : "~iIndex~",
+			isDeleted : mustBeMocked,
+			isTransient : mustBeMocked
+		};
+		this.mock(oNode).expects("isDeleted").withExactArgs().returns(false);
+		this.mock(oNode).expects("isTransient").withExactArgs().returns(false);
+		oBinding.aContexts["~iIndex~"] = oNode;
+		const oCheckSuspendedExpectation
+			= this.mock(oBinding).expects("checkSuspended").withExactArgs();
+		this.mock(oBinding).expects("lockGroup").withExactArgs().returns("~oGroupLock~");
+		const oCache = {
+			getSiblingIndex : mustBeMocked,
+			requestSiblingIndex : mustBeMocked
+		};
+		oBinding.oCache = oCache;
+		const oGetSiblingIndexExpectation = this.mock(oCache).expects("getSiblingIndex")
+			.withExactArgs("~iIndex~", -1).returns(undefined);
+		this.mock(oBinding).expects("fetchContexts").never();
+		this.mock(oCache).expects("requestSiblingIndex")
+			.withExactArgs("~iIndex~", -1, "~oGroupLock~").resolves(bNull ? -1 : 42);
+		this.mock(oBinding).expects("requestContexts").exactly(bNull ? 0 : 1)
+			.withExactArgs(42, 1).resolves(["~oSiblingContext~"]);
+
+		// code under test
+		const oPromise = oBinding.fetchOrGetSibling(oNode, -1, true);
 
 		sinon.assert.callOrder(oCheckSuspendedExpectation, oGetSiblingIndexExpectation);
 		assert.ok(oPromise instanceof Promise);
-		assert.strictEqual(await oPromise, "~oSiblingContext~");
+		assert.strictEqual(await oPromise, bNull ? null : "~oSiblingContext~");
 	});
 });
 

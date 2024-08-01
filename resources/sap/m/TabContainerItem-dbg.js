@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/Element',
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 *
 		 * @constructor
 		 * @public
@@ -86,6 +86,7 @@ sap.ui.define(['sap/ui/core/Element',
 				/**
 				 * Sends information that some of the properties have changed.
 				 * @private
+				 * @ui5-restricted sap.m.TabContainerItem
 				 */
 				itemPropertyChanged : {
 					parameters: {

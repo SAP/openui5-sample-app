@@ -26,13 +26,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.125.0",
+		 version: "1.126.1",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 apiVersion: 2,
 		 types: [
@@ -1626,7 +1626,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0
@@ -1844,12 +1844,14 @@ sap.ui.define([
 	/**
 	 * Marker interface for controls that can serve as a menu for a table column header.
 	 *
-	 * Implementation of this interface implements the <code>openBy</code> and <code>getAriaHasPopupType</code> methods.
+	 * Implementation of this interface should include the <code>openBy</code>, <code>close</code>, <code>isOpen</code> and
+	 * <code>getAriaHasPopupType</code> methods and fire the <code>beforeOpen</code> and <code>afterClose</code> events.
+	 *
+	 * Refer to the base class {@link sap.m.table.columnmenu.MenuBase} for a detailed API description.
 	 *
 	 * @name sap.ui.core.IColumnHeaderMenu
 	 * @interface
 	 * @public
-	 * @experimental As of version 1.98
 	 * @since 1.98
 	 *
 	 */
@@ -1860,21 +1862,59 @@ sap.ui.define([
 	 *
 	 * @public
 	 * @function
-	 * @experimental As of version 1.98
 	 * @since 1.98
 	 * @name sap.ui.core.IColumnHeaderMenu.openBy
 	 */
 
 	/**
-	 * Returns the <code>sap.ui.core.aria.HasPopup<\code> type of the menu.
-	 *
-	 * @returns {sap.ui.core.aria.HasPopup} <code>sap.ui.core.aria.HasPopup<\code> type of the menu
+	 * Closes the menu.
 	 *
 	 * @public
 	 * @function
-	 * @experimental As of version 1.98
+	 * @since 1.126
+	 * @name sap.ui.core.IColumnHeaderMenu.close
+	 */
+
+	/**
+	 * Determines whether the menu is open.
+	 *
+	 * @param {sap.ui.core.Element} openBy The element for which the menu is opened. If it is an <code>HTMLElement</code>,
+	 * the closest control is passed for this event (if it exists).
+	 * @returns {boolean} <code>true</code> if the menu is open, <code>false</code> otherwise
+	 *
+	 * @public
+	 * @function
+	 * @since 1.126
+	 * @name sap.ui.core.IColumnHeaderMenu.isOpen
+	 */
+
+	/**
+	 * Returns the <code>sap.ui.core.aria.HasPopup</code> type of the menu.
+	 *
+	 * @returns {sap.ui.core.aria.HasPopup} <code>sap.ui.core.aria.HasPopup</code> type of the menu
+	 *
+	 * @public
+	 * @function
 	 * @since 1.98.0
 	 * @name sap.ui.core.IColumnHeaderMenu.getAriaHasPopupType
+	 */
+
+	/**
+	 * Fires before the menu is opened.
+	 *
+	 * @public
+	 * @event
+	 * @since 1.126
+	 * @name sap.ui.core.IColumnHeaderMenu.beforeOpen
+	 */
+
+	/**
+	 * Fires after the menu is closed.
+	 *
+	 * @public
+	 * @event
+	 * @since 1.126
+	 * @name sap.ui.core.IColumnHeaderMenu.afterClose
 	 */
 
 	/**

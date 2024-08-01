@@ -49,11 +49,15 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS"],
 				aDescribedBy = oAvatar.getAriaDescribedBy(),
 				aHasPopup = oAvatar.getAriaHasPopup(),
 				bHasListener = oAvatar.hasListeners("press"),
-				bShouldBeClickable = (bHasListener && !oAvatar._bIsDefaultIcon && oAvatar.getDetailBox()) || (bHasListener && !oAvatar.getDetailBox()),
-				oBadge = bShouldBeClickable ?  oAvatar._getBadge() : null,
+				bHasSrc = (!oAvatar._bIsDefaultIcon && oAvatar.getDetailBox()) || (!oAvatar.getDetailBox()),
+				bShouldBeClickable = bHasListener && bHasSrc,
+				oBadge = bHasSrc ?  oAvatar._getBadge() : null,
 				sDefaultTooltip = oAvatar._getDefaultTooltip(),
 				sInitialsLength = sInitials.length,
-				bActive = oAvatar.getActive() && bShouldBeClickable;
+				bActive = oAvatar.getActive() && bShouldBeClickable,
+				sCustomBadgeTooltip = oAvatar._getBadgeTooltip(),
+				sDefaultBadgeTooltip = oAvatar._getDefaultTooltip(),
+				sBadgeTooltip = (sCustomBadgeTooltip && sCustomBadgeTooltip !== sDefaultBadgeTooltip) ? sDefaultTooltip + " " + sCustomBadgeTooltip : sDefaultBadgeTooltip;
 
 			oRm.openStart("span", oAvatar);
 			oRm.class(sAvatarClass);
@@ -94,6 +98,13 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS"],
 				// if tooltip property is set the initials should be overwritten
 				oRm.attr("title", sTooltip);
 				oRm.attr("aria-label", sTooltip);
+			} else if (sBadgeTooltip) {
+				// if both initials and badgeTooltip are available, their value should also be incorporated into the aria-label
+				if (sInitials) {
+					sBadgeTooltip += " " + sInitials;
+				}
+				// if only badgeTooltip is available, its value should be incorporated into the aria-label
+				oRm.attr("aria-label", sBadgeTooltip);
 			} else if (sInitials) {
 				// default "Avatar" text + initials
 				oRm.attr("aria-label", sDefaultTooltip + " " + sInitials);

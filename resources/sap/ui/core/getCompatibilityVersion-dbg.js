@@ -16,7 +16,7 @@ sap.ui.define([
 
 	const BASE_CVERS = Version("1.14");
 
-	const VERSION = "1.125.0";
+	const VERSION = "1.126.1";
 
 	var M_COMPAT_FEATURES = {
 		"xx-test"               : "1.15", //for testing purposes only

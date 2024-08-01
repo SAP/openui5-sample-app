@@ -399,9 +399,14 @@ sap.ui.define([
 		}
 
 		for (let i = iIndex + 1; i < iIndex + 1 + iCount; i += 1) {
-			delete aElements.$byPredicate[_Helper.getPrivateAnnotation(aElements[i], "predicate")];
-			delete aElements.$byPredicate[
-				_Helper.getPrivateAnnotation(aElements[i], "transientPredicate")];
+			// selected elements are effectively kept alive (with recursive hierarchy)
+			if (!this.oAggregation.hierarchyQualifier
+				|| !aElements[i]["@$ui5.context.isSelected"]) {
+				delete aElements.$byPredicate[
+					_Helper.getPrivateAnnotation(aElements[i], "predicate")];
+				delete aElements.$byPredicate[
+					_Helper.getPrivateAnnotation(aElements[i], "transientPredicate")];
+			}
 		}
 		const aSpliced = aElements.splice(iIndex + 1, iCount);
 		aSpliced.$level = oGroupNode["@$ui5.node.level"];
@@ -427,7 +432,10 @@ sap.ui.define([
 	_AggregationCache.prototype.countDescendants = function (oGroupNode, iIndex) {
 		var i;
 
-		let iGroupNodeLevel = oGroupNode["@$ui5.node.level"];
+		let iGroupNodeLevel = oGroupNode["@$ui5.node.level"]; // max level of oGroupNode's cache
+		// We have to check a candidate's rank if oGroupNode is in oFirstLevel
+		// Note: expandTo may be undefined (when using data aggregation)
+		let bCheckRank = iGroupNodeLevel <= this.oAggregation.expandTo;
 		let iDescendants = _Helper.getPrivateAnnotation(oGroupNode, "descendants");
 		if (iDescendants) { // => this.oAggregation.expandTo > 1
 			// Note: "descendants" refers to LimitedDescendantCount and counts descendants within
@@ -436,10 +444,14 @@ sap.ui.define([
 		}
 		if (this.bUnifiedCache) {
 			iGroupNodeLevel = Infinity;
+			bCheckRank = true;
 		}
 		const aElements = this.aElements;
 		for (i = iIndex + 1; i < aElements.length; i += 1) {
-			if (aElements[i]["@$ui5.node.level"] <= iGroupNodeLevel) {
+			// If the candidate is not in a nested level cache and (in oFirstLevel) it has a rank,
+			// it counts as descendant. Or it is a sibling if oGroupNode did not have descendants.
+			if (aElements[i]["@$ui5.node.level"] <= iGroupNodeLevel
+					&& (!bCheckRank || _Helper.hasPrivateAnnotation(aElements[i], "rank"))) {
 				// Note: level 0 or 1 is used for initial placeholders of 1st level cache!
 				if (!iDescendants) {
 					break; // we've reached a sibling of the collapsed node
@@ -503,18 +515,11 @@ sap.ui.define([
 		if (oParentNode?.["@$ui5.node.isExpanded"] === false) {
 			throw new Error("Unsupported collapsed parent: " + sParentPath);
 		}
-		if (oParentNode && oParentNode["@$ui5.node.isExpanded"] === undefined) {
-			_Helper.updateAll(this.mChangeListeners, sParentPredicate, oParentNode,
-				{"@$ui5.node.isExpanded" : true}); // not a leaf anymore
-			if (oParentNode["@$ui5.node.level"] >= this.oAggregation.expandTo) {
-				this.oTreeState.expand(oParentNode);
-			} // else: already expanded automatically
-		}
 
 		const iLevel = oParentNode
 			? oParentNode["@$ui5.node.level"] + 1
 			: 1;
-		let oCache = iLevel > this.oAggregation.expandTo
+		let oCache = iLevel > this.oAggregation.expandTo && !this.oAggregation.createInPlace
 			? _Helper.getPrivateAnnotation(oParentNode, "cache")
 			: this.oFirstLevel;
 		if (!oCache) {
@@ -528,8 +533,8 @@ sap.ui.define([
 		const oPromise = oCache.create(oGroupLock, oPostPathPromise, sPath, sTransientPredicate,
 			oEntityData, bAtEndOfCreated, fnErrorCallback, fnSubmitCallback, /*onCancel*/() => {
 				_Helper.removeByPath(this.mPostRequests, sTransientPredicate, oEntityData);
-				if (oCache === this.oFirstLevel) {
-					this.adjustDescendantCount(oEntityData, iIndex, -1);
+				if (this.oAggregation.createInPlace) {
+					return;
 				}
 				aElements.$count -= 1;
 				delete aElements.$byPredicate[sTransientPredicate];
@@ -542,23 +547,34 @@ sap.ui.define([
 					= _Helper.makeRelativeUrl("/" + sParentPath, "/" + this.sResourcePath);
 		}
 
+		const bParentIsLeaf = oParentNode && oParentNode["@$ui5.node.isExpanded"] === undefined;
+		const bExpandTreeState = bParentIsLeaf
+			&& oParentNode?.["@$ui5.node.level"] >= this.oAggregation.expandTo;
+		if (bExpandTreeState) {
+			this.oTreeState.expand(oParentNode);
+		} // else: already expanded automatically
+
 		const addElement = (iIndex0, iRank) => {
+			if (bParentIsLeaf) {
+				_Helper.updateAll(this.mChangeListeners, sParentPredicate, oParentNode,
+					{"@$ui5.node.isExpanded" : true}); // not a leaf anymore
+			}
 			oEntityData["@$ui5.node.level"] = iLevel; // do not send via POST!
 			aElements.splice(iIndex0, 0, null); // create a gap
 			this.addElements(oEntityData, iIndex0, oCache, iRank);
 			aElements.$count += 1;
-			if (oCache === this.oFirstLevel) {
-				this.adjustDescendantCount(oEntityData, iIndex0, +1);
-			}
 		};
-		const completeCreation = (iIndex0, iRank) => {
-			oCache.removeElement(0, sTransientPredicate);
-			_Helper.deletePrivateAnnotation(oEntityData, "transientPredicate");
-			oCache.restoreElement(iRank, oEntityData);
 
+		const completeCreation = (iIndex0, iRank) => {
+			oCache.removeElement(0);
+			_Helper.deletePrivateAnnotation(oEntityData, "transientPredicate");
 			delete aElements.$byPredicate[sTransientPredicate];
-			_Helper.setPrivateAnnotation(oEntityData, "rank", iRank);
-			this.shiftRank(iIndex0, +1);
+			if (iRank !== undefined) {
+				this.adjustDescendantCount(oEntityData, iIndex0, +1);
+				oCache.restoreElement(iRank, oEntityData);
+				_Helper.setPrivateAnnotation(oEntityData, "rank", iRank);
+				this.shiftRank(iIndex0, +1);
+			}
 		};
 
 		if (this.oAggregation.createInPlace) {
@@ -568,8 +584,10 @@ sap.ui.define([
 					this.requestRank(oEntityData, oGroupLock),
 					this.requestNodeProperty(oEntityData, oGroupLock)
 				]);
-				if (iRank === undefined) {
-					oCache.removeElement(0, sTransientPredicate);
+				if (bExpandTreeState) { // isRefreshNeededAfterCreate returns true
+					_Helper.setPrivateAnnotation(oEntityData, "rank", iRank);
+				} else if (iRank === undefined) {
+					oCache.removeElement(0);
 				} else {
 					addElement(iRank, iRank);
 					completeCreation(iRank, iRank);
@@ -669,7 +687,7 @@ sap.ui.define([
 	 * Expands the given group node.
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
-	 *   A lock for the group to associate the requests with
+	 *   An unlocked lock for the group to associate the requests with
 	 * @param {object|string} vGroupNodeOrPath
 	 *   The group node or its path relative to the cache; a group node instance (instead of a path)
 	 *   MUST only be given in case of "expanding" continued
@@ -834,7 +852,7 @@ sap.ui.define([
 	 * @param {number} iIndex
 	 *   The index of the child node
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
-	 *   A lock for the group to associate the requests with
+	 *   An unlocked lock for the group to associate the requests with
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise to be resolved with the requested index of the parent.
 	 *
@@ -895,7 +913,7 @@ sap.ui.define([
 				this.oFirstLevel.calculateKeyPredicate(oParent, this.getTypes(), this.sMetaPath);
 
 				const iParentIndex = this.findIndex(iRank);
-				if (_Helper.getPrivateAnnotation(this.aElements[iParentIndex], "placeholder")) {
+				if (_Helper.hasPrivateAnnotation(this.aElements[iParentIndex], "placeholder")) {
 					this.insertNode(oParent, iRank, iParentIndex);
 				} // else: parent already inside collection
 
@@ -914,8 +932,7 @@ sap.ui.define([
 	 * Returns a promise to be resolved with an OData object for the requested data.
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
-	 *   A lock for the group to associate the request with; unused in CollectionCache since no
-	 *   request will be created
+	 *   An unlocked lock for the group to associate the request with
 	 * @param {string} [sPath]
 	 *   Relative path to drill-down into
 	 * @param {function} [fnDataRequested]
@@ -1118,37 +1135,45 @@ sap.ui.define([
 	 *
 	 * @param {number} iIndex - The index of a node
 	 * @param {number} iOffset - An offset, either -1 or +1
+	 * @param {boolean} [bAllowPlaceholder] - Whether the sibling is allowed to be a placeholder
 	 * @returns {number}
-	 *   The sibling node's index, or -1 if no such sibling exists
+	 *   The sibling node's index, or -1 if no such sibling exists for sure, or
+	 *   <code>undefined</code> if we cannot tell or if the sibling is currently a placeholder and
+	 *   that is not allowed
 	 *
 	 * @public
 	 */
-	_AggregationCache.prototype.getSiblingIndex = function (iIndex, iOffset) {
-		function findSibling(aElements, iRank, iLevel) {
-			for (;;) {
-				iRank += iOffset;
-				if (iRank < 0 || iRank >= aElements.$count) {
-					return -1; // no such sibling
-				}
-				if (!aElements[iRank]) {
-					return iRank;
-				}
-				if (aElements[iRank]["@$ui5.node.level"] < iLevel) {
-					return -1; // no such sibling
-				}
-				if (aElements[iRank]["@$ui5.node.level"] === iLevel) {
-					return iRank;
-				}
-				// else: ignore descendants
+	_AggregationCache.prototype.getSiblingIndex = function (iIndex, iOffset, bAllowPlaceholder) {
+		const oNode = this.aElements[iIndex];
+		const oCache = _Helper.getPrivateAnnotation(oNode, "parent");
+		const bSingleLevelCache = oCache !== this.oFirstLevel
+			|| this.oAggregation.expandTo === 1 && !this.oAggregation.$ExpandLevels;
+		const iRank = _Helper.getPrivateAnnotation(oNode, "rank");
+		let iSiblingRank = iRank + iOffset;
+		if (iOffset < 0) { // previous sibling
+			if (!bSingleLevelCache) {
+				iSiblingRank // Note: may become undefined!
+					= _AggregationHelper.findPreviousSiblingIndex(oCache.aElements, iRank);
+			}
+			if (iSiblingRank < 0) {
+				return -1; // no such sibling
+			}
+		} else { // next sibling: skip descendants
+			iSiblingRank += _Helper.getPrivateAnnotation(oNode, "descendants", 0);
+			if (iSiblingRank >= oCache.aElements.$count
+				|| oCache.aElements[iSiblingRank]?.["@$ui5.node.level"]
+					< oNode["@$ui5.node.level"]) {
+				return -1; // no such sibling
 			}
 		}
 
-		const oNode = this.aElements[iIndex];
-		const oCache = _Helper.getPrivateAnnotation(oNode, "parent");
-		const iSiblingRank = findSibling(oCache.aElements,
-			_Helper.getPrivateAnnotation(oNode, "rank"), oNode["@$ui5.node.level"]);
-
-		return iSiblingRank < 0 ? -1 : this.findIndex(iSiblingRank, oCache);
+		if (iSiblingRank >= 0) {
+			const iSiblingIndex = this.findIndex(iSiblingRank, oCache);
+			if (bSingleLevelCache && bAllowPlaceholder
+				|| !_Helper.hasPrivateAnnotation(this.aElements[iSiblingIndex], "placeholder")) {
+				return iSiblingIndex; // sibling found
+			}
+		} // else: iSiblingRank === undefined => return undefined;
 	};
 
 	/**
@@ -1284,6 +1309,22 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns whether a refresh is needed, if a child is created below the given parent (index).
+	 *
+	 * @param {number} iParentIndex Index of the parent
+	 * @returns {boolean} Whether a refresh is needed
+	 *
+	 * @public
+	 */
+	_AggregationCache.prototype.isRefreshNeededAfterCreate = function (iParentIndex) {
+		const oParent = this.aElements[iParentIndex];
+
+		return this.oAggregation.createInPlace
+			&& oParent["@$ui5.node.isExpanded"] === undefined
+			&& oParent["@$ui5.node.level"] >= this.oAggregation.expandTo;
+	};
+
+	/**
 	 * Determines the list of elements determined by the given predicates. All other elements are
 	 * turned into placeholders (lazily), except transient ones.
 	 *
@@ -1354,12 +1395,15 @@ sap.ui.define([
 	 * @param {string} [sNonCanonicalChildPath]
 	 *   The (child) node's non-canonical path (relative to the service); only used when
 	 *   <code>sSiblingPath</code> is given
+	 * @param {boolean} [bRequestSiblingRank]
+	 *   Whether to request the next sibling's rank and return its new index
 	 * @returns {{promise : sap.ui.base.SyncPromise<function():number|number[]>, refresh : boolean}}
 	 *   An object with two properties:
 	 *   - <code>promise</code>: A promise which is resolved when the move is finished, or rejected
 	 *     in case of an error. In case a refresh is needed, the promise is resolved with a function
-	 *     that can be called w/o args once the refresh is finished; it then returns the new index
-	 *     of the moved node (or <code>undefined</code>). Else it resolves with with an array of:
+	 *     that can be called w/o args once the refresh is finished - it then returns an array with
+	 *     the new indices of the moved node (or <code>undefined</code>) and of the next sibling (if
+	 *     requested). Else it is resolved with an array of:
 	 *     - the number of child nodes added (normally one, but maybe more in case the parent node
 	 *       was collapsed before),
 	 *     - the new index of the moved node,
@@ -1370,7 +1414,7 @@ sap.ui.define([
 	 * @public
 	 */
 	_AggregationCache.prototype.move = function (oGroupLock, sChildPath, sParentPath, sSiblingPath,
-			sNonCanonicalChildPath) {
+			sNonCanonicalChildPath, bRequestSiblingRank) {
 		let bRefreshNeeded = !this.bUnifiedCache;
 
 		const sChildPredicate = sChildPath.slice(sChildPath.indexOf("("));
@@ -1400,13 +1444,15 @@ sap.ui.define([
 			}
 		}
 
+		let oSiblingNode; // side effect of calling invokeNextSibling()
 		const invokeNextSibling = () => {
 			if (sSiblingPath !== undefined) {
 				bRefreshNeeded = true;
 				const sActionPath = sNonCanonicalChildPath + "/"
 					+ this.oAggregation.$Actions.ChangeNextSiblingAction;
 				const sSiblingPredicate = sSiblingPath?.slice(sSiblingPath.indexOf("("));
-				let oSiblingNode = this.aElements.$byPredicate[sSiblingPredicate];
+				oSiblingNode = this.aElements.$byPredicate[sSiblingPredicate];
+				let oNextSibling = null;
 				if (oSiblingNode) {
 					// remove OOP for all descendants (incl. itself) of a next sibling
 					this.oTreeState.deleteOutOfPlace(sSiblingPredicate);
@@ -1414,18 +1460,16 @@ sap.ui.define([
 						_Helper.getMetaPath("/" + sActionPath + "/NextSibling/")
 					).getResult();
 					const aKeys = Object.keys(oNextSiblingType).filter((sKey) => sKey[0] !== "$");
-					oSiblingNode = aKeys.reduce((oKeys, sKey) => {
+					oNextSibling = aKeys.reduce((oKeys, sKey) => {
 						oKeys[sKey] = oSiblingNode[sKey];
 						return oKeys;
 					}, {});
-				} else {
-					oSiblingNode = null;
 				}
 
 				return this.oRequestor.request("POST", sActionPath, oGroupLock.getUnlockedCopy(), {
 						"If-Match" : oChildNode,
 						Prefer : "return=minimal"
-					}, {NextSibling : oSiblingNode});
+					}, {NextSibling : oNextSibling});
 			}
 		};
 
@@ -1436,13 +1480,17 @@ sap.ui.define([
 				}, {[this.oAggregation.$ParentNavigationProperty + "@odata.bind"] : sParentPath},
 				/*fnSubmit*/null, function fnCancel() { /*nothing to do*/ }),
 			invokeNextSibling(),
-			this.requestRank(oChildNode, oGroupLock, bRefreshNeeded)
+			this.requestRank(oChildNode, oGroupLock, bRefreshNeeded),
+			bRequestSiblingRank && this.requestRank(oSiblingNode, oGroupLock, true)
 		]);
 
 		if (bRefreshNeeded) {
-			oPromise = oPromise.then(([,, iRank]) => {
+			oPromise = oPromise.then(([,, iRank, iSiblingRank]) => {
 				return () => { // Note: caller MUST wait for side-effects refresh first
-					return iRank === undefined ? undefined : this.findIndex(iRank);
+					return [
+						iRank === undefined ? undefined : this.findIndex(iRank),
+						bRequestSiblingRank && this.findIndex(iSiblingRank)
+					];
 				};
 			});
 		} else {
@@ -1553,7 +1601,6 @@ sap.ui.define([
 	_AggregationCache.prototype.read = function (iIndex, iLength, iPrefetchLength, oGroupLock,
 			fnDataRequested) {
 		var oCurrentParent,
-			oElement,
 			iFirstLevelIndex = iIndex,
 			iFirstLevelLength = iLength,
 			oGapParent,
@@ -1571,9 +1618,9 @@ sap.ui.define([
 		 * @param {number} iGapStart start of gap, inclusive
 		 * @param {number} iGapEnd end of gap, exclusive
 		 */
-		function readGap(iGapStart, iGapEnd) {
+		function readGap(iGapStart0, iGapEnd) {
 			aReadPromises.push(
-				that.readGap(oGapParent, iGapStart, iGapEnd, oGroupLock.getUnlockedCopy(),
+				that.readGap(oGapParent, iGapStart0, iGapEnd, oGroupLock.getUnlockedCopy(),
 					fnDataRequested));
 		}
 
@@ -1619,7 +1666,7 @@ sap.ui.define([
 				});
 			const n = Math.min(oReadRange.start + oReadRange.length, this.aElements.length);
 			for (i = oReadRange.start; i < n; i += 1) {
-				oElement = this.aElements[i];
+				const oElement = this.aElements[i];
 				oCurrentParent = _Helper.hasPrivateAnnotation(oElement, "placeholder")
 					? _Helper.getPrivateAnnotation(oElement, "parent")
 					: undefined;
@@ -1666,8 +1713,8 @@ sap.ui.define([
 	 * search into account.
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
-	 *   A lock for the group to associate the requests with;
-	 *   {@link sap.ui.model.odata.v4.lib._GroupLock#getUnlockedCopy} still needs to be called!
+	 *   An original lock for the group ID to be used for the GET request, to be cloned via
+	 *   {@link sap.ui.model.odata.v4.lib._GroupLock#getUnlockedCopy}
 	 * @returns {Promise<void>|undefined}
 	 *   A promise which is resolved without a defined result when the read is finished, or
 	 *   rejected in case of an error; <code>undefined</code> in case no count needs to be read
@@ -1896,10 +1943,12 @@ sap.ui.define([
 	 * @override
 	 * @see sap.ui.model.odata.v4.lib._CollectionCache#refreshKeptElements
 	 */
-	_AggregationCache.prototype.refreshKeptElements = function (oGroupLock, fnOnRemove) {
+	_AggregationCache.prototype.refreshKeptElements = function (oGroupLock, fnOnRemove,
+			bIgnorePendingChanges, _bDropApply) {
 		// "super" call (like @borrows ...)
 		const fnSuper = this.oFirstLevel.refreshKeptElements;
-		return fnSuper.call(this, oGroupLock, fnOnRemove, true);
+		return fnSuper.call(this, oGroupLock, fnOnRemove, bIgnorePendingChanges,
+			/*bDropApply*/true);
 	};
 
 	/**
@@ -1934,7 +1983,8 @@ sap.ui.define([
 	 * moved to their out-of-place position in the cache.
 	 *
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
-	 *   A lock for the group to associate the requests with
+	 *   An original lock for the group ID to be used for the GET request, to be cloned via
+	 *   {@link sap.ui.model.odata.v4.lib._GroupLock#getUnlockedCopy}
 	 * @returns {Promise[]}
 	 *   The request promises
 	 *
@@ -2027,7 +2077,7 @@ sap.ui.define([
 			this.sMetaPath, undefined, false, {$select : aSelect}, this);
 		const oRequestedProperties = oResult.value[0];
 
-		if (bInheritResult) {
+		if (bInheritResult && oRequestedProperties) {
 			aSelect.forEach((sPath) => {
 				_Helper.inheritPathValue(sPath.split("/"), oRequestedProperties, oElement, true);
 			});
@@ -2059,6 +2109,57 @@ sap.ui.define([
 			oGroupLock, false, false, bRefreshNeeded);
 
 		return oResult && parseInt(_Helper.drillDown(oResult, this.oAggregation.$LimitedRank));
+	};
+
+	/**
+	 * Returns the index of the given node's sibling, either the next one (via offset +1) or the
+	 * previous one (via offset -1).
+	 *
+	 * @param {number} iIndex - The index of a node
+	 * @param {number} iOffset - An offset, either -1 or +1
+	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
+	 *   An unlocked lock for the group to associate the requests with
+	 * @returns {Promise<number>}
+	 *   The sibling node's index, or -1 if no such sibling exists
+	 *
+	 * @public
+	 */
+	_AggregationCache.prototype.requestSiblingIndex = async function (iIndex, iOffset, oGroupLock) {
+		const iSiblingIndex = this.getSiblingIndex(iIndex, iOffset, true);
+		if (iSiblingIndex !== undefined) {
+			return iSiblingIndex;
+		}
+
+		const oNode = this.aElements[iIndex];
+		const mQueryOptions = {
+			...this.oFirstLevel.mQueryOptions,
+			$filter : this.oAggregation.$LimitedRank + (iOffset < 0 ? " lt " : " gt ")
+				+ _Helper.getPrivateAnnotation(oNode, "rank") + " and "
+				+ this.oAggregation.$DistanceFromRoot + " lt " + oNode["@$ui5.node.level"],
+			$top : 1
+		};
+		if (iOffset < 0) {
+			mQueryOptions.$orderby = this.oAggregation.$LimitedRank + " desc";
+		}
+		mQueryOptions.$select = [...mQueryOptions.$select, this.oAggregation.$LimitedRank];
+		delete mQueryOptions.$count;
+		const sResourcePath = this.sResourcePath
+			+ this.oRequestor.buildQueryString("", mQueryOptions, false, true, true);
+
+		const oResult = await this.oRequestor.request("GET", sResourcePath, oGroupLock);
+
+		const oSibling = oResult.value[0];
+		// Note: overridden by _AggregationCache.calculateKeyPredicateRH
+		this.oFirstLevel.calculateKeyPredicate(oSibling, this.getTypes(), this.sMetaPath);
+		const iSiblingRank = parseInt(_Helper.drillDown(oSibling, this.oAggregation.$LimitedRank));
+		_Helper.deleteProperty(oSibling, this.oAggregation.$LimitedRank);
+		if (_Helper.hasPrivateAnnotation(this.aElements[iSiblingRank], "placeholder")) {
+			this.insertNode(oSibling, iSiblingRank);
+		} // else: sibling already inside collection
+
+		return oSibling["@$ui5.node.level"] === oNode["@$ui5.node.level"]
+			? iSiblingRank
+			: -1; // no such sibling
 	};
 
 	/**

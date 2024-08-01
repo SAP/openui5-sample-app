@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IContextMenu
 	 *
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -1217,11 +1217,10 @@ sap.ui.define([
 	///////////////////////////////////////// Hidden Functions /////////////////////////////////////////
 
 	function checkCozyMode(oRef) {
-		if (!oRef) {
+		if (!oRef || !oRef.getDomRef) {
 			return false;
 		}
-		oRef = oRef.$ ? oRef.$() : jQuery(oRef);
-		return oRef.closest(".sapUiSizeCompact,.sapUiSizeCondensed,.sapUiSizeCozy").hasClass("sapUiSizeCozy");
+		return !!oRef.getDomRef()?.closest(".sapUiSizeCompact,.sapUiSizeCondensed,.sapUiSizeCozy")?.classList.contains("sapUiSizeCozy");
 	}
 
 	function setItemToggleState(oMenu, bOpen){

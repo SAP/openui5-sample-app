@@ -70,7 +70,7 @@ sap.ui.define([
 		 * @abstract
 		 *
 		 * @author SAP SE
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 *
 		 * @constructor
 		 * @public
@@ -98,8 +98,9 @@ sap.ui.define([
 					 * Indicates whether the picker is opened.
 					 * @deprecated since version 1.110 Please check the <code>showItems</code> functionality if you need to open the picker programmatically.
 					 * @private
+					 * @ui5-restricted sap.m.ComboBoxBase
 					 */
-					 open: {
+					open: {
 						type: "boolean",
 						defaultValue: false
 					},

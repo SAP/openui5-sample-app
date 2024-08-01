@@ -18,7 +18,7 @@
  * sap.ui.lazyRequire("sap.ui.core.Control");
  * sap.ui.lazyRequire("sap.m.Button");
  *
- * @version 1.125.0
+ * @version 1.126.1
  * @author  SAP SE
  * @public
  */
@@ -35,7 +35,7 @@ sap.ui.define([
 	"use strict";
 
 	// Register to the OpenAjax Hub if it exists
-	if (window.OpenAjax && window.OpenAjax.hub) {
+	if (globalThis.OpenAjax && globalThis.OpenAjax.hub) {
 		OpenAjax.hub.registerLibrary("sap", "http://www.sap.com/", "0.1", {});
 	}
 
@@ -48,7 +48,7 @@ sap.ui.define([
 	 * The <code>sap</code> namespace is automatically registered with the
 	 * OpenAjax hub if it exists.
 	 *
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @namespace
 	 * @public
 	 * @name sap
@@ -58,7 +58,7 @@ sap.ui.define([
 	 * The <code>sap.ui</code> namespace is the central OpenAjax compliant entry
 	 * point for UI related JavaScript functionality provided by SAP.
 	 *
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @namespace
 	 * @name sap.ui
 	 * @public
@@ -69,9 +69,9 @@ sap.ui.define([
 		 * The version of the SAP UI Library
 		 * @type string
 		 */
-		version: "1.125.0",
+		version: "1.126.1",
 		// buildinfo.lastchange is deprecated and is therefore defaulted to empty string
-		buildinfo : { lastchange : "", buildtime : "20240731-1505" }
+		buildinfo : { lastchange : "", buildtime : "20240801-0848" }
 	};
 
 	/**
@@ -124,7 +124,7 @@ sap.ui.define([
 
 	/**
 	 * Ensures that a given a namespace or hierarchy of nested namespaces exists in the
-	 * current <code>window</code>.
+	 * current <code>globalThis</code>.
 	 *
 	 * @param {string} sNamespace
 	 * @return {object} the innermost namespace of the hierarchy

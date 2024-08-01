@@ -170,7 +170,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @param {object} [oRootNode] reference to the DOM element that should be 'hosting' the UI Area.
 	 * @public
 	 * @alias sap.ui.core.UIArea
@@ -868,7 +868,7 @@ sap.ui.define([
 		} else {
 			var oUIArea = oControl.getUIArea();
 			oUIArea && oUIArea._onControlRendered(oControl);
-			oRenderLog.warning("Couldn't rerender '" + oControl.getId() + "', as its DOM location couldn't be determined");
+			oRenderLog.info("Couldn't rerender '" + oControl.getId() + "', as its DOM location couldn't be determined");
 		}
 	};
 	var rEvents = /^(mousedown|mouseup|click|keydown|keyup|keypress|touchstart|touchend|tap)$/;

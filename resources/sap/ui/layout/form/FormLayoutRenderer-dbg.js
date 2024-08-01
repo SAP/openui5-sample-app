@@ -97,7 +97,7 @@ sap.ui.define([
 		var oToolbar = oContainer.getToolbar();
 		var oTitle = oContainer.getTitle();
 
-		rm.openStart("section", oContainer);
+		rm.openStart("div", oContainer);
 		rm.class("sapUiFormContainer");
 
 		if (oToolbar) {
@@ -110,7 +110,7 @@ sap.ui.define([
 			rm.attr('title', oContainer.getTooltip_AsString());
 		}
 
-		this.writeAccessibilityStateContainer(rm, oContainer);
+		this.writeAccessibilityStateContainer(rm, oContainer, !oLayout.isContainerLabelled(oContainer));
 
 		rm.openEnd();
 
@@ -197,7 +197,18 @@ sap.ui.define([
 				sLevel = "H5";
 			}
 
-			// just reuse TextView class because there font size & co. is already defined
+			const bRenderExpander = bExpander && oExpandButton;
+
+			if (bRenderExpander) {
+				// if expander is renders put a DIV around expander an d title. (If expander inside title the screenreader announcement is somehow strange.)
+				rm.openStart("div", sContentId + "--head");
+				rm.class("sapUiFormTitle");
+				// rm.class("sapUiFormTitle" + sLevel);
+				rm.class("sapUiFormTitleExpandable");
+				rm.openEnd();
+				rm.renderControl(oExpandButton);
+			}
+
 			if ( typeof oTitle !== "string" ) {
 				rm.openStart(sLevel.toLowerCase(), oTitle);
 				if (oTitle.getTooltip_AsString()) {
@@ -209,16 +220,12 @@ sap.ui.define([
 			} else {
 				rm.openStart(sLevel.toLowerCase(), sContentId + "--title");
 			}
-			rm.class("sapUiFormTitle");
-			rm.class("sapUiFormTitle" + sLevel);
-			if (bExpander && oExpandButton) {
-				rm.class("sapUiFormTitleExpandable");
+			if (!bRenderExpander) {
+				rm.class("sapUiFormTitle");
 			}
+			rm.class("sapUiFormTitle" + sLevel);
 			rm.openEnd();
 
-			if (bExpander && oExpandButton) {
-				rm.renderControl(oExpandButton);
-			}
 			if (typeof oTitle === "string") {
 				// Title is just a string
 				oTitle.split(/\n/).forEach(function(sLine, iIndex) {
@@ -249,6 +256,9 @@ sap.ui.define([
 			}
 
 			rm.close(sLevel.toLowerCase());
+			if (bRenderExpander) {
+				rm.close("div");
+			}
 		}
 
 	};
@@ -280,8 +290,9 @@ sap.ui.define([
 	 * Writes the accessibility attributes for FormContainers.
 	 * @param {sap.ui.core.RenderManager} rm
 	 * @param {sap.ui.layout.form.FormContainer} oContainer
+	 * @param {boolean} bNoRole if set the DOM node needs no role (e.g. Container has no title)
 	 */
-	FormLayoutRenderer.writeAccessibilityStateContainer = function(rm, oContainer){
+	FormLayoutRenderer.writeAccessibilityStateContainer = function(rm, oContainer, bNoRole){
 
 		var mAriaProps = {};
 		var oTitle = oContainer.getTitle();
@@ -302,8 +313,7 @@ sap.ui.define([
 			mAriaProps["labelledby"] = {value: sId, append: true};
 		}
 
-		if (mAriaProps["labelledby"] || oContainer.getAriaLabelledBy().length > 0) {
-			// if no title or label do not set role because of JAWS 18 issues
+		if (!bNoRole) {
 			mAriaProps["role"] = "form";
 		}
 

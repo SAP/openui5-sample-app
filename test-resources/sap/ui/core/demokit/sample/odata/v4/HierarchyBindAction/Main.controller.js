@@ -5,11 +5,27 @@
  */
 sap.ui.define([
 	"sap/m/MessageBox",
+	"sap/ui/model/Filter",
+	"sap/ui/model/FilterOperator",
+	"sap/ui/model/FilterType",
 	"sap/ui/core/sample/common/Controller"
-], function (MessageBox, Controller) {
+], function (MessageBox, Filter, FilterOperator, FilterType, Controller) {
 	"use strict";
 
 	return Controller.extend("sap.ui.core.sample.odata.v4.HierarchyBindAction.Main", {
+		create : async function (oParentContext, bFilteredOut) {
+			try {
+				const oContext = this.byId("table").getBinding("rows").create({
+					"@$ui5.node.parent" : oParentContext,
+					Description : bFilteredOut ? "Out" : ""
+				}, /*bSkipRefresh*/true);
+				await oContext.created();
+				this.scrollTo(oContext);
+			} catch (oError) {
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
+			}
+		},
+
 		onChangeHierarchy : function (oEvent) {
 			const oSource = oEvent.getSource();
 			const oContext = oSource.toString().includes("ODataListBinding")
@@ -26,23 +42,12 @@ sap.ui.define([
 			oView.setBindingContext(oRowsBinding.getHeaderContext(), "header");
 		},
 
-		onCreate : async function (oEvent) {
-			try {
-				const oParentContext = oEvent.getSource().getBindingContext();
-				await oParentContext.getBinding().create({
-					"@$ui5.node.parent" : oParentContext
-				}, /*bSkipRefresh*/true);
-			} catch (oError) {
-				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
-			}
+		onCreate : function (oEvent, bFilteredOut) {
+			this.create(oEvent.getSource().getBindingContext(), bFilteredOut);
 		},
 
-		onCreateRoot : async function () {
-			try {
-				await this.byId("table").getBinding("rows").create({}, /*bSkipRefresh*/true);
-			} catch (oError) {
-				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
-			}
+		onCreateRoot : function (_oEvent, bFilteredOut) {
+			this.create(null, bFilteredOut);
 		},
 
 		onDelete : async function (oEvent) {
@@ -79,9 +84,16 @@ sap.ui.define([
 						: parseFloat(sExpandTo || "1"), // Note: parseInt("1E16") === 1
 					hierarchyQualifier : "I_SADL_BHV_BIND_DIR_HIERVIEW"
 				};
+				if (oUriParameters.has("createInPlace")) {
+					this._oAggregation.createInPlace = true;
+				}
 
 				this.byId("selectHierarchy").getBinding("items")
 					.attachEventOnce("dataReceived", this.onChangeHierarchy.bind(this));
+
+				this.byId("table").getBinding("rows").filter(
+					new Filter("Description", FilterOperator.NotStartsWith, "Out"),
+					FilterType.Control);
 
 				this.initMessagePopover("table");
 			}, this);
@@ -105,13 +117,13 @@ sap.ui.define([
 			this._vNextSibling = vNextSibling;
 			this._oNode = oEvent.getSource().getBindingContext();
 			const oSelectDialog = this.byId("moveDialog");
+			oSelectDialog.setBindingContext(this._oNode);
 			const oListBinding = oSelectDialog.getBinding("items");
 			if (oListBinding.isSuspended()) {
 				oListBinding.resume();
 			} else {
 				oListBinding.refresh();
 			}
-			oSelectDialog.setBindingContext(this._oNode);
 			oSelectDialog.open();
 		},
 
@@ -152,12 +164,89 @@ sap.ui.define([
 			}
 		},
 
-		onRefresh : function () {
-			this.byId("table").getBindingContext().refresh();
+		onMoveDown : async function (oEvent) {
+			var oNode;
+
+			try {
+				this.getView().setBusy(true);
+				oNode = oEvent.getSource().getBindingContext();
+				oNode.setKeepAlive(true); // opt-in to update nextSibling's index
+
+				const [oParent, oSibling] = await Promise.all([
+					oNode.requestParent(),
+					oNode.requestSibling(+1)
+				]);
+
+				if (!oSibling) {
+					MessageBox.alert("Cannot move down",
+						{icon : MessageBox.Icon.INFORMATION, title : "Already last sibling"});
+					return;
+				}
+
+				await oSibling.move({nextSibling : oNode, parent : oParent});
+
+				this.scrollTo(oNode);
+			} catch (oError) {
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
+			} finally {
+				oNode.setKeepAlive(false);
+				this.getView().setBusy(false);
+			}
 		},
 
-		onSynchronize : function () {
-			this.byId("table").getBinding("rows").getHeaderContext().requestSideEffects([""]);
+		onMoveUp : async function (oEvent) {
+			var oNode;
+
+			try {
+				this.getView().setBusy(true);
+				oNode = oEvent.getSource().getBindingContext();
+				oNode.setSelected(true); // MUST NOT make any difference here
+
+				const [oParent, oSibling] = await Promise.all([
+					oNode.requestParent(),
+					oNode.requestSibling(-1)
+				]);
+
+				if (!oSibling) {
+					this.scrollTo(oParent);
+					MessageBox.alert("Cannot move up",
+						{icon : MessageBox.Icon.INFORMATION, title : "Already first sibling"});
+					return;
+				}
+
+				await oNode.move({nextSibling : oSibling, parent : oParent});
+
+				// make sure moved node is visible
+				this.scrollTo(oNode);
+			} catch (oError) {
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
+			} finally {
+				oNode.setSelected(false);
+				this.getView().setBusy(false);
+			}
+		},
+
+		onRefresh : function (_oEvent, bKeepTreeState) {
+			var oTable = this.byId("table");
+
+			if (bKeepTreeState) {
+				oTable.getBinding("rows").getHeaderContext().requestSideEffects([""]);
+			} else {
+				oTable.getBindingContext().refresh();
+			}
+		},
+
+		scrollTo : function (oNode) {
+			const iIndex = oNode.getIndex();
+			const oTable = this.byId("table");
+			const iFirstVisibleRow = oTable.getFirstVisibleRow();
+			const iRowCount = oTable.getRowMode().getRowCount();
+
+			if (iIndex < iFirstVisibleRow) {
+				oTable.setFirstVisibleRow(iIndex);
+			} else if (iIndex >= iFirstVisibleRow + iRowCount) {
+				oTable.setFirstVisibleRow(iIndex - iRowCount + 1);
+			} // else: node is already visible
 		}
 	});
 });

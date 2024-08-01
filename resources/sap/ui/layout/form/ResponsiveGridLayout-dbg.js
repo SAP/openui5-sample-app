@@ -55,7 +55,7 @@ sap.ui.define([
 	 *
 	 * This control cannot be used stand-alone, it just renders a {@link sap.ui.layout.form.Form Form}, so it must be assigned to a {@link sap.ui.layout.form.Form Form} using the <code>layout</code> aggregation.
 	 * @extends sap.ui.layout.form.FormLayout
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @public
@@ -289,7 +289,7 @@ sap.ui.define([
 					oRm.attr('title', sTooltip);
 				}
 
-				oLayout.getRenderer().writeAccessibilityStateContainer(oRm, oContainer);
+				oLayout.getRenderer().writeAccessibilityStateContainer(oRm, oContainer, false); // if Container-Panel used render always a role
 
 				oRm.openEnd();
 

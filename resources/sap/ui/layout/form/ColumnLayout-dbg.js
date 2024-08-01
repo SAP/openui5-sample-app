@@ -60,7 +60,7 @@ sap.ui.define([
 	 * This control cannot be used stand-alone, it just renders a {@link sap.ui.layout.form.Form Form} control,
 	 * so it must be assigned to a {@link sap.ui.layout.form.Form Form} control using the <code>layout</code> aggregation.
 	 * @extends sap.ui.layout.form.FormLayout
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @public
@@ -684,6 +684,16 @@ sap.ui.define([
 	ColumnLayout.prototype.renderControlsForSemanticElement = function() {
 
 		return true;
+
+	};
+
+	ColumnLayout.prototype.hasLabelledContainers = function(oForm) {
+
+		const aContainers = oForm.getFormContainers();
+
+		// Let Form render role="region" also if FormContainer has no title.
+		// If only one FormContainer exist and it has no title let Form render role "form".
+		return aContainers.length !== 1 || this.isContainerLabelled(aContainers[0]);
 
 	};
 

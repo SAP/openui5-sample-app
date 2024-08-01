@@ -557,6 +557,9 @@ function(
 	});
 
 	QUnit.module("Design Time Library and Preload", {
+		before: () => {
+			return Library.load("sap.ui.core");
+		},
 		beforeEach: function(assert) {
 			this.oMetadata = CustomData.getMetadata();
 			this.vOldDesigntime = this.oMetadata._oDesignTime;

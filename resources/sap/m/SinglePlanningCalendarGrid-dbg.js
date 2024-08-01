@@ -115,7 +115,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 *
 		 * @constructor
 		 * @private
@@ -1314,7 +1314,7 @@ sap.ui.define([
 				this._bMultiDateSelectWithArrow = true;
 			} else if (oEvent.which === KeyCodes.SPACE && !oEvent.shiftKey && bMultiDateSelection) {
 				this._bMultiDateSelect = true;
-			} else if (oEvent.which === KeyCodes.SPACE && !oEvent.shiftKey) {
+			} else if ((oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER) && !oEvent.shiftKey) {
 				this.removeAllSelectedDates();
 				this._bMultiDateSelect = true;
 			}

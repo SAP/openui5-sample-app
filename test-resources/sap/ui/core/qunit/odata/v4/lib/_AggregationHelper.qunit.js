@@ -103,6 +103,9 @@ sap.ui.define([
 
 		assert.strictEqual(oElement["@$ui5.node.isExpanded"], "~new~", "unchanged");
 
+		oHelperMock.expects("copySelected")
+			.withExactArgs(sinon.match.same(oPlaceholder), sinon.match.same(oElement));
+
 		// Note: an initial placeholder cannot know "@$ui5.node.isExpanded"!
 		_Helper.setPrivateAnnotation(oPlaceholder, "placeholder", 1);
 		oPlaceholder["@$ui5.node.isExpanded"] = "~old~";
@@ -111,6 +114,9 @@ sap.ui.define([
 		_AggregationHelper.beforeOverwritePlaceholder(oPlaceholder, oElement, oCache, 42);
 
 		assert.strictEqual(oElement["@$ui5.node.isExpanded"], "~old~");
+
+		oHelperMock.expects("copySelected")
+			.withExactArgs(sinon.match.same(oPlaceholder), sinon.match.same(oElement));
 
 		delete oElement["@$ui5.node.isExpanded"];
 		delete oPlaceholder["@$ui5.node.isExpanded"];
@@ -2444,6 +2450,80 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
+	QUnit.test("findPreviousSiblingIndex: no request needed", function (assert) {
+		const aElements = [{
+			"@$ui5._" : {
+				descendants : 2
+			},
+			"@$ui5.node.level" : 1
+		}, {
+			"@$ui5._" : {
+				// descendants : 0
+			},
+			"@$ui5.node.level" : 2
+		}, undefined, {
+			"@$ui5._" : {
+				// descendants : 0
+			},
+			"@$ui5.node.level" : 1
+		}];
+
+		assert.strictEqual(
+			// code under test
+			_AggregationHelper.findPreviousSiblingIndex(aElements, 0),
+			-1, "already first");
+
+		assert.strictEqual(
+			// code under test
+			_AggregationHelper.findPreviousSiblingIndex(aElements, 3),
+			0, "sibling found beyond hole");
+
+		assert.strictEqual(
+			// code under test
+			_AggregationHelper.findPreviousSiblingIndex(aElements, 1),
+			-1, "no such sibling");
+	});
+
+	//*********************************************************************************************
+	QUnit.test("findPreviousSiblingIndex: request needed", function (assert) {
+		const aElements = [undefined, {
+			"@$ui5._" : {
+				// descendants : 0
+			},
+			"@$ui5.node.level" : 1
+		}, undefined, {
+			"@$ui5._" : {
+				// descendants : 0
+			},
+			"@$ui5.node.level" : 1
+		}, undefined, {
+			"@$ui5._" : {
+				// descendants : 0
+			},
+			"@$ui5.node.level" : 1
+		}];
+
+		assert.strictEqual(
+			// code under test
+			_AggregationHelper.findPreviousSiblingIndex(aElements, 1),
+			undefined, "sibling not available");
+
+		assert.strictEqual(
+			// code under test
+			_AggregationHelper.findPreviousSiblingIndex(aElements, 3),
+			undefined, "sibling not available");
+
+		this.mock(_Helper).expects("getPrivateAnnotation")
+			.withExactArgs(sinon.match.same(aElements[3]), "descendants", 0).returns(0);
+		// Note: no further calls!
+
+		assert.strictEqual(
+			// code under test
+			_AggregationHelper.findPreviousSiblingIndex(aElements, 5),
+			undefined, "sibling not available");
+	});
+
+	//*********************************************************************************************
 	QUnit.test("getQueryOptionsForOutOfPlaceNodesData: below parent", function (assert) {
 		const oOutOfPlace = {
 			nodeFilters : ["~node2Filter~", "~node1Filter~", "~node3Filter~"],
@@ -2589,8 +2669,8 @@ sap.ui.define([
 			.returns(SyncPromise.resolve("~$metadata~"));
 		this.mock(_Helper).expects("selectKeyProperties")
 			.withExactArgs(sinon.match.object, "~$metadata~")
-			.callsFake(function (mQueryOptions) {
-				mQueryOptions.$select.push("~key~");
+			.callsFake(function (mQueryOptions0) {
+				mQueryOptions0.$select.push("~key~");
 			});
 
 		// code under test

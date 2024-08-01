@@ -50,7 +50,7 @@ sap.ui.define([
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @public
@@ -188,8 +188,10 @@ sap.ui.define([
 		if (oToolbar) {
 			oToolbar.addStyleClass("sapFCardHeaderToolbar");
 			oToolbar.removeEventDelegate(this._oToolbarDelegate, this);
+			if (oToolbar.updateVisibility) {
+				oToolbar.updateVisibility();
+			}
 		}
-
 		if (aBannerLines) {
 			aBannerLines.forEach((oText) => {
 				oText.setTextAlign(TextAlign.End);
@@ -250,10 +252,7 @@ sap.ui.define([
 	 * @private
 	 */
 	BaseHeader.prototype._onToolbarFocusin = function () {
-		var oDomRef = this.getDomRef();
-		if (oDomRef) {
-			this.getDomRef().classList.add("sapFCardHeaderToolbarFocused");
-		}
+		this.addStyleClass("sapFCardHeaderToolbarFocused");
 	};
 
 	/**
@@ -261,10 +260,7 @@ sap.ui.define([
 	 * @private
 	 */
 	BaseHeader.prototype._onToolbarFocusout = function () {
-		var oDomRef = this.getDomRef();
-		if (oDomRef) {
-			this.getDomRef().classList.remove("sapFCardHeaderToolbarFocused");
-		}
+		this.removeStyleClass("sapFCardHeaderToolbarFocused");
 	};
 
 	/*

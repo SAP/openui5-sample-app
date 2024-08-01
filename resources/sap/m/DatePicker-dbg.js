@@ -188,7 +188,7 @@ sap.ui.define([
 	 * the close event), or select Cancel.
 	 *
 	 * @extends sap.m.DateTimeField
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @public
@@ -1343,7 +1343,7 @@ sap.ui.define([
 			this._getCalendar().addSelectedDate(this._oDateRange);
 			this._getCalendar()._setSpecialDatesControlOrigin(this);
 			this._getCalendar().attachCancel(_cancel, this);
-			if (this.$().closest(".sapUiSizeCompact").length > 0) {
+			if (this.getDomRef()?.closest(".sapUiSizeCompact")) {
 				this._getCalendar().addStyleClass("sapUiSizeCompact");
 			}
 			if (this._bSecondaryCalendarTypeSet) {

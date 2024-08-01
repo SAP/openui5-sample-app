@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -360,8 +360,9 @@ sap.ui.define([
 
 	/**
 	 * Destroys this context, that is, it removes this context from all dependent bindings and drops
-	 * references to binding and model, so that the context cannot be used anymore; it keeps path
-	 * and index for debugging purposes.
+	 * references to {@link #getBinding binding} and {@link #getModel model}, so that the context
+	 * cannot be used anymore; it keeps path and index for debugging purposes. A destroyed context
+	 * can be recognized by calling {@link #getBinding}, which returns <code>undefined</code>.
 	 *
 	 * <b>BEWARE:</b> Do not call this function! The lifetime of an OData V4 context is completely
 	 * controlled by its binding.
@@ -435,8 +436,8 @@ sap.ui.define([
 
 			// Messages have been updated via _Cache#_delete; "that" is already destroyed; remove
 			// all dependent caches in all bindings
-			oModel.getAllBindings().forEach(function (oBinding) {
-				oBinding.removeCachesAndMessages(sResourcePathPrefix, true);
+			oModel.getAllBindings().forEach(function (oBinding0) {
+				oBinding0.removeCachesAndMessages(sResourcePathPrefix, true);
 			});
 		}).catch(function (oError) {
 			oModel.reportError("Failed to delete " + that.getPath(), sClassName, oError);
@@ -606,15 +607,32 @@ sap.ui.define([
 	 *
 	 * @param {boolean} bSelected
 	 *   Whether this context is to be selected
+	 * @param {boolean} [bDoNotUpdateAnnotation]
+	 *   Whether the client-side annotation "@$ui5.context.isSelected" should not be updated
+	 * @returns {boolean}
+	 *   Whether the selection state of the context has changed
 	 *
 	 * @private
 	 * @see #setSelected
 	 */
-	Context.prototype.doSetSelected = function (bSelected) {
-		this.bSelected = bSelected;
-		if (this.oBinding) {
-			this.oBinding.onKeepAliveChanged(this); // selected contexts are effectively kept alive
+	Context.prototype.doSetSelected = function (bSelected, bDoNotUpdateAnnotation) {
+		if (bSelected === this.bSelected) {
+			return false;
 		}
+
+		if (!bDoNotUpdateAnnotation) {
+			this.withCache((oCache, sPath) => {
+				if (this.oBinding) {
+					oCache.setProperty("@$ui5.context.isSelected", bSelected, sPath);
+				} // else: context already destroyed
+			}, "");
+		}
+
+		this.bSelected = bSelected;
+
+		this.oBinding?.onKeepAliveChanged(this); // selected contexts are effectively kept alive
+
+		return true;
 	};
 
 	/**
@@ -1016,6 +1034,32 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns this node's sibling; either the next one (via offset +1) or the previous one (via
+	 * offset -1). Returns <code>null</code> if no such sibling exists (because this node is the
+	 * last or first sibling, respectively). If it's not known whether the requested sibling
+	 * exists, <code>undefined</code> is returned and {@link #requestSibling} can be used instead.
+	 *
+	 * @param {number} [iOffset=+1] - An offset, either -1 or +1
+	 * @returns {sap.ui.model.odata.v4.Context|null|undefined}
+	 *   The sibling's context, or <code>null</code> if no such sibling exists for sure, or
+	 *   <code>undefined</code> if we cannot tell
+	 * @throws {Error} If
+	 *   <ul>
+	 *     <li> the given offset is unsupported,
+	 *     <li> this context's root binding is suspended,
+	 *     <li> this context is {@link #isDeleted deleted}, {@link #isTransient transient}, or not
+	 *       part of a recursive hierarchy.
+	 *   </ul>
+	 *
+	 * @private
+	 * @since 1.126.0
+	 * @ui5-restricted sap.fe
+	 */
+	Context.prototype.getSibling = function (iOffset) {
+		return this.oBinding.fetchOrGetSibling(this, iOffset);
+	};
+
+	/**
 	 * Returns the group ID of the context's binding that is used for update requests. See
 	 * {@link sap.ui.model.odata.v4.ODataListBinding#getUpdateGroupId} and
 	 * {@link sap.ui.model.odata.v4.ODataContextBinding#getUpdateGroupId}.
@@ -1260,7 +1304,13 @@ sap.ui.define([
 	 *
 	 * The move potentially changes the {@link #getIndex index} of this context, of all of its
 	 * descendants, and of all other nodes affected by the move. Any index change can, however, only
-	 * be observed reliably for this context itself.
+	 * be observed reliably for this context itself or (since 1.126.0) the next sibling's context
+	 * if that is {@link #isKeepAlive kept alive} or {@link #isSelected selected} (and the
+	 * preconditions of {@link #setKeepAlive} hold). For a kept-alive or selected next sibling, the
+	 * index must be retrieved as soon as the returned promise resolves. If such a next sibling is
+	 * not one of the binding's {@link sap.ui.model.odata.v4.ODataListBinding#getCurrentContexts
+	 * current contexts} after the move, it is not in the collection anymore and thus loses its
+	 * index pretty soon.
 	 *
 	 * The move changes the
 	 * {@link topic:c9723f8265f644af91c0ed941e114d46/section_CST context states} of the nodes as
@@ -1649,18 +1699,12 @@ sap.ui.define([
 	 *   </ul>
 	 *
 	 * @private
+	 * @see #getSibling
 	 * @since 1.125.0
 	 * @ui5-restricted sap.fe
 	 */
-	Context.prototype.requestSibling = function (iOffset = +1) {
-		if (iOffset !== -1 && iOffset !== +1) {
-			throw new Error("Unsupported offset: " + iOffset);
-		}
-		if (this.isDeleted() || this.isTransient()) {
-			throw new Error("Unsupported context: " + this);
-		}
-
-		return this.oBinding.requestSibling(this, iOffset);
+	Context.prototype.requestSibling = function (iOffset) {
+		return Promise.resolve(this.oBinding.fetchOrGetSibling(this, iOffset, true));
 	};
 
 	/**
@@ -2238,17 +2282,24 @@ sap.ui.define([
 	};
 
 	/**
-	 * Sets whether this context is currently selected. While a context is currently
-	 * {@link #delete deleted} on the client, it does not appear as {@link #isSelected selected}. If
-	 * the preconditions of {@link #setKeepAlive} hold, a best effort is made to implicitly keep a
-	 * selected context alive in order to preserve the selection state. Once the selection is no
-	 * longer needed, for example because you perform an operation on this context which logically
-	 * removes it from its list, you need to reset the selection.
+	 * Sets whether this context is currently selected. If the selection state changes, a
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#event:selectionChanged 'selectionChanged'}
+	 * event is fired on the list binding which this context belongs to. While a context is
+	 * currently {@link #delete deleted} on the client, it does not appear as
+	 * {@link #isSelected selected}. If the preconditions of {@link #setKeepAlive} hold, a best
+	 * effort is made to implicitly keep a selected context alive in order to preserve the selection
+	 * state. Once the selection is no longer needed, for example because you perform an operation
+	 * on this context which logically removes it from its list, you need to reset the selection.
 	 *
 	 * If this context is a header context of a list binding, the new selection state is propagated
-	 * to all row contexts. This method can be called repeatedly with the same value to again select
-	 * all row contexts. For example, if a row context was deselected explicitly, it is selected
-	 * again by selecting the header context (even if the header context is already selected).
+	 * to all row contexts. If the selection state of this header context changes, a
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#event:selectionChanged 'selectionChanged'}
+	 * event is fired for this header context. This method can be called repeatedly with
+	 * the same value to again select all row contexts. For example, if a row context was deselected
+	 * explicitly, it is selected again by selecting the header context (even if the header context
+	 * is already selected). If the selection state of any row context changes in this way, then a
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#event:selectionChanged 'selectionChanged'}
+	 * event is nevertheless fired for this header context, but not for the row context.
 	 *
 	 * <b>Note:</b> It is unsafe to keep a reference to a context instance which is not
 	 * {@link #isKeepAlive kept alive}.
@@ -2269,23 +2320,21 @@ sap.ui.define([
 		if (bSelected && this.isDeleted()) {
 			throw new Error("Must not select a deleted entity: " + this);
 		}
-		if (this.oBinding.getHeaderContext() === this) {
-			this.oBinding._getAllExistingContexts().forEach(function (oContext) {
-				oContext.setSelected(bSelected);
-			});
-		}
-		if (bSelected !== this.bSelected) {
-			if (this.mChangeListeners) { // header context: "select all"
-				_Helper.fireChange(this.mChangeListeners, "", bSelected);
-			}
-			this.withCache((oCache, sPath) => {
-				if (this.oBinding) {
-					oCache.setProperty("@$ui5.context.isSelected", bSelected, sPath);
-				} // else: context already destroyed
-			}, "");
+
+		const bRowsChanged = this.oBinding.getHeaderContext() === this
+			&& this.oBinding._getAllExistingContexts().reduce((bChanged, oContext) => {
+				return oContext.doSetSelected(bSelected) || bChanged;
+			}, false);
+
+		const bSelectionChanged = this.doSetSelected(bSelected);
+
+		if (bSelectionChanged && this.mChangeListeners) { // header context: "select all"
+			_Helper.fireChange(this.mChangeListeners, "", bSelected);
 		}
 
-		this.doSetSelected(bSelected);
+		if (bSelectionChanged || bRowsChanged) {
+			this.oBinding.fireSelectionChanged(this);
+		}
 	};
 
 	/**

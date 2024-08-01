@@ -3102,7 +3102,7 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("assertSameCache", function (assert) {
+	QUnit.test("checkSameCache", function (assert) {
 		var oBinding = new ODataBinding({
 				oCache : {}
 			}),
@@ -3110,10 +3110,10 @@ sap.ui.define([
 				toString : function () { return "~"; }
 			};
 
-		oBinding.assertSameCache(oBinding.oCache);
+		oBinding.checkSameCache(oBinding.oCache);
 
 		try {
-			oBinding.assertSameCache(oCache);
+			oBinding.checkSameCache(oCache);
 			assert.ok(false);
 		} catch (oError) {
 			assert.strictEqual(oError.message,

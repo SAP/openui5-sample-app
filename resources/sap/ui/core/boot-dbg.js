@@ -62,11 +62,6 @@ sap.ui.define([
 	// run initDOM for early paint
 	var pInitDOM = initDOM.run(boot);
 
-	// create writable config instance for preBoot tasks
-	var config = _Configuration.getWritableBootInstance();
-	// burn after reading
-	delete _Configuration.getWritableBootInstance;
-
 	//Helper for loading tasks from manifest
 	function loadTasks(aTasks) {
 		aTasks = aTasks || [];
@@ -93,7 +88,7 @@ sap.ui.define([
 		return loadTasks(oBootManifest.preBoot);
 	}).then(function(aTasks) {
 		// execute pre boot tasks
-		return executeTasks(aTasks, config);
+		return executeTasks(aTasks);
 	}).then(function() {
 		GlobalConfigurationProvider.freeze();
 		// load core boot tasks

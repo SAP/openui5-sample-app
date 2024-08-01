@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR",
 		"applicationVersion" : {
-			"version" : "1.125.0"
+			"version" : "1.126.1"
 		},
 		"description" : "Example for OData V2 service consumption with an OData V4 model",
 		"dataSources" : {

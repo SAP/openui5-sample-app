@@ -40,7 +40,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.SimpleType
 		 *
 		 * @author SAP SE
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 *
 		 * @constructor
 		 * @public

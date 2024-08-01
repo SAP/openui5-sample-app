@@ -258,7 +258,7 @@ sap.ui.define([
 		 * is opened. The dialog is closed via a date time period value selection or by pressing the "Cancel" button.
 		 *
 		 * @author SAP SE
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 *
 		 * @constructor
 		 * @public
@@ -282,6 +282,7 @@ sap.ui.define([
 					 *
 					 * @since 1.92
 					 * @private
+					 * @ui5-restricted sap.m.DynamicDateRange
 					 */
 					value: { type: "object" },
 
@@ -361,6 +362,7 @@ sap.ui.define([
 					 *
 					 * @since 1.92
 					 * @private
+					 * @ui5-restricted sap.m.DynamicDateRange
 					 */
 					formatter: { type: "object" },
 

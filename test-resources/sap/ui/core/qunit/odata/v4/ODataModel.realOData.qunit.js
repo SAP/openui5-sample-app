@@ -196,6 +196,7 @@ sap.ui.define([
 			getGroupProperty : defaultGetGroupProperty,
 			isIgnoreETag : function () {},
 			onCreateGroup : function () {},
+			onHttpResponse : function () {},
 			reportStateMessages : function () {},
 			reportTransitionMessages : function () {}
 		},
@@ -1033,12 +1034,12 @@ sap.ui.define([
 					method : "POST",
 					headers : oBatchHeaders,
 					data : oBatchRequestContent.body
-				}).then(function (oData, _sTextStatus, jqXHR) {
+				}).then(function (oData, _sTextStatus0, jqXHR0) {
 					var aResponses;
 
-					assert.strictEqual(jqXHR.status, 200);
+					assert.strictEqual(jqXHR0.status, 200);
 					aResponses = _Batch.deserializeBatchResponse(
-						jqXHR.getResponseHeader("Content-Type"), oData);
+						jqXHR0.getResponseHeader("Content-Type"), oData);
 
 					parseResponses(aResponses);
 
@@ -1082,12 +1083,12 @@ sap.ui.define([
 					"X-CSRF-Token" : sCsrfToken
 				},
 				data : oBatchRequestContent.body
-			}).then(function (oData, _sTextStatus, jqXHR) {
+			}).then(function (oData, _sTextStatus0, jqXHR0) {
 				var aResponses, oResponse;
 
-				assert.strictEqual(jqXHR.status, 200);
+				assert.strictEqual(jqXHR0.status, 200);
 				aResponses = _Batch.deserializeBatchResponse(
-					jqXHR.getResponseHeader("Content-Type"), oData);
+					jqXHR0.getResponseHeader("Content-Type"), oData);
 
 				assert.strictEqual(aResponses.length, 1);
 				oResponse = aResponses[0];

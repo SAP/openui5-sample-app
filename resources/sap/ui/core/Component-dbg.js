@@ -186,11 +186,25 @@ sap.ui.define([
 			}
 		}
 
-		// @public & @deprecated on ComponentMetadata, kept for compatibility
+		/**
+		 * Public on ComponentMetadata, kept for compatibility.
+		 *
+		 * @deprecated
+		 * @return {Object|null} manifest.
+		 */
 		oMetadataProxy.getManifest = function() {
 			return this._getManifest();
 		};
-		// @public & @deprecated on ComponentMetadata, kept for compatibility
+
+		/**
+		 * Public on ComponentMetadata, kept for compatibility.
+		 * Detailed documentation see ComponentMetadata#getManifestEntry
+		 *
+		 * @param {string} sKey Either the manifest section name (namespace) or a concrete path
+		 * @param {boolean} [bMerged=false] Indicates whether the custom configuration is merged with the parent custom configuration of the Component.
+		 * @deprecated
+		 * @return {any|null} Value of the manifest section or the key (could be any kind of value)
+		 */
 		oMetadataProxy.getManifestEntry = function(sKey, bMerged) {
 			return this._getManifestEntry(sKey, bMerged);
 		};
@@ -242,7 +256,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */

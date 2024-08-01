@@ -21,7 +21,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @private
 	 * @alias sap.ui.core.util.LibraryInfo
 	 */
@@ -231,7 +231,7 @@ sap.ui.define([
 			// is relative to the library root path
 
 			var sBaseUrl = bResourceUrlAvailable ? that.getResourceUrl("") : window.location.href,
-				regexBaseUrl = /\/\d.\d{1,2}.\d{1,2}\//;
+				regexBaseUrl = /\/\d\.\d+\.\d+\//;
 
 			if ($Doc.attr("resolve") == "lib") {
 				if (regexBaseUrl.test(sBaseUrl) || bIsNeoAppJsonPresent === false) {

@@ -22,7 +22,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @private
@@ -44,6 +44,7 @@ sap.ui.define([
 				/**
 				 * Indicates whether the card has any content
 				 * @private
+				 * @ui5-restricted sap.f.cards.loading.PlaceholderBase
 				 */
 				hasContent: { type: "boolean", defaultValue: true}
 			}

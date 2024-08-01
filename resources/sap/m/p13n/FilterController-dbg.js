@@ -49,20 +49,20 @@ sap.ui.define([
 	 * @extends sap.m.p13n.SelectionController
 	 *
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @since 1.121
 	 * @public
 	 * @alias sap.m.p13n.FilterController
 	 */
 	const FilterController = BaseController.extend("sap.m.p13n.FilterController", {
-		constructor: function(mSettings) {
+		constructor: function (mSettings) {
 			BaseController.apply(this, arguments);
 			this._itemFactory = mSettings?.itemFactory;
 			this._bResetEnabled = true;
 		}
 	});
 
-	FilterController.prototype.getCurrentState = function() {
+	FilterController.prototype.getCurrentState = function () {
 		const oXConfig = xConfigAPI.readConfig(this.getAdaptationControl()) || {};
 		const aConditions = oXConfig.hasOwnProperty("properties") ? oXConfig.properties.filterConditions : [];
 
@@ -85,7 +85,7 @@ sap.ui.define([
 		return "active";
 	};
 
-	FilterController.prototype.initAdaptationUI = function(oPropertyHelper, oWrapper) {
+	FilterController.prototype.initAdaptationUI = function (oPropertyHelper, oWrapper) {
 
 		return new Promise((resolve, reject) => {
 			sap.ui.require(["sap/m/p13n/FilterPanel", "sap/m/Input"], (FilterPanel, Input) => {
@@ -128,12 +128,12 @@ sap.ui.define([
 	 * @param {sap.m.p13n.FilterStateItem[]} aConditions
 	 * @returns {int} Index of `oCondition` in `aConditions`
 	 */
-	FilterController.prototype._indexOfCondition = function(oCondition, aConditions) {
+	FilterController.prototype._indexOfCondition = function (oCondition, aConditions) {
 		const oExistingCondition = aConditions.find((oExistingCondition) => oExistingCondition.operator == oCondition.operator && oExistingCondition.values[0] == oCondition.values[0]);
 		return aConditions.indexOf(oExistingCondition);
 	};
 
-	FilterController.prototype._createConditionChange = function(sChangeType, oControl, sFieldPath, oCondition) {
+	FilterController.prototype._createConditionChange = function (sChangeType, oControl, sFieldPath, oCondition) {
 		delete oCondition.filtered; //Consider moving this to the delta calculation instead
 
 		const oConditionChange = {
@@ -165,7 +165,7 @@ sap.ui.define([
 	*
 	* @returns {array} Array containing the delta based created changes
 	*/
-	FilterController.prototype._diffConditionPath = function(sFieldPath, aConditions, aOrigShadowConditions, oControl, bAbsoluteAppliance) {
+	FilterController.prototype._diffConditionPath = function (sFieldPath, aConditions, aOrigShadowConditions, oControl, bAbsoluteAppliance) {
 		let oChange;
 		const aChanges = [];
 		const aOrigConditions = merge([], aConditions);
@@ -243,7 +243,7 @@ sap.ui.define([
 	*
 	* @returns {array} Array containing the delta based created changes
 	*/
-	FilterController.prototype.getConditionDeltaChanges = function(mDeltaInfo) {
+	FilterController.prototype.getConditionDeltaChanges = function (mDeltaInfo) {
 		let aConditionChanges = [];
 
 		const mNewConditionState = mDeltaInfo.changedState;
@@ -266,7 +266,7 @@ sap.ui.define([
 		return aConditionChanges;
 	};
 
-	FilterController.prototype.getDelta = function(mPropertyBag) {
+	FilterController.prototype.getDelta = function (mPropertyBag) {
 		const { existingState } = mPropertyBag;
 		let { changedState } = mPropertyBag;
 
@@ -306,7 +306,7 @@ sap.ui.define([
 		return oChangeContent;
 	};
 
-	FilterController.prototype.mixInfoAndState = function(oPropertyHelper) {
+	FilterController.prototype.mixInfoAndState = function (oPropertyHelper) {
 
 		const mExistingFilters = this.getCurrentState() || {};
 
@@ -328,6 +328,28 @@ sap.ui.define([
 		}, oP13nData.items);
 
 		return oP13nData;
+	};
+
+	FilterController.prototype.changesToState = function (aChanges) {
+
+		const mStateDiff = {};
+
+		aChanges.forEach((oChange) => {
+			const oStateDiffContent = merge({}, oChange.changeSpecificData.content);
+			const sKey = oStateDiffContent.key;
+
+			if (!mStateDiff[sKey]) {
+				mStateDiff[sKey] = [];
+			}
+
+			//set the presence attribute to false in case of an explicit remove
+			if (oChange.changeSpecificData.changeType === this.getChangeOperations()["remove"]) {
+				oStateDiffContent.condition.filtered = false;
+			}
+			mStateDiff[sKey].push(oStateDiffContent.condition);
+		});
+
+		return mStateDiff;
 	};
 
 	return FilterController;

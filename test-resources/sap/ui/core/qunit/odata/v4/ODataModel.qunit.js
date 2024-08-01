@@ -73,11 +73,11 @@ sap.ui.define([
 	QUnit.test("basics", function (assert) {
 		var oModel;
 
-		// @deprecated As of Version 1.110.0
+		/** @deprecated As of Version 1.110.0 */
 		assert.throws(function () {
 			return new ODataModel({synchronizationMode : undefined});
 		}, new Error("Synchronization mode must be 'None'"));
-		// @deprecated As of Version 1.110.0
+		/** @deprecated As of Version 1.110.0 */
 		assert.throws(function () {
 			return new ODataModel({synchronizationMode : "Nope"});
 		}, new Error("Synchronization mode must be 'None'"));
@@ -100,7 +100,7 @@ sap.ui.define([
 		// code under test: operation mode Server must not throw an error
 		oModel = this.createModel("", {
 			operationMode : OperationMode.Server,
-			// @deprecated As of Version 1.110.0
+			/** @deprecated As of Version 1.110.0 */
 			synchronizationMode : "None" // deprecated and optional, but still allowed
 		});
 
@@ -145,6 +145,7 @@ sap.ui.define([
 		assert.deepEqual(oModel.aAllBindings, []);
 		assert.strictEqual(oModel.aPrerenderingTasks, null);
 		assert.strictEqual(oModel.getOptimisticBatchEnabler(), null);
+		assert.strictEqual(oModel.fnHttpListener, null);
 		oMetaModel = oModel.getMetaModel();
 		assert.ok(oMetaModel instanceof ODataMetaModel);
 		assert.strictEqual(oMetaModel.oRequestor, oMetadataRequestor);
@@ -457,6 +458,7 @@ sap.ui.define([
 					getReporter : sinon.match.func,
 					isIgnoreETag : sinon.match.func,
 					onCreateGroup : sinon.match.func,
+					onHttpResponse : sinon.match.func,
 					reportStateMessages : sinon.match.func,
 					reportTransitionMessages : sinon.match.func,
 					updateMessages : sinon.match.func
@@ -511,6 +513,7 @@ sap.ui.define([
 					getReporter : "~fnGetReporter~",
 					isIgnoreETag : sinon.match.func,
 					onCreateGroup : sinon.match.func,
+					onHttpResponse : sinon.match.func,
 					reportStateMessages : "~fnReportStateMessages~",
 					reportTransitionMessages : "~fnReportTransitionMessages~",
 					updateMessages : sinon.match.func
@@ -587,6 +590,35 @@ sap.ui.define([
 		oModelInterface.updateMessages("~oldMessages~", "~newMessages~");
 
 		assert.strictEqual(oModelInterface.isIgnoreETag(), "~bIgnoreETag~");
+
+		assert.strictEqual(oModel.fnHttpListener, null, "not yet there");
+
+		// code under test (MUST NOT fail)
+		oModelInterface.onHttpResponse();
+
+		const fnHttpListener = sinon.spy();
+
+		// code under test
+		oModel.setHttpListener(fnHttpListener);
+
+		assert.strictEqual(oModel.fnHttpListener, fnHttpListener);
+
+		// code under test
+		oModelInterface.onHttpResponse("~mHeaders~");
+
+		assert.ok(fnHttpListener.calledOnce);
+		assert.ok(fnHttpListener.calledOn(undefined), "no this");
+		assert.ok(fnHttpListener.calledWithExactly({responseHeaders : "~mHeaders~"}));
+
+		// code under test
+		oModel.setHttpListener("foo");
+
+		assert.strictEqual(oModel.fnHttpListener, "foo");
+
+		// code under test
+		oModel.setHttpListener(null);
+
+		assert.strictEqual(oModel.fnHttpListener, null);
 	});
 });
 
@@ -1116,7 +1148,7 @@ sap.ui.define([
 		message : "Failure\n_Helper.createError@_Helper.js"
 	}].forEach(function (oFixture, i) {
 		QUnit.test("reportError, i:" + i, function () {
-			var sClassName = "sap.ui.model.odata.v4.ODataPropertyBinding",
+			var sClassName0 = "sap.ui.model.odata.v4.ODataPropertyBinding",
 				oError = new Error("Failure"),
 				oHelperMock = this.mock(_Helper),
 				sLogMessage = "Failed to read path /Product('1')/Unknown",
@@ -1128,7 +1160,7 @@ sap.ui.define([
 
 			oHelperMock.expects("extractMessages").withExactArgs(sinon.match.same(oError))
 				.returns("~extractedMessages~");
-			this.oLogMock.expects("error").withExactArgs(sLogMessage, oFixture.message, sClassName)
+			this.oLogMock.expects("error").withExactArgs(sLogMessage, oFixture.message, sClassName0)
 				.twice();
 			oModelMock.expects("reportStateMessages").never();
 			oModelMock.expects("reportTransitionMessages")
@@ -1136,8 +1168,8 @@ sap.ui.define([
 				.withExactArgs("~extractedMessages~", "resource/path");
 
 			// code under test
-			oModel.reportError(sLogMessage, sClassName, oError);
-			oModel.reportError(sLogMessage, sClassName, oError); // oError.$reported is now true
+			oModel.reportError(sLogMessage, sClassName0, oError);
+			oModel.reportError(sLogMessage, sClassName0, oError); // oError.$reported is now true
 		});
 	});
 

@@ -58,7 +58,7 @@ sap.ui.define([
 		 *
 		 * @protected
 		 * @alias sap.ui.core.delegate.ScrollEnablement
-		 * @version 1.125.0
+		 * @version 1.126.1
 		 * @author SAP SE
 		 */
 		var ScrollEnablement = BaseObject.extend("sap.ui.core.delegate.ScrollEnablement", /** @lends sap.ui.core.delegate.ScrollEnablement.prototype */ {
@@ -361,7 +361,7 @@ sap.ui.define([
 			},
 
 			onkeydown : function(oEvent) {
-				if (this._useDefaultScroll(oEvent.target)) {
+				if (this._useDefaultScroll(oEvent.target) || oEvent.getMark("dnd")) {
 					return;
 				}
 

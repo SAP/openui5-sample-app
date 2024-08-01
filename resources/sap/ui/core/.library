@@ -6,7 +6,7 @@
   <copyright>OpenUI5
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.125.0</version>
+  <version>1.126.1</version>
 
   <documentation>The SAPUI5 Core Runtime.
 
@@ -480,13 +480,6 @@
             <name>CA-UI5-TA</name>
             <modules>
                 <module>sap/ui/test/*</module>
-            </modules>
-        </component>
-
-        <component>
-            <name>CA-WDE-MCK</name>
-            <modules>
-                <module>sap/ui/core/util/MockServer</module>
             </modules>
         </component>
 

@@ -28,7 +28,7 @@ sap.ui.define([
 	 * @experimental Since 1.124
 	 * @public
 	 * @since 1.124
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 * @alias sap.m.upload.UploadItem
 	 */
     var UploadItem = Element.extend("sap.m.upload.UploadItem", {

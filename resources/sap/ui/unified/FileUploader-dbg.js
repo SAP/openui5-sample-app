@@ -73,7 +73,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IFormContent, sap.ui.unified.IProcessableBlobs
 	 *
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @public
@@ -673,10 +673,6 @@ sap.ui.define([
 		return this;
 	};
 
-	FileUploader.prototype.getIdForLabel = function () {
-		return this.oBrowse.getId();
-	};
-
 	/**
 	 * Ensures that FileUploader's internal button will have a reference back to the labels, by which
 	 * the FileUploader is labelled
@@ -1187,7 +1183,7 @@ sap.ui.define([
 				if (window.File) {
 					oFiles = this.FUEl.files;
 				}
-				if (!this.getSameFilenameAllowed() || sValue) {
+				if (!this.getSameFilenameAllowed() || (sValue && oldValue != sValue)) {
 					this.fireChange({id:this.getId(), newValue:sValue, files:oFiles});
 				}
 			}
@@ -2090,16 +2086,24 @@ sap.ui.define([
 	* Add default input type=file and label behaviour to file uploader.
 	*/
 	FileUploader.prototype._addLabelFeaturesToBrowse = function () {
-		var $browse;
+		let $browse;
+		const fnBrowseClickHandler = (oEvent) => {
+			oEvent.preventDefault();
+			oEvent.stopPropagation();
+			this.FUEl.click(); // The default behaviour on click on label is to open "open file" dialog. The only way to attach click event that is transferred from the label to the button is this way. AttachPress and attachTap don't work in this case.
+		};
 
 		if (this.oBrowse &&  this.oBrowse.$().length) {
 			$browse = this.oBrowse.$();
 
-			$browse.off("click").on("click", (oEvent) => {
-				oEvent.preventDefault();
-				oEvent.stopPropagation();
-				this.FUEl.click(); // The default behaviour on click on label is to open "open file" dialog. The only way to attach click event that is transferred from the label to the button is this way. AttachPress and attachTap don't work in this case.
-			});
+			if (this.oBrowse.getAriaLabelledBy()) {
+				LabelEnablement.getReferencingLabels(this).forEach(function (sLabelId) {
+					const $externalLabel = Element.getElementById(sLabelId).$();
+					$externalLabel.off("click").on("click", fnBrowseClickHandler);
+				}, this);
+			}
+
+			$browse.off("click").on("click", fnBrowseClickHandler);
 
 			// The event propagation needs to be stopped so composing controls, which also react on
 			// drag and drop events like the sap.m.UploadCollection or sap.m.upload.UploadSet aren't affected.

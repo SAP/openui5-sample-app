@@ -72,7 +72,6 @@ sap.ui.define([
 			var aContainedControls,
 				oEntityType,
 				aProperties = [],
-				sPropertyName,
 				oView = this.getView(),
 				oItemsBinding = oControl.getBinding("items"),
 				oBinding = oItemsBinding // list binding
@@ -129,7 +128,7 @@ sap.ui.define([
 					enabled : !sPropertyName.includes("/") && !sPropertyName.startsWith("<Not")
 				});
 			});
-			for (sPropertyName in oEntityType) {
+			for (const sPropertyName in oEntityType) {
 				if (oEntityType[sPropertyName].$kind === "Property"
 						&& oEntityType[sPropertyName].$Type.startsWith("Edm.")) {
 					if (!this.aDisplayedProperties.includes(sPropertyName)) {

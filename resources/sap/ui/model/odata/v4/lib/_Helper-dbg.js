@@ -308,12 +308,15 @@ sap.ui.define([
 		 *   Examples:
 		 *   buildQuery({foo : "bar", "bar" : "baz"}) results in the query string "?foo=bar&bar=baz"
 		 *   buildQuery({foo : ["bar", "baz"]}) results in the query string "?foo=bar&foo=baz"
+		 * @param {boolean} [bSortSystemQueryOptions]
+		 *   Whether system query options are sorted alphabetically and moved to the query string's
+		 *   end
 		 * @returns {string}
 		 *   The query string; it is empty if there are no parameters; it starts with "?" otherwise
 		 *
 		 * @public
 		 */
-		buildQuery : function (mParameters) {
+		buildQuery : function (mParameters, bSortSystemQueryOptions) {
 			var aKeys, aQuery;
 
 			if (!mParameters) {
@@ -325,6 +328,12 @@ sap.ui.define([
 				return "";
 			}
 
+			if (bSortSystemQueryOptions) { // sort only system query options, and keep them last
+				aKeys = aKeys.filter((sKey) => sKey[0] !== "$")
+					.concat(
+						aKeys.filter((sKey) => sKey[0] === "$").sort()
+					);
+			}
 			aQuery = [];
 			aKeys.forEach(function (sKey) {
 				var vValue = mParameters[sKey];
@@ -465,8 +474,8 @@ sap.ui.define([
 		 * @see .clone
 		 */
 		cloneNo$ : function cloneNo$(vValue) {
-			return _Helper.clone(vValue, function (sKey, vValue) {
-				return sKey[0] === "$" ? undefined : vValue;
+			return _Helper.clone(vValue, function (sKey, vValue0) {
+				return sKey[0] === "$" ? undefined : vValue0;
 			});
 		},
 
@@ -532,7 +541,7 @@ sap.ui.define([
 		},
 
 		/**
-		 * Sets "@$ui5.context.isSelected" in <code>oTarget</code> to true if it is true in
+		 * Sets "@$ui5.context.isSelected" in <code>oTarget</code> to true if it is truthy in
 		 * <code>oSource</code>.
 		 *
 		 * @param {object} oSource - The source object
@@ -541,7 +550,7 @@ sap.ui.define([
 		 * @public
 		 */
 		copySelected : function (oSource, oTarget) {
-			if (oSource["@$ui5.context.isSelected"] === true) {
+			if (oSource["@$ui5.context.isSelected"]) {
 				oTarget["@$ui5.context.isSelected"] = true;
 			}
 		},
@@ -2325,6 +2334,29 @@ sap.ui.define([
 		},
 
 		/**
+		 * Returns a map from HTTP response header names (in all lower case) to their string values.
+		 *
+		 * @param {string} sRawHeaders - A return value of XMLHttpRequest#getAllResponseHeaders
+		 * @returns {Object<string>} - A map from names to values
+		 *
+		 * @public
+		 */
+		parseRawHeaders : function (sRawHeaders) {
+			return sRawHeaders.split("\r\n")
+				.slice(0, -1) // #split leaves an extra empty line
+				.reduce((mHeaders, sRawLine) => {
+					const iColon = sRawLine.indexOf(": ");
+					if (iColon < 0) { // no value
+						mHeaders[sRawLine] = "";
+					} else {
+						mHeaders[sRawLine.slice(0, iColon).toLowerCase()]
+							= sRawLine.slice(iColon + 2);
+					}
+					return mHeaders;
+				}, {});
+		},
+
+		/**
 		 * Returns a clone of the given value where all occurrences of the private namespace
 		 * object have been deleted.
 		 *
@@ -2341,9 +2373,9 @@ sap.ui.define([
 		 * @see sap.ui.model.odata.v4.lib._Helper.clone
 		 */
 		publicClone : function (vValue, bRemoveClientAnnotations, bAsString) {
-			return _Helper.clone(vValue, function (sKey, vValue) {
+			return _Helper.clone(vValue, function (sKey, vValue0) {
 				if (bRemoveClientAnnotations ? !sKey.startsWith("@$ui5.") : sKey !== "@$ui5._") {
-					return vValue;
+					return vValue0;
 				}
 				// return undefined;
 			}, bAsString);
@@ -2656,14 +2688,15 @@ sap.ui.define([
 		 * taken into account. Fires change events for all changed properties. The function
 		 * recursively handles modified, added or removed structural properties (or single-valued
 		 * navigation properties) and fires change events for all modified/added/removed primitive
-		 * properties therein.
+		 * properties therein. It also fires for each collection encounterd, no matter if changed
+		 * or not.
 		 *
 		 * Restrictions:
 		 * - oTarget and oSource are expected to have the same structure: when there is an
 		 *   object at a given path in either of them, the other one must have an object or
 		 *   <code>null</code>.
-		 * - no change events for collection-valued properties; list bindings without own cache must
-		 *   refresh when updateAll is used to update cache data.
+		 * - list bindings without own cache must refresh when updateAll is used to update cache
+		 *   data.
 		 *
 		 * @param {object} mChangeListeners A map of change listeners by path
 		 * @param {string} sPath The path of the old object in mChangeListeners
@@ -2684,12 +2717,14 @@ sap.ui.define([
 					_Helper.setPrivateAnnotation(oTarget, "predicate",
 						_Helper.getPrivateAnnotation(oSource, "predicate"));
 				} else if (Array.isArray(vSourceProperty)) {
-					// copy complete collection w/o firing change events
+					// copy complete collection
 					oTarget[sProperty] = vSourceProperty;
+					_Helper.fireChange(mChangeListeners, sPropertyPath, vSourceProperty);
 				} else if (vSourceProperty && typeof vSourceProperty === "object") {
 					oTarget[sProperty]
 						= _Helper.updateAll(mChangeListeners, sPropertyPath, vTargetProperty || {},
 								vSourceProperty);
+					_Helper.fireChange(mChangeListeners, sPropertyPath, vSourceProperty);
 				} else if (vTargetProperty !== vSourceProperty) {
 					oTarget[sProperty] = vSourceProperty;
 					if (vTargetProperty && typeof vTargetProperty === "object") {
@@ -2913,7 +2948,6 @@ sap.ui.define([
 		 *   object at a given path in either of them, the other one must have an object or
 		 *   <code>null</code>.
 		 * - "*" in aSelect does not work correctly if oNewValue contains navigation properties
-		 * - no change events for collection-valued properties
 		 * - does not update navigation properties (ignores both key predicates and $count)
 		 *
 		 * @param {object} mChangeListeners
@@ -3009,16 +3043,17 @@ sap.ui.define([
 							_Helper.setPrivateAnnotation(oTarget, "predicate", sSourcePredicate);
 						}
 					} else if (Array.isArray(vSourceProperty)) {
-						// copy complete collection; no change events as long as collection-valued
-						// properties are not supported; transient entity collections from a deep
+						// copy complete collection; transient entity collections from a deep
 						// create are handled elsewhere
 						if (!(vTargetProperty && vTargetProperty.$postBodyCollection)) {
 							oTarget[sProperty] = vSourceProperty;
+							_Helper.fireChange(mChangeListeners, sPropertyPath, vSourceProperty);
 						}
 					} else if (vSourceProperty && typeof vSourceProperty === "object"
 							&& !sProperty.includes("@")) {
 						oTarget[sProperty] = update(sPropertyPath, vSelected, vTargetProperty || {},
 							vSourceProperty);
+						_Helper.fireChange(mChangeListeners, sPropertyPath, vSourceProperty);
 					} else if (vTargetProperty !== vSourceProperty
 							&& !oTarget[sProperty + "@$ui5.updating"]) {
 						oTarget[sProperty] = vSourceProperty;

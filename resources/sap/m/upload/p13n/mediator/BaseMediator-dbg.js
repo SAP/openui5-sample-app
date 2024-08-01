@@ -20,7 +20,7 @@ sap.ui.define(["sap/ui/base/Object", "sap/ui/core/mvc/XMLView"], function (BaseO
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @public
 	 * @experimental since 1.120

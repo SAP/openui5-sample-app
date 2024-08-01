@@ -302,6 +302,8 @@ sap.ui.define([
 	 *   Whether all system query options are dropped (useful for non-GET requests)
 	 * @param {boolean} [bSortExpandSelect]
 	 *   Whether the paths in $expand and $select shall be sorted in the query string
+	 * @param {boolean} [bSortSystemQueryOptions]
+	 *   Whether system query options are sorted alphabetically and moved to the query string's end
 	 * @returns {string}
 	 *   The query string; it is empty if there are no options; it starts with "?" otherwise
 	 * @example
@@ -327,10 +329,11 @@ sap.ui.define([
 	 * @public
 	 */
 	_Requestor.prototype.buildQueryString = function (sMetaPath, mQueryOptions,
-			bDropSystemQueryOptions, bSortExpandSelect) {
+			bDropSystemQueryOptions, bSortExpandSelect, bSortSystemQueryOptions) {
 		return _Helper.buildQuery(
 			this.convertQueryOptions(sMetaPath, mQueryOptions, bDropSystemQueryOptions,
-				bSortExpandSelect));
+				bSortExpandSelect),
+			bSortSystemQueryOptions);
 	};
 
 	/**
@@ -466,8 +469,8 @@ sap.ui.define([
 			return iChangeSetNo !== i && aChangeSet.some(isUsingStrictHandling);
 		}
 
-		function isUsingStrictHandling(oRequest) {
-			return oRequest.headers.Prefer === "handling=strict";
+		function isUsingStrictHandling(oRequest0) {
+			return oRequest0.headers.Prefer === "handling=strict";
 		}
 
 		// do not look past aRequests.iChangeSet because these cannot be change sets
@@ -986,7 +989,6 @@ sap.ui.define([
 		var aArguments = [],
 			sName,
 			mName2Parameter = {}, // maps valid names to parameter metadata
-			oParameter,
 			that = this;
 
 		sPath = sPath.slice(1, -5);
@@ -997,7 +999,7 @@ sap.ui.define([
 		}
 		if (oOperationMetadata.$kind === "Function") {
 			for (sName in mParameters) {
-				oParameter = mName2Parameter[sName];
+				const oParameter = mName2Parameter[sName];
 				if (oParameter) {
 					if (oParameter.$isCollection) {
 						throw new Error("Unsupported collection-valued parameter: " + sName);
@@ -1334,27 +1336,27 @@ sap.ui.define([
 		 * Visits the given request/response pairs, rejecting or resolving the corresponding
 		 * promises accordingly.
 		 *
-		 * @param {object[]} aRequests
+		 * @param {object[]} aRequests0
 		 * @param {object[]} aResponses
 		 */
-		function visit(aRequests, aResponses) {
+		function visit(aRequests0, aResponses) {
 			var oCause;
 
-			aRequests.forEach(function (vRequest, index) {
-				var oError,
-					sETag,
+			aRequests0.forEach(function (vRequest, index) {
+				var sETag,
 					oResponse,
 					vResponse = aResponses[index];
 
 				if (Array.isArray(vResponse)) {
 					visit(vRequest, vResponse);
 				} else if (!vResponse) {
-					oError = new Error(
+					const oError = new Error(
 						"HTTP request was not processed because the previous request failed");
 					oError.cause = oCause;
 					oError.$reported = true; // do not create a message for this error
 					reject(oError, vRequest); // Note: vRequest may well be a change set
 				} else if (vResponse.status >= 400) {
+					that.oModelInterface.onHttpResponse(vResponse.headers);
 					vResponse.getResponseHeader = getResponseHeader;
 					// Note: vRequest is an array in case a change set fails, hence url and
 					// $resourcePath are undefined
@@ -1370,6 +1372,7 @@ sap.ui.define([
 						vRequest.$reject(oCause);
 					}
 				} else {
+					that.oModelInterface.onHttpResponse(vResponse.headers);
 					if (vResponse.responseText) {
 						try {
 							that.doCheckVersionHeader(getResponseHeader.bind(vResponse),
@@ -1595,6 +1598,8 @@ sap.ui.define([
 							delete that.mHeaders["X-CSRF-Token"];
 						}
 						that.oSecurityTokenPromise = null;
+						that.oModelInterface.onHttpResponse(
+							_Helper.parseRawHeaders(jqXHR.getAllResponseHeaders()));
 						fnResolve();
 					}, function (jqXHR) {
 						that.oSecurityTokenPromise = null;
@@ -2016,6 +2021,9 @@ sap.ui.define([
 				.then(function (/*{object|string}*/vResponse, _sTextStatus, jqXHR) {
 					var sETag = jqXHR.getResponseHeader("ETag"),
 						sCsrfToken = jqXHR.getResponseHeader("X-CSRF-Token");
+
+					that.oModelInterface.onHttpResponse(
+						_Helper.parseRawHeaders(jqXHR.getAllResponseHeaders()));
 
 					try {
 						that.doCheckVersionHeader(jqXHR.getResponseHeader, sResourcePath,

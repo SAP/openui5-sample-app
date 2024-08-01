@@ -7,7 +7,7 @@
 		"i18n": "i18n/i18n.properties",
 		"title": "Unit Table",
 		"description": "Sample for Unit Tables",
-		"applicationVersion": {"version": "1.125.0"}
+		"applicationVersion": {"version": "1.126.1"}
 	},
 
 	"sap.ui": {

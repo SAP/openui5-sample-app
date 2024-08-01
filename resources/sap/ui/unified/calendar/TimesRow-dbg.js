@@ -67,7 +67,7 @@ sap.ui.define([
 	 *
 	 * The TimesRow works with UI5Date or JavaScript Date objects.
 	 * @extends sap.ui.core.Control
-	 * @version 1.125.0
+	 * @version 1.126.1
 	 *
 	 * @constructor
 	 * @public
@@ -128,6 +128,7 @@ sap.ui.define([
 			 * If set, the calendar type is used for display.
 			 * If not set, the calendar type of the global configuration is used.
 			 * @private
+			 * @ui5-restricted sap.ui.unified.TimesRow
 			 * @since 1.108.0
 			 */
 			primaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
@@ -136,6 +137,7 @@ sap.ui.define([
 			 * If set, the days are also displayed in this calendar type
 			 * If not set, the dates are only displayed in the primary calendar type
 			 * @private
+			 * @ui5-restricted sap.ui.unified.TimesRow
 			 * @since 1.109.0
 			 */
 			secondaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"}

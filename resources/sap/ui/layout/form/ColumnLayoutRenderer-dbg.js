@@ -66,7 +66,7 @@ sap.ui.define([
 
 		oContainer._checkProperties();
 
-		oRm.openStart("section", oContainer);
+		oRm.openStart("div", oContainer);
 		oRm.class("sapUiFormCLContainer");
 		oRm.class("sapUiFormCLContainerS" + oOptions.S.Size);
 		oRm.class("sapUiFormCLContainerM" + oOptions.M.Size);
@@ -109,7 +109,9 @@ sap.ui.define([
 			oRm.attr('title', oContainer.getTooltip_AsString());
 		}
 
-		this.writeAccessibilityStateContainer(oRm, oContainer);
+		const oForm = oContainer.getParent();
+		// let every container render role, even without title (expect there is only one container). So screenreader also anounces forms structure. (Was not possible for some older layouts.)
+		this.writeAccessibilityStateContainer(oRm, oContainer, !oLayout.isContainerLabelled(oContainer) && oForm.getFormContainers().length === 1);
 
 		oRm.openEnd();
 
@@ -137,7 +139,7 @@ sap.ui.define([
 		}
 
 		oRm.close("div");
-		oRm.close("section");
+		oRm.close("div");
 
 	};
 

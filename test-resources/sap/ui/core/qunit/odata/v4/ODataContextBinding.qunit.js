@@ -864,7 +864,7 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(oGroupLock), "foo", sinon.match.func, undefined)
 			.callsArg(2)
 			.returns(SyncPromise.resolve(Promise.resolve()).then(function () {
-				that.mock(oBinding).expects("assertSameCache")
+				that.mock(oBinding).expects("checkSameCache")
 					.withExactArgs(sinon.match.same(oCache))
 					.throws(oError);
 				return {};
@@ -1104,7 +1104,7 @@ sap.ui.define([
 		this.mock(oCache).expects("fetchValue")
 			.withExactArgs(sinon.match.same(_GroupLock.$cached), "bar", sinon.match.func, null)
 			.returns(SyncPromise.resolve(42));
-		this.mock(oBinding).expects("assertSameCache").withExactArgs(oCache);
+		this.mock(oBinding).expects("checkSameCache").withExactArgs(oCache);
 
 		// code under test
 		return oBinding.fetchValue("/absolute/bar", null, true).then(function (vResult) {
@@ -1143,7 +1143,7 @@ sap.ui.define([
 		this.mock(oCache).expects("fetchValue")
 			.withExactArgs(sinon.match.same(oGroupLock), "bar", sinon.match.func, undefined)
 			.returns(SyncPromise.resolve(42));
-		this.mock(oBinding).expects("assertSameCache").withExactArgs(oCache);
+		this.mock(oBinding).expects("checkSameCache").withExactArgs(oCache);
 
 		// code under test
 		return oBinding.fetchValue("/absolute/bar").then(function (vResult) {
@@ -1680,8 +1680,8 @@ sap.ui.define([
 					// code under test: invoke creates a new cache with the new path
 					return oBinding.setParameter("foo", "bar")
 						._invoke(oGroupLock1, "~mParameters~", "~bIgnoreETag~")
-						.then(function (oReturnValueContext) {
-							assert.strictEqual(oReturnValueContext, undefined);
+						.then(function (oReturnValueContext0) {
+							assert.strictEqual(oReturnValueContext0, undefined);
 							if (oExpectation) {
 								assert.strictEqual(oExpectation.args[0][4](), oEntity);
 							}
@@ -2020,8 +2020,8 @@ sap.ui.define([
 		this.mock(this.oModel).expects("reportError")
 			.withExactArgs("Failed to invoke /TEAMS('42')/name.space.Operation(...)",
 				sClassName, sinon.match.same(oError))
-			.callsFake(function (_sLogMessage, _sReportingClassName, oError) {
-				assert.strictEqual(oError.resourcePath, "~"); // unchanged
+			.callsFake(function (_sLogMessage, _sReportingClassName, oError0) {
+				assert.strictEqual(oError0.resourcePath, "~"); // unchanged
 			});
 
 		// code under test
@@ -2073,8 +2073,8 @@ sap.ui.define([
 		this.mock(this.oModel).expects("reportError")
 			.withExactArgs("Failed to invoke /ActionImport(...)",
 				sClassName, sinon.match.same(oError))
-			.callsFake(function (_sLogMessage, _sReportingClassName, oError) {
-				assert.strictEqual(oError.resourcePath, "~"); // unchanged
+			.callsFake(function (_sLogMessage, _sReportingClassName, oError0) {
+				assert.strictEqual(oError0.resourcePath, "~"); // unchanged
 			});
 
 		// code under test
@@ -3092,8 +3092,8 @@ sap.ui.define([
 			.withExactArgs(sinon.match.same(oError), sinon.match.same(oOperationMetadata), "~Path~",
 				bRelative ? "~contextPath~" : undefined);
 		this.mock(_Helper).expects("extractMessages")
-			.withExactArgs(sinon.match(function (oError) {
-				return oError.error.$ignoreTopLevel === true;
+			.withExactArgs(sinon.match(function (oError0) {
+				return oError0.error.$ignoreTopLevel === true;
 			}))
 			.returns(aRawMessages);
 
@@ -3456,13 +3456,13 @@ sap.ui.define([
 
 				that.mock(oBinding).expects("createRefreshPromise").never();
 				oBinding.attachChange(function (oEvent) {
-					var oElementContext = oBinding.getBoundContext();
+					var oElementContext0 = oBinding.getBoundContext();
 
 					assert.strictEqual(oEvent.getParameter("reason"), ChangeReason.Refresh);
-					assert.strictEqual(oElementContext.getBinding(), oBinding);
-					assert.strictEqual(oElementContext.getModelIndex(), undefined);
-					assert.strictEqual(oElementContext.getModel(), this.oModel);
-					assert.strictEqual(oElementContext.getPath(), "/EMPLOYEES('42')");
+					assert.strictEqual(oElementContext0.getBinding(), oBinding);
+					assert.strictEqual(oElementContext0.getModelIndex(), undefined);
+					assert.strictEqual(oElementContext0.getModel(), this.oModel);
+					assert.strictEqual(oElementContext0.getPath(), "/EMPLOYEES('42')");
 				});
 
 				// code under test
@@ -4792,11 +4792,11 @@ sap.ui.define([
 					that.mock(oBinding).expects("visitSideEffects")
 						.withExactArgs(sGroupId, sinon.match.same(aPaths),
 							sinon.match.same(oContext), aPromises)
-						.callsFake(function (_sGroupId, _aPaths, _oContext, aPromises) {
-							aPromises.push(Promise.resolve());
-							aPromises.push(Promise.reject(oCanceledError));
+						.callsFake(function (_sGroupId, _aPaths, _oContext, aPromises0) {
+							aPromises0.push(Promise.resolve());
+							aPromises0.push(Promise.reject(oCanceledError));
 							if (bRecursionRejects) {
-								aPromises.push(Promise.reject(oError));
+								aPromises0.push(Promise.reject(oError));
 							}
 						});
 					that.mock(oBinding).expects("refreshDependentListBindingsWithoutCache")
