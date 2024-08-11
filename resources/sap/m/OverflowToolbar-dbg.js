@@ -23,6 +23,7 @@ sap.ui.define([
 	"./OverflowToolbarRenderer",
 	"sap/base/Log",
 	"sap/ui/core/Lib",
+	"sap/ui/thirdparty/jquery",
 	"sap/ui/dom/jquery/Focusable" // jQuery Plugin "lastFocusableDomRef"
 ], function(
 	Theming,
@@ -41,7 +42,8 @@ sap.ui.define([
 	Device,
 	OverflowToolbarRenderer,
 	Log,
-	Library
+	Library,
+	jQuery
 ) {
 	"use strict";
 
@@ -131,7 +133,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.Toolbar,sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -335,6 +337,38 @@ sap.ui.define([
 		this._resetChildControlFocusInfo();
 	};
 
+	OverflowToolbar.prototype.onfocusfail = function(oEvent) {
+		const oFocusLostCtrl = oEvent.srcControl;
+		const oOverflowButton = this._getOverflowButton();
+		const oDomRef = this.getDomRef();
+
+		if (!oDomRef.contains(oFocusLostCtrl.getDomRef())) {
+			oOverflowButton?.focus();
+			this._bControlWasFocused = false;
+			this._bOverflowButtonWasFocused = !!oOverflowButton;
+			this.sFocusedChildControlId = "";
+		} else {
+			const oChildren = this.getContent();
+			const iPos = oChildren.indexOf(oFocusLostCtrl);
+
+			if (iPos !== -1) {
+				let oFocusTarget;
+				for (let i = iPos + 1; i < oChildren.length; i++) {
+					const oFocusDomRef = oChildren[i].getFocusDomRef?.();
+					if (oDomRef.contains(oFocusDomRef) && jQuery.expr.pseudos.sapTabbable(oFocusDomRef)) {
+						oFocusTarget = oChildren[i];
+						break;
+					}
+				}
+				oFocusTarget ??= oOverflowButton;
+				oFocusTarget?.focus();
+				this._bControlWasFocused = !oOverflowButton;
+				this._bOverflowButtonWasFocused = !!oOverflowButton;
+				this.sFocusedChildControlId = oFocusTarget === oOverflowButton ? "" : oFocusTarget.getId();
+			}
+		}
+	};
+
 	OverflowToolbar.prototype.setWidth = function(sWidth) {
 		this.setProperty("width", sWidth);
 		this._bResized = true;
@@ -430,10 +464,14 @@ sap.ui.define([
 			this._bControlWasFocused = false;
 			this._bOverflowButtonWasFocused = true;
 
-		} else if (this._bOverflowButtonWasFocused && !this._getOverflowButtonNeeded()) {
-			// If before invalidation the overflow button was focused, and it's not visible any more, focus the last focusable control
-			$LastFocusableChildControl && $LastFocusableChildControl.focus();
-			this._bOverflowButtonWasFocused = false;
+		} else if (this._bOverflowButtonWasFocused) {
+			if (this._getOverflowButtonNeeded()) {
+				this._getOverflowButton().focus();
+			} else {
+				// If before invalidation the overflow button was focused, and it's not visible any more, focus the last focusable control
+				$LastFocusableChildControl && $LastFocusableChildControl.focus();
+				this._bOverflowButtonWasFocused = false;
+			}
 		}
 	};
 

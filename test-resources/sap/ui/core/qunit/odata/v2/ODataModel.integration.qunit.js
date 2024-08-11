@@ -11,6 +11,7 @@ sap.ui.define([
 	"sap/m/Input",
 	"sap/m/Label",
 	"sap/ui/Device",
+	"sap/ui/base/BindingInfo",
 	"sap/ui/base/ManagedObjectObserver",
 	"sap/ui/base/SyncPromise",
 	"sap/ui/core/Lib",
@@ -42,7 +43,7 @@ sap.ui.define([
 	"sap/ui/util/XMLHelper"
 	// load Table resources upfront to avoid loading times > 1 second for the first test using Table
 	// "sap/ui/table/Table"
-], function (Log, Localization, merge, uid, Input, Label, Device, ManagedObjectObserver, SyncPromise,
+], function (Log, Localization, merge, uid, Input, Label, Device, BindingInfo, ManagedObjectObserver, SyncPromise,
 		Library, Messaging, UI5Date, FieldHelp, FieldHelpUtil, Message, MessageType, Controller, View, Rendering,
 		BindingMode, Filter, FilterOperator, FilterType, Model, Sorter, JSONModel, MessageModel, CountMode,
 		MessageScope, Decimal, Context, ODataModel, XMLModel, TestUtils, datajs, XMLHelper) {
@@ -89,6 +90,18 @@ sap.ui.define([
 	}
 
 	/**
+	 * Compares two given field help hotspots.
+	 *
+	 * @param {object} a A field help hotspot
+	 * @param {object} b Another field help hotspot
+	 *
+	 * @returns {-1|0|1} Wheter <code>a</code> is smaller, equal or greater
+	 */
+	function compareHotspots(a, b) {
+		return a.hotspotId.localeCompare(b.hotspotId) || a.backendHelpKey.id.localeCompare(b.backendHelpKey.id);
+	}
+
+	/**
 	 * Creates an error response object for a technical error (http status code = 4xx/5xx).
 	 *
 	 * @param {object} [oErrorResponseInfo]
@@ -102,6 +115,8 @@ sap.ui.define([
 	 * @param {number} [oErrorResponseInfo.statusCode=500]
 	 *   The HTTP status code
 	 * @param {string} [oErrorResponseInfo.target]
+	 *   The message target
+	 * @param {object} [oErrorResponseInfo.headers]
 	 *   The message target
 	 * @returns {object}
 	 *   The error response
@@ -125,7 +140,7 @@ sap.ui.define([
 				error : oError
 			}),
 			crashBatch : oErrorResponseInfo.crashBatch,
-			headers : {"Content-Type" : "application/json;charset=utf-8"},
+			headers : oErrorResponseInfo.headers || {"Content-Type" : "application/json;charset=utf-8"},
 			statusCode : oErrorResponseInfo.statusCode || 500,
 			statusText : "FAILED"
 		};
@@ -1867,7 +1882,7 @@ sap.ui.define([
 	path : "/SalesOrderSet('1')/ToBusinessPartner/ToProducts",
 	title : "Absolute path with three segments to a collection; 'to 1' navigation in the middle"
 }, {
-	// even if key predicates for ToBusinessPartner cannot be resolved, canonical path for the
+	// even if key predicate for ToBusinessPartner cannot be resolved, canonical path for the
 	// product can be computed
 	expectedCanonicalRequest : {
 		deepPath : "/SalesOrderSet('1')/ToBusinessPartner/ToProducts('P1')",
@@ -23110,15 +23125,6 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 	<Label labelFor="Note0" text="Label for Item or Sales Order Note" />
 	<Input id="Note0" value="{Note}" />
 </FlexBox>`;
-		function compare(a, b) {
-			if (a === b) {
-				return 0;
-			}
-			return a < b ? -1 : 1;
-		}
-		function sortHotspots(a, b) {
-			return compare(a.hotspotId, b.hotspotId) || compare(a.backendHelpKey.id, b.backendHelpKey.id);
-		}
 		let fnResolve;
 		function updateCallback(aCurrentHotspots) {
 			fnResolve(aCurrentHotspots);
@@ -23128,7 +23134,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			return new Promise((resolve) => {
 				fnResolve = resolve;
 			}).then((aCurrentHotspots) => {
-				assert.deepEqual(aCurrentHotspots.sort(sortHotspots), aExpectedHotspots.sort(sortHotspots),
+				assert.deepEqual(aCurrentHotspots.sort(compareHotspots), aExpectedHotspots.sort(compareHotspots),
 					"Update called: " + sTestTitle);
 			});
 		}
@@ -23160,7 +23166,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			FieldHelpUtil.setDocumentationRef(oFilterDynamicallyDestroyed,
 				"urn:sap-com:documentation:key?=type=DTEL&id=SALESORDERID");
 			const aExpectedHotspots = [{
-				"backendHelpKey": {id: "FOO", origin: null, type: "DTEL"},
+				"backendHelpKey": {id: "FOO", type: "DTEL"},
 				"hotspotId": oFilterWithFieldHelp.getId(),
 				"labelText": "Label for filter with field help"
 			}, {
@@ -23172,15 +23178,15 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				"hotspotId": oView.byId("Note").getId(),
 				"labelText": "Label for Note"
 			}, { // documentation ref from OData annotation - composite binding part 0
-				"backendHelpKey": {id: "GROSSAMOUNT", origin: null, type: "DTEL"},
+				"backendHelpKey": {id: "GROSSAMOUNT", type: "DTEL"},
 				"hotspotId": oView.byId("Amount0").getId(),
 				"labelText": "Label for both amount and currency"
 			}, { // documentation ref from OData annotation - composite binding part 1
-				"backendHelpKey": {id: "/FOO/CURRENCY", origin: null, type: "DTEL"},
+				"backendHelpKey": {id: "/FOO/CURRENCY", type: "DTEL"},
 				"hotspotId": oView.byId("Amount0").getId(),
 				"labelText": "Label for both amount and currency"
 			}, { // documentation ref from OData annotation - composite binding showning only one part
-				"backendHelpKey": {id: "GROSSAMOUNT", origin: null, type: "DTEL"},
+				"backendHelpKey": {id: "GROSSAMOUNT", type: "DTEL"},
 				"hotspotId": oView.byId("Amount1").getId(),
 				"labelText": "Label for amount only"
 			}];
@@ -23200,7 +23206,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				const oUpdateCalledPromise = waitForUpdate([
 					...aExpectedHotspots,
 					{
-						"backendHelpKey": {id: "BAZ", origin: null, type: "DTEL"},
+						"backendHelpKey": {id: "BAZ", type: "DTEL"},
 						"hotspotId": oLateFilterField.getId(),
 						"labelText": "Label for late filter field"
 					}], "late creation of a filter field");
@@ -23224,11 +23230,11 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				const oUpdateCalledPromise = waitForUpdate([
 					...aExpectedHotspots,
 					{
-						"backendHelpKey": {id: "GROSSAMOUNT", origin: null, type: "DTEL"},
+						"backendHelpKey": {id: "GROSSAMOUNT", type: "DTEL"},
 						"hotspotId": oView.byId("Amount2").getId(),
 						"labelText": "Label for both amount and currency, lazy bound"
 					}, {
-						"backendHelpKey": {id: "/FOO/CURRENCY", origin: null, type: "DTEL"},
+						"backendHelpKey": {id: "/FOO/CURRENCY", type: "DTEL"},
 						"hotspotId": oView.byId("Amount2").getId(),
 						"labelText": "Label for both amount and currency, lazy bound"
 					}], "late composite binding");
@@ -23266,7 +23272,7 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				const oUpdateCalledPromise = waitForUpdate([
 					...aExpectedHotspots,
 					{
-						"backendHelpKey": {id: "ITEMNOTE", origin: null, type: "DTEL"},
+						"backendHelpKey": {id: "ITEMNOTE", type: "DTEL"},
 						"hotspotId": oView.byId("Note0").getId(),
 						"labelText": "Label for Item or Sales Order Note"
 					}], "late initially setting a binding context");
@@ -23312,5 +23318,489 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 		}).finally(() => {
 			FieldHelp.getInstance().deactivate();
 		});
+	});
+
+	//*********************************************************************************************
+	// Scenario 1: If a child control with a field help is embedded in a parent control with a
+	// <code>fieldHelpDisplay</code> association, the field help is displayed at the parent control.
+	// Scenario 2: If a parent control with a <code>fieldHelpDisplay</code> association has multiple child controls with
+	// field helps, those field helps are displayed at the parent control and not the children.
+	// Scenario 3+4: same as 1 and 2 but instead of <code>fieldHelpDisplay</code> association the parent control has
+	// a BindingInfo.OriginalParent symbol assigned.
+	// JIRA: CPOUI5MODELS-1761
+	QUnit.test("Field Help: fieldHelpDisplay association and BindingInfo.OriginalParent symbol", function (assert) {
+		const oModel = createSalesOrdersModel({defaultBindingMode: BindingMode.TwoWay});
+		const sView = `
+<FlexBox id="form" binding="{/SalesOrderSet('1')}">
+	<Label labelFor="ShowFieldHelp0" text="Element displaying field help" />
+	<Text id="ShowFieldHelp0" />
+	<FlexBox id="ParentWithFieldHelpDisplay">
+		<Label labelFor="Amount0" text="Label for both amount and currency" />
+		<Input id="Amount0" value="{
+			mode: 'TwoWay',
+			parts: [{
+				constraints: {precision: 16, scale: 3},
+				path: 'GrossAmount',
+				type: 'sap.ui.model.odata.type.Decimal'
+			}, {
+				constraints: {maxLength: 5},
+				path: 'CurrencyCode',
+				type: 'sap.ui.model.odata.type.String'
+			}],
+			type: 'sap.ui.model.type.Currency'
+		}" />
+		<Label labelFor="AmountOnly" text="Label for amount only" />
+		<Input id="AmountOnly" value="{
+			formatOptions: {showMeasure: false},
+			mode: 'TwoWay',
+			parts: [{
+				constraints: {precision: 16, scale: 3},
+				path: 'GrossAmount',
+				type: 'sap.ui.model.odata.type.Decimal'
+			}, {
+				constraints: {maxLength: 5},
+				path: 'CurrencyCode',
+				type: 'sap.ui.model.odata.type.String'
+			}],
+			type: 'sap.ui.model.type.Currency'
+		}" />
+		<Label labelFor="Note" text="Label for Note" />
+		<Input id="Note" value="{path: 'Note', type: 'sap.ui.model.odata.type.String'}" />
+	</FlexBox>
+	<Label labelFor="ShowFieldHelp1" text="Element displaying field help (OriginalParent)" />
+	<Text id="ShowFieldHelp1" />
+	<FlexBox id="ParentWithOriginalParentSymbol">
+		<Label labelFor="Amount1" text="Label for both amount and currency" />
+		<Input id="Amount1" value="{
+			mode: 'TwoWay',
+			parts: [{
+				constraints: {precision: 16, scale: 3},
+				path: 'GrossAmount',
+				type: 'sap.ui.model.odata.type.Decimal'
+			}, {
+				constraints: {maxLength: 5},
+				path: 'CurrencyCode',
+				type: 'sap.ui.model.odata.type.String'
+			}],
+			type: 'sap.ui.model.type.Currency'
+		}" />
+		<Label labelFor="AmountOnly1" text="Label for amount only" />
+		<Input id="AmountOnly1" value="{
+			formatOptions: {showMeasure: false},
+			mode: 'TwoWay',
+			parts: [{
+				constraints: {precision: 16, scale: 3},
+				path: 'GrossAmount',
+				type: 'sap.ui.model.odata.type.Decimal'
+			}, {
+				constraints: {maxLength: 5},
+				path: 'CurrencyCode',
+				type: 'sap.ui.model.odata.type.String'
+			}],
+			type: 'sap.ui.model.type.Currency'
+		}" />
+		<Label labelFor="Note1" text="Label for Note" />
+		<Input id="Note1" value="{path: 'Note', type: 'sap.ui.model.odata.type.String'}" />
+	</FlexBox>
+</FlexBox>`;
+		let fnResolve;
+		function updateCallback(aCurrentHotspots) {
+			fnResolve(aCurrentHotspots);
+		}
+		function waitForUpdate(aHotspots, sTestTitle) {
+			const aExpectedHotspots = aHotspots;
+			return new Promise((resolve) => {
+				fnResolve = resolve;
+			}).then((aCurrentHotspots) => {
+				assert.deepEqual(aCurrentHotspots.sort(compareHotspots), aExpectedHotspots.sort(compareHotspots),
+					"Update called: " + sTestTitle);
+			});
+		}
+
+		this.expectHeadRequest()
+			.expectRequest("SalesOrderSet('1')", {
+				__metadata: {uri: "SalesOrderSet('1')"},
+				CurrencyCode: "EUR",
+				DeliveryStatus: "N",
+				GrossAmount: "1.23",
+				Note: "Sales Order Note",
+				SalesOrderID: "1"
+			})
+			.expectValue("Amount0", "1.23")
+			.expectValue("AmountOnly", "1.23")
+			.expectValue("Amount0", "1.23\xa0EUR")
+			.expectValue("Note", "Sales Order Note");
+
+		return this.createView(assert, sView, {undefined: oModel, filter: new JSONModel({filter: "42"})}).then(() => {
+			const oView = this.oView;
+			oView.byId("ParentWithFieldHelpDisplay").setFieldHelpDisplay(oView.byId("ShowFieldHelp0"));
+			oView.byId("ParentWithOriginalParentSymbol")[BindingInfo.OriginalParent] = oView.byId("ShowFieldHelp1");
+			const aExpectedHotspots = [{
+				"backendHelpKey": {id: "GROSSAMOUNT", type: "DTEL"},
+				"hotspotId": oView.byId("ShowFieldHelp0").getId(),
+				"labelText": "Element displaying field help"
+			}, {
+				"backendHelpKey": {id: "/FOO/CURRENCY", type: "DTEL"},
+				"hotspotId": oView.byId("ShowFieldHelp0").getId(),
+				"labelText": "Element displaying field help"
+			}, {
+				"backendHelpKey": {id: "NOTE", origin: "MyOrigin", type: "DTEL"},
+				"hotspotId": oView.byId("ShowFieldHelp0").getId(),
+				"labelText": "Element displaying field help"
+			},{
+				"backendHelpKey": {id: "GROSSAMOUNT", type: "DTEL"},
+				"hotspotId": oView.byId("ShowFieldHelp1").getId(),
+				"labelText": "Element displaying field help (OriginalParent)"
+			}, {
+				"backendHelpKey": {id: "/FOO/CURRENCY", type: "DTEL"},
+				"hotspotId": oView.byId("ShowFieldHelp1").getId(),
+				"labelText": "Element displaying field help (OriginalParent)"
+			}, {
+				"backendHelpKey": {id: "NOTE", origin: "MyOrigin", type: "DTEL"},
+				"hotspotId": oView.byId("ShowFieldHelp1").getId(),
+				"labelText": "Element displaying field help (OriginalParent)"
+			}];
+			const oUpdateCalledPromise = waitForUpdate(aExpectedHotspots, "initial activation");
+
+			// code under test
+			FieldHelp.getInstance().activate(updateCallback);
+
+			return Promise.all([
+				oUpdateCalledPromise,
+				this.waitForChanges(assert, "Initial activation")
+			]);
+		}).finally(() => {
+			FieldHelp.getInstance().deactivate();
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: Server responds with 503 HTTP status code and "Retry-after" response header
+	// 1) $batch with GET request answered with 503, no error no change, callback waiting
+	// 1a) Deferred binding request data, no request happen because pending promise, callback not called again,
+	//   callback promise reused.
+	// 2) Callback resolves promise -> first $batch repeated, second $batch for deferred binding also sent
+	// 3) ODataBinding#refresh results in different $batches, first $batch response processing reuses already
+	//   existing promise of 2nd $batch which responded faster with 503.
+	// 3a) Callback rejects promise with supplied error -> requests rejected, error reported only once
+	// 4) 3 $batch, 2nd and 3rd answered with 503, 1st answer pending
+	// 4a) 1st $batch gets 503 answer, reuses already existing retry-after promise
+	// 4b) resolve retry-after promise and see all 3 $batch repeated
+	// 5) Callback rejects promise with own Error reason
+	// 5a) preparation, GET and MERGE request answered with 503
+	// 5b) reject with own reason, error is not reported, only logged
+	// 5c) after rejection the change is still present and can be repeated via #submitChanges wereas GET is not repeated
+	//
+	// JIRA: CPOUI5MODELS-1750
+	QUnit.test("503 retry-after handling", function (assert) {
+		let iCallbackCounter = 0;
+		let bCallbackWaiting = false;
+		let iErrorHandlerCalled = 0;
+		const mParameters = {
+			error() {
+				assert.ok(true);
+				iErrorHandlerCalled += 1;
+			},
+			success() {
+				assert.ok(false);
+			}};
+		let fnRejectRetryAfter;
+		let pRetryAfterFinished;
+		let fnResolveRetryAfter;
+		let fnRolveLate503Response;
+		let oSuppliedError;
+		const oModel = createSalesOrdersModel({refreshAfterChange : false});
+		const sView = `
+<FlexBox id="objectPage1" binding="{/SalesOrderSet('1')}">
+	<Text id="note1" text="{Note}" />
+</FlexBox>
+<FlexBox id="objectPage2">
+	<Text id="note2" text="{Note}" />
+</FlexBox>
+<FlexBox id="objectPage3">
+	<Text id="note3" text="{Note}" />
+</FlexBox>`;
+
+		oModel.setRetryAfterHandler((oError) => {
+			iCallbackCounter += 1;
+			bCallbackWaiting = true;
+			oSuppliedError = oError;
+			assert.ok(oError instanceof Error);
+			assert.strictEqual(oError.message, "HTTP request failed");
+			assert.ok(oError.retryAfter instanceof Date);
+			const pRetryAfter = new Promise((resolve, reject) => {
+				fnResolveRetryAfter = resolve;
+				fnRejectRetryAfter = reject;
+			});
+			pRetryAfterFinished = pRetryAfter.catch(() => {}).finally(() => {bCallbackWaiting = false;});
+			return pRetryAfter;
+		});
+
+		function create503ErrorResponse(sCode) {
+			return createErrorResponse({
+				crashBatch : true,
+				message : "Service Unavailable",
+				statusCode : 503,
+				headers : {"retry-after" : 5},
+				messageCode : sCode
+			});
+		}
+
+		this.expectHeadRequest()
+			.expectRequest("SalesOrderSet('1')", create503ErrorResponse("1)"));
+
+		// code under test (1)
+		return this.createView(assert, sView, oModel).then(() => {
+			assert.ok(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 1);
+
+			// code under test
+			this.oView.byId("objectPage2").bindObject("/SalesOrderSet('2')");
+
+			// waitForChanges only needed for progress output
+			return this.waitForChanges(assert, "1a) reuse callback promise, no request");
+		}).then(() => {
+			assert.ok(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 1);
+
+			this.expectRequest("SalesOrderSet('1')", {
+					SalesOrderID : "1", Note : "Foo1"
+				})
+				.expectRequest("SalesOrderSet('2')", {
+					SalesOrderID : "2", Note : "Foo2"
+				})
+				.expectValue("note1", "Foo1")
+				.expectValue("note2", "Foo2");
+
+			// code under test
+			fnResolveRetryAfter();
+
+			return Promise.all([
+				pRetryAfterFinished,
+				this.waitForChanges(assert, "2) resolve -> both batches repeated")
+			]);
+		}).then(() => {
+			assert.notOk(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 1);
+
+			this.expectRequest("SalesOrderSet('1')", resolveLater(() => {
+					// process 503 a little later than 2nd request's response, callback promise reused
+					assert.ok(bCallbackWaiting);
+					assert.strictEqual(iCallbackCounter, 2);
+					return {response : create503ErrorResponse("3) late")};
+				}))
+				.expectRequest("SalesOrderSet('2')", create503ErrorResponse("3) early"));
+
+			// code under test (refresh via different groups in order to get separate batches)
+			this.oView.byId("objectPage1").getElementBinding().refresh(true, "refresh1");
+			this.oView.byId("objectPage2").getElementBinding().refresh(true, "refresh2");
+
+			return Promise.all([
+				resolveLater(), // wait until error processing for 1st $batch is done
+				this.waitForChanges(assert, "3) refresh answered with 503, callback only once")
+			]);
+		}).then(() => {
+			assert.ok(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 2);
+
+			this.expectValue("note1", "")
+				.expectValue("note2", "")
+				.expectMessages([{
+					code : "3) late",  // 3) early was overwritten because same target "/batch"
+					message : "Service Unavailable",
+					persistent : false,
+					fullTarget : "/$batch",
+					target : "/$batch",
+					technical : true,
+					type : "Error"
+				}]);
+
+			this.oLogMock.expects("error")
+				.withExactArgs("Request failed with status code 503: "
+					+ "POST /sap/opu/odata/sap/ZUI5_GWSAMPLE_BASIC/$batch", sinon.match("3) early"),
+					sODataMessageParserClassName);
+			this.oLogMock.expects("error")
+				.withExactArgs("Request failed with status code 503: "
+					+ "POST /sap/opu/odata/sap/ZUI5_GWSAMPLE_BASIC/$batch", sinon.match("3) late"),
+					sODataMessageParserClassName);
+
+			// code under test
+			fnRejectRetryAfter(oSuppliedError);
+
+			return Promise.all([
+				pRetryAfterFinished,
+				this.waitForChanges(assert, "3a) callback rejects promise with reason oSuppliedError")
+			]);
+		}).then(() => {
+			assert.notOk(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 2);
+			this.removePersistentAndTechnicalMessages(); // reset messages
+
+			this.expectRequest("SalesOrderSet('1')", new Promise((resolve) => {fnRolveLate503Response = resolve;}))
+				.expectRequest("SalesOrderSet('2')", create503ErrorResponse("3) for SalesOrder 2"))
+				.expectRequest("SalesOrderSet('3')", create503ErrorResponse("3) for SalesOrder 3"))
+				.expectMessages([]);
+
+			// code under test
+			this.oView.byId("objectPage1").getElementBinding().refresh(true, "refresh1");
+			this.oView.byId("objectPage2").getElementBinding().refresh(true, "refresh2");
+			this.oView.byId("objectPage3").bindObject("/SalesOrderSet('3')");
+
+			return this.waitForChanges(assert, "4) tree $batch, 2nd+3rd answered with 503, 1st answer pending");
+		}).then(() => {
+			assert.ok(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 3);
+
+			// code under test
+			fnRolveLate503Response({response : create503ErrorResponse("4) for SalesOrder 1")});
+
+			return Promise.all([
+				resolveLater(), // wait until error processing for 1st $batch is done
+				this.waitForChanges(assert, "4a) 1st $batch now answered also with 503")
+			]);
+		}).then(() => {
+			assert.ok(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 3);
+
+			this.expectRequest("SalesOrderSet('1')", {SalesOrderID : "1", Note : "Bar1"})
+				.expectRequest("SalesOrderSet('2')", {SalesOrderID : "2", Note : "Bar2"})
+				.expectRequest("SalesOrderSet('3')", {SalesOrderID : "3", Note : "Bar3"});
+
+			this.expectValue("note1", "Bar1")
+				.expectValue("note2", "Bar2")
+				.expectValue("note3", "Bar3")
+				.expectMessages([]);
+
+			fnResolveRetryAfter();
+
+			return Promise.all([
+				pRetryAfterFinished,
+				this.waitForChanges(assert, "4b) see $batches once retry-after resolved")
+			]);
+		}).then(() => {
+			assert.notOk(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 3);
+
+			this.removePersistentAndTechnicalMessages(); // reset messages
+			this.expectRequest("SalesOrderSet('2')", create503ErrorResponse("5)"))
+				.expectMessages([]);
+
+			this.oView.byId("objectPage2").getElementBinding().refresh(true, "refresh2");
+
+			return Promise.all([
+				resolveLater(), // we have to wait until error processing for $batch is done
+				this.waitForChanges(assert, "5a) preparation")
+			]);
+		}).then(() => {
+			assert.ok(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 4);
+
+			this.expectValue("note1", "Note1 5)");
+
+			// code under test
+			oModel.setProperty("/SalesOrderSet('1')/Note", "Note1 5)");
+			oModel.submitChanges(mParameters);
+
+			return this.waitForChanges(assert, "5a) preparation (2nd request queued)");
+		}).then(() => {
+			assert.ok(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 4);
+
+			this.expectValue("note3", "Note3 5)");
+
+			// code under test
+			oModel.setProperty("/SalesOrderSet('3')/Note", "Note3 5)");
+			oModel.submitChanges(mParameters);
+
+			return this.waitForChanges(assert, "5a) preparation (3nd request queued)");
+		}).then(() => {
+			assert.ok(bCallbackWaiting);
+			assert.strictEqual(iCallbackCounter, 4);
+
+			this.expectValue("note2", "")
+				.expectMessages([]);
+			this.oLogMock.expects("error")
+				.withExactArgs("Retry-After handler rejected with: Rejected by User",
+					sinon.match.string, sODataModelClassName);
+
+			// code under test
+			fnRejectRetryAfter(new Error("Rejected by User"));
+
+			return Promise.all([
+				pRetryAfterFinished,
+				this.waitForChanges(assert, "5b) rejection with own error, only logged")
+			]);
+		}).then(() => {
+			assert.strictEqual(iErrorHandlerCalled, 2);
+			assert.strictEqual(oModel.hasPendingChanges(true), true);
+
+			this.expectRequest({
+					data : {
+						__metadata : {uri : "SalesOrderSet('3')"},
+						Note : "Note3 5)"
+					},
+					key : "SalesOrderSet('3')",
+					method : "MERGE",
+					requestUri : "SalesOrderSet('3')"
+				}, NO_CONTENT)
+				.expectRequest({
+					data : {
+						__metadata : {uri : "SalesOrderSet('1')"},
+						Note : "Note1 5)"
+					},
+					key : "SalesOrderSet('1')",
+					method : "MERGE",
+					requestUri : "SalesOrderSet('1')"
+				}, NO_CONTENT)
+				.expectMessages([]);
+
+			// code under test
+			oModel.submitChanges();
+
+			return this.waitForChanges(assert, "5c) changes still present and sent");
+		}).then(() => {
+			assert.strictEqual(oModel.hasPendingChanges(true), false);
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: HTTP status 503 retry-after handling in combination with sequentializeRequests
+	// 503 and retry-after handling in combination with sequentializeRequests model parameter not
+	// supported -> is treated as normal error
+	// JIRA: CPOUI5MODELS-1750
+	QUnit.test("503 retry-after handling (sequentializeRequests)", function (assert) {
+		const oModel = createSalesOrdersModel({refreshAfterChange : false, sequentializeRequests : true});
+		const sView = `
+<FlexBox id="objectPage1" binding="{/SalesOrderSet('1')}">
+	<Text id="note1" text="{Note}"/>
+</FlexBox>`;
+
+		oModel.setRetryAfterHandler(() => {
+			assert.ok(false, "must be not called!");
+		});
+
+		this.expectHeadRequest()
+			.expectRequest("SalesOrderSet('1')", createErrorResponse({
+				crashBatch : true,
+				message : "Service Unavailable",
+				statusCode : 503,
+				headers : {"retry-after" : 5},
+				messageCode : "HTTP 503"
+			}))
+			.expectMessages([{
+				code : "HTTP 503",
+				message : "Service Unavailable",
+				persistent : false,
+				fullTarget : "/$batch",
+				target : "/$batch",
+				technical : true,
+				type : "Error"
+			}]);
+		this.oLogMock.expects("error").withExactArgs("Request failed with status code 503: "
+			+ "POST /sap/opu/odata/sap/ZUI5_GWSAMPLE_BASIC/$batch", sinon.match.string,
+			sODataMessageParserClassName);
+
+		// code under test
+		return this.createView(assert, sView, oModel);
 	});
 });

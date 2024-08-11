@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.DataState

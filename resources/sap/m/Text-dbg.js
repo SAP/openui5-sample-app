@@ -59,7 +59,7 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -83,7 +83,7 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 				/**
 				 * Determines the text to be displayed.
 				 */
-				text: { type: "string", defaultValue: '', bindable: "bindable" },
+				text: { type: "string", group: "Data", defaultValue: '', bindable: "bindable" },
 
 				/**
 				 * Available options for the text direction are LTR and RTL. By default the control inherits the text direction from its parent control.

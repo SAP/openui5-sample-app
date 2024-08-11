@@ -84,7 +84,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @alias sap.ui.core.Control
 	 */
 	var Control = Element.extend("sap.ui.core.Control", /** @lends sap.ui.core.Control.prototype */ {
@@ -1282,7 +1282,7 @@ sap.ui.define([
 	 * @return {sap.ui.core.AccessibilityInfo} Current accessibility state of the control.
 	 * @since 1.37.0
 	 * @function
-	 * @name sap.ui.core.Control.prototype.getAccessibilityInfo
+	 * @name sap.ui.core.Control.prototype.getAccessibilityInfo?
 	 * @protected
 	 */
 	//Control.prototype.getAccessibilityInfo = function() { return null; };

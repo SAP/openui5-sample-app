@@ -31,7 +31,7 @@ sap.ui.define(
 		 * @extends sap.m.upload.p13n.mediator.BaseMediator
 		 *
 		 * @author SAP SE
-		 * @version 1.126.1
+		 * @version 1.127.0
 		 * @private
 		 * @experimental
 		 * @internal

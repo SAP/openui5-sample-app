@@ -69,7 +69,7 @@ sap.ui.define([
 	 * @alias sap.m.p13n.Engine
 	 * @extends sap.m.p13n.modules.AdaptationProvider
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @public
 	 * @since 1.104
 	 */
@@ -225,17 +225,16 @@ sap.ui.define([
 	 *
 	 * @returns {Promise<sap.m.p13n.Popup>} Promise resolving in the <code>sap.m.p13n.Popup</code> instance
 	 */
-	Engine.prototype.show = function(oControl, vPanelKeys, mSettings) {
-		return this.hasChanges(oControl, vPanelKeys)
-			.catch((oError) => {
-				return false;
-			})
-			.then((enableReset) => {
-				return this.uimanager.show(oControl, vPanelKeys, {
-					...mSettings,
-					enableReset
-				});
-			});
+	Engine.prototype.show = async function(oControl, vPanelKeys, mSettings) {
+		const enableReset = await this.hasChanges(oControl, vPanelKeys)
+		.catch((oError) => {
+			return false;
+		});
+		const oDialog = await this.uimanager.show(oControl, vPanelKeys, {
+			...mSettings,
+			enableReset
+		});
+		return oDialog.getParent();
 	};
 
 	/**

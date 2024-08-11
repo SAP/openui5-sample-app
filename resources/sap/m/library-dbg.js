@@ -75,14 +75,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.m",
-		version: "1.126.1",
+		version: "1.127.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -217,6 +217,7 @@ sap.ui.define([
 			"sap.m.p13n.IContent",
 			"sap.m.IconTab",
 			"sap.m.IScale",
+			"sap.m.IMenuItem",
 			"sap.m.semantic.IGroup",
 			"sap.m.semantic.IFilter",
 			"sap.m.semantic.ISort",
@@ -2343,6 +2344,17 @@ sap.ui.define([
 
 	/**
 	 *
+	 * Interface for controls which are suitable to be added as items of sap.m.Menu.
+	 *
+	 *
+	 * @since 1.127.0
+	 * @name sap.m.IMenuItem
+	 * @interface
+	 * @public
+	 */
+
+	/**
+	 *
 	 * Common interface for sap.m.ColumnListItem and sap.m.GroupHeaderListItem
 	 *
 	 * @since 1.119
@@ -3389,8 +3401,11 @@ sap.ui.define([
 	 *
 	 * @property {boolean} [canOverflow]
 	 * 	A boolean that tells whether the control can move to the overflow menu or not.
-	 * 	<b>Note:</b> Even if <code>canOverflow</code> is set to <code>false</code>, the <code>propsUnrelatedToSize</code> field is taken into account,
-	 * 	allowing to optimize the behavior of controls that do not need to overflow, but are used in an <code>sap.m.OverflowToolbar</code> regardless.
+	 * <ul><b>Notes:</b>
+	 * <li>Even if <code>canOverflow</code> is set to <code>false</code>, the <code>propsUnrelatedToSize</code> field is taken into account,
+	 * allowing to optimize the behavior of controls that do not need to overflow, but are used in an <code>sap.m.OverflowToolbar</code> regardless.</li>
+	 * <li>If <code>canOverflow</code> is not provided, its default value is <code>false</code>. In this case, the control is shown in the content of the
+	 * <code>sap.m.OverflowToolbar</code> but it's not possible to enter the overflow area.</li></ul>
 	 * @property {string[]} [autoCloseEvents]
 	 * 	An array of strings, listing all of the control's events that should trigger the closing of the overflow menu, when fired.
 	 * @property {string[]} [invalidationEvents]

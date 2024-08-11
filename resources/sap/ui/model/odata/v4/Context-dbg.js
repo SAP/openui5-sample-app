@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.126.1
+		 * @version 1.127.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -246,7 +246,7 @@ sap.ui.define([
 	 *
 	 * Since 1.125.0, deleting a node in a recursive hierarchy (see
 	 * {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}) is supported. As a
-	 * precondition, the context must not be both {@link #setKeepAlive kept-alive} and hidden (for
+	 * precondition, the context must not be both {@link #setKeepAlive kept alive} and hidden (for
 	 * example due to a filter), and the group ID must not have
 	 * {@link sap.ui.model.odata.v4.SubmitMode.API}. Such a deletion is not a pending change.
 	 *
@@ -636,20 +636,29 @@ sap.ui.define([
 	};
 
 	/**
-	 * Expands the group node that this context points to.
+	 * Expands the group node that this context points to. Since 1.127.0, it is possible to expand
+	 * a group node by a given number of levels.
 	 *
+	 * @param {number} [iLevels=1]
+	 *   The number of levels to expand (@experimental as of version 1.127.0),
+	 *   <code>iLevels >= Number.MAX_SAFE_INTEGER</code> can be used to expand all levels. If a node
+	 *   is expanded a second time, the expand state of the descendants is not changed.
 	 * @throws {Error}
-	 *   If the context points to a node that is not expandable or already expanded
+	 *   If the context points to a node that is not expandable or already expanded, or the given
+	 *   number of levels is not a positive number
 	 *
 	 * @public
 	 * @see #collapse
 	 * @see #isExpanded
 	 * @since 1.77.0
 	 */
-	Context.prototype.expand = function () {
+	Context.prototype.expand = function (iLevels = 1) {
+		if (iLevels <= 0) {
+			throw new Error("Not a positive number: " + iLevels);
+		}
 		switch (this.isExpanded()) {
 			case false:
-				this.oBinding.expand(this).catch(this.oModel.getReporter());
+				this.oBinding.expand(this, iLevels).catch(this.oModel.getReporter());
 				break;
 			case true:
 				throw new Error("Already expanded: " + this);
@@ -2186,12 +2195,13 @@ sap.ui.define([
 	 *
 	 * Note: this is a private and internal API. Do not call this!
 	 *
+	 * @param {boolean} [bForce] Whether to set "persisted" independently of the previous state
 	 * @throws {Error} If this context is not "created" or still transient
 	 *
 	 * @private
 	 */
-	Context.prototype.setPersisted = function () {
-		if (this.isTransient() !== false) {
+	Context.prototype.setPersisted = function (bForce) {
+		if (!bForce && this.isTransient() !== false) {
 			throw new Error("Not 'created persisted'");
 		}
 		this.bInactive = undefined;

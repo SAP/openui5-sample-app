@@ -2654,6 +2654,15 @@
 
 	// establish APIs in the sap.ui namespace
 
+	/**
+	 * Root namespace for JavaScript functionality provided by SAP SE.
+	 *
+	 * @version 1.127.0
+	 * @namespace
+	 * @public
+	 * @name sap
+	 */
+
 	__global.sap = __global.sap || {};
 	sap.ui = sap.ui || {};
 

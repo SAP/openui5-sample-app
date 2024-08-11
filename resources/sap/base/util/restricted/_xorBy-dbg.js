@@ -10,7 +10,7 @@
  * @alias module:sap/base/util/restricted/_xorBy
  * @author SAP SE
  * @since 1.80
- * @version 1.126.1
+ * @version 1.127.0
  * @private
  * @ui5-restricted
 */

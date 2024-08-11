@@ -45,7 +45,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -605,11 +605,12 @@ sap.ui.define([
 	};
 
 	Column.prototype._onLabelPropertyChange = function (oEvent) {
-		if (oEvent.getParameter("name") != "required") {
+		var oTable = this.getTable();
+		if (!oTable || oEvent.getParameter("name") != "required") {
 			return;
 		}
 
-		if (this.getTable().bActiveHeaders || this.getHeaderMenuInstance()) {
+		if (oTable.bActiveHeaders || this.getHeaderMenuInstance()) {
 			this.$()[oEvent.getSource().getRequired() ? "addAriaDescribedBy" : "removeAriaDescribedBy"](InvisibleText.getStaticId("sap.m", "CONTROL_IN_COLUMN_REQUIRED"));
 		}
 	};

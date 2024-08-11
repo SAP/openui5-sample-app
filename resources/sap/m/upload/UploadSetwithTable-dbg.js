@@ -63,7 +63,7 @@ sap.ui.define([
 	 * @constructor
 	 * @public
 	 * @deprecated as of version 1.124, replaced by {@link sap.m.plugins.UploadSetwithTable}
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @alias sap.m.upload.UploadSetwithTable
 	 */
 	var UploadSetwithTable = Table.extend("sap.m.upload.UploadSetwithTable", {

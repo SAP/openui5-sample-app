@@ -53,7 +53,7 @@ sap.ui.define([
 	 * and requests, unified behavior of instant and deferred uploads, as well as improved progress indication.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -329,7 +329,7 @@ sap.ui.define([
 						 * Required for receiving a <code>readyState</code> is to set the property <code>sendXHR</code>
 						 * to true. This property is not supported by Internet Explorer 9.
 						 */
-						readyState : {type : "string"},
+						readyState : {type : "int"},
 
 						/**
 					 	* Status of the XHR request.
@@ -337,7 +337,7 @@ sap.ui.define([
 					 	* Required for receiving a <code>status</code> is to set the property <code>sendXHR</code> to true.
 					 	* This property is not supported by Internet Explorer 9.
 					 	*/
-						status : {type : "string"},
+						status : {type : "int"},
 						/**
 					 	* Http-Response which comes from the server.
 					 	*

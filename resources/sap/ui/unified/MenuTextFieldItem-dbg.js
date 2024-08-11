@@ -50,9 +50,10 @@ sap.ui.define([
 	 * Special menu item which contains a label and a text field. This menu item is e.g. helpful for filter implementations.
 	 * The aggregation <code>submenu</code> (inherited from parent class) is not supported for this type of menu item.
 	 * @extends sap.ui.unified.MenuItemBase
+	 * @implements sap.ui.unified.IMenuItem
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -61,6 +62,9 @@ sap.ui.define([
 	 */
 	var MenuTextFieldItem = MenuItemBase.extend("sap.ui.unified.MenuTextFieldItem", /** @lends sap.ui.unified.MenuTextFieldItem.prototype */ { metadata : {
 
+		interfaces: [
+			"sap.ui.unified.IMenuItem"
+		],
 		library : "sap.ui.unified",
 		properties : {
 
@@ -105,8 +109,8 @@ sap.ui.define([
 		} else if (oInfo.iItemNo == oInfo.iTotalItems) {
 			rm.class("sapUiMnuItmLast");
 		}
-		if (!oMenu.checkEnabled(oItem)) {
-			rm.class("sapUiMnuItmDsbl");
+		if (!bIsEnabled) {
+				rm.class("sapUiMnuItmDsbl");
 		}
 		if (oItem.getStartsSection()) {
 			rm.class("sapUiMnuItmSepBefore");

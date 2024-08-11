@@ -32,7 +32,7 @@ sap.ui.define([
 	 * @class
 	 * Abstract class that can be extended in order to implement any extended tooltip. For example, RichTooltip Control is based on it. It provides the opening/closing behavior and the main "text" property.
 	 * @extends sap.ui.core.Control
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.TooltipBase
@@ -46,7 +46,7 @@ sap.ui.define([
 				/**
 				 * The text that is shown in the tooltip that extends the TooltipBase class, for example in RichTooltip.
 				 */
-				text : {type : "string", group : "Misc", defaultValue : ""},
+				text : {type : "string", group : "Data", defaultValue : ""},
 
 				/**
 				 * Optional. Open Duration in milliseconds.

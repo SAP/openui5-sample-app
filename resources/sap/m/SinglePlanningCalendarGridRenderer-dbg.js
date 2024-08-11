@@ -242,7 +242,10 @@ sap.ui.define([
 			}
 
 			if (oBlocker.getSelected()) {
-				mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + InvisibleText.getStaticId("sap.ui.unified", "APPOINTMENT_SELECTED");
+				mAccProps["describedby"] = {
+					value: InvisibleText.getStaticId("sap.ui.unified", "APPOINTMENT_SELECTED"),
+					append: true
+				};
 			}
 
 			oRm.openStart("div", oBlocker);
@@ -293,7 +296,7 @@ sap.ui.define([
 			oRm.openStart("div");
 			oRm.class("sapUiCalendarAppCont");
 
-			if (sColor) {
+			if (sColor && !oBlocker.getSelected()) {
 				oRm.style("background-color", oBlocker._getCSSColorForBackground(sColor));
 			}
 
@@ -561,7 +564,10 @@ sap.ui.define([
 			}
 
 			if (oAppointment.getSelected()) {
-				mAccProps["labelledby"].value = mAccProps["labelledby"].value + " " + InvisibleText.getStaticId("sap.ui.unified", "APPOINTMENT_SELECTED");
+				mAccProps["describedby"] = {
+					value: InvisibleText.getStaticId("sap.ui.unified", "APPOINTMENT_SELECTED"),
+					append: true
+				};
 			}
 
 			oRm.openStart("div", oAppointment.getId() + "-" + iColumn + "_" + iIndex);
@@ -616,7 +622,7 @@ sap.ui.define([
 			oRm.openStart("div");
 			oRm.class("sapUiCalendarAppCont");
 
-			if (sColor) {
+			if (sColor && !oAppointment.getSelected()) {
 				oRm.style("background-color", oAppointment._getCSSColorForBackground(sColor));
 			}
 

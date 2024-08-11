@@ -8,7 +8,7 @@ sap.ui.define([
 	"sap/ui/core/Element",
 	"sap/ui/core/UIComponent",
 	"sap/ui/core/mvc/View",
-	"sap/ui/qunit/utils/nextUIUpdate"
+	"sap/ui/test/utils/nextUIUpdate"
 ], function(future, Log, Button, ManagedObject, Component, ComponentContainer, Element, UIComponent, View, nextUIUpdate) {
 
 	"use strict";
@@ -1845,7 +1845,7 @@ sap.ui.define([
 			window._oHookSpy = this.hookSpy;
 
 			this.requireSpy = this.spy(sap.ui, "require");
-			this.componentName = "sap.ui.test.routerClass";
+			this.componentName = "testdata.routerClass";
 		},
 		afterEach() {
 			this.component.destroy();

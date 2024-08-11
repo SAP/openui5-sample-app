@@ -1,6 +1,6 @@
 {
   "1.126.0": {
-    "date": "July 2024",
+    "date": "June 2024",
     "notes": [
       {
         "id": "a51660d52bf9a8bc1ed8377519e530713ae17c70",
@@ -41,22 +41,6 @@
         "id": "11059ae3f2d6bdbee72c4e261ac53b2b9349ca39",
         "type": "FIX",
         "text": " sap.ui.core.format.DateFormat.qunit: Fix flaky tests"
-      }
-    ]
-  },
-  "1.126.1": {
-    "date": "July 2024",
-    "notes": [
-      {
-        "id": "1a9126b92de0f065abba51a04be4c44144309dbe",
-        "type": "FIX",
-        "text": " ControllerExtension support for TypeScript",
-        "references": [
-          {
-            "type": "BCP",
-            "reference": ""
-          }
-        ]
       }
     ]
   }

@@ -12,6 +12,7 @@ sap.ui.define([
 	'./library',
 	'./Title',
 	"sap/base/i18n/Localization",
+	'sap/ui/dom/isElementCovered',
 	'sap/ui/core/Control',
 	'sap/ui/core/Popup',
 	'sap/ui/core/delegate/ScrollEnablement',
@@ -38,6 +39,7 @@ sap.ui.define([
 		library,
 		Title,
 		Localization,
+		isElementCovered,
 		Control,
 		Popup,
 		ScrollEnablement,
@@ -122,7 +124,7 @@ sap.ui.define([
 		* @extends sap.ui.core.Control
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.126.1
+		* @version 1.127.0
 		*
 		* @public
 		* @alias sap.m.Popover
@@ -468,6 +470,13 @@ sap.ui.define([
 				var oLastRect = mInfo.lastOfRect,
 					oRect = mInfo.currentOfRect;
 
+				if (Device.system.desktop &&
+					this.oPopup.isTopmost() &&
+					isElementCovered(this._getOpenByDomRef(), this.getDomRef())) {
+					this.close();
+					return;
+				}
+
 				// When runs on mobile device, Popover always follows the open by control.
 				// When runs on the other platforms, Popover is repositioned if the position change of openBy is smaller than the tolerance, otherwise popover is closed.
 				if (!Device.system.desktop
@@ -579,7 +588,7 @@ sap.ui.define([
 			// autoclose.
 			this.oPopup.close = function (bBeforeCloseFired) {
 				var bBooleanParam = typeof bBeforeCloseFired === "boolean";
-				var eOpenState = that.oPopup.getOpenState();
+				var eOpenState = this.getOpenState();
 				var bIsOpenerExisting = that._oOpenBy && that._oOpenBy.getDomRef && !!that._oOpenBy.getDomRef();
 
 				/* Only when the given parameter is "true", the beforeClose event isn't fired here.

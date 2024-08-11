@@ -264,7 +264,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @public
 	 * @alias sap.ui.base.ManagedObject
 	 */
@@ -2318,9 +2318,6 @@ sap.ui.define([
 		} else {
 			i = iIndex;
 		}
-		if (i !== iIndex) {
-			future.warningThrows("ManagedObject.insertAggregation: index '" + iIndex + "' out of range [0," + aChildren.length + "], forced to " + i);
-		}
 		aChildren.splice(i, 0, oObject);
 		oObject.setParent(this, sAggregationName, bSuppressInvalidate);
 
@@ -3751,6 +3748,8 @@ sap.ui.define([
 				oBindingInfo.factory = oTemplate;
 			}
 		}
+
+		oBindingInfo[BindingInfo.OriginalParent] ??= this;
 
 		var oForwarder = oMetadata.getAggregationForwarder(sName);
 		if (oForwarder && oForwarder.forwardBinding) {

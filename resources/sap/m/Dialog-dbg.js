@@ -173,7 +173,7 @@ function(
 		*
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.126.1
+		* @version 1.127.0
 		*
 		* @constructor
 		* @public
@@ -908,7 +908,7 @@ function(
 			//Check if the invisible FIRST focusable element (suffix '-firstfe') has gained focus
 			if (oSourceDomRef.id === this.getId() + "-firstfe") {
 				//Check if buttons are available
-				var oLastFocusableDomRef = this.$("footer").lastFocusableDomRef() || this.$("cont").lastFocusableDomRef() || (this.getSubHeader() && this.getSubHeader().$().firstFocusableDomRef()) || (this._getAnyHeader() && this._getAnyHeader().$().lastFocusableDomRef());
+				var oLastFocusableDomRef = this._getAnyFooter()?.$().lastFocusableDomRef() || this.$("cont").lastFocusableDomRef() || (this.getSubHeader() && this.getSubHeader().$().firstFocusableDomRef()) || (this._getAnyHeader() && this._getAnyHeader().$().lastFocusableDomRef());
 				if (oLastFocusableDomRef) {
 					oLastFocusableDomRef.focus();
 				}
@@ -1680,6 +1680,14 @@ function(
 		};
 
 		/**
+		 * @private
+		 * @returns {sap.m.Toolbar|undefined} The custom footer if <code>footer</code> aggregation is set, internal footer otherwise
+		 */
+		Dialog.prototype._getAnyFooter = function () {
+			return this.getFooter() || this._getToolbar();
+		};
+
+		/**
 		 *
 		 * @private
 		 */
@@ -1695,7 +1703,6 @@ function(
 		};
 
 		/**
-		 *
 		 * @private
 		 */
 		Dialog.prototype._registerResizeHandler = function () {
@@ -1712,7 +1719,6 @@ function(
 		};
 
 		/**
-		 *
 		 * @private
 		 */
 		Dialog.prototype._deregisterContentResizeHandler = function () {
@@ -1769,7 +1775,6 @@ function(
 				that = this,
 				aButtons = [beginButton, endButton];
 
-
 			// remove handler if such exists
 			aButtons.forEach(function(oBtn) {
 				if (oBtn && that._oButtonDelegate) {
@@ -1802,9 +1807,8 @@ function(
 			}
 		};
 
-		/*
-		 *
-		 * @returns {*|sap.m.IBar|null}
+		/**
+		 * @returns {sap.m.IBar|undefined} Toolbar
 		 * @private
 		 */
 		Dialog.prototype._getToolbar = function () {
@@ -2152,13 +2156,11 @@ function(
 						dialogHeight,
 						dialogBordersHeight;
 
+					that.removeStyleClass("sapMDialogDisableSelection");
 					$w.off("mouseup", mouseUpHandler);
 					$w.off("mousemove", mouseMoveHandler);
 
-
 					if (bResize) {
-						that._$dialog.removeClass('sapMDialogResizing');
-
 						// Take the calculated height of the dialog, so that the max-height is also applied.
 						// Else the content area will be bigger than the dialog and therefore will overflow.
 						dialogHeight = parseInt($dialog.height());
@@ -2174,7 +2176,6 @@ function(
 
 				if (isHeaderClicked(e.target) && this.getDraggable()) {
 					mouseMoveHandler = function (event) {
-
 						event.preventDefault();
 
 						if (event.buttons === 0) {
@@ -2199,8 +2200,6 @@ function(
 						});
 					};
 				} else if (bResize) {
-					that._$dialog.addClass('sapMDialogResizing');
-
 					var styles = {};
 					var minWidth = parseInt(that._$dialog.css('min-width'));
 					var maxLeftOffset = initial.x + initial.width - minWidth;
@@ -2242,6 +2241,7 @@ function(
 					return;
 				}
 
+				this.addStyleClass("sapMDialogDisableSelection");
 				$w.on("mousemove", mouseMoveHandler);
 				$w.on("mouseup", mouseUpHandler);
 

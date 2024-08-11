@@ -105,7 +105,7 @@ function(library,
 	 * @implements sap.ui.core.IFormContent, sap.m.IHyphenation
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -125,7 +125,7 @@ function(library,
 				/**
 				 * Determines the text to be displayed.
 				 */
-				text: { type: "string", defaultValue: '', bindable: "bindable" },
+				text: { type: "string", group: "Data", defaultValue: '', bindable: "bindable" },
 
 				/**
 				 * Available options for the text direction are left-to-right (LTR) and right-to-left (RTL)

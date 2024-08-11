@@ -91,7 +91,7 @@ sap.ui.define([
 		 * @extends sap.m.ListItemBase
 		 *
 		 * @author SAP SE
-		 * @version 1.126.1
+		 * @version 1.127.0
 		 *
 		 * @constructor
 		 * @public
@@ -114,7 +114,7 @@ sap.ui.define([
 					/**
 					 * Determines the title of the NotificationListBase item.
 					 */
-					title: {type: 'string', group: 'Appearance', defaultValue: ''},
+					title: {type: 'string', group: 'Data', defaultValue: ''},
 
 					/**
 					 * The time stamp of the Notification.

@@ -26,13 +26,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.126.1",
+		 version: "1.127.0",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 apiVersion: 2,
 		 types: [
@@ -66,6 +66,7 @@ sap.ui.define([
 			 "sap.ui.core.IconColor",
 			 "sap.ui.core.ImeMode",
 			 "sap.ui.core.IndicationColor",
+			 "sap.ui.core.ItemSelectionMode",
 			 "sap.ui.core.MessageType",
 			 "sap.ui.core.OpenState",
 			 "sap.ui.core.Orientation",
@@ -1109,24 +1110,8 @@ sap.ui.define([
 	};
 	DataType.registerEnum("sap.ui.core.HorizontalAlign", thisLib.HorizontalAlign);
 
-
-	/**
-	 * @classdesc A string type representing an ID or a name.
-	 *
-	 * Allowed is a sequence of characters (capital/lowercase), digits, underscores, dashes, points and/or colons.
-	 * It may start with a character or underscore only.
-	 *
-	 * @final
-	 * @namespace
-	 * @public
-	 */
-	thisLib.ID = DataType.createType('sap.ui.core.ID', {
-			isValid : function(vValue) {
-				return /^([A-Za-z_][-A-Za-z0-9_.:]*)$/.test(vValue);
-			}
-		},
-		DataType.getType('string')
-	);
+	// expose ID type for compatibility reasons
+	thisLib.ID = DataType.getType('sap.ui.core.ID');
 
 	/**
 	 * Interface for the controls which are suitable to shrink.
@@ -1626,7 +1611,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0
@@ -2400,6 +2385,37 @@ sap.ui.define([
 	DataType.registerEnum("sap.ui.core.dnd.DropEffect", thisLib.dnd.DropEffect);
 
 	thisLib.mvc = thisLib.mvc || {};
+
+	/**
+	 * Defines the selection mode of the menu items.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @name sap.ui.core.ItemSelectionMode
+	 * @since 1.127.0
+	 */
+	thisLib.ItemSelectionMode = {
+
+		/**
+		 * No selection mode.
+		 * @public
+		 */
+		None : "None",
+
+		/**
+		 * Single selection mode (only one menu item can be selected).
+		 * @public
+		 */
+		SingleSelect : "SingleSelect",
+
+		/**
+		 * Multi selection mode (more than one menu item can be selected).
+		 * @public
+		 */
+		MultiSelect : "MultiSelect"
+
+	};
+	DataType.registerEnum("sap.ui.core.ItemSelectionMode", thisLib.ItemSelectionMode);
 
 	/**
 	 * Specifies possible message types.

@@ -165,7 +165,7 @@ sap.ui.define([
 	 * @class The Manifest class.
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @alias sap.ui.core.Manifest
 	 * @since 1.33.0
 	 */

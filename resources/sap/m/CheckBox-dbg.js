@@ -95,7 +95,7 @@ sap.ui.define([
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -170,7 +170,7 @@ sap.ui.define([
 				/**
 				 * Defines the text displayed next to the checkbox
 				 */
-				text : {type : "string", group : "Appearance", defaultValue : null},
+				text : {type : "string", group : "Data", defaultValue : null},
 
 				/**
 				 * Options for the text direction are RTL and LTR. Alternatively, the control can inherit the text direction from its parent container.

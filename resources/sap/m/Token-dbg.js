@@ -50,7 +50,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -71,12 +71,12 @@ sap.ui.define([
 				/**
 				 * Key of the token.
 				 */
-				key : {type : "string", group : "Misc", defaultValue : ""},
+				key : {type : "string", group : "Data", defaultValue : ""},
 
 				/**
 				 * Displayed text of the token.
 				 */
-				text : {type : "string", group : "Misc", defaultValue : ""},
+				text : {type : "string", group : "Data", defaultValue : ""},
 
 				/**
 				 * Indicates the editable status of the token. If it is set to <code>true</code>, token displays a delete icon.

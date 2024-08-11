@@ -29,6 +29,7 @@ sap.ui.define([
 	'sap/ui/core/IconPool',
 	"sap/ui/core/Theming",
 	'sap/ui/core/date/UI5Date',
+	"sap/ui/core/InvisibleText",
 	// provides jQuery.fn.cursorPos
 	'sap/ui/dom/jquery/cursorPos'
 ], function(
@@ -54,7 +55,8 @@ sap.ui.define([
 	Button,
 	IconPool,
 	Theming,
-	UI5Date
+	UI5Date,
+	InvisibleText
 ) {
 	"use strict";
 
@@ -181,7 +183,7 @@ sap.ui.define([
 	 * mobile devices, it opens in full screen.
 	 *
 	 * @extends sap.m.DatePicker
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -971,6 +973,7 @@ sap.ui.define([
 					oHeader,
 					this._oPopupContent
 				],
+				ariaLabelledBy: InvisibleText.getStaticId("sap.m", this._getAccessibleNameLabel()),
 				afterOpen: _handleAfterOpen.bind(this),
 				afterClose: _handleAfterClose.bind(this)
 			});
@@ -1006,6 +1009,15 @@ sap.ui.define([
 
 		}
 
+	};
+
+	/**
+	 * Returns the message bundle key of the invisible text for the accessible name of the popover.
+	 * @private
+	 * @returns {string} The message bundle key
+	 */
+	DateTimePicker.prototype._getAccessibleNameLabel = function() {
+		return "DATETIMEPICKER_POPOVER_ACCESSIBLE_NAME";
 	};
 
 	DateTimePicker.prototype._openPopup = function(oDomRef){

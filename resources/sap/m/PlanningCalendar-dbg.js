@@ -206,7 +206,7 @@ sap.ui.define([
 	 * {@link sap.m.PlanningCalendarView PlanningCalendarView}'s properties.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -979,6 +979,7 @@ sap.ui.define([
 
 		this._toggleStickyClasses();
 
+		updateSelectedRows.call(this);
 	};
 
 	PlanningCalendar.prototype._updateHeader = function () {
@@ -5025,6 +5026,14 @@ sap.ui.define([
 		var oListItem = getListItem(oRow);
 
 		return oListItem ? oListItem.getTimeline() : null;
+	}
+
+	function updateSelectedRows() {
+		const aSelectedRows = this.getSelectedRows();
+
+		for (let i = 0; i < aSelectedRows.length; i++) {
+			getListItem(aSelectedRows[i]).setSelected(true);
+		}
 	}
 
 	function handleTableSelectionChange(oEvent) {

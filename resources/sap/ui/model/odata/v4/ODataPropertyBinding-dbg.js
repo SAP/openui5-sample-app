@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.126.1
+		 * @version 1.127.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -349,7 +349,10 @@ sap.ui.define([
 			// Use Promise to become async so that only the latest sync call to checkUpdateInternal
 			// wins
 			vValue = Promise.resolve(vValue);
+		} else if (vValue && typeof vValue === "object") {
+			vValue = _Helper.publicClone(vValue);
 		}
+
 		return SyncPromise.all([vValue, vType]).then(function (aResults) {
 			var oType = aResults[1],
 				vValue0 = aResults[0];

@@ -11,7 +11,7 @@ sap.ui.define([
 	"use strict";
 
 	// new Component
-	var Component = UIComponent.extend("sap.ui.test.routing.targets.Component", {
+	var Component = UIComponent.extend("testdata.routing.targets.Component", {
 		metadata : {
 			interfaces: ["sap.ui.core.IAsyncContentCreation"],
 			routing: {
@@ -29,7 +29,7 @@ sap.ui.define([
 
 		createContent : function () {
 			this.pView = View.create({
-				viewName: "module:sap/ui/test/routing/TestView"
+				viewName: "module:testdata/routing/TestView"
 			});
 
 			return this.pView;

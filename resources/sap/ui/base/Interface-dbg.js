@@ -27,8 +27,38 @@ sap.ui.define(['sap/ui/base/Object'], function(BaseObject) {
 	 * <b>Note:</b> If a class returns a facade in its constructor, only the defined functions will be visible,
 	 * no internals of the class can be accessed.
 	 *
+	 * @example
+	 * <code>sap.ui.define([
+	 *   "sap/ui/base/Object",
+	 *   "sap/ui/base/Interface"
+	 * ], (BaseObject, Interface) => {
+	 *   "use strict";
+	 *   const MyModule = BaseObject.extend("MyModule", {
+	 *     constructor: function() {
+	 *       this._limitedModuleInterface = new Interface(this, [
+	 *         "doSomething",
+	 *         "doSomethingElse"
+	 *       ]);
+	 *     },
+	 *     doSomething() {
+	 *       // Can be called on a MyModule instance and on the facade
+	 *     },
+	 *     doSomethingElse() {
+	 *       // Can be called on a MyModule instance and on the facade
+	 *     },
+	 *     doSomethingNot() {
+	 *      // Can be called only on a MyModule instance and not on the facade
+	 *     },
+	 *     getFacade() {
+	 *       return this._limitedModuleInterface;
+	 *     }
+	 *   });
+	 *   return MyModule;
+	 * });
+	 * </code>
+	 *
 	 * @author Malte Wedel, Daniel Brinkmann
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @param {sap.ui.base.Object} oObject
 	 *   Object for which a facade should be created
 	 * @param {string[]} aMethods

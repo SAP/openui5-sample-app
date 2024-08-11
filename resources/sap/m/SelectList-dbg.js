@@ -34,7 +34,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.126.1
+		 * @version 1.127.0
 		 *
 		 * @constructor
 		 * @public
@@ -89,7 +89,7 @@ sap.ui.define([
 					 */
 					selectedItemId: {
 						type: "string",
-						group: "Misc",
+						group: "Data",
 						defaultValue: ""
 					},
 

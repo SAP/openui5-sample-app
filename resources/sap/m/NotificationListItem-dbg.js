@@ -67,7 +67,7 @@ function(
 	 * @extends sap.m.NotificationListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -81,12 +81,12 @@ function(
 				/**
 				 * Determines the description of the NotificationListItem.
 				 */
-				description: {type: 'string', group: 'Appearance', defaultValue: ''},
+				description: {type: 'string', group: 'Data', defaultValue: ''},
 
 				/**
 				 * Defines the displayed author initials.
 				 */
-				authorInitials: {type: "string", group: "Data", defaultValue: null},
+				authorInitials: {type: "string", group: "Appearance", defaultValue: null},
 
 				/**
 				 * Determines if the text in the title and the description of the notification are truncated to the first two lines.

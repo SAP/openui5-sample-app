@@ -3337,6 +3337,14 @@ sap.ui.define([
 	};
 
 	/**
+	 * @private
+	 * @ui-restricted sap.m.Popover
+	 */
+	Popup.prototype.isTopmost = function() {
+		return this._iZIndex === Popup.getLastZIndex();
+	};
+
+	/**
 	 * Removes all selections from the window except if the selection is collapsed
 	 *
 	 * @private

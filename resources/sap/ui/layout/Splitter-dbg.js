@@ -72,7 +72,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -1246,6 +1246,10 @@ sap.ui.define([
 	};
 
 	//////////////////////////////////////// Overridden Methods ////////////////////////////////////////
+
+	Splitter.prototype.getFocusDomRef = function() {
+		return this.getDomRef("splitbar-0") || this.getDomRef();
+	};
 
 	Splitter.prototype.invalidate = function(oOrigin) {
 		var bForce =

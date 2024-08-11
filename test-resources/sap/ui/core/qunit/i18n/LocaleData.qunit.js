@@ -3,6 +3,7 @@ sap.ui.define([
 	"./helper/_timezones",
 	"sap/base/Log",
 	"sap/base/i18n/Formatting",
+	"sap/base/i18n/LanguageTag",
 	"sap/base/i18n/Localization",
 	"sap/base/i18n/date/TimezoneUtils",
 	"sap/base/util/LoaderExtensions",
@@ -12,8 +13,8 @@ sap.ui.define([
 	"sap/ui/core/Locale",
 	"sap/ui/core/LocaleData",
 	"sap/ui/core/date/CalendarWeekNumbering"
-], function(timezones, Log, Formatting, Localization, TimezoneUtils, LoaderExtensions, CalendarType, Configuration, Lib,
-		Locale, LocaleData, CalendarWeekNumbering) {
+], function(timezones, Log, Formatting, LanguageTag, Localization, TimezoneUtils, LoaderExtensions, CalendarType,
+		Configuration, Lib, Locale, LocaleData, CalendarWeekNumbering) {
 	"use strict";
 	const aSupportedLanguages = ["ar", "ar_EG", "ar_SA", "bg", "ca", "cnr", "cs", "cy", "da", "de", "de_AT", "de_CH",
 		"el", "el_CY", "en", "en_AU", "en_GB", "en_HK", "en_IE", "en_IN", "en_NZ", "en_PG", "en_SG", "en_ZA", "es",
@@ -22,14 +23,18 @@ sap.ui.define([
 		"ms", "nb", "nl", "nl_BE", "pl", "pt", "pt_PT", "ro", "ru", "ru_UA", "sk", "sl", "sr", "sr_Latn", "sv", "th",
 		"tr", "uk", "vi", "zh_CN", "zh_HK", "zh_SG", "zh_TW"];
 
-	QUnit.module("Locale Data Loading", {
-		beforeEach: function(assert) {
+	QUnit.module("sap.ui.core.LocaleData", {
+		beforeEach: function () {
 			this.oLogMock = this.mock(Log);
 			this.oLogMock.expects("error").never();
 			this.oLogMock.expects("warning").never();
-			this.loadResourceSpy = this.spy(LoaderExtensions, "loadResource");
-		}, afterEach: function(assert) {
-			this.loadResourceSpy.restore();
+			Formatting.setUnitMappings();
+			Formatting.setCustomUnits();
+			LocaleData._mTimezoneTranslations = {};
+		},
+		after() {
+			// Only required after the test run is through for performance reasons
+			LocaleData._resetLocaleDataCache();
 		}
 	});
 
@@ -38,56 +43,63 @@ sap.ui.define([
 		assert.deepEqual(LocaleData._cldrLocales.slice().sort(), aSupportedLanguages.slice().sort());
 	});
 
+	//*********************************************************************************************
 	QUnit.test("LocaleData caching of data", function(assert) {
+		LocaleData._resetLocaleDataCache();
+		const oLoadResourceSpy = this.spy(LoaderExtensions, "loadResource");
 		LocaleData.getInstance(new Locale("en_US"));
 		// Get Instance again to test cache
 		LocaleData.getInstance(new Locale("en_US"));
-		assert.equal(this.loadResourceSpy.callCount, 1, "called only once for same locale");
+		assert.strictEqual(oLoadResourceSpy.callCount, 1, "called only once for same locale");
 	});
 
+	//*********************************************************************************************
 	QUnit.test("LocaleData mapping", function(assert) {
+		LocaleData._resetLocaleDataCache();
+		const oLoadResourceSpy = this.spy(LoaderExtensions, "loadResource");
 		// Serbian Latin
 		// sr_Latn -> sr-Latn
 		var oLocaleData = LocaleData.getInstance(new Locale("sr_Latn"));
-		assert.equal(this.loadResourceSpy.callCount, 1, "called for sr_Latn");
-		assert.equal(this.loadResourceSpy.getCall(0).args[0], "sap/ui/core/cldr/sr_Latn.json", "sr_Latn is loaded");
-		assert.equal(oLocaleData.sCLDRLocaleId, "sr-Latn");
+		assert.strictEqual(oLoadResourceSpy.callCount, 1, "called for sr_Latn");
+		assert.strictEqual(oLoadResourceSpy.getCall(0).args[0], "sap/ui/core/cldr/sr_Latn.json", "sr_Latn is loaded");
+		assert.strictEqual(oLocaleData.sCLDRLocaleId, "sr-Latn");
 
 		// sh -> sr-Latn
 		oLocaleData = LocaleData.getInstance(new Locale("sh"));
-		assert.equal(this.loadResourceSpy.callCount, 1, "not called for sh because sr_Latn already loaded");
-		assert.equal(this.loadResourceSpy.getCall(0).args[0], "sap/ui/core/cldr/sr_Latn.json", "sr_Latn already loaded");
-		assert.equal(oLocaleData.sCLDRLocaleId, "sr-Latn");
+		assert.strictEqual(oLoadResourceSpy.callCount, 1, "not called for sh because sr_Latn already loaded");
+		assert.strictEqual(oLoadResourceSpy.getCall(0).args[0],
+			"sap/ui/core/cldr/sr_Latn.json", "sr_Latn already loaded");
+		assert.strictEqual(oLocaleData.sCLDRLocaleId, "sr-Latn");
 
 		// sr -> sr
 		oLocaleData = LocaleData.getInstance(new Locale("sr"));
-		assert.equal(this.loadResourceSpy.callCount, 2, "called for sr");
-		assert.equal(this.loadResourceSpy.getCall(1).args[0], "sap/ui/core/cldr/sr.json", "sr is loaded");
-		assert.equal(oLocaleData.sCLDRLocaleId, "sr");
+		assert.strictEqual(oLoadResourceSpy.callCount, 2, "called for sr");
+		assert.strictEqual(oLoadResourceSpy.getCall(1).args[0], "sap/ui/core/cldr/sr.json", "sr is loaded");
+		assert.strictEqual(oLocaleData.sCLDRLocaleId, "sr");
 
 		// zh_Hant -> zh-TW
 		oLocaleData = LocaleData.getInstance(new Locale("zh_Hant"));
-		assert.equal(oLocaleData.sCLDRLocaleId, "zh-TW");
+		assert.strictEqual(oLocaleData.sCLDRLocaleId, "zh-TW");
 
 		// zh_Hans -> zh-CN
 		oLocaleData = LocaleData.getInstance(new Locale("zh_Hans"));
-		assert.equal(oLocaleData.sCLDRLocaleId, "zh-CN");
+		assert.strictEqual(oLocaleData.sCLDRLocaleId, "zh-CN");
 
 		// no -> nb
 		oLocaleData = LocaleData.getInstance(new Locale("no"));
-		assert.equal(oLocaleData.sCLDRLocaleId, "nb");
+		assert.strictEqual(oLocaleData.sCLDRLocaleId, "nb");
 
 		// de_CH (with region) -> de-CH
 		oLocaleData = LocaleData.getInstance(new Locale("de_CH"));
-		assert.equal(oLocaleData.sCLDRLocaleId, "de-CH");
+		assert.strictEqual(oLocaleData.sCLDRLocaleId, "de-CH");
 
 		// de (without region) -> de
 		oLocaleData = LocaleData.getInstance(new Locale("de"));
-		assert.equal(oLocaleData.sCLDRLocaleId, "de");
+		assert.strictEqual(oLocaleData.sCLDRLocaleId, "de");
 
 		// invalid (falls back to en) -> en
 		oLocaleData = LocaleData.getInstance(new Locale("invalid"));
-		assert.equal(oLocaleData.sCLDRLocaleId, "en");
+		assert.strictEqual(oLocaleData.sCLDRLocaleId, "en");
 	});
 
 	aSupportedLanguages.forEach(function(sLanguage) {
@@ -98,6 +110,8 @@ sap.ui.define([
 			assert.ok(oLocaleData.getCurrentLanguageName(), "Current language is present for locale: '" + sLanguage + "'");
 		});
 	});
+
+	//*********************************************************************************************
 [
 	{sLocale: "cnr", sName: "crnogorski"},
 	{sLocale: "cnr_ME", sName: "crnogorski (Crna Gora)"},
@@ -144,28 +158,6 @@ sap.ui.define([
 		// code under test
 		assert.strictEqual(LocaleData.prototype.getCurrentLanguageName.call(oLocaleData), "~name");
 	});
-
-	QUnit.module("Locale data types", {
-		beforeEach: function(assert) {
-			this.oLogMock = this.mock(Log);
-			this.oLogMock.expects("error").never();
-			this.oLogMock.expects("warning").never();
-			//ensure custom unit mappings and custom units are reset
-			Formatting.setUnitMappings();
-			Formatting.setCustomUnits();
-
-			assert.equal(Formatting.getCustomUnits(), undefined, "units must be undefined");
-			assert.equal(Formatting.getUnitMappings(), undefined, "unit mappings must be undefined");
-		}, afterEach: function(assert) {
-			//ensure custom unit mappings and custom units are reset
-			Formatting.setUnitMappings();
-			Formatting.setCustomUnits();
-
-			assert.equal(Formatting.getCustomUnits(), undefined, "units must be undefined");
-			assert.equal(Formatting.getUnitMappings(), undefined, "unit mappings must be undefined");
-		}
-	});
-
 
 	QUnit.test("Currency digits", function(assert) {
 		var oLocaleData = LocaleData.getInstance(new Locale("en_US"));
@@ -448,9 +440,6 @@ sap.ui.define([
 			"Legacy unit is not found in custom unit mapping");
 		assert.strictEqual(oLocaleData.getUnitFormat("concentr-milligram-per-deciliter").displayName, "mg/dL",
 			"Legacy unit is mapped to new unit in CLDR");
-
-		//reset unit mappings
-		Formatting.setUnitMappings();
 	});
 
 	QUnit.test("Unit Mappings", function(assert) {
@@ -601,19 +590,6 @@ sap.ui.define([
 		Formatting.setCustomCurrencies();
 		assert.equal(oLocaleData.getCurrencyDigits("EUR"), 2, "number of digits for Euro");
 		assert.equal(oLocaleData.getCurrencyDigits("JPY"), 0, "number of digits for Japanese Yen");
-	});
-
-	QUnit.module("sap.ui.core.LocaleData", {
-		beforeEach: function () {
-			this.oLogMock = this.mock(Log);
-			this.oLogMock.expects("error").never();
-			this.oLogMock.expects("warning").never();
-			LocaleData._mTimezoneTranslations = {};
-		},
-		after: function () {
-			// Make sure that the translation cache is deleted to reduce the memory consumption after the test
-			LocaleData._mTimezoneTranslations = {};
-		}
 	});
 
 	QUnit.test("getCurrencySymbols", function(assert) {
@@ -1439,4 +1415,155 @@ sap.ui.define([
 			"~result");
 	});
 });
+
+	//*********************************************************************************************
+	QUnit.test("_resetLocaleDataCache", function(assert) {
+		LocaleData._resetLocaleDataCache();
+		const oLoadResourceSpy = this.spy(LoaderExtensions, "loadResource");
+
+		// code under test - loadResource is called once
+		LocaleData.getInstance(new Locale("de_DE"));
+		LocaleData.getInstance(new Locale("de_DE"));
+
+		assert.strictEqual(oLoadResourceSpy.callCount, 1);
+
+		// code under test - loadResource is called again after the reset of the cache
+		LocaleData._resetLocaleDataCache();
+		LocaleData.getInstance(new Locale("de_DE"));
+
+		assert.strictEqual(oLoadResourceSpy.callCount, 2);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("requestInstance", function(assert) {
+		LocaleData._resetLocaleDataCache();
+		const oLoaderExtensionsMock = this.mock(LoaderExtensions);
+		oLoaderExtensionsMock.expects("loadResource")
+			.withExactArgs("sap/ui/core/cldr/ar_SA.json", {"async": true, dataType: "json", failOnError: false})
+			.returns(Promise.resolve({"scripts": {"baz": "foo"}, "weekData-firstDay": 1, "__fallbackLocale": "ar"}));
+		oLoaderExtensionsMock.expects("loadResource")
+			.withExactArgs("sap/ui/core/cldr/ar.json", {"async": true, dataType: "json", failOnError: false})
+			.returns(Promise.resolve({"scripts": {"foo": "bar"}, "weekData-firstDay": 0}));
+
+		// code under test
+		const pLocaleData = LocaleData.requestInstance(new LanguageTag("ar_SA"));
+
+		assert.ok(pLocaleData instanceof Promise);
+
+		return pLocaleData.then((oLocaleData) => {
+			assert.ok(oLocaleData instanceof LocaleData);
+			assert.strictEqual(oLocaleData.sCLDRLocaleId, "ar-SA");
+			assert.strictEqual(oLocaleData.getFirstDayOfWeek(), 1, "Specific data wins over fallback data");
+			assert.deepEqual(oLocaleData.getScripts(), {"baz": "foo", "foo": "bar"}, "'foo' is added from locale 'ar'");
+			assert.ok(!oLocaleData.hasOwnProperty("loaded"));
+
+			// code under test - no request when synchronously creating a LocaleData instance for the same language tag
+			const oSyncLocaleData = LocaleData.getInstance(new LanguageTag("ar_SA"));
+
+			assert.deepEqual(oLocaleData, oSyncLocaleData);
+		});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("requestInstance for custom locale", function(assert) {
+		LocaleData._resetLocaleDataCache();
+		this.mock(LoaderExtensions).expects("loadResource")
+			.withExactArgs("sap/ui/core/cldr/de.json", {"async": true, dataType: "json", failOnError: false})
+			.returns(Promise.resolve({"scripts": {"baz": "foo"}}));
+		const oFormattingMock = this.mock(Formatting);
+		oFormattingMock.expects("getCustomLocaleData").withExactArgs().returns("~mCustomLocaleData");
+
+		// code under test
+		const pLocaleData = LocaleData.requestInstance(new LanguageTag("de-x-sapufmt"));
+
+		assert.ok(pLocaleData instanceof Promise);
+
+		return pLocaleData.then((oLocaleData) => {
+			assert.ok(oLocaleData instanceof LocaleData);
+			assert.strictEqual(oLocaleData.sCLDRLocaleId, "de");
+			assert.deepEqual(oLocaleData.getScripts(), {"baz":"foo"});
+			assert.strictEqual(oLocaleData.mCustomData, "~mCustomLocaleData");
+
+			oFormattingMock.expects("getCustomLocaleData").withExactArgs().returns("~mCustomLocaleData");
+
+			// code under test - sync loading the same language tag
+			const oSyncLocaleData = LocaleData.getInstance(new LanguageTag("de-x-sapufmt"));
+
+			assert.deepEqual(oLocaleData, oSyncLocaleData);
+		});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("requestInstance: loadResource returns null", function(assert) {
+		LocaleData._resetLocaleDataCache();
+		const oLoaderExtensionsMock = this.mock(LoaderExtensions);
+		oLoaderExtensionsMock.expects("loadResource")
+			.withExactArgs("sap/ui/core/cldr/de.json", {"async": true, dataType: "json", failOnError: false})
+			.returns(Promise.resolve(null));
+		oLoaderExtensionsMock.expects("loadResource")
+			.withExactArgs("sap/ui/core/cldr/en.json", {"async": true, dataType: "json", failOnError: false})
+			.returns(Promise.resolve({"scripts": {"baz": "foo"}}));
+
+		// code under test
+		const pLocaleData = LocaleData.requestInstance(new LanguageTag("de"));
+
+		assert.ok(pLocaleData instanceof Promise);
+
+		return pLocaleData.then((oLocaleData) => {
+			assert.ok(oLocaleData instanceof LocaleData);
+			assert.strictEqual(oLocaleData.sCLDRLocaleId, "en");
+			assert.deepEqual(oLocaleData.getScripts(), {"baz": "foo"});
+		});
+	});
+
+	//*********************************************************************************************
+	// SNOW: DINC0216128 - As described in the ticket, as of now must allow synchronous request to overtake the async
+	// loading of the locale data
+	QUnit.test("requestInstance: loadResource is called for synchronous request while async request is still running",
+			function(assert) {
+		LocaleData._resetLocaleDataCache();
+		const oLoaderExtensionsMock = this.mock(LoaderExtensions);
+		oLoaderExtensionsMock.expects("loadResource")
+			.withExactArgs("sap/ui/core/cldr/de.json", {"async": true, dataType: "json", failOnError: false})
+			.returns(Promise.resolve({"scripts": {"baz": "foo"}}));
+		oLoaderExtensionsMock.expects("loadResource")
+			.withExactArgs("sap/ui/core/cldr/de.json", {"async": undefined, dataType: "json", failOnError: false})
+			.returns({"scripts": {"baz": "foo"}});
+
+		// code under test
+		const pLocaleData = LocaleData.requestInstance(new LanguageTag("de"));
+		const oSyncLocaleData = LocaleData.getInstance(new LanguageTag("de"));
+
+		assert.ok(pLocaleData instanceof Promise);
+		assert.ok(oSyncLocaleData instanceof LocaleData);
+		assert.deepEqual(oSyncLocaleData.getScripts(), {"baz": "foo"});
+
+		return pLocaleData.then((oLocaleData) => {
+			assert.deepEqual(oLocaleData, oSyncLocaleData);
+		});
+	});
+
+	//*********************************************************************************************
+	// SNOW: DINC0216128 - If a second async request for locale data is triggered it must be ignored
+	QUnit.test("requestInstance: loadResource is only called once for async requestInstance",
+			function(assert) {
+		LocaleData._resetLocaleDataCache();
+		const oLoaderExtensionsMock = this.mock(LoaderExtensions);
+		oLoaderExtensionsMock.expects("loadResource")
+			.withExactArgs("sap/ui/core/cldr/de.json", {"async": true, dataType: "json", failOnError: false})
+			.returns(Promise.resolve({"scripts": {"baz": "foo"}}));
+
+		// code under test
+		const pLocaleData = LocaleData.requestInstance(new LanguageTag("de"));
+		// this request must not trigger another loading of resources
+		LocaleData.requestInstance(new LanguageTag("de"));
+
+		assert.ok(pLocaleData instanceof Promise);
+
+		return pLocaleData.then((oLocaleData) => {
+			assert.ok(oLocaleData instanceof LocaleData);
+			assert.strictEqual(oLocaleData.sCLDRLocaleId, "de");
+			assert.deepEqual(oLocaleData.getScripts(), {"baz": "foo"});
+		});
+	});
 });

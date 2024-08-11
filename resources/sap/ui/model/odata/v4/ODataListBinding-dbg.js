@@ -58,7 +58,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.126.1
+		 * @version 1.127.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -692,6 +692,7 @@ sap.ui.define([
 	 * @see #expand
 	 */
 	ODataListBinding.prototype.collapse = function (oContext, bSilent, iCount) {
+		this.checkSuspended();
 		if (this.aContexts[oContext.iIndex] !== oContext) {
 			throw new Error("Not currently part of the hierarchy: " + oContext);
 		}
@@ -1006,6 +1007,7 @@ sap.ui.define([
 					return;
 				}
 
+				oContext.setPersisted(true); // force set, due to oCreatePromise not yet resolved
 				that.insertContext(oContext, iRank);
 			}
 			bDeepCreate = _Helper.getPrivateAnnotation(oCreatedEntity, "deepCreate");
@@ -1138,7 +1140,7 @@ sap.ui.define([
 				this.aContexts[iStart + i] = oContext;
 			}
 		}
-		// destroy previous contexts which are not reused or kept-alive
+		// destroy previous contexts which are not reused or kept alive
 		this.destroyPreviousContextsLater(Object.keys(this.mPreviousContextsByPath));
 		if (iCount !== undefined) { // server count is available or "non-empty short read"
 			this.bLengthFinal = true;
@@ -1265,7 +1267,7 @@ sap.ui.define([
 			} else {
 				if (bExpanded) {
 					// runs synchronously because it was expanded before
-					that.expand(oContext, /*bSilent*/true).unwrap();
+					that.expand(oContext, /*iLevels*/1, /*bSilent*/true).unwrap();
 				}
 				that._fireChange({reason : ChangeReason.Add});
 			}
@@ -1332,7 +1334,7 @@ sap.ui.define([
 	 * Removes and destroys contexts from mPreviousContextsByPath.
 	 *
 	 * @param {string[]} [aPathsToDelete]
-	 *   If given, only contexts with paths in this list except kept-alive and pending deletes are
+	 *   If given, only contexts with paths in this list except kept alive and pending deletes are
 	 *   removed and destroyed (transient contexts are removed only); otherwise all contexts in the
 	 *   list are removed and destroyed
 	 *
@@ -1371,7 +1373,7 @@ sap.ui.define([
 	 * prerendering task.
 	 *
 	 * @param {string[]} aPathsToDelete
-	 *   Only contexts with paths in this list except kept-alive and pending deletes are removed and
+	 *   Only contexts with paths in this list except kept alive and pending deletes are removed and
 	 *   destroyed (transient contexts are removed only)
 	 *
 	 * @private
@@ -1513,7 +1515,7 @@ sap.ui.define([
 	/**
 	 * Replaces the given old context with a new one for the given element and key predicate,
 	 * placing the new one at the same index and returning it. If a context for the given key
-	 * predicate already exists, it is reused. A newly created context will be kept-alive if the old
+	 * predicate already exists, it is reused. A newly created context will be kept alive if the old
 	 * context was, and then it will share the <code>fnOnBeforeDestroy</code> method - but it will
 	 * be called with the new context as first argument.
 	 *
@@ -1580,10 +1582,13 @@ sap.ui.define([
 	ODataListBinding.prototype.doSetProperty = function () {};
 
 	/**
-	 * Expands the group node that the given context points to.
+	 * Expands the group node that the given context points to by the given number of levels.
 	 *
 	 * @param {sap.ui.model.odata.v4.Context} oContext
 	 *   The context corresponding to the group node
+	 * @param {number} iLevels
+	 *   The number of levels to expand, <code>iLevels >= Number.MAX_SAFE_INTEGER</code> can be
+	 *   used to expand all levels
 	 * @param {boolean} [bSilent]
 	 *   Whether no ("change") events should be fired
 	 * @returns {sap.ui.base.SyncPromise}
@@ -1595,16 +1600,16 @@ sap.ui.define([
 	 * @private
 	 * @see #collapse
 	 */
-	ODataListBinding.prototype.expand = function (oContext, bSilent) {
+	ODataListBinding.prototype.expand = function (oContext, iLevels, bSilent) {
 		this.checkSuspended();
 		if (this.aContexts[oContext.iIndex] !== oContext) {
 			throw new Error("Not currently part of the hierarchy: " + oContext);
 		}
 
 		let bDataRequested = false;
+		const sPath = _Helper.getRelativePath(oContext.getPath(), this.oHeaderContext.getPath());
 
-		return this.oCache.expand(this.lockGroup(),
-			_Helper.getRelativePath(oContext.getPath(), this.oHeaderContext.getPath()),
+		return this.oCache.expand(this.lockGroup(), sPath, iLevels,
 			/*fnDataRequested*/ () => {
 				bDataRequested = true;
 				this.fireDataRequested();
@@ -2065,7 +2070,17 @@ sap.ui.define([
 		}
 		this.checkSuspended();
 
-		const iSibling = this.oCache.getSiblingIndex(oNode.iIndex, iOffset);
+		let iSibling;
+		if (oNode.created()) {
+			if (iOffset < 0) { // out-of-place nodes have no previous sibling
+				return null;
+			}
+			const oParent = oNode.getParent(); // Note: always sync for out-of-place nodes
+			iSibling = this.oCache.get1stInPlaceChildIndex(oParent ? oParent.iIndex : -1);
+		} else {
+			iSibling = this.oCache.getSiblingIndex(oNode.iIndex, iOffset);
+		}
+
 		if (iSibling < 0) {
 			return null;
 		}
@@ -3526,7 +3541,8 @@ sap.ui.define([
 			setIndices(iOldIndex, iNewIndex);
 
 			if (iCollapseCount) {
-				this.expand(oChildContext).unwrap(); // guaranteed to be sync! incl. _fireChange
+				this.expand(oChildContext, /*iLevels*/1) // guaranteed to be sync! incl. _fireChange
+					.unwrap();
 			} else {
 				this._fireChange({reason : ChangeReason.Change});
 			}
@@ -3861,8 +3877,8 @@ sap.ui.define([
 			 *
 			 * @param {boolean} bStillAlive
 			 *   If <code>false</code>, the context does not match the filter criteria and, if the
-			 *   context is kept-alive, the entity it points to no longer exists. If
-			 *   <code>true</code>, the context is kept-alive and the entity it points to still
+			 *   context is kept alive, the entity it points to no longer exists. If
+			 *   <code>true</code>, the context is kept alive and the entity it points to still
 			 *   exists. In this case the context must not be destroyed.
 			 */
 			function onRemove(bStillAlive) {

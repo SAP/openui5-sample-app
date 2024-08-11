@@ -1,7 +1,7 @@
 /*global QUnit sinon */
 sap.ui.define([
 	'sap/ui/qunit/QUnitUtils',
-	"sap/ui/qunit/utils/nextUIUpdate",
+	"sap/ui/test/utils/nextUIUpdate",
 	'sap/ui/core/Component',
 	'sap/ui/core/ComponentContainer',
 	'sap/ui/core/XMLTemplateProcessor',
@@ -37,7 +37,7 @@ sap.ui.define([
 	});
 
 	QUnit.test("ExtensionPoint contains async View/Fragment", function(assert) {
-		var sManifestUrl = sap.ui.require.toUrl("sap/ui/test/customizing/async/noInterface/customer/manifest.json");
+		var sManifestUrl = sap.ui.require.toUrl("testdata/customizing/async/noInterface/customer/manifest.json");
 		var oRootComponent;
 
 		return Component.create({
@@ -200,7 +200,7 @@ sap.ui.define([
 
 	QUnit.test("ExtensionPoint contains async View/Fragment", function(assert) {
 		// Create component with manifest containing viewExtensions
-		var sManifestUrl = sap.ui.require.toUrl("sap/ui/test/customizing/async/viewExtensions/customer/manifest.json");
+		var sManifestUrl = sap.ui.require.toUrl("testdata/customizing/async/viewExtensions/customer/manifest.json");
 
 		return Component.create({
 			id: "myCustomerComponent",

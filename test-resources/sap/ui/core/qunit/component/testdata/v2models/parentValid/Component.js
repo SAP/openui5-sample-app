@@ -4,11 +4,11 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-// Provides class sap.ui.test.v2models.Component
+// Provides class teatdata.v2models.Component
 sap.ui.define(["sap/ui/core/UIComponent"], function(UIComponent) {
 	"use strict";
 
-	return UIComponent.extend("sap.ui.test.v2models.parentValid.Component", {
+	return UIComponent.extend("testdata.v2models.parentValid.Component", {
 
 		metadata: {
 
@@ -18,7 +18,7 @@ sap.ui.define(["sap/ui/core/UIComponent"], function(UIComponent) {
 
 				"sap.app": {
 					"_version": "1.0.0",
-					"id": "sap.ui.test.v2models.parentValid",
+					"id": "testdata.v2models.parentValid",
 					"type": "application",
 					"applicationVersion": {
 						"version": "1.0.0"
@@ -221,7 +221,7 @@ sap.ui.define(["sap/ui/core/UIComponent"], function(UIComponent) {
 						"resourceBundle-name": {
 							"type": "sap.ui.model.resource.ResourceModel",
 							"settings": {
-								"bundleName": "sap.ui.test.v2models.parent.i18n"
+								"bundleName": "testdata.v2models.parent.i18n"
 							}
 						},
 
@@ -231,17 +231,17 @@ sap.ui.define(["sap/ui/core/UIComponent"], function(UIComponent) {
 						},
 
 						"custom-uri-string": {
-							"type": "sap.ui.test.v2models.parent.CustomModel",
+							"type": "testdata.v2models.parent.CustomModel",
 							"dataSource": "customType"
 						},
 
 						"custom-relative-uri-string": {
-							"type": "sap.ui.test.v2models.parent.CustomModel",
+							"type": "testdata.v2models.parent.CustomModel",
 							"dataSource": "customType-relative"
 						},
 
 						"custom-uri-string-with-settings": {
-							"type": "sap.ui.test.v2models.parent.CustomModel",
+							"type": "testdata.v2models.parent.CustomModel",
 							"dataSource": "customType",
 							"settings": {
 								"foo": "bar"
@@ -249,17 +249,17 @@ sap.ui.define(["sap/ui/core/UIComponent"], function(UIComponent) {
 						},
 
 						"custom-without-args": {
-							"type": "sap.ui.test.v2models.parent.CustomModel"
+							"type": "testdata.v2models.parent.CustomModel"
 						},
 
 						"custom-uri-setting-name": {
-							"type": "sap.ui.test.v2models.parent.CustomModel",
+							"type": "testdata.v2models.parent.CustomModel",
 							"dataSource": "customType",
 							"uriSettingName": "myUri"
 						},
 
 						"custom-uri-setting-merge": {
-							"type": "sap.ui.test.v2models.parent.CustomModel",
+							"type": "testdata.v2models.parent.CustomModel",
 							"dataSource": "customType",
 							"uriSettingName": "uri",
 							"settings": {
@@ -268,7 +268,7 @@ sap.ui.define(["sap/ui/core/UIComponent"], function(UIComponent) {
 						},
 
 						"custom-uri-setting-already-defined": {
-							"type": "sap.ui.test.v2models.parent.CustomModel",
+							"type": "testdata.v2models.parent.CustomModel",
 							"dataSource": "customType",
 							"uriSettingName": "uri",
 							"settings": {

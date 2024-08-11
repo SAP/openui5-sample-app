@@ -331,7 +331,8 @@ sap.ui.define([
 			if (mQueryOptions.$apply.includes("ExpandLevels")) {
 				let sExpandLevels = mQueryOptions.$apply.match(/,ExpandLevels=(.+)\)/)[1];
 				sExpandLevels = decodeURIComponent(sExpandLevels);
-				return new Map(JSON.parse(sExpandLevels).map((o) => [o.NodeID, o.Levels]));
+				return new Map(JSON.parse(sExpandLevels).map(
+					(o) => [o.NodeID, o.Levels ?? Number.MAX_SAFE_INTEGER]));
 			}
 		}
 
@@ -486,7 +487,7 @@ sap.ui.define([
 				}
 
 				const sParentId = oBody["EMPLOYEE_2_MANAGER@odata.bind"]
-					?.slice("EMPLOYEES('".length, -"')".length);
+					?.slice("EMPLOYEES('".length, -"')".length) ?? null;
 				if (sParentId) {
 					for (let sId = sParentId; sId; sId = mNodeById[sId].MANAGER_ID) {
 						if (sId === oChild.ID) { // cycle detected
@@ -537,7 +538,7 @@ sap.ui.define([
 				oChild.MANAGER_ID = sParentId;
 				const iParentDistanceFromRoot = sParentId
 					? mNodeById[sParentId].DistanceFromRoot
-					: 0;
+					: -1;
 				adjustDistanceFromRoot(oChild,
 					iParentDistanceFromRoot + 1 - oChild.DistanceFromRoot);
 				break;
@@ -651,7 +652,7 @@ sap.ui.define([
 			}
 		}
 
-		const oCopy = SandboxModel.update([oNewChild])[0];
+		const oCopy = {...SandboxModel.update([oNewChild])[0]};
 		// RAP would not respond w/ DescendantCount,DistanceFromRoot,DrillState!
 		delete oCopy.DescendantCount;
 		delete oCopy.DistanceFromRoot;
@@ -745,7 +746,12 @@ sap.ui.define([
 				if (isAncestorCollapsed(oNode)) {
 					return false; // node is not part of hierarchy if an ancestor is collapsed
 				}
-				if (oExpandLevels.get(oNode.MANAGER_ID) === 1) {
+				const iExpandLevels = oExpandLevels.get(oNode.MANAGER_ID);
+				if (iExpandLevels > 0) {
+					if (iExpandLevels > 1) {
+						oExpandLevels.set(oNode.ID, iExpandLevels - 1);
+					}
+
 					return true; // node is part of hierarchy if parent is expanded
 				}
 				return oNode.DistanceFromRoot <= iMaxDistanceFromRoot;
@@ -779,7 +785,7 @@ sap.ui.define([
 	 * @param {boolean} [bSkipCopy]
 	 *   Whether "copy on write" may safely be skipped
 	 * @returns {object[]}
-	 *   An updated copy
+	 *   An updated copy or the original(!) in case no update is needed
 	 */
 	SandboxModel.update = function (aNodes, bSkipCopy = false) {
 		return aNodes.map((oNode) => {

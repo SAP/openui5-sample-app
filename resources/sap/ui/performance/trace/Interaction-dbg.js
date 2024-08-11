@@ -96,6 +96,7 @@ sap.ui.define([
 	 * @property {float} busyDuration The sum of the global busy indicator duration during the interaction
 	 * @property {string} id The ID of the interaction
 	 * @property {string} passportAction The default PassportAction for startup
+	 * @property {string} rootId The root context ID
 	 */
 
 	function createMeasurement(iTime) {
@@ -120,7 +121,8 @@ sap.ui.define([
 			requestCompression: "X", // ok per default, if compression does not match SAP rules we report an empty string
 			busyDuration: 0, // summed GlobalBusyIndicator duration during this interaction
 			id: uid(), //Interaction ID
-			passportAction: "undetermined_startup_0" //default PassportAction for startup
+			passportAction: "undetermined_startup_0", //default PassportAction for startup
+			rootId: undefined // root context ID
 		};
 	}
 
@@ -217,7 +219,6 @@ sap.ui.define([
 			oPendingInteraction.processing = iProcessing > -1 ? iProcessing : 0;
 
 			oPendingInteraction.completed = true;
-			Object.freeze(oPendingInteraction);
 
 			// Duration threshold 2 in order to filter not performance relevant interactions such as liveChange
 			if (oPendingInteraction.semanticStepName || oPendingInteraction.duration >= 2 || oPendingInteraction.requests.length > 0 || isNavigation) {
@@ -231,6 +232,7 @@ sap.ui.define([
 			if (Interaction.onInteractionFinished) {
 				Interaction.onInteractionFinished(oFinshedInteraction);
 			}
+			Object.freeze(oPendingInteraction);
 			oPendingInteraction = null;
 			oCurrentBrowserEvent = null;
 			isNavigation = false;

@@ -116,6 +116,15 @@ sap.ui.define([
 			// code under test
 			oContext.setPersisted();
 		}, new Error("Not 'created persisted'"));
+
+		oContext.bInactive = oContext.oCreatedPromise = oContext.oSyncCreatePromise = "any value";
+
+		// code under test
+		oContext.setPersisted(/*bForce*/true);
+
+		assert.strictEqual(oContext.isInactive(), undefined);
+		assert.strictEqual(oContext.isTransient(), undefined);
+		assert.strictEqual(oContext.created(), undefined);
 	});
 
 	//*********************************************************************************************
@@ -4038,7 +4047,8 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [false, true].forEach(function (bSuccess) {
-	QUnit.test("expand: success=" + bSuccess, function (assert) {
+	["~iLevels~", undefined].forEach(function (iLevels) {
+	QUnit.test("expand: success=" + bSuccess + ", iLevels=" + iLevels, function (assert) {
 		var oBinding = {
 				expand : function () {}
 			},
@@ -4051,18 +4061,20 @@ sap.ui.define([
 			fnReporter = sinon.spy();
 
 		this.mock(oContext).expects("isExpanded").withExactArgs().returns(false);
-		this.mock(oBinding).expects("expand").withExactArgs(sinon.match.same(oContext))
+		this.mock(oBinding).expects("expand")
+			.withExactArgs(sinon.match.same(oContext), iLevels || 1)
 			.returns(oPromise);
 		this.mock(oModel).expects("getReporter").withExactArgs().returns(fnReporter);
 
 		// code under test
-		oContext.expand();
+		oContext.expand(iLevels);
 
 		return oPromise.then(function () {
 			assert.notOk(fnReporter.called);
 		}, function () {
 			sinon.assert.calledOnceWithExactly(fnReporter, sinon.match.same(oError));
 		});
+	});
 	});
 });
 
@@ -4077,6 +4089,18 @@ sap.ui.define([
 			oContext.expand();
 		}, new Error("Already expanded: " + oContext));
 	});
+
+	//*********************************************************************************************
+[-23, 0].forEach(function (iLevels) {
+	QUnit.test("expand: not a positive number " + iLevels, function (assert) {
+		var oContext = Context.create({/*oModel*/}, {/*oBinding*/}, "/path");
+
+		assert.throws(function () {
+			// code under test
+			oContext.expand(iLevels);
+		}, new Error("Not a positive number: " + iLevels));
+	});
+});
 
 	//*********************************************************************************************
 	QUnit.test("expand/collapse: not expandable", function (assert) {
@@ -4393,7 +4417,7 @@ sap.ui.define([
 
 		oContext.oDeletePromise = "~deletePromise~";
 
-		// code under test - reset kept-alive on a deleted context
+		// code under test - reset "keep alive" on a deleted context
 		oContext.setKeepAlive(false);
 
 		assert.strictEqual(oContext.isKeepAlive(), false);

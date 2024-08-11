@@ -24,7 +24,7 @@ sap.ui.define([
 	 * in the documentation.
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.CustomData

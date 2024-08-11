@@ -47,6 +47,30 @@ sap.ui.define([
 			}
 		},
 
+		onExpandLevels : function (oEvent) {
+			this.byId("expandLevelsDialog")
+				.setBindingContext(oEvent.getSource().getBindingContext())
+				.open();
+		},
+
+		onExpandLevelsCancel : function () {
+			this.byId("expandLevelsDialog").close();
+		},
+
+		onExpandLevelsConfirm : function (oEvent) {
+			const sValue = this.byId("expandLevels").getValue();
+			try {
+				oEvent.getSource().getBindingContext()
+					.expand(sValue === "*"
+						? Number.MAX_SAFE_INTEGER
+						: parseFloat(sValue)); // Note: parseInt("1E16") === 1
+			} catch (oError) {
+				MessageBox.alert(oError.message, {icon : MessageBox.Icon.ERROR, title : "Error"});
+			} finally {
+				this.byId("expandLevelsDialog").close();
+			}
+		},
+
 		onInit : function () {
 			// initialization has to wait for view model/context propagation
 			this.getView().attachEventOnce("modelContextChange", function () {
@@ -213,7 +237,11 @@ sap.ui.define([
 					return;
 				}
 
-				await oSibling.move({nextSibling : oNode, parent : oParent});
+				if (oNode.created()) { // out-of-place, move it to become the 1st child/root
+					await oNode.move({nextSibling : oSibling, parent : oParent});
+				} else {
+					await oSibling.move({nextSibling : oNode, parent : oParent});
+				}
 
 				this.scrollTo(oNode, oTable);
 			} catch (oError) {
@@ -239,7 +267,9 @@ sap.ui.define([
 				]);
 
 				if (!oSibling) {
-					this.scrollTo(oParent, oTable);
+					if (oParent) {
+						this.scrollTo(oParent, oTable);
+					}
 					MessageBox.alert("Cannot move up",
 						{icon : MessageBox.Icon.INFORMATION, title : "Already first sibling"});
 					return;

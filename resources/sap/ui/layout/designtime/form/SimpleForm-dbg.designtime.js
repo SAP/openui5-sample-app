@@ -65,6 +65,10 @@ sap.ui.define([
 	}
 
 	var oFormPropagatedMetadata = {
+		properties: {
+			width: {ignore: true},
+			editable: {ignore: true}
+		},
 		aggregations: {
 			formContainers: {
 				//maybe inherited from Form
@@ -144,6 +148,11 @@ sap.ui.define([
 		name: {
 			singular: "GROUP_CONTROL_NAME",
 			plural: "GROUP_CONTROL_NAME_PLURAL"
+		},
+		properties: {
+			visible: {ignore: true},
+			expanded: {ignore: true},
+			expandable: {ignore: true}
 		},
 		aggregations: {
 			formElements: {
@@ -227,6 +236,9 @@ sap.ui.define([
 		name: {
 			singular: "FIELD_CONTROL_NAME",
 			plural: "FIELD_CONTROL_NAME_PLURAL"
+		},
+		properties: {
+			visible: {ignore: true}
 		},
 		actions: {
 			rename: {

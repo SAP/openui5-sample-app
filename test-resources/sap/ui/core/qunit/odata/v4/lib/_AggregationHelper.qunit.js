@@ -2636,7 +2636,25 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("getQueryOptionsForOutOfPlaceNodesRank", function (assert) {
+[{
+	limitedDescendantCount : "~$LimitedDescendantCount~",
+	expectedSelect : [
+		"~$DistanceFromRoot~",
+		"~$DrillState~",
+		"~$LimitedRank~",
+		"~$LimitedDescendantCount~",
+		"~key~"
+	]
+}, {
+	limitedDescendantCount : undefined,
+	expectedSelect : [
+		"~$DistanceFromRoot~",
+		"~$DrillState~",
+		"~$LimitedRank~",
+		"~key~"
+	]
+}].forEach(function (oFixture, i) {
+	QUnit.test(`getQueryOptionsForOutOfPlaceNodesRank #${i}`, function (assert) {
 		const aOutOfPlaceByParent = [{
 			nodeFilters : ["~node2Filter~", "~node1Filter~"],
 			parentFilter : "~parent1Filter~"
@@ -2650,7 +2668,7 @@ sap.ui.define([
 		const oAggregation = {
 			$DistanceFromRoot : "~$DistanceFromRoot~",
 			$DrillState : "~$DrillState~",
-			$LimitedDescendantCount : "~$LimitedDescendantCount~",
+			$LimitedDescendantCount : oFixture.limitedDescendantCount,
 			$LimitedRank : "~$LimitedRank~",
 			$metaPath : "~$metaPath~",
 			$fetchMetadata : mustBeMocked
@@ -2681,13 +2699,7 @@ sap.ui.define([
 			$apply : "~apply~",
 			$filter : "~node1Filter~ or ~node2Filter~ or ~node3Filter~ or ~node4Filter~"
 				+ " or ~node5Filter~ or ~parent1Filter~",
-			$select : [
-				"~$DistanceFromRoot~",
-				"~$DrillState~",
-				"~$LimitedDescendantCount~",
-				"~$LimitedRank~",
-				"~key~"
-			],
+			$select : oFixture.expectedSelect,
 			$top : 6,
 			custom : "~custom~"
 		});
@@ -2695,4 +2707,5 @@ sap.ui.define([
 			JSON.stringify(aOutOfPlaceByParent), sOutOfPlaceByParentJSON, "unchanged");
 		assert.strictEqual(JSON.stringify(mQueryOptions), sQueryOptionsJSON, "unchanged");
 	});
+});
 });

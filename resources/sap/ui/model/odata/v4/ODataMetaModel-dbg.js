@@ -156,127 +156,13 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.126.1
+		 * @version 1.127.0
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
 			}),
 		ODataMetaListBinding,
 		ODataMetaPropertyBinding;
-
-	/**
-	 * Adds the given reference URI to the map of reference URIs for schemas.
-	 *
-	 * @param {sap.ui.model.odata.v4.ODataMetaModel} oMetaModel
-	 *   The OData metadata model
-	 * @param {string} sSchema
-	 *   A namespace of a schema, for example "foo.bar."
-	 * @param {string} sReferenceUri
-	 *   A URI to the metadata document for the given schema
-	 * @param {string} [sDocumentUri]
-	 *   The URI to the metadata document containing the given reference to the given schema
-	 * @throws {Error}
-	 *   If the schema has already been loaded from a different URI
-	 */
-	function addUrlForSchema(oMetaModel, sSchema, sReferenceUri, sDocumentUri) {
-		var sUrl0,
-			mUrls = oMetaModel.mSchema2MetadataUrl[sSchema];
-
-		if (!mUrls) {
-			mUrls = oMetaModel.mSchema2MetadataUrl[sSchema] = {};
-			mUrls[sReferenceUri] = false;
-		} else if (!(sReferenceUri in mUrls)) {
-			sUrl0 = Object.keys(mUrls)[0];
-			if (mUrls[sUrl0]) {
-				// document already processed, no different URLs allowed
-				reportAndThrowError(oMetaModel, "A schema cannot span more than one document: "
-					+ sSchema + " - expected reference URI " + sUrl0 + " but instead saw "
-					+ sReferenceUri, sDocumentUri);
-			}
-			mUrls[sReferenceUri] = false;
-		}
-	}
-
-	/**
-	 * Returns the schema with the given namespace, or a promise which is resolved as soon as the
-	 * schema has been included, or <code>undefined</code> in case the schema is neither present nor
-	 * referenced.
-	 *
-	 * @param {sap.ui.model.odata.v4.ODataMetaModel} oMetaModel
-	 *   The OData metadata model
-	 * @param {object} mScope
-	 *   The $metadata "JSON" of the root service
-	 * @param {string} sSchema
-	 *   A namespace, for example "foo.bar.", of a schema.
-	 * @param {function} fnLog
-	 *   The log function
-	 * @returns {object|sap.ui.base.SyncPromise|undefined}
-	 *   The schema, or a promise which is resolved without details or rejected with an error, or
-	 *   <code>undefined</code>.
-	 * @throws {Error}
-	 *   If the schema has already been loaded and read from a different URI
-	 */
-	function getOrFetchSchema(oMetaModel, mScope, sSchema, fnLog) {
-		var oPromise, sUrl, aUrls, mUrls;
-
-		/*
-		 * Include the schema (and all of its children) with namespace <code>sSchema</code> from
-		 * the given referenced scope.
-		 *
-		 * @param {object} mReferencedScope
-		 *   The $metadata "JSON"
-		 */
-		function includeSchema(mReferencedScope) {
-			var oElement,
-				sKey;
-
-			if (!(sSchema in mReferencedScope)) {
-				fnLog(WARNING, sUrl, " does not contain ", sSchema);
-				return;
-			}
-
-			fnLog(DEBUG, "Including ", sSchema, " from ", sUrl);
-			for (sKey in mReferencedScope) {
-				// $EntityContainer can be ignored; $Reference, $Version is handled above
-				if (sKey[0] !== "$" && schema(sKey) === sSchema) {
-					oElement = mReferencedScope[sKey];
-					mScope[sKey] = oElement;
-					mergeAnnotations(oElement, mScope.$Annotations);
-				}
-			}
-		}
-
-		if (sSchema in mScope) {
-			return mScope[sSchema];
-		}
-
-		mUrls = oMetaModel.mSchema2MetadataUrl[sSchema];
-		if (mUrls) {
-			aUrls = Object.keys(mUrls);
-			if (aUrls.length > 1) {
-				reportAndThrowError(oMetaModel, "A schema cannot span more than one document: "
-					+ "schema is referenced by following URLs: " + aUrls.join(", "), sSchema);
-			}
-
-			sUrl = aUrls[0];
-			mUrls[sUrl] = true;
-			fnLog(DEBUG, "Namespace ", sSchema, " found in $Include of ", sUrl);
-			oPromise = oMetaModel.mMetadataUrl2Promise[sUrl];
-			if (!oPromise) {
-				fnLog(DEBUG, "Reading ", sUrl);
-				oPromise = oMetaModel.mMetadataUrl2Promise[sUrl]
-					= SyncPromise.resolve(oMetaModel.oRequestor.read(sUrl))
-						.then(oMetaModel.validate.bind(oMetaModel, sUrl));
-			}
-			oPromise = oPromise.then(includeSchema);
-			// BEWARE: oPromise may already be resolved, then includeSchema() is done now
-			if (sSchema in mScope) {
-				return mScope[sSchema];
-			}
-			mScope[sSchema] = oPromise;
-			return oPromise;
-		}
-	}
 
 	/**
 	 * Checks that the term is the expected term and determines the qualifier.
@@ -332,65 +218,6 @@ sap.ui.define([
 					return oParameter.$Name === sName;
 				});
 		});
-	}
-
-	/**
-	 * Merges the given schema's annotations into the root scope's $Annotations.
-	 *
-	 * @param {object} oSchema
-	 *   a schema; schema children are ignored because they do not contain $Annotations
-	 * @param {object} mAnnotations
-	 *   the root scope's $Annotations
-	 * @param {boolean} [bPrivileged]
-	 *   whether the schema has been loaded from a privileged source and thus may overwrite
-	 *   existing annotations
-	 */
-	function mergeAnnotations(oSchema, mAnnotations, bPrivileged) {
-		var sTarget;
-
-		/*
-		 * "PUT" semantics on term/qualifier level, only privileged sources may overwrite.
-		 *
-		 * @param {object} oTarget
-		 *   The target object (which is modified)
-		 * @param {object} oSource
-		 *   The source object
-		 */
-		function extend(oTarget, oSource) {
-			var sName;
-
-			for (sName in oSource) {
-				if (bPrivileged || !(sName in oTarget)) {
-					oTarget[sName] = oSource[sName];
-				}
-			}
-		}
-
-		for (sTarget in oSchema.$Annotations) {
-			if (!(sTarget in mAnnotations)) {
-				mAnnotations[sTarget] = {};
-			}
-			extend(mAnnotations[sTarget], oSchema.$Annotations[sTarget]);
-		}
-		delete oSchema.$Annotations;
-	}
-
-	/**
-	 * Reports an error with the given message and details and throws it.
-	 *
-	 * @param {sap.ui.model.odata.v4.ODataMetaModel} oMetaModel
-	 *   The OData metadata model
-	 * @param {string} sMessage
-	 *   Error message
-	 * @param {string} sDetails
-	 *   Error details
-	 * @throws {Error}
-	 */
-	function reportAndThrowError(oMetaModel, sMessage, sDetails) {
-		var oError = new Error(sDetails + ": " + sMessage);
-
-		oMetaModel.oModel.reportError(sMessage, sODataMetaModel, oError);
-		throw oError;
 	}
 
 	/**
@@ -740,6 +567,189 @@ sap.ui.define([
 	ODataMetaModel.prototype.$$valueAsPromise = true;
 
 	/**
+	 * Adds the given reference URI to the map of reference URIs for schemas.
+	 *
+	 * @param {string} sSchema
+	 *   A namespace of a schema, for example "foo.bar."
+	 * @param {string} sReferenceUri
+	 *   A URI to the metadata document for the given schema
+	 * @param {string} [sDocumentUri]
+	 *   The URI to the metadata document containing the given reference to the given schema
+	 * @throws {Error}
+	 *   If the schema has already been loaded from a different URI
+	 *
+	 * @private
+	 */
+	ODataMetaModel.prototype._addUrlForSchema = function (sSchema, sReferenceUri, sDocumentUri) {
+		var sUrl0,
+			mUrls = this.mSchema2MetadataUrl[sSchema];
+
+		if (!mUrls) {
+			mUrls = this.mSchema2MetadataUrl[sSchema] = {};
+			mUrls[sReferenceUri] = false;
+		} else if (!(sReferenceUri in mUrls)) {
+			sUrl0 = Object.keys(mUrls)[0];
+			if (mUrls[sUrl0]) {
+				// document already processed, no different URLs allowed
+				this._reportAndThrowError("A schema cannot span more than one document: "
+					+ sSchema + " - expected reference URI " + sUrl0 + " but instead saw "
+					+ sReferenceUri, sDocumentUri);
+			}
+			mUrls[sReferenceUri] = false;
+		}
+	};
+
+	/**
+	 * Changes the given map of annotations by applying the current array of change objects defining
+	 * a metamodel path (pointing to an annotation) and a value to be set for that annotation.
+	 *
+	 * @param {object} mAnnotations
+	 *   the root scope's $Annotations
+	 *
+	 * @private
+	 */
+	ODataMetaModel.prototype._changeAnnotations = function (mAnnotations) {
+		this.aAnnotationChanges?.forEach(({path : sPath, value : vValue}) => {
+			const iIndexOfAt = sPath.indexOf("@");
+			const sTarget = this.getObject(sPath.slice(0, iIndexOfAt) + "@$ui5.target");
+			if (sTarget) {
+				mAnnotations[sTarget] ??= {};
+				mAnnotations[sTarget][sPath.slice(iIndexOfAt)] = vValue;
+			}
+		});
+	};
+
+	/**
+	 * Merges the given schema's annotations into the root scope's $Annotations.
+	 *
+	 * @param {object} oSchema
+	 *   a schema; schema children are ignored because they do not contain $Annotations
+	 * @param {object} mAnnotations
+	 *   the root scope's $Annotations
+	 * @param {boolean} [bPrivileged]
+	 *   whether the schema has been loaded from a privileged source and thus may overwrite
+	 *   existing annotations
+	 * @returns {boolean}
+	 *   whether at least one annotation has been merged
+	 *
+	 * @private
+	 */
+	ODataMetaModel.prototype._doMergeAnnotations = function (oSchema, mAnnotations, bPrivileged) {
+		let bMerged = false;
+
+		/*
+		 * "PUT" semantics on term/qualifier level, only privileged sources may overwrite.
+		 *
+		 * @param {object} oTarget
+		 *   The target object (which is modified)
+		 * @param {object} oSource
+		 *   The source object
+		 */
+		function extend(oTarget, oSource) {
+			for (const sName in oSource) {
+				if (bPrivileged || !(sName in oTarget)) {
+					oTarget[sName] = oSource[sName];
+					bMerged = true;
+				}
+			}
+		}
+
+		for (const sTarget in oSchema.$Annotations) {
+			if (!(sTarget in mAnnotations)) {
+				mAnnotations[sTarget] = {};
+			}
+			extend(mAnnotations[sTarget], oSchema.$Annotations[sTarget]);
+		}
+		delete oSchema.$Annotations;
+
+		return bMerged;
+	};
+
+	/**
+	 * Returns the schema with the given namespace, or a promise which is resolved as soon as the
+	 * schema has been included, or <code>undefined</code> in case the schema is neither present nor
+	 * referenced.
+	 *
+	 * @param {object} mScope
+	 *   The $metadata "JSON" of the root service
+	 * @param {string} sSchema
+	 *   A namespace, for example "foo.bar.", of a schema.
+	 * @param {function} fnLog
+	 *   The log function
+	 * @returns {object|sap.ui.base.SyncPromise|undefined}
+	 *   The schema, or a promise which is resolved without details or rejected with an error, or
+	 *   <code>undefined</code>.
+	 * @throws {Error}
+	 *   If the schema has already been loaded and read from a different URI
+	 *
+	 * @private
+	 */
+	ODataMetaModel.prototype._getOrFetchSchema = function (mScope, sSchema, fnLog) {
+		var oPromise, sUrl, aUrls, mUrls,
+			that = this;
+
+		/*
+		 * Include the schema (and all of its children) with namespace <code>sSchema</code> from
+		 * the given referenced scope.
+		 *
+		 * @param {object} mReferencedScope
+		 *   The $metadata "JSON"
+		 */
+		function includeSchema(mReferencedScope) {
+			if (!(sSchema in mReferencedScope)) {
+				fnLog(WARNING, sUrl, " does not contain ", sSchema);
+				return;
+			}
+
+			fnLog(DEBUG, "Including ", sSchema, " from ", sUrl);
+			let bMerged = false;
+			for (const sKey in mReferencedScope) {
+				// $EntityContainer can be ignored; $Reference, $Version is handled above
+				if (sKey[0] !== "$" && schema(sKey) === sSchema) {
+					mScope[sKey] = mReferencedScope[sKey];
+					if (that._doMergeAnnotations(mScope[sKey], mScope.$Annotations)) {
+						bMerged = true;
+					}
+				}
+			}
+			if (bMerged) {
+				that._changeAnnotations(mScope.$Annotations);
+			}
+		}
+
+		if (sSchema in mScope) {
+			return mScope[sSchema];
+		}
+
+		mUrls = this.mSchema2MetadataUrl[sSchema];
+		if (mUrls) {
+			aUrls = Object.keys(mUrls);
+			if (aUrls.length > 1) {
+				this._reportAndThrowError("A schema cannot span more than one document: "
+					+ "schema is referenced by following URLs: " + aUrls.join(", "), sSchema);
+			}
+
+			sUrl = aUrls[0];
+			mUrls[sUrl] = true;
+			fnLog(DEBUG, "Namespace ", sSchema, " found in $Include of ", sUrl);
+			oPromise = this.mMetadataUrl2Promise[sUrl];
+			if (!oPromise) {
+				fnLog(DEBUG, "Reading ", sUrl);
+				oPromise = this.mMetadataUrl2Promise[sUrl]
+					= SyncPromise.resolve(this.oRequestor.read(sUrl))
+						.then(this.validate.bind(this, sUrl));
+			}
+			oPromise = oPromise.then(includeSchema);
+			// BEWARE: oPromise may already be resolved, then includeSchema() is done now
+			if (sSchema in mScope) {
+				return mScope[sSchema];
+			}
+			mScope[sSchema] = oPromise;
+			return oPromise;
+		}
+	};
+
+	/**
 	 * Merges <code>$Annotations</code> from the given $metadata and additional annotation files
 	 * into the root scope as a new map of all annotations, called <code>$Annotations</code>.
 	 *
@@ -761,8 +771,8 @@ sap.ui.define([
 		mScope.$Annotations = {};
 		Object.keys(mScope).forEach(function (sElement) {
 			if (mScope[sElement].$kind === "Schema") {
-				addUrlForSchema(that, sElement, that.sUrl);
-				mergeAnnotations(mScope[sElement], mScope.$Annotations);
+				that._addUrlForSchema(sElement, that.sUrl);
+				that._doMergeAnnotations(mScope[sElement], mScope.$Annotations);
 			}
 		});
 
@@ -775,18 +785,36 @@ sap.ui.define([
 			for (sQualifiedName in mAnnotationScope) {
 				if (sQualifiedName[0] !== "$") {
 					if (sQualifiedName in mScope) {
-						reportAndThrowError(that, "A schema cannot span more than one document: "
+						that._reportAndThrowError("A schema cannot span more than one document: "
 							+ sQualifiedName, that.aAnnotationUris[i]);
 					}
 					oElement = mAnnotationScope[sQualifiedName];
 					mScope[sQualifiedName] = oElement;
 					if (oElement.$kind === "Schema") {
-						addUrlForSchema(that, sQualifiedName, that.aAnnotationUris[i]);
-						mergeAnnotations(oElement, mScope.$Annotations, true);
+						that._addUrlForSchema(sQualifiedName, that.aAnnotationUris[i]);
+						that._doMergeAnnotations(oElement, mScope.$Annotations, true);
 					}
 				}
 			}
 		});
+	};
+
+	/**
+	 * Reports an error with the given message and details and throws it.
+	 *
+	 * @param {string} sMessage
+	 *   Error message
+	 * @param {string} sDetails
+	 *   Error details
+	 * @throws {Error}
+	 *
+	 * @private
+	 */
+	ODataMetaModel.prototype._reportAndThrowError = function (sMessage, sDetails) {
+		var oError = new Error(sDetails + ": " + sMessage);
+
+		this.oModel.reportError(sMessage, sODataMetaModel, oError);
+		throw oError;
 	};
 
 	/**
@@ -964,7 +992,7 @@ sap.ui.define([
 	 *   Whether to just read the $metadata document and annotations, but not yet convert them from
 	 *   XML to JSON; this is useful at most once in an early call that precedes all other normal
 	 *   calls and ignored after the first call without this.
-	 * @returns {sap.ui.base.SyncPromise}
+	 * @returns {sap.ui.base.SyncPromise|null}
 	 *   A promise which is resolved with the $metadata "JSON" object as soon as the entity
 	 *   container is fully available, or rejected with an error. In case of
 	 *   <code>bPrefetch</code> in an early call, <code>null</code> is returned.
@@ -986,13 +1014,20 @@ sap.ui.define([
 				});
 			}
 			if (!bPrefetch) {
+				aPromises.push(this.oModel._requestAnnotationChanges());
 				this.oMetadataPromise = SyncPromise.all(aPromises).then(function (aMetadata) {
 					var mScope = aMetadata[0];
 
+					that.aAnnotationChanges = aMetadata.pop();
 					that._mergeAnnotations(mScope, aMetadata.slice(1));
 
 					return mScope;
 				});
+				// apply annotation changes before anyone else has access, but after the promise has
+				// already resolved (else #fetchObject cannot really be used)
+				this.oMetadataPromise.then(
+					(mScope) => this._changeAnnotations(mScope.$Annotations),
+					() => { /* avoid "Uncaught (in promise)" */ });
 			}
 		}
 		return this.oMetadataPromise;
@@ -1289,9 +1324,13 @@ sap.ui.define([
 
 				vBindingParameterType = vResult && vResult.$Type || vBindingParameterType;
 				if (that.bSupportReferences && !(sQualifiedName in mScope)) {
+					if (sResolvedPath.endsWith("@$ui5.target")) { // do not fetch schema
+						vResult = undefined;
+						return false;
+					}
 					// unknown qualified name: maybe schema is referenced and can be included?
 					sSchema = schema(sQualifiedName);
-					vResult = getOrFetchSchema(that, mScope, sSchema, logWithLocation);
+					vResult = that._getOrFetchSchema(mScope, sSchema, logWithLocation);
 				}
 
 				if (sQualifiedName in mScope) {
@@ -1488,14 +1527,33 @@ sap.ui.define([
 						return i + 1 >= aSegments.length || log(WARNING, "Invalid empty segment");
 					}
 					if (sSegment[0] === "@") {
-						if (sSegment === "@sapui.name") {
-							vResult = sName;
+						/*
+						 * Sets the result to the given value, which must not be
+						 * <code>undefined</code>, and checks that the current segment is the last.
+						 *
+						 * @param {any} vValue - the new <code>vResult</code>
+						 * @returns {boolean} <code>false</code>
+						 */
+						// eslint-disable-next-line no-inner-declarations
+						function terminal(vValue) {
+							vResult = vValue;
 							if (vResult === undefined) {
-								log(WARNING, "Unsupported path before @sapui.name");
+								log(WARNING, "Unsupported path before " + sSegment);
 							} else if (i + 1 < aSegments.length) {
-								log(WARNING, "Unsupported path after @sapui.name");
+								log(WARNING, "Unsupported path after " + sSegment);
 							}
 							return false;
+						}
+
+						if (sSegment === "@sapui.name") {
+							if (sName === undefined && bSplitSegment && i
+								&& aSegments[i - 1] === "$NavigationPropertyBinding") {
+								sName = vResult;
+							}
+							return terminal(sName);
+						}
+						if (sSegment === "@$ui5.target") {
+							return terminal(sTarget);
 						}
 						if (sSegment[1] === "@") {
 							// computed annotation
@@ -1576,7 +1634,7 @@ sap.ui.define([
 			}
 
 			if (!steps(sResolvedPath.slice(1)) && SyncPromise.isThenable(vResult)) {
-				// try again after getOrFetchSchema's promise has resolved,
+				// try again after #_getOrFetchSchema's promise has resolved,
 				// but avoid endless loop for computed annotations returning a promise!
 				vResult = vResult.then(function () {
 					return that.fetchObject(sPath, oContext, mParameters);
@@ -2841,6 +2899,13 @@ sap.ui.define([
 	 *     as the annotation does not have a "$Type" property.
 	 *   <li> A technical property (that is, a numerical segment or one starting with a "$")
 	 *     immediately before "@sapui.name" is invalid, for example "/$EntityContainer@sapui.name".
+	 *   <li> Since 1.127.0, "@sapui.name" can also be used to access the resulting name of an
+	 *     entity set via a navigation property binding. This allows XML Templating to use
+	 *     "${entitySet>@sapui.name}" no matter whether the variable "entitySet" refers to "/TEAMS"
+	 *     or "/TEAMS/$NavigationPropertyBinding/TEAM_2_EMPLOYEES". This way, "/TEAMS@sapui.name"
+	 *     results in "TEAMS" and "/TEAMS/$NavigationPropertyBinding/TEAM_2_EMPLOYEES@sapui.name"
+	 *     results either in a simple name like "EMPLOYEES" or maybe in a path like
+	 *     "some.other.EntityContainer/SomeEntitySet".
 	 * </ul>
 	 * The path must not continue after "@sapui.name".
 	 *
@@ -3487,16 +3552,16 @@ sap.ui.define([
 			sReferenceUri = new URI(sReferenceUri).absoluteTo(this.sUrl).toString();
 
 			if ("$IncludeAnnotations" in oReference) {
-				reportAndThrowError(this, "Unsupported IncludeAnnotations", sUrl);
+				this._reportAndThrowError("Unsupported IncludeAnnotations", sUrl);
 			}
 			for (i in oReference.$Include) {
 				sSchema = oReference.$Include[i];
 				if (sSchema in mScope) {
-					reportAndThrowError(this, "A schema cannot span more than one document: "
+					this._reportAndThrowError("A schema cannot span more than one document: "
 						+ sSchema + " - is both included and defined",
 						sUrl);
 				}
-				addUrlForSchema(this, sSchema, sReferenceUri, sUrl);
+				this._addUrlForSchema(sSchema, sReferenceUri, sUrl);
 			}
 		}
 

@@ -4,11 +4,11 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-// Provides class sap.ui.test.v4models.sapSystem.Component
+// Provides class testdata.v4models.sapSystem.Component
 sap.ui.define(["sap/ui/core/UIComponent"], function(UIComponent) {
 	"use strict";
 
-	return UIComponent.extend("sap.ui.test.v4models.sapSystem.Component", {
+	return UIComponent.extend("testdata.v4models.sapSystem.Component", {
 		interfaces: ["sap.ui.core.IAsyncContentCreation"],
 		metadata: {
 			manifest: "json"

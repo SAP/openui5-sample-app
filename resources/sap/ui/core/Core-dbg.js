@@ -30,6 +30,7 @@ sap.ui.define([
 	"sap/base/util/ObjectPath",
 	"sap/base/util/Version",
 	"sap/ui/Device",
+	"sap/ui/Global",
 	"sap/ui/VersionInfo",
 	"sap/ui/base/EventProvider",
 	"sap/ui/base/Interface",
@@ -80,6 +81,7 @@ sap.ui.define([
 		ObjectPath,
 		Version,
 		Device,
+		Global,
 		VersionInfo,
 		EventProvider,
 		Interface,
@@ -101,6 +103,42 @@ sap.ui.define([
 	"use strict";
 
 	var oCore;
+
+	/**
+	 * The Core version, e.g. '1.127.0'
+	 * @name sap.ui.core.Core.version
+	 * @final
+	 * @type {string}
+	 * @static
+	 * @since 1.127
+	 * @private
+	 * @ui5-restricted sap.ui.core, sap.ui.test
+	 */
+	const sVersion = "1.127.0";
+
+	/**
+	 * The buildinfo.
+	 * @typedef {object} sap.ui.core.Core.BuildInfo
+	 * @property {string} buildtime the build timestamp, e.g. '20240625091308'
+	 * @since 1.127
+	 * @private
+	 * @ui5-restricted sap.ui.core, sap.ui.test
+	 */
+
+	/**
+	 * The buildinfo, containing a build timestamp.
+	 * @name sap.ui.core.Core.buildinfo
+	 * @final
+	 * @type {sap.ui.core.Core.BuildInfo}
+	 * @static
+	 * @since 1.127
+	 * @private
+	 * @ui5-restricted sap.ui.core, sap.ui.test
+	 */
+	const oBuildinfo = Object.assign({}, Global.buildinfo);
+	 // freeze since it is exposed as a property on the Core and must not be changed at runtime
+	 // (refer to Core#getInterface)
+	Object.freeze(oBuildinfo);
 
 	// getComputedStyle polyfill + syncXHR fix for firefox
 	if ( Device.browser.firefox ) {
@@ -396,7 +434,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 * @final
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @alias sap.ui.core.Core
 	 * @public
 	 * @hideconstructor
@@ -955,6 +993,23 @@ sap.ui.define([
 		}
 
 	});
+
+	/*
+	 * Overwrite getInterface so that we can add the version info as a property
+	 * to the Core.
+	 */
+	Core.prototype.getInterface = function() {
+		const oCoreInterface = BaseObject.prototype.getInterface.call(this);
+		Object.defineProperties(oCoreInterface, {
+			"version": {
+				value: sVersion
+			},
+			"buildinfo": {
+				value: oBuildinfo
+			}
+		});
+		return oCoreInterface;
+	};
 
 	/**
 	 * Map of event names and ids, that are provided by this class
@@ -2308,7 +2363,7 @@ sap.ui.define([
 	 *    synchronously rendering UI updates is no longer supported as it can lead to unnecessary
 	 *    intermediate DOM updates or layout shifting etc. Controls should rather use invalidation
 	 *    and apps should not trigger rendering at all but rather rely on the framework's automatic
-	 *    update mechanisms. Test code can use the test module <code>sap/ui/qunit/utils/nextUIUpdate</code>
+	 *    update mechanisms. Test code can use the test module <code>sap/ui/test/utils/nextUIUpdate</code>
 	 *    as a convenient way to wait for the next asynchronous rendering.
 	 */
 	Core.prototype.applyChanges = function() {

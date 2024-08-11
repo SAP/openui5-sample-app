@@ -17,7 +17,37 @@ sap.ui.define([
 	"use strict";
 
 	// Marker to not 'forget' ui5Objects
-	var sUI5ObjectMarker = Symbol("ui5object");
+	const UI5_OBJECT_MARKER = Symbol("ui5object");
+
+	// Marker that is used for aggregation binding. It's set on the instance
+	// cloned from the given template with value pointing to the original
+	// parent where the aggregation is defined. In case the aggregation is
+	// forwarded to another control, the original parent isn't changed and still
+	// points to the control before the aggregation gets forwarded.
+	const ORIGINAL_PARENT = Symbol("OriginalParent");
+
+	// Marker symbol for BindingInfos which already have extracted a
+	// named model from their path
+	const MODEL_NAME_EXTRACTED = Symbol("ModelNameExtracted");
+
+	/**
+	 * Checks if the "path" of the given BindingInfo/part contains
+	 * a model name and if so extracts it accordingly.
+	 * @param {sap.ui.base.BindingInfo} oPart the BindingInfo to check for a model name
+	 * @returns {sap.ui.base.BindingInfo} the modified BindingInfo
+	 */
+	function extractModelName(oPart) {
+		if (!oPart[MODEL_NAME_EXTRACTED]) {
+			// if a model separator is found in the path, extract model name and path
+			const iSeparatorPos = oPart.path.indexOf(">");
+			if (iSeparatorPos > 0) {
+				oPart.model = oPart.path.substr(0, iSeparatorPos);
+				oPart.path = oPart.path.substr(iSeparatorPos + 1);
+				oPart[MODEL_NAME_EXTRACTED] = true;
+			}
+		}
+		return oPart;
+	}
 
 	/**
 	 * This module is responsible for the following tasks:
@@ -40,8 +70,6 @@ sap.ui.define([
 		 * @ui5-restricted sap.ui.base, sap.ui.core
 		 */
 		createProperty: function(oBindingInfo) {
-			var iSeparatorPos;
-
 			// only one binding object with one binding specified
 			if (!oBindingInfo.parts) {
 				oBindingInfo.parts = [];
@@ -74,11 +102,7 @@ sap.ui.define([
 
 				// if a model separator is found in the path, extract model name and path
 				if (oPart.path !== undefined) {
-					iSeparatorPos = oPart.path.indexOf(">");
-					if (iSeparatorPos > 0) {
-						oPart.model = oPart.path.substr(0, iSeparatorPos);
-						oPart.path = oPart.path.substr(iSeparatorPos + 1);
-					}
+					extractModelName(oPart);
 				}
 				// if a formatter exists the binding mode can be one way or one time only
 				if (oBindingInfo.formatter &&
@@ -113,16 +137,18 @@ sap.ui.define([
 			} else if (oBindingInfo.template) {
 				// if we have a template we will create a factory function
 				oBindingInfo.factory = function(sId) {
-					return oBindingInfo.template.clone(sId);
+					const oClone = oBindingInfo.template.clone(sId);
+					// This flag is currently used by FieldHelp.js and it needs to be set only when a binding template is given.
+					// When a custom factory method is provided, it's not guaranteed that all instances created from the factory
+					// are bound to the same sub-path under the given aggregation path. Therefore we can't use the parent
+					// control for showing the header of the field help.
+					oClone[ORIGINAL_PARENT] = oBindingInfo[ORIGINAL_PARENT];
+					return oClone;
 				};
 			}
 
 			// if a model separator is found in the path, extract model name and path
-			var iSeparatorPos = oBindingInfo.path.indexOf(">");
-			if (iSeparatorPos > 0) {
-				oBindingInfo.model = oBindingInfo.path.substr(0, iSeparatorPos);
-				oBindingInfo.path = oBindingInfo.path.substr(iSeparatorPos + 1);
-			}
+			extractModelName(oBindingInfo);
 			return oBindingInfo;
 		},
 
@@ -134,14 +160,8 @@ sap.ui.define([
 		 * @ui5-restricted sap.ui.base, sap.ui.core
 		 */
 		createObject: function(oBindingInfo) {
-			var iSeparatorPos;
-
 			// if a model separator is found in the path, extract model name and path
-			iSeparatorPos = oBindingInfo.path.indexOf(">");
-			if (iSeparatorPos > 0) {
-				oBindingInfo.model = oBindingInfo.path.substr(0, iSeparatorPos);
-				oBindingInfo.path = oBindingInfo.path.substr(iSeparatorPos + 1);
-			}
+			extractModelName(oBindingInfo);
 			return oBindingInfo;
 		},
 
@@ -155,9 +175,9 @@ sap.ui.define([
 				if (oValue.Type) {
 					// if value contains the 'Type' property (capital 'T'), this is not a binding info.
 					oBindingInfo = undefined;
-				} else if (oValue[sUI5ObjectMarker]) {
+				} else if (oValue[UI5_OBJECT_MARKER]) {
 					// no bindingInfo, delete marker
-					delete oValue[sUI5ObjectMarker];
+					delete oValue[UI5_OBJECT_MARKER];
 				} else if (oValue.ui5object) {
 					// if value contains ui5object property, this is not a binding info,
 					// remove it and not check for path or parts property
@@ -199,7 +219,8 @@ sap.ui.define([
 			}
 		},
 
-		UI5ObjectMarker: sUI5ObjectMarker
+		UI5ObjectMarker: UI5_OBJECT_MARKER,
+		OriginalParent: ORIGINAL_PARENT
 	};
 
 	/**

@@ -64,7 +64,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 * @author SAP SE
 	 *
 	 * @public
@@ -1151,7 +1151,7 @@ sap.ui.define([
 	PluginBase.setConfigs({
 		"sap.ui.table.Table": {
 			selectableCells: ".sapUiTableDataCell",
-			scrollArea: "sapUiTableCtrlScr",
+			scrollArea: "tableCCnt",
 			scrollEvent: "firstVisibleRowChanged",
 			eventClearedAll: "sapUiTableClearAll",
 			onActivate: function(oTable, oPlugin) {

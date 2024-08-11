@@ -7489,7 +7489,7 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
-	QUnit.test("CollectionCache#handleResponse: kept-alive, update conflict", function (assert) {
+	QUnit.test("CollectionCache#handleResponse: kept alive, update conflict", function (assert) {
 		var oCache = this.createCache("Employees"),
 			oElement = {
 				"@odata.etag" : "new"
@@ -9982,7 +9982,7 @@ sap.ui.define([
 		sExpectedKeys : "", // aElements remains empty
 		iExpectedLength : 0,
 		sFilter : "key eq 'a6' or key eq 'a7'",
-		aKeptAliveKeys : ["g", "h"],
+		aKeptAliveKeys : ["h", "g"],
 		iLength : 0,
 		iStart : 24,
 		aValues : [{key : "g"}, {key : "h"}]

@@ -7,14 +7,12 @@
 // Provides control sap.m.SelectDialogBase.
 sap.ui.define([
 		'./library',
-		'sap/ui/Device',
 		'sap/ui/core/Control',
 		'sap/ui/core/InvisibleText',
 		"sap/ui/core/Lib"
 ],
 function(
 	library,
-	Device,
 	Control,
 	InvisibleText,
 	Library
@@ -36,7 +34,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -158,23 +156,13 @@ function(
 		return this.oInvisibleText;
 	};
 
-	SelectDialogBase.prototype._setInitialFocus = function () {
-		var oInitiallyFocusedControl;
-
-		if (!Device.system.desktop) {
-			return;
-		}
-
+	SelectDialogBase.prototype._getInitialFocus = function () {
 		switch (this.getInitialFocus()) {
 			case SelectDialogInitialFocus.SearchField:
-				oInitiallyFocusedControl = this._oSearchField;
-				break;
+				return this._oSearchField;
 			default:
-				oInitiallyFocusedControl = this._oDialog.getContent()[1];
-				break;
+				return this._oDialog.getContent()[1];
 		}
-
-		this._oDialog.setInitialFocus(oInitiallyFocusedControl);
 	};
 
 	return SelectDialogBase;

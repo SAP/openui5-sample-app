@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.126.1
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -1008,7 +1008,7 @@ sap.ui.define([
 		var oBundle = Library.getResourceBundleFor("sap.m"),
 			sAnnouncement = oBundle.getText("ACC_CTR_TYPE_HEADER_ROW") + " ";
 
-		if (this.isAllSelectableSelected()) {
+		if (this.getMultiSelectMode() !== "ClearAll" && this.isAllSelectableSelected()) {
 			sAnnouncement += oBundle.getText("LIST_ALL_SELECTED");
 		}
 

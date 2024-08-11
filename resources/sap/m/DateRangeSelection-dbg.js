@@ -168,8 +168,8 @@ sap.ui.define([
 	 * compact mode and provides a touch-friendly size in cozy mode.
 	 *
 	 * @extends sap.m.DatePicker
-	 * @version 1.126.1
-	 * @version 1.126.1
+	 * @version 1.127.0
+	 * @version 1.127.0
 	 *
 	 * @constructor
 	 * @public
@@ -311,6 +311,15 @@ sap.ui.define([
 		}
 
 		return sPlaceholder;
+	};
+
+	/**
+	 * Returns the message bundle key of the invisible text for the accessible name of the popover.
+	 * @private
+	 * @returns {string} The message bundle key
+	 */
+	DateRangeSelection.prototype._getAccessibleNameLabel = function() {
+		return "DATERANGESELECTION_POPOVER_ACCESSIBLE_NAME";
 	};
 
 	DateRangeSelection.prototype._getDateFormatPlaceholderText = function (oFormatOptions) {

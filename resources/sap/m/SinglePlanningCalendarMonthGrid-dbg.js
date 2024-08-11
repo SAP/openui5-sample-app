@@ -95,7 +95,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.126.1
+		 * @version 1.127.0
 		 *
 		 * @constructor
 		 * @private
@@ -578,9 +578,8 @@ sap.ui.define([
 				}
 
 				var oControl = this._findSrcControl(oEvent);
-				if (oControl && oControl.isA("sap.ui.unified.CalendarAppointment")) {
-					var sBundleKey = oControl.getSelected() ? "APPOINTMENT_SELECTED" : "APPOINTMENT_UNSELECTED";
-					this._oInvisibleMessage.announce(this._oUnifiedRB.getText(sBundleKey), InvisibleMessageMode.Polite);
+				if (oControl && oControl.isA("sap.ui.unified.CalendarAppointment") && !oControl.getSelected()) {
+					this._oInvisibleMessage.announce(this._oUnifiedRB.getText("APPOINTMENT_UNSELECTED"), InvisibleMessageMode.Polite);
 				}
 
 				// Prevent scrolling
@@ -1345,7 +1344,7 @@ sap.ui.define([
 				.getLibraryResourceBundle("sap.ui.unified")
 				.getText("CALENDAR_START_TIME");
 
-				return sStartTime + ": " + this._oFormatAriaFullDayCell.format(oStartDate) + "; ";
+				return sStartTime + ": " + this._oFormatAriaFullDayCell.format(oStartDate);
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype._getAppointmentAnnouncementInfo = function(oAppointment) {
