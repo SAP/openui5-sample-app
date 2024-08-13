@@ -14,8 +14,8 @@
 			}
 		},
 		"rootView": {
-			"viewName": "sap.ui.demo.todo.view.App",
-			"type": "XML",
+			"viewName": "sap.ui.demo.todo.view.Home",
+			"type": "JS",
 			"id": "app"
 		},
 		"models": {
