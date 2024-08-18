@@ -21,7 +21,7 @@
 	"devDependencies": {
 		"@eslint/js": "^9.8.0",
 		"@ui5/cli": "^4.0.4",
-		"@ui5/linter": "^0.3.1",
+		"@ui5/linter": "^0.3.2",
 		"@ui5/middleware-code-coverage": "^2.0.0",
 		"eslint": "^9.9.0",
 		"globals": "^15.9.0",
