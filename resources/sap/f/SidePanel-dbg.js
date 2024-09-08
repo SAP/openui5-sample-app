@@ -151,7 +151,7 @@ sap.ui.define([
  	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -1082,13 +1082,18 @@ sap.ui.define([
 	};
 
 	SidePanel.prototype._getSideContentHeaderIcon = function() {
-		var oSelectedItem = this._getSelectedItem();
+		var oSelectedItem = this._getSelectedItem(),
+			sSrc = oSelectedItem && oSelectedItem.getIcon();
+
+		if (!sSrc) {
+			return null;
+		}
 
 		if (!this._contentHeaderIcon) {
 			this._contentHeaderIcon = new Icon();
 		}
 
-		oSelectedItem && this._contentHeaderIcon.setSrc(oSelectedItem.getIcon());
+		oSelectedItem && this._contentHeaderIcon.setSrc(sSrc);
 
 		return this._contentHeaderIcon;
 	};

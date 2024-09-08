@@ -1617,7 +1617,11 @@ sap.ui.define([
 						.reportStateMessages(that.sResourcePath, {}, [sPath + sPredicate]);
 					fnOnRemove(false);
 				} else if (bRemoveFromCollection) {
-					_Helper.copySelected(aElements.$byPredicate[sPredicate], aReadResult[0]);
+					const oOldElement = aElements.$byPredicate[sPredicate];
+					_Helper.copySelected(oOldElement, aReadResult[0]);
+					if ("@$ui5.context.isTransient" in oOldElement) {
+						aReadResult[0]["@$ui5.context.isTransient"] = false;
+					}
 					that.removeElement(iIndex, sPredicate, aElements, sPath);
 					// element no longer in cache -> re-insert via replaceElement
 					that.replaceElement(aElements, undefined, sPredicate, aReadResult[0],
@@ -2563,6 +2567,8 @@ sap.ui.define([
 		// number of all (client-side) created elements (active or inactive)
 		this.aElements.$created = 0;
 		// this.aElements.$deleted = []; // only created on demand
+		// "select all", only created on demand
+		// this.aElements["@$ui5.context.isSelected"] = false;
 		this.aElements.$tail = undefined; // promise for a read w/o $top
 		// upper limit for @odata.count, maybe sharp; assumes #getQueryString can $filter out all
 		// created elements
@@ -2739,9 +2745,9 @@ sap.ui.define([
 	};
 
 	/**
-	 * Fills the given range of currently available elements with the given promise. If it is not
-	 * an option to enlarge the array to accommodate <code>iEnd - 1</code>, the promise is also
-	 * stored in <code>aElements.$tail</code>.
+	 * Fills the given range of currently available elements with the given promise. If the
+	 * collection count is unknown and it is not an option to enlarge the array to accommodate
+	 * <code>iEnd - 1</code>, the promise is stored in <code>aElements.$tail</code>.
 	 *
 	 * @param {sap.ui.base.SyncPromise} oPromise
 	 *   The promise
@@ -2749,13 +2755,19 @@ sap.ui.define([
 	 *   The start index
 	 * @param {number} iEnd
 	 *   The end index (will not be filled)
+	 * @throws {Error}
+	 *   If the array cannot be filled and the promise was stored in <code>aElements.$tail</code> in
+	 *   a previous call already
 	 *
 	 * @private
 	 */
 	_CollectionCache.prototype.fill = function (oPromise, iStart, iEnd) {
 		var i;
 
-		if (iEnd > this.aElements.length && iEnd - iStart > 1024) {
+		// iEnd = Infinity is not an issue here. If $count is known, it is taken care of that iEnd
+		// is never higher than $count (using iLimit) @see #read, @see ODataUtils#_getReadIntervals.
+		// If not, iEnd is reduced to this.aElements.length here.
+		if (!this.aElements.$count && iEnd > this.aElements.length && iEnd - iStart > 1024) {
 			if (this.aElements.$tail && oPromise) {
 				throw new Error("Cannot fill from " + iStart + " to " + iEnd
 					+ ", $tail already in use, # of elements is " + this.aElements.length);
@@ -3520,6 +3532,26 @@ sap.ui.define([
 			mTypeForMetaPath = this.getTypes(),
 			that = this;
 
+		/*
+		 * Handles the response for a single element.
+		 *
+		 * @param {object} oElement - The response for a single element
+		 * @param {string} [sPredicate] - The element's key predicate
+		 */
+		function handle(oElement,
+				sPredicate = _Helper.getPrivateAnnotation(oElement, "predicate")) {
+			that.beforeUpdateSelected?.(sPredicate, oElement);
+			_Helper.updateSelected(that.mChangeListeners, sPredicate,
+				that.aElements.$byPredicate[sPredicate], oElement, aPaths,
+				function preventKeyPredicateChange(sPath) {
+					sPath = sPath.slice(sPredicate.length + 1); // strip sPredicate
+					// not (below) a $NavigationPropertyPath?
+					return !aPaths.some(function (sSideEffectPath) {
+						return _Helper.getRelativePath(sPath, sSideEffectPath) !== undefined;
+					});
+				});
+		}
+
 		this.checkSharedRequest();
 
 		mQueryOptions = _Helper.intersectQueryOptions(
@@ -3528,31 +3560,29 @@ sap.ui.define([
 		if (!mQueryOptions) {
 			return SyncPromise.resolve(); // micro optimization: use *sync.* promise which is cached
 		}
-		if (this.beforeRequestSideEffects) {
-			this.beforeRequestSideEffects(mQueryOptions);
-		}
+		this.beforeRequestSideEffects?.(mQueryOptions);
 
+		delete mQueryOptions.$count;
+		delete mQueryOptions.$orderby;
+		delete mQueryOptions.$search;
 		if (bSingle) {
-			aElements = [this.aElements.$byPredicate[aPredicates[0]]];
+			delete mQueryOptions.$filter;
 		} else {
 			aElements = this.keepOnlyGivenElements(aPredicates);
 			if (!aElements.length) {
 				return SyncPromise.resolve(); // micro optimization: use cached *sync.* promise
 			}
+			mQueryOptions.$filter = aElements.map(function (oElement) {
+				// all elements have a key predicate, so we will get a key filter
+				return _Helper.getKeyFilter(oElement, that.sMetaPath, mTypeForMetaPath);
+			}).sort().join(" or ");
+			if (aElements.length > 1) { // avoid small default page size for server-driven paging
+				mQueryOptions.$top = aElements.length;
+			}
+			_Helper.selectKeyProperties(mQueryOptions, mTypeForMetaPath[this.sMetaPath]);
 		}
-		mQueryOptions.$filter = aElements.map(function (oElement) {
-			// all elements have a key predicate, so we will get a key filter
-			return _Helper.getKeyFilter(oElement, that.sMetaPath, mTypeForMetaPath);
-		}).sort().join(" or ");
-		if (aElements.length > 1) { // avoid small default page size for server-driven paging
-			mQueryOptions.$top = aElements.length;
-		}
-		_Helper.selectKeyProperties(mQueryOptions, mTypeForMetaPath[this.sMetaPath]);
-		delete mQueryOptions.$count;
-		delete mQueryOptions.$orderby;
-		delete mQueryOptions.$search;
 		mMergeableQueryOptions = _Helper.extractMergeableQueryOptions(mQueryOptions);
-		sResourcePath = this.sResourcePath
+		sResourcePath = this.sResourcePath + (bSingle ? aPredicates[0] : "")
 			+ this.oRequestor.buildQueryString(this.sMetaPath, mQueryOptions, false, true);
 
 		return this.oRequestor.request("GET", sResourcePath, oGroupLock, undefined, undefined,
@@ -3565,36 +3595,25 @@ sap.ui.define([
 						return aPaths;
 					}
 			}).then(function (oResult) {
-				var oElement, sPredicate, i, n;
-
-				function preventKeyPredicateChange(sPath) {
-					sPath = sPath.slice(sPredicate.length + 1); // strip sPredicate
-					// not (below) a $NavigationPropertyPath?
-					return !aPaths.some(function (sSideEffectPath) {
-						return _Helper.getRelativePath(sPath, sSideEffectPath) !== undefined;
-					});
-				}
-
 				if (bSkip) {
 					return;
 				}
 
-				if (oResult.value.length !== aElements.length) {
-					throw new Error("Expected " + aElements.length + " row(s), but instead saw "
-						+ oResult.value.length);
-				}
-				// Note: iStart makes no sense here (use NaN instead), but is not needed because
-				// we know we have key predicates
-				that.visitResponse(oResult, mTypeForMetaPath, undefined, "", NaN, true);
-				for (i = 0, n = oResult.value.length; i < n; i += 1) {
-					oElement = oResult.value[i];
-					sPredicate = _Helper.getPrivateAnnotation(oElement, "predicate");
-					if (that.beforeUpdateSelected) {
-						that.beforeUpdateSelected(sPredicate, oElement);
+				if (bSingle) {
+					that.visitResponse(oResult, mTypeForMetaPath, undefined, aPredicates[0],
+						undefined, true);
+					handle(oResult, aPredicates[0]);
+				} else {
+					if (oResult.value.length !== aElements.length) {
+						throw new Error("Expected " + aElements.length + " row(s), but instead saw "
+							+ oResult.value.length);
 					}
-					_Helper.updateSelected(that.mChangeListeners, sPredicate,
-						that.aElements.$byPredicate[sPredicate], oElement, aPaths,
-						preventKeyPredicateChange);
+					// Note: iStart makes no sense here (use NaN instead), but is not needed because
+					// we know we have key predicates
+					that.visitResponse(oResult, mTypeForMetaPath, undefined, "", NaN, true);
+					for (let i = 0, n = oResult.value.length; i < n; i += 1) {
+						handle(oResult.value[i]);
+					}
 				}
 			});
 	};
@@ -3991,6 +4010,7 @@ sap.ui.define([
 		var sResourcePath = this.sResourcePath + this.sQueryString,
 			that = this;
 
+		this.registerChangeListener(sPath, oListener);
 		if (this.oPromise) {
 			oGroupLock.unlock();
 		} else {
@@ -4013,7 +4033,6 @@ sap.ui.define([
 			if (oResult && oResult["$ui5.deleted"]) {
 				throw new Error("Cannot read a deleted entity");
 			}
-			that.registerChangeListener(sPath, oListener);
 			return that.drillDown(oResult, sPath, oGroupLock, bCreateOnDemand);
 		});
 	};

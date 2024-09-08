@@ -12,13 +12,14 @@ sap.ui.define([
 	'sap/ui/core/ValueStateSupport',
 	'sap/ui/core/IndicationColorSupport',
 	'sap/ui/core/library',
+	'sap/ui/core/_IconRegistry',
 	'sap/ui/base/DataType',
 	'./ObjectStatusRenderer',
 	'sap/m/ImageHelper',
 	'sap/ui/core/LabelEnablement',
 	"sap/ui/events/KeyCodes"
 ],
-	function(library, Control, Library, ValueStateSupport, IndicationColorSupport, coreLibrary, DataType, ObjectStatusRenderer, ImageHelper, LabelEnablement, KeyCodes) {
+	function(library, Control, Library, ValueStateSupport, IndicationColorSupport, coreLibrary, _IconRegistry, DataType, ObjectStatusRenderer, ImageHelper, LabelEnablement, KeyCodes) {
 	"use strict";
 
 
@@ -47,7 +48,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
@@ -202,17 +203,22 @@ sap.ui.define([
 			mProperties = {
 				src : this.getIcon(),
 				densityAware : this.getIconDensityAware(),
-				useIconTooltip : false,
+				useIconTooltip : bIsIconOnly,
 				decorative: !this.getActive()
 			};
-
-		if (bIsIconOnly) {
-			mProperties.alt = Library.getResourceBundleFor("sap.m").getText("OBJECT_STATUS_ICON");
-		}
 
 		this._oImageControl = ImageHelper.getImageControl(sImgId, this._oImageControl, this, mProperties);
 
 		return this._oImageControl;
+	};
+
+	ObjectStatus.prototype._getAriaIconTitle = function() {
+		var vIconInfo;
+		if (this._oImageControl.isA("sap.ui.core.Icon")) {
+			vIconInfo = _IconRegistry.getIconInfo(this._oImageControl.getSrc(), undefined, "mixed");
+		}
+
+		return vIconInfo ? vIconInfo.text : Library.getResourceBundleFor("sap.m").getText("OBJECT_STATUS_ICON");
 	};
 
 	/**

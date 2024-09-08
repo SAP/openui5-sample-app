@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.127.0
+		 * @version 1.128.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -100,6 +100,7 @@ sap.ui.define([
 		this.bInactive = bInactive || undefined; // be in sync with the annotation
 		this.iIndex = iIndex;
 		this.bKeepAlive = false;
+		this.bOutOfPlace = false;
 		this.bSelected = false;
 		this.fnOnBeforeDestroy = undefined;
 	}
@@ -160,19 +161,26 @@ sap.ui.define([
 	/**
 	 * Collapses the group node that this context points to.
 	 *
+	 * @param {boolean} [bAll]
+	 *   Whether to collapse the node and all its descendants (@experimental as of version 1.128.0)
 	 * @throws {Error}
-	 *   If the context points to a node that is not expandable, already collapsed, or
-	 *   is a grand total.
+	 *   If the context points to a node that
+	 *   <ul>
+	 *     <li> is not expandable,
+	 *     <li> is already collapsed,
+	 *     <li> is a grand total,
+	 *   </ul>
+	 *   or if <code>bAll</code> is <code>true</code> but no recursive hierarchy is present.
 	 *
 	 * @public
 	 * @see #expand
 	 * @see #isExpanded
 	 * @since 1.83.0
 	 */
-	Context.prototype.collapse = function () {
+	Context.prototype.collapse = function (bAll) {
 		switch (this.getProperty("@$ui5.node.level") === 0 ? undefined : this.isExpanded()) {
 			case true:
-				this.oBinding.collapse(this);
+				this.oBinding.collapse(this, bAll);
 				break;
 			case false:
 				throw new Error("Already collapsed: " + this);
@@ -644,8 +652,9 @@ sap.ui.define([
 	 *   <code>iLevels >= Number.MAX_SAFE_INTEGER</code> can be used to expand all levels. If a node
 	 *   is expanded a second time, the expand state of the descendants is not changed.
 	 * @throws {Error}
-	 *   If the context points to a node that is not expandable or already expanded, or the given
-	 *   number of levels is not a positive number
+	 *   If the context points to a node that is not expandable or already expanded, the given
+	 *   number of levels is not a positive number, or the given number of levels is greater than
+	 *   1 without a recursive hierarchy
 	 *
 	 * @public
 	 * @see #collapse
@@ -1200,7 +1209,8 @@ sap.ui.define([
 
 		return this.bKeepAlive
 			|| !mParameters.$$sharedRequest
-			&& this.isSelected() && this !== this.oBinding.getHeaderContext()
+			&& this.oBinding.getHeaderContext?.()
+			&& this.oBinding.getHeaderContext().isSelected() !== this.isSelected()
 			&& !(this.oBinding.isRelative() && !mParameters.$$ownRequest)
 			&& !_Helper.isDataAggregation(mParameters)
 			// check for key predicate in the last path segment
@@ -1265,6 +1275,22 @@ sap.ui.define([
 	 */
 	Context.prototype.isKeepAlive = function () {
 		return this.bKeepAlive;
+	};
+
+	/**
+	 * Tells whether the created node that this context points to is currently shown out of place.
+	 * It is even shown if it doesn't match current search or filter criteria! All out-of-place
+	 * nodes are shown as the first children of their parent or as the first roots, but not in their
+	 * usual position as defined by the service and the current sort order.
+	 *
+	 * @returns {boolean}
+	 *   Whether the created node that this context points to is currently shown out of place
+	 *
+	 * @private
+	 * @see #setOutOfPlace
+	 */
+	Context.prototype.isOutOfPlace = function () {
+		return this.bOutOfPlace;
 	};
 
 	/**
@@ -1336,13 +1362,13 @@ sap.ui.define([
 	 *     "persisted"; otherwise, their states remain unaffected by the move.
 	 * </ul>
 	 *
-	 * Note that a node in the "created" state is not shown in its usual position as defined by the
-	 * service and the current sort order, but out of place as the first child of its parent. It is
-	 * even shown if it doesn't match current search or filter criteria! Once it becomes simply
-	 * "persisted" due to the move (as described above), this special handling ends. The node is
-	 * then shown in place again, or it might even not be shown anymore due to the search or filter
-	 * criteria. If the latter happens to this context, its {@link #getIndex index} becomes
-	 * <code>undefined</code>.
+	 * Note that nodes in the "created" state are not shown in their usual position as defined by
+	 * the service and the current sort order, but out of place as the first children of their
+	 * parent or as the first roots. They are even shown if they don't match current search or
+	 * filter criteria! Once they become simply "persisted" due to the move (as described above),
+	 * this special handling ends. These nodes are then shown in place again, or they might even not
+	 * be shown anymore due to the search or filter criteria. If the latter happens to this context,
+	 * its {@link #getIndex index} becomes <code>undefined</code>.
 	 *
 	 * @param {object} oParameters - A parameter object
 	 * @param {sap.ui.model.odata.v4.Context|null} [oParameters.nextSibling]
@@ -2188,6 +2214,29 @@ sap.ui.define([
 	Context.prototype.setNewGeneration = function () {
 		iGenerationCounter += 1;
 		this.iGeneration = iGenerationCounter;
+	};
+
+	/**
+	 * Determines whether the created node that this context points to is shown out of place (see
+	 * {@link #isOutOfPlace}). Once it is shown in place again, it becomes 'persisted' (see also
+	 * "Context states" of {@link topic:c9723f8265f644af91c0ed941e114d46 Creating an Entity}).
+	 *
+	 * @param {boolean} bOutOfPlace
+	 *   Whether the created node that this context points to is shown out of place
+	 * @throws {Error}
+	 *   If this context is not currently 'created persisted'
+	 *
+	 * @private
+	 * @see #created
+	 */
+	Context.prototype.setOutOfPlace = function (bOutOfPlace) {
+		if (!bOutOfPlace) {
+			this.setPersisted();
+		} else if (!this.created()) {
+			// Note: due to timing issues, #isTransient may still return true
+			throw new Error("Not 'created persisted'");
+		}
+		this.bOutOfPlace = bOutOfPlace;
 	};
 
 	/**

@@ -124,7 +124,7 @@ sap.ui.define([
 		* @extends sap.ui.core.Control
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.127.0
+		* @version 1.128.0
 		*
 		* @public
 		* @alias sap.m.Popover
@@ -472,6 +472,7 @@ sap.ui.define([
 
 				if (Device.system.desktop &&
 					this.oPopup.isTopmost() &&
+					!this.getModal() &&
 					isElementCovered(this._getOpenByDomRef(), this.getDomRef())) {
 					this.close();
 					return;
@@ -679,7 +680,8 @@ sap.ui.define([
 				if (!this._oScroller) {
 					this._oScroller = new ScrollEnablement(this, this.getId() + "-scroll", {
 						horizontal: bHorScrolling,
-						vertical: bVerScrolling
+						vertical: bVerScrolling,
+						callBefore: true
 					});
 				} else {
 					this._oScroller.setHorizontal(bHorScrolling);
@@ -1251,7 +1253,7 @@ sap.ui.define([
 		 */
 		Popover.prototype.onmousedown = function (oEvent) {
 			var bRTL = Localization.getRTL();
-			if (!oEvent.target.classList || !oEvent.target.classList.contains("sapMPopoverResizeHandle")) {
+			if (!oEvent.target.closest(".sapMPopoverResizeHandle")) {
 				return;
 			}
 
@@ -1910,7 +1912,7 @@ sap.ui.define([
 				iMaxContentWidth = this._getMaxContentWidth(oPosParams),
 				iMaxContentHeight = this._getMaxContentHeight(oPosParams);
 
-				//make sure iMaxContentHeight is NEVER less than 0
+			//make sure iMaxContentHeight is NEVER less than 0
 			iMaxContentHeight = Math.max(iMaxContentHeight, 0);
 
 			oCSS["max-width"] = iMaxContentWidth + "px";

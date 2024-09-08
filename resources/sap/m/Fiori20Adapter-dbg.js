@@ -28,7 +28,7 @@ sap.ui.define([
 	 *
 	 *
 	 * @class text
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 * @private
 	 * @since 1.38
 	 * @alias HeaderAdapter
@@ -249,7 +249,7 @@ sap.ui.define([
 	 * Constructor for an sap.m.Fiori20Adapter.
 	 *
 	 * @class text
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 * @private
 	 * @since 1.38
 	 * @alias sap.m.Fiori20Adapter
@@ -878,7 +878,7 @@ sap.ui.define([
 	}
 
 	function isListBasedControl (oControl) {
-		return isInstanceOfGroup(oControl, ["sap/m/List", "sap/m/Table", "sap/ui/table/Table", "sap/ui/table/TreeTable"]);
+		return isInstanceOfGroup(oControl, ["sap/m/List", "sap/m/SelectList", "sap/m/Table", "sap/ui/table/Table", "sap/ui/table/TreeTable", "sap/ui/comp/variants/VariantManagement"]);
 	}
 
 	function isInstanceOfGroup(oControl, aTypes) {

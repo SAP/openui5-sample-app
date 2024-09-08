@@ -1,7 +1,0 @@
-<mvc:View
-	xmlns:mvc="sap.ui.core.mvc"
-	xmlns="sap.m">
-	<Page id="page"
-		showHeader="false">
-	</Page>
-</mvc:View>

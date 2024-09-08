@@ -53,7 +53,7 @@ sap.ui.define([
 	 * and requests, unified behavior of instant and deferred uploads, as well as improved progress indication.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -434,7 +434,13 @@ sap.ui.define([
 						 * The file that fails to meet the file size restriction specified in the
 						 * <code>maxFileSize</code> property.
 						 */
-						item: {type: "sap.m.upload.UploadSetItem"}
+						item: {type: "sap.m.upload.UploadSetItem"},
+
+						/**
+						 * The size of a file in MB, that fails to meet the file size restriction specified in the <code>maxFileSize</code> property.
+						 * @since 1.128.0
+						 */
+						fileSize: {type: "float"}
 					}
 				},
 				/**
@@ -536,7 +542,7 @@ sap.ui.define([
 				illustrationType: IllustratedMessageType.NoData,
 				illustrationSize: IllustratedMessageSize.Auto,
 				title: this._oRb.getText("UPLOAD_SET_NO_DATA_TEXT"),
-				description: this._oRb.getText("UPLOADCOLLECTION_NO_DATA_DESCRIPTION")
+				description: this.getUploadEnabled() ? this._oRb.getText("UPLOADCOLLECTION_NO_DATA_DESCRIPTION") : " "
 			});
 		}
 		this._oIllustratedMessage.addIllustrationAriaLabelledBy(this._oInvisibleText.getId());
@@ -616,15 +622,20 @@ sap.ui.define([
 			}.bind(this)
 		};
 		this._oList.addDelegate(this._oListEventDelegate);
+		var aList = this.getList();
 		if (this._bItemRemoved) {
 			this._bItemRemoved = false;
-			var aList = this.getList();
 			var aListItems = aList.getItems();
 			if (aListItems.length > 0) {
 				aListItems[0].focus();
 			} else {
 				aList.getDomRef().querySelector(".sapMUCNoDataPage").focus();
 			}
+		}
+		var oNoDataDom = aList?.getDomRef()?.querySelector(".sapMUCNoDataPage");
+		var iCurrentHeight = oNoDataDom?.offsetHeight;
+		if (iCurrentHeight){
+			oNoDataDom.style.height = iCurrentHeight + "px";
 		}
 
 		if (this.getCloudFilePickerEnabled()) {
@@ -767,12 +778,12 @@ sap.ui.define([
 		var sNoDataText = "";
 		var oIllustratedMessage = this.getAggregation("illustratedMessage");
 		if (!sText) {
-			sNoDataText = oIllustratedMessage.getTitle() + " " + oIllustratedMessage.getDescription();
+			sNoDataText = oIllustratedMessage.getTitle() + " " + this.getUploadEnabled() ? oIllustratedMessage.getDescription() : " ";
 		} else if (sText) {
 			if (bIsDescription) {
 				sNoDataText = oIllustratedMessage.getTitle() + " " + sText;
 			} else {
-				sNoDataText = sText + " " + oIllustratedMessage.getDescription();
+				sNoDataText = sText + " " + this.getUploadEnabled() ? oIllustratedMessage.getDescription() : " ";
 			}
 		}
 		return sNoDataText;
@@ -1007,7 +1018,7 @@ sap.ui.define([
 			if (this._getDragIndicator()) {
 				oAggregation.setIllustrationType(IllustratedMessageType.UploadCollection);
 				oAggregation.setTitle(this.getDragDropText());
-				oAggregation.setDescription(this.getDragDropDescription());
+				oAggregation.setDescription(this.getUploadEnabled() ? this.getDragDropDescription() : " ");
 				oAggregation.removeAllAdditionalContent();
 			} else {
 				oAggregation.setIllustrationType(this._oIllustratedMessageClone.getIllustrationType());
@@ -1017,9 +1028,9 @@ sap.ui.define([
 					oAggregation.setTitle(this._oRb.getText("UPLOAD_SET_NO_DATA_TEXT"));
 				}
 				if (this._oIllustratedMessageClone.getDescription()) {
-					oAggregation.setDescription(this._oIllustratedMessageClone.getDescription());
+					oAggregation.setDescription(this.getUploadEnabled() ? this._oIllustratedMessageClone.getDescription() : " ");
 				} else {
-					oAggregation.setDescription(this._oRb.getText("UPLOADCOLLECTION_NO_DATA_DESCRIPTION"));
+					oAggregation.setDescription(this.getUploadEnabled() ? this._oRb.getText("UPLOADCOLLECTION_NO_DATA_DESCRIPTION") : " ");
 				}
 				if (this._oIllustratedMessageClone.getAdditionalContent().length) {
 					oAggregation.removeAllAdditionalContent();
@@ -1578,18 +1589,19 @@ sap.ui.define([
 			sMessageText = this._oRb.getText("UPLOAD_SET_DELETE_TEXT", oItem.getFileName());
 		}
 		this._oItemToBeDeleted = UploadSetItem._findById(oItem.getId(), this._getAllItems());
-		MessageBox.show(sMessageText, {
+		MessageBox.warning(sMessageText, {
 			id: this.getId() + "-deleteDialog",
 			title: this._oRb.getText("UPLOAD_SET_DELETE_TITLE"),
-			actions: [MessageBox.Action.OK, MessageBox.Action.CANCEL],
+			actions: [MessageBox.Action.DELETE, MessageBox.Action.CANCEL],
 			onClose: this._handleClosedDeleteDialog.bind(this),
 			dialogId: "messageBoxDeleteFile",
-			styleClass: this.hasStyleClass("sapUiSizeCompact") ? "sapUiSizeCompact" : ""
+			styleClass: this.hasStyleClass("sapUiSizeCompact") ? "sapUiSizeCompact" : "",
+			emphasizedAction: MessageBox.Action.DELETE
 		});
 	};
 
 	UploadSet.prototype._handleClosedDeleteDialog = function (sAction) {
-		if (sAction !== MessageBox.Action.OK) {
+		if (sAction !== MessageBox.Action.DELETE) {
 			return;
 		}
 		this.removeItem(this._oItemToBeDeleted);
@@ -1884,7 +1896,7 @@ sap.ui.define([
 	UploadSet.prototype._fireFileSizeExceed = function (oItem) {
 		var oSendItem = new UploadSetItem();
 		oSendItem.setFileName(oItem.getParameter('fileName'));
-		this.fireFileSizeExceeded({item: oSendItem});
+		this.fireFileSizeExceeded({item: oSendItem, fileSize: oItem.getParameter("fileSize") });
 	};
 
 	UploadSet.prototype._fireFilenameLengthExceed = function (oItem) {

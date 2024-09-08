@@ -133,7 +133,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.Toolbar,sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -233,6 +233,7 @@ sap.ui.define([
 
 		this._fnMediaChangeRef = this._fnMediaChange.bind(this);
 		Device.media.attachHandler(this._fnMediaChangeRef);
+		this._handleKeyNavigationBound =  this._handleKeyNavigation.bind(this);
 	};
 
 	OverflowToolbar.prototype.exit = function () {
@@ -317,7 +318,6 @@ sap.ui.define([
 	 */
 	OverflowToolbar.prototype.onAfterRendering = function () {
 		this._bInvalidatedAndNotRendered = false;
-
 		if (this._bContentVisibilityChanged) {
 			this._bControlsInfoCached = false;
 			this._bContentVisibilityChanged = false;
@@ -331,6 +331,13 @@ sap.ui.define([
 			this._doLayout();
 			this._applyFocus();
 		}
+
+		//Attach event listened needed for the arrow key navigation
+		if (this.getDomRef()) {
+			this.getDomRef().removeEventListener("keydown", this._handleKeyNavigationBound);
+			this.getDomRef().addEventListener("keydown", this._handleKeyNavigationBound);
+		}
+
 	};
 
 	OverflowToolbar.prototype.onsapfocusleave = function() {
@@ -1204,6 +1211,18 @@ sap.ui.define([
 			this._bOverflowButtonNeeded = bValue;
 		}
 		return this;
+	};
+
+	OverflowToolbar.prototype._getToolbarInteractiveControls = function () {
+		var aVisibleControls = this._getVisibleContent(),
+		    aInteractiveControls = aVisibleControls.filter(function(oControl) {
+			return this._getControlPriority(oControl) !== OverflowToolbarPriority.AlwaysOverflow
+				&& oControl.isA("sap.m.IToolbarInteractiveControl")
+				&& typeof (oControl._getToolbarInteractive) === "function" && oControl._getToolbarInteractive();
+		}, this);
+		aInteractiveControls.push(this._getOverflowButton());
+
+		return aInteractiveControls;
 	};
 
 	/**

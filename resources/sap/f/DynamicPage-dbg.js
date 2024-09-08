@@ -118,7 +118,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -454,7 +454,8 @@ sap.ui.define([
 	DynamicPage.prototype.onAfterRendering = function () {
 
 		var bShouldSnapWithScroll,
-			iCurrentScrollPosition;
+			iCurrentScrollPosition,
+			oHeader = this.getHeader();
 
 		if (this.getPreserveHeaderStateOnScroll()) {
 			// Ensure that in this tick DP and it's aggregations are rendered
@@ -486,6 +487,10 @@ sap.ui.define([
 
 		this._updateToggleHeaderVisualIndicators();
 		this._updateTitleVisualState();
+
+		if (exists(oHeader) && oHeader._setLandmarkInfo) {
+			oHeader._setLandmarkInfo(this.getLandmarkInfo());
+		}
 	};
 
 	DynamicPage.prototype.exit = function () {

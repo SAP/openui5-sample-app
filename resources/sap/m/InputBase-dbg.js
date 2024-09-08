@@ -73,7 +73,7 @@ function(
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 	 *
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -85,7 +85,8 @@ function(
 
 			interfaces : [
 				"sap.ui.core.IFormContent",
-				"sap.ui.core.ISemanticFormContent"
+				"sap.ui.core.ISemanticFormContent",
+				"sap.m.IToolbarInteractiveControl"
 			],
 			library: "sap.m",
 			properties: {
@@ -1342,6 +1343,19 @@ function(
 
 	InputBase.prototype.getFormRenderAsControl = function () {
 		return false;
+	};
+
+	/**
+	 * Required by the {@link sap.m.IToolbarInteractiveControl} interface.
+	 * Determines if the Control is interactive.
+	 *
+	 * @returns {boolean} If it is an interactive Control
+	 *
+	 * @private
+	 * @ui5-restricted sap.m.OverflowToolBar, sap.m.Toolbar
+	 */
+	InputBase.prototype._getToolbarInteractive = function () {
+		return true;
 	};
 
 	return InputBase;

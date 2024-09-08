@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/core/Element","sap/ui/core/date/UI5Date","sap/base/Log"],function(t,e,i){"use strict";var a=t.extend("sap.ui.unified.NonWorkingPeriod",{metadata:{library:"sap.ui.unified",properties:{date:{type:"object",group:"Data"}},defaultAggregation:"timeRange",aggregations:{timeRange:{type:"sap.ui.unified.TimeRange",multiple:false}}}});a.prototype.getStartDate=function(){if(!this.getDate()){return i.error("Enter a valid date.")}const t=e.getInstance(this.getDate());const a=this.getTimeRange().getStartDate();t.setHours(a.getHours(),a.getMinutes(),a.getMilliseconds());return t};a.prototype.getEndDate=function(){if(!this.getDate()){return i.error("Enter a valid date.")}const t=e.getInstance(this.getDate());const a=this.getTimeRange().getEndDate();t.setHours(a.getHours(),a.getMinutes(),a.getMilliseconds());return t};a.prototype.getDurationInMinutes=function(){return Math.abs(this.getStartDate().getTime()-this.getEndDate().getTime())/1e3/60};a.prototype.isRecurring=function(){return false};return a});
+//# sourceMappingURL=NonWorkingPeriod.js.map

@@ -49,7 +49,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -311,15 +311,15 @@ sap.ui.define([
 			sResult += sId + "-number ";
 		}
 
-		if (this.getUnit()) {
+		if (this.getUnit() && this.getEmptyIndicatorMode() === EmptyIndicatorMode.Off) {
 			sResult += sId + "-unit ";
 		}
 
-		if (this.getEmphasized()) {
+		if ((this.getNumber() && this.getEmphasized())) {
 			sResult += sId + "-emphasized ";
 		}
 
-		if (this.getState() !== ValueState.None) {
+		if ((this.getNumber() && this.getState() !== ValueState.None)) {
 			sResult += sId + "-state";
 		}
 

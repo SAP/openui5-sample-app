@@ -1,4 +1,0 @@
-<!-- stupid test that "extension fragments" can again be extended -->
-<ExtensionPoint name="replace.me" xmlns="sap.ui.core">
-	<Icon src="sap-icon://error" tooltip="Error" />
-</ExtensionPoint>

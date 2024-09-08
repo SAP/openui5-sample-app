@@ -206,7 +206,7 @@ sap.ui.define([
 	 * {@link sap.m.PlanningCalendarView PlanningCalendarView}'s properties.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -4000,6 +4000,9 @@ sap.ui.define([
 				},
 				appointments: function (oChanges) {
 					oRowTimeline.invalidate();
+				},
+				nonWorkingPeriods: function (oChanges) {
+					oRowTimeline.invalidate();
 				}
 			}
 		};
@@ -4012,7 +4015,7 @@ sap.ui.define([
 			}
 		}).observe(oRow, {
 			properties: ["icon", "text", "title", "nonWorkingDays", "nonWorkingHours", "selected", "enableAppointmentsDragAndDrop", "enableAppointmentsResize", "enableAppointmentsCreate"],
-			aggregations: ["tooltip", "appointments", "intervalHeaders", "headerContent"],
+			aggregations: ["tooltip", "appointments", "nonWorkingPeriods", "intervalHeaders", "headerContent"],
 			destroy: true
 		});
 
@@ -4081,6 +4084,10 @@ sap.ui.define([
 
 		oRowTimeline.getAppointments = function() {
 			return oRow.getAppointments();
+		};
+
+		oRowTimeline.getNonWorkingPeriods = function () {
+			return oRow.getNonWorkingPeriods();
 		};
 
 		oRowTimeline.getIntervalHeaders = function() {
@@ -4239,7 +4246,7 @@ sap.ui.define([
 		var iPlaceholders = this.getProperty("intervals");
 
 		if (this.getIntervalType() === CalendarIntervalType.Hour) {
-			iPlaceholders *= 2 ;
+			iPlaceholders *= 4; // 15 min intervals
 		}
 
 		this.removeAllAggregation("_intervalPlaceholders");
@@ -4587,7 +4594,7 @@ sap.ui.define([
 		var oRowStartUTC = CalendarUtils._createUniversalUTCDate(oRowStartDate, null, true),
 			oAppStartUTC = CalendarUtils._createUniversalUTCDate(oAppStartDate, null, true),
 			oAppEndUTC = CalendarUtils._createUniversalUTCDate(oAppEndDate, null, true),
-			oStartDateUTC = UI5Date.getInstance(oRowStartUTC.setUTCMinutes(0, 0, 0) + (iIndex * 30 * 60 * 1000));
+			oStartDateUTC = UI5Date.getInstance(oRowStartUTC.setUTCMinutes(0, 0, 0) + (iIndex * 15 * 60 * 1000)); // 15 min
 
 		return {
 			startDate: CalendarUtils._createLocalDate(oStartDateUTC, true),
@@ -4757,7 +4764,7 @@ sap.ui.define([
 
 	PlanningCalendar.prototype._calcResizeNewHoursAppPos = function(oRowStartDate, oAppStartDate, oAppEndDate, iIndex) {
 		var oRowStartUTC = CalendarUtils._createUniversalUTCDate(UI5Date.getInstance(oRowStartDate.getTime()), null, true),
-			iMinutesStep = 30 * 60 * 1000, // 30 min
+			iMinutesStep = 15 * 60 * 1000, // 15 min
 			oAppStartUTC = CalendarUtils._createUniversalUTCDate(oAppStartDate, null, true),
 			oAppEndUTC = UI5Date.getInstance(oRowStartUTC.setUTCMinutes(0, 0, 0) + ((iIndex + 1) *  iMinutesStep));
 
@@ -4812,7 +4819,7 @@ sap.ui.define([
 	PlanningCalendar.prototype._calcCreateNewAppHours = function(oRowStartDate, iFirstIndex, iSecondIndex) {
 		var [iStartIndex, iEndIndex] = [iFirstIndex, iSecondIndex].sort((iIndexA, iIndexB) => iIndexA - iIndexB),
 			oRowStartUTC = CalendarUtils._createUniversalUTCDate(oRowStartDate, null, true),
-			iMinutesStep = 30 * 60 * 1000,  // 30 min
+			iMinutesStep = 15 * 60 * 1000,  // 15 min
 			iStartAddon = iStartIndex,
 			iEndAddon = iEndIndex + 1,
 			oRowStartDateTimeUTC = UI5Date.getInstance(oRowStartUTC.setUTCMinutes(0, 0, 0)),

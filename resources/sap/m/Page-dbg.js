@@ -97,7 +97,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 * @mixes sap.ui.core.ContextMenuSupport
 		 * @author SAP SE
-		 * @version 1.127.0
+		 * @version 1.128.0
 		 *
 		 * @public
 		 * @alias sap.m.Page
@@ -426,9 +426,6 @@ function(
 				});
 			}
 
-			/**
-			 * @deprecated As of version 1.20
-			 */
 			this._navBtn.setType(this.getNavButtonType());
 			this._navBtn.setTooltip(sBackText);
 		};

@@ -171,7 +171,7 @@ sap.ui.define([
 	 *   Enable/disable automatic refresh after change operations
 	 * @param {boolean} [mParameters.sequentializeRequests=false]
 	 *   Whether to sequentialize all requests, needed in case the service cannot handle parallel
-	 *   requests
+	 *   requests. <b>Deprecated</b> as of version 1.128.0, the concept has been discarded.
 	 * @param {string} [mParameters.serviceUrl]
 	 *   Base URI of the service to request data from; this property is mandatory when the first
 	 *   method parameter <code>serviceUrl</code> is omitted, but ignored otherwise
@@ -213,7 +213,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -3321,8 +3321,8 @@ sap.ui.define([
 				this.pSecurityToken = new Promise(function(resolve, reject) {
 					this.refreshSecurityToken(function() {
 						resolve(this.oSharedServiceData.securityToken);
-					}.bind(this),function(){
-						reject();
+					}.bind(this), function(oError) {
+						reject(oError);
 					}, true);
 				}.bind(this));
 			}
@@ -3344,13 +3344,16 @@ sap.ui.define([
 	 */
 	ODataModel.prototype.refreshSecurityToken = function(fnSuccess, fnError, bAsync) {
 		var oRequest, sToken,
-			mTokenRequest = {
+			that = this,
+			oRequestHandle = {
 				abort: function() {
+					if (that.pRetryAfter) {
+						throw new Error("abort() during HTTP 503 'Retry-after' processing not supported");
+					}
 					this.request.abort();
 				}
 			},
-			sUrl = this._createRequestUrlWithNormalizedPath("/"),
-			that = this;
+			sUrl = this._createRequestUrlWithNormalizedPath("/");
 
 		function handleSuccess(oData, oResponse) {
 			if (oResponse) {
@@ -3378,6 +3381,12 @@ sap.ui.define([
 		}
 
 		function handleGetError(oError) {
+			if (oError.$rejected) {
+				// request answered with a 503 "Retry-After" error and was rejected later on
+				that.resetSecurityToken();
+				fnError(oError);
+				return;
+			}
 			// Disable token handling, if token request returns an error
 			that.resetSecurityToken();
 			that.bTokenHandling = false;
@@ -3389,8 +3398,15 @@ sap.ui.define([
 		}
 
 		function handleHeadError(oError) {
+			if (oError.$rejected) {
+				// request answered with a 503 "Retry-After" error and was rejected later on
+				// -> no fallback to requestToken via "GET"
+				that.resetSecurityToken();
+				fnError(oError);
+				return;
+			}
 			// Disable token handling, if token request returns an error
-			mTokenRequest.request = requestToken("GET", handleGetError);
+			oRequestHandle.request = requestToken("GET", handleGetError);
 		}
 
 		function requestToken(sRequestType, fnError) {
@@ -3404,11 +3420,11 @@ sap.ui.define([
 
 		// Initially try method "HEAD", error handler falls back to "GET" unless the flag forbids HEAD request
 		if (this.bDisableHeadRequestForToken) {
-			mTokenRequest.request = requestToken("GET", handleGetError);
+			oRequestHandle.request = requestToken("GET", handleGetError);
 		} else {
-			mTokenRequest.request = requestToken("HEAD", handleHeadError);
+			oRequestHandle.request = requestToken("HEAD", handleHeadError);
 		}
-		return mTokenRequest;
+		return oRequestHandle;
 
 	};
 
@@ -3421,11 +3437,18 @@ sap.ui.define([
 	 * @param {object} oErrorResponse The error response from the back end
 	 * @param {function} fnSuccess The success callback function
 	 * @param {function} fnError The error callback function
-	 * @returns {boolean} Whether it is a 503 "Retry-After" error response and the error is processed
-	 *   by the "Retry-After" handler
+	 * @param {object} oHandler The request handler object
+	 * @param {object} oHttpClient The HttpClient object
+	 * @param {object} oMetadata The metadata object
+	 * @param {object} oRequestHandle
+	 *   The preliminary created request handle whose abort function is replaced with the abort function
+	 *   of the repeated request
+	 * @returns {boolean}
+	 *   Whether it is a 503 "Retry-After" error response and the error is processed by the "Retry-After" handler
 	 * @private
 	 */
-	ODataModel.prototype.checkAndProcessRetryAfterError = function(oRequest, oErrorResponse, fnSuccess, fnError) {
+	ODataModel.prototype.checkAndProcessRetryAfterError = function(oRequest, oErrorResponse, fnSuccess, fnError,
+			oHandler, oHttpClient, oMetadata, oRequestHandle) {
 		if (oErrorResponse.response?.statusCode === 503
 			&& this._getHeader("retry-after", oErrorResponse.response.headers)
 			&& this.fnRetryAfter
@@ -3436,7 +3459,8 @@ sap.ui.define([
 			}
 			this.pRetryAfter.then(() => {
 				this.pRetryAfter = this.oRetryAfterError = null;
-				this._submitRequest(oRequest, fnSuccess, fnError);
+				oRequestHandle.abort =
+					this._request(oRequest, fnSuccess, fnError, oHandler, oHttpClient, oMetadata).abort;
 			}, (oReason) => {
 				this.pRetryAfter = null; // this.oRetryAfterError must not be reset!
 				this.onRetryAfterRejected(fnError, oErrorResponse, oReason);
@@ -3465,7 +3489,7 @@ sap.ui.define([
 	/**
 	 * Reject handler for <code>this.pRetryAfter</code>.
 	 *
-	 * If the given <code>oReason</code> and <code>this.oRetryAfterError</code> originally passed to the "Retry-after"
+	 * If the given <code>oReason</code> and <code>this.oRetryAfterError</code> originally passed to the "Retry-After"
 	 * handler are the same, then the <code>fnError</code> callback is called with <code>oErrorResponse</code> and
 	 * <code>this.oRetryAfterError</code> is logged and reported to the message model. Otherwise the given
 	 * <code>oReason</code> is only logged.
@@ -3482,14 +3506,23 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataModel.prototype.onRetryAfterRejected = function(fnError, oErrorResponse, oReason) {
+		if (this.bDestroyed) {
+			// Analog to ODM#_request we do nothing once the Model is destroyed
+			return;
+		}
+
 		const sReason = oReason?.message
 			? "Retry-After handler rejected with: " + oReason.message
 			: "Retry-After handler rejected w/o reason";
-		if (oErrorResponse && this.oRetryAfterError !== oReason) {
-			oErrorResponse.$ownReason = true;
-			Log.error(sReason, oReason.stack, sClassName);
+		if (oErrorResponse) {
+			oErrorResponse.$rejected = true; // skip fallback in #refreshSecurityToken
+			if (this.oRetryAfterError !== oReason) {
+				oErrorResponse.$ownReason = true;
+				oErrorResponse.$reported = true;
+				Log.error(sReason, oReason.stack, sClassName);
+			}
 		}
-		fnError(oErrorResponse || {$ownReason : true, message : sReason});
+		fnError(oErrorResponse || {$ownReason: true, $rejected: true, $reported: true, message: sReason});
 	};
 
 	/**
@@ -3533,9 +3566,6 @@ sap.ui.define([
 					return;
 				}
 			}
-			if (that.checkAndProcessRetryAfterError(oRequest, oError, fnSuccess, fnError)) {
-				return;
-			}
 
 			if (fnError) {
 				fnError(oError);
@@ -3564,7 +3594,13 @@ sap.ui.define([
 					oRequest.headers["x-csrf-token"] = sToken;
 				}
 				submit();
-			}, function() {
+			}, function(oError) {
+				if (oError.$rejected) {
+					// request answered with a 503 "Retry-After" error and was rejected later on
+					// -> no fallback on submit() w/o token
+					handleError(oError);
+					return;
+				}
 				submit();
 			});
 		}
@@ -3612,25 +3648,17 @@ sap.ui.define([
 			}
 		}
 
-		if (this.pRetryAfter) {
-			this.pRetryAfter.then(() => {
-				this._submitRequest(oRequest, fnSuccess, fnError);
-			}, (oReason) => {
-				this.onRetryAfterRejected(fnError, undefined, oReason);
-			});
-		} else {
-			//handler only needed for $batch; datajs gets the handler from the accept header
-			oHandler = that._getODataHandler(oRequest.requestUri);
+		//handler only needed for $batch; datajs gets the handler from the accept header
+		oHandler = that._getODataHandler(oRequest.requestUri);
 
-			// If requests are serialized, chain it to the current request, otherwise just submit
-			if (this.bSequentializeRequests) {
-				this.pSequentialRequestCompleted.then(function() {
-					submitWithToken();
-				});
-				this.pSequentialRequestCompleted = pRequestCompleted;
-			} else {
+		// If requests are serialized, chain it to the current request, otherwise just submit
+		if (this.bSequentializeRequests) {
+			this.pSequentialRequestCompleted.then(function() {
 				submitWithToken();
-			}
+			});
+			this.pSequentialRequestCompleted = pRequestCompleted;
+		} else {
+			submitWithToken();
 		}
 
 		return {
@@ -5160,6 +5188,9 @@ sap.ui.define([
 		}
 		oRequestHandle = {
 				abort : function () {
+					if (that.pRetryAfter) {
+						throw new Error("abort() during HTTP 503 'Retry-after' processing not supported");
+					}
 					if (bDeferred && !bAborted){
 						// Since in some scenarios no request object was created yet, the counter is
 						// decreased manually
@@ -6458,6 +6489,10 @@ sap.ui.define([
 
 		oRequestHandle = {
 			abort: function() {
+				if (that.pRetryAfter) {
+					throw new Error("abort() during HTTP 503 'Retry-after' processing not supported");
+				}
+
 				if (vRequestHandleInternal) {
 					if (Array.isArray(vRequestHandleInternal)) {
 						vRequestHandleInternal.forEach(function(oRequestHandle) {
@@ -7712,6 +7747,11 @@ sap.ui.define([
 	 * is rejected with the same <code>Error</code> reason as previously passed to the handler, then
 	 * this reason is reported to the message model.
 	 *
+	 * <b>Note:</b>
+	 * For APIs, like e.g. {@link #submitChanges}, which return an object having an <code>abort</code>
+	 * function to abort the request triggered by the API, this abort function must not be called as
+	 * long as the above promise is pending. Otherwise an error will be thrown.
+	 *
 	 * @param {function(module:sap/ui/model/odata/v2/RetryAfterError):Promise<undefined>} fnRetryAfter
 	 *   A "Retry-After" handler
 	 *
@@ -7801,19 +7841,39 @@ sap.ui.define([
 			};
 		}
 
-		// create request with wrapped handlers
-		oRequestHandle = OData.request(
+		function handle503Error(fnError0) {
+			return function (oErrorResponse) {
+				if (that.checkAndProcessRetryAfterError(oRequest, oErrorResponse, fnSuccess, fnError0, oHandler,
+						oHttpClient, oMetadata, oRequestHandle)) {
+					return;
+				}
+				fnError0(oErrorResponse);
+			};
+		}
+
+		if (this.pRetryAfter) {
+			oRequestHandle = {abort() {}};
+			this.pRetryAfter.then(() => {
+				oRequestHandle.abort =
+					this._request(oRequest, fnSuccess, fnError, oHandler, oHttpClient, oMetadata).abort;
+			}, (oReason) => {
+				this.onRetryAfterRejected(fnError, undefined, oReason);
+			});
+		} else {
+			// create request with wrapped handlers
+			oRequestHandle = OData.request(
 				oRequest,
 				wrapHandler(fnSuccess || OData.defaultSuccess),
-				wrapHandler(fnError || OData.defaultError),
+				wrapHandler(handle503Error(fnError || OData.defaultError)),
 				oHandler,
 				oHttpClient,
 				oMetadata
-		);
+			);
 
-		// add request handle to array and return it (only for async requests)
-		if (oRequest.async !== false) {
-			this.aPendingRequestHandles.push(oRequestHandle);
+			// add request handle to array and return it (only for async requests)
+			if (oRequest.async !== false) {
+				this.aPendingRequestHandles.push(oRequestHandle);
+			}
 		}
 
 		return oRequestHandle;
@@ -8821,7 +8881,8 @@ sap.ui.define([
 			message : "Request aborted",
 			responseText : "",
 			statusCode : 0,
-			statusText : "abort"
+			statusText : "abort",
+			$rejected : true // prevent fallback in handleHeadError to fetch-token via GET
 		};
 	};
 

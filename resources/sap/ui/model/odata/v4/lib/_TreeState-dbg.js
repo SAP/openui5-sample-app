@@ -47,22 +47,30 @@ sap.ui.define([
 		 * Collapse a node.
 		 *
 		 * @param {object} oNode - The node
+		 * @param {boolean|number} bAll
+		 *   Whether collapsing completely; <code>undefined</code> means a simple collapse,
+		 *   <code>true</code> collapsing all at this node, <code>1</code> a nested node below
+		 *   a collapse all
 		 *
 		 * @public
 		 */
-		collapse(oNode) {
+		collapse(oNode, bAll) {
 			if (!this.sNodeProperty) {
 				return;
 			}
 
 			const sPredicate = _Helper.getPrivateAnnotation(oNode, "predicate");
 			const oExpandLevel = this.mPredicate2ExpandLevels[sPredicate];
-			if (oExpandLevel && oExpandLevel.Levels !== 0) {
+			if (bAll === 1 || oExpandLevel && oExpandLevel.Levels !== 0) {
 				delete this.mPredicate2ExpandLevels[sPredicate];
 			} else {
 				// must have NodeId as the node may be missing when calling #getExpandLevels
 				const sNodeId = _Helper.drillDown(oNode, this.sNodeProperty);
-				this.mPredicate2ExpandLevels[sPredicate] = {NodeID : sNodeId, Levels : 0};
+				this.mPredicate2ExpandLevels[sPredicate] = {
+					collapseAll : bAll,
+					NodeID : sNodeId,
+					Levels : 0
+				};
 			}
 		}
 
@@ -88,6 +96,20 @@ sap.ui.define([
 		}
 
 		/**
+		 * Deletes the expand levels for the given node and all its descendants.
+		 *
+		 * @param {object} oNode - The node
+		 *
+		 * @private
+		 */
+		deleteExpandLevels(oNode) {
+			delete this.mPredicate2ExpandLevels[_Helper.getPrivateAnnotation(oNode, "predicate")];
+			_Helper.getPrivateAnnotation(oNode, "spliced", []).forEach((oChild) => {
+				this.deleteExpandLevels(oChild);
+			});
+		}
+
+		/**
 		 * Deletes a node and all its descendants from the out-of-place list (making them in-place).
 		 *
 		 * @param {string} sPredicate - The node's key predicate
@@ -108,6 +130,7 @@ sap.ui.define([
 					sPredicate = sParentPredicate;
 				}
 			}
+			this.mPredicate2OutOfPlace[sPredicate].context.setOutOfPlace(false);
 			delete this.mPredicate2OutOfPlace[sPredicate];
 			Object.values(this.mPredicate2OutOfPlace).forEach((oOutOfPlace) => {
 				if (oOutOfPlace.parentPredicate === sPredicate) {
@@ -131,17 +154,21 @@ sap.ui.define([
 				return;
 			}
 
+			if (iLevels >= Number.MAX_SAFE_INTEGER) {
+				iLevels = null;
+				this.deleteExpandLevels(oNode);
+			}
 			const sPredicate = _Helper.getPrivateAnnotation(oNode, "predicate");
 			const oExpandLevel = this.mPredicate2ExpandLevels[sPredicate];
-			if (oExpandLevel && !oExpandLevel.Levels) {
+			if (oExpandLevel && !oExpandLevel.Levels && !oExpandLevel.collapseAll) {
 				delete this.mPredicate2ExpandLevels[sPredicate];
 			} else {
 				// must have NodeId as the node may be missing when calling #getExpandLevels
 				const sNodeId = _Helper.drillDown(oNode, this.sNodeProperty);
-				if (iLevels >= Number.MAX_SAFE_INTEGER) {
-					iLevels = null;
-				}
-				this.mPredicate2ExpandLevels[sPredicate] = {NodeID : sNodeId, Levels : iLevels};
+				this.mPredicate2ExpandLevels[sPredicate] = {
+					NodeID : sNodeId,
+					Levels : iLevels
+				};
 			}
 		}
 
@@ -155,7 +182,12 @@ sap.ui.define([
 		 */
 		getExpandLevels() {
 			const aExpandLevels = Object.values(this.mPredicate2ExpandLevels);
-			return aExpandLevels.length ? JSON.stringify(aExpandLevels) : undefined;
+			return aExpandLevels.length
+				? JSON.stringify(aExpandLevels.map((oExpandLevel) => {
+						// filter out collapseAll
+						return {NodeID : oExpandLevel.NodeID, Levels : oExpandLevel.Levels};
+					}))
+				: undefined;
 		}
 
 		/**
@@ -247,27 +279,49 @@ sap.ui.define([
 		 * @public
 		 */
 		resetOutOfPlace() {
-			this.mPredicate2OutOfPlace = {};
+			this.getOutOfPlacePredicates()
+				.forEach((sPredicate) => this.deleteOutOfPlace(sPredicate));
 		}
 
 		/**
-		 * Makes the node out of place.
+		 * Makes the ("created persisted"!) node out of place.
 		 *
 		 * @param {object} oNode - The node
 		 * @param {object} [oParent] - The parent, unless the node is a root
+		 * @throws {Error} If the node is not 'created persisted'
 		 *
 		 * @public
 		 */
 		setOutOfPlace(oNode, oParent) {
+			if (oNode["@$ui5.context.isTransient"] !== false) {
+				throw new Error("Not 'created persisted'");
+			}
 			const oOutOfPlace = {
+				context : _Helper.getPrivateAnnotation(oNode, "context"),
 				nodeFilter : this.fnGetKeyFilter(oNode),
 				nodePredicate : _Helper.getPrivateAnnotation(oNode, "predicate")
 			};
+			oOutOfPlace.context.setOutOfPlace(true);
 			if (oParent) {
 				oOutOfPlace.parentFilter = this.fnGetKeyFilter(oParent);
 				oOutOfPlace.parentPredicate = _Helper.getPrivateAnnotation(oParent, "predicate");
 			}
 			this.mPredicate2OutOfPlace[oOutOfPlace.nodePredicate] = oOutOfPlace;
+		}
+
+		/**
+		 * The given node is still out of place and thus must keep a client-side annotation
+		 * <code>"@$ui5.context.isTransient"</code> as well as a private annotation "context".
+		 *
+		 * @param {object} oNode - The node
+		 * @param {string} sPredicate - The node's key predicate
+		 *
+		 * @public
+		 */
+		stillOutOfPlace(oNode, sPredicate) {
+			oNode["@$ui5.context.isTransient"] = false;
+			_Helper.setPrivateAnnotation(oNode, "context",
+				this.mPredicate2OutOfPlace[sPredicate].context);
 		}
 	}
 

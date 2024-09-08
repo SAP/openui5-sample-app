@@ -31,7 +31,7 @@ sap.ui.define([
 		 * @extends sap.m.StandardListItem
 		 *
 		 * @author SAP SE
-		 * @version 1.127.0
+		 * @version 1.128.0
 		 *
 		 * @constructor
 		 * @private
@@ -122,7 +122,7 @@ sap.ui.define([
 			var sDescription = this.getDescription();
 
 			if (bActiveTitle) {
-				return this.getDomRef().querySelector("a");
+				return this.getDomRef().querySelector(".sapMLnkText");
 			}
 
 			if (sDescription) {

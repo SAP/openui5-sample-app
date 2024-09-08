@@ -114,7 +114,7 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class The ConditionPanel Control will be used to implement the Sorting, Filtering and Grouping panel of the new Personalization dialog.
 	 * @extends sap.ui.core.Control
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 * @constructor
 	 * @public
 	 * @since 1.26.0
@@ -797,8 +797,7 @@ sap.ui.define([
 
 		this._oPrevButton = new Button({
 			icon: IconPool.getIconURI("navigation-left-arrow"),
-			//tooltip: "Show Previous",
-			tooltip: this._oRb.getText("WIZARD_FINISH"), //TODO create new resoucre
+			tooltip: this._oRb.getText("p13n.PREVIOUS"),
 			visible: true,
 			press: function(oEvent) {
 				that._iFirstConditionIndex = Math.max(0, that._iFirstConditionIndex - that._iConditionPageSize);
@@ -812,8 +811,7 @@ sap.ui.define([
 
 		this._oNextButton = new Button({
 			icon: IconPool.getIconURI("navigation-right-arrow"),
-			//tooltip: "Show Next",
-			tooltip: this._oRb.getText("WIZARD_NEXT"), //TODO create new resoucre
+			tooltip: this._oRb.getText("p13n.NEXT"),
 			visible: true,
 			press: function(oEvent) {
 				that._iFirstConditionIndex += that._iConditionPageSize;

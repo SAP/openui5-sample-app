@@ -84,7 +84,7 @@ sap.ui.define([
 	 * @class
 	 * A calendar row with a header and appointments. The Appointments will be placed in the defined interval.
 	 * @extends sap.ui.core.Control
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -248,6 +248,12 @@ sap.ui.define([
 			 * <b>Note:</b> For performance reasons, only appointments in the visible time range or nearby should be assigned.
 			 */
 			appointments : {type : "sap.ui.unified.CalendarAppointment", defaultClass: CalendarAppointment, multiple : true, singularName : "appointment"},
+
+			/**
+			 * Sets the provided period to be displayed as a non-working.
+			 * @since 1.128
+			 */
+			nonWorkingPeriods: {type: "sap.ui.unified.NonWorkingPeriod", multiple: true},
 
 			/**
 			 * Appointments to be displayed in the top of the intervals. The <code>intervalHeaders</code> are used to visualize
@@ -1680,9 +1686,10 @@ sap.ui.define([
 		var oApp;
 		var sAriaDescribedBy;
 		var sAriaDescribedByNotSelected;
-		var sAriaDescribedBySelected;
+		var sCurrentAriaDescribedBy;
+		var sCurrentAriaDescribedBySelected;
+		var sCurrentAriaDescribedByNotSelected;
 		var sSelectedTextId = InvisibleText.getStaticId("sap.ui.unified", "APPOINTMENT_SELECTED");
-		var sUnselectedTextId = InvisibleText.getStaticId("sap.ui.unified", "APPOINTMENT_UNSELECTED");
 		var bSelect = !oAppointment.getSelected();
 
 		if (bRemoveOldSelection) {
@@ -1702,24 +1709,29 @@ sap.ui.define([
 						}
 					}
 					sAriaDescribedBy = oApp.$().attr("aria-describedby");
-					sAriaDescribedByNotSelected = sAriaDescribedBy ? sAriaDescribedBy.replace(sSelectedTextId, sUnselectedTextId) : "";
+					sAriaDescribedByNotSelected = sAriaDescribedBy ? sAriaDescribedBy.replace(sSelectedTextId, "") : "";
 					oApp.$().attr("aria-describedby", sAriaDescribedByNotSelected);
 				}
 			}
 		}
 
-		sAriaDescribedBySelected = oAppointment.$().attr("aria-describedby").replace(sUnselectedTextId, sSelectedTextId).trim();
-		sAriaDescribedByNotSelected = oAppointment.$().attr("aria-describedby").replace(sSelectedTextId, sUnselectedTextId).trim();
+		sCurrentAriaDescribedBy = oAppointment.$().attr("aria-describedby");
+		sCurrentAriaDescribedByNotSelected = (sCurrentAriaDescribedBy ? sCurrentAriaDescribedBy.replace(sSelectedTextId, "") : "").trim();
+		sCurrentAriaDescribedBySelected = (sCurrentAriaDescribedByNotSelected + " " + sSelectedTextId).trim();
 
 		if (oAppointment.getSelected()) {
 			oAppointment.setProperty("selected", false, true); // do not invalidate CalendarRow
 			oAppointment.$().removeClass("sapUiCalendarAppSel");
-			oAppointment.$().attr("aria-describedby", sAriaDescribedByNotSelected);
+			if (sCurrentAriaDescribedByNotSelected) {
+				oAppointment.$().attr("aria-describedby", sCurrentAriaDescribedByNotSelected);
+			} else {
+				oAppointment.$().removeAttr("aria-describedby");
+			}
 			_removeAllAppointmentSelections(this, bRemoveOldSelection);
 		} else {
 			oAppointment.setProperty("selected", true, true); // do not invalidate CalendarRow
 			oAppointment.$().addClass("sapUiCalendarAppSel");
-			oAppointment.$().attr("aria-describedby", sAriaDescribedBySelected);
+			oAppointment.$().attr("aria-describedby", sCurrentAriaDescribedBySelected);
 			_removeAllAppointmentSelections(this, bRemoveOldSelection);
 		}
 		// removes or adds the selected appointments from this.aSelectedAppointments

@@ -53,7 +53,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -250,7 +250,7 @@ sap.ui.define([
 		}
 
 		if (oEvent.which === KeyCodes.ENTER) {
-			this.firePress(/* no parameters */);
+			this._firePress(oEvent);
 		}
 	};
 
@@ -266,7 +266,7 @@ sap.ui.define([
 
 		if (oEvent.which === KeyCodes.SPACE) {
 			if (!this._bShouldInterupt) {
-				this.firePress(/* no parameters */);
+				this._firePress(oEvent);
 			}
 			this._bShouldInterupt = false;
 			this._bSpacePressed = false;
@@ -278,8 +278,8 @@ sap.ui.define([
 	 *
 	 * @private
 	 */
-	GenericTag.prototype.onclick = function(){
-		this.firePress(/* no parameters */);
+	GenericTag.prototype.onclick = function(oEvent) {
+		this._firePress(oEvent);
 	};
 
 	/**
@@ -294,6 +294,12 @@ sap.ui.define([
 	/**
 	 * @private
 	 */
+	GenericTag.prototype._firePress = function(oEvent) {
+		oEvent.setMarked();
+
+		this.firePress();
+	};
+
 	GenericTag.prototype._toggleActiveGenericTag = function(bToggle){
 		this.toggleStyleClass("sapMGenericTagActive", bToggle);
 	};

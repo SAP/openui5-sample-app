@@ -112,7 +112,7 @@ sap.ui.define([
 	 * When using the <code>sap.m.TableSelectDialog</code> in SAP Quartz and Horizon themes, the breakpoints and layout paddings could be determined by the dialog's width. To enable this concept and add responsive paddings to an element of the control, you have to add the following classes depending on your use case: <code>sapUiResponsivePadding--header</code>, <code>sapUiResponsivePadding--subHeader</code>, <code>sapUiResponsivePadding--content</code>, <code>sapUiResponsivePadding--footer</code>.
 	 * @extends sap.m.SelectDialogBase
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -382,8 +382,8 @@ sap.ui.define([
 						that._oDialog.attachAfterClose(fnResetAfterClose);
 						that._oDialog.close();
 					} else {
-						// update the selection label
 						that._updateSelectionIndicator();
+						that._announceSelectionIndicator();
 					}
 				}
 			},
@@ -567,6 +567,8 @@ sap.ui.define([
 		this._sSearchFieldValue = sSearchValue || "";
 
 		this._oDialog.setInitialFocus(this._getInitialFocus());
+		this._updateSelectionIndicator();
+		this.updateDialogAriaDescribedBy();
 		this._oDialog.open();
 
 		// open dialog with busy state if a list update is still in progress
@@ -576,9 +578,6 @@ sap.ui.define([
 
 		// store the current selection for the cancel event
 		this._aInitiallySelectedItems = this._oTable.getSelectedItems();
-
-		// refresh the selection indicator to be in sync with the model
-		this._updateSelectionIndicator();
 
 		//now return the control for chaining
 		return this;
@@ -1210,12 +1209,17 @@ sap.ui.define([
 		if (this.getShowClearButton() && this._oClearButton) {
 			this._oClearButton.setEnabled(iSelectedContexts > 0);
 		}
-		// update the selection label
+
 		oInfoBar.setVisible(!!iSelectedContexts);
 		oInfoBar.getContent()[0].setText(this._oRb.getText("TABLESELECTDIALOG_SELECTEDITEMS", [iSelectedContexts]));
+		SelectDialogBase.getSelectionIndicatorInvisibleText().setText(iSelectedContexts > 0 ? this._oRb.getText("TABLESELECTDIALOG_SELECTEDITEMS_SR", [iSelectedContexts]) : "");
+	};
 
-		if (this._oDialog.isOpen()) {
-			InvisibleMessage.getInstance().announce(iSelectedContexts > 0 ? this._oRb.getText("TABLESELECTDIALOG_SELECTEDITEMS_SR", [iSelectedContexts]) : "", InvisibleMessageMode.Polite);
+	TableSelectDialog.prototype._announceSelectionIndicator = function () {
+		const selectedContexts = this._oTable.getSelectedContextPaths(true).length;
+
+		if (selectedContexts) {
+			InvisibleMessage.getInstance().announce(this._oRb.getText("TABLESELECTDIALOG_SELECTEDITEMS_SR", [selectedContexts]), InvisibleMessageMode.Polite);
 		}
 	};
 

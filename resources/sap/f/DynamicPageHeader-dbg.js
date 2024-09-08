@@ -64,7 +64,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.127.0
+		 * @version 1.128.0
 		 *
 		 * @constructor
 		 * @public
@@ -141,10 +141,10 @@ sap.ui.define([
 		DynamicPageHeader.prototype.init = function() {
 			this._bShowCollapseButton = true;
 			this._oInvisibleMessage = null;
+			this._oLandmarkInfo = null;
 		};
 
 		DynamicPageHeader.prototype.onAfterRendering = function () {
-			this._initARIAState();
 			this._initPinButtonARIAState();
 
 			if (!this._oInvisibleMessage) {
@@ -155,6 +155,8 @@ sap.ui.define([
 			if (this.getPinnable()) {
 				this._setPressedStatePinIcon();
 			}
+
+			this._applyAriaAttributes();
 		};
 
 		/*************************************** Private members ******************************************/
@@ -212,13 +214,25 @@ sap.ui.define([
 		};
 
 		/**
-		 * Initializes the <code>DynamicPageHeader</code> ARIA State.
+		 * Applies the <code>DynamicPageHeader</code> ARIA attributes.
 		 * @private
 		 */
-		DynamicPageHeader.prototype._initARIAState = function () {
-			var $header = this.$();
+		DynamicPageHeader.prototype._applyAriaAttributes = function () {
+			var $header = this.$(),
+				bHasHeaderContentLabel = this._oLandmarkInfo && this._oLandmarkInfo.getHeaderContentLabel();
 
-			$header.attr(DynamicPageHeader.ARIA.ARIA_LABEL, DynamicPageHeader.ARIA.LABEL_EXPANDED);
+			if (bHasHeaderContentLabel) {
+				var sHeaderContentLabel = this._oLandmarkInfo.getHeaderContentLabel();
+				$header.attr(DynamicPageHeader.ARIA.ARIA_LABEL, sHeaderContentLabel);
+			} else {
+				$header.attr(DynamicPageHeader.ARIA.ARIA_LABEL, DynamicPageHeader.ARIA.LABEL_EXPANDED);
+			}
+		};
+
+		DynamicPageHeader.prototype._setLandmarkInfo = function (oLandmarkInfo) {
+			this._oLandmarkInfo = oLandmarkInfo;
+
+			this._applyAriaAttributes();
 		};
 
 		/**

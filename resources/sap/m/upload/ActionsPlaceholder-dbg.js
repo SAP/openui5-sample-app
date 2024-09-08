@@ -20,7 +20,7 @@ sap.ui.define(["sap/ui/core/Control"], function (Control) {
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public

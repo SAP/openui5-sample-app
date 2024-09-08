@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/Element', './library'],
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -88,7 +88,16 @@ sap.ui.define(['sap/ui/core/Element', './library'],
 			 *
 			 * If not set (and a landmark different than <code>sap.ui.core.AccessibleLandmarkRole.None</code> is defined), no label is set.
 			 */
-			footerLabel : {type : "string", defaultValue : null}
+			footerLabel : {type : "string", defaultValue : null},
+
+			/**
+			* Texts which describe the landmark of the section inside the header container of the corresponding <code>sap.f.DynamicPage</code> control.
+			*
+			* If not set, default "Expanded header" aria-label is set.
+			* @public
+			* @since 1.127.0
+			*/
+			headerContentLabel: {type : "string", defaultValue : null}
 		}
 	}});
 

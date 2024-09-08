@@ -18,7 +18,7 @@ sap.ui.define([
 	 * Eventing
 	 *
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @since 1.120.0
 	 * @private

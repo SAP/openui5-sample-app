@@ -58,7 +58,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.127.0
+		 * @version 1.128.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -680,25 +680,32 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.model.odata.v4.Context} oContext
 	 *   The context corresponding to the group node
+	 * @param {boolean} [bAll]
+	 *   Whether to collapse the node and all its descendants
 	 * @param {boolean} [bSilent]
 	 *   Whether no ("change") events should be fired
 	 * @param {number} [iCount]
 	 *   The count of nodes affected by the collapse, in case the cache already performed it
 	 * @throws {Error}
-	 *   If the binding's root binding is suspended or if the given context is not part of a
-	 *   recursive hierarchy
+	 *   If the binding's root binding is suspended, if the given context is not part of a
+	 *   hierarchy, or <code>bAll</code> is <code>true</code> without a recursive hierarchy
 	 *
 	 * @private
 	 * @see #expand
 	 */
-	ODataListBinding.prototype.collapse = function (oContext, bSilent, iCount) {
+	ODataListBinding.prototype.collapse = function (oContext, bAll, bSilent, iCount) {
 		this.checkSuspended();
 		if (this.aContexts[oContext.iIndex] !== oContext) {
 			throw new Error("Not currently part of the hierarchy: " + oContext);
 		}
 
+		if (bAll && !this.mParameters.$$aggregation?.hierarchyQualifier) {
+			throw new Error("Missing recursive hierarchy");
+		}
+
 		iCount ??= this.oCache.collapse(
-			_Helper.getRelativePath(oContext.getPath(), this.oHeaderContext.getPath()));
+			_Helper.getRelativePath(oContext.getPath(), this.oHeaderContext.getPath()),
+			bAll);
 
 		if (iCount > 0) {
 			const aContexts = this.aContexts;
@@ -1117,9 +1124,6 @@ sap.ui.define([
 					// reuse the previous context, unless it is created (and persisted), but not
 					// kept alive; always reuse created contexts in a recursive hierarchy
 					delete this.mPreviousContextsByPath[sContextPath];
-					if (oContext.created() && !("@$ui5.context.isTransient" in aResults[i])) {
-						oContext.setPersisted();
-					}
 					oContext.iIndex = i$skipIndex;
 					oContext.checkUpdate();
 				} else if (_Helper.hasPrivateAnnotation(aResults[i], "context")) {
@@ -1183,7 +1187,7 @@ sap.ui.define([
 
 		const bExpanded = oContext.isExpanded();
 		if (bExpanded) {
-			this.collapse(oContext, /*bSilent*/true);
+			this.collapse(oContext, /*bAll*/false, /*bSilent*/true);
 		}
 
 		// When deleting a context with negative index, iCreatedContexts et al. must be adjusted.
@@ -1350,7 +1354,7 @@ sap.ui.define([
 
 				if (oContext) {
 					if (aPathsToDelete && (oContext.isEffectivelyKeptAlive()
-							|| oContext.oDeletePromise && oContext.oDeletePromise.isPending())) {
+							|| oContext.isOutOfPlace() || oContext.oDeletePromise?.isPending())) {
 						oContext.iIndex = undefined;
 					} else {
 						if (!oContext.isTransient()) {
@@ -1594,8 +1598,8 @@ sap.ui.define([
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise that is resolved when the expand is successful and rejected when it fails
 	 * @throws {Error}
-	 *   If the binding's root binding is suspended or if the given context is not part of a
-	 *   recursive hierarchy
+	 *   If the binding's root binding is suspended, if the given context is not part of a
+	 *   hierarchy, or <code>iLevels > 1</code> without a recursive hierarchy
 	 *
 	 * @private
 	 * @see #collapse
@@ -1604,6 +1608,9 @@ sap.ui.define([
 		this.checkSuspended();
 		if (this.aContexts[oContext.iIndex] !== oContext) {
 			throw new Error("Not currently part of the hierarchy: " + oContext);
+		}
+		if (iLevels > 1 && !this.mParameters.$$aggregation?.hierarchyQualifier) {
+			throw new Error("Missing recursive hierarchy");
 		}
 
 		let bDataRequested = false;
@@ -3217,6 +3224,7 @@ sap.ui.define([
 					? ChangeReason.Change
 					: ChangeReason.Refresh;
 			} else if (this.sChangeReason === "AddVirtualContext") {
+				this.checkDataState();
 				this._fireChange({
 					detailedReason : "AddVirtualContext",
 					reason : ChangeReason.Change
@@ -3532,7 +3540,7 @@ sap.ui.define([
 				this.insertGap(oParentContext.getModelIndex(), iCount - 1);
 			}
 			if (iCollapseCount) { // Note: _AC#collapse already done!
-				this.collapse(oChildContext, /*bSilent*/true, iCollapseCount);
+				this.collapse(oChildContext, /*bAll*/false, /*bSilent*/true, iCollapseCount);
 			}
 			const iOldIndex = oChildContext.getModelIndex();
 			this.aContexts.splice(iOldIndex, 1);
@@ -4370,6 +4378,7 @@ sap.ui.define([
 		this.sResumeAction = undefined;
 		this.sResumeChangeReason = undefined;
 
+		this.checkDataState();
 		if (bRefresh) {
 			if (this.mParameters.$$clearSelectionOnFilter
 				&& sResumeChangeReason === ChangeReason.Filter) {
@@ -4468,7 +4477,9 @@ sap.ui.define([
 	 * @param {boolean} [oAggregation.createInPlace]
 	 *   Whether created nodes are shown in place at the position specified by the service
 	 *   (@experimental as of version 1.125.0); only the value <code>true</code> is allowed.
-	 *   Otherwise, created nodes are displayed out of place as the first child of their parent.
+	 *   Otherwise, created nodes are displayed out of place as the first children of their parent
+	 *   or as the first roots, but not in their usual position as defined by the service and the
+	 *   current sort order.
 	 * @param {number} [oAggregation.expandTo=1]
 	 *   The number (as a positive integer) of different levels initially available without calling
 	 *   {@link sap.ui.model.odata.v4.Context#expand} (since 1.117.0), supported only if a

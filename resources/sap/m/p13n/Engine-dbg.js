@@ -9,7 +9,7 @@ sap.ui.define([
 	"sap/base/util/merge",
 	"sap/base/Log",
 	"sap/m/p13n/modification/FlexModificationHandler",
-	"sap/m/MessageStrip",
+	"sap/m/p13n/MessageStrip",
 	"sap/ui/core/Element",
 	"sap/ui/core/ElementRegistry",
 	"sap/ui/core/message/MessageType",
@@ -69,7 +69,7 @@ sap.ui.define([
 	 * @alias sap.m.p13n.Engine
 	 * @extends sap.m.p13n.modules.AdaptationProvider
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 * @public
 	 * @since 1.104
 	 */

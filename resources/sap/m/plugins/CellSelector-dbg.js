@@ -52,8 +52,6 @@ sap.ui.define([
 	 * <ul>
 	 * 	<li>Drag for rows is active</li>
 	 *	<li>If used in combination with {@link sap.ui.table.Table#cellClick} or {@link sap.m.Table#itemPress}</li>
-	 *	<li>If the <code>sap.ui.table.SelectionBehavior.RowOnly</code> or <code>sap.ui.table.SelectionBehavior.Row</code> selection behavior is used
-	 * in the <code>sap.ui.table.Table</code></li>
 	 * 	<li>If the <code>sap.m.ListType.SingleSelectMaster</code> mode is used in the <code>sap.m.Table</code></li>
 	 * </ul>
 	 *
@@ -64,7 +62,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 * @author SAP SE
 	 *
 	 * @public
@@ -245,12 +243,25 @@ sap.ui.define([
 			}
 
 			var oSelectableCell = this._getSelectableCell(oEvent.target);
-			if (oSelectableCell) {
-				this._bMouseDown = true;
-				this._mClickedCell = this.getConfig("getCellInfo", this.getControl(), oSelectableCell, this._oPreviousCell);
-				this._oPreviousCell = this._mClickedCell;
+
+			if (!oSelectableCell) {
+				return;
 			}
 
+			const oInfo = this.getConfig("getCellInfo", this.getControl(), oSelectableCell, this._oPreviousCell);
+			this._bMouseDown = true;
+
+			if (oEvent.shiftKey) {
+				if (this._oPreviousCell?.rowIndex !== oInfo.rowIndex || this._oPreviousCell?.colIndex !== oInfo.colIndex) {
+					window.getSelection().removeAllRanges();
+
+					if (this._oOriginCell) {
+						this._selectCells(this._oOriginCell, oInfo);
+					}
+				}
+			}
+
+			this._mClickedCell = this._oPreviousCell = oInfo;
 			if (oEvent.ctrlKey || oEvent.metaKey) {
 				this._startSelection(oEvent);
 				if (this._mClickedCell) {
@@ -264,7 +275,6 @@ sap.ui.define([
 			this._bBorderDown = false;
 			this._mClickedCell = undefined;
 			this._bScrolling = false;
-			this._oPreviousCell = undefined;
 			this._mTempCell = undefined;
 			this._oHoveredCell = undefined;
 			this._endSelection(oEvent);
@@ -404,7 +414,7 @@ sap.ui.define([
 	CellSelector.prototype._deregisterEvents = function() {
 		var oControl = this.getControl();
 		if (oControl) {
-			oControl.detachEvent(this.getConfig("scrollEvent"), this._fnControlUpdate);
+			this.getConfig("scrollEvent") && oControl.detachEvent(this.getConfig("scrollEvent"), this._fnControlUpdate);
 			this.getConfig("detachSelectionChange", oControl, this._fnRemoveSelection);
 			this.getConfig("detachBindingUpdate", oControl, this._fnOnBindingUpdate);
 			var oScrollArea = oControl.getDomRef(this.getConfig("scrollArea"));
@@ -528,7 +538,7 @@ sap.ui.define([
 
 		const bSelectionChange = this._oSession?.mSource || this._oSession?.mTarget;
 		this._bSelecting = false;
-		this._mClickedCell = this._oPreviousCell = this._oHoveredCell = null;
+		this._mClickedCell = this._oPreviousCell = this._oHoveredCell = this._oOriginCell = null;
 		this._oSession = { cellRefs: [], cellTypes: [] };
 		if (bSelectionChange) {
 			this._onSelectionChange();
@@ -536,7 +546,7 @@ sap.ui.define([
 	};
 
 	CellSelector.prototype._onsaparrowmodifiers = function(oEvent, sDirectionType, iRowDiff, iColDiff) {
-		if (!this._shouldBeHandled(oEvent) || !oEvent.shiftKey || !this._getSelectableCell(oEvent.target)) {
+		if (!this._shouldBeHandled(oEvent) || !oEvent.shiftKey || !this._getSelectableCell(oEvent.target) || oEvent.ctrlKey || oEvent.metaKey || oEvent.altKey) {
 			this._oPreviousCell = undefined;
 			return;
 		}
@@ -823,6 +833,7 @@ sap.ui.define([
 			this._oSession.mSource = oCellInfo;
 			this._selectCells(mStart, oCellInfo);
 			this._oPreviousCell = oCellInfo;
+			this._oOriginCell = mStart;
 		}
 
 		oEvent.preventDefault();
@@ -1175,7 +1186,6 @@ sap.ui.define([
 			 */
 			isSupported: function(oTable, oPlugin) {
 				return !oTable.hasListeners("cellClick")
-					&& oTable.getSelectionBehavior() == "RowSelector"
 					&& !hasDragEnabled(oTable, "rows");
 			},
 			isBottomToTop: function(oTable) {

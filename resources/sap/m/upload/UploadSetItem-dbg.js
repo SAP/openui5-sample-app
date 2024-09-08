@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @class Item that represents one file to be uploaded using the {@link sap.m.upload.UploadSet} control.
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -806,7 +806,7 @@ sap.ui.define([
 		if (!this._oDeleteButton) {
 			this._oDeleteButton = new Button({
 				id: this.getId() + "-deleteButton",
-				icon: "sap-icon://decline",
+				icon: "sap-icon://delete",
 				type: MobileLibrary.ButtonType.Standard,
 				enabled: this.getEnabledRemove(),
 				visible: this.getVisibleRemove(),
@@ -1069,7 +1069,7 @@ sap.ui.define([
 			this._bSizeRestricted = bRestricted;
 			this.invalidate();
 			if (bRestricted && this.getParent()) {
-				this.getParent().fireFileSizeExceeded({item: this});
+				this.getParent().fireFileSizeExceeded({item: this, fileSize: this._fFileSize});
 			}
 		}
 	};

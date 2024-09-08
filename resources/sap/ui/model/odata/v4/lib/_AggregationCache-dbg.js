@@ -375,17 +375,21 @@ sap.ui.define([
 	 *
 	 * @param {string} sGroupNodePath
 	 *   The group node path relative to the cache
+	 * @param {boolean|number} [bAll]
+	 *   Whether collapsing the node and all its descendants; <code>undefined</code> means a simple
+	 *   collapse, <code>true</code> collapsing all at this node, <code>1</code> a nested node below
+	 *   a collapse all
 	 * @returns {number}
 	 *   The number of descendant nodes that were affected
 	 *
 	 * @public
 	 * @see #expand
 	 */
-	_AggregationCache.prototype.collapse = function (sGroupNodePath) {
+	_AggregationCache.prototype.collapse = function (sGroupNodePath, bAll) {
 		const oGroupNode = this.getValue(sGroupNodePath);
 		const oCollapsed = _AggregationHelper.getCollapsedObject(oGroupNode);
 		_Helper.updateAll(this.mChangeListeners, sGroupNodePath, oGroupNode, oCollapsed);
-		this.oTreeState.collapse(oGroupNode);
+		this.oTreeState.collapse(oGroupNode, bAll);
 
 		const aElements = this.aElements;
 		const iIndex = aElements.indexOf(oGroupNode);
@@ -398,21 +402,29 @@ sap.ui.define([
 			iCount += 1; // collapse subtotals at bottom
 		}
 
-		for (let i = iIndex + 1; i < iIndex + 1 + iCount; i += 1) {
-			// selected elements are effectively kept alive (with recursive hierarchy)
-			if (!this.oAggregation.hierarchyQualifier
-				|| !aElements[i]["@$ui5.context.isSelected"]) {
+		let iRemaining = iCount; // with bAll this is the count of the direct children in the end
+		for (let i = iIndex + 1; i < iIndex + 1 + iRemaining; i += 1) {
+			const oElement = aElements[i];
+			if (bAll && oElement["@$ui5.node.isExpanded"]) {
+				iRemaining
+					-= this.collapse(_Helper.getPrivateAnnotation(oElement, "predicate"), 1);
+			}
+			// exceptions of selection are effectively kept alive (with recursive hierarchy)
+			if (!this.isSelectionDifferent(oElement)) {
+				delete aElements.$byPredicate[_Helper.getPrivateAnnotation(oElement, "predicate")];
 				delete aElements.$byPredicate[
-					_Helper.getPrivateAnnotation(aElements[i], "predicate")];
-				delete aElements.$byPredicate[
-					_Helper.getPrivateAnnotation(aElements[i], "transientPredicate")];
+					_Helper.getPrivateAnnotation(oElement, "transientPredicate")];
 			}
 		}
-		const aSpliced = aElements.splice(iIndex + 1, iCount);
-		aSpliced.$level = oGroupNode["@$ui5.node.level"];
-		aSpliced.$rank = _Helper.getPrivateAnnotation(oGroupNode, "rank");
-		_Helper.setPrivateAnnotation(oGroupNode, "spliced", aSpliced);
-		aElements.$count -= iCount;
+		const aSpliced = aElements.splice(iIndex + 1, iRemaining);
+		// with collapse all do not remember the collapsed nodes in a multi-level first level cache
+		const iLevel = oGroupNode["@$ui5.node.level"];
+		if (!bAll || !this.bUnifiedCache && iLevel >= this.oAggregation.expandTo) {
+			aSpliced.$level = iLevel;
+			aSpliced.$rank = _Helper.getPrivateAnnotation(oGroupNode, "rank");
+			_Helper.setPrivateAnnotation(oGroupNode, "spliced", aSpliced);
+		}
+		aElements.$count -= iRemaining;
 
 		return iCount;
 	};
@@ -719,7 +731,9 @@ sap.ui.define([
 			this.oTreeState.expand(oGroupNode, iLevels);
 		} // else: no update needed!
 
-		if (aSpliced) {
+		if (iLevels >= Number.MAX_SAFE_INTEGER) { // expand all below oGroupNode
+			// nothing to do
+		} else if (aSpliced) {
 			_Helper.deletePrivateAnnotation(oGroupNode, "spliced");
 			const aOldElements = this.aElements;
 			const iIndex = aOldElements.indexOf(oGroupNode) + 1;
@@ -728,6 +742,7 @@ sap.ui.define([
 			this.aElements.$byPredicate = aOldElements.$byPredicate;
 			iCount = aSpliced.length;
 			this.aElements.$count = aOldElements.$count + iCount;
+			_Helper.copySelected(aOldElements, this.aElements);
 			const iLevelDiff = oGroupNode["@$ui5.node.level"] - aSpliced.$level;
 			const iRankDiff = _Helper.getPrivateAnnotation(oGroupNode, "rank") - aSpliced.$rank;
 			aSpliced.forEach(function (oElement) {
@@ -745,7 +760,7 @@ sap.ui.define([
 					}
 				}
 				if (!_Helper.hasPrivateAnnotation(oElement, "placeholder")) {
-					if (aSpliced.$stale && !oElement["@$ui5.context.isSelected"]) {
+					if (aSpliced.$stale && !that.isSelectionDifferent(oElement)) {
 						that.turnIntoPlaceholder(oElement, sPredicate);
 					} else {
 						that.aElements.$byPredicate[sPredicate] = oElement;
@@ -763,7 +778,8 @@ sap.ui.define([
 			});
 			return SyncPromise.resolve(iCount);
 		}
-		if (this.bUnifiedCache || iLevels > 1) {
+		if (this.bUnifiedCache || iLevels > 1
+				|| oGroupNode["@$ui5.node.level"] < this.oAggregation.expandTo) {
 			return SyncPromise.resolve(-1); // refresh needed
 		}
 
@@ -1357,6 +1373,23 @@ sap.ui.define([
 	};
 
 	/**
+	 * Determines if the "@$ui5.context.isSelected" annotation of the given element differs from the
+	 * annotation at the collection. Only relevant in case of a recursive hierarchy. Note: A missing
+	 * annotation is treated as <code>false</code>.
+	 *
+	 * @param {object} oElement - The element
+	 * @returns {boolean} Whether recursive hierarchy is used and the selection state of the element
+	 *   differs from the collection
+	 *
+	 * @private
+	 */
+	_AggregationCache.prototype.isSelectionDifferent = function (oElement) {
+		return this.oAggregation.hierarchyQualifier
+			&& (oElement["@$ui5.context.isSelected"] ?? false)
+				!== (this.aElements["@$ui5.context.isSelected"] ?? false);
+	};
+
+	/**
 	 * Determines the list of elements determined by the given predicates. All other elements are
 	 * turned into placeholders (lazily), except transient ones.
 	 *
@@ -1590,6 +1623,7 @@ sap.ui.define([
 		aOutOfPlacePredicates.forEach((sNodePredicate) => {
 			const oNode = this.aElements.$byPredicate[sNodePredicate];
 			if (oNode) {
+				this.oTreeState.stillOutOfPlace(oNode, sNodePredicate);
 				const bExpanded = oNode["@$ui5.node.isExpanded"];
 				if (bExpanded) {
 					this.collapse(sNodePredicate);

@@ -37,7 +37,7 @@ sap.ui.define([
 	 * The <code>sap.m.PlanningCalendarRow</code> allows you to modify appointments at row level.
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @constructor
 	 * @public
@@ -111,12 +111,12 @@ sap.ui.define([
 			 *
 			 * Hours:<br>
 			 * For views where the displayed intervals are hours, the placeholder snaps on every interval
-			 * of 30 minutes. After the appointment is dropped, the {@link #event:appointmentDrop appointmentDrop} event is fired, containing
+			 * of 15 minutes. After the appointment is dropped, the {@link #event:appointmentDrop appointmentDrop} event is fired, containing
 			 * the new start and end UI5Date or JavaScript Date objects.<br>
 			 * For example, an appointment with start date "Nov 13 2017 12:17:00" and end date "Nov 13 2017 12:45:30"
 			 * lasts for 27 minutes and 30 seconds. After dragging and dropping to a new time, the possible new
-			 * start date has time that is either "hh:00:00" or "hh:30:00" because of the placeholder that can
-			 * snap on every 30 minutes. The new end date is calculated to be 27 minutes and 30 seconds later
+			 * start date has time that is either "hh:00:00" or "hh:15:00" because of the placeholder that can
+			 * snap on every 15 minutes. The new end date is calculated to be 27 minutes and 30 seconds later
 			 * and would be either "hh:27:30" or "hh:57:30".
 			 *
 			 * Days:<br>
@@ -171,7 +171,7 @@ sap.ui.define([
 			 *
 			 * Hours:
 			 * For views where the displayed intervals are hours, the appointment snaps on every interval
-			 * of 30 minutes. After the resize is finished, the {@link #event:appointmentResize appointmentResize} event is fired, containing
+			 * of 15 minutes. After the resize is finished, the {@link #event:appointmentResize appointmentResize} event is fired, containing
 			 * the new start and end UI5Date or JavaScript Date objects.
 			 *
 			 * Days:
@@ -226,6 +226,12 @@ sap.ui.define([
 			 * <b>Note:</b> For performance reasons, only appointments in the visible time range or nearby should be assigned.
 			 */
 			appointments : {type : "sap.ui.unified.CalendarAppointment", multiple : true, singularName : "appointment", dnd : {draggable: true}},
+
+			/**
+			 * Sets the provided period to be displayed as a non-working.
+			 * @since 1.128
+			 */
+			nonWorkingPeriods: {type: "sap.ui.unified.NonWorkingPeriod", multiple: true},
 
 			/**
 			 * The appointments to be displayed at the top of the intervals (for example, for public holidays).

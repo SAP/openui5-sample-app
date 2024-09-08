@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.127.0"
+      "version": "1.128.0"
     },
     "title": "SAPUI5 library with Fiori controls.",
     "description": "SAPUI5 library with Fiori controls.",
@@ -22,16 +22,16 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.127",
+      "minUI5Version": "1.128",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.127.0"
+          "minVersion": "1.128.0"
         },
         "sap.ui.layout": {
-          "minVersion": "1.127.0"
+          "minVersion": "1.128.0"
         },
         "sap.m": {
-          "minVersion": "1.127.0"
+          "minVersion": "1.128.0"
         }
       }
     },
@@ -124,6 +124,10 @@
           "sap.f.DynamicPageAccessibleLandmarkInfo",
           "sap.f.GridContainerItemLayoutData",
           "sap.f.FlexibleColumnLayoutAccessibleLandmarkInfo",
+          "sap.f.FlexibleColumnLayoutData",
+          "sap.f.FlexibleColumnLayoutDataForDesktop",
+          "sap.f.FlexibleColumnLayoutDataForTablet",
+          "sap.f.cards.CardBadgeCustomData",
           "sap.f.semantic.AddAction",
           "sap.f.semantic.CloseAction",
           "sap.f.semantic.CopyAction",

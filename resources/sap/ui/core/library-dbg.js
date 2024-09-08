@@ -26,13 +26,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.127.0",
+		 version: "1.128.0",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 apiVersion: 2,
 		 types: [
@@ -1611,7 +1611,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0
@@ -2428,7 +2428,7 @@ sap.ui.define([
 	 * @borrows module:sap/ui/core/message/MessageType.Warning as Warning
 	 * @borrows module:sap/ui/core/message/MessageType.Success as Success
 	 * @borrows module:sap/ui/core/message/MessageType.None as None
-	 * @deprecated As of version 1.120. Please use {@link sap.ui.core.message.MessageType} instead.
+	 * @deprecated As of version 1.120. Please use {@link module:sap/ui/core/message/MessageType} instead.
 	 */
 	thisLib.MessageType = MessageType;
 

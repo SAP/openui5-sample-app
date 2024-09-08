@@ -1,8 +1,0 @@
-{
-	"@odata.count": "1",
-	"value": [{
-		"Region": "Wales",
-		"LocalCurrency": "GBP",
-		"SalesAmountLocalCurrency": "815825"
-	}]
-}

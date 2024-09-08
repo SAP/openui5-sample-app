@@ -55,10 +55,11 @@ sap.ui.define([
 		 * @param {boolean} [oConfig.preventDefault=false] Deprecated since 1.42, the parameter has no effect
 		 * @param {boolean} [oConfig.nonTouchScrolling=false] If true, the delegate will also be active to allow touch like scrolling with the mouse on non-touch platforms.
 		 * @param {string} [oConfig.scrollContainerId=""] Native scrolling does not need content wrapper. In this case, ID of the container element should be provided.
+		 * @param {boolean} [oConfig.callBefore=false] if true, the delegate event listeners are called before the event listeners of the element; default is "false".
 		 *
 		 * @protected
 		 * @alias sap.ui.core.delegate.ScrollEnablement
-		 * @version 1.127.0
+		 * @version 1.128.0
 		 * @author SAP SE
 		 */
 		var ScrollEnablement = BaseObject.extend("sap.ui.core.delegate.ScrollEnablement", /** @lends sap.ui.core.delegate.ScrollEnablement.prototype */ {
@@ -68,7 +69,7 @@ sap.ui.define([
 				BaseObject.apply(this);
 
 				this._oControl = oControl;
-				this._oControl.addDelegate(this);
+				this._oControl.addDelegate(this, oConfig.callBefore);
 				this._sContentId = sScrollContentDom;
 				this._sContainerId = oConfig.scrollContainerId;
 				this._bHorizontal = !!oConfig.horizontal;

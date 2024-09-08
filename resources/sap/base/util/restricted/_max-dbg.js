@@ -10,7 +10,7 @@
  * @alias module:sap/base/util/restricted/_max
  * @author SAP SE
  * @since 1.71
- * @version 1.127.0
+ * @version 1.128.0
  * @private
  * @ui5-restricted
 */

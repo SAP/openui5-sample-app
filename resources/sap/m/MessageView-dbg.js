@@ -117,7 +117,7 @@ sap.ui.define([
 	 * The responsiveness of the <code>MessageView</code> is determined by the container in which it is embedded. For that reason the control could not be visualized if the
 	 * container’s sizes are not defined.
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 *
 	 * @extends sap.ui.core.Control
 	 * @constructor
@@ -424,9 +424,6 @@ sap.ui.define([
 
 				// TODO: adopt this to NavContainer's public API once a parameter for back navigation transition name is available
 				this._navContainer._pageStack[this._navContainer._pageStack.length - 1].transition = "slide";
-			} else {
-				// if the update is just on the item's props, do not navigate back and forward
-				this._updateDescriptionPage(aItems[0], aListItems[0]);
 			}
 		} else if (aListItems.length === 0) {
 			this._navContainer.backToTop();
@@ -434,6 +431,12 @@ sap.ui.define([
 
 		// Bind automatically to the MessageModel if no items are bound
 		this._makeAutomaticBinding();
+	};
+
+	MessageView.prototype._updateDescription = function (oItem) {
+		if (!this._isListPage() && oItem._oListItem) {
+			this._updateDescriptionPage(oItem, oItem._oListItem);
+		}
 	};
 
 	/**
@@ -478,12 +481,11 @@ sap.ui.define([
 		var oHeader = new GroupHeaderListItem({
 			title: sGroupName
 		});
-
-		this._oLists["all"].addAggregation("items", oHeader, true);
+		this._oLists["all"].addItemGroup(null, oHeader, true);
 
 		["error", "warning", "success", "information"].forEach(function (sListType) {
 			if (this._hasGroupItemsOfType(aItems, sListType)) {
-				this._oLists[sListType].addAggregation("items", oHeader.clone(), true);
+				this._oLists[sListType].addItemGroup(null, oHeader.clone(), true);
 			}
 		}, this);
 
@@ -828,6 +830,7 @@ sap.ui.define([
 		}
 
 		oListItem._oMessageItem = oMessageItem;
+		oMessageItem._oListItem = oListItem;
 
 		return oListItem;
 	};

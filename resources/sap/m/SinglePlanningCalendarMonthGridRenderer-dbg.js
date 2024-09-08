@@ -122,11 +122,9 @@ sap.ui.define([
 				oRm.attr("role", "row");
 				oRm.openEnd();
 
-				for (j = 0; j < iColumns; j++) {
-					iCellIndex = i * iColumns + j;
-					oDay = aCells[iCellIndex];
-					this.renderDay(oRm, oControl, oDay, oLocaleData, aMoreCountPerCell[iCellIndex], iCellIndex);
-				}
+				oRm.openStart("div");
+				oRm.attr("role", "gridcell" );
+				oRm.openEnd();
 
 				oRm.openStart("div");
 				oRm.class("sapMSinglePCBlockers");
@@ -147,6 +145,13 @@ sap.ui.define([
 				}
 
 				oRm.close("div"); // end appointments
+				oRm.close("div");
+
+				for (j = 0; j < iColumns; j++) {
+					iCellIndex = i * iColumns + j;
+					oDay = aCells[iCellIndex];
+					this.renderDay(oRm, oControl, oDay, oLocaleData, aMoreCountPerCell[iCellIndex], iCellIndex);
+				}
 				oRm.close("div"); // end cells
 				oRm.close("div"); // end grid
 			}
@@ -237,6 +242,9 @@ sap.ui.define([
 			//acc for day view + special dates + legend
 			if (oControl._sLegendId && sLegendItemType) {
 				oRm.text(sLegendItemType);
+			}
+			if (oControl._doesContainAppointments(oDay)) {
+				oRm.text(oControl._getCellDescription());
 			}
 			oRm.close("span");
 
@@ -517,7 +525,6 @@ sap.ui.define([
 				oFirstRenderedDate.setDate(oFirstRenderedDate.getDate() + 1);
 
 				oRm.accessibilityState(null, {
-					role: "columnheader",
 					label: aWeekDaysWide[iDayIndex]
 				});
 				oRm.openEnd();

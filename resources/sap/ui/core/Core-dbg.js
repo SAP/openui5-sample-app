@@ -114,7 +114,7 @@ sap.ui.define([
 	 * @private
 	 * @ui5-restricted sap.ui.core, sap.ui.test
 	 */
-	const sVersion = "1.127.0";
+	const sVersion = "1.128.0";
 
 	/**
 	 * The buildinfo.
@@ -141,9 +141,14 @@ sap.ui.define([
 	Object.freeze(oBuildinfo);
 
 	// getComputedStyle polyfill + syncXHR fix for firefox
-	if ( Device.browser.firefox ) {
+	if (Device.browser.firefox) {
 		getComputedStyleFix();
-		syncXHRFix();
+		if (Device.browser.version < 129) {
+			// Firefox fixes the issue from its version 129. See
+			// https://bugzilla.mozilla.org/show_bug.cgi?id=697151
+			// https://wpt.fyi/results/xhr/send-sync-blocks-async.htm?label=experimental&label=master&aligned
+			syncXHRFix();
+		}
 	}
 
 	if (BaseConfig.get({
@@ -434,7 +439,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 * @final
 	 * @author SAP SE
-	 * @version 1.127.0
+	 * @version 1.128.0
 	 * @alias sap.ui.core.Core
 	 * @public
 	 * @hideconstructor
@@ -629,7 +634,7 @@ sap.ui.define([
 
 			/**
 			 * in case the flexibilityServices configuration was set to a non-empty,
-			 * non-default value, sap.ui.fl becomes mandatoryif not overruled by
+			 * non-default value, sap.ui.fl becomes mandatory if not overruled by
 			 * 'xx-skipAutomaticFlLibLoading'.
 			 * @deprecated As of Version 1.120.0
 			 */
@@ -720,8 +725,8 @@ sap.ui.define([
 			 * @returns {sap.ui.core.Core} the API of the current SAPUI5 Core instance.
 			 * @public
 			 * @function
-			 * @deprecated since 1.118. Please require 'sap/ui/core/Core' instead and use the
-			 * 				module export directly without using 'new'."
+			 * @deprecated as of version 1.118. Please require 'sap/ui/core/Core' instead and use the
+			 * 				module export directly without using 'new'.
 			 * @ui5-global-only
 			 */
 			sap.ui.getCore = function() {
@@ -1122,6 +1127,9 @@ sap.ui.define([
 		// add CalendarClass to list of modules
 		this.aModules.push("sap/ui/core/date/" + Formatting.getCalendarType());
 
+		// add FieldHelpEndpoint to list of modules
+		this.aModules.push("sap/ui/core/boot/FieldHelpEndpoint");
+
 		// load all modules now
 		if ( bAsync ) {
 			return this._requireModulesAsync().then(function() {
@@ -1252,7 +1260,7 @@ sap.ui.define([
 	 * @return {this} the Core, to allow method chaining
 	 * @since 1.10
 	 * @deprecated As of version 1.119, without replacement. The need to define the location for a theme
-	 *   should be fully covered with the capabiltites of the {@link sap/base/config base configuration}.
+	 *   should be fully covered with the capabilities of the {@link sap/base/config base configuration}.
 	 * @public
 	 */
 	Core.prototype.setThemeRoot = function(sThemeName, aLibraryNames, sThemeBaseUrl, bForceUpdate) {
@@ -1394,7 +1402,7 @@ sap.ui.define([
 	};
 
 	Core.prototype._executeInitialization = function() {
-		// chain ready to be the firstone that is executed
+		// chain ready to be the first one that is executed
 		var METHOD = "sap.ui.core.Core.init()"; // Because it's only used from init
 		if (this.bInitialized) {
 			return;
@@ -1550,7 +1558,7 @@ sap.ui.define([
 	 *
 	 * @return {sap.ui.core.Configuration} the Configuration of the current Core.
 	 * @public
-	 * @deprecated As of Version 1.120. Please see {@link sap.ui.core.Configuration Configuration} for the corrsponding replacements.
+	 * @deprecated As of Version 1.120. Please see {@link sap.ui.core.Configuration Configuration} for the corresponding replacements.
 	 */
 	Core.prototype.getConfiguration = function () {
 		return Configuration;
@@ -1559,7 +1567,7 @@ sap.ui.define([
 	/**
 	 * Creates a new <code>RenderManager</code> instance for use by the caller.
 	 *
-	 * @returns {sap.ui.core.RenderManager} A newly createdRenderManeger
+	 * @returns {sap.ui.core.RenderManager} A newly created RenderManager
 	 * @public
 	 * @deprecated Since version 0.15.0. Replaced by <code>createRenderManager()</code>
 	 */
@@ -2127,7 +2135,7 @@ sap.ui.define([
 	 *  Controls can listen to the themeChanged event to realign their appearance after changing the theme.
 	 *  Changing the cozy/compact CSS class should then also be handled as a theme change.
 	 *  In more simple scenarios where the cozy/compact CSS class is added to a DOM element which contains only a few controls
-	 *  it might not be necessary to trigger the realigment of all controls placed in the DOM,
+	 *  it might not be necessary to trigger the realignment of all controls placed in the DOM,
 	 *  for example changing the cozy/compact CSS class at a single control
 	 * @public
 	 * @function
@@ -2658,7 +2666,7 @@ sap.ui.define([
 	 *   usage only. They unfortunately allow access to all internals of the Core and therefore break encapsulation
 	 *   and hinder evolution of the Core. The most common use case of accessing the set of all controls/elements
 	 *   or all components can now be addressed by using the APIs {@link sap.ui.core.Element.registry} or
-	 *   {@link sap.ui.core.Component.registry}, respectively. Future refactorings of the Core will only take
+	 *   {@link sap.ui.core.Component.registry}, respectively. Future refactoring of the Core will only take
 	 *   existing plugins in the OpenUI5 repository into account.
 	 */
 	Core.prototype.registerPlugin = function(oPlugin) {
@@ -2696,7 +2704,7 @@ sap.ui.define([
 	 *   usage only. They unfortunately allow access to all internals of the Core and therefore break encapsulation
 	 *   and hinder evolution of the Core. The most common use case of accessing the set of all controls/elements
 	 *   or all components can now be addressed by using the APIs {@link sap.ui.core.Element.registry} or
-	 *   {@link sap.ui.core.Component.registry}, respectively. Future refactorings of the Core will only take
+	 *   {@link sap.ui.core.Component.registry}, respectively. Future refactoring of the Core will only take
 	 *   existing plugins in the OpenUI5 repository into account.
 	 */
 	Core.prototype.unregisterPlugin = function(oPlugin) {
