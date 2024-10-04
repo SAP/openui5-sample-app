@@ -33,11 +33,11 @@ A deployed version of the [openui5-sample-app](http://sap.github.io/openui5-samp
     ```sh
     npm run lint
     ```
-* Start the [Karma Test Runner](https://karma-runner.github.io/latest/index.html) with the [UI5 Plugin](https://github.com/SAP/karma-ui5) and execute the tests automatically after every change
+* Start the [UI5 Test Runner](https://www.npmjs.com/package/ui5-test-runner) and execute the tests
     ```sh
-    npm run watch
+    npm run test-ui5
     ```
-* Run both ESLint and Karma in CI mode
+* Run both ESLint and UI5 Test Runner
     ```sh
     npm test
     ```

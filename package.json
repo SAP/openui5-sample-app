@@ -10,10 +10,10 @@
 	"scripts": {
 		"start": "ui5 serve",
 		"lint": "eslint webapp && ui5lint",
-		"karma": "karma start",
-		"karma-ci": "rimraf coverage && karma start karma-ci.conf.js",
-		"watch": "npm run karma",
-		"test": "npm run lint && npm run karma-ci",
+		"test-ui5": "start-server-and-test start http://localhost:8080 test-runner-coverage",
+		"test-runner": "ui5-test-runner --port 8081 --url http://localhost:8080/test/testsuite.qunit.html",
+		"test-runner-coverage": "ui5-test-runner --port 8081 --url http://localhost:8080/test/testsuite.qunit.html --coverage -ccb 100 -ccf 100 -ccl 100 -ccs 100",
+		"test": "npm run lint && npm run test-ui5",
 		"build": "ui5 build -a --clean-dest",
 		"build-self-contained": "ui5 build self-contained -a --clean-dest",
 		"serve-dist": "ws --compress -d dist"
@@ -25,11 +25,9 @@
 		"@ui5/middleware-code-coverage": "^2.0.1",
 		"eslint": "^9.15.0",
 		"globals": "^15.12.0",
-		"karma": "^6.4.4",
-		"karma-chrome-launcher": "^3.2.0",
-		"karma-coverage": "^2.2.1",
-		"karma-ui5": "^4.1.0",
 		"local-web-server": "^5.4.0",
-		"rimraf": "^6.0.1"
+		"rimraf": "^6.0.1",
+		"start-server-and-test": "^2.0.8",
+		"ui5-test-runner": "^5.3.5"
 	}
 }
