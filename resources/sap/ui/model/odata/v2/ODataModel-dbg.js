@@ -213,7 +213,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -341,6 +341,9 @@ sap.ui.define([
 			this.sMaxDataServiceVersion = sMaxDataServiceVersion;
 			this.bLoadAnnotationsJoined = bLoadAnnotationsJoined !== false;
 			this.sAnnotationURI = sAnnotationURI;
+			// A promise that may resolves with an array of annotation changes, see ODataModel#_requestAnnotationChanges
+			// and ODataModel#setAnnotationChangePromise
+			this.pAnnotationChanges = null;
 			this.sDefaultCountMode = sDefaultCountMode || CountMode.Request;
 			this.sDefaultOperationMode = sDefaultOperationMode || OperationMode.Default;
 			this.sMetadataLoadEvent = null;
@@ -3519,7 +3522,7 @@ sap.ui.define([
 			if (this.oRetryAfterError !== oReason) {
 				oErrorResponse.$ownReason = true;
 				oErrorResponse.$reported = true;
-				Log.error(sReason, oReason.stack, sClassName);
+				Log.error(sReason, oReason?.stack, sClassName);
 			}
 		}
 		fnError(oErrorResponse || {$ownReason: true, $rejected: true, $reported: true, message: sReason});
@@ -6194,9 +6197,9 @@ sap.ui.define([
 	 * loaded annotations.
 	 *
 	 * <b>Important</b>: This covers the annotations that were given to the model constructor, not
-	 * the ones that might have been added later on using the protected API method
-	 * {@link #addAnnotationUrl}. In order to get information about those, the event
-	 * <code>annotationsLoaded</code> can be used.
+	 * the ones that might have been added later on using the API method
+	 * {@link sap.ui.model.odata.ODataMetaModel#getODataValueLists}.
+	 * In order to get information about those, the event <code>annotationsLoaded</code> can be used.
 	 *
 	 * @returns {Promise}
 	 *   A promise that resolves with an array containing information about the initially loaded
@@ -6255,7 +6258,7 @@ sap.ui.define([
 	 * 								 The structure is the same as in the metadata object reached by the <code>getServiceMetadata()</code> method.
 	 * 								 For non-<code>$metadata</code> requests the array will be empty.
 	 *
-	 * @protected
+	 * @private
 	 */
 	ODataModel.prototype.addAnnotationUrl = function(vUrl) {
 		var aUrls = [].concat(vUrl),
@@ -6299,7 +6302,7 @@ sap.ui.define([
 	 * @param {string} sXMLContent - The string that should be parsed as annotation XML
 	 * @param {boolean} [bSuppressEvents=false] - Whether not to fire annotationsLoaded event on the annotationParser
 	 * @return {Promise} The Promise to parse the given XML-String, resolved if parsed without errors, rejected if errors occur
-	 * @protected
+	 * @private
 	 */
 	ODataModel.prototype.addAnnotationXML = function(sXMLContent, bSuppressEvents) {
 		return this.oAnnotations.addSource({
@@ -8992,6 +8995,73 @@ sap.ui.define([
 		var sOperation = bTransitionMessagesOnly ? "add" : "delete";
 
 		this.oTransitionMessagesOnlyGroups[sOperation](sGroupId);
+	};
+
+	/**
+	 * @typedef {object} sap.ui.model.odata.v2.ODataModel.AnnotationChange
+	 *
+	 * A change to an annotation which is to be applied to this model's metamodel.
+	 *
+	 * @property {string} path
+	 *   The meta path pointing to the annotation to be changed
+	 * @property {any} value
+	 *   The new annotation value; the object structure depends on the annotation being changed
+	 *
+	 * @example <caption>Change the label of a the business partner ID property</caption>
+	 * {
+	 *    path : "/dataServices/schema/0/entityType/[${name}==='BusinessPartner']/property/"
+	 *        + "[${name}==='BusinessPartnerID']/Label",
+	 *    value : {String : "*My* Business Partner ID"}
+	 * }
+	 * @example <caption>Change the label of a the business partner ID in a <code>LineItem</code> annotation</caption>
+	 * {
+	 *    path : "/dataServices/schema/0/entityType/[${name}==='BusinessPartner']/com.sap.vocabularies.UI.v1.LineItem/"
+	 *        + "[${Value/Path}==='BusinessPartnerID']/Label",
+	 *    value : {String : "*My* Business Partner ID"}
+	 * }
+	 * @private
+	 * @see sap.ui.model.odata.v2.ODataModel#setAnnotationChangePromise
+	 * @since 1.129.0
+	 * @ui5-restricted sap.ui.fl
+	 */
+
+	/**
+	 * Sets a promise resolving with changes which are applied to all annotations loaded by this model, either as part
+	 * of service metadata or from annotation files given via parameter "annotationURI" (see {@link #constructor}).
+	 *
+	 * @param {Promise<sap.ui.model.odata.v2.ODataModel.AnnotationChange[]>} pAnnotationChanges
+	 *   A promise resolving with an array of annotation changes
+	 * @throws {Error}
+	 *   In case the promise has already been set, or it is set after {@link #getMetaModel} has been called and the meta
+	 *   model data and the annotations have been loaded
+	 *
+	 * @private
+	 * @see sap.ui.model.odata.v2.ODataModel.AnnotationChange
+	 * @since 1.129.0
+	 * @ui5-restricted sap.ui.fl
+	 */
+	ODataModel.prototype.setAnnotationChangePromise = function (pAnnotationChanges) {
+		if (this.pAnnotationChanges) {
+			throw Error("Promise is set too late; an annotation change promise has already been set or the meta model"
+				+ " is already used");
+		}
+		this.pAnnotationChanges = pAnnotationChanges;
+	};
+
+	/**
+	 * Requests changes to annotations.
+	 *
+	 * @returns {Promise<sap.ui.model.odata.v2.ODataModel.AnnotationChange[]>|sap.ui.base.SyncPromise<undefined>}
+	 *   A promise resolving with an optional array of annotation changes
+	 *
+	 * @private
+	 * @see #setAnnotationChangePromise
+	 * @see sap.ui.model.odata.v2.ODataModel.AnnotationChange
+	 */
+	ODataModel.prototype._requestAnnotationChanges = function () {
+		this.pAnnotationChanges ??= SyncPromise.resolve(); // now it's too late for the setter
+
+		return this.pAnnotationChanges;
 	};
 
 	return ODataModel;

@@ -190,7 +190,7 @@ sap.ui.define([
 	 * the close event), or select Cancel.
 	 *
 	 * @extends sap.m.DateTimeField
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @constructor
 	 * @public

@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m.table.Util
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 * @since 1.96.0
 	 * @private
 	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp
@@ -413,6 +413,9 @@ sap.ui.define([
 			var sMessage = oResourceBundle.getText("TABLE_SELECT_LIMIT", [iLimit]);
 			oPopover.getContent()[0].setText(sMessage); //Content contains a single text element
 			if (oSelectAllDomRef) {
+				oPopover.attachEventOnce("afterOpen", function() {
+					InvisibleMessage.getInstance().announce(sMessage);
+				});
 				oPopover.openBy(oSelectAllDomRef);
 			}
 		});
@@ -555,12 +558,11 @@ sap.ui.define([
 		}
 
 		const oDetailsList = oPopover.getContent()[0];
-
-		const oItemsTemplate = oDetailsList.getBindingInfo("items")?.template || new CustomListItem({content: [mSettings.listItemContentTemplate]});
+		const oItemsTemplate = new CustomListItem({content: [mSettings.listItemContentTemplate]});
 
 		oDetailsList.bindItems({
 			...mSettings.itemsBindingInfo,
-			templateShareable: true,
+			templateShareable: false,
 			template: oItemsTemplate
 		});
 

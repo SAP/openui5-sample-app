@@ -56,7 +56,7 @@ function(
 	 *
 	* <b>Note:</b> This control should not be used with {@link sap.m.Label} or in Forms along with {@link sap.m.Label}.
 	 * @extends sap.ui.core.Control
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @constructor
 	 * @public
@@ -74,12 +74,12 @@ function(
 				/**
 				 * Defines the object title.
 				 */
-				title : {type : "string", group : "Misc", defaultValue : null},
+				title : {type : "string", group : "Data", defaultValue : null},
 
 				/**
 				 * Defines the object text.
 				 */
-				text : {type : "string", group : "Misc", defaultValue : null},
+				text : {type : "string", group : "Data", defaultValue : null},
 
 				/**
 				 * Indicates whether or not the notes icon is displayed.

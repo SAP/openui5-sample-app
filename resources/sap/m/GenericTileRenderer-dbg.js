@@ -622,6 +622,9 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 			oRm.attr("title", sTooltipText);
 		}
 		oRm.openEnd();
+		if (sState === LoadState.Failed) {
+			oRm.close("div");
+		}
 		switch (sState) {
 			case LoadState.Loading :
 				oControl._oBusy.setBusy(sState == LoadState.Loading);
@@ -649,7 +652,9 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 				break;
 			default :
 		}
-		oRm.close("div");
+		if (sState !== LoadState.Failed) {
+			oRm.close("div");
+		}
 	};
 
 	GenericTileRenderer._renderActionsScope = function(oRm, oControl) {

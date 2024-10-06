@@ -36,7 +36,7 @@ sap.ui.define([
 	};
 
 	var AVATAR_MARGIN_GROUP = {
-		XS: 0.75,
+		XS: 0.5,
 		S: 1.25,
 		M: 1.625,
 		L: 2,
@@ -100,7 +100,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @constructor
 	 * @public

@@ -121,7 +121,7 @@ function(
 		 * @implements sap.ui.core.IFormContent
 		 *
 		 * @author SAP SE
-		 * @version 1.128.0
+		 * @version 1.129.0
 		 *
 		 * @constructor
 		 * @public
@@ -753,16 +753,16 @@ function(
 				if (bHasValidationErrorListeners && sBindingConstraintMax) {
 					return;
 				}
-				sMessage = oCoreMessageBundle.getText("EnterNumberMax", [max]);
+				sMessage = this.getValueStateText() ? this.getValueStateText() : oCoreMessageBundle.getText("EnterNumberMax", [max]);
 				aViolatedConstraints.push("maximum");
 			} else if (this._isLessThanMin(value)) {
 				if (bHasValidationErrorListeners && sBindingConstraintMin) {
 					return;
 				}
-				sMessage = oCoreMessageBundle.getText("EnterNumberMin", [min]);
+				sMessage = this.getValueStateText() ? this.getValueStateText() : oCoreMessageBundle.getText("EnterNumberMin", [min]);
 				aViolatedConstraints.push("minimum");
 			} else if (this._areFoldChangeRequirementsFulfilled() && (value % this.getStep() !== 0)) {
-				sMessage = oCoreMessageBundle.getText("Float.Invalid");
+				sMessage = this.getValueStateText() ? this.getValueStateText() : oCoreMessageBundle.getText("Float.Invalid");
 			}
 
 			if (sMessage) {

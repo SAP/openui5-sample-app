@@ -141,6 +141,7 @@ sap.ui.define([
 	 *   <li> '$$ownRequest' with value <code>true</code>
 	 *   <li> '$$patchWithoutSideEffects' with value <code>true</code>
 	 *   <li> '$$updateGroupId' with allowed values as specified in {@link #checkGroupId}
+	 *   <li> '$$separate' with value <code>string[]</code>
 	 * </ul>
 	 *
 	 * @param {object} mParameters
@@ -222,6 +223,11 @@ sap.ui.define([
 					if (vValue !== true) {
 						throw new Error("Unsupported value for binding parameter '" + sKey + "': "
 							+ vValue);
+					}
+					break;
+				case "$$separate":
+					if (mParameters.$$aggregation) {
+						throw new Error("Cannot combine $$aggregation and $$separate");
 					}
 					break;
 				default:

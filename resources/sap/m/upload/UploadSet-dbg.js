@@ -53,10 +53,11 @@ sap.ui.define([
 	 * and requests, unified behavior of instant and deferred uploads, as well as improved progress indication.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 * @constructor
 	 * @public
 	 * @since 1.63
+	 * @deprecated As of version 1.129, replaced by {@link sap.m.plugins.UploadSetwithTable}
 	 * @alias sap.m.upload.UploadSet
 	 */
 	var UploadSet = Control.extend("sap.m.upload.UploadSet", {
@@ -185,11 +186,11 @@ sap.ui.define([
 				/**
 				 * Items representing files that have already been uploaded.
 				 */
-				items: {type: "sap.m.upload.UploadSetItem", multiple: true, singularName: "item"},
+				items: {type: "sap.m.upload.UploadSetItem", defaultClass: UploadSetItem, multiple: true, singularName: "item"},
 				/**
 				 * Items representing files yet to be uploaded.
 				 */
-				incompleteItems: {type: "sap.m.upload.UploadSetItem", multiple: true, singularName: "incompleteItem"},
+				incompleteItems: {type: "sap.m.upload.UploadSetItem", defaultClass: UploadSetItem, multiple: true, singularName: "incompleteItem"},
 				/**
 				 * Header fields to be included in the header section of an XHR request.
 				 */
@@ -1450,7 +1451,12 @@ sap.ui.define([
 		if (this._oItemToUpdate && this.getInstantUpload()) {
 			this.removeAggregation('items', this._oItemToUpdate, false);
 		}
-		this.insertItem(oItem, 0);
+		if (!this.isBound('items')){
+			this.insertItem(oItem, 0);
+		}
+		if (this.isBound('items')) {
+			this.removeIncompleteItem(oItem);
+		}
 		oItem.setUploadState(UploadState.Complete);
 		this._oItemToUpdate = null;
 		this.fireUploadCompleted(oXhrParams);
@@ -1604,8 +1610,10 @@ sap.ui.define([
 		if (sAction !== MessageBox.Action.DELETE) {
 			return;
 		}
-		this.removeItem(this._oItemToBeDeleted);
-		this.removeIncompleteItem(this._oItemToBeDeleted);
+		if (!this.isBound("items")){
+			this.removeItem(this._oItemToBeDeleted);
+			this.removeIncompleteItem(this._oItemToBeDeleted);
+		}
 		this.fireAfterItemRemoved({item: this._oItemToBeDeleted});
 		this._oItemToBeDeleted = null;
 		this._bItemRemoved = true;

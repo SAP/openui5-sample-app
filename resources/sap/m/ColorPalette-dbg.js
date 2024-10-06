@@ -108,7 +108,7 @@ sap.ui.define([
 		 * To prevent this, apps using the <code>ColorPalette</code> should also load the <code>sap.ui.unified</code> library in advance.
 		 *
 		 * @extends sap.ui.core.Control
-		 * @version 1.128.0
+		 * @version 1.129.0
 		 *
 		 * @constructor
 		 * @public
@@ -588,6 +588,7 @@ sap.ui.define([
 			// OK button
 			oDialog.setBeginButton(new Button({
 				text: oLibraryResourceBundle.getText("COLOR_PALETTE_MORE_COLORS_CONFIRM"),
+				type: ButtonType.Emphasized,
 				press: function (oEvent) {
 					oDialog.close();
 					if (oDialog._oColorPicker.getColorString()) {

@@ -70,7 +70,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IContextMenu
 	 *
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -147,7 +147,13 @@ sap.ui.define([
 						 */
 						item : {type : "sap.ui.unified.MenuItemBase"}
 					}
-				}
+				},
+
+				/**
+				 * Fired when the menu is closed.
+				 * @since 1.129
+				 */
+				closed: {}
 
 			}
 		},
@@ -618,6 +624,9 @@ sap.ui.define([
 	 * @private
 	 */
 	Menu.prototype._menuClosed = function() {
+
+		this.fireClosed();
+
 		//TBD: standard popup autoclose: this.close(); //Ensure proper cleanup
 		if (this.oOpenerRef) {
 			if (!this.bIgnoreOpenerDOMRef) {

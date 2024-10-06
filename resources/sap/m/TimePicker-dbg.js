@@ -181,7 +181,7 @@ function(
 		 * @extends sap.m.DateTimeField
 		 *
 		 * @author SAP SE
-		 * @version 1.128.0
+		 * @version 1.129.0
 		 *
 		 * @constructor
 		 * @public
@@ -908,6 +908,17 @@ function(
 			this.setProperty("title", title, true);
 
 			return this;
+		};
+
+		/**
+		 * Gets current value of property width.
+		 *
+		 * @returns {string} The value of property width or "100%"
+		 * @public
+		 * @override
+		 */
+		TimePicker.prototype.getWidth = function() {
+			return this.getProperty("width") || "100%";
 		};
 
 		/**

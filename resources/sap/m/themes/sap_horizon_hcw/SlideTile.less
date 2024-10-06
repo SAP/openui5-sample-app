@@ -7,7 +7,7 @@
 	border-radius: 0.25rem;
 }
 
-html.sap-desktop .sapMST:active .sapMGTFocusDiv {
+.sapMST:active .sapMGTFocusDiv {
 	left: 0;
 	top: 0;
 	right: 0;
@@ -15,19 +15,19 @@ html.sap-desktop .sapMST:active .sapMGTFocusDiv {
 	border: 0.125rem dotted @sapUiContentFocusColor;
 }
 
-html.sap-desktop .sapMST:focus:not([tabindex]) {
+.sapMST:focus:not([tabindex]) {
 	border-color: transparent;
 }
 
 /* Bulleted indicator of multiple tiles*/
-.sapMSTBulleted > span {
+.sapMSTBulleted .sapMSTIndicator{
 	border: solid 0.0625rem @sapTile_OverlayForegroundColor;
 	opacity: 0.6;
 	box-shadow : 0 0 0.125rem @sapContent_ShadowColor;
 	margin: 0 0.094rem;
 }
 
-.sapMSTBulleted > span.sapMSTActive {
+.sapMSTBulleted .sapMSTIndicator.sapMSTActive {
 	background: @sapTile_OverlayForegroundColor;
 	box-shadow: 0 0 0.063rem @sapContent_ShadowColor;
 }
@@ -60,12 +60,12 @@ html.sap-desktop .sapMST:focus:not([tabindex]) {
 	border: none;
 }
 
-html.sap-desktop .sapMST.sapMSTIconPressed .sapMSTIconClickTapArea:hover ~.sapMSTIconDisplayArea {
+.sapMST.sapMSTIconPressed .sapMSTIconClickTapArea:hover ~.sapMSTIconDisplayArea {
 	border-color: @sapButton_Active_BorderColor;
 	background-color: @sapButton_Active_Background;
 }
 
-html.sap-desktop .sapMST.sapMSTIconPressed{
+.sapMST.sapMSTIconPressed{
 	.sapMSTIconNestedArea{
 		.sapUiIcon{
 			color: @sapButton_Active_TextColor !important;

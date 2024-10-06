@@ -49,7 +49,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @constructor
 	 * @public
@@ -68,7 +68,7 @@ sap.ui.define([
 				/**
 				 * Defines the number field.
 				 */
-				number : {type : "string", group : "Misc", defaultValue : null},
+				number : {type : "string", group : "Data", defaultValue : null},
 
 				/**
 				 * Defines the number units qualifier.
@@ -90,7 +90,7 @@ sap.ui.define([
 				 * Defines the number units qualifier. If numberUnit and unit are both set, the unit value is used.
 				 * @since 1.16.1
 				 */
-				unit : {type : "string", group : "Misc", defaultValue : null},
+				unit : {type : "string", group : "Data", defaultValue : null},
 
 				/**
 				 * Available options for the number and unit text direction are LTR(left-to-right) and RTL(right-to-left). By default, the control inherits the text direction from its parent control.

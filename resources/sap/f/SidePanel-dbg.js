@@ -151,7 +151,7 @@ sap.ui.define([
  	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @constructor
 	 * @public
@@ -468,7 +468,7 @@ sap.ui.define([
 				this.getItems().length && this._fixSidePanelWidth();
 			}
 		} else {
-			if (this.getDomRef().querySelector(".sapFSPMain").scrollTop === 0) {
+			if (this.getDomRef().querySelector(".sapFSPMain").scrollTop === 0 && !this._isSingleItem()) {
 				this.setActionBarExpanded(true);
 			}
 		}
@@ -498,7 +498,8 @@ sap.ui.define([
 			bSideContentExpanded = this._getSideContentExpanded(),
 			bSideExpanded = this.getActionBarExpanded() || bSideContentExpanded,
 			bCtrlOrCmd = oEvent.ctrlKey || oEvent.metaKey,
-			bSplitterFocused = document.activeElement === this.getDomRef().querySelector(".sapFSPSplitterBar");
+			bSplitterFocused = document.activeElement === this.getDomRef().querySelector(".sapFSPSplitterBar"),
+			iDirectionModifier = this.getSidePanelPosition() === SidePanelPosition.Right ? 1 : -1;
 
 		if (bCtrlOrCmd && oEvent.which === KeyCodes.ARROW_LEFT) {
 			oEvent.preventDefault();
@@ -539,10 +540,14 @@ sap.ui.define([
 					this._setSidePanelResizePosition(SIDE_PANEL_POSITION_MIN_WIDTH);
 					break;
 				case KeyCodes.ARROW_LEFT:
+					this._moveSidePanelResizePositionWith(oEvent.shiftKey ? this.getSidePanelResizeLargerStep() * iDirectionModifier : this.getSidePanelResizeStep() * iDirectionModifier);
+					break;
 				case KeyCodes.ARROW_UP:
 					this._moveSidePanelResizePositionWith(oEvent.shiftKey ? this.getSidePanelResizeLargerStep() : this.getSidePanelResizeStep());
 					break;
 				case KeyCodes.ARROW_RIGHT:
+					this._moveSidePanelResizePositionWith(oEvent.shiftKey ? -this.getSidePanelResizeLargerStep() * iDirectionModifier : -this.getSidePanelResizeStep() * iDirectionModifier);
+					break;
 				case KeyCodes.ARROW_DOWN:
 					this._moveSidePanelResizePositionWith(oEvent.shiftKey ? -this.getSidePanelResizeLargerStep() : -this.getSidePanelResizeStep());
 					break;
@@ -1194,7 +1199,7 @@ sap.ui.define([
 			setTimeout(function() {
 				bForward = iTop > this._iLastScrollPosition;
 				bBackward = iTop < this._iLastScrollPosition;
-				this.setActionBarExpanded(!bForward || bBackward);
+				!this._isSingleItem() && this.setActionBarExpanded(!bForward || bBackward);
 				this._iLastScrollPosition = iTop;
 				this.bScrolling = false;
 			}.bind(this), 100);
@@ -1333,6 +1338,10 @@ sap.ui.define([
 			iDeltaX = this._iStartPositionX - iCurrentPositionX,
 			oSide = this.getDomRef().querySelector(".sapFSPSide"),
 			iSidePanelWidth = parseInt(window.getComputedStyle(oSide)['width']);
+
+		if (this.getSidePanelPosition() === SidePanelPosition.Left) {
+			iDeltaX = -iDeltaX;
+		}
 
 		oEvent.preventDefault();
 

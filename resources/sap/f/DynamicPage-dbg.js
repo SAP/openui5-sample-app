@@ -118,7 +118,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @constructor
 	 * @public
@@ -469,7 +469,7 @@ sap.ui.define([
 		this._updateTitlePositioning();
 		this._attachPageChildrenAfterRenderingDelegates();
 		this._updatePinButtonState();
-		this._hidePinButtonIfNotApplicable();
+		this._showHidePinButton();
 
 		if (!this.getHeaderExpanded()) {
 			this._snapHeader(false);
@@ -1061,13 +1061,11 @@ sap.ui.define([
 
 
 	/**
-	 * Hides the pin button if no pin scenario is possible
+	 * Shows/hides the pin button if pin scenario is possible/not possible
 	 * @private
 	 */
-	DynamicPage.prototype._hidePinButtonIfNotApplicable = function () {
-		if (this._preserveHeaderStateOnScroll()) {
-			this._togglePinButtonVisibility(false);
-		}
+	DynamicPage.prototype._showHidePinButton = function () {
+		this._togglePinButtonVisibility(!this._preserveHeaderStateOnScroll());
 	};
 
 	/**

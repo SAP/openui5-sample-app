@@ -75,14 +75,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.m",
-		version: "1.128.0",
+		version: "1.129.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -4404,7 +4404,14 @@ sap.ui.define([
 		 * @public
 		 * @since 1.56
 		 */
-		InfoToolbar: "InfoToolbar"
+		InfoToolbar: "InfoToolbar",
+
+		/**
+		 * The group headers remain in a fixed position at the top of the page during vertical scrolling.
+		 * @public
+		 * @since 1.128
+		 */
+		GroupHeaders: "GroupHeaders"
 	};
 
 	/**
@@ -6435,6 +6442,7 @@ sap.ui.define([
 	DataType.registerEnum("sap.m.ButtonAccessibleRole", thisLib.ButtonAccessibleRole);
 	DataType.registerEnum("sap.m.ButtonType", thisLib.ButtonType);
 	DataType.registerEnum("sap.m.CarouselArrowsPlacement", thisLib.CarouselArrowsPlacement);
+	DataType.registerEnum("sap.m.CarouselPageIndicatorPlacementType", thisLib.CarouselPageIndicatorPlacementType);
 	DataType.registerEnum("sap.m.DeviationIndicator", thisLib.DeviationIndicator);
 	DataType.registerEnum("sap.m.DialogRoleType", thisLib.DialogRoleType);
 	DataType.registerEnum("sap.m.DialogType", thisLib.DialogType);

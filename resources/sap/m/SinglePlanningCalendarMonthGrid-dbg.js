@@ -95,7 +95,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.128.0
+		 * @version 1.129.0
 		 *
 		 * @constructor
 		 * @private
@@ -1402,11 +1402,14 @@ sap.ui.define([
 		});
 
 		SinglePlanningCalendarMonthGrid.prototype._getCellStartInfo = function(oStartDate) {
-			var sStartTime = Core
-				.getLibraryResourceBundle("sap.ui.unified")
-				.getText("CALENDAR_START_TIME");
+			var sStartDateLabel = Core.getLibraryResourceBundle("sap.ui.unified").getText("CALENDAR_START_TIME"),
+				sStartDate = this._oFormatAriaFullDayCell.format(oStartDate.toLocalJSDate()),
+				sToday = Core.getLibraryResourceBundle("sap.ui.unified").getText("LEGEND_TODAY"),
+				sDesciption = oStartDate.isSame(CalendarDate.fromLocalJSDate(UI5Date.getInstance()))
+					? `${sToday}, ${sStartDate}`
+					: sStartDate;
 
-				return sStartTime + ": " + this._oFormatAriaFullDayCell.format(oStartDate);
+			return `${sStartDateLabel}: ${sDesciption}`;
 		};
 
 		SinglePlanningCalendarMonthGrid.prototype._getAppointmentAnnouncementInfo = function(oAppointment) {

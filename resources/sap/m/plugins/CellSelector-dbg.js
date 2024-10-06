@@ -62,7 +62,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 * @author SAP SE
 	 *
 	 * @public
@@ -1577,8 +1577,8 @@ sap.ui.define([
 					iToIndex = Math.min(iToIndex, iFromIndex + iLimit - 1, iMaxIndex);
 				}
 
-				return oItems.filter((oItem) => !oItem.isGroupHeader?.()) // ignore group headers
-					.slice(iFromIndex, iToIndex + 1)
+				return oItems.slice(iFromIndex, iToIndex + 1)
+					.filter((oItem) => !oItem.isGroupHeader?.()) // ignore group headers
 					.map((oItem) => oItem?.getBindingContext(oTable.getBindingInfo("items")?.model));
 			},
 			/**

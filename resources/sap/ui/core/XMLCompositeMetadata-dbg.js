@@ -22,19 +22,19 @@ sap.ui.define([
 
 	var mFragmentCache = {};
 
-	/*
-	 *
+	/**
 	 * Creates a new metadata object that describes a subclass of XMLComposite.
 	 *
 	 * @param {string} sClassName fully qualified name of the described class
 	 * @param {object} oClassInfo static info to construct the metadata from
 	 *
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 * @since 1.50.0
 	 * @alias sap.ui.core.XMLCompositeMetadata
 	 * @extends sap.ui.core.ElementMetadata
-	 * @public
+	 * @private
+	 * @ui5-restricted sap.ui.core.XMLComposite
 	 * @deprecated As of version 1.88, use {@link topic:c1512f6ce1454ff1913e3857bad56392 Standard Composite Controls}
 	 * @experimental
 	 */

@@ -10,7 +10,7 @@
  * @alias module:sap/base/util/restricted/_min
  * @author SAP SE
  * @since 1.71
- * @version 1.128.0
+ * @version 1.129.0
  * @private
  * @ui5-restricted
 */

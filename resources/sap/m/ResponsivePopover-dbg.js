@@ -63,7 +63,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @constructor
 	 * @public
@@ -185,6 +185,12 @@ sap.ui.define([
 				 * EndButton is supported by both variants. It is always show in the right part (left part in RTL mode) of the footer which is located at the bottom of the ResponsivePopover. If buttons need to be displayed in header, please use customHeader instead.
 				 */
 				endButton : {type : "sap.m.Button", multiple : false},
+
+				/**
+				 * The footer of this popover.
+				 * @since 1.129
+				 */
+				footer: {type: "sap.m.Toolbar", multiple: false},
 
 				/**
 				 * The internal popup instance which is either a dialog on phone or a popover on the rest of platforms

@@ -91,6 +91,7 @@ sap.ui.define([
 		this.oModelInterface = oModelInterface;
 		this.oOptimisticBatch = null; // optimistic batch processing off
 		this.sQueryParams = _Helper.buildQuery(mQueryParams); // Used for $batch and CSRF token only
+		this.oRetryAfterPromise = null;
 		this.mRunningChangeRequests = {}; // map from group ID to a SyncPromise[]
 		this.iSessionTimer = 0;
 		this.iSerialNumber = 0;
@@ -1396,7 +1397,7 @@ sap.ui.define([
 						// methods it must be possible to insert the ETag from the header
 						oResponse = vRequest.method === "GET" ? null : {};
 					}
-					that.reportHeaderMessages(vRequest.url,
+					that.reportHeaderMessages(vRequest.$resourcePath,
 						getResponseHeader.call(vResponse, "sap-messages"));
 					sETag = getResponseHeader.call(vResponse, "ETag");
 					if (sETag) {
@@ -1425,6 +1426,7 @@ sap.ui.define([
 					"HTTP request was not processed because $batch failed");
 
 				oRequestError.cause = oError;
+				oRequestError.$reported = oError.$reported;
 				reject(oRequestError, aRequests);
 				throw oError;
 			}).finally(function () {
@@ -1891,7 +1893,9 @@ sap.ui.define([
 					aRequests[iChangeSetNo].push(oRequest);
 				}
 				if (sGroupId === "$single") {
-					that.submitBatch("$single");
+					that.submitBatch("$single").catch(() => {
+						// nothing to do, see "HTTP request was not processed because $batch failed"
+					});
 				}
 			});
 			oRequest.$promise = oPromise;
@@ -1913,7 +1917,7 @@ sap.ui.define([
 				sMethod === "GET" ? {"sap-cancel-on-close" : "true"} : undefined),
 			JSON.stringify(oPayload), sOriginalResourcePath
 		).then(function (oResponse) {
-			that.reportHeaderMessages(oResponse.resourcePath, oResponse.messages);
+			that.reportHeaderMessages(sOriginalResourcePath, oResponse.messages);
 			return that.doConvertResponse(
 				// Note: "text/plain" used for $count
 				typeof oResponse.body === "string" ? JSON.parse(oResponse.body) : oResponse.body,
@@ -2072,6 +2076,22 @@ sap.ui.define([
 						that.refreshSecurityToken(sOldCsrfToken).then(function () {
 							send(true);
 						}, fnReject);
+					} else if (jqXHR.status === 503 && jqXHR.getResponseHeader("Retry-After")
+							&& (that.oRetryAfterPromise
+								|| that.oModelInterface.getRetryAfterHandler())) {
+						if (!that.oRetryAfterPromise) {
+							const oRetryAfterError = _Helper.createError(jqXHR, "");
+							that.oRetryAfterPromise = that.oModelInterface.getRetryAfterHandler()(
+								oRetryAfterError);
+							that.oRetryAfterPromise.finally(() => {
+								that.oRetryAfterPromise = null;
+							}).catch(() => { /* catch is only needed due to finally */ });
+							that.oRetryAfterPromise.catch((oError) => {
+								// own error reason is not reported to the message model
+								oError.$reported = oError !== oRetryAfterError;
+							});
+						}
+						that.oRetryAfterPromise.then(send, fnReject);
 					} else {
 						sMessage = "Communication error";
 						if (sContextId) {
@@ -2091,7 +2111,9 @@ sap.ui.define([
 				});
 			}
 
-			if (that.oSecurityTokenPromise && sMethod !== "GET") {
+			if (that.oRetryAfterPromise) {
+				that.oRetryAfterPromise.then(send, fnReject);
+			} else if (that.oSecurityTokenPromise && sMethod !== "GET") {
 				that.oSecurityTokenPromise.then(send);
 			} else {
 				send();
@@ -2309,6 +2331,9 @@ sap.ui.define([
 	 *   A catch handler function expecting an <code>Error</code> instance. This function will call
 	 *   {@link sap.ui.model.odata.v4.ODataModel#reportError} if the error has not been reported
 	 *   yet
+	 * @param {function} oModelInterface.getRetryAfterHandler
+	 *   A function that returns the "Retry-After" handler,
+	 *   see also {@link sap.ui.model.odata.v4.ODataModel#setRetryAfterHandler}
 	 * @param {function():boolean} oModelInterface.isIgnoreETag
 	 *   Tells whether an entity's ETag should be actively ignored (If-Match:*) for PATCH requests.
 	 * @param {function} oModelInterface.onCreateGroup

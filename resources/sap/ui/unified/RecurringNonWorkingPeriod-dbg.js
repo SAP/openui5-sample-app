@@ -24,7 +24,7 @@ sap.ui.define([
 	 *
 	 * Applications can inherit from this element to add own fields.
 	 * @extends sap.ui.unified.
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @constructor
 	 * @public
@@ -54,20 +54,6 @@ sap.ui.define([
 			recurrencePattern: {type : "int", group : "Behavior", defaultValue : 1}
 		}
 	}});
-
-	/**
-	 * Evaluates whether there is an occurrence for the given date and hours.
-	 * @param {Date|module:sap/ui/core/date/UI5Date} oDate A date instance
-	 * @return {boolean} True if there is an occurrence for these hours
-	 * @private
-	 */
-	RecurringNonWorkingPeriod.prototype.hasNonWorkingAtHour = function (oDate) {
-		const iStartHours = this.getStartDate().getHours();
-		const iTimeCalendarItem = iStartHours + (this.getStartDate().getMinutes() + this.getDurationInMinutes()) / 60;
-		const iTimeData = oDate.getHours() + oDate.getMinutes() / 60;
-
-		return oDate.getHours() === iStartHours || (iTimeCalendarItem >= iTimeData && iStartHours <= oDate.getHours());
-	};
 
 	/**
 	 * Determines whether the current instance has recurrence or not.

@@ -64,7 +64,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.128.0
+		 * @version 1.129.0
 		 *
 		 * @constructor
 		 * @public
@@ -177,7 +177,7 @@ sap.ui.define([
 		 * @private
 		 */
 		DynamicPageHeader.prototype._setShowPinBtn = function (bValue) {
-			this._getPinButton().$().toggleClass("sapUiHidden", !bValue);
+			this._getPinButton().toggleStyleClass("sapUiHidden", !bValue);
 		};
 
 		/**

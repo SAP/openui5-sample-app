@@ -24,6 +24,7 @@ sap.ui.define([
 	'sap/ui/core/EnabledPropagator',
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/Popup",
+	"sap/ui/base/ManagedObject",
 	"sap/ui/core/Element"
 ],
 	function(
@@ -45,6 +46,7 @@ sap.ui.define([
 		EnabledPropagator,
 		jQuery,
 		Popup,
+		ManagedObject,
 		Element
 	) {
 		"use strict";
@@ -81,7 +83,7 @@ sap.ui.define([
 		 * @implements sap.ui.core.IContextMenu
 		 *
 		 * @author SAP SE
-		 * @version 1.128.0
+		 * @version 1.129.0
 		 *
 		 * @constructor
 		 * @public
@@ -515,11 +517,11 @@ sap.ui.define([
 				id  : sMenuListItemId,
 				type: oItem.getEnabled() ? ListType.Active : ListType.Inactive,
 				icon: oItem.getIcon(),
-				title: oItem.getText(),
+				title: ManagedObject.escapeSettingsValue(oItem.getText()),
 				selected: oItem.getSelected(),
 				startsSection: oItem.getStartsSection(),
 				menuItem: oItem,
-				tooltip: oItem.getTooltip(),
+				tooltip: ManagedObject.escapeSettingsValue(oItem.getTooltip()),
 				visible: oItem.getVisible(),
 				enabled: oItem.getEnabled()
 			});
@@ -545,11 +547,11 @@ sap.ui.define([
 			oUfdMenuItem = new UfdMenuItem({
 				id: sUfdMenuItemId,
 				icon: oItem.getIcon(),
-				text: oItem.getText(),
+				text: ManagedObject.escapeSettingsValue(oItem.getText()),
 				selected: oItem.getSelected(),
-				shortcutText: oItem.getShortcutText(),
+				shortcutText: ManagedObject.escapeSettingsValue(oItem.getShortcutText()),
 				startsSection: oItem.getStartsSection(),
-				tooltip: oItem.getTooltip(),
+				tooltip: ManagedObject.escapeSettingsValue(oItem.getTooltip()),
 				visible: oItem.getVisible(),
 				enabled: oItem.getEnabled()
 			});

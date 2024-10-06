@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.128.0
+		 * @version 1.129.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -1207,7 +1207,7 @@ sap.ui.define([
 	Context.prototype.isEffectivelyKeptAlive = function () {
 		var mParameters = this.oBinding.mParameters;
 
-		return this.bKeepAlive
+		return this.bKeepAlive && !this.isDeleted()
 			|| !mParameters.$$sharedRequest
 			&& this.oBinding.getHeaderContext?.()
 			&& this.oBinding.getHeaderContext().isSelected() !== this.isSelected()

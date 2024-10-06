@@ -74,9 +74,8 @@ sap.ui.define([
 	 * </pre>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 * @author SAP SE
-	 * @experimental Since 1.124
 	 * @public
 	 * @since 1.124
 	 * @alias sap.m.plugins.UploadSetwithTable
@@ -1711,9 +1710,9 @@ sap.ui.define([
 		},
 		getTableContexts: function(oTable) {
 			if (oTable?.isA("sap.m.Table")) {
-				return oTable.getBinding("items").getContexts();
+				return oTable.getBinding("items").getCurrentContexts();
 			} else if (oTable?.isA("sap.ui.table.Table")) {
-				return oTable?.getBinding("rows")?.getContexts();
+				return oTable?.getBinding("rows")?.getCurrentContexts();
 			}
 			return null;
 		}
@@ -1837,7 +1836,7 @@ sap.ui.define([
 			return false;
 		},
 		getTableContexts: function(oTable) {
-			return oTable?.getBinding("items")?.getContexts() || null;
+			return oTable?.getBinding("items")?.getCurrentContexts() || null;
 		}
 	 },
 	 "sap.ui.table.Table": {
@@ -1960,7 +1959,7 @@ sap.ui.define([
 			return false;
 		},
 		getTableContexts: function(oTable) {
-			return oTable?.getBinding("rows")?.getContexts() || null;
+			return oTable?.getBinding("rows")?.getCurrentContexts() || null;
 		}
 	 }
     }, UploadSetwithTable);

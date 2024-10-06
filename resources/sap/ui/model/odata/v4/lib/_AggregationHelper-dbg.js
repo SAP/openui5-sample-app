@@ -173,7 +173,11 @@ sap.ui.define([
 			}
 
 			_Helper.copyPrivateAnnotation(oPlaceholder, "cache", oElement);
+			_Helper.copyPrivateAnnotation(oPlaceholder, "context", oElement);
 			_Helper.copyPrivateAnnotation(oPlaceholder, "spliced", oElement);
+			if ("@$ui5.context.isTransient" in oPlaceholder) {
+				oElement["@$ui5.context.isTransient"] = false;
+			}
 			if (_Helper.getPrivateAnnotation(oPlaceholder, "placeholder") === 1) {
 				if ((oPlaceholder["@$ui5.node.isExpanded"] === undefined)
 						!== (oElement["@$ui5.node.isExpanded"] === undefined)) {
@@ -183,7 +187,6 @@ sap.ui.define([
 					// restore previous expansion state
 					oElement["@$ui5.node.isExpanded"] = oPlaceholder["@$ui5.node.isExpanded"];
 				}
-				_Helper.copySelected(oPlaceholder, oElement);
 			}
 		},
 
@@ -225,6 +228,10 @@ sap.ui.define([
 		 * @param {string} [mQueryOptions.$$filterBeforeAggregate]
 		 *   The value for a filter which is applied before the aggregation; it is removed from the
 		 *   returned map and turned into a "filter()" transformation
+		 * @param {string} [mQueryOptions.$$filterOnAggregate]
+		 *   The value for a filter which is applied on aggregates and thus contains the special
+		 *   syntax "$these/aggregate(...)"; it is removed from the returned map and turned into a
+		 *   "groupby((...),filter(...)" transformation
 		 * @param {boolean} [mQueryOptions.$$leaves]
 		 *   Tells whether the count of leaves is requested; it is removed from the returned map; it
 		 *   is turned into an aggregate "$count as UI5__leaves" for the first request
@@ -393,6 +400,11 @@ sap.ui.define([
 				} else if (sLeaves) {
 					sApply = "concat(" + sLeaves + "," + sApply + ")";
 				}
+			}
+			if (mQueryOptions.$$filterOnAggregate) {
+				sApply = "groupby((" + Object.keys(oAggregation.group).sort().join(",")
+					+ "),filter(" + mQueryOptions.$$filterOnAggregate + "))/" + sApply;
+				delete mQueryOptions.$$filterOnAggregate;
 			}
 			if (oAggregation.search) {
 				sApply = "search(" + oAggregation.search + ")/" + sApply;
@@ -1277,8 +1289,7 @@ sap.ui.define([
 
 		/**
 		 * Splits a filter depending on the aggregation information into an array that consists of
-		 * two filters, one that must be applied after and one that must be applied before
-		 * aggregating the data.
+		 * three filters, depending on how they are related to data aggregation.
 		 *
 		 * @param {sap.ui.model.Filter} oFilter
 		 *   The filter object that is split
@@ -1286,33 +1297,37 @@ sap.ui.define([
 		 *   An object holding the information needed for data aggregation;
 		 *   (see {@link .buildApply}).
 		 * @returns {sap.ui.model.Filter[]}
-		 *   An array that consists of two filters, the first one has to be applied after and the
-		 *   second one has to be applied before aggregating the data. Both can be
-		 *   <code>undefined</code>.
+		 *   An array that consists of three filters where each can be <code>undefined</code>. The
+		 *   first one has to be applied after data aggregation. The second one can simply be
+		 *   applied before data aggregation (which improves performance) because it is unrelated to
+		 *   aggregates. The third one is special in that it has to be applied before data
+		 *   aggregation via the special syntax "$these/aggregate(...)" because it relates to
+		 *   aggregates; it is present only when grand totals are used, but "grandTotal like 1.84"
+		 *   is not.
 		 *
 		 * @public
 		 */
 		splitFilter : function (oFilter, oAggregation) {
-			var aFiltersAfterAggregate = [],
-				aFiltersBeforeAggregate = [];
+			var aFiltersNoAggregate = [],
+				aFiltersOnAggregate = [];
 
 			/*
-			 * Tells whether the given filter must be applied after aggregating data
+			 * Tells whether the given filter relates to an aggregate
 			 *
 			 * @param {sap.ui.model.Filter} oFilter
 			 *   A filter
 			 * @returns {boolean}
-			 *   Whether the filter must be applied after aggregating
+			 *   Whether the filter relates to an aggregate
 			 */
-			function isAfter(oFilter0) {
+			function isRelatedToAggregate(oFilter0) {
 				return oFilter0.aFilters
-					? oFilter0.aFilters.some(isAfter)
+					? oFilter0.aFilters.some(isRelatedToAggregate)
 					: oFilter0.sPath in oAggregation.aggregate;
 			}
 
 			/*
 			 * Splits the given filter tree along AND operations into filters that must be applied
-			 * after and filters that must be applied before aggregating the data.
+			 * with or without "$these/aggregate(...)".
 			 *
 			 * @param {sap.ui.model.Filter} oFilter
 			 *   A filter
@@ -1321,7 +1336,7 @@ sap.ui.define([
 				if (oFilter0.aFilters && oFilter0.bAnd) {
 					oFilter0.aFilters.forEach(split);
 				} else {
-					(isAfter(oFilter0) ? aFiltersAfterAggregate : aFiltersBeforeAggregate)
+					(isRelatedToAggregate(oFilter0) ? aFiltersOnAggregate : aFiltersNoAggregate)
 						.push(oFilter0);
 				}
 			}
@@ -1343,8 +1358,18 @@ sap.ui.define([
 			}
 
 			split(oFilter);
+			let aResult = [wrap(aFiltersOnAggregate), wrap(aFiltersNoAggregate)];
 
-			return [wrap(aFiltersAfterAggregate), wrap(aFiltersBeforeAggregate)];
+			if (!oAggregation["grandTotal like 1.84"]) {
+				const bHasSubtotals = Object.values(oAggregation.aggregate)
+					.some((oDetails) => oDetails.subtotals);
+
+				if (bHasSubtotals || _AggregationHelper.hasGrandTotal(oAggregation.aggregate)) {
+					aResult = [undefined, aResult[1], aResult[0]];
+				}
+			}
+
+			return aResult;
 		},
 
 		/**

@@ -1129,32 +1129,6 @@ sap.ui.define([
 	 */
 
 	/**
-	 * Returns an array containing all current elements of a collection or single cache for the
-	 * given relative path; the array is annotated with the collection's $count. If there are
-	 * pending requests, the corresponding promises will be ignored and set to
-	 * <code>undefined</code>.
-	 *
-	 * @param {string} [sPath]
-	 *   Relative path to drill-down into, may be empty (only for collection cache)
-	 * @returns {object[]} The cache elements
-	 *
-	 * @public
-	 */
-	_Cache.prototype.getAllElements = function (sPath) {
-		var aAllElements;
-
-		if (sPath) {
-			return this.getValue(sPath);
-		}
-		aAllElements = this.aElements.map(function (oElement) {
-			return oElement instanceof SyncPromise ? undefined : oElement;
-		});
-		aAllElements.$count = this.aElements.$count;
-
-		return aAllElements;
-	};
-
-	/**
 	 * Returns the collection at the given path and removes it from the cache if it is marked as
 	 * transferable.
 	 *
@@ -1240,6 +1214,34 @@ sap.ui.define([
 			+ this.oRequestor.buildQueryString(
 				_Helper.buildPath(this.sMetaPath, _Helper.getMetaPath(sPath)),
 				this.getDownloadQueryOptions(mQueryOptions), false, true);
+	};
+
+	/**
+	 * Returns an array containing elements of a collection or single cache for the given relative
+	 * path; the array is annotated with the collection's $count. If no range is given, all elements
+	 * are returned. If there are pending requests, the corresponding promises will be ignored and
+	 * set to <code>undefined</code>.
+	 *
+	 * @param {string} [sPath]
+	 *   Relative path to drill-down into, may be empty (only for collection cache)
+	 * @param {number} [iStart]
+	 *   The start index of the range (inclusive)
+	 * @param {number} [iEnd]
+	 *   The end index of the range (exclusive)
+	 * @returns {object[]|undefined} The cache elements
+	 *
+	 * @public
+	 */
+	_Cache.prototype.getElements = function (sPath, iStart, iEnd) {
+		const aElements = this.getValue(sPath);
+		if (!aElements) {
+			return undefined;
+		}
+		const aFilteredElements = aElements.slice(iStart, iEnd)
+			.map((oElement) => (oElement instanceof SyncPromise ? undefined : oElement));
+		aFilteredElements.$count = aElements.$count;
+
+		return aFilteredElements;
 	};
 
 	/**
@@ -2549,12 +2551,14 @@ sap.ui.define([
 	 *   The deep resource path to be used to build the target path for bound messages
 	 * @param {boolean} [bSharedRequest]
 	 *   If this parameter is set, the cache is read-only and modifying calls lead to an error.
+	 * @param {string[]} [aSeparateProperties]
+	 *   An array of properties which are requested separately
 	 *
 	 * @alias sap.ui.model.odata.v4.lib._CollectionCache
 	 * @constructor
 	 */
 	function _CollectionCache(oRequestor, sResourcePath, mQueryOptions, bSortExpandSelect,
-			sDeepResourcePath, bSharedRequest) {
+			sDeepResourcePath, bSharedRequest, aSeparateProperties) {
 		_Cache.call(this, oRequestor, sResourcePath, mQueryOptions, bSortExpandSelect,
 			sDeepResourcePath, bSharedRequest);
 
@@ -2578,6 +2582,7 @@ sap.ui.define([
 		// - iStart: the start (inclusive)
 		// - iEnd: the end (exclusive)
 		this.aReadRequests = [];
+		this.aSeparateProperties = aSeparateProperties ?? []; // properties to be loaded separately
 		this.bServerDrivenPaging = false;
 		this.oSyncPromiseAll = undefined;
 	}
@@ -2718,6 +2723,8 @@ sap.ui.define([
 			that = this;
 
 		oGroupLock.unlock();
+		that.registerChangeListener(sPath, oListener);
+
 		if (this.aElements.$byPredicate[sFirstSegment]) {
 			oSyncPromise = SyncPromise.resolve(); // sync access possible
 		} else if ((oGroupLock === _GroupLock.$cached || sFirstSegment !== "$count")
@@ -2737,9 +2744,6 @@ sap.ui.define([
 		}
 
 		return oSyncPromise.then(function () {
-			// register afterwards to avoid that updateExisting fires updates before the first
-			// response
-			that.registerChangeListener(sPath, oListener);
 			return that.drillDown(that.aElements, sPath, oGroupLock, bCreateOnDemand);
 		});
 	};
@@ -2833,6 +2837,18 @@ sap.ui.define([
 			mQueryOptions = Object.assign({}, this.mQueryOptions),
 			sFilterOptions = mQueryOptions.$filter,
 			sQueryString = this.sQueryString;
+
+		if (this.aSeparateProperties.length) {
+			mQueryOptions.$expand = {...mQueryOptions.$expand};
+			this.aSeparateProperties.forEach((sProperty) => {
+				delete mQueryOptions.$expand[sProperty];
+			});
+			if (_Helper.isEmptyObject(mQueryOptions.$expand)) {
+				delete mQueryOptions.$expand;
+			}
+			sQueryString = this.oRequestor.buildQueryString(this.sMetaPath, mQueryOptions, false,
+				this.bSortExpandSelect, true);
+		}
 
 		if (sExclusiveFilter) {
 			if (sFilterOptions) {
@@ -3881,8 +3897,9 @@ sap.ui.define([
 				this.sResourcePath + this.sQueryString, oGroupLock, undefined, undefined,
 				fnDataRequested, undefined, this.sMetaPath));
 		}
+		that.registerChangeListener("", oListener);
+
 		return this.oPromise.then(function (oResult) {
-			that.registerChangeListener("", oListener);
 			// Note: For a null value, null is returned due to "204 No Content". For $count,
 			// "a simple primitive integer value with media type text/plain" is returned.
 			return oResult && typeof oResult === "object" ? oResult.value : oResult;
@@ -4426,13 +4443,15 @@ sap.ui.define([
 	 *   If this parameter is set, multiple requests for a cache using the same resource path will
 	 *   always return the same, shared cache. This cache is read-only, modifying calls lead to an
 	 *   error.
+	 * @param {string[]} [aSeparateProperties]
+	 *   An array of properties which are requested separately
 	 * @returns {sap.ui.model.odata.v4.lib._Cache}
 	 *   The cache
 	 *
 	 * @public
 	 */
 	_Cache.create = function (oRequestor, sResourcePath, mQueryOptions, bSortExpandSelect,
-			sDeepResourcePath, bSharedRequest) {
+			sDeepResourcePath, bSharedRequest, aSeparateProperties) {
 		var iCount, aKeys, sPath, oSharedCollectionCache, mSharedCollectionCacheByPath;
 
 		if (bSharedRequest) {
@@ -4469,7 +4488,7 @@ sap.ui.define([
 		}
 
 		return new _CollectionCache(oRequestor, sResourcePath, mQueryOptions, bSortExpandSelect,
-				sDeepResourcePath);
+				sDeepResourcePath, bSharedRequest, aSeparateProperties);
 	};
 
 	/**

@@ -58,7 +58,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @public
 	 * @alias sap.m.p13n.SelectionController
@@ -181,20 +181,25 @@ sap.ui.define([
 		}
 	};
 
-	SelectionController.prototype.getCurrentState = function() {
+	SelectionController.prototype._calcPresentState = function() {
 		const aState = [],
-			aAggregationItems = this.getAdaptationControl().getAggregation(this.getTargetAggregation()) || [];
+		aAggregationItems = this.getAdaptationControl().getAggregation(this.getTargetAggregation()) || [];
 		const oView = getViewForControl(this.getAdaptationControl());
 		aAggregationItems.forEach((oItem, iIndex) => {
+			const sKey = oItem.getVisible() ? oItem.data("p13nKey") : null;
 			const sId = oView ? oView.getLocalId(oItem.getId()) : oItem.getId();
-			const vRelevant = this._fSelector ? this._fSelector(oItem) : oItem.getVisible();
+			const vRelevant = sKey || (this._fSelector ? this._fSelector(oItem) : oItem.getVisible());
 			if (vRelevant) {
 				aState.push({
 					key: typeof vRelevant === "boolean" ? sId : vRelevant
 				});
 			}
 		});
+		return aState;
+	};
 
+	SelectionController.prototype.getCurrentState = function() {
+		const aState = this._calcPresentState(); //The state of the control without xConfig
 		const oXConfig = xConfigAPI.readConfig(this.getAdaptationControl()) || {};
 		const oItemXConfig = oXConfig.hasOwnProperty("aggregations") ? oXConfig.aggregations[this._sTargetAggregation] : {};
 		const aItemXConfig = [];

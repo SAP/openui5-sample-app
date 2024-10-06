@@ -45,7 +45,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @constructor
 	 * @public
@@ -613,6 +613,12 @@ sap.ui.define([
 		if (oTable.bActiveHeaders || this.getHeaderMenuInstance()) {
 			this.$()[oEvent.getSource().getRequired() ? "addAriaDescribedBy" : "removeAriaDescribedBy"](InvisibleText.getStaticId("sap.m", "CONTROL_IN_COLUMN_REQUIRED"));
 		}
+	};
+
+	Column.prototype.getFieldHelpInfo = function() {
+		return {
+			label: this.getHeader()?.getText?.() || ""
+		};
 	};
 
 	return Column;

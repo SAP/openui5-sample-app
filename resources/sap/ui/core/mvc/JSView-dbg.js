@@ -27,7 +27,7 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @extends sap.ui.core.mvc.View
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 * @deprecated Since 1.90. Instead use {@link topic:e6bb33d076dc4f23be50c082c271b9f0 Typed Views}
 	 * by defining the view class with {@link sap.ui.core.mvc.View.extend View.extend} and
 	 * creating the view instances with {@link sap.ui.core.mvc.View.create View.create}.

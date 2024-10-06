@@ -226,6 +226,11 @@ sap.ui.define([
 
 			if (oCell && bRenderCell) {
 				this.applyAriaLabelledBy(oColumn.getHeader(), oCell);
+
+				if (!oCell.getFieldHelpDisplay()) {
+					oCell.setFieldHelpDisplay(oColumn);
+				}
+
 				rm.renderControl(oCell);
 			}
 
@@ -335,6 +340,11 @@ sap.ui.define([
 				rm.class("sapMListTblSubCntVal" + sPopinDisplay);
 				rm.openEnd();
 				this.applyAriaLabelledBy(oOriginalHeader, oCell);
+
+				if (oCell.getFieldHelpDisplay() === oColumn.getId()) {
+					oCell.setFieldHelpDisplay(); // Display the field help on the cell itself, because the column is hidden (in popin)
+				}
+
 				rm.renderControl(oCell);
 				rm.close("div");
 			}

@@ -124,7 +124,7 @@ sap.ui.define([
 		* @extends sap.ui.core.Control
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.128.0
+		* @version 1.129.0
 		*
 		* @public
 		* @alias sap.m.Popover
@@ -2682,7 +2682,12 @@ sap.ui.define([
 			} else {
 				Control.prototype.destroyAggregation.apply(this, arguments);
 			}
-			oActiveControl && oActiveControl.getDomRef() ? oActiveControl.focus() : this.focus();
+
+			// set focus to the popover itself when the focused control is destroyed to keep the popover open
+			if (oActiveControl && !oActiveControl.getDomRef()) {
+				this.focus();
+			}
+
 			return this;
 		};
 

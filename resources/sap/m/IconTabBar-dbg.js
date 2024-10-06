@@ -94,7 +94,7 @@ sap.ui.define([
 	 * @implements sap.m.ObjectHeaderContainer, sap.f.IDynamicPageStickyContent
 	 *
 	 * @author SAP SE
-	 * @version 1.128.0
+	 * @version 1.129.0
 	 *
 	 * @public
 	 * @alias sap.m.IconTabBar
@@ -484,21 +484,35 @@ sap.ui.define([
 	 * @name sap.m.IconTabBar#getAriaTexts
 	 */
 
+	/**
+	 * @override
+	 */
 	IconTabBar.prototype.addStyleClass = function (sClass, bSuppressRerendering) {
 		var oIconTabHeader = this._getIconTabHeader();
 
-		if (oIconTabHeader && IconTabBar._CLASSES_TO_COPY.indexOf(sClass) !== -1) {
-			oIconTabHeader.addStyleClass(sClass, true);
+		if (oIconTabHeader) {
+			sClass.split(/\s+/).forEach((sSingleClass) => {
+				if (IconTabBar._CLASSES_TO_COPY.includes(sSingleClass)) {
+					oIconTabHeader.addStyleClass(sSingleClass, true);
+				}
+			});
 		}
 
 		return Control.prototype.addStyleClass.apply(this, arguments);
 	};
 
+	/**
+	 * @override
+	 */
 	IconTabBar.prototype.removeStyleClass = function (sClass, bSuppressRerendering) {
 		var oIconTabHeader = this._getIconTabHeader();
 
-		if (oIconTabHeader && IconTabBar._CLASSES_TO_COPY.indexOf(sClass) !== -1) {
-			oIconTabHeader.removeStyleClass(sClass, true);
+		if (oIconTabHeader) {
+			sClass.split(/\s+/).forEach((sSingleClass) => {
+				if (IconTabBar._CLASSES_TO_COPY.includes(sSingleClass)) {
+					oIconTabHeader.removeStyleClass(sSingleClass, true);
+				}
+			});
 		}
 
 		return Control.prototype.removeStyleClass.apply(this, arguments);

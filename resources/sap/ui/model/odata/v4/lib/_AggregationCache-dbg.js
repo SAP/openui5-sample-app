@@ -258,8 +258,9 @@ sap.ui.define([
 				} else if (that.hasPendingChangesForPath(sPredicate)) {
 					throw new Error("Modified on client and on server: "
 						+ that.sResourcePath + sPredicate);
-				} // else: ETag changed, ignore kept element!
-				_Helper.copySelected(oKeptElement, oElement);
+				} else { // ETag changed, mostly ignore kept element!
+					_Helper.copySelected(oKeptElement, oElement);
+				}
 			}
 
 			if (sPredicate) {
@@ -375,21 +376,21 @@ sap.ui.define([
 	 *
 	 * @param {string} sGroupNodePath
 	 *   The group node path relative to the cache
-	 * @param {boolean|number} [bAll]
-	 *   Whether collapsing the node and all its descendants; <code>undefined</code> means a simple
-	 *   collapse, <code>true</code> collapsing all at this node, <code>1</code> a nested node below
-	 *   a collapse all
+	 * @param {boolean} [bAll]
+	 *   Whether collapsing the node and all its descendants
+	 * @param {boolean} [bNested]
+	 *   Whether the "collapse all" was performed at an ancestor
 	 * @returns {number}
 	 *   The number of descendant nodes that were affected
 	 *
 	 * @public
 	 * @see #expand
 	 */
-	_AggregationCache.prototype.collapse = function (sGroupNodePath, bAll) {
+	_AggregationCache.prototype.collapse = function (sGroupNodePath, bAll, bNested) {
 		const oGroupNode = this.getValue(sGroupNodePath);
 		const oCollapsed = _AggregationHelper.getCollapsedObject(oGroupNode);
 		_Helper.updateAll(this.mChangeListeners, sGroupNodePath, oGroupNode, oCollapsed);
-		this.oTreeState.collapse(oGroupNode, bAll);
+		this.oTreeState.collapse(oGroupNode, bAll, bNested);
 
 		const aElements = this.aElements;
 		const iIndex = aElements.indexOf(oGroupNode);
@@ -406,8 +407,8 @@ sap.ui.define([
 		for (let i = iIndex + 1; i < iIndex + 1 + iRemaining; i += 1) {
 			const oElement = aElements[i];
 			if (bAll && oElement["@$ui5.node.isExpanded"]) {
-				iRemaining
-					-= this.collapse(_Helper.getPrivateAnnotation(oElement, "predicate"), 1);
+				iRemaining -= this.collapse(
+					_Helper.getPrivateAnnotation(oElement, "predicate"), bAll, true);
 			}
 			// exceptions of selection are effectively kept alive (with recursive hierarchy)
 			if (!this.isSelectionDifferent(oElement)) {
@@ -417,7 +418,7 @@ sap.ui.define([
 			}
 		}
 		const aSpliced = aElements.splice(iIndex + 1, iRemaining);
-		// with collapse all do not remember the collapsed nodes in a multi-level first level cache
+		// with collapse all do not remember the children if they live inside the top pyramid
 		const iLevel = oGroupNode["@$ui5.node.level"];
 		if (!bAll || !this.bUnifiedCache && iLevel >= this.oAggregation.expandTo) {
 			aSpliced.$level = iLevel;
@@ -1017,51 +1018,39 @@ sap.ui.define([
 
 	/**
 	 * Returns the index in <code>this.aElements</code> of the first in-place child of the given
-	 * parent node, or the first in-place root if no parent is given.
+	 * parent node (which must not be out of place!), or the first in-place root if no parent is
+	 * given.
 	 *
 	 * @param {number} iParentIndex
 	 *   The parent node's index, or -1 if looking for a root node
-	 * @returns {number}
-	 *   The array index, or -1 if there is no such first in-place node
+	 * @returns {Array<boolean|number>}
+	 *   The array index (or -1 if there is no such first in-place child), whether that first
+	 *   in-place child is currently a placeholder, and the expected level of such a first in-place
+	 *   child (useful in case of level 0 placeholders)
 	 *
 	 * @public
 	 */
 	_AggregationCache.prototype.get1stInPlaceChildIndex = function (iParentIndex) {
-		const iLevel = iParentIndex >= 0
-			? this.aElements[iParentIndex]["@$ui5.node.level"] + 1
-			: 1;
-
-		return this.aElements.findIndex(
-			(oElement, iIndex) => iIndex > iParentIndex
-				&& oElement["@$ui5.node.level"] === iLevel
-				&& oElement["@$ui5.context.isTransient"] === undefined);
-	};
-
-	/**
-	 * Returns an array containing all current elements of this aggregation cache's flat list; the
-	 * array is annotated with the collection's $count. If there are placeholders, the corresponding
-	 * objects will be ignored and set to <code>undefined</code>.
-	 *
-	 * @param {string} [sPath] - Relative path to drill-down into, MUST be empty
-	 * @returns {object[]} The cache elements
-	 * @throws {Error} If a non-empty path is given
-	 *
-	 * @public
-	 */
-	// @override sap.ui.model.odata.v4.lib._Cache#getAllElements
-	_AggregationCache.prototype.getAllElements = function (sPath) {
-		var aAllElements;
-
-		if (sPath) {
-			throw new Error("Unsupported path: " + sPath);
+		let iFirst = iParentIndex + 1;
+		while (this.aElements[iFirst]?.["@$ui5.context.isTransient"] !== undefined) {
+			iFirst += 1; // skip all OOP nodes
 		}
 
-		aAllElements = this.aElements.map(function (oElement) {
-			return _Helper.hasPrivateAnnotation(oElement, "placeholder") ? undefined : oElement;
-		});
-		aAllElements.$count = this.aElements.$count;
+		const oElement = this.aElements[iFirst];
+		if (!oElement) { // beyond array length
+			return [-1];
+		}
 
-		return aAllElements;
+		const iLevel = oElement["@$ui5.node.level"];
+		const iChildLevel = iParentIndex >= 0
+			? this.aElements[iParentIndex]["@$ui5.node.level"] + 1
+			: 1;
+		const bPlaceholder = _Helper.hasPrivateAnnotation(oElement, "placeholder");
+
+		// a level 0 (placeholders only!) needs a GET, but else we can rely on the level
+		return iLevel === iChildLevel || iLevel === 0
+			? [iFirst, bPlaceholder, iChildLevel]
+			: [-1];
 	};
 
 	/**
@@ -1102,6 +1091,34 @@ sap.ui.define([
 	 */
 	_AggregationCache.prototype.getDownloadUrl = function (_sPath, _mCustomQueryOptions) {
 		return this.sDownloadUrl;
+	};
+
+	/**
+	 * Returns an array containing elements of this aggregation cache's flat list; the array is
+	 * annotated with the collection's $count. If no range is given, all elements are returned. If
+	 * there are placeholders, the corresponding objects will be ignored and set to
+	 * <code>undefined</code>.
+	 *
+	 * @param {string} [sPath] - Relative path to drill-down into, MUST be empty
+	 * @param {number} [iStart] - The start index of the range (inclusive)
+	 * @param {number} [iEnd] - The end index of the range (exclusive)
+	 * @returns {object[]} The cache elements
+	 * @throws {Error} If a non-empty path is given
+	 *
+	 * @public
+	 */
+	// @override sap.ui.model.odata.v4.lib._Cache#getElements
+	_AggregationCache.prototype.getElements = function (sPath, iStart, iEnd) {
+		if (sPath) {
+			throw new Error("Unsupported path: " + sPath);
+		}
+
+		const aElements = this.aElements.slice(iStart, iEnd).map((oElement) => {
+			return _Helper.hasPrivateAnnotation(oElement, "placeholder") ? undefined : oElement;
+		});
+		aElements.$count = this.aElements.$count;
+
+		return aElements;
 	};
 
 	/**
@@ -2597,6 +2614,8 @@ sap.ui.define([
 	 *   error.
 	 * @param {boolean} [bIsGrouped]
 	 *   Whether the list binding is grouped via its first sorter
+	 * @param {string[]} [aSeparateProperties]
+	 *   An array of properties which are requested separately
 	 * @returns {sap.ui.model.odata.v4.lib._Cache}
 	 *   The cache
 	 * @throws {Error}
@@ -2611,7 +2630,8 @@ sap.ui.define([
 	 * @public
 	 */
 	_AggregationCache.create = function (oRequestor, sResourcePath, sDeepResourcePath,
-			mQueryOptions, oAggregation, bSortExpandSelect, bSharedRequest, bIsGrouped) {
+			mQueryOptions, oAggregation, bSortExpandSelect, bSharedRequest, bIsGrouped,
+			aSeparateProperties) {
 		var bHasGrandTotal, bHasGroupLevels;
 
 		function checkExpandSelect() {
@@ -2671,6 +2691,9 @@ sap.ui.define([
 			}
 		}
 
+		if ("$$filterOnAggregate" in mQueryOptions) {
+			throw new Error("Unsupported $$filterOnAggregate");
+		}
 		if (mQueryOptions.$$filterBeforeAggregate) {
 			mQueryOptions.$apply = "filter(" + mQueryOptions.$$filterBeforeAggregate + ")/"
 				+ mQueryOptions.$apply;
@@ -2678,7 +2701,7 @@ sap.ui.define([
 		}
 
 		return _Cache.create(oRequestor, sResourcePath, mQueryOptions, bSortExpandSelect,
-			sDeepResourcePath, bSharedRequest);
+			sDeepResourcePath, bSharedRequest, aSeparateProperties);
 	};
 
 	return _AggregationCache;

@@ -28,7 +28,7 @@ sap.ui.define([
 		 * @extends sap.m.SinglePlanningCalendarView
 		 *
 		 * @author SAP SE
-		 * @version 1.128.0
+		 * @version 1.129.0
 		 *
 		 * @constructor
 		 * @public
@@ -60,7 +60,7 @@ sap.ui.define([
 		 */
 		SinglePlanningCalendarMonthView.prototype.getScrollEntityCount = function(oStartDate, iOffset) {
 			var oNewDate = CalendarDate.fromLocalJSDate(oStartDate),
-				iMonth = oStartDate.getMonth() + iOffset;
+				iMonth = oNewDate.getMonth() + iOffset;
 
 			oNewDate.setMonth(iMonth);
 

@@ -58,7 +58,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.128.0
+		 * @version 1.129.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -117,7 +117,8 @@ sap.ui.define([
 		mParameters = _Helper.clone(mParameters) || {};
 		this.checkBindingParameters(mParameters, ["$$aggregation", "$$canonicalPath",
 			"$$clearSelectionOnFilter", "$$getKeepAliveContext", "$$groupId", "$$operationMode",
-			"$$ownRequest", "$$patchWithoutSideEffects", "$$sharedRequest", "$$updateGroupId"]);
+			"$$ownRequest", "$$patchWithoutSideEffects", "$$separate", "$$sharedRequest",
+			"$$updateGroupId"]);
 		const aFilters = _Helper.toArray(vFilters);
 		if (mParameters.$$aggregation && aFilters[0] === Filter.NONE) {
 			throw new Error("Cannot combine Filter.NONE with $$aggregation");
@@ -1071,13 +1072,15 @@ sap.ui.define([
 	 *   The start index of the range
 	 * @param {object[]} aResults
 	 *   The OData entities read from the cache for the given range
+	 * @param {boolean} bCreateOnly
+	 *   If <code>true</code>, only contexts are created (no destruction or length calculation)
 	 * @returns {boolean}
 	 *   <code>true</code>, if contexts have been created or dropped or <code>isLengthFinal</code>
 	 *   has changed
 	 *
 	 * @private
 	 */
-	ODataListBinding.prototype.createContexts = function (iStart, aResults) {
+	ODataListBinding.prototype.createContexts = function (iStart, aResults, bCreateOnly) {
 		var bChanged = false,
 			oContext,
 			sContextPath,
@@ -1144,6 +1147,10 @@ sap.ui.define([
 				this.aContexts[iStart + i] = oContext;
 			}
 		}
+		if (bCreateOnly) {
+			return bChanged;
+		}
+
 		// destroy previous contexts which are not reused or kept alive
 		this.destroyPreviousContextsLater(Object.keys(this.mPreviousContextsByPath));
 		if (iCount !== undefined) { // server count is available or "non-empty short read"
@@ -1170,6 +1177,30 @@ sap.ui.define([
 			bChanged = true;
 		}
 		return bChanged;
+	};
+
+	/**
+	 * Asks the cache for data in the given range and creates matching contexts. Does not fire
+	 * change events.
+	 *
+	 * @param {number} iStart - The start index
+	 * @param {number} iLength - The length
+	 *
+	 * @private
+	 */
+	ODataListBinding.prototype.createContextsForCachedData = function (iStart, iLength) {
+		if (this.bFirstCreateAtEnd) {
+			// turn view into model index
+			// Note: no need to adjust iLength, reading past $count does not hurt
+			iStart += this.iCreatedContexts;
+		}
+
+		this.withCache((oCache, sPath) => {
+			const aElements = oCache.getElements(sPath, iStart, iStart + iLength);
+			if (aElements) {
+				this.createContexts(iStart, aElements, true);
+			}
+		}, "", true);
 	};
 
 	/**
@@ -1480,7 +1511,8 @@ sap.ui.define([
 		}
 		oCache ??= _AggregationCache.create(this.oModel.oRequestor, sResourcePath,
 			sDeepResourcePath, mQueryOptions, this.mParameters.$$aggregation,
-			this.oModel.bAutoExpandSelect, this.bSharedRequest, this.isGrouped());
+			this.oModel.bAutoExpandSelect, this.bSharedRequest, this.isGrouped(),
+			this.mParameters.$$separate);
 		if (mKeptElementsByPredicate) {
 			aKeepAlivePredicates.forEach(function (sPredicate) {
 				oCache.addKeptElement(mKeptElementsByPredicate[sPredicate]);
@@ -1821,11 +1853,14 @@ sap.ui.define([
 	 *   that the cache promise is already created when the events are fired.
 	 * @param {string} sStaticFilter
 	 *   The static filter value
-	 * @returns {sap.ui.base.SyncPromise} A promise which resolves with an array that consists of
-	 *   two filters, the first one ("$filter") has to be applied after and the second one
-	 *   ("$$filterBeforeAggregate") has to be applied before aggregating the data.
-	 *   Both can be <code>undefined</code>. It rejects with an error if a filter has an unknown
-	 *   operator or an invalid path.
+	 * @returns {sap.ui.base.SyncPromise}
+	 *   A promise which resolves with an array that consists of three filters where each can be
+	 *   <code>undefined</code>. The first one has to be applied after data aggregation. The second
+	 *   one can simply be applied before data aggregation (which improves performance) because it
+	 *   is unrelated to aggregates. The third one is special in that it has to be applied before
+	 *   data aggregation and contains the special syntax "$these/aggregate(...)" because it relates
+	 *   to aggregates. The promise rejects with an error if a filter has an unknown operator or an
+	 *   invalid path.
 	 *
 	 * @private
 	 */
@@ -1836,12 +1871,13 @@ sap.ui.define([
 		 * Returns the $filter value for the given single filter using the given Edm type to
 		 * format the filter's operand(s).
 		 *
-		 * @param {sap.ui.model.Filter} oFilter The filter
-		 * @param {string} sEdmType The Edm type
-		 * @param {boolean} bWithinAnd Whether the embedding filter is an 'and'
+		 * @param {sap.ui.model.Filter} oFilter - The filter
+		 * @param {string} sEdmType - The Edm type
+		 * @param {boolean} bWithinAnd - Whether the embedding filter is an 'and'
+		 * @param {boolean} bThese - Whether the special syntax "$these/aggregate(...)" is needed
 		 * @returns {string} The $filter value
 		 */
-		function getSingleFilterValue(oFilter, sEdmType, bWithinAnd) {
+		function getSingleFilterValue(oFilter, sEdmType, bWithinAnd, bThese) {
 			var sFilter, sFilterPath, bToLower, sValue;
 
 			function setCase(sText) {
@@ -1849,7 +1885,9 @@ sap.ui.define([
 			}
 
 			bToLower = sEdmType === "Edm.String" && oFilter.bCaseSensitive === false;
-			sFilterPath = setCase(decodeURIComponent(oFilter.sPath));
+			sFilterPath = bThese
+				? setCase(`$these/aggregate(${oFilter.sPath})`)
+				: setCase(decodeURIComponent(oFilter.sPath));
 			sValue = setCase(_Helper.formatLiteral(oFilter.oValue1, sEdmType));
 
 			switch (oFilter.sOperator) {
@@ -1889,10 +1927,11 @@ sap.ui.define([
 		 * @param {sap.ui.model.Filter} oFilter The filter
 		 * @param {object} mLambdaVariableToPath The map from lambda variable to full path
 		 * @param {boolean} [bWithinAnd] Whether the embedding filter is an 'and'
+		 * @param {boolean} bThese - Whether the special syntax "$these/aggregate(...)" is needed
 		 * @returns {sap.ui.base.SyncPromise} A promise which resolves with the $filter value or
 		 *   rejects with an error if the filter value uses an unknown operator
 		 */
-		function fetchFilter(oFilter, mLambdaVariableToPath, bWithinAnd) {
+		function fetchFilter(oFilter, mLambdaVariableToPath, bWithinAnd, bThese) {
 			var sResolvedPath;
 
 			if (!oFilter) {
@@ -1901,7 +1940,7 @@ sap.ui.define([
 
 			if (oFilter.aFilters) {
 				return SyncPromise.all(oFilter.aFilters.map(function (oSubFilter) {
-					return fetchFilter(oSubFilter, mLambdaVariableToPath, oFilter.bAnd);
+					return fetchFilter(oSubFilter, mLambdaVariableToPath, oFilter.bAnd, bThese);
 				})).then(function (aFilterStrings) {
 					// wrap it if it's an 'or' filter embedded in an 'and'
 					return wrap(aFilterStrings.join(oFilter.bAnd ? " and " : " or "),
@@ -1940,7 +1979,7 @@ sap.ui.define([
 							+ "(" + sLambdaVariable + ":" + sFilterValue + ")";
 					});
 				}
-				return getSingleFilterValue(oFilter, oPropertyMetadata.$Type, bWithinAnd);
+				return getSingleFilterValue(oFilter, oPropertyMetadata.$Type, bWithinAnd, bThese);
 			});
 		}
 
@@ -1982,12 +2021,13 @@ sap.ui.define([
 		oMetaContext = oMetaModel.getMetaContext(this.oModel.resolve(this.sPath, oContext));
 
 		return SyncPromise.all([
-			fetchFilter(aFilters[0], {}, /*bWithAnd*/sStaticFilter).then(function (sFilter) {
+			fetchFilter(aFilters[0], {}, /*bWithinAnd*/sStaticFilter).then(function (sFilter) {
 				return sFilter && sStaticFilter
 					? sFilter + " and (" + sStaticFilter + ")"
 					: sFilter || sStaticFilter;
 			}),
-			fetchFilter(aFilters[1], {})
+			fetchFilter(aFilters[1], {}), // $$filterBeforeAggregate
+			fetchFilter(aFilters[2], {}, undefined, /*bThese*/true) // $$filterOnAggregate
 		]);
 	};
 
@@ -2083,7 +2123,24 @@ sap.ui.define([
 				return null;
 			}
 			const oParent = oNode.getParent(); // Note: always sync for out-of-place nodes
-			iSibling = this.oCache.get1stInPlaceChildIndex(oParent ? oParent.iIndex : -1);
+			if (oParent?.created()) { // out-of-place nodes have no in-place children
+				return null;
+			}
+
+			let bPlaceholder;
+			let iExpectedLevel;
+			[iSibling, bPlaceholder, iExpectedLevel]
+				= this.oCache.get1stInPlaceChildIndex(oParent ? oParent.iIndex : -1);
+			if (bPlaceholder) { // => iSibling >= 0
+				return bAllowRequest
+					? this.requestContexts(iSibling, 1).then((aResult) => aResult[0])
+						.then((oContext) => {
+							return oContext.getProperty("@$ui5.node.level") === iExpectedLevel
+								? oContext
+								: null;
+						})
+					: undefined;
+			}
 		} else {
 			iSibling = this.oCache.getSiblingIndex(oNode.iIndex, iOffset);
 		}
@@ -2383,7 +2440,7 @@ sap.ui.define([
 		var aElements;
 
 		this.withCache(function (oCache, sPath) {
-				aElements = oCache.getAllElements(sPath);
+				aElements = oCache.getElements(sPath);
 			}, "", /*bSync*/true);
 
 		if (aElements && this.createContexts(0, aElements)) {
@@ -2587,6 +2644,9 @@ sap.ui.define([
 					bDataRequested = true;
 					that.fireDataRequested(bPreventBubbling);
 				});
+			if (!bRefreshEvent && oPromise.isPending()) {
+				this.createContextsForCachedData(iStart, iLength);
+			}
 			this.resolveRefreshPromise(oPromise).then(function (bChanged) {
 				if (that.bUseExtendedChangeDetection) {
 					that.oDiff = {
@@ -3219,12 +3279,12 @@ sap.ui.define([
 	// @override sap.ui.model.Binding#initialize
 	ODataListBinding.prototype.initialize = function () {
 		if (this.isResolved()) {
+			this.checkDataState();
 			if (this.isRootBindingSuspended()) {
 				this.sResumeChangeReason = this.sChangeReason === "AddVirtualContext"
 					? ChangeReason.Change
 					: ChangeReason.Refresh;
 			} else if (this.sChangeReason === "AddVirtualContext") {
-				this.checkDataState();
 				this._fireChange({
 					detailedReason : "AddVirtualContext",
 					reason : ChangeReason.Change
@@ -3835,7 +3895,8 @@ sap.ui.define([
 	 *   {@link sap.ui.model.odata.v4.Context#isKeepAlive kept alive} and still exists on the
 	 *   server.
 	 * @param {boolean} [bKeepCacheOnError]
-	 *   If <code>true</code>, the binding data remains unchanged if the refresh fails
+	 *   If <code>true</code>, the binding data remains unchanged if the refresh fails and
+	 *   (since 1.129.0) no dataRequested/dataReceived events are fired in the first place
 	 * @param {boolean} [bWithMessages]
 	 *   Whether the "@com.sap.vocabularies.Common.v1.Messages" path is treated specially
 	 * @returns {sap.ui.base.SyncPromise}
@@ -3874,8 +3935,10 @@ sap.ui.define([
 			}
 
 			function fireDataRequested() {
-				bDataRequested = true;
-				that.fireDataRequested();
+				if (!bKeepCacheOnError) {
+					bDataRequested = true;
+					that.fireDataRequested();
+				}
 			}
 
 			/*
@@ -4378,7 +4441,6 @@ sap.ui.define([
 		this.sResumeAction = undefined;
 		this.sResumeChangeReason = undefined;
 
-		this.checkDataState();
 		if (bRefresh) {
 			if (this.mParameters.$$clearSelectionOnFilter
 				&& sResumeChangeReason === ChangeReason.Filter) {
@@ -4441,7 +4503,9 @@ sap.ui.define([
 	 *   be used to turn on the handling of grand totals like in 1.84.0, using aggregates of
 	 *   aggregates and thus allowing to filter by aggregated properties while grand totals are
 	 *   needed. Beware that methods like "average" or "countdistinct" are not compatible with this
-	 *   approach, and it cannot be combined with group levels.
+	 *   approach, and it cannot be combined with group levels. Since 1.129.0, this property is not
+	 *   needed anymore and filtering by aggregated properties is supported even while grand totals
+	 *   or subtotals are needed.
 	 *   <br>
 	 *   Since 1.117.0, either a read-only recursive hierarchy or pure data aggregation is
 	 *   supported, but no mix; <code>hierarchyQualifier</code> is the leading property that decides
@@ -4454,7 +4518,6 @@ sap.ui.define([
 	 *     <li> <code>grandTotal</code>: An optional boolean that tells whether a grand total for
 	 *       this aggregatable property is needed (since 1.59.0); not supported in this case are:
 	 *       <ul>
-	 *         <li> filtering by any aggregatable property (since 1.89.0),
 	 *         <li> "$search" (since 1.93.0),
 	 *         <li> the <code>vGroup</code> parameter of {@link sap.ui.model.Sorter}
 	 *           (since 1.107.0),
