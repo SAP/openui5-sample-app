@@ -36,4 +36,5 @@ module.exports = function(config) {
 		singleRun: true
 
 	});
+	require("karma-ui5/helper").configureIframeCoverage(config);
 };
