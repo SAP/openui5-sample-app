@@ -1,6 +1,9 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns="sap.m" xmlns:f="sap.f" controllerName="sap.ui.demo.todo.controller.App" displayBlock="true">
 		<App>
 			<Page>
+				<dependents>
+					<core:CommandExecution id="CE_CLEAR_COMPLETED" command="Clear" enabled="true" execute=".onClearCompleted" />
+				</dependents>
 				<customHeader>
 					<f:ShellBar core:require="{ Helper: 'sap/ui/demo/todo/util/Helper' }" title="{i18n>TITLE}" homeIcon="{:= Helper.resolvePath('./img/logo_ui5.png') }" />
 				</customHeader>
@@ -31,7 +34,7 @@
 												<SegmentedButtonItem text="{i18n>LABEL_COMPLETED}" key="completed"/>
 											</items>
 										</SegmentedButton>
-										<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".onClearCompleted"/>
+										<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press="cmd:Clear"/>
 									</OverflowToolbar>
 								</headerToolbar>
 								<infoToolbar>
@@ -69,7 +72,7 @@
 							</items>
 						</SegmentedButton>
 						<ToolbarSpacer />
-						<Button id="clearCompleted-footer" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".onClearCompleted"/>
+						<Button id="clearCompleted-footer" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press="cmd:Clear"/>
 					</OverflowToolbar>
 				</footer>
 
