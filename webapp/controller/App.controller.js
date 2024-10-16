@@ -38,7 +38,7 @@ sap.ui.define([
 		/**
 		 * Removes all completed items from the todo list.
 		 */
-		clearCompleted() {
+		onClearCompleted() {
 			const oModel = this.getView().getModel();
 			const aTodos = oModel.getProperty("/todos").map((oTodo) => Object.assign({}, oTodo));
 
