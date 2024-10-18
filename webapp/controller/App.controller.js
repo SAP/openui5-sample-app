@@ -20,11 +20,20 @@ sap.ui.define([
 		},
 
 		/**
+		 * Get the default model from the view
+		 *
+		 * @returns {sap.ui.model.json.JSONModel} The model containing the todo list, etc.
+		 */
+		getModel() {
+			return this.getView().getModel();
+		},
+
+		/**
 		 * Adds a new todo item to the bottom of the list.
 		 */
 		addTodo() {
-			const oModel = this.getView().getModel();
-			const aTodos = oModel.getProperty("/todos").map((oTodo) => Object.assign({}, oTodo));
+			const oModel = this.getModel();
+			const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
 
 			aTodos.push({
 				title: oModel.getProperty("/newTodo"),
@@ -39,17 +48,15 @@ sap.ui.define([
 		 * Trigger removal of all completed items from the todo list.
 		 */
 		onClearCompleted() {
-			const oModel = this.getView().getModel();
-			const aTodos = oModel.getProperty("/todos").map((oTodo) => Object.assign({}, oTodo));
+			const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
 			this.removeCompletedTodos(aTodos);
-			oModel.setProperty("/todos", aTodos);
+			this.getModel().setProperty("/todos", aTodos);
 		},
 
 		/**
 		 * Removes all completed items from the given todos.
 		 *
 		 * @param {object[]} aTodos
-		 * @returns
 		 */
 		removeCompletedTodos(aTodos) {
 			let i = aTodos.length;
@@ -62,15 +69,21 @@ sap.ui.define([
 		},
 
 		/**
+		 * Determines the todo list
+		 *
+		 * @returns {object[]} The todo list
+		 */
+		getTodos(){
+			const oModel = this.getModel();
+			return oModel && oModel.getProperty("/todos") || [];
+		},
+
+		/**
 		 * Updates the number of items not yet completed
 		 */
 		onUpdateItemsLeftCount() {
-			const oModel = this.getView().getModel();
-			const aTodos = oModel.getProperty("/todos") || [];
-
-			const iItemsLeft = aTodos.filter((oTodo) => oTodo.completed !== true).length;
-
-			oModel.setProperty("/itemsLeftCount", iItemsLeft);
+			const iItemsLeft = this.getTodos().filter((oTodo) => oTodo.completed !== true).length;
+			this.getModel().setProperty("/itemsLeftCount", iItemsLeft);
 		},
 
 		/**
@@ -78,7 +91,7 @@ sap.ui.define([
 		 * @param {sap.ui.base.Event} oEvent Input changed event
 		 */
 		onSearch(oEvent) {
-			const oModel = this.getView().getModel();
+			const oModel = this.getModel();
 
 			// First reset current filters
 			this.aSearchFilters = [];

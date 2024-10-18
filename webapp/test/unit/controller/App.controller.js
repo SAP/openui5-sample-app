@@ -1,8 +1,9 @@
-/* global QUnit */
+/* global QUnit, sinon */
 
 sap.ui.define([
-	"sap/ui/demo/todo/controller/App.controller"
-], (AppController) => {
+	"sap/ui/demo/todo/controller/App.controller",
+	"sap/ui/model/json/JSONModel"
+], (AppController, JSONModel) => {
 	"use strict";
 
 	let oAppController;
@@ -37,5 +38,22 @@ sap.ui.define([
 		aTodos[1].completed = true;
 		oAppController.removeCompletedTodos(aTodos)
 		assert.deepEqual(aTodos, [{title: "My Todo", completed: false}]);
+	});
+
+
+	QUnit.test("getTodos", (assert) => {
+		// Prepare
+		const oViewStub = {};
+		oViewStub.getModel = () => {
+			return new JSONModel();
+		};
+		const oGetViewStub = sinon.stub(oAppController, "getView");
+		oGetViewStub.returns(oViewStub);
+
+		// Act
+		assert.deepEqual(oAppController.getTodos(), []);
+
+		// Clean-up
+		oGetViewStub.restore();
 	});
 });
