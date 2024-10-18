@@ -3,8 +3,9 @@ sap.ui.define([
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
-	"sap/ui/model/json/JSONModel"
-], (Device, Controller, Filter, FilterOperator, JSONModel) => {
+	"sap/ui/model/json/JSONModel",
+	"sap/base/strings/formatMessage"
+], (Device, Controller, Filter, FilterOperator, JSONModel, formatMessage) => {
 	"use strict";
 
 	return Controller.extend("sap.ui.demo.todo.controller.App", {
@@ -14,17 +15,25 @@ sap.ui.define([
 			this.aTabFilters = [];
 
 			this.getView().setModel(new JSONModel({
-				isMobile: Device.browser.mobile,
-				filterText: undefined
+				isMobile: Device.browser.mobile
 			}), "view");
+		},
+
+		/**
+		 * Get the default model from the view
+		 *
+		 * @returns {sap.ui.model.json.JSONModel} The model containing the todo list, etc.
+		 */
+		getModel() {
+			return this.getView().getModel();
 		},
 
 		/**
 		 * Adds a new todo item to the bottom of the list.
 		 */
 		addTodo() {
-			const oModel = this.getView().getModel();
-			const aTodos = oModel.getProperty("/todos").map((oTodo) => Object.assign({}, oTodo));
+			const oModel = this.getModel();
+			const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
 
 			aTodos.push({
 				title: oModel.getProperty("/newTodo"),
@@ -36,12 +45,20 @@ sap.ui.define([
 		},
 
 		/**
-		 * Removes all completed items from the todo list.
+		 * Trigger removal of all completed items from the todo list.
 		 */
-		clearCompleted() {
-			const oModel = this.getView().getModel();
-			const aTodos = oModel.getProperty("/todos").map((oTodo) => Object.assign({}, oTodo));
+		onClearCompleted() {
+			const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
+			this.removeCompletedTodos(aTodos);
+			this.getModel().setProperty("/todos", aTodos);
+		},
 
+		/**
+		 * Removes all completed items from the given todos.
+		 *
+		 * @param {object[]} aTodos
+		 */
+		removeCompletedTodos(aTodos) {
 			let i = aTodos.length;
 			while (i--) {
 				const oTodo = aTodos[i];
@@ -49,20 +66,24 @@ sap.ui.define([
 					aTodos.splice(i, 1);
 				}
 			}
+		},
 
-			oModel.setProperty("/todos", aTodos);
+		/**
+		 * Determines the todo list
+		 *
+		 * @returns {object[]} The todo list
+		 */
+		getTodos(){
+			const oModel = this.getModel();
+			return oModel && oModel.getProperty("/todos") || [];
 		},
 
 		/**
 		 * Updates the number of items not yet completed
 		 */
-		updateItemsLeftCount() {
-			const oModel = this.getView().getModel();
-			const aTodos = oModel.getProperty("/todos") || [];
-
-			const iItemsLeft = aTodos.filter((oTodo) => oTodo.completed !== true).length;
-
-			oModel.setProperty("/itemsLeftCount", iItemsLeft);
+		onUpdateItemsLeftCount() {
+			const iItemsLeft = this.getTodos().filter((oTodo) => oTodo.completed !== true).length;
+			this.getModel().setProperty("/itemsLeftCount", iItemsLeft);
 		},
 
 		/**
@@ -70,7 +91,7 @@ sap.ui.define([
 		 * @param {sap.ui.base.Event} oEvent Input changed event
 		 */
 		onSearch(oEvent) {
-			const oModel = this.getView().getModel();
+			const oModel = this.getModel();
 
 			// First reset current filters
 			this.aSearchFilters = [];
@@ -104,7 +125,7 @@ sap.ui.define([
 					break;
 				case "all":
 				default:
-					// Don't use any filter
+				// Don't use any filter
 			}
 
 			this._applyListFilters();
@@ -116,30 +137,29 @@ sap.ui.define([
 
 			oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");
 
-			let sI18nKey;
-			if (this.sFilterKey && this.sFilterKey !== "all") {
-				if (this.sFilterKey === "active") {
-					sI18nKey = "ACTIVE_ITEMS";
-				} else {
-					// completed items: sFilterKey = "completed"
-					sI18nKey = "COMPLETED_ITEMS";
-				}
-				if (this.sSearchQuery) {
-					sI18nKey += "_CONTAINING";
-				}
-			} else if (this.sSearchQuery) {
-				sI18nKey = "ITEMS_CONTAINING";
-			}
+			const sI18nKey = this.getI18NKey(this.sFilterKey, this.sSearchQuery);
 
-			let sFilterText;
+			this.byId("filterToolbar").setVisible(!!sI18nKey);
 			if (sI18nKey) {
-				const oResourceBundle = this.getView().getModel("i18n").getResourceBundle();
-				sFilterText = oResourceBundle.getText(sI18nKey, [this.sSearchQuery]);
+				this.byId("filterLabel").bindProperty("text", {
+					path: sI18nKey,
+					model: "i18n",
+					formatter: (textWithPlaceholder) => {
+						return formatMessage(textWithPlaceholder, [this.sSearchQuery]);
+					}
+				});
 			}
-
-			this.getView().getModel("view").setProperty("/filterText", sFilterText);
 		},
 
+		getI18NKey(sFilterKey, sSearchQuery) {
+			if (!sFilterKey || sFilterKey === "all") {
+				return sSearchQuery ? "ITEMS_CONTAINING" : undefined;
+			} else if (sFilterKey === "active") {
+				return "ACTIVE_ITEMS" + (sSearchQuery ? "_CONTAINING" : "");
+			} else {
+				return "COMPLETED_ITEMS" + (sSearchQuery ? "_CONTAINING" : "");
+			}
+		}
 	});
 
 });
