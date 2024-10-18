@@ -14,7 +14,7 @@
 						<f:content>
 
 							<List id="todoList"
-								items="{ path: '/todos', events: { change: '.updateItemsLeftCount' } }"
+								items="{ path: '/todos', events: { change: '.onUpdateItemsLeftCount' } }"
 								mode="None"
 								growing="true"
 								growingScrollToLoad="true"
@@ -31,14 +31,15 @@
 												<SegmentedButtonItem text="{i18n>LABEL_COMPLETED}" key="completed"/>
 											</items>
 										</SegmentedButton>
-										<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".clearCompleted"/>
+										<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".onClearCompleted"/>
 									</OverflowToolbar>
 								</headerToolbar>
 								<infoToolbar>
 									<OverflowToolbar
-										visible="{= !!${view>/filterText} }"
+										id="filterToolbar"
+										visible="false"
 										active="false">
-										<Label text="{view>/filterText}" />
+										<Label id="filterLabel"/>
 									</OverflowToolbar>
 								</infoToolbar>
 								<CustomListItem>
@@ -68,7 +69,7 @@
 							</items>
 						</SegmentedButton>
 						<ToolbarSpacer />
-						<Button id="clearCompleted-footer" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".clearCompleted"/>
+						<Button id="clearCompleted-footer" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".onClearCompleted"/>
 					</OverflowToolbar>
 				</footer>
 

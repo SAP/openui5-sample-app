@@ -31,6 +31,7 @@
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
           "bundleName": "sap.ui.demo.todo.i18n.i18n",
+          "async": true,
           "supportedLocales": [
             "",
             "de",
