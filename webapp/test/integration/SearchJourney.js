@@ -3,7 +3,7 @@
 sap.ui.define([
 	"sap/ui/Device",
 	"sap/ui/test/opaQunit",
-	"sap/ui/demo/todo/test/integration/pages/App"
+	"./pages/App"
 ], (Device, opaTest) => {
 	"use strict";
 
