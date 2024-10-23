@@ -5,14 +5,8 @@ sap.ui.define([
 
 	return Opa5.extend("sap.ui.demo.todo.test.integration.arrangements.Startup", {
 
-		iStartMyApp() {
-			this.iStartMyUIComponent({
-				componentConfig: {
-					name: "sap.ui.demo.todo",
-					async: true,
-					manifest: true
-				}
-			});
+		iStartMyApp: function () {
+			this.iStartMyAppInAFrame(sap.ui.require.toUrl("sap/ui/demo/todo/index") + ".html");
 		}
 
 	});
