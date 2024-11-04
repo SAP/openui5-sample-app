@@ -91,15 +91,16 @@ function(
 	 * @see {@link fiori:https://experience.sap.com/fiori-design-web/link/ Link}
 	 *
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.core.IShrinkable, sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent, sap.ui.core.ITitleContent, sap.ui.core.IAccessKeySupport
+	 * @implements sap.ui.core.IShrinkable, sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent, sap.ui.core.ITitleContent, sap.ui.core.IAccessKeySupport, sap.ui.core.ILabelable
 	 *
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
+	 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @constructor
 	 * @public
@@ -115,7 +116,8 @@ function(
 				"sap.ui.core.ISemanticFormContent",
 				"sap.ui.core.ITitleContent",
 				"sap.ui.core.IAccessKeySupport",
-				"sap.m.IToolbarInteractiveControl"
+				"sap.m.IToolbarInteractiveControl",
+				"sap.ui.core.ILabelable"
 			],
 			library : "sap.m",
 			designtime: "sap/m/designtime/Link.designtime",
@@ -711,6 +713,16 @@ function(
 		}
 
 		return oIcon;
+	};
+
+	/**
+	 * Returns if the control can be bound to a label
+	 *
+	 * @returns {boolean} <code>true</code> if the control can be bound to a label
+	 * @public
+	 */
+	Link.prototype.hasLabelableHTMLElement = function () {
+		return false;
 	};
 
 	return Link;

@@ -22,8 +22,8 @@ sap.ui.define([
 	 * @private
 	 */
 	class _TreeState {
-		// maps predicate to node id and number of levels to expand
-		mPredicate2ExpandLevels = {};
+		// @see #collapse, #expand
+		mPredicate2ExpandInfo = {};
 
 		// @see #getOutOfPlace
 		mPredicate2OutOfPlace = {};
@@ -59,16 +59,17 @@ sap.ui.define([
 			}
 
 			const sPredicate = _Helper.getPrivateAnnotation(oNode, "predicate");
-			const oExpandLevel = this.mPredicate2ExpandLevels[sPredicate];
-			if (bNested || oExpandLevel && oExpandLevel.levels !== 0) {
-				delete this.mPredicate2ExpandLevels[sPredicate];
+			const oExpandInfo = this.mPredicate2ExpandInfo[sPredicate];
+			if (bNested || oExpandInfo && oExpandInfo.levels !== 0) {
+				delete this.mPredicate2ExpandInfo[sPredicate];
 			} else {
-				// must determine node ID now; the node may be missing when calling #getExpandLevels
-				const sNodeId = _Helper.drillDown(oNode, this.sNodeProperty);
-				this.mPredicate2ExpandLevels[sPredicate] = {
+				// must determine node ID and key filter now; the node may be missing when calling
+				// #getExpandLevels or #getExpandFilters
+				this.mPredicate2ExpandInfo[sPredicate] = {
 					collapseAll : bAll,
+					filter : this.fnGetKeyFilter(oNode),
 					levels : 0,
-					nodeId : sNodeId
+					nodeId : _Helper.drillDown(oNode, this.sNodeProperty)
 				};
 			}
 		}
@@ -87,7 +88,7 @@ sap.ui.define([
 			}
 
 			const sPredicate = _Helper.getPrivateAnnotation(oNode, "predicate");
-			delete this.mPredicate2ExpandLevels[sPredicate];
+			delete this.mPredicate2ExpandInfo[sPredicate];
 			this.deleteOutOfPlace(sPredicate);
 			_Helper.getPrivateAnnotation(oNode, "spliced", []).forEach((oChild) => {
 				this.delete(oChild);
@@ -95,16 +96,16 @@ sap.ui.define([
 		}
 
 		/**
-		 * Deletes the expand levels for the given node and all its descendants.
+		 * Deletes the expand info for the given node and all its descendants.
 		 *
 		 * @param {object} oNode - The node
 		 *
-		 * @private
+		 * @public
 		 */
-		deleteExpandLevels(oNode) {
-			delete this.mPredicate2ExpandLevels[_Helper.getPrivateAnnotation(oNode, "predicate")];
+		deleteExpandInfo(oNode) {
+			delete this.mPredicate2ExpandInfo[_Helper.getPrivateAnnotation(oNode, "predicate")];
 			_Helper.getPrivateAnnotation(oNode, "spliced", []).forEach((oChild) => {
-				this.deleteExpandLevels(oChild);
+				this.deleteExpandInfo(oChild);
 			});
 		}
 
@@ -155,33 +156,53 @@ sap.ui.define([
 
 			if (iLevels >= Number.MAX_SAFE_INTEGER) {
 				iLevels = null;
-				this.deleteExpandLevels(oNode);
+				this.deleteExpandInfo(oNode);
 			}
 			const sPredicate = _Helper.getPrivateAnnotation(oNode, "predicate");
-			const oExpandLevel = this.mPredicate2ExpandLevels[sPredicate];
-			if (oExpandLevel && !oExpandLevel.levels && !oExpandLevel.collapseAll) {
-				delete this.mPredicate2ExpandLevels[sPredicate];
+			const oExpandInfo = this.mPredicate2ExpandInfo[sPredicate];
+			if (oExpandInfo && !oExpandInfo.levels && !oExpandInfo.collapseAll) {
+				delete this.mPredicate2ExpandInfo[sPredicate];
 			} else {
-				// must determine node ID now; the node may be missing when calling #getExpandLevels
-				const sNodeId = _Helper.drillDown(oNode, this.sNodeProperty);
-				this.mPredicate2ExpandLevels[sPredicate] = {levels : iLevels, nodeId : sNodeId};
+				// must determine node ID and key filter now; the node may be missing when calling
+				// #getExpandLevels or #getExpandFilters
+				this.mPredicate2ExpandInfo[sPredicate] = {
+					filter : this.fnGetKeyFilter(oNode),
+					levels : iLevels,
+					nodeId : _Helper.drillDown(oNode, this.sNodeProperty)
+				};
 			}
 		}
 
 		/**
-		 * Returns the ExpandLevels parameter to the TopLevels function describing the tree state in
-		 * $apply.
+		 * Returns an unsorted list of filter strings for the "$filter" system query option for all
+		 * nodes which contribute to the "ExpandLevels" parameter and where the given filter
+		 * function is matching.
 		 *
-		 * @returns {string|undefined} The ExpandLevels or undefined if no tree state is kept
+		 * @param {function(string):boolean} fnFilter - A filter function for the predicates
+		 * @return {string[]} The filter strings
+		 *
+		 * @public
+		 */
+		getExpandFilters(fnFilter) {
+			return Object.keys(this.mPredicate2ExpandInfo).filter(fnFilter)
+				.map((sPredicate) => this.mPredicate2ExpandInfo[sPredicate].filter);
+		}
+
+		/**
+		 * Returns the "ExpandLevels" parameter to the "TopLevels" function describing the tree
+		 * state in "$apply".
+		 *
+		 * @returns {string|undefined}
+		 *   The "ExpandLevels" parameter or undefined if no tree state is kept
 		 *
 		 * @public
 		 */
 		getExpandLevels() {
-			const aExpandLevels = Object.values(this.mPredicate2ExpandLevels);
-			return aExpandLevels.length
-				? JSON.stringify(aExpandLevels.map((oExpandLevel) => {
+			const aExpandInfos = Object.values(this.mPredicate2ExpandInfo);
+			return aExpandInfos.length
+				? JSON.stringify(aExpandInfos.map((oExpandInfo) => {
 						// build the server representation
-						return {NodeID : oExpandLevel.nodeId, Levels : oExpandLevel.levels};
+						return {NodeID : oExpandInfo.nodeId, Levels : oExpandInfo.levels};
 					}))
 				: undefined;
 		}
@@ -265,7 +286,7 @@ sap.ui.define([
 		 * @public
 		 */
 		reset() {
-			this.mPredicate2ExpandLevels = {};
+			this.mPredicate2ExpandInfo = {};
 			this.resetOutOfPlace();
 		}
 

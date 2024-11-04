@@ -41,7 +41,11 @@ sap.ui.define([
 		if (mOptions) {
 			if (mOptions.suffix) {
 				sMessage += " " + mOptions.suffix;
-			} else {
+			}
+			if (mOptions.cause) {
+				args.unshift(mOptions.cause);
+			}
+			if (!mOptions.cause && !mOptions.suffix) {
 				args.unshift(mOptions);
 			}
 		}
@@ -70,7 +74,11 @@ sap.ui.define([
 		if (mOptions) {
 			if (mOptions.suffix) {
 				sMessage += " " + mOptions.suffix;
-			} else {
+			}
+			if (mOptions.cause) {
+				args.unshift(mOptions.cause);
+			}
+			if (!mOptions.cause && !mOptions.suffix) {
 				args.unshift(mOptions);
 			}
 		}

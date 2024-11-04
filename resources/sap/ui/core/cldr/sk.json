@@ -6022,5 +6022,9 @@
 		"noon": {
 			"_at": "12:00"
 		}
+	},
+	"sap-calendarWeek": {
+		"narrow": "KT {0}",
+		"wide": "Kalendárny týždeň {0}"
 	}
 }

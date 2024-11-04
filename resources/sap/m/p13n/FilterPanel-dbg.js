@@ -53,7 +53,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.QueryPanel
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @private
 	 * @since 1.121

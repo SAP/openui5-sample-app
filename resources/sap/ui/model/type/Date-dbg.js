@@ -27,7 +27,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.SimpleType
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @public
 	 * @param {object} [oFormatOptions] Formatting options. For a list of all available options, see {@link sap.ui.core.format.DateFormat.getDateInstance DateFormat}.
@@ -84,7 +84,8 @@ sap.ui.define([
 				oResult = this.oOutputFormat.parse(oValue);
 				if (!oResult) {
 					oBundle = Library.getResourceBundleFor("sap.ui.core");
-					throw new ParseException(oBundle.getText(this.sName + ".Invalid"));
+					throw new ParseException(oBundle.getText("Enter" + this.getName(),
+						[this.oOutputFormat.format(this.oOutputFormat.getSampleValue()[0])]));
 				}
 				if (this.oInputFormat) {
 					if (this.oFormatOptions.source.pattern == "timestamp") {

@@ -58,7 +58,7 @@ sap.ui.define([
 	 * See also {@link module:sap/ui/core/ComponentSupport}.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.ComponentContainer
@@ -454,7 +454,7 @@ sap.ui.define([
 					delete this._oComponentPromise;
 					// listeners can prevent the default log entry
 					if ( this.fireComponentFailed({ reason: oReason }) ) {
-						future.errorThrows("Failed to load component for container " + this.getId(), oReason);
+						future.errorThrows("Failed to load component for container " + this.getId(), { cause: oReason});
 					}
 				}.bind(this));
 			} else if (oComponent) {

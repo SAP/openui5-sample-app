@@ -151,7 +151,7 @@ sap.ui.define([
 	/**
 	 * Root Namespace for the jQuery plug-in provided by SAP SE.
 	 *
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @namespace
 	 * @public
 	 * @static
@@ -1140,7 +1140,7 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.clear} instead
 	 */
-	jQuery.sap.measure.clearInteractionMeasurements = Interaction.clear;
+	jQuery.sap.measure.clearInteractionMeasurements = () => { Interaction.clear(); };
 
 	/**
 	 * Start an interaction measurements
@@ -1152,7 +1152,7 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.start} instead
 	 */
-	jQuery.sap.measure.startInteraction = Interaction.start;
+	jQuery.sap.measure.startInteraction = (sType, oSrcElement) => { Interaction.start(sType, oSrcElement); };
 
 	/**
 	 * End an interaction measurements
@@ -1163,7 +1163,7 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.end} instead
 	 */
-	jQuery.sap.measure.endInteraction = Interaction.end;
+	jQuery.sap.measure.endInteraction = (bForce) => { Interaction.end(bForce); };
 
 	/**
 	 * Gets the incomplete pending interaction
@@ -1173,7 +1173,7 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.getPending} instead
 	 */
-	jQuery.sap.measure.getPendingInteractionMeasurement = Interaction.getPending;
+	jQuery.sap.measure.getPendingInteractionMeasurement = () => { return Interaction.getPending(); };
 
 	/**
 	 * Gets all interaction measurements for which a provided filter function returns a truthy value.
@@ -1190,7 +1190,7 @@ sap.ui.define([
 	 * @since 1.36.2
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.filter} instead
 	 */
-	jQuery.sap.measure.filterInteractionMeasurements = Interaction.filter;
+	jQuery.sap.measure.filterInteractionMeasurements = (fnFilter) => { return Interaction.filter(fnFilter); };
 
 	/**
 	 * Gets all interaction measurements
@@ -1201,7 +1201,7 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.getAll} instead
 	 */
-	jQuery.sap.measure.getAllInteractionMeasurements = Interaction.getAll;
+	jQuery.sap.measure.getAllInteractionMeasurements = (bFinalize) => { return Interaction.getAll(bFinalize); };
 
 	/**
 	 * Gets the current request timings array for type 'resource' safely

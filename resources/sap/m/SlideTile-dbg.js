@@ -51,7 +51,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @since 1.34
 	 *
 	 * @public
@@ -89,7 +89,6 @@ sap.ui.define([
 				width: {type: "sap.ui.core.CSSSize", group: "Appearance"},
 				/**
 				 * Height of the control.
-				 * @experimental
 				 * @since 1.96
 				 */
 				height: {type: "sap.ui.core.CSSSize", group: "Appearance"}

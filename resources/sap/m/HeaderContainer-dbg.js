@@ -125,7 +125,7 @@ sap.ui.define([
 		 * @since 1.44.0
 		 *
 		 * @author SAP SE
-		 * @version 1.129.0
+		 * @version 1.130.0
 		 *
 		 * @public
 		 * @alias sap.m.HeaderContainer
@@ -205,7 +205,6 @@ sap.ui.define([
 					/**
 					* Enables grid layout in mobile view.
         			* @since 1.99
-					* @experimental since 1.99
 					*/
 					gridLayout: {type: "boolean", defaultValue: false},
 					/**

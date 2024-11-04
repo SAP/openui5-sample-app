@@ -41,10 +41,9 @@ sap.ui.define([
 	* @extends sap.m.GenericTile
 	*
 	* @author SAP SE
-	* @version 1.129.0
+	* @version 1.130.0
 	*
 	* @public
-	* @experimental since 1.122
 	* @since 1.122
 	* @alias sap.m.ActionTile
 	*/
@@ -56,38 +55,38 @@ sap.ui.define([
 				/**
 				 * The height of the tile changes dynamically to accommodate the content inside it
 				 *
-				 * @experimental Since 1.124
+				 * @since 1.124
 				 */
 				enableDynamicHeight: { type: "boolean", group: "Appearance", defaultValue: false },
 				/**
 				 * Decides whether the headerImage should have a frame or not.
 				 *
-				 * @experimental Since 1.124
+				 * @since 1.124
 				 */
 				enableIconFrame: { type: "boolean", group: "Appearance", defaultValue: false },
 				/**
 				 * Adds a priority indicator for the Action Tile.
 				 *
-				 * @experimental Since 1.124
+				 * @since 1.124
 				 */
 				priority: { type: "sap.m.Priority", group: "Data", defaultValue: Priority.None },
 				/**
 				 * Sets the text inside the priority indicator for the Action Tile.
 				 *
-				 * @experimental Since 1.124
+				 * @since 1.124
 				 */
 				priorityText: { type: "string", group: "Data", defaultValue: null },
 				/**
 				 * Defines what type of icon is displayed as visual affordance for the icon frame badge.
 				 *
-				 * @experimental Since 1.124
+				 * @since 1.124
 				 */
 				badgeIcon: { type: "sap.ui.core.URI", group: "Appearance", defaultValue: "" },
 				/**
 				 * Visualizes the validation state of the icon frame badge, e.g. <code>Error</code>, <code>Warning</code>,
 				 * <code>Success</code>, <code>Information</code>.
 				 *
-				 * @experimental Since 1.124
+				 * @since 1.124
 				 */
 				badgeValueState: {
 					type: "sap.ui.core.ValueState",

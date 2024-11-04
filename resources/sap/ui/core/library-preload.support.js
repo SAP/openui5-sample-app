@@ -16,7 +16,15 @@ sap.ui.predefine("sap/ui/core/library.support", [
 	"./rules/Rendering.support",
 	"./rules/Theming.support"
 ],
-	function(MiscSupport, ConfigSupport, ModelSupport, ViewSupport, AppSupport, RenderingSupport, ThemingSupport) {
+	function(
+		MiscSupport,
+		ConfigSupport,
+		ModelSupport,
+		ViewSupport,
+		AppSupport,
+		RenderingSupport,
+		ThemingSupport
+	) {
 	"use strict";
 
 	return {
@@ -27,6 +35,7 @@ sap.ui.predefine("sap/ui/core/library.support", [
 			ConfigSupport,
 			ModelSupport,
 			ViewSupport,
+			/** @deprecated */
 			AppSupport,
 			RenderingSupport,
 			ThemingSupport
@@ -40,6 +49,9 @@ sap.ui.predefine("sap/ui/core/library.support", [
  */
 /**
  * Defines Application related support rules.
+ *
+ * @deprecated since 1.120 No rule will survive as all will throw an error in the future.
+ * @fileoverview
  */
 sap.ui.predefine("sap/ui/core/rules/App.support", [
 	"sap/ui/support/library",
@@ -391,6 +403,8 @@ sap.ui.predefine("sap/ui/core/rules/App.support", [
 
 	/**
 	 * Check for usage of Controller Extension API.
+	 *
+	 * @deprecated since 1.120 Will throw an error instead.
 	 */
 	var oControllerExtensionRule = {
 		id: "controllerExtension",
@@ -457,6 +471,8 @@ sap.ui.predefine("sap/ui/core/rules/App.support", [
 
 	/**
 	 * Checks for missing super init() calls on sap.ui.core.UIComponents.
+	 *
+	 * @deprecated since 1.120 Will throw an error instead.
 	 */
 	 var oMissingSuperInitRule = {
 		id: "missingInitInUIComponent",
@@ -487,6 +503,8 @@ sap.ui.predefine("sap/ui/core/rules/App.support", [
 
 	/**
 	 * Checks for missing super constructor calls on sap.ui.core.Component and sap.ui.core.mvc.Controller.
+	 *
+	 * @deprecated since 1.120 Will throw an error instead.
 	 */
 	 var oMissingSuperConstructorRule = {
 		id: "missingSuperConstructor",
@@ -536,9 +554,11 @@ sap.ui.predefine("sap/ui/core/rules/App.support", [
 		oJQueryThreeDeprecationRule,
 		/** @deprecated */
 		oJSViewRule,
-
-		oMissingSuperInitRule,
+		/** @deprecated */
 		oMissingSuperConstructorRule,
+		/** @deprecated */
+		oMissingSuperInitRule,
+		/** @deprecated */
 		oControllerExtensionRule
 	];
 }, true);

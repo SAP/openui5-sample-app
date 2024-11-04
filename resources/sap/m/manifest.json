@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.129.0"
+      "version": "1.130.0"
     },
     "title": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
     "description": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
@@ -16,7 +16,7 @@
       {
         "name": "DOMPurify",
         "packagedWithMySelf": true,
-        "version": "2.3.8"
+        "version": "3.1.7"
       },
       {
         "name": "qunit-composite-2",
@@ -34,17 +34,17 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.129",
+      "minUI5Version": "1.130",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.129.0"
+          "minVersion": "1.130.0"
         },
         "sap.ui.layout": {
-          "minVersion": "1.129.0",
+          "minVersion": "1.130.0",
           "lazy": true
         },
         "sap.ui.unified": {
-          "minVersion": "1.129.0",
+          "minVersion": "1.130.0",
           "lazy": true
         }
       }
@@ -283,8 +283,6 @@
           "sap.m.UploadCollectionToolbarPlaceholder",
           "sap.m.upload.UploadSet",
           "sap.m.upload.UploadSetToolbarPlaceholder",
-          "sap.m.upload.UploadSetwithTable",
-          "sap.m.upload.UploadSetwithTableItem",
           "sap.m.VariantManagement",
           "sap.m.VBox",
           "sap.m.ViewSettingsDialog",
@@ -461,6 +459,7 @@
           "sap.m.IllustratedMessageSize",
           "sap.m.IllustratedMessageType",
           "sap.m.ImageMode",
+          "sap.m.InputListItemContentSize",
           "sap.m.InputTextFormatMode",
           "sap.m.InputType",
           "sap.m.LabelDesign",

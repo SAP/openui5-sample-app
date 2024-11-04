@@ -5975,5 +5975,9 @@
 	"calendarPreference": [
 		"gregorian",
 		"japanese"
-	]
+	],
+	"sap-calendarWeek": {
+		"narrow": "CW {0}",
+		"wide": "カレンダ週 {0}"
+	}
 }

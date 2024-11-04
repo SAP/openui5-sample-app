@@ -49,7 +49,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.ClientModel
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @public
 	 * @alias sap.ui.model.json.JSONModel
 	 */
@@ -70,6 +70,17 @@ sap.ui.define([
 		}
 
 	});
+
+	/**
+	 * Returns a copy of all active bindings of the model.
+	 *
+	 * @return {sap.ui.model.Binding[]} The active bindings of the model
+	 *
+	 * @function
+	 * @name sap.ui.model.json.JSONModel.prototype.getBindings
+	 * @private
+	 * @ui5-restricted sap.ushell
+	 */
 
 	/**
 	 * Sets the data, passed as a JS object tree, to the model.

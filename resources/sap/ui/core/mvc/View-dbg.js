@@ -144,7 +144,7 @@ sap.ui.define([
 	 * The default implementation of this method returns <code>false</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.View
@@ -964,7 +964,7 @@ sap.ui.define([
 		if (vPreprocessor) {
 			initGlobalPreprocessorsRegistry(sType, sViewType);
 			if (bOnDemand && onDemandPreprocessorExists(sViewType, sType)) {
-				future.errorThrows("Registration for \"" + sType + "\" failed, only one on-demand-preprocessor allowed", this.getMetadata().getName());
+				future.errorThrows(`${this.getMetadata().getName()}: Registration for "${sType}" failed, only one on-demand-preprocessor allowed`);
 				return;
 			}
 			View._mPreprocessors[sViewType][sType].push({
@@ -976,7 +976,7 @@ sap.ui.define([
 			Log.debug("Registered " + (bOnDemand ? "on-demand-" : "") + "preprocessor for \"" + sType + "\"" +
 			(bSyncSupport ? " with syncSupport" : ""), this.getMetadata().getName());
 		} else {
-			future.errorThrows("Registration for \"" + sType + "\" failed, no preprocessor specified",  this.getMetadata().getName());
+			future.errorThrows(`${this.getMetadata().getName()}: Registration for "${sType}" failed, no preprocessor specified`);
 		}
 	};
 

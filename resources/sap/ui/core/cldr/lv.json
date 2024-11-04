@@ -5863,5 +5863,9 @@
 		"noon": {
 			"_at": "12:00"
 		}
+	},
+	"sap-calendarWeek": {
+		"narrow": "KN {0}",
+		"wide": "Kalendārā nedēļa {0}"
 	}
 }

@@ -336,6 +336,28 @@ sap.ui.define([
 		oRm.close('div');
 	};
 
+	MonthRenderer.isTypeAttributeRequired = function (bFilteredByTypeOrColor, sSpecialDateTypeFilter, sSpecialDateColorFilter, oDayType){
+		const sColor = oDayType.color?.toLowerCase();
+
+		if (bFilteredByTypeOrColor) {
+			return sSpecialDateColorFilter === sColor && sSpecialDateTypeFilter === oDayType.type;
+		}
+
+		return sSpecialDateTypeFilter === "" || sSpecialDateTypeFilter === CalendarDayType.None || sSpecialDateTypeFilter === oDayType.type;
+	};
+
+	MonthRenderer.isColorAttributeRequired = function (sColor, bFilteredByTypeOrColor, sSpecialDateColorFilter, sSpecialDateTypeFilter, aDayTypes) {
+		const bHasColorAndNotFiltered = sColor && !bFilteredByTypeOrColor;
+		const bHasMatchingTypeAndColor = sColor === sSpecialDateColorFilter && sSpecialDateTypeFilter === aDayTypes[0].type;
+		const bHasSameColorWithoutType = sColor === sSpecialDateColorFilter && (!sSpecialDateTypeFilter || sSpecialDateTypeFilter === CalendarDayType.None);
+
+		if (bHasColorAndNotFiltered) {
+			return true;
+		}
+
+		return bHasMatchingTypeAndColor || bHasSameColorWithoutType;
+	};
+
 	/**
 	 * Generates helper object from passed date
 	 * @param {sap.ui.unified.calendar.Month} oMonth the month instance
@@ -412,6 +434,7 @@ sap.ui.define([
 		var iSelected = oMonth._checkDateSelected(oDay);
 		var aDayTypes = oMonth._getDateTypes(oDay);
 		var sSpecialDateTypeFilter = oHelper && oHelper.oLegend ? oHelper.oLegend._getSpecialDateTypeFilter() : '';
+		var sSpecialDateColorFilter = oHelper?.oLegend ? oHelper.oLegend._getSpecialDateColorFilter().toLowerCase() : '';
 		var bEnabled = oMonth._checkDateEnabled(oDay);
 		var bShouldBeMarkedAsSpecialDate = oMonth._isSpecialDateMarkerEnabled(oDay);
 		const sFirstSpecialDateType = aDayTypes.length > 0 && aDayTypes[0].type;
@@ -424,7 +447,7 @@ sap.ui.define([
 			&& bIsWeekend;
 		const bNonWorking = sFirstSpecialDateType === CalendarDayType.NonWorking
 			|| sSecondaryDateType === CalendarDayType.NonWorking || bNonWorkingWeekend;
-
+		const bFilteredByTypeOrColor = !!(sSpecialDateTypeFilter || sSpecialDateColorFilter) && (sSpecialDateTypeFilter !== CalendarDayType.None || sSpecialDateColorFilter) ;
 		const sNonWorkingDayText = oMonth._oUnifiedRB.getText("LEGEND_NON_WORKING_DAY");
 		const aTooltipTexts = [];
 
@@ -487,9 +510,10 @@ sap.ui.define([
 		}
 
 		if (bShouldBeMarkedAsSpecialDate) {
+			const that = this;
 			aDayTypes.forEach(function(oDayType, iIndex) {
 				if (oDayType.type !== CalendarDayType.None) {
-					if (sSpecialDateTypeFilter === "" || sSpecialDateTypeFilter === CalendarDayType.None || sSpecialDateTypeFilter === oDayType.type) {
+					if (that.isTypeAttributeRequired(bFilteredByTypeOrColor, sSpecialDateTypeFilter, sSpecialDateColorFilter, oDayType)) {
 						if (iIndex === 0) {
 							oRm.class("sapUiCalItem" + oDayType.type);
 						}
@@ -540,10 +564,12 @@ sap.ui.define([
 		if (aDayTypes[0] && bShouldBeMarkedAsSpecialDate){ //if there's a special date inside current month, render it
 			oRm.openStart("div");
 			oRm.class("sapUiCalSpecialDate");
-			if (aDayTypes[0].color && (sSpecialDateTypeFilter === "" || sSpecialDateTypeFilter === CalendarDayType.None)) { // if there's a custom color and no special date filtering, render it
+			const sColor = aDayTypes[0].color?.toLowerCase();
 
-				oRm.style("background-color", aDayTypes[0].color);
+			if (this.isColorAttributeRequired(sColor, bFilteredByTypeOrColor, sSpecialDateColorFilter, sSpecialDateTypeFilter, aDayTypes)) { // if there's a custom color and no special date filtering, render it
+				oRm.style("background-color", sColor);
 			}
+
 			oRm.openEnd(); // div
 			oRm.close("div");
 		}

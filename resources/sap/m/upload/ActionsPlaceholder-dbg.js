@@ -20,7 +20,7 @@ sap.ui.define(["sap/ui/core/Control"], function (Control) {
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @constructor
 	 * @public
@@ -48,7 +48,17 @@ sap.ui.define(["sap/ui/core/Control"], function (Control) {
 			apiVersion: 2,
 			render: function (oRm, oControl) {
 				if (oControl?.getPlaceholderFor()) {
-					oRm.renderControl(oControl.getAggregation("_actionButton"));
+					// pass the custom style classes added to the placeholder control to the action control.
+					// usecase : to add custom style classes to the action control added to the placeholder when the placeholder is used in the table header toolbar.
+					// the header toolbar added the custom class .sapMBarChild to the placeholder control. This class is not added to the action control.
+                    const oActionControl = oControl.getAggregation("_actionButton");
+                    const aCustomClasses = oControl?.aCustomStyleClasses;
+                    aCustomClasses?.forEach((sClass) => {
+                        oActionControl?.addStyleClass(sClass);
+                    });
+
+
+                    oRm.renderControl(oActionControl);
 				}
 			}
 		}

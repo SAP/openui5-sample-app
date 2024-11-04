@@ -5792,5 +5792,9 @@
 		"noon": {
 			"_at": "12:00"
 		}
+	},
+	"sap-calendarWeek": {
+		"narrow": "Lịch tuần {0}",
+		"wide": "Lịch tuần {0}"
 	}
 }

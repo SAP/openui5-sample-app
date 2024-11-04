@@ -117,7 +117,7 @@ sap.ui.define([
 	 * The responsiveness of the <code>MessageView</code> is determined by the container in which it is embedded. For that reason the control could not be visualized if the
 	 * container’s sizes are not defined.
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @extends sap.ui.core.Control
 	 * @constructor
@@ -1087,7 +1087,11 @@ sap.ui.define([
 				promise: oPromiseArgument
 			};
 
-			fnAsyncURLHandler(config);
+			// apply validation asynchronously
+			// details page should be fully rendered to change the links inside
+			setTimeout(() => {
+				fnAsyncURLHandler(config);
+			}, 0);
 		});
 
 		oPromise.id = iValidationTaskId;

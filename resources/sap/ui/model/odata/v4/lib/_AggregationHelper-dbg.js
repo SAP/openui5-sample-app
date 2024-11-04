@@ -538,7 +538,8 @@ sap.ui.define([
 			if (mQueryOptions.$$filterBeforeAggregate) { // children of a given parent
 				sApply += "descendants($root" + oAggregation.$path
 					+ "," + oAggregation.hierarchyQualifier + "," + sNodeProperty
-					+ ",filter(" + mQueryOptions.$$filterBeforeAggregate + "),1)";
+					+ ",filter(" + mQueryOptions.$$filterBeforeAggregate
+					+ (bAllLevels ? "))" : "),1)");
 				delete mQueryOptions.$$filterBeforeAggregate;
 				if (mQueryOptions.$orderby) {
 					sApply += "/orderby(" + mQueryOptions.$orderby + ")";
@@ -1237,7 +1238,7 @@ sap.ui.define([
 
 		/**
 		 * Sets the "@$ui5.node.*" annotations for the given element as indicated and adds
-		 * <code>null</code> values for all missing properties.
+		 * "...@$ui5.noData" annotations for all missing properties.
 		 *
 		 * @param {object} oElement
 		 *   Any node or leaf element
@@ -1263,7 +1264,8 @@ sap.ui.define([
 					if (Array.isArray(vProperty)) {
 						_Helper.createMissing(oElement, vProperty);
 					} else if (!(vProperty in oElement)) {
-						oElement[vProperty] = null;
+						oElement[vProperty] = undefined;
+						oElement[vProperty + "@$ui5.noData"] = true;
 					}
 				});
 			}
@@ -1304,10 +1306,12 @@ sap.ui.define([
 		 *   aggregation via the special syntax "$these/aggregate(...)" because it relates to
 		 *   aggregates; it is present only when grand totals are used, but "grandTotal like 1.84"
 		 *   is not.
+		 * @param {object} [oEntityType]
+		 *   The metadata for the entity type; needed only in case of aggregates
 		 *
 		 * @public
 		 */
-		splitFilter : function (oFilter, oAggregation) {
+		splitFilter : function (oFilter, oAggregation, oEntityType) {
 			var aFiltersNoAggregate = [],
 				aFiltersOnAggregate = [];
 
@@ -1354,7 +1358,12 @@ sap.ui.define([
 			}
 
 			if (!oAggregation || !oAggregation.aggregate) {
+				// no data aggregation at all
 				return [oFilter];
+			}
+			if (oEntityType.$Key.every((sKey) => sKey in oAggregation.group)) {
+				// no data aggregation on leaf level (all keys used for grouping)
+				return [undefined, oFilter];
 			}
 
 			split(oFilter);

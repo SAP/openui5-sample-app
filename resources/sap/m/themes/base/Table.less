@@ -107,11 +107,11 @@ tr.sapMListTblHeaderNone > .sapMTableTH {
 
 .sapMListTblSubCntSpr,
 .sapMListTblSubCntVal {
-    display: inline;
+    display: inline-flex;
 }
 
 .sapMListTblSubCntValBlock {
-	display: block;
+	display: flex;
 }
 
 .sapMListTblHighlightCol,
@@ -529,6 +529,14 @@ html[data-sap-ui-browser^='ff'] .sapMTableRowCustomFocus:focus > :not(.sapMListT
 /* decrease the navigation icon size */
 .sapUiSizeCompact .sapMListTblNavCol > .sapMLIBImgNav {
 	width : auto;
+}
+
+.sapUiSizeCompact .sapMListTbl:not(.sapMListModeDelete) {
+	.sapMListTblSelCol,
+	.sapMListTblSelCol > .sapMLIBSelectM,
+	.sapMListTblSelCol > .sapMLIBSelectS {
+		width: 2rem;
+	}
 }
 
 /* min height for the table rows */

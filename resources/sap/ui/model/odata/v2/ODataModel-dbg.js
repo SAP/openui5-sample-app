@@ -63,6 +63,11 @@ sap.ui.define([
 ) {
 
 	"use strict";
+	/**
+	 * Whether the ODataModel is marked as final.
+	 * @ui5-transform-hint replace-local true
+	 */
+	const bFinal = false;
 
 	var sClassName = "sap.ui.model.odata.v2.ODataModel",
 		aDeepCreateParametersAllowlist = ["context", "properties"],
@@ -213,7 +218,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -533,7 +538,8 @@ sap.ui.define([
 			                 "setDefaultBindingMode", "getDefaultBindingMode", "getDefaultCountMode",
 			                 "setProperty", "getSecurityToken", "refreshSecurityToken", "setHeaders",
 			                 "getHeaders", "setUseBatch", "setDeferredBatchGroups", "getDeferredBatchGroups",
-			                 "setChangeBatchGroups", "getChangeBatchGroups"]
+			                 "setChangeBatchGroups", "getChangeBatchGroups"],
+			"final": bFinal
 		}
 	});
 
@@ -1792,6 +1798,19 @@ sap.ui.define([
 		aBindings.forEach(function(oBinding) {
 			oBinding.initialize();
 		});
+	};
+
+	/**
+	 * Returns this model's base URI of the data service (as defined by the "serviceUrl" model parameter; see
+	 * {@link #constructor}), without query options.
+	 *
+	 * @returns {string} The service's base URI without query options
+	 *
+	 * @public
+	 * @since 1.130.0
+	 */
+	ODataModel.prototype.getServiceUrl = function () {
+		return this.sServiceUrl;
 	};
 
 	/**
@@ -9062,6 +9081,18 @@ sap.ui.define([
 		this.pAnnotationChanges ??= SyncPromise.resolve(); // now it's too late for the setter
 
 		return this.pAnnotationChanges;
+	};
+	/** @deprecated */
+	const fnOriginalExtend = ODataModel.extend;
+	/**
+	 * DO NOT EXTEND THIS CLASS.
+	 *
+	 * @returns {function} The created class / constructor function
+	 * @deprecated
+	 */
+	ODataModel.extend = function () {
+		Log.error("[FUTURE FATAL] sap.ui.model.odata.v2.ODataModel must not be extended");
+		return fnOriginalExtend.apply(this, arguments);
 	};
 
 	return ODataModel;

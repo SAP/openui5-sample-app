@@ -264,7 +264,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @public
 	 * @alias sap.ui.base.ManagedObject
 	 */
@@ -1927,9 +1927,7 @@ sap.ui.define([
 		}
 
 		if (typeof (vObject) == "number") { // "object" is the index now
-			if (vObject < 0 || vObject >= aIds.length) {
-				future.warningThrows("ManagedObject.removeAssociation called with invalid index: " + sAssociationName + ", " + vObject);
-			} else {
+			if (vObject >= 0 && vObject < aIds.length) {
 				sId = aIds[vObject];
 				aIds.splice(vObject, 1);
 				if (this._observer) {
@@ -2434,10 +2432,7 @@ sap.ui.define([
 		}
 
 		if (typeof (vObject) == "number") { // "vObject" is the index now
-			if (vObject < 0 || vObject >= aChildren.length) {
-				future.warningThrows("ManagedObject.removeAggregation called with invalid index: " + sAggregationName + ", " + vObject);
-
-			} else {
+			if (vObject >= 0 && vObject < aChildren.length) {
 				oChild = aChildren[vObject];
 				aChildren.splice(vObject, 1); // first remove it from array, then call setParent (avoids endless recursion)
 				oChild.setParent(null);
@@ -2661,7 +2656,7 @@ sap.ui.define([
 	ManagedObject.prototype._removeChild = function(oChild, sAggregationName, bSuppressInvalidate) {
 		if (!sAggregationName) {
 			// an aggregation name has to be specified!
-			future.errorThrows("Cannot remove aggregated child without aggregation name.", null, this);
+			future.errorThrows(`${this}: Cannot remove aggregated child without aggregation name.`);
 		} else {
 			// set suppress invalidate flag
 			if (bSuppressInvalidate) {

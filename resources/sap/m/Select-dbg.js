@@ -107,15 +107,16 @@ function(
 		 * @see {@link fiori:https://experience.sap.com/fiori-design-web/select/ Select}
 		 *
 		 * @extends sap.ui.core.Control
-		 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
+		 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent, sap.ui.core.ILabelable
 		 *
 		 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
 		 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
 		 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
 		 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
+		 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
 		 *
 		 * @author SAP SE
-		 * @version 1.129.0
+		 * @version 1.130.0
 		 *
 		 * @constructor
 		 * @public
@@ -508,7 +509,13 @@ function(
 								type: "sap.ui.core.Item"
 							}
 						}
-					}
+					},
+
+					/**
+					 * This event is triggered prior to the opening of the <code>sap.m.SelectList</code>.
+					 * @since 1.130
+					 */
+					beforeOpen: {}
 				},
 				designtime: "sap/m/designtime/Select.designtime"
 			},
@@ -968,6 +975,8 @@ function(
 
 			// call the hook to add additional content to the list
 			this.addContent();
+
+			this.fireEvent("beforeOpen");
 
 			this.addContentToFlex();
 
@@ -3307,13 +3316,20 @@ function(
 		};
 
 		/**
-		 * Returns the DOMNode Id of the labelable HTML element for the <code>sap.m.Select</code>.
+		 * @override
+		 */
+		Select.prototype.getIdForLabel = function () {
+			return this.getId() + "-hiddenInput";
+		};
+
+		/**
+		 * Returns if the control can be bound to a label
 		 *
-		 * @return {string} Id of the labelable HTML element
+		 * @returns {boolean} <code>true</code> if the control can be bound to a label
 		 * @public
 		 */
 		Select.prototype.hasLabelableHTMLElement = function () {
-			return this.getId() + "-hiddenSelect";
+			return true;
 		};
 
 		return Select;

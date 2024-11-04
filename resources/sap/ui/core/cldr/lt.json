@@ -6232,5 +6232,9 @@
 		"noon": {
 			"_at": "12:00"
 		}
+	},
+	"sap-calendarWeek": {
+		"narrow": "KS {0}",
+		"wide": "Kalendorinė savaitė {0}"
 	}
 }

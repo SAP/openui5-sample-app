@@ -104,7 +104,7 @@ function(
 		 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 		 *
 		 * @author SAP SE
-		 * @version 1.129.0
+		 * @version 1.130.0
 		 *
 		 * @constructor
 		 * @public
@@ -186,6 +186,7 @@ function(
 					/**
 					 * Indicates whether input fields should be used as tooltips for the handles. <b>Note:</b> Setting this option to <code>true</code>
 					 * will only work if <code>showAdvancedTooltip</code> is set to <code>true</code>.
+					 * **Note:** To comply with the accessibility standard, it is recommended to set the <code>inputsAsTooltips</code> property to true.
 					 * @since 1.42
 					 */
 					inputsAsTooltips: {type: "boolean", group: "Appearance", defaultValue: false},

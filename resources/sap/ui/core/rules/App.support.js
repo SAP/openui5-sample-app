@@ -5,6 +5,9 @@
  */
 /**
  * Defines Application related support rules.
+ *
+ * @deprecated since 1.120 No rule will survive as all will throw an error in the future.
+ * @fileoverview
  */
 sap.ui.define([
 	"sap/ui/support/library",
@@ -356,6 +359,8 @@ sap.ui.define([
 
 	/**
 	 * Check for usage of Controller Extension API.
+	 *
+	 * @deprecated since 1.120 Will throw an error instead.
 	 */
 	var oControllerExtensionRule = {
 		id: "controllerExtension",
@@ -422,6 +427,8 @@ sap.ui.define([
 
 	/**
 	 * Checks for missing super init() calls on sap.ui.core.UIComponents.
+	 *
+	 * @deprecated since 1.120 Will throw an error instead.
 	 */
 	 var oMissingSuperInitRule = {
 		id: "missingInitInUIComponent",
@@ -452,6 +459,8 @@ sap.ui.define([
 
 	/**
 	 * Checks for missing super constructor calls on sap.ui.core.Component and sap.ui.core.mvc.Controller.
+	 *
+	 * @deprecated since 1.120 Will throw an error instead.
 	 */
 	 var oMissingSuperConstructorRule = {
 		id: "missingSuperConstructor",
@@ -501,9 +510,11 @@ sap.ui.define([
 		oJQueryThreeDeprecationRule,
 		/** @deprecated */
 		oJSViewRule,
-
-		oMissingSuperInitRule,
+		/** @deprecated */
 		oMissingSuperConstructorRule,
+		/** @deprecated */
+		oMissingSuperInitRule,
+		/** @deprecated */
 		oControllerExtensionRule
 	];
 }, true);

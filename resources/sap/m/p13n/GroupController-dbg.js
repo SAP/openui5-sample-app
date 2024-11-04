@@ -31,7 +31,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.SelectionController
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @public
 	 * @since 1.104
 	 * @alias sap.m.p13n.GroupController

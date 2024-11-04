@@ -36,6 +36,8 @@ sap.ui.define([
 
 	var CardBadgeCustomData = CustomData.extend("sap.f.cards.CardBadgeCustomData", {
 		metadata: {
+
+			library : "sap.f",
 			properties: {
 
 				/**

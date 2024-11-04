@@ -13,7 +13,6 @@ sap.ui.define([
 	"./lib/_Cache",
 	"./lib/_GroupLock",
 	"./lib/_Helper",
-	"./lib/_Parser",
 	"sap/base/Log",
 	"sap/ui/base/SyncPromise",
 	"sap/ui/model/Binding",
@@ -26,8 +25,8 @@ sap.ui.define([
 	"sap/ui/model/Sorter",
 	"sap/ui/model/odata/OperationMode"
 ], function (Context, asODataParentBinding, _AggregationCache, _AggregationHelper, _Cache,
-		_GroupLock, _Helper, _Parser, Log, SyncPromise, Binding, ChangeReason, Filter,
-		FilterOperator, FilterProcessor, FilterType, ListBinding, Sorter, OperationMode) {
+		_GroupLock, _Helper, Log, SyncPromise, Binding, ChangeReason, Filter, FilterOperator,
+		FilterProcessor, FilterType, ListBinding, Sorter, OperationMode) {
 	"use strict";
 
 	var sClassName = "sap.ui.model.odata.v4.ODataListBinding",
@@ -58,7 +57,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.129.0
+		 * @version 1.130.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -551,7 +550,8 @@ sap.ui.define([
 
 	/**
 	 * The 'selectionChanged' event is fired if the selection state of a context changes; for more
-	 * information see {@link sap.ui.model.odata.v4.Context#setSelected}.
+	 * information see {@link sap.ui.model.odata.v4.Context#setSelected}. This event was
+	 * experimental as of version 1.126.0.
 	 *
 	 * @param {sap.ui.base.Event} oEvent The event object
 	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource() This binding
@@ -561,8 +561,8 @@ sap.ui.define([
 	 *   The context for which {@link sap.ui.model.odata.v4.Context#setSelected} was called
 	 *
 	 * @event sap.ui.model.odata.v4.ODataListBinding#selectionChanged
-	 * @experimental As of version 1.126.0
 	 * @public
+	 * @since 1.130.0
 	 */
 
 	/**
@@ -706,7 +706,7 @@ sap.ui.define([
 
 		iCount ??= this.oCache.collapse(
 			_Helper.getRelativePath(oContext.getPath(), this.oHeaderContext.getPath()),
-			bAll);
+			bAll ? this.lockGroup() : undefined);
 
 		if (iCount > 0) {
 			const aContexts = this.aContexts;
@@ -812,13 +812,12 @@ sap.ui.define([
 	 * {@link sap.ui.model.odata.v4.Context#move move} must be pending, and no other modification
 	 * (including collapse of some ancestor node) must happen while this creation is pending!
 	 *
-	 * When using the <code>createInPlace</code> parameter
-	 * (see {@link #setAggregation}, @experimental as of version 1.125.0), the new
-	 * {@link sap.ui.model.odata.v4.Context#isTransient transient} child is hidden until its
-	 * {@link sap.ui.model.odata.v4.Context#created created promise} resolves, and then it is shown
-	 * at a position determined by the back end and the current sort order. Note that the returned
-	 * context is not always part of this list binding's collection and can only be used for the
-	 * following scenarios:
+	 * When using the <code>createInPlace</code> parameter (see {@link #setAggregation},
+	 * since 1.130.0), the new {@link sap.ui.model.odata.v4.Context#isTransient transient} child is
+	 * hidden until its {@link sap.ui.model.odata.v4.Context#created created promise} resolves, and
+	 * then it is shown at a position determined by the back end and the current sort order. Note
+	 * that the returned context is not always part of this list binding's collection and can only
+	 * be used for the following scenarios:
 	 * <ul>
 	 *   <li> The position of the new child can be retrieved by using its
 	 *     {@link sap.ui.model.odata.v4.Context#getIndex index}. If the created child does not
@@ -1511,8 +1510,8 @@ sap.ui.define([
 		}
 		oCache ??= _AggregationCache.create(this.oModel.oRequestor, sResourcePath,
 			sDeepResourcePath, mQueryOptions, this.mParameters.$$aggregation,
-			this.oModel.bAutoExpandSelect, this.bSharedRequest, this.isGrouped(),
-			this.mParameters.$$separate);
+			this.oModel.bAutoExpandSelect || "$$separate" in this.mParameters,
+			this.bSharedRequest, this.isGrouped(), this.mParameters.$$separate);
 		if (mKeptElementsByPredicate) {
 			aKeepAlivePredicates.forEach(function (sPredicate) {
 				oCache.addKeptElement(mKeptElementsByPredicate[sPredicate]);
@@ -1865,7 +1864,8 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataListBinding.prototype.fetchFilter = function (oContext, sStaticFilter) {
-		var oCombinedFilter, aFilters, oMetaModel, oMetaContext;
+		const oMetaModel = this.oModel.getMetaModel();
+		const oMetaContext = oMetaModel.getMetaContext(this.oModel.resolve(this.sPath, oContext));
 
 		/*
 		 * Returns the $filter value for the given single filter using the given Edm type to
@@ -2009,26 +2009,32 @@ sap.ui.define([
 			return bWrap ? "(" + sFilter + ")" : sFilter;
 		}
 
-		oCombinedFilter = FilterProcessor.combineFilters(this.aFilters, this.aApplicationFilters);
+		const oCombinedFilter
+			= FilterProcessor.combineFilters(this.aFilters, this.aApplicationFilters);
 		if (!oCombinedFilter) {
 			return SyncPromise.resolve([sStaticFilter]);
 		}
 		if (oCombinedFilter === Filter.NONE) {
 			return SyncPromise.resolve(["false"]);
 		}
-		aFilters = _AggregationHelper.splitFilter(oCombinedFilter, this.mParameters.$$aggregation);
-		oMetaModel = this.oModel.getMetaModel();
-		oMetaContext = oMetaModel.getMetaContext(this.oModel.resolve(this.sPath, oContext));
 
-		return SyncPromise.all([
-			fetchFilter(aFilters[0], {}, /*bWithinAnd*/sStaticFilter).then(function (sFilter) {
-				return sFilter && sStaticFilter
-					? sFilter + " and (" + sStaticFilter + ")"
-					: sFilter || sStaticFilter;
-			}),
-			fetchFilter(aFilters[1], {}), // $$filterBeforeAggregate
-			fetchFilter(aFilters[2], {}, undefined, /*bThese*/true) // $$filterOnAggregate
-		]);
+		const oPromise = _Helper.isDataAggregation(this.mParameters)
+			? oMetaModel.fetchObject(oMetaContext.getPath() + "/")
+			: SyncPromise.resolve();
+
+		return oPromise.then((oEntityType) => {
+			const aFilters = _AggregationHelper.splitFilter(oCombinedFilter,
+				this.mParameters.$$aggregation, oEntityType);
+
+			return SyncPromise.all([
+				fetchFilter(aFilters[0], {}, /*bWithinAnd*/sStaticFilter)
+					.then((sFilter) => (sFilter && sStaticFilter
+						? sFilter + " and (" + sStaticFilter + ")"
+						: sFilter || sStaticFilter)),
+				fetchFilter(aFilters[1], {}), // $$filterBeforeAggregate
+				fetchFilter(aFilters[2], {}, undefined, /*bThese*/true) // $$filterOnAggregate
+			]);
+		});
 	};
 
 	/**
@@ -2532,7 +2538,10 @@ sap.ui.define([
 	 *   Whether this call keeps the result of {@link #getCurrentContexts} untouched; since 1.86.0.
 	 * @returns {sap.ui.model.odata.v4.Context[]}
 	 *   The array of already created contexts with the first entry containing the context for
-	 *   <code>iStart</code>
+	 *   <code>iStart</code>. Since 1.130.0, the array has an additional property
+	 *   <code>bExpectMore</code>, which is <code>true</code> if the response is not complete, a
+	 *   {@link #event:change 'change'} event will follow, and a busy indicator should be switched
+	 *   on.
 	 * @throws {Error}
 	 *   If the binding's root binding is suspended, if <code>iMaximumPrefetchSize</code> and
 	 *   <code>bKeepCurrent</code> are set, if extended change detection is enabled and
@@ -2685,6 +2694,7 @@ sap.ui.define([
 			this.iCurrentEnd = iStart + iLength;
 		}
 		aContexts = this.getContextsInViewOrder(iStart, iLength);
+		aContexts.bExpectMore = this._isExpectingMoreContexts(aContexts, iStart, iLength);
 		if (this.bUseExtendedChangeDetection) {
 			if (this.oDiff && iLength !== this.oDiff.iLength) {
 				throw new Error("Extended change detection protocol violation: Expected "
@@ -4074,6 +4084,7 @@ sap.ui.define([
 			}
 		}
 		this.aContexts.splice(iIndex, 1);
+		oContext.iIndex = undefined;
 		if (!oContext.isEffectivelyKeptAlive()) {
 			this.destroyLater(oContext);
 		}
@@ -4224,8 +4235,8 @@ sap.ui.define([
 			});
 
 			aFilters = Object.keys(mPredicates).map(function (sPredicate) {
-				return ODataListBinding.getFilterForPredicate(sPredicate, oEntityType,
-					oMetaModel, sMetaPath);
+				return _Helper
+					.getFilterForPredicate(sPredicate, oEntityType, oMetaModel, sMetaPath);
 			});
 
 			if (aFilters.length === 0) {
@@ -4305,6 +4316,9 @@ sap.ui.define([
 			}
 		}
 		if (bSingle) {
+			this.oModel.withUnresolvedBindings("removeCachesAndMessages",
+				oContext.getPath().slice(1));
+
 			return this.refreshSingle(oContext, this.lockGroup(sGroupId), /*bAllowRemoval*/false,
 				/*bKeepCacheOnError*/true, /*bWithMessages*/true);
 		}
@@ -4539,7 +4553,7 @@ sap.ui.define([
 	 *   </ul>
 	 * @param {boolean} [oAggregation.createInPlace]
 	 *   Whether created nodes are shown in place at the position specified by the service
-	 *   (@experimental as of version 1.125.0); only the value <code>true</code> is allowed.
+	 *   (since 1.130.0); only the value <code>true</code> is allowed.
 	 *   Otherwise, created nodes are displayed out of place as the first children of their parent
 	 *   or as the first roots, but not in their usual position as defined by the service and the
 	 *   current sort order.
@@ -4559,7 +4573,7 @@ sap.ui.define([
 	 *   <ul>
 	 *     <li> <code>additionally</code>: An optional list of strings that provides the paths to
 	 *       properties (like texts or attributes) related to this groupable property in a 1:1
-	 *       relation (since 1.87.0). They are requested additionally via <code>groupby<code> and
+	 *       relation (since 1.87.0). They are requested additionally via <code>groupby</code> and
 	 *       must not change the actual grouping; a <code>unit</code> for an aggregatable property
 	 *       must not be repeated here.
 	 *   </ul>
@@ -4998,46 +5012,6 @@ sap.ui.define([
 	//*********************************************************************************************
 	// "static" functions
 	//*********************************************************************************************
-
-	/**
-	 * Calculates the filter for the given key predicate.
-	 *
-	 * @param {string} sPredicate The key predicate of a message target
-	 * @param {object} oEntityType The metadata for the entity type
-	 * @param {sap.ui.model.odata.v4.ODataMetaModel} oMetaModel The meta model
-	 * @param {string} sMetaPath The meta path
-	 * @returns {sap.ui.model.Filter} an {@link sap.ui.model.Filter} for the given key predicate
-	 *
-	 * @private
-	 */
-	ODataListBinding.getFilterForPredicate = function (sPredicate, oEntityType, oMetaModel,
-			sMetaPath) {
-		var aFilters,
-			mValueByKeyOrAlias = _Parser.parseKeyPredicate(sPredicate);
-
-		if ("" in mValueByKeyOrAlias) {
-			// unnamed key e.g. {"" : ('42')} => replace it by the name of the only key property
-			mValueByKeyOrAlias[oEntityType.$Key[0]] = mValueByKeyOrAlias[""];
-			delete mValueByKeyOrAlias[""];
-		}
-
-		aFilters = oEntityType.$Key.map(function (vKey) {
-			var sKeyOrAlias, sKeyPath;
-
-			if (typeof vKey === "string") {
-				sKeyPath = sKeyOrAlias = vKey;
-			} else {
-				sKeyOrAlias = Object.keys(vKey)[0]; // alias
-				sKeyPath = vKey[sKeyOrAlias];
-			}
-
-			return new Filter(sKeyPath, FilterOperator.EQ,
-				_Helper.parseLiteral(decodeURIComponent(mValueByKeyOrAlias[sKeyOrAlias]),
-					oMetaModel.getObject(sMetaPath + "/" + sKeyPath + "/$Type"), sKeyPath));
-		});
-
-		return aFilters.length === 1 ? aFilters[0] : new Filter({and : true, filters : aFilters});
-	};
 
 	/**
 	 * Returns whether this binding is below an ODLB with data aggregation.

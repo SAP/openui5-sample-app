@@ -53,6 +53,12 @@ sap.ui.define([
 		Message, MessageType, BindingMode, BaseContext, Model, OperationMode, URI) {
 	"use strict";
 
+	/**
+	 * Whether the ODataModel is marked as final.
+	 * @ui5-transform-hint replace-local true
+	 */
+	const bFinal = false;
+
 	var sClassName = "sap.ui.model.odata.v4.ODataModel",
 		// system query options allowed within a $expand query option
 		aExpandQueryOptions = ["$count", "$expand", "$filter", "$levels", "$orderby", "$search",
@@ -234,11 +240,12 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.129.0
+		 * @version 1.130.0
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
-				constructor : constructor
+				constructor : constructor,
+				metadata : {final : bFinal}
 			});
 
 	//*********************************************************************************************
@@ -383,6 +390,7 @@ sap.ui.define([
 				const fnHttpListener = that.fnHttpListener; // avoid "this" when calling
 				fnHttpListener?.({responseHeaders : mHeaders});
 			},
+			reportError : this.reportError.bind(this),
 			reportStateMessages : this.reportStateMessages.bind(this),
 			reportTransitionMessages : this.reportTransitionMessages.bind(this),
 			updateMessages : function (aOldMessages, aNewMessages) {
@@ -954,9 +962,9 @@ sap.ui.define([
 	 *   An array of navigation property names which are omitted from the main list request and
 	 *   loaded in a separate request instead (@experimental as of version 1.129.0). This results in
 	 *   the main list becoming available faster, while the separate properties are merged as soon
-	 *   as the data is received. Note that the separate properties must be part of the '$expand'
-	 *   system query option, either automatically via the "autoExpandSelect" model parameter (see
-	 *   {@link sap.ui.model.odata.v4.ODataModel#constructor}) or manually. The
+	 *   as the data is received. Note that the separate properties must be single valued and part
+	 *   of the '$expand' system query option, either automatically via the "autoExpandSelect" model
+	 *   parameter (see {@link sap.ui.model.odata.v4.ODataModel#constructor}) or manually. The
 	 *   <code>$$separate</code> parameter must not be combined with <code>$$aggregation</code>.
 	 * @param {boolean} [mParameters.$$sharedRequest]
 	 *   Whether multiple bindings for the same resource path share the data, so that it is
@@ -1036,8 +1044,8 @@ sap.ui.define([
 	 * and the binding is relative or points to metadata, the binding may have an object value;
 	 * in this case and unless the binding refers to an action advertisement the binding's mode must
 	 * be {@link sap.ui.model.BindingMode.OneTime}. {@link sap.ui.model.BindingMode.OneWay OneWay}
-	 * is also supported (@experimental as of version 1.126.0) for complex types and collections
-	 * thereof; for entity types, use {@link #bindContext} instead.
+	 * is also supported (since 1.130.0) for complex types and collections thereof; for entity
+	 * types, use {@link #bindContext} instead.
 	 *
 	 * @param {string} sPath
 	 *   The binding path in the model; must not end with a slash
@@ -3055,6 +3063,21 @@ sap.ui.define([
 			prefix : "sap.ui.model.odata.v4.optimisticBatch:"
 		});
 	};
+
+	/** @deprecated */
+	(() => {
+		const fnOriginalExtend = ODataModel.extend;
+		/**
+		 * DO NOT EXTEND THIS CLASS.
+		 *
+		 * @returns {function} The created class / constructor function
+		 * @deprecated
+		 */
+		ODataModel.extend = function () {
+			Log.error("[FUTURE FATAL] sap.ui.model.odata.v4.ODataModel must not be extended");
+			return fnOriginalExtend.apply(this, arguments);
+		};
+	})();
 
 	return ODataModel;
 });

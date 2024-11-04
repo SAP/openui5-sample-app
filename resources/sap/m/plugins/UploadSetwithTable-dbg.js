@@ -74,7 +74,7 @@ sap.ui.define([
 	 * </pre>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @author SAP SE
 	 * @public
 	 * @since 1.124
@@ -156,17 +156,14 @@ sap.ui.define([
 				 directory: {type: "boolean", group: "Behavior", defaultValue: false},
 				/**
 				  * Enables CloudFile picker feature to upload files from cloud.
-				  * @experimental Since 1.120
 				  */
 				cloudFilePickerEnabled: { type: "boolean", group: "Behavior", defaultValue: false },
 				/**
 				  * Url of the FileShare OData V4 service supplied for CloudFile picker control.
-				  * @experimental Since 1.120.
 				  */
 				cloudFilePickerServiceUrl: { type: "sap.ui.core.URI", group: "Data", defaultValue: "" },
 				/**
 				  * The text of the CloudFile picker button. The default text is "Upload from cloud" (translated to the respective language).
-				  * @experimental Since 1.120.
 				  */
 				cloudFilePickerButtonText: { type: 'string', defaultValue: "" }
 			},
@@ -512,6 +509,14 @@ sap.ui.define([
 	UploadSetwithTable.prototype.setUploadEnabled = function (bEnable) {
 		if (bEnable !== this.getUploadEnabled()) {
 			this.getDefaultFileUploader().setEnabled(bEnable);
+
+			const oPlugin = this.getConfig("getPluginInstance");
+			if (bEnable && !oPlugin._oDragDropConfig) {
+				this.getConfig("setDragDropConfig");
+			} else if (!bEnable) {
+				this.getConfig("resetDragDropConfig");
+			}
+
 			this.setProperty("uploadEnabled", bEnable, false);
 		}
 		return this;
@@ -982,7 +987,7 @@ sap.ui.define([
 		var parts = [new Blob([])];
 
 		var oFileMetaData = {
-			type: oItem.getParameter('fileType'),
+			type: oItem.getParameter('mimeType'),
 			webkitRelativePath: '',
 			name: oItem.getParameter('fileName')
 		};
@@ -1604,7 +1609,10 @@ sap.ui.define([
 			return this._oControlInstance;
 		},
 		setPluginDefaultSettings: function() {
-			this.setDragDropConfig();
+			const oPlugin = this.getPluginInstance();
+			if (oPlugin.getUploadEnabled()) {
+				this.setDragDropConfig();
+			}
 			this.setDefaultIllustrations();
 		},
 		setIsTableBound: function(oControl) {
@@ -1646,6 +1654,14 @@ sap.ui.define([
 			}, () => {
 				Log.error("Failed to load MDC library for Drag and Drop configuration.");
 			});
+		},
+		resetDragDropConfig: function() {
+			const oPlugin = this.getPluginInstance();
+			const oControl = this.getControlInstance();
+			if (oPlugin && oControl && oPlugin._oDragDropConfig) {
+				oControl.removeDragDropConfig(oPlugin._oDragDropConfig);
+				oPlugin._oDragDropConfig = null;
+			}
 		},
 		// Set default illustrations for the table when no data is available. set only when upload plugin is activated.
 		setDefaultIllustrations: function() {
@@ -1735,7 +1751,10 @@ sap.ui.define([
 			return this._oControlInstance;
 		},
 		setPluginDefaultSettings: function() {
-			this.setDragDropConfig();
+			const oPlugin = this.getPluginInstance();
+			if (oPlugin.getUploadEnabled()) {
+				this.setDragDropConfig();
+			}
 			this.setDefaultIllustrations();
 		},
 		setIsTableBound: function(oControl) {
@@ -1761,11 +1780,11 @@ sap.ui.define([
 			const oPlugin = this.getPluginInstance();
 			const oControl = this.getControlInstance();
 
-			var oDragDropConfig = new DragDropInfo({
+			var oDragDropConfig = oPlugin._oDragDropConfig = new DragDropInfo({
 				sourceAggregation: "items",
 				targetAggregation: "items"
 			});
-			var oDropConfig = new DropInfo({
+			var oDropConfig = oPlugin._oDropConfig = new DropInfo({
 				dropEffect:"Move",
 				dropPosition:"OnOrBetween",
 				dragEnter: [oPlugin?._onDragEnterFile, oPlugin],
@@ -1773,6 +1792,16 @@ sap.ui.define([
 			});
 			oControl?.addDragDropConfig(oDragDropConfig);
 			oControl?.addDragDropConfig(oDropConfig);
+		},
+		resetDragDropConfig: function() {
+			const oPlugin = this.getPluginInstance();
+			const oControl = this.getControlInstance();
+			if (oPlugin && oControl) {
+				oControl.removeDragDropConfig(oPlugin._oDragDropConfig);
+				oControl.removeDragDropConfig(oPlugin._oDropConfig);
+				oPlugin._oDragDropConfig = null;
+				oPlugin._oDropConfig = null;
+			}
 		},
 		// Set default illustrations for the table when no data is available. set only when upload plugin is activated.
 		setDefaultIllustrations: function() {
@@ -1857,7 +1886,10 @@ sap.ui.define([
 			return this._oControlInstance;
 		},
 		setPluginDefaultSettings: function() {
-			this.setDragDropConfig();
+			const oPlugin = this.getPluginInstance();
+			if (oPlugin.getUploadEnabled()) {
+				this.setDragDropConfig();
+			}
 			this.setDefaultIllustrations();
 		},
 		setIsTableBound: function(oControl) {
@@ -1883,11 +1915,11 @@ sap.ui.define([
 			const oPlugin = this.getPluginInstance();
 			const oControl = this.getControlInstance();
 
-			var oDragDropConfig = new DragDropInfo({
+			var oDragDropConfig = oPlugin._oDragDropConfig = new DragDropInfo({
 				sourceAggregation: "rows",
 				targetAggregation: "rows"
 			});
-			var oDropConfig = new DropInfo({
+			var oDropConfig = oPlugin._oDropConfig = new DropInfo({
 				dropEffect:"Move",
 				dropPosition:"OnOrBetween",
 				dragEnter: [oPlugin?._onDragEnterFile, oPlugin],
@@ -1895,6 +1927,16 @@ sap.ui.define([
 			});
 			oControl?.addDragDropConfig(oDragDropConfig);
 			oControl?.addDragDropConfig(oDropConfig);
+		},
+		resetDragDropConfig: function() {
+			const oPlugin = this.getPluginInstance();
+			const oControl = this.getControlInstance();
+			if (oPlugin && oControl) {
+				oControl.removeDragDropConfig(oPlugin._oDragDropConfig);
+				oControl.removeDragDropConfig(oPlugin._oDropConfig);
+				oPlugin._oDragDropConfig = null;
+				oPlugin._oDropConfig = null;
+			}
 		},
 		// Set default illustrations for the table when no data is available. set only when upload plugin is activated.
 		setDefaultIllustrations: function() {

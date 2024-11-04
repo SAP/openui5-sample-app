@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.129.0
+		 * @version 1.130.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -238,8 +238,8 @@ sap.ui.define([
 	 *
 	 * Since 1.105 such a pending deletion is a pending change. It causes
 	 * <code>hasPendingChanges</code> to return <code>true</code> for the context, the binding
-	 * containing it, and the model. The <code>resetChanges</code> method called on the context
-	 * (since 1.109.0), the binding, or the model cancels the deletion and restores the context.
+	 * containing it, and the model. The <code>resetChanges</code> method called on the context, the
+	 * binding, or the model cancels the deletion and restores the context.
 	 *
 	 * If the DELETE request succeeds, the context is destroyed and must not be used anymore. If it
 	 * fails or is canceled, the context is restored, reinserted into the list, and fully functional
@@ -322,6 +322,9 @@ sap.ui.define([
 		}
 		this.oBinding.checkSuspended();
 		if (this.isTransient()) {
+			if (this.iIndex === undefined) {
+				return Promise.resolve(); // already deleted, nothing to do
+			}
 			sGroupId = null;
 		} else if (sGroupId === null) {
 			if (!(this.isKeepAlive() && this.iIndex === undefined)) {
@@ -651,6 +654,9 @@ sap.ui.define([
 	 *   The number of levels to expand (@experimental as of version 1.127.0),
 	 *   <code>iLevels >= Number.MAX_SAFE_INTEGER</code> can be used to expand all levels. If a node
 	 *   is expanded a second time, the expand state of the descendants is not changed.
+	 * @returns {Promise<void>}
+	 *   A promise which is resolved without a defined result when the expand is successful, or
+	 *   rejected in case of an error
 	 * @throws {Error}
 	 *   If the context points to a node that is not expandable or already expanded, the given
 	 *   number of levels is not a positive number, or the given number of levels is greater than
@@ -667,8 +673,7 @@ sap.ui.define([
 		}
 		switch (this.isExpanded()) {
 			case false:
-				this.oBinding.expand(this, iLevels).catch(this.oModel.getReporter());
-				break;
+				return Promise.resolve(this.oBinding.expand(this, iLevels)).then(() => {});
 			case true:
 				throw new Error("Already expanded: " + this);
 			default:
@@ -844,6 +849,46 @@ sap.ui.define([
 	 * @since 1.39.0
 	 */
 	Context.prototype.getCanonicalPath = _Helper.createGetMethod("fetchCanonicalPath", true);
+
+	/**
+	 * Returns a filter object corresponding to this context. For an ordinary row context of a list
+	 * binding, the filter matches exactly the entity's key properties. For a subtotal row (see
+	 * {@link sap.ui.model.odata.v4.ODataListBinding.setAggregation}), the filter matches exactly
+	 * the groupable properties corresponding to this context. For a grand total, <code>null</code>
+	 * is returned.
+	 *
+	 * @returns {sap.ui.model.Filter|null}
+	 *   A filter object corresponding to this context
+	 * @throws {Error} If this context is
+	 *   <ul>
+	 *     <li> not a list binding's row context,
+	 *     <li> currently transient,
+	 *     <li> using key aliases,
+	 *     <li> using an index, not a key predicate in the last segment of its path,
+	 *     <li> just created via {@link sap.ui.model.odata.v4.ODataModel#getKeepAliveContext} and
+	 *       metadata is not yet available
+	 *   </ul>
+	 *
+	 * @public
+	 * @since 1.130.0
+	 */
+	Context.prototype.getFilter = function () {
+		if (!this.oBinding.getHeaderContext || this.isTransient()) {
+			throw new Error("Not a list context path to an entity: " + this);
+		}
+
+		const iPredicateIndex = _Helper.getPredicateIndex(this.sPath);
+		const sPredicate = this.sPath.slice(iPredicateIndex).replace(/,?\$isTotal=true\)$/, ")");
+		if (sPredicate === "()") {
+			return null; // grand total
+		}
+
+		const oMetaModel = this.oModel.getMetaModel();
+		const sMetaPath = _Helper.getMetaPath(this.sPath);
+		const oEntityType = oMetaModel.getObject(sMetaPath + "/");
+
+		return _Helper.getFilterForPredicate(sPredicate, oEntityType, oMetaModel, sMetaPath, true);
+	};
 
 	/**
 	 * Returns the unique number of this context's generation, or <code>0</code> if it does not
@@ -1295,15 +1340,15 @@ sap.ui.define([
 
 	/**
 	 * Tells whether this context is currently selected, but not {@link #delete deleted} on the
-	 * client. Since 1.122.0 the selection state can also be accessed via instance annotation
-	 * "@$ui5.context.isSelected" at the entity. Note that the annotation does not take the deletion
-	 * state into account.
+	 * client. Selection was experimental as of version 1.111.0. Since 1.122.0, the selection state
+	 * can also be accessed via instance annotation "@$ui5.context.isSelected" at the entity. Note
+	 * that the annotation does not take the deletion state into account.
 	 *
 	 * @returns {boolean} Whether this context is currently selected
 	 *
-	 * @experimental As of version 1.111.0
 	 * @public
 	 * @see #setSelected
+	 * @since 1.130.0
 	 */
 	Context.prototype.isSelected = function () {
 		return this.bSelected && !this.oDeletePromise;
@@ -2346,9 +2391,11 @@ sap.ui.define([
 	 * event is fired on the list binding which this context belongs to. While a context is
 	 * currently {@link #delete deleted} on the client, it does not appear as
 	 * {@link #isSelected selected}. If the preconditions of {@link #setKeepAlive} hold, a best
-	 * effort is made to implicitly keep a selected context alive in order to preserve the selection
-	 * state. Once the selection is no longer needed, for example because you perform an operation
-	 * on this context which logically removes it from its list, you need to reset the selection.
+	 * effort is made to implicitly keep a (de-)selected context alive in order to preserve the
+	 * selection state of every exception to the "select all" state defined by the list binding's
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#getHeaderContext header context}. Once the
+	 * selection is no longer needed, for example because you perform an operation on this context
+	 * which logically removes it from its list, you need to reset the selection.
 	 *
 	 * If this context is a header context of a list binding, the new selection state is propagated
 	 * to all row contexts. If the selection state of this header context changes, a
@@ -2360,6 +2407,8 @@ sap.ui.define([
 	 * {@link sap.ui.model.odata.v4.ODataListBinding#event:selectionChanged 'selectionChanged'}
 	 * event is nevertheless fired for this header context, but not for the row context.
 	 *
+	 * Selection was experimental as of version 1.111.0.
+	 *
 	 * <b>Note:</b> It is unsafe to keep a reference to a context instance which is not
 	 * {@link #isKeepAlive kept alive}.
 	 *
@@ -2368,9 +2417,9 @@ sap.ui.define([
 	 *   If this context does not belong to a list binding, or if it is {@link #isDeleted deleted}
 	 *   and <code>bSelected</code> is <code>true</code>
 	 *
-	 * @experimental As of version 1.111.0
 	 * @public
 	 * @see #isSelected
+	 * @since 1.130.0
 	 */
 	Context.prototype.setSelected = function (bSelected) {
 		if (this.oBinding && !this.oBinding.getHeaderContext) {

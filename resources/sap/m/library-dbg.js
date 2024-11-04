@@ -75,14 +75,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.m",
-		version: "1.129.0",
+		version: "1.130.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -132,6 +132,7 @@ sap.ui.define([
 			"sap.m.IllustratedMessageSize",
 			"sap.m.IllustratedMessageType",
 			"sap.m.ImageMode",
+			"sap.m.InputListItemContentSize",
 			"sap.m.InputTextFormatMode",
 			"sap.m.InputType",
 			"sap.m.LabelDesign",
@@ -403,8 +404,6 @@ sap.ui.define([
 			"sap.m.UploadCollectionToolbarPlaceholder",
 			"sap.m.upload.UploadSet",
 			"sap.m.upload.UploadSetToolbarPlaceholder",
-			"sap.m.upload.UploadSetwithTable",
-			"sap.m.upload.UploadSetwithTableItem",
 			"sap.m.VariantManagement",
 			"sap.m.VBox",
 			"sap.m.ViewSettingsDialog",
@@ -652,8 +651,7 @@ sap.ui.define([
 				},
 				"sap.m.ObjectHeader": {
 					"moveControls": "default"
-				},
-				"sap.m.upload.UploadSetwithTable":"sap/m/upload/p13n/flexibility/UploadSetwithTable"
+				}
 			},
 			//Configuration used for rule loading of Support Assistant
 			"sap.ui.support": {
@@ -2311,6 +2309,29 @@ sap.ui.define([
 
 	};
 
+	/**
+	 * Defines the available content sizes for the <code>InputListItem</code> control.
+	 *
+	 * @enum {string}
+	 * @public
+	 */
+	thisLib.InputListItemContentSize = {
+
+		/**
+		 * Large: Recommended for larger input controls, such as {@link sap.m.Input} or {@link sap.m.RatingIndicator}. If there is limited space,
+		 * the input control moves to a new line below the label.
+		 * @public
+		 */
+		L : "L",
+
+		/**
+		 * Small: Recommended for smaller controls, such as {@link sap.m.Switch} or {@link sap.m.Checkbox}. If there is limited space, only the label
+		 * is wrapped. The input control is always right-aligned horizontally and middle-aligned vertically.
+		 * @public
+		 */
+		S : "S"
+
+	};
 
 	/**
 	 *
@@ -4078,6 +4099,48 @@ sap.ui.define([
 		LASTYEARS : "LASTYEARS",
 
 		/**
+		 * The range will contain the last X minutes including the current one. The count of the minutes is selected from a StepInput.
+		 * @public
+		 */
+		LASTMINUTESINCLUDED : "LASTMINUTESINCLUDED",
+
+		/**
+		 * The range will contain the last X hours including the current one. The count of the hours is selected from a StepInput.
+		 * @public
+		 */
+		 LASTHOURSINCLUDED : "LASTHOURSINCLUDED",
+
+		/**
+		 * The range will contain the last X days including the current one. The count of the days is selected from a StepInput.
+		 * @public
+		 */
+		LASTDAYSINCLUDED : "LASTDAYSINCLUDED",
+
+		/**
+		 * The range will contain the last X weeks including the current one. The count of the weeks is selected from a StepInput.
+		 * @public
+		 */
+		LASTWEEKSINCLUDED : "LASTWEEKSINCLUDED",
+
+		/**
+		 * The range will contain the last X months including the current one. The count of the months is selected from a StepInput.
+		 * @public
+		 */
+		LASTMONTHSINCLUDED : "LASTMONTHSINCLUDED",
+
+		/**
+		 * The range will contain the last X quarters including the current one. The count of the quarters is selected from a StepInput.
+		 * @public
+		 */
+		LASTQUARTERSINCLUDED : "LASTQUARTERSINCLUDED",
+
+		/**
+		 * The range will contain the last X years including the current one. The count of the years is selected from a StepInput.
+		 * @public
+		 */
+		LASTYEARSINCLUDED : "LASTYEARSINCLUDED",
+
+		/**
 		 * The range will contain the next X minutes. The count of the minutes is selected from a StepInput.
 		 * @public
 		 */
@@ -4118,6 +4181,48 @@ sap.ui.define([
 		 * @public
 		 */
 		NEXTYEARS : "NEXTYEARS",
+
+		/**
+		 * The range will contain the next X minutes including the current one. The count of the minutes is selected from a StepInput.
+		 * @public
+		 */
+		NEXTMINUTESINCLUDED : "NEXTMINUTESINCLUDED",
+
+		/**
+		 * The range will contain the next X hours including the current one. The count of the hours is selected from a StepInput.
+		 * @public
+		 */
+		NEXTHOURSINCLUDED : "NEXTHOURSINCLUDED",
+
+		/**
+		 * The range will contain the next X days including the current one. The count of the days is selected from a StepInput.
+		 * @public
+		 */
+		NEXTDAYSINCLUDED : "NEXTDAYSINCLUDED",
+
+		/**
+		 * The range will contain the next X weeks including the current one. The count of the weeks is selected from a StepInput.
+		 * @public
+		 */
+		NEXTWEEKSINCLUDED : "NEXTWEEKSINCLUDED",
+
+		/**
+		 * The range will contain the next X months including the current one. The count of the months is selected from a StepInput.
+		 * @public
+		 */
+		NEXTMONTHSINCLUDED : "NEXTMONTHSINCLUDED",
+
+		/**
+		 * The range will contain the next X quarters including the current one. The count of the quarters is selected from a StepInput.
+		 * @public
+		 */
+		NEXTQUARTERSINCLUDED: "NEXTQUARTERSINCLUDED",
+
+		/**
+		 * The range will contain the next X years including the current one. The count of the years is selected from a StepInput.
+		 * @public
+		 */
+		NEXTYEARSINCLUDED : "NEXTYEARSINCLUDED",
 
 		/**
 		 * The range will contain the last X days and the next Y days. The count of the days is selected from a StepInput.

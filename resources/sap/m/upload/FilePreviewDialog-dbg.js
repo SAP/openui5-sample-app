@@ -66,9 +66,8 @@ sap.ui.define([
    * @param {object} [mSettings] Initial settings for the new control.
    * @constructor
    * @public
-   * @experimental since 1.120
    * @since 1.120
-   * @version 1.129.0
+   * @version 1.130.0
    * @extends sap.ui.core.Element
    * @name sap.m.upload.FilePreviewDialog
    */

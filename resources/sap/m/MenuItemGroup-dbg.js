@@ -32,7 +32,7 @@ sap.ui.define([
 	 * @implements sap.m.IMenuItem
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @since 1.127.0
 	 *
 	 * @constructor

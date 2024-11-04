@@ -138,7 +138,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @public
 	 * @alias sap.ui.core.Element
 	 */
@@ -2075,7 +2075,11 @@ sap.ui.define([
 
 		if (typeof vParam === "string") {
 			oDomRef = document.querySelector(vParam);
-		} else if (vParam instanceof window.Element){
+		} else if (typeof vParam === "object"
+			&& vParam.nodeType === Node.ELEMENT_NODE
+			&& typeof vParam.nodeName === "string") {
+			// can't use 'instanceof window.Element' because DOM node may be
+			// created by using the constructor in another frame in Chrome/Edge.
 			oDomRef = vParam;
 		} else if (vParam.jquery) {
 			oDomRef = vParam[0];

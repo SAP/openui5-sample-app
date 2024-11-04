@@ -165,7 +165,7 @@ sap.ui.define([
 	 * @class The Manifest class.
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @alias sap.ui.core.Manifest
 	 * @since 1.33.0
 	 */
@@ -631,7 +631,7 @@ sap.ui.define([
 					var sResourceRootPath = mResourceRoots[sResourceRoot];
 					var oResourceRootURI = new URI(sResourceRootPath);
 					if (oResourceRootURI.is("absolute") || (oResourceRootURI.path() && oResourceRootURI.path()[0] === "/")) {
-						future.errorThrows("Resource root for \"" + sResourceRoot + "\" is absolute and therefore won't be registered! \"" + sResourceRootPath + "\"", this.getComponentName());
+						future.errorThrows(`${this.getComponentName()}: Resource root for "${sResourceRoot}" is absolute and therefore won't be registered! "${sResourceRootPath}"`);
 						continue;
 					}
 					sResourceRootPath = this.resolveUri(sResourceRootPath);

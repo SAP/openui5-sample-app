@@ -692,7 +692,7 @@ sap.ui.define([
 			}
 
 			if (sLogMessage) {
-				future.errorThrows(sLogMessage, this);
+				future.errorThrows(`${this}: ${sLogMessage}`);
 			}
 
 			return bIsValid || sLogMessage;

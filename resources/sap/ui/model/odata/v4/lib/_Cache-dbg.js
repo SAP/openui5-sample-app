@@ -758,6 +758,16 @@ sap.ui.define([
 				}
 			}
 
+			const aSeparateRequestRanges = that.mSeparateProperty2ReadRequest?.[sSegment];
+			if (aSeparateRequestRanges) {
+				// separate properties always operate on entities of that.aElements
+				const iIndex = that.aElements.indexOf(oValue);
+				if (aSeparateRequestRanges.some(
+						(oRange) => iIndex >= oRange.start && iIndex < oRange.end)) {
+					return undefined; // separate property request still pending
+				}
+			}
+
 			vPermissions = oValue[_Helper.getAnnotationKey(oValue, ".Permissions", sSegment)];
 			if (vPermissions === 0 || vPermissions === "None") {
 				return undefined;
@@ -782,6 +792,9 @@ sap.ui.define([
 							return _Helper.buildPath(that.oRequestor.getServiceUrl()
 								+ that.sResourcePath, sPropertyPath);
 						}
+					}
+					if (!bAgain && oValue[sSegment + "@$ui5.noData"]) {
+						return undefined; // Note: do not use null here!
 					}
 					if (!bTransient) {
 						// If there is no entity with a key predicate, try it with the cache root
@@ -2583,6 +2596,11 @@ sap.ui.define([
 		// - iEnd: the end (exclusive)
 		this.aReadRequests = [];
 		this.aSeparateProperties = aSeparateProperties ?? []; // properties to be loaded separately
+		// maps separate property to an array of requested $skip/$top ranges (see aReadRequests)
+		this.mSeparateProperty2ReadRequest = {};
+		this.aSeparateProperties.forEach((sProperty) => {
+			this.mSeparateProperty2ReadRequest[sProperty] = [];
+		});
 		this.bServerDrivenPaging = false;
 		this.oSyncPromiseAll = undefined;
 	}
@@ -2827,24 +2845,36 @@ sap.ui.define([
 	 * Returns the query string with $filter adjusted as needed to exclude non-transient created
 	 * elements (which have all key properties available).
 	 *
+	 * @param {string} [sSeparateProperty]
+	 *   If set, only expand the given property; types must already be available (see #getTypes) to
+	 *   determine the origin's key properties
 	 * @returns {string}
 	 *   The query string; it is empty if there are no options; it starts with "?" otherwise
 	 *
 	 * @private
 	 */
-	_CollectionCache.prototype.getQueryString = function () {
+	_CollectionCache.prototype.getQueryString = function (sSeparateProperty) {
 		var sExclusiveFilter = this.getExclusiveFilter(),
 			mQueryOptions = Object.assign({}, this.mQueryOptions),
 			sFilterOptions = mQueryOptions.$filter,
 			sQueryString = this.sQueryString;
 
 		if (this.aSeparateProperties.length) {
-			mQueryOptions.$expand = {...mQueryOptions.$expand};
-			this.aSeparateProperties.forEach((sProperty) => {
-				delete mQueryOptions.$expand[sProperty];
-			});
-			if (_Helper.isEmptyObject(mQueryOptions.$expand)) {
-				delete mQueryOptions.$expand;
+			if (sSeparateProperty) {
+				delete mQueryOptions.$count;
+				mQueryOptions.$expand = {
+					[sSeparateProperty] : mQueryOptions.$expand[sSeparateProperty]
+				};
+				mQueryOptions.$select = [];
+				_Helper.selectKeyProperties(mQueryOptions, this.getTypes()[this.sMetaPath]);
+			} else {
+				mQueryOptions.$expand = {...mQueryOptions.$expand};
+				this.aSeparateProperties.forEach((sProperty) => {
+					delete mQueryOptions.$expand[sProperty];
+				});
+				if (_Helper.isEmptyObject(mQueryOptions.$expand)) {
+					delete mQueryOptions.$expand;
+				}
 			}
 			sQueryString = this.oRequestor.buildQueryString(this.sMetaPath, mQueryOptions, false,
 				this.bSortExpandSelect, true);
@@ -2871,6 +2901,9 @@ sap.ui.define([
 	 *   The start index of the range
 	 * @param {number} iEnd
 	 *   The index after the last element
+	 * @param {string} [sSeparateProperty]
+	 *   If set, only expand the given property; types must already be available (see #getTypes) to
+	 *   determine the origin's key properties
 	 * @returns {string}
 	 *   The resource path including the query string
 	 * @throws {Error}
@@ -2878,9 +2911,10 @@ sap.ui.define([
 	 *
 	 * @private
 	 */
-	_CollectionCache.prototype.getResourcePathWithQuery = function (iStart, iEnd) {
+	_CollectionCache.prototype.getResourcePathWithQuery = function (iStart, iEnd,
+			sSeparateProperty) {
 		var iCreated = this.aElements.$created,
-			sQueryString = this.getQueryString(),
+			sQueryString = this.getQueryString(sSeparateProperty),
 			sDelimiter = sQueryString ? "&" : "?",
 			iExpectedLength = iEnd - iStart,
 			sResourcePath = this.sResourcePath + sQueryString;
@@ -3045,6 +3079,11 @@ sap.ui.define([
 						throw new Error("Modified on client and on server: "
 							+ this.sResourcePath + sPredicate);
 					} // else: ETag changed, ignore kept element!
+
+					const iIndex = aElements.indexOf(oKeptElement);
+					if (iIndex >= 0 && iIndex !== iStart + i - iOffset) {
+						throw new Error("Duplicate predicate: " + sPredicate);
+					}
 				}
 				aElements.$byPredicate[sPredicate] = oElement;
 			}
@@ -3505,10 +3544,64 @@ sap.ui.define([
 			that.aReadRequests.splice(that.aReadRequests.indexOf(oReadRequest), 1);
 		});
 
+		this.requestSeparateProperties(iStart, iEnd, oPromise);
+
 		// Note: oPromise MUST be a SyncPromise for performance reasons, see SyncPromise#all
 		this.fill(oPromise, iStart, iEnd);
 
 		return oPromise;
+	};
+
+	/**
+	 * Requests the separate properties for the given range and merges them into the aElements list.
+	 *
+	 * @param {number} iStart
+	 *   The start index of the range
+	 * @param {number} iEnd
+	 *   The index after the last element
+	 * @param {sap.ui.base.SyncPromise} oMainPromise
+	 *   A promise which is resolved when the main request is finished
+	 * @returns {Promise<void>}
+	 *   A promise which is resolved without a defined result at no defined point in time
+	 *
+	 * @private
+	 */
+	_CollectionCache.prototype.requestSeparateProperties = async function (iStart, iEnd,
+			oMainPromise) {
+		if (!this.aSeparateProperties.length) {
+			return;
+		}
+
+		// types are needed for selecting the key properties, see #getQueryString called by
+		// #getResourcePathWithQuery
+		const oTypes = await this.fetchTypes();
+		const oReadRange = {start : iStart, end : iEnd};
+		const aRequestPromises = this.aSeparateProperties.map((sProperty) => {
+			this.mSeparateProperty2ReadRequest[sProperty].push(oReadRange);
+			return this.oRequestor.request("GET",
+				this.getResourcePathWithQuery(iStart, iEnd, sProperty),
+				this.oRequestor.lockGroup("$single", this));
+		});
+
+		await oMainPromise;
+		aRequestPromises.forEach(async (oRequestPromise, i) => {
+			const oResult = await oRequestPromise;
+			const sProperty = this.aSeparateProperties[i];
+			const iRangeIndex = this.mSeparateProperty2ReadRequest[sProperty].indexOf(oReadRange);
+			if (iRangeIndex < 0) { // stop import after #reset
+				return;
+			}
+			this.mSeparateProperty2ReadRequest[sProperty].splice(iRangeIndex, 1);
+			this.visitResponse(oResult, oTypes, undefined, undefined, iStart);
+			for (const oSeparateData of oResult.value) {
+				const sPredicate = _Helper.getPrivateAnnotation(oSeparateData, "predicate");
+				const oElement = this.aElements.$byPredicate[sPredicate];
+				if (oElement) {
+					_Helper.updateSelected(this.mChangeListeners, sPredicate, oElement,
+						oSeparateData, [sProperty]);
+				}
+			}
+		});
 	};
 
 	/**
@@ -3727,6 +3820,9 @@ sap.ui.define([
 		this.aReadRequests?.forEach((oReadRequest) => {
 			oReadRequest.bObsolete = true;
 		});
+		for (const sProperty in this.mSeparateProperty2ReadRequest) {
+			this.mSeparateProperty2ReadRequest[sProperty] = [];
+		}
 		if (mChangeListeners[""]) {
 			this.mChangeListeners[""] = mChangeListeners[""];
 			_Helper.fireChange(this.mChangeListeners, "");
@@ -3941,7 +4037,7 @@ sap.ui.define([
 	 * @param {boolean} [bPost]
 	 *   Whether the cache uses POST requests. If <code>true</code>, the initial request must be
 	 *   done via {@link #post}. {@link #fetchValue} expects to have cache data, but may initiate
-	 *   requests for late properties. If <code>false<code>, {@link #post} throws an error.
+	 *   requests for late properties. If <code>false</code>, {@link #post} throws an error.
 	 * @param {string} [sMetaPath]
 	 *   Optional meta path in case it cannot be derived from the given resource path
 	 * @param {boolean} [bEmpty]

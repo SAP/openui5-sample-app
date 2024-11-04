@@ -62,7 +62,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 * @author SAP SE
 	 *
 	 * @public
@@ -93,7 +93,13 @@ sap.ui.define([
 				 */
 				enabled: {type: "boolean", defaultValue: true}
 			},
-			events: {}
+			events: {
+				/**
+				 * Fired when the selection changes
+				 * @since 1.130
+				*/
+				selectionChange: {}
+			}
 		}
 	});
 
@@ -377,9 +383,8 @@ sap.ui.define([
 	/**
 	 * Determines whether there is a cell selection.
 	 *
-	 * @private
+	 * @public
 	 * @returns {boolean} Whether there is a cell selection
-	 * @ui5-restricted sap.m.plugins.CopyProvider
 	 */
 	CellSelector.prototype.hasSelection = function() {
 		return Boolean(this._bSelecting && this._oSession?.mSource);
@@ -390,8 +395,7 @@ sap.ui.define([
 	};
 
 	CellSelector.prototype._onSelectionChange = function() {
-		/* @ui5-restricted sap.m.plugins.CopyProvider */
-		this.fireEvent("selectionChange");
+		this.fireSelectionChange();
 	};
 
 	CellSelector.prototype._registerEvents = function() {

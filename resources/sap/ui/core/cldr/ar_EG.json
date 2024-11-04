@@ -7042,5 +7042,9 @@
 		"islamic",
 		"islamic-civil",
 		"islamic-tbla"
-	]
+	],
+	"sap-calendarWeek": {
+		"narrow": "أسبوع التقويم {0}",
+		"wide": "أسبوع التقويم {0}"
+	}
 }

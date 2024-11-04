@@ -113,7 +113,7 @@ sap.ui.define([
 	 * bound content aggregation. An error will be thrown when the above combination is detected.
 	 *
 	 * @extends sap.ui.core.mvc.View
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.XMLView
@@ -862,7 +862,7 @@ sap.ui.define([
 		if (XMLView.PreprocessorType[sType]) {
 			View.registerPreprocessor(XMLView.PreprocessorType[sType], vPreprocessor, sOwnViewType, bSyncSupport, bOnDemand, mSettings);
 		} else {
-			future.errorThrows("Preprocessor could not be registered due to unknown sType \"" + sType + "\"", this.getMetadata().getName());
+			future.errorThrows(`${this.getMetadata().getName()}: Preprocessor could not be registered due to unknown sType "${sType}"`);
 		}
 	};
 

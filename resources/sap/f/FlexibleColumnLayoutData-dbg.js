@@ -5,8 +5,8 @@
  */
 
 // Provides element sap.f.FlexibleColumnLayoutData
-sap.ui.define(['sap/ui/core/LayoutData'],
-	function(LayoutData) {
+sap.ui.define(["sap/ui/core/LayoutData", "sap/ui/base/ManagedObjectObserver", "sap/ui/thirdparty/jquery"],
+	function(LayoutData, ManagedObjectObserver, jQuery) {
 		"use strict";
 
 		/**
@@ -21,7 +21,7 @@ sap.ui.define(['sap/ui/core/LayoutData'],
 		 *
 		 *
 		 * @author SAP SE
-		 * @version 1.129.0
+		 * @version 1.130.0
 		 *
 		 * @extends sap.ui.core.LayoutData
 		 *
@@ -47,6 +47,59 @@ sap.ui.define(['sap/ui/core/LayoutData'],
 				}
 			}
 		});
+
+		FlexibleColumnLayoutData.prototype.init = function () {
+			this._oObserver = new ManagedObjectObserver(FlexibleColumnLayoutData.prototype._onAggregationChange.bind(this));
+			this._oObserver.observe(this, {
+				aggregations: [
+					"desktopLayoutData",
+					"tabletLayoutData"
+				]
+			});
+		};
+
+		FlexibleColumnLayoutData.prototype._onAggregationChange = function(oChanges) {
+			// Handle changes in the aggregations
+			if (oChanges.mutation === "insert") {
+				// Observe the properties of the newly added control
+				this._observeControlProperties(oChanges.child);
+			} else if (oChanges.mutation === "remove") {
+				this._unobserveControlProperties(oChanges.child);
+			} else if (oChanges.type === "property") {
+				this.fireEvent("_layoutDataPropertyChanged", {
+					layout: oChanges.name.charAt(0).toUpperCase() + oChanges.name.slice(1),
+					srcControl: oChanges.object,
+					oldValue: oChanges.old,
+					newValue: oChanges.current
+				});
+			}
+		};
+
+		FlexibleColumnLayoutData.prototype._observeControlProperties = function(oControl) {
+			// Observe changes in the properties of the control
+			this._oObserver.observe(oControl, {
+				properties: Object.keys(oControl.getMetadata().getAllProperties())
+			});
+		};
+
+		FlexibleColumnLayoutData.prototype._unobserveControlProperties = function(oControl) {
+			// Stop observing changes in the properties of the control
+			this._oObserver.unobserve(oControl, {
+				properties: Object.keys(oControl.getMetadata().getAllProperties())
+			});
+		};
+
+		FlexibleColumnLayoutData.prototype.invalidate = function() {
+			// Override to prevent error from Core implementation when the parent of FlexibleColumnLayout is UIComponent.
+			// Here we also want to fire a LayoutDataChange event to the actual parent - the FlexibleColumnLayout Control.
+			var oParent = this.getParent();
+
+			if (oParent) {
+				var oEvent = jQuery.Event("LayoutDataChange");
+				oEvent.srcControl = this;
+				oParent._handleEvent?.(oEvent);
+			}
+		};
 
 		return FlexibleColumnLayoutData;
 	});

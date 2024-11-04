@@ -7041,5 +7041,9 @@
 		"gregorian",
 		"islamic",
 		"islamic-rgsa"
-	]
+	],
+	"sap-calendarWeek": {
+		"narrow": "أسبوع التقويم {0}",
+		"wide": "أسبوع التقويم {0}"
+	}
 }

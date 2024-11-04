@@ -95,7 +95,7 @@ sap.ui.define([
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @constructor
 	 * @public
@@ -625,6 +625,18 @@ sap.ui.define([
 	 */
 	CheckBox.prototype._getToolbarInteractive = function () {
 		return true;
+	};
+
+	/**
+	 * Determines if the Control is used in visual only mode (hidden from the accessibility tree).
+	 *
+	 * @returns {boolean} If it is an visual only checkbox
+	 *
+	 * @private
+	 * @ui5-restricted sap.m.MultiComboBox
+	 */
+	CheckBox.prototype._getVisualOnlyMode = function () {
+		return false;
 	};
 
 	/**

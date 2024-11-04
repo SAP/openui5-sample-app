@@ -248,7 +248,7 @@ sap.ui.define([
 			oKeptElement = aElements.$byPredicate[sPredicate];
 			if (oKeptElement && oKeptElement !== oElement
 					&& !(oKeptElement instanceof SyncPromise)) {
-				if (!sHierarchyQualifier) {
+				if (!sHierarchyQualifier || aElements.includes(oKeptElement)) {
 					throw new Error("Duplicate predicate: " + sPredicate);
 				}
 				if (!oKeptElement["@odata.etag"]
@@ -376,8 +376,9 @@ sap.ui.define([
 	 *
 	 * @param {string} sGroupNodePath
 	 *   The group node path relative to the cache
-	 * @param {boolean} [bAll]
-	 *   Whether collapsing the node and all its descendants
+	 * @param {sap.ui.model.odata.v4.lib._GroupLock} [oGroupLock]
+	 *   An unlocked lock for the group to associate the clean-up request with; this indicates
+	 *   whether to collapse the node and all its descendants
 	 * @param {boolean} [bNested]
 	 *   Whether the "collapse all" was performed at an ancestor
 	 * @returns {number}
@@ -386,10 +387,11 @@ sap.ui.define([
 	 * @public
 	 * @see #expand
 	 */
-	_AggregationCache.prototype.collapse = function (sGroupNodePath, bAll, bNested) {
+	_AggregationCache.prototype.collapse = function (sGroupNodePath, oGroupLock, bNested) {
 		const oGroupNode = this.getValue(sGroupNodePath);
 		const oCollapsed = _AggregationHelper.getCollapsedObject(oGroupNode);
 		_Helper.updateAll(this.mChangeListeners, sGroupNodePath, oGroupNode, oCollapsed);
+		const bAll = !!oGroupLock;
 		this.oTreeState.collapse(oGroupNode, bAll, bNested);
 
 		const aElements = this.aElements;
@@ -408,7 +410,7 @@ sap.ui.define([
 			const oElement = aElements[i];
 			if (bAll && oElement["@$ui5.node.isExpanded"]) {
 				iRemaining -= this.collapse(
-					_Helper.getPrivateAnnotation(oElement, "predicate"), bAll, true);
+					_Helper.getPrivateAnnotation(oElement, "predicate"), oGroupLock, true);
 			}
 			// exceptions of selection are effectively kept alive (with recursive hierarchy)
 			if (!this.isSelectionDifferent(oElement)) {
@@ -426,6 +428,10 @@ sap.ui.define([
 			_Helper.setPrivateAnnotation(oGroupNode, "spliced", aSpliced);
 		}
 		aElements.$count -= iRemaining;
+
+		if (bAll && !bNested) {
+			this.validateAndDeleteExpandInfo(oGroupLock, oGroupNode);
+		}
 
 		return iCount;
 	};
@@ -580,6 +586,8 @@ sap.ui.define([
 			_Helper.deletePrivateAnnotation(oEntityData, "transientPredicate");
 			delete aElements.$byPredicate[sTransientPredicate];
 			if (iRank !== undefined) {
+				// Note: a node w/ rank in oFirstLevel is counted in "descendants", thus we must
+				// first adjust "descendants" before setting the rank!
 				this.adjustDescendantCount(oEntityData, iIndex0, +1);
 				oCache.restoreElement(iRank, oEntityData);
 				_Helper.setPrivateAnnotation(oEntityData, "rank", iRank);
@@ -733,8 +741,11 @@ sap.ui.define([
 		} // else: no update needed!
 
 		if (iLevels >= Number.MAX_SAFE_INTEGER) { // expand all below oGroupNode
-			// nothing to do
-		} else if (aSpliced) {
+			return SyncPromise.resolve(this.validateAndDeleteExpandInfo(oGroupLock, oGroupNode))
+				.then(() => -1); // refresh needed
+		}
+
+		if (aSpliced) {
 			_Helper.deletePrivateAnnotation(oGroupNode, "spliced");
 			const aOldElements = this.aElements;
 			const iIndex = aOldElements.indexOf(oGroupNode) + 1;
@@ -1612,10 +1623,13 @@ sap.ui.define([
 					"@$ui5.context.isTransient" : undefined,
 					"@$ui5.node.level" : oParentNode ? oParentNode["@$ui5.node.level"] + 1 : 1
 				});
-				_Helper.setPrivateAnnotation(oChildNode, "rank", iRank);
+				// Note: a node w/ rank in oFirstLevel is counted in "descendants", thus we must
+				// first adjust "descendants" before setting the new rank!
+				_Helper.deletePrivateAnnotation(oChildNode, "rank");
 				const iNewIndex = this.getInsertIndex(iRank);
 				this.aElements.splice(iNewIndex, 0, oChildNode);
 				this.adjustDescendantCount(oChildNode, iNewIndex, +iOffset);
+				_Helper.setPrivateAnnotation(oChildNode, "rank", iRank);
 
 				return [iResult, iNewIndex, iCount];
 			});
@@ -2435,6 +2449,56 @@ sap.ui.define([
 		} // else: special handling inside #readGap
 	};
 
+	/**
+	 * Validates for all nodes which contribute to the ExpandLevels parameter whether they are a
+	 * descendant of the given node. If a node is a descendant, its expand info is deleted.
+	 *
+	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
+	 *   An unlocked lock for the group to associate the request with
+	 * @param {object} oGroupNode
+	 *   A collapsed(!) group node
+	 * @return {Promise<void>}
+	 *   A promise resolving when the expand info objects have been deleted
+	 *
+	 * @private
+	 */
+	_AggregationCache.prototype.validateAndDeleteExpandInfo = async function (oGroupLock,
+			oGroupNode) {
+		// returns a list of filters for all nodes which contribute to the ExpandLevels parameter
+		// and are not in the flat list
+		const aFilters = this.oTreeState.getExpandFilters((sPredicate) => {
+			const oNode = this.aElements.$byPredicate[sPredicate];
+			return !this.aElements.includes(oNode);
+		});
+		if (!aFilters.length) {
+			return;
+		}
+
+		const mTypeForMetaPath = this.getTypes();
+		let mQueryOptions = {...this.mQueryOptions};
+		mQueryOptions.$$filterBeforeAggregate
+			= _Helper.getKeyFilter(oGroupNode, this.sMetaPath, mTypeForMetaPath);
+		delete mQueryOptions.$count;
+		delete mQueryOptions.$expand;
+		delete mQueryOptions.$orderby;
+		mQueryOptions
+			= _AggregationHelper.buildApply4Hierarchy(this.oAggregation, mQueryOptions, true);
+		mQueryOptions.$filter = aFilters.sort().join(" or ");
+		mQueryOptions.$select = [];
+		_Helper.selectKeyProperties(mQueryOptions, mTypeForMetaPath[this.sMetaPath]);
+		mQueryOptions.$top = aFilters.length;
+		const sResourcePath = this.sResourcePath
+			+ this.oRequestor.buildQueryString(this.sMetaPath, mQueryOptions, false, true, true);
+
+		const oResult = await this.oRequestor.request("GET", sResourcePath,
+				this.oRequestor.getUnlockedAutoCopy(oGroupLock));
+
+		oResult.value.forEach((oNode) => {
+			this.calculateKeyPredicate(oNode, mTypeForMetaPath, this.sMetaPath);
+			this.oTreeState.deleteExpandInfo(oNode);
+		});
+	};
+
 	//*********************************************************************************************
 	// "static" functions
 	//*********************************************************************************************
@@ -2482,6 +2546,9 @@ sap.ui.define([
 				if (Array.isArray(vProperty)) {
 					_Helper.inheritPathValue(vProperty, oGroupNode, oElement);
 				} else if (!(vProperty in oElement)) {
+					if (oGroupNode[vProperty + "@$ui5.noData"]) {
+						oElement[vProperty + "@$ui5.noData"] = true;
+					}
 					oElement[vProperty] = oGroupNode[vProperty];
 				}
 			});

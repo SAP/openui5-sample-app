@@ -95,7 +95,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @constructor
 	 * @public
@@ -878,6 +878,16 @@ sap.ui.define([
 
 		oAction.sParentAggregationName = oAction._sOriginalParentAggregationName;
 		oAction._sOriginalParentAggregationName = null;
+	};
+
+	DynamicPageTitle.prototype.onfocusfail = function (oEvent) {
+		var oSourceControl = oEvent.srcControl;
+
+		if (oSourceControl.sParentAggregationName === "actions") {
+			this.getAggregation("_actionsToolbar")?.onfocusfail(oEvent);
+		} else {
+			Control.prototype.onfocusfail.apply(this, arguments);
+		}
 	};
 
 	/**

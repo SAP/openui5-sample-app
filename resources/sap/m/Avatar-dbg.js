@@ -85,7 +85,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @constructor
 	 * @public
@@ -321,10 +321,14 @@ sap.ui.define([
 	};
 
 	Avatar.prototype.setSrc = function (sSrc) {
+		var bIsIconURI = IconPool.isIconURI(sSrc),
+			oLightBox = this.getAggregation("detailBox");
+
 		this._bImageLoadError = false;
 
 		this.setProperty("src", sSrc);
 		this._validateSrc(this._getAvatarSrc());
+		this._handleDetailBoxPress(bIsIconURI, oLightBox);
 
 		return this;
 	};
@@ -358,7 +362,9 @@ sap.ui.define([
 	 * @public
 	 */
 	Avatar.prototype.setDetailBox = function (oLightBox) {
-		var oCurrentDetailBox = this.getDetailBox();
+		var oCurrentDetailBox = this.getDetailBox(),
+			sSrc = this.getSrc(),
+			bIsIconURI = IconPool.isIconURI(sSrc);
 
 		if (oLightBox) {
 			// In case someone try's to set the same LightBox twice we don't do anything
@@ -366,14 +372,8 @@ sap.ui.define([
 				return this;
 			}
 
-			// If we already have a LightBox detach old one's event
-			if (oCurrentDetailBox) {
-				this.detachPress(this._fnLightBoxOpen, oCurrentDetailBox);
-			}
+			this._handleDetailBoxPress(bIsIconURI, oLightBox);
 
-			// Bind the LightBox open method to the press event of the Avatar
-			this._fnLightBoxOpen = oLightBox.open;
-			this.attachPress(this._fnLightBoxOpen, oLightBox);
 		} else if (this._fnLightBoxOpen) {
 			// If there was a LightBox - cleanup
 			this.detachPress(this._fnLightBoxOpen, oCurrentDetailBox);
@@ -381,6 +381,23 @@ sap.ui.define([
 		}
 
 		return this.setAggregation("detailBox", oLightBox);
+	};
+
+	Avatar.prototype._handleDetailBoxPress = function (bIsIconURI, oLightBox) {
+		var oCurrentDetailBox = this.getDetailBox();
+
+		// If we already have a LightBox detach old one's event
+		if (oCurrentDetailBox) {
+			this.detachPress(this._fnLightBoxOpen, oCurrentDetailBox);
+		}
+
+		// Bind the LightBox open method to the press event of the Avatar
+		// only if the Avatar's source is not an icon URI,
+		// otherwise, prevent the Lightbox from opening on press.
+		if (!bIsIconURI && oLightBox) {
+				this._fnLightBoxOpen = oLightBox.open;
+				this.attachPress(this._fnLightBoxOpen, oLightBox);
+			}
 	};
 
 	/**
@@ -674,9 +691,11 @@ sap.ui.define([
 	};
 
 	Avatar.prototype._getBadgeIconSource = function() {
-		var sBadgeIconPath;
+		var sBadgeIconPath,
+			sSrc = this.getSrc(),
+			bIsIconURI = IconPool.isIconURI(sSrc);
 
-		if (this.getDetailBox()) {
+		if (this.getDetailBox() && !bIsIconURI) {
 			sBadgeIconPath = "sap-icon://zoom-in";
 		} else if (this.getBadgeIcon() !== "") {
 			if (this._getDisplayIcon(this.getBadgeIcon())) {

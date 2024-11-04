@@ -20,7 +20,7 @@ sap.ui.define(['sap/ui/core/LayoutData'],
 		 *
 		 *
 		 * @author SAP SE
-		 * @version 1.129.0
+		 * @version 1.130.0
 		 *
 		 * @extends sap.ui.core.LayoutData
 		 *
@@ -66,6 +66,10 @@ sap.ui.define(['sap/ui/core/LayoutData'],
 				}
 			}
 		});
+
+		FlexibleColumnLayoutDataForTablet.prototype.invalidate = function() {
+			// Override basic LayoutData implementation, as we listen to changes in the parent control (FlexibleColumnLayoutData), where we have more information what has been changed.
+		};
 
 		return FlexibleColumnLayoutDataForTablet;
 	});

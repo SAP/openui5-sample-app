@@ -1,7 +1,0 @@
-/*!
- * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
- * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
- */
-sap.ui.define(["sap/m/upload/p13n/PersManager","sap/m/upload/p13n/modules/CustomDataConfig","sap/ui/fl/changeHandler/condenser/Classification"],function(e,n,t){"use strict";const a={};a.chainPromise=function(e,n){const t=function(n){if(e._p13nQueue===n){delete e._p13nQueue}};e._p13nQueue=e._p13nQueue instanceof Promise?e._p13nQueue.then(n):n();e._p13nQueue.then(t.bind(null,e._p13nQueue))};a.applyModifiedConfig=function(n){if(!n.isA){return}if(n._p13nChangeApplyPromise){return}n._p13nChangeApplyPromise=e.getInstance().waitForChanges(n).then(()=>{e.getInstance().applyStateChange(n);delete n._p13nChangeApplyPromise})};a.create=function(e){return{changeHandler:{applyChange:function(t,o,r){return a.chainPromise(o,function(){const i=t.getChangeType(),u=t.getContent();const p=e.createRevertData(u);t.setRevertData(p);return n.update(o,{changeType:i,content:u,propertyBag:r}).then(()=>a.applyModifiedConfig(o))})},completeChangeContent:function(e,n,t){},getCondenserInfo:function(e){return{classification:t.LastOneWins,affectedControl:e.getSelector(),uniqueKey:e.getContent().targetAggregation}},revertChange:function(e,t,o){return a.chainPromise(t,function(){const r=e.getChangeType(),i=e.getRevertData();return n.update(t,{changeType:r,content:i,propertyBag:o}).then(()=>e.resetRevertData()).then(()=>a.applyModifiedConfig(t))})}},layers:{USER:true}}};return a});
-//# sourceMappingURL=ChangeHandler.js.map

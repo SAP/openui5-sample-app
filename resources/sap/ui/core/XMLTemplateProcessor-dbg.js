@@ -865,7 +865,7 @@ function(
 						}
 					})();
 
-					future.errorThrows(sErrorLogMessage, "", "XMLTemplateProcessor");
+					future.errorThrows(`XMLTemplateProcessor: ${sErrorLogMessage}`);
 				}
 				return fnClass;
 			}
@@ -927,7 +927,7 @@ function(
 			if ( node.nodeType === 1 /* ELEMENT_NODE */ ) {
 				// Using native HTML in future is not allowed. We need to check explicitely in order to throw
 				if (node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE) {
-					future.warningThrows(`Using native HTML content in XMLViews is deprecated.`, oView.getId());
+					future.warningThrows(`${oView.getId()}: Using native HTML content in XMLViews is deprecated.`);
 				}
 				/**
 				 * Differentiate between SAPUI5 and plain-HTML children
@@ -1338,7 +1338,7 @@ function(
 								try {
 									mMetaContextsInfo = XMLTemplateProcessor._calculatedModelMapping(sValue, oView._oContainingView.oController, true);
 								} catch (e) {
-									future.errorThrows("" + oView + ":" + e.message);
+									future.errorThrows(`Failed to parse metadataContexts in view "${oView}"`,  { cause: e });
 								}
 
 								if (mMetaContextsInfo) {

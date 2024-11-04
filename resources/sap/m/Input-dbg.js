@@ -162,7 +162,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @constructor
 	 * @public
@@ -629,6 +629,7 @@ function(
 		// even though there is no user input (check Input.prototype.onsapright).
 		this._setTypedInValue("");
 		this._bDoTypeAhead = false;
+		this._bBackspaceOrDelete = false;
 		this._isValueInitial = false;
 		this._previousInputType = this.getType();
 
@@ -1849,7 +1850,8 @@ function(
 
 	Input.prototype.onkeydown = function (oEvent) {
 		// disable the typeahead feature for android devices due to an issue on android soft keyboard, which always returns keyCode 229
-		this._bDoTypeAhead = !Device.os.android && this.getAutocomplete() && (oEvent.which !== KeyCodes.BACKSPACE) && (oEvent.which !== KeyCodes.DELETE);
+		this._bBackspaceOrDelete = (oEvent.which === KeyCodes.BACKSPACE) || (oEvent.which === KeyCodes.DELETE);
+		this._bDoTypeAhead = !Device.os.android && this.getAutocomplete() && !this._bBackspaceOrDelete;
 	};
 
 	Input.prototype.onkeyup = function (oEvent) {
@@ -2291,7 +2293,9 @@ function(
 
 		const bExactMatch = this._hasTabularSuggestions() ? this.checkMatchingTabularSuggestionItems(sValue) : this.checkMatchingSuggestionItems(sValue);
 
-		if (!bDoTypeAhead && !bExactMatch) {
+		// perform typeahead only if typeahead prerequisites are met or
+		// backspace is pressed and exact match is present
+		if (!bDoTypeAhead && !(bExactMatch && this._bBackspaceOrDelete)) {
 			return;
 		}
 
@@ -3089,7 +3093,6 @@ function(
 
 			oItemToBeSelected = this._hasTabularSuggestions() ? mTypeAheadInfo.selectedItem : ListHelpers.getListItem(mTypeAheadInfo.selectedItem);
 			oItemToBeSelected.setSelected(true);
-			this.setSelectionUpdatedFromList(true);
 		}, this);
 
 		if (this.isMobileDevice()) {

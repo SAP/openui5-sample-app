@@ -25,7 +25,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.CompositeType
 	 *
 	 * @author SAP SE
-	 * @version 1.129.0
+	 * @version 1.130.0
 	 *
 	 * @alias sap.ui.model.type.DateInterval
 	 * @param {object} [oFormatOptions]
@@ -187,7 +187,8 @@ sap.ui.define([
 				if (!aDates[0] || (!aDates[1] && !this.oFormatOptions.singleIntervalValue)) {
 					// at least one single date should be returned
 					oBundle = Library.getResourceBundleFor("sap.ui.core");
-					throw new ParseException(oBundle.getText(this.sName + ".Invalid"));
+					throw new ParseException(oBundle.getText("Enter" + this.getName(),
+						[this.oOutputFormat.format(this.oOutputFormat.getSampleValue()[0])]));
 				}
 
 				// for client side filtering, ensure to set the end of day for the second value;
