@@ -28,6 +28,6 @@
 		"local-web-server": "^5.4.0",
 		"rimraf": "^6.0.1",
 		"start-server-and-test": "^2.0.8",
-		"ui5-test-runner": "^5.3.5"
+		"ui5-test-runner": "^5.3.6"
 	}
 }
