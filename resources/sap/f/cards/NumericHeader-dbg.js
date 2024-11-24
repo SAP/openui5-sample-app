@@ -57,7 +57,7 @@ sap.ui.define([
 	 * @extends sap.f.cards.BaseHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.130.0
+	 * @version 1.130.1
 	 *
 	 * @constructor
 	 * @public

@@ -24,7 +24,7 @@ sap.ui.define([
 	 *
 	 * Applications can inherit from this element to add own fields.
 	 * @extends sap.ui.unified.
-	 * @version 1.130.0
+	 * @version 1.130.1
 	 *
 	 * @constructor
 	 * @public

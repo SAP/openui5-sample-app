@@ -57,7 +57,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.130.0
+	 * @version 1.130.1
 	 *
 	 * @constructor
 	 * @public
@@ -383,6 +383,12 @@ sap.ui.define([
 				return oItem.getId();
 			}
 		).join(" ");
+	};
+
+	CalendarLegend.prototype._getAllItems = function() {
+		var aStandardItems = this.getAggregation("_standardItems") || [],
+			aCustomItems = this.getItems() || [];
+		return aStandardItems.concat(aCustomItems);
 	};
 
 	return CalendarLegend;

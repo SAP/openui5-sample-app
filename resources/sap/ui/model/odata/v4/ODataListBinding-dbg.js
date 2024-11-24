@@ -57,7 +57,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.130.0
+		 * @version 1.130.1
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -2557,8 +2557,8 @@ sap.ui.define([
 			bKeepCurrent) {
 		var sChangeReason,
 			aContexts,
-			bDataRequested = false,
 			bFireChange = false,
+			bFireDataReceived,
 			bPreventBubbling,
 			oPromise,
 			bRefreshEvent = !!this.sChangeReason, // ignored for "*VirtualContext"
@@ -2650,8 +2650,10 @@ sap.ui.define([
 			// make sure "refresh" is followed by async "change"
 			oPromise = this.fetchContexts(iStart, iLength, iMaximumPrefetchSize, undefined,
 				/*bAsync*/bRefreshEvent, function () {
-					bDataRequested = true;
-					that.fireDataRequested(bPreventBubbling);
+					if (bFireDataReceived === undefined) {
+						bFireDataReceived = true;
+						that.fireDataRequested(bPreventBubbling);
+					}
 				});
 			if (!bRefreshEvent && oPromise.isPending()) {
 				this.createContextsForCachedData(iStart, iLength);
@@ -2670,12 +2672,13 @@ sap.ui.define([
 						that.oDiff = undefined;
 					}
 				}
-				if (bDataRequested) {
+				if (bFireDataReceived) {
 					that.fireDataReceived({data : {}}, bPreventBubbling);
 				}
+				bFireDataReceived = false; // no subsequent #fireDataRequested allowed
 			}, function (oError) {
 				// cache shares promises for concurrent read
-				if (bDataRequested) {
+				if (bFireDataReceived) {
 					that.fireDataReceived(oError.canceled ? {data : {}} : {error : oError},
 						bPreventBubbling);
 				}

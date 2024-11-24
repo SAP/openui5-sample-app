@@ -23,7 +23,7 @@ sap.ui.define(["sap/ui/core/Lib", 'sap/ui/unified/CalendarLegend', 'sap/ui/unifi
 		 * @extends sap.ui.unified.CalendarLegend
 		 *
 		 * @author SAP SE
-		 * @version 1.130.0
+		 * @version 1.130.1
 		 *
 		 * @constructor
 		 * @public
@@ -130,6 +130,17 @@ sap.ui.define(["sap/ui/core/Lib", 'sap/ui/unified/CalendarLegend', 'sap/ui/unifi
 			}
 
 			return sAppointmentItemsHeader;
+		};
+
+		/**
+		 * @override
+		 * @returns {sap.ui.unified.CalendarLegendItem[]} All items in the legend.
+		 */
+		PlanningCalendarLegend.prototype._getAllItems = function() {
+			var aStandardItems = this.getAggregation("_standardItems") || [],
+				aAppointmentItems = this.getAppointmentItems() || [],
+				aCustomItems = this.getItems() || [];
+			return aStandardItems.concat(aAppointmentItems).concat(aCustomItems);
 		};
 
 		return PlanningCalendarLegend;

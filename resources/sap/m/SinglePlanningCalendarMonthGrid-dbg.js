@@ -95,7 +95,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.130.0
+		 * @version 1.130.1
 		 *
 		 * @constructor
 		 * @private
@@ -455,7 +455,7 @@ sap.ui.define([
 					const oStartDate = CalendarDate.fromLocalJSDate(oAppointment.getStartDate());
 					const oEndDate = CalendarDate.fromLocalJSDate(oAppointment.getEndDate());
 
-					return oDay.isSameOrAfter(oStartDate) && oDay.isBefore(oEndDate);
+					return oDay.isSameOrAfter(oStartDate) && oDay.isSameOrBefore(oEndDate);
 				}
 				return false;
 			});
