@@ -17,6 +17,7 @@ sap.ui.define([
 	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	"sap/ui/core/ResizeHandler",
+	"sap/ui/dom/getScrollbarSize",
 	"sap/ui/thirdparty/jquery",
 	"./IllustratedMessageRenderer"
 ], function(
@@ -31,6 +32,7 @@ sap.ui.define([
 	Library,
 	coreLibrary,
 	ResizeHandler,
+	getScrollbarSize,
 	jQuery,
 	IllustratedMessageRenderer
 ) {
@@ -88,7 +90,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -332,8 +334,6 @@ sap.ui.define([
 
 	IllustratedMessage.prototype.init = function () {
 		this._sLastKnownMedia = null;
-		this._oLastKnownWidthForMedia = {};
-		this._oLastKnownHeightForMedia = {};
 		this._updateInternalIllustrationSetAndType(this.getIllustrationType());
 		EventBus.getInstance().subscribe("sapMIllusPool-assetLdgFailed", this._handleMissingAsset.bind(this));
 	};
@@ -616,7 +616,12 @@ sap.ui.define([
 	 */
 	IllustratedMessage.prototype._onResize = function (oEvent) {
 		var iCurrentWidth = oEvent.size.width,
-			iCurrentHeight = oEvent.size.height;
+			iCurrentHeight = oEvent.size.height,
+			oParentNode = oEvent.target && oEvent.target.parentNode;
+
+			if (!this.getEnableVerticalResponsiveness() && oParentNode && oParentNode.scrollHeight > oParentNode.clientHeight) { // parent has vertical scrollbar
+				iCurrentWidth += getScrollbarSize().width;
+			}
 
 		this._updateMedia(iCurrentWidth, iCurrentHeight);
 	};
@@ -629,7 +634,7 @@ sap.ui.define([
 	 */
 	IllustratedMessage.prototype._updateMedia = function (iWidth, iHeight) {
 		var bVertical = this.getEnableVerticalResponsiveness(),
-			sNewMedia, iLastKnownWidth, iLastKnownHeight;
+			sNewMedia;
 
 		if (!iWidth && !iHeight) {
 			return;
@@ -648,21 +653,7 @@ sap.ui.define([
 		}
 
 		this._updateSymbol(sNewMedia);
-
-		iLastKnownWidth = this._oLastKnownWidthForMedia[sNewMedia];
-		iLastKnownHeight = this._oLastKnownHeightForMedia[sNewMedia];
-		// prevents infinite resizing, when same width is detected for the same media,
-		// excluding the case in which, the control is placed inside expand/collapse container
-		if (this._sLastKnownMedia !== sNewMedia &&
-			!(iLastKnownWidth && iWidth === iLastKnownWidth
-			&& iLastKnownHeight && iHeight === iLastKnownHeight)
-			|| this._oLastKnownWidthForMedia[this._sLastKnownMedia] === 0
-			|| this._oLastKnownHeightForMedia[this._sLastKnownMedia] === 0) {
-			this._updateMediaStyle(sNewMedia);
-			this._oLastKnownWidthForMedia[sNewMedia] = iWidth;
-			this._oLastKnownHeightForMedia[sNewMedia] = iHeight;
-			this._sLastKnownMedia = sNewMedia;
-		}
+		this._updateMediaStyle(sNewMedia);
 	};
 
 	/**

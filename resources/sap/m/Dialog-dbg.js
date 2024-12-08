@@ -171,7 +171,7 @@ function(
 		*
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.130.1
+		* @version 1.131.1
 		*
 		* @constructor
 		* @public
@@ -415,7 +415,9 @@ function(
 					/**
 					 * This event will be fired before the Dialog is opened.
 					 */
-					beforeOpen: {},
+					beforeOpen: {
+						allowPreventDefault: true
+					},
 
 					/**
 					 * This event will be fired after the Dialog is opened.
@@ -426,6 +428,7 @@ function(
 					 * This event will be fired before the Dialog is closed.
 					 */
 					beforeClose: {
+						allowPreventDefault: true,
 						parameters: {
 
 							/**
@@ -748,10 +751,14 @@ function(
 				default:
 			}
 
+			if (!this.fireBeforeOpen()) {
+				return this;
+			}
+
 			//reset the close trigger
 			this._oCloseTrigger = null;
 
-			this.fireBeforeOpen();
+
 			oPopup.attachOpened(this._handleOpened, this);
 
 			// reset scroll fix check
@@ -778,22 +785,29 @@ function(
 		 */
 		Dialog.prototype.close = function () {
 			this._bOpenAfterClose = false;
-			this._deregisterWithinAreaResizeObserver();
 
 			var oPopup = this.oPopup;
 
 			var eOpenState = this.oPopup.getOpenState();
-			if (!(eOpenState === OpenState.CLOSED || eOpenState === OpenState.CLOSING)) {
-				library.closeKeyboard();
-				this.fireBeforeClose({origin: this._oCloseTrigger});
-				oPopup.attachClosed(this._handleClosed, this);
-				this._bDisableRepositioning = false;
-				//reset the drag and/or resize
-				this._oManuallySetPosition = null;
-				this._oManuallySetSize = null;
-				oPopup.close();
-				this._deregisterResizeObserver();
+			if (eOpenState === OpenState.CLOSED || eOpenState === OpenState.CLOSING) {
+				return this;
 			}
+
+			if (!this.fireBeforeClose({origin: this._oCloseTrigger})) {
+				return this;
+			}
+
+			this._deregisterWithinAreaResizeObserver();
+
+			library.closeKeyboard();
+			oPopup.attachClosed(this._handleClosed, this);
+			this._bDisableRepositioning = false;
+			//reset the drag and/or resize
+			this._oManuallySetPosition = null;
+			this._oManuallySetSize = null;
+			oPopup.close();
+			this._deregisterResizeObserver();
+
 			return this;
 		};
 
@@ -1268,9 +1282,18 @@ function(
 			}
 
 			var $dialog = this.$(),
-				$dialogContent = this.$('cont'),
-				sContentWidth = this.getContentWidth(),
-				iMaxDialogWidth = this._calcMaxSizes().maxWidth; // 90% of the max screen size
+			$dialogContent = this.$('cont'),
+			sContentWidth = this.getContentWidth(),
+			iMaxDialogWidth = this._calcMaxSizes().maxWidth, // 90% of the max screen size
+			oSubHeaderDomRef = this.getSubHeader()?.getDomRef(),
+			oHeaderDomRef = (this.getCustomHeader() || this._header)?.getDomRef();
+
+		if (oHeaderDomRef || oSubHeaderDomRef) {
+			const iHeaderHeight = oHeaderDomRef ? oHeaderDomRef.getBoundingClientRect().height : 0;
+			const iSubHeaderHeight = oSubHeaderDomRef ? oSubHeaderDomRef.getBoundingClientRect().height : 0;
+
+			this.getDomRef().style.paddingTop = iHeaderHeight + iSubHeaderHeight + "px";
+		}
 
 			//if height is set by manually resizing return;
 			if (this._oManuallySetSize) {
@@ -1744,6 +1767,10 @@ function(
 				});
 
 				this._oResizeObserver.observe(this.getDomRef("scrollCont"));
+
+				if (this.getDomRef().getElementsByClassName("sapMDialogTitleGroup") && this.getDomRef().getElementsByClassName("sapMDialogTitleGroup").length > 0) {
+					this._oResizeObserver.observe(this.getDomRef().getElementsByClassName("sapMDialogTitleGroup")[0]);
+				}
 			}
 
 			//set the initial size of the content container so when a dialog with large content is open there will be a scroller

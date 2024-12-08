@@ -14,11 +14,12 @@ sap.ui.define([
 	"sap/ui/core/Lib",
 	"sap/ui/events/KeyCodes",
 	"sap/ui/thirdparty/jquery",
+	"sap/ui/thirdparty/URI",
 	"sap/base/security/encodeCSS",
 	"sap/ui/Device",
 	"sap/ui/core/library"
 ],
-	function(library, Control, DataType, URLListValidator, ImageRenderer, Library, KeyCodes, jQuery, encodeCSS, Device, coreLibrary) {
+	function(library, Control, DataType, URLListValidator, ImageRenderer, Library, KeyCodes, jQuery, URI, encodeCSS, Device, coreLibrary) {
 	"use strict";
 
 
@@ -62,7 +63,7 @@ sap.ui.define([
 	 * @borrows sap.ui.core.IFormContent.getFormDoNotAdjustWidth as #getFormDoNotAdjustWidth
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @public
 	 * @alias sap.m.Image
@@ -686,6 +687,21 @@ sap.ui.define([
 	*/
 	Image.prototype._isHrefValid = function (sURL) {
 		return URLListValidator.validate(sURL);
+	};
+
+	/**
+	* Converts an url to absolute url from the origin of the base url
+	* @param {string} sUrl - The url to be converted
+	* @param {string} oBaseUrl - The base url
+	* @returns {string} The absolute url
+	* @private
+	*/
+	Image.prototype._toAbsoluteUrl = function (sUrl, oBaseUrl) {
+		var oUrl = URI(sUrl);
+		if (oUrl.is("relative")) {
+			oUrl = oUrl.absoluteTo(oBaseUrl);
+		}
+		return oUrl.toString();
 	};
 
 	/**

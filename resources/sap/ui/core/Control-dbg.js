@@ -84,7 +84,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @alias sap.ui.core.Control
 	 */
 	var Control = Element.extend("sap.ui.core.Control", /** @lends sap.ui.core.Control.prototype */ {
@@ -837,6 +837,9 @@ sap.ui.define([
 		 * @private
 		 */
 		onBeforeRendering: function() {
+			if (this.getBusy()) {
+				fnRemoveBusyIndicator.call(this);
+			}
 			// remove all block-layers to prevent leftover DOM elements and eventhandlers
 			fnRemoveAllBlockLayers.call(this);
 		},
@@ -861,19 +864,29 @@ sap.ui.define([
 				if (iDelay) {
 					this._busyIndicatorDelayedCallId = setTimeout(fnAppendBusyIndicator.bind(this), iDelay);
 				} else {
-					fnAppendBusyIndicator.call(this);
+					// To win against the focus restoration from RenderManager, we have to set focus asynchronously.
+					fnAppendBusyIndicator.call(this, /* bAsyncFocus */ true);
 				}
 			}
 		}
 	};
 
+	function checkAndFocusBlockLayer() {
+		if (this._oBusyBlockState && this.getDomRef(this._sBusySection)?.contains(document.activeElement)) {
+			// Move focus to the busy indicator if the focus is currently within the busy control's DOM.
+			this._oBusyBlockState.lastFocusPosition = document.activeElement;
+			this._oBusyBlockState.$blockLayer.get(0).focus({ preventScroll: true });
+		}
+	}
 
 	/**
 	 * Add busy indicator to DOM
 	 *
+	 * @param {boolean} [asyncFocus=false] whether focus should be set asynchronously.
+	 * This is need to set the focus after the restoration from RenderManager
 	 * @private
 	 */
-	function fnAppendBusyIndicator() {
+	function fnAppendBusyIndicator(bAsyncFocus) {
 
 		// Only append if busy state is still set
 		if (!this.getBusy()) {
@@ -904,12 +917,18 @@ sap.ui.define([
 				this._oBusyBlockState = this._oBlockState;
 
 			} else {
-				// BusyIndicator is the first blocking element created (and )
+				// BusyIndicator is the first blocking element created
 				fnAddStandaloneBusyIndicator.call(this);
 			}
 		} else {
 			// Standalone busy indicator
 			fnAddStandaloneBusyIndicator.call(this);
+		}
+
+		if (bAsyncFocus) {
+			setTimeout(checkAndFocusBlockLayer.bind(this), 0);
+		} else {
+			checkAndFocusBlockLayer.call(this);
 		}
 	}
 
@@ -962,9 +981,28 @@ sap.ui.define([
 			return;
 		}
 
-		var $this = this.$(this._sBusySection);
+		// Restore focus on last focus position, if possible
+		let oLastFocusedElement;
+		if (this._oBusyBlockState) {
+			const oBlockLayerDOM = this._oBusyBlockState.$blockLayer.get(0);
 
+			// Focus might be moved from the busy indicator
+			// If it is still on the busy indicator, we restore the focus. Otherwise do nothing.
+			if (oBlockLayerDOM === document.activeElement) {
+				// Check if last focused DOM element is still available, restore focus on the DOM element
+				// Otherwise, move focus to the control's DOM Ref
+				if (jQuery(this._oBusyBlockState.lastFocusPosition).is(":sapFocusable")) {
+					oLastFocusedElement = this._oBusyBlockState.lastFocusPosition;
+				} else {
+					oLastFocusedElement = Element.closestTo(this._oBusyBlockState.lastFocusPosition) || this;
+				}
+				oLastFocusedElement.focus();
+			}
+		}
+
+		const $this = this.$(this._sBusySection);
 		$this.removeClass('sapUiLocalBusy');
+		$this.removeAttr("aria-busy");
 
 		if (this._sBlockSection === this._sBusySection) {
 			if (!this.getBlocked() && !this.getBusy()) {
@@ -972,11 +1010,11 @@ sap.ui.define([
 				fnRemoveAllBlockLayers.call(this);
 
 			} else if (this.getBlocked()) {
-				// Hide animation in shared block layer
-				BlockLayerUtils.toggleAnimationStyle(this._oBlockState || this._oBusyBlockState, false);
-
-				this._oBlockState = this._oBusyBlockState;
-
+				if (this._oBlockState || this._oBusyBlockState) {
+					// Hide animation in shared block layer
+					BlockLayerUtils.toggleAnimationStyle(this._oBlockState || this._oBusyBlockState, false);
+					this._oBlockState = this._oBusyBlockState;
+				}
 			} else if (this._oBusyBlockState) {
 				BlockLayerUtils.unblock(this._oBusyBlockState);
 

@@ -181,7 +181,7 @@ function(
 		 * @extends sap.m.DateTimeField
 		 *
 		 * @author SAP SE
-		 * @version 1.130.1
+		 * @version 1.131.1
 		 *
 		 * @constructor
 		 * @public
@@ -637,7 +637,7 @@ function(
 		 */
 		TimePicker.prototype.onmouseup = function() {
 			if (this._isMaskEnabled() && this._isValueEmpty()) {
-				this._setCursorPosition(0);
+				this._positionCaret();
 			}
 		};
 

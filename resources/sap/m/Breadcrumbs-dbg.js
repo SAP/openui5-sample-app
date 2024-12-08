@@ -74,7 +74,7 @@ sap.ui.define([
 	 * @implements sap.m.IBreadcrumbs, sap.m.IOverflowToolbarContent, sap.ui.core.IShrinkable
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -754,18 +754,21 @@ sap.ui.define([
 			iSelectedDomIndex = -1,
 			aItemsToNavigate = this._getItemsToNavigate(),
 			aNavigationDomRefs = [],
+			bIsDisabledLink = false,
 			oItemDomRef;
 
 		if (aItemsToNavigate.length === 0) {
 			return;
 		}
 
-		aItemsToNavigate.forEach(function (oItem, iIndex) {
+		aItemsToNavigate.forEach(function (oItem) {
 			oItemDomRef = oItem.getFocusDomRef();
 			if (oItemDomRef) {
-				oItemDomRef.setAttribute("tabindex", iIndex === 0 ? "0" : "-1");
+				bIsDisabledLink = oItem.isA("sap.m.Link") && !oItem.getEnabled();
+				if (!bIsDisabledLink) {
+					aNavigationDomRefs.push(oItemDomRef);
+				}
 			}
-			aNavigationDomRefs.push(oItem.getFocusDomRef());
 		});
 
 		this.addDelegate(oItemNavigation);

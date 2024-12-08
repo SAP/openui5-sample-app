@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m.table.Util
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @since 1.96.0
 	 * @private
 	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp
@@ -440,7 +440,7 @@ sap.ui.define([
 	 * @param {string} sText The header text to be announced
 	 * @param {int|undefined} iRowCount The row count. If not provided, the row count will not be announced
 	 * @private
-	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp
+	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp, sap.m.p13n
 	 * @since 1.114
 	 */
 	Util.announceTableUpdate = function(sText, iRowCount) {

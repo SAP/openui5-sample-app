@@ -83,7 +83,7 @@ sap.ui.define([
 	 * If used inside the calendar the properties and aggregation are directly taken from the parent
 	 * (To not duplicate and sync DateRanges and so on...)
 	 * @extends sap.ui.core.Control
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -791,7 +791,7 @@ sap.ui.define([
 		if (oParent && oParent.getLegend) {
 			return oParent.getLegend();
 		} else {
-			return this.getAssociation("legend", []);
+			return this.getAssociation("legend");
 		}
 
 	};

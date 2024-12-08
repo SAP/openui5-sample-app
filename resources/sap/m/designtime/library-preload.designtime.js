@@ -334,7 +334,7 @@ sap.ui.predefine("sap/m/designtime/PlanningCalendarLegend.designtime", [],functi
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/Popover.designtime", [],function(){"use strict";return{actions:{rename:function(e){if(e.getCustomHeader()){return}return{changeType:"rename",domRef:function(e){return e.getDomRef("title")}}}},aggregations:{content:{domRef:":sap-domref > .sapMPopoverCont",actions:{move:"moveControls"}},customHeader:{domRef:":sap-domref > .sapMPopoverHeader"},subHeader:{domRef:":sap-domref > .sapMPopoverSubHeader"},footer:{domRef:":sap-domref > .sapMPopoverFooter"},beginButton:{domRef:":sap-domref > header.sapMPopoverHeader .sapMBarLeft"},endButton:{domRef:":sap-domref > header.sapMPopoverHeader .sapMBarRight"}}}});
+sap.ui.predefine("sap/m/designtime/Popover.designtime", [],function(){"use strict";return{actions:{rename:function(e){if(e.getCustomHeader()){return}return{changeType:"rename",domRef:function(e){return e.getDomRef("title")}}}},aggregations:{content:{domRef:":sap-domref > .sapMPopoverWrapper > .sapMPopoverCont",actions:{move:"moveControls"}},customHeader:{domRef:":sap-domref > .sapMPopoverWrapper > .sapMPopoverHeader"},subHeader:{domRef:":sap-domref > .sapMPopoverWrapper > .sapMPopoverSubHeader"},footer:{domRef:":sap-domref > .sapMPopoverWrapper > .sapMPopoverFooter"},beginButton:{domRef:":sap-domref > .sapMPopoverWrapper > header.sapMPopoverHeader .sapMBarLeft"},endButton:{domRef:":sap-domref > .sapMPopoverWrapper > header.sapMPopoverHeader .sapMBarRight"}}}});
 /*!
  * OpenUI5
  * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.

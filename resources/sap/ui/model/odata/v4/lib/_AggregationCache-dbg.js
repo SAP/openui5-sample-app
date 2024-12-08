@@ -408,6 +408,9 @@ sap.ui.define([
 		let iRemaining = iCount; // with bAll this is the count of the direct children in the end
 		for (let i = iIndex + 1; i < iIndex + 1 + iRemaining; i += 1) {
 			const oElement = aElements[i];
+			if (_Helper.hasPrivateAnnotation(oElement, "placeholder")) {
+				continue;
+			}
 			if (bAll && oElement["@$ui5.node.isExpanded"]) {
 				iRemaining -= this.collapse(
 					_Helper.getPrivateAnnotation(oElement, "predicate"), oGroupLock, true);
@@ -1881,10 +1884,11 @@ sap.ui.define([
 
 		iLength += iPrefetchLength; // "after the given range"
 
+		const iOutOfPlaceCount = this.oTreeState.getOutOfPlaceCount();
 		// "before the given range"
 		// after a side-effects refresh out-of-place nodes may shift the visible range, we have
 		// to read as many nodes before this range to be on the safe side
-		iPrefetchLength = Math.max(iPrefetchLength, this.oTreeState.getOutOfPlaceCount());
+		iPrefetchLength = Math.max(iPrefetchLength, iOutOfPlaceCount);
 		if (iStart > iPrefetchLength) {
 			iLength += iPrefetchLength;
 			iStart -= iPrefetchLength;
@@ -1895,12 +1899,19 @@ sap.ui.define([
 
 		// Note: this.oFirstLevel.read changes this value
 		const bSentRequest = this.oFirstLevel.bSentRequest;
+		if (bSentRequest && iOutOfPlaceCount) { // cannot handle result below, avoid new request
+			oGroupLock = _GroupLock.$cached;
+		}
 
 		return SyncPromise.all([
 				this.oFirstLevel.read(iStart, iLength, 0, oGroupLock, fnDataRequested),
 				// request out-of-place nodes only once
 				...(bSentRequest ? [] : this.requestOutOfPlaceNodes(oGroupLock))
 			]).then(function ([oResult, ...aOutOfPlaceResults]) {
+				if (bSentRequest && iOutOfPlaceCount) {
+					return; // not idempotent due to previous #handleOutOfPlaceNodes
+				}
+
 				// Note: this code must be idempotent, it might well run twice!
 				var oGrandTotal,
 					oGrandTotalCopy,

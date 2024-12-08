@@ -96,7 +96,6 @@ sap.ui.define([
 	 * <li>{@link sap.m.ComboBox}</li>
 	 * <li>{@link sap.m.DatePicker}</li>
 	 * <li>{@link sap.m.DateRangeSelection}</li>
-	 * <li>{@link sap.m.DateTimeInput}</li>
 	 * <li>{@link sap.m.DateTimePicker}</li>
 	 * <li>{@link sap.m.GenericTag}</li>
 	 * <li>{@link sap.m.Input}</li>
@@ -133,7 +132,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.Toolbar,sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -764,7 +763,7 @@ sap.ui.define([
 			}
 
 			// Add the overflow button only if there is at least one control, which will be shown in the Popover.
-			if (this._getControlPriority(vMovableControl) !== OverflowToolbarPriority.Disappear) {
+			if (this._getControlPriority(vMovableControl) !== OverflowToolbarPriority.Disappear && !vMovableControl.isA?.("sap.m.ToolbarSeparator")) {
 				this._addOverflowButton();
 			}
 

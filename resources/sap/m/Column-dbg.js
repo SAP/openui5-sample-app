@@ -45,7 +45,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -588,17 +588,21 @@ sap.ui.define([
 
 	Column.prototype.setHeader = function (oControl) {
 		var oOldHeader = this.getHeader();
-		if (oOldHeader && oOldHeader.isA("sap.m.Label")) {
-			oOldHeader.detachEvent("_change", this._onLabelPropertyChange, this);
-			oOldHeader.setIsInColumnHeaderContext(false);
+		if (oOldHeader) {
+			if (oOldHeader.isA("sap.m.Label")) {
+				oOldHeader.detachEvent("_change", this._onLabelPropertyChange, this);
+			}
+			oOldHeader.setIsInColumnHeaderContext?.(false);
 		}
 
 		this.setAggregation("header", oControl);
 
 		var oNewHeader = this.getHeader();
-		if (oNewHeader && oNewHeader.isA("sap.m.Label")) {
-			oNewHeader.attachEvent("_change", this._onLabelPropertyChange, this);
-			oNewHeader.setIsInColumnHeaderContext(true);
+		if (oNewHeader) {
+			if (oNewHeader.isA("sap.m.Label")) {
+				oNewHeader.attachEvent("_change", this._onLabelPropertyChange, this);
+			}
+			oNewHeader.setIsInColumnHeaderContext?.(true);
 		}
 
 		return this;

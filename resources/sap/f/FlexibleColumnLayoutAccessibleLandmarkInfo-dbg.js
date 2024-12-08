@@ -22,7 +22,7 @@ sap.ui.define(['sap/ui/core/Element', './library'],
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @since 1.95
 	 *
 	 * @constructor
@@ -83,6 +83,28 @@ sap.ui.define(['sap/ui/core/Element', './library'],
 			lastColumnForwardArrowLabel : {type : "string", defaultValue : null}
 		}
 	}});
+
+	FlexibleColumnLayoutAccessibleLandmarkInfo.prototype.setFirstColumnLabel = function (sLabel) {
+		return this._setColumnsLabel("firstColumnLabel", sLabel, "begin");
+	};
+
+	FlexibleColumnLayoutAccessibleLandmarkInfo.prototype.setMiddleColumnLabel = function (sLabel) {
+		return this._setColumnsLabel("middleColumnLabel", sLabel, "mid");
+	};
+
+	FlexibleColumnLayoutAccessibleLandmarkInfo.prototype.setLastColumnLabel = function (sLabel) {
+		return this._setColumnsLabel("lastColumnLabel", sLabel, "end");
+	};
+
+	FlexibleColumnLayoutAccessibleLandmarkInfo.prototype._setColumnsLabel = function (sProperty, sLabel, sColumn) {
+		this.setProperty(sProperty, sLabel, true);
+		this.fireEvent("_changeColumnsLabel", {
+			column: sColumn,
+			label: sLabel
+		});
+
+		return this;
+	};
 
 	return FlexibleColumnLayoutAccessibleLandmarkInfo;
 });

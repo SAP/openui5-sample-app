@@ -125,7 +125,7 @@ sap.ui.define([
 		 * @since 1.44.0
 		 *
 		 * @author SAP SE
-		 * @version 1.130.1
+		 * @version 1.131.1
 		 *
 		 * @public
 		 * @alias sap.m.HeaderContainer
@@ -1166,7 +1166,7 @@ sap.ui.define([
 		};
 
 		HeaderContainer.prototype._getParentCell = function (oDomElement) {
-			return jQuery(oDomElement).parents(".sapMHrdrCntrInner").andSelf(".sapMHrdrCntrInner").get(0);
+			return jQuery(oDomElement).parents(".sapMHrdrCntrInner").addBack(".sapMHrdrCntrInner").get(0);
 		};
 
 

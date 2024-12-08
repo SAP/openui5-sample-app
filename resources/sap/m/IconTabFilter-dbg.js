@@ -92,7 +92,7 @@ sap.ui.define([
 	 * @implements sap.m.IconTab
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -789,7 +789,8 @@ sap.ui.define([
 
 			oRM.icon(oIcon, aClasses, {
 				id: this.getId() + "-icon",
-				"aria-hidden": true
+				"aria-hidden": true,
+				"aria-label": null
 			});
 		} else {
 			oRM.openStart("span").class("sapUiIcon").openEnd().close("span");

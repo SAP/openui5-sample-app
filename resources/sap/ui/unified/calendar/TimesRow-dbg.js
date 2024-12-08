@@ -67,7 +67,7 @@ sap.ui.define([
 	 *
 	 * The TimesRow works with UI5Date or JavaScript Date objects.
 	 * @extends sap.ui.core.Control
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -642,7 +642,7 @@ sap.ui.define([
 		if (oParent && oParent.getLegend) {
 			return oParent.getLegend();
 		} else {
-			return this.getAssociation("ariaLabelledBy", []);
+			return this.getAssociation("legend");
 		}
 
 	};

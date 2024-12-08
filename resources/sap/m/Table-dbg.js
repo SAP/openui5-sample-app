@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -1086,11 +1086,9 @@ sap.ui.define([
 			} else if (this._clearAllIcon && sMultiSelectMode == "ClearAll" && !this._clearAllIcon.hasStyleClass("sapMTableDisableClearAll")) {
 				this.removeSelections(false, true, false);
 			}
-
 		} else if (oEvent.target.classList.contains("sapMTblCellFocusable")) {
 			// prevent from scrolling
 			oEvent.preventDefault();
-			oEvent.setMarked();
 		}
 	};
 

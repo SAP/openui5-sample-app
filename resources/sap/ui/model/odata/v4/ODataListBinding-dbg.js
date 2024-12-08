@@ -15,6 +15,7 @@ sap.ui.define([
 	"./lib/_Helper",
 	"sap/base/Log",
 	"sap/ui/base/SyncPromise",
+	"sap/ui/core/Messaging",
 	"sap/ui/model/Binding",
 	"sap/ui/model/ChangeReason",
 	"sap/ui/model/Filter",
@@ -25,8 +26,8 @@ sap.ui.define([
 	"sap/ui/model/Sorter",
 	"sap/ui/model/odata/OperationMode"
 ], function (Context, asODataParentBinding, _AggregationCache, _AggregationHelper, _Cache,
-		_GroupLock, _Helper, Log, SyncPromise, Binding, ChangeReason, Filter, FilterOperator,
-		FilterProcessor, FilterType, ListBinding, Sorter, OperationMode) {
+		_GroupLock, _Helper, Log, SyncPromise, Messaging, Binding, ChangeReason, Filter,
+		FilterOperator, FilterProcessor, FilterType, ListBinding, Sorter, OperationMode) {
 	"use strict";
 
 	var sClassName = "sap.ui.model.odata.v4.ODataListBinding",
@@ -42,7 +43,8 @@ sap.ui.define([
 			patchCompleted : true,
 			patchSent : true,
 			refresh : true,
-			selectionChanged : true
+			selectionChanged : true,
+			separateReceived : true
 		},
 		/**
 		 * @alias sap.ui.model.odata.v4.ODataListBinding
@@ -57,7 +59,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.130.1
+		 * @version 1.131.1
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -563,6 +565,36 @@ sap.ui.define([
 	 * @event sap.ui.model.odata.v4.ODataListBinding#selectionChanged
 	 * @public
 	 * @since 1.130.0
+	 */
+
+	/**
+	 * The 'separateReceived' event is fired when a separate property request (see '$$separate'
+	 * binding parameter of {@link sap.ui.model.odata.v4.ODataModel#bindList}) is completed. The
+	 * <code>start</code> and <code>length</code> parameters can be used to retrieve the received
+	 * data via {@link #requestContexts}.
+	 *
+	 * If the request fails, the <code>errorMessage</code> is a UI5 message containing the back-end
+	 * error. It is reported to the message model by default unless
+	 * {@link sap.ui.base.Event#preventDefault} is called.
+	 *
+	 * @param {sap.ui.base.Event} oEvent
+	 *   The event object
+	 * @param {sap.ui.model.odata.v4.ODataListBinding} oEvent.getSource()
+	 *   This binding
+	 * @param {function():Object<any>} oEvent.getParameters
+	 *   Function which returns an object containing all event parameters
+	 * @param {string} oEvent.getParameters.property
+	 *   The requested property name
+	 * @param {number} oEvent.getParameters.start
+	 *   The start index of the requested range
+	 * @param {number} oEvent.getParameters.length
+	 *   The length of the requested range
+	 * @param {sap.ui.core.message.Message} [oEvent.getParameters.errorMessage]
+	 *   A UI5 message of type {@link module:sap/ui/core/message/MessageType MessageType.Error}
+	 *
+	 * @event sap.ui.model.odata.v4.ODataListBinding#separateReceived
+	 * @experimental As of version 1.131.0
+	 * @public
 	 */
 
 	/**
@@ -1334,7 +1366,7 @@ sap.ui.define([
 		this.oDiff = undefined;
 		this.aFilters = undefined;
 		this.oHeaderContext = undefined;
-		// this.mParameters = undefined;
+		this.mParameters = undefined;
 		this.mPreviousContextsByPath = undefined;
 		this.aPreviousData = undefined;
 		this.mQueryOptions = undefined;
@@ -1787,7 +1819,7 @@ sap.ui.define([
 				}
 
 				return oCache.read(iIndex, iLength, iMaximumPrefetchSize, oGroupLock,
-					fnDataRequested
+					fnDataRequested, undefined, that.fireSeparateReceived.bind(that)
 				).then(function (oResult) {
 					oResult.$checkStillValid = that.checkSameCache.bind(that, oCache);
 
@@ -2386,6 +2418,34 @@ sap.ui.define([
 	 */
 	ODataListBinding.prototype.fireSelectionChanged = function (oContext) {
 		this.fireEvent("selectionChanged", {context : oContext});
+	};
+
+	/**
+	 * Fires the 'separateReceived' event.
+	 *
+	 * @param {string} sProperty - The requested property name
+	 * @param {number} iStart - The start index of the requested range
+	 * @param {number} iEnd - The index after the requested range
+	 * @param {Error} [oError] - A back-end error
+	 *
+	 * @private
+	 */
+	ODataListBinding.prototype.fireSeparateReceived = function (sProperty, iStart, iEnd, oError) {
+		const oParameters = {
+			property : sProperty,
+			start : iStart,
+			length : iEnd - iStart
+		};
+		if (oError) {
+			oParameters.errorMessage = this.oModel.reportTransitionMessages(
+				_Helper.extractMessages(oError), oError.resourcePath, /*bSilent*/true)[0];
+		}
+
+		const bDefaultAction = this.fireEvent("separateReceived", oParameters, true);
+
+		if (oError && bDefaultAction) {
+			Messaging.updateMessages(undefined, [oParameters.errorMessage]);
+		}
 	};
 
 	/**

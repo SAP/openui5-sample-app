@@ -78,7 +78,7 @@ sap.ui.define([
 	 *   {@link https://cldr.unicode.org/ Unicode CLDR}.
 	 * @hideconstructor
 	 * @public
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 */
 	var LocaleData = BaseObject.extend("sap.ui.core.LocaleData", /** @lends sap.ui.core.LocaleData.prototype */ {
 
@@ -2818,7 +2818,7 @@ sap.ui.define([
 	/**
 	 * Creates an instance of <code>LocaleData</code> for the given locale.
 	 *
-	 * @param {sap.ui.core.Locale|sap.base.i18n.LanguageTag} vLocale The locale or language tag
+	 * @param {sap.ui.core.Locale|module:sap/base/i18n/LanguageTag} vLocale The locale or language tag
 	 * @returns {sap.ui.core.LocaleData} An instance of <code>LocaleData</code>
 	 *
 	 * @public
@@ -2832,7 +2832,7 @@ sap.ui.define([
 	/**
 	 * Creates an instance of <code>LocaleData</code> asynchronously for the given language tag.
 	 *
-	 * @param {sap.base.i18n.LanguageTag} oLanguageTag
+	 * @param {module:sap/base/i18n/LanguageTag} oLanguageTag
 	 *   The language tag
 	 * @returns {Promise<sap.ui.core.LocaleData>}
 	 *   A <code>Promise</code> which resolves with an instance of <code>LocaleData</code>; the <code>Promise</code>

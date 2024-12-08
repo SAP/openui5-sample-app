@@ -11,31 +11,33 @@
  * This API is independent from any other part of the UI5 framework. This allows it to be loaded beforehand, if it is needed, to create the UI5 bootstrap
  * dynamically depending on the capabilities of the browser or device.
  *
- * @version 1.130.1
+ * @version 1.131.1
  * @namespace
  * @name sap.ui.Device
  * @public
  */
 
-/*global console */
-
-//Introduce namespace if it does not yet exist
+// Introduce namespace if it does not yet exist
+// ui5lint-disable no-globals
 if (typeof window.sap !== "object" && typeof window.sap !== "function") {
 	window.sap = {};
 }
 if (typeof window.sap.ui !== "object") {
 	window.sap.ui = {};
 }
+// ui5lint-enable no-globals
 
 (function() {
 	"use strict";
 
-	//Skip initialization if API is already available
+	// Skip initialization if API is already available
+	// ui5lint-disable no-globals
 	if (typeof window.sap.ui.Device === "object" || typeof window.sap.ui.Device === "function") {
-		var apiVersion = "1.130.1";
+		var apiVersion = "1.131.1";
 		window.sap.ui.Device._checkAPIVersion(apiVersion);
 		return;
 	}
+	// ui5lint-enable no-globals
 
 	var Device = {};
 
@@ -105,7 +107,7 @@ if (typeof window.sap.ui !== "object") {
 
 	//Only used internal to make clear when Device API is loaded in wrong version
 	Device._checkAPIVersion = function(sVersion) {
-		var v = "1.130.1";
+		var v = "1.131.1";
 		if (v != sVersion) {
 			oLogger.log(WARNING, "Device API version differs: " + v + " <-> " + sVersion);
 		}
@@ -1896,7 +1898,8 @@ if (typeof window.sap.ui !== "object") {
 	setResizeInfo(Device.resize);
 	setOrientationInfo(Device.orientation);
 
-	//Add API to global namespace
+	// Add API to global namespace
+	// ui5lint-disable-next-line no-globals
 	window.sap.ui.Device = Device;
 
 	// Add handler for orientationchange and resize after initialization of Device API

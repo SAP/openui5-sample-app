@@ -75,14 +75,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.m",
-		version: "1.130.1",
+		version: "1.131.1",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -2332,6 +2332,7 @@ sap.ui.define([
 		S : "S"
 
 	};
+	DataType.registerEnum("sap.m.InputListItemContentSize", thisLib.InputListItemContentSize);
 
 	/**
 	 *
@@ -3630,7 +3631,6 @@ sap.ui.define([
 	/**
 	 * @enum {string}
 	 * @public
-	 * @experimental since version 1.26 !!! THIS TYPE IS ONLY FOR INTERNAL USE !!!
 	 */
 	thisLib.P13nConditionOperation = {
 		// filter operations

@@ -31,7 +31,11 @@ sap.ui.define([
 	 * @ui5-restricted sap.ui.comp.filterbar, sap.fe.templates.ListReport
 	 * @alias sap.ui.core.fieldhelp.FieldHelpCustomData
 	 */
-	const FieldHelpCustomData = CustomData.extend("sap.ui.core.fieldhelp.FieldHelpCustomData");
+	const FieldHelpCustomData = CustomData.extend("sap.ui.core.fieldhelp.FieldHelpCustomData", {
+		metadata: {
+			library: "sap.ui.core"
+		}
+	});
 
 	FieldHelpCustomData.DOCUMENTATION_REF_KEY = "sap-ui-DocumentationRef";
 

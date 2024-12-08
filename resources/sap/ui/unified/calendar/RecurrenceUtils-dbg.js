@@ -57,7 +57,7 @@ sap.ui.define([
 
 			const iDayInMilliseconds = 24 * 60 * 60 * 1000;
 			const isDateInRange = oCurrentDate >= oStartDate && oCurrentDate <= this.getRecurrenceEndDate();
-			const isWithCorrectPattern = ((oCurrentDate.getTime() - oStartDate.getTime()) / iDayInMilliseconds) % this.getRecurrencePattern() === 0;
+			const isWithCorrectPattern = Math.floor((oCurrentDate.getTime() - oStartDate.getTime()) / iDayInMilliseconds) % this.getRecurrencePattern() === 0;
 
 			return  isDateInRange && isWithCorrectPattern;
 		};
@@ -73,6 +73,8 @@ sap.ui.define([
 				iDuration -= (iTimeCell - iTimePart);
 			} else if (oNonWorkingPartDate.getHours() === oCellStartDate.getHours() && oNonWorkingPartDate.getMinutes() > 0) {
 				iDuration = oNonWorkingPart.getDurationInMinutes() + iCurrentPointInMinutes > 60 ? iMinutesInOneHours - iCurrentPointInMinutes : oNonWorkingPart.getDurationInMinutes();
+			} else if (oNonWorkingPartDate.getHours() === oCellStartDate.getHours() && oNonWorkingPart.getEndDate().getHours() <= oCellStartDate.getHours() + 1) {
+				iDuration = oNonWorkingPart.getDurationInMinutes();
 			} else {
 				iDuration = iMinutesInOneHours - iCurrentPointInMinutes;
 			}

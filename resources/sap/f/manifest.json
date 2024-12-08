@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.130.1"
+      "version": "1.131.1"
     },
     "title": "SAPUI5 library with Fiori controls.",
     "description": "SAPUI5 library with Fiori controls.",
@@ -22,16 +22,16 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.130",
+      "minUI5Version": "1.131",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.130.1"
+          "minVersion": "1.131.1"
         },
         "sap.ui.layout": {
-          "minVersion": "1.130.1"
+          "minVersion": "1.131.1"
         },
         "sap.m": {
-          "minVersion": "1.130.1"
+          "minVersion": "1.131.1"
         }
       }
     },
@@ -162,6 +162,7 @@
           "sap.f.AvatarColor",
           "sap.f.AvatarGroupType",
           "sap.f.CardBadgeVisibilityMode",
+          "sap.f.cards.SemanticRole",
           "sap.f.cards.HeaderPosition",
           "sap.f.cards.NumericHeaderSideIndicatorsAlignment",
           "sap.f.DynamicPageTitleArea",

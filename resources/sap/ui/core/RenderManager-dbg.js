@@ -241,7 +241,7 @@ sap.ui.define([
 	 *
 	 * @extends Object
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @alias sap.ui.core.RenderManager
 	 * @hideconstructor
 	 * @public
@@ -1987,6 +1987,9 @@ sap.ui.define([
 					};
 				}
 			);
+			/**
+			 * @deprecated As of version 1.120
+			 */
 			IconPool = sap.ui.requireSync("sap/ui/core/IconPool"); // legacy-relevant: Sync fallback
 		}
 

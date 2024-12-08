@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.dnd.DropInfo
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @public
 	 * @since 1.68

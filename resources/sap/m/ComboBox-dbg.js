@@ -106,7 +106,7 @@ sap.ui.define([
 		 * </ul>
 		 *
 		 * @author SAP SE
-		 * @version 1.130.1
+		 * @version 1.131.1
 		 *
 		 * @constructor
 		 * @extends sap.m.ComboBoxBase
@@ -1128,7 +1128,7 @@ sap.ui.define([
 					this.handleInlineListNavigation(sName);
 				} else {
 					var oSuggestionsPopover = this._getSuggestionsPopover();
-					oSuggestionsPopover && oSuggestionsPopover.handleListNavigation(this, oEvent, sName);
+					oSuggestionsPopover && oSuggestionsPopover.handleListNavigation(this, oEvent, !!this.getSelectedItem());
 				}
 
 				// mark the event for components that needs to know if the event was handled

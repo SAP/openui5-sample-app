@@ -145,7 +145,7 @@ function(
 	 * </ul>
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @extends sap.m.ComboBoxBase
@@ -3355,6 +3355,11 @@ function(
 		this._bPreventValueRemove = false;
 		// ToDo: Remove. Just for backwards compatibility with the runtime layer. When this change merges, we'd need to adjust the code in the runtime
 		this._oTokenizer = this._createTokenizer();
+
+		// Override "focusfail" handler, see sap.ui.core.Element#onfocusfail
+		// Disable handler since the MultiComboBox will handle the focus for the Tokenizer
+		this._oTokenizer.onfocusfail = function() {};
+
 		this.setAggregation("tokenizer", this._oTokenizer);
 		this._aInitiallySelectedItems = [];
 

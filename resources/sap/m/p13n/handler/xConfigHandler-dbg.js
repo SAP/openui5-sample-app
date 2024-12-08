@@ -100,7 +100,7 @@ sap.ui.define([
 
 		return {
 			"changeHandler": {
-				applyChange: function(oChange, oControl, mPropertyBag) {
+				applyChange: function (oChange, oControl, mPropertyBag) {
 					const sChangePersistenceIdentifier = oChange.getContent().persistenceIdentifier;
 					const oController = Engine.getInstance().getController(oControl, oChange.getChangeType(), sChangePersistenceIdentifier);
 					if (sChangePersistenceIdentifier && oController.getPersistenceIdentifier() !== sChangePersistenceIdentifier) {
@@ -109,8 +109,8 @@ sap.ui.define([
 
 					return fnQueueChange(oControl, () => {
 						return Engine.getInstance().readXConfig(oControl, {
-								propertyBag: mPropertyBag
-							})
+							propertyBag: mPropertyBag
+						})
 							.then(async (oPriorAggregationConfig) => {
 								const sOperation = getOperationType(oChange.getChangeType());
 								sAffectedAggregation = oChange.getContent().targetAggregation;
@@ -131,7 +131,7 @@ sap.ui.define([
 								}
 
 								if (!oPriorAggregationConfig) {
-									const aCurrentState = await xConfigAPI.getCurrentItemState(oControl, {propertyBag: mPropertyBag, changeType: oChange.getChangeType()}, oPriorAggregationConfig, sAffectedAggregation);
+									const aCurrentState = await xConfigAPI.getCurrentItemState(oControl, { propertyBag: mPropertyBag, changeType: oChange.getChangeType() }, oPriorAggregationConfig, sAffectedAggregation);
 									if (aCurrentState) {
 										const oStateItem = aCurrentState?.find((oItem, iIndex) => {
 											return oItem.key === oChange.getContent().key;
@@ -179,10 +179,10 @@ sap.ui.define([
 					});
 
 				},
-				completeChangeContent: function(oChange, mChangeSpecificInfo, mPropertyBag) {
+				completeChangeContent: function (oChange, mChangeSpecificInfo, mPropertyBag) {
 					// Not used, but needs to be there
 				},
-				revertChange: function(oChange, oControl, mPropertyBag) {
+				revertChange: function (oChange, oControl, mPropertyBag) {
 
 					const sOperation = getRevertOperationType(oChange.getChangeType());
 

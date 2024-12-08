@@ -206,7 +206,7 @@ sap.ui.define([
 	 * {@link sap.m.PlanningCalendarView PlanningCalendarView}'s properties.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -3876,8 +3876,24 @@ sap.ui.define([
 			for (var j = 0; j < aApps.length; j++) {
 				var oApp = Element.getElementById(aApps[j]);
 				if (oApp) {
+					var oAppColor = oApp.getColor(),
+						sBackgroundColor, oAppointmentDomRef, oAppointmentCont;
+
 					oApp.setProperty("selected", false, true);
 					oApp.$().removeClass("sapUiCalendarAppSel");
+
+					if (!oAppColor) {
+						continue;
+					}
+					sBackgroundColor = oApp._getCSSColorForBackground(oAppColor);
+
+					oAppointmentDomRef = oApp.getDomRef();
+					if (oAppointmentDomRef) {
+						oAppointmentCont = oAppointmentDomRef.querySelector('.sapUiCalendarAppCont');
+						if (oAppointmentCont) {
+							oAppointmentCont.style.backgroundColor = sBackgroundColor;
+						}
+					}
 				}
 
 			}
@@ -4353,12 +4369,15 @@ sap.ui.define([
 				width : {type : "sap.ui.core.CSSSize", group : "Appearance", defaultValue : null}
 			}
 		},
-		renderer: function(oRm, oControl) {
-			oRm.openStart("div", oControl);
-			oRm.style("width", oControl.getWidth());
-			oRm.class("sapUiCalendarRowAppsPlaceholder");
-			oRm.openEnd();
-			oRm.close("div");
+		renderer: {
+			apiVersion: 2,
+			render(oRm, oControl) {
+				oRm.openStart("div", oControl);
+				oRm.style("width", oControl.getWidth());
+				oRm.class("sapUiCalendarRowAppsPlaceholder");
+				oRm.openEnd();
+				oRm.close("div");
+			}
 		}
 	});
 

@@ -39,14 +39,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.f
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @since 1.44
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.f",
-		version: "1.130.1",
+		version: "1.131.1",
 		dependencies : ["sap.ui.core", "sap.m", "sap.ui.layout"],
 		designtime: "sap/f/designtime/library.designtime",
 		interfaces: [
@@ -64,6 +64,7 @@ sap.ui.define([
 			"sap.f.AvatarColor",
 			"sap.f.AvatarGroupType",
 			"sap.f.CardBadgeVisibilityMode",
+			"sap.f.cards.SemanticRole",
 			"sap.f.cards.HeaderPosition",
 			"sap.f.cards.NumericHeaderSideIndicatorsAlignment",
 			"sap.f.DynamicPageTitleArea",
@@ -508,7 +509,6 @@ sap.ui.define([
 	 *
 	 * @enum {string}
 	 * @public
-	 * @experimental Since 1.73.
 	 * @since 1.73
 	 */
 	thisLib.AvatarGroupType = {
@@ -583,7 +583,6 @@ sap.ui.define([
 	 *
 	 * @since 1.63
 	 * @name sap.f.IShellBar
-	 * @experimental Since 1.63, that provides only limited functionality. Also, it can be removed in future versions.
 	 * @public
 	 * @interface
 	 */
@@ -601,6 +600,29 @@ sap.ui.define([
 	 */
 
 	thisLib.cards = thisLib.cards || {};
+
+	 /**
+	 * Different options for the semantic role in controls that implement the {@link sap.f.ICard} interface.
+	 *
+	 * @enum {string}
+	 * @experimental
+	 * @public
+	 * @since 1.131
+	 */
+	 thisLib.cards.SemanticRole = {
+		/**
+		 * The card has no interactive elements.
+		 *
+		 * @public
+		 */
+		Region: "Region",
+		/**
+		 * The card has interactive elements.
+		 *
+		 * @public
+		 */
+		ListItem: "ListItem"
+	};
 
 	 /**
 	 * Different options for the position of the header in controls that implement the {@link sap.f.ICard} interface.
@@ -779,6 +801,7 @@ sap.ui.define([
 	* Register all of the above defined enums.
 	*/
 	DataType.registerEnum("sap.f.AvatarGroupType", thisLib.AvatarGroupType);
+	DataType.registerEnum("sap.f.cards.SemanticRole", thisLib.cards.SemanticRole);
 	DataType.registerEnum("sap.f.cards.HeaderPosition", thisLib.cards.HeaderPosition);
 	DataType.registerEnum("sap.f.cards.NumericHeaderSideIndicatorsAlignment", thisLib.cards.NumericHeaderSideIndicatorsAlignment);
 	DataType.registerEnum("sap.f.LayoutType", thisLib.LayoutType);

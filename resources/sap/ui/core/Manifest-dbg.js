@@ -165,7 +165,7 @@ sap.ui.define([
 	 * @class The Manifest class.
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @alias sap.ui.core.Manifest
 	 * @since 1.33.0
 	 */
@@ -445,7 +445,7 @@ sap.ui.define([
 
 			/**
 			 * Load JS files.
-			 * @eprecated As of version 1.94, standard dependencies should be used instead.
+			 * @deprecated As of version 1.94, standard dependencies should be used instead.
 			 */
 			if (mResources["js"]) {
 				var aJSResources = mResources["js"];

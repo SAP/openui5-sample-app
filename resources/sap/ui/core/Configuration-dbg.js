@@ -41,7 +41,7 @@ sap.ui.define([
 ) {
 	"use strict";
 
-	var oVersion = new Version("1.130.1");
+	var oVersion = new Version("1.131.1");
 	var oFormatSettings;
 
 	// Lazy dependency to core

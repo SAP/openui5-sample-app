@@ -70,7 +70,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IContextMenu
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -153,7 +153,16 @@ sap.ui.define([
 				 * Fired when the menu is closed.
 				 * @since 1.129
 				 */
-				closed: {}
+				closed: {},
+
+				/**
+				 * Fired before the menu is closed.
+				 * This event can be prevented which effectively prevents the menu from closing.
+				 * sinnce 1.131
+				 */
+				beforeClose : {
+					allowPreventDefault : true
+				}
 
 			}
 		},
@@ -310,7 +319,11 @@ sap.ui.define([
 		}
 
 		this.setHoveredItem(oItem);
-		oItem && oItem.focus(this);
+
+		var bShouldFocusItem = oItem && (oItem.getDomRef() !== document.activeElement);
+		if (bShouldFocusItem) {
+			oItem.focus(this);
+		}
 
 		this._openSubMenuDelayed(oItem);
 	};
@@ -954,7 +967,7 @@ sap.ui.define([
 			}
 		}
 
-		if (!isInMenuHierarchy) {
+		if (!isInMenuHierarchy && this.fireBeforeClose()) {
 			this.close();
 		}
 	};
@@ -982,7 +995,9 @@ sap.ui.define([
 			// This is a normal item -> Close all menus and fire event.
 			// Call Menu.prototype.close with argument value equal to "true"
 			// in order not to ignore the opener DOM reference
-			this.getRootMenu().close(true);
+			if (this.fireBeforeClose()) {
+				this.getRootMenu().close(true);
+			}
 
 			if (oItem._getItemSelectionMode && oItem._getItemSelectionMode() !== ItemSelectionMode.None) {
 				oItem.setSelected(!oItem.getSelected());

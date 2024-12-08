@@ -56,7 +56,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @public
 	 * @since 1.97
@@ -141,6 +141,7 @@ sap.ui.define([
 	Popup.prototype.init = function() {
 		Control.prototype.init.apply(this, arguments);
 		this._aPanels = [];
+		this._aCustomStyles = [];
 	};
 
 	/**
@@ -213,6 +214,11 @@ sap.ui.define([
 			const oPopup = this._createContainer(mSettings);
 			this.addDependent(oPopup);
 			this._oPopup = oPopup;
+			this._aCustomStyles.forEach((sStyleClass) => {
+				if (!this._oPopup.hasStyleClass(sStyleClass)) {
+					this._oPopup.addStyleClass(sStyleClass);
+				}
+			});
 		}
 
 		if (this.getMode() === "Dialog") {
@@ -233,6 +239,17 @@ sap.ui.define([
 		}
 
 		this._bIsOpen = true;
+	};
+
+	Popup.prototype.addStyleClass = function(sStyleClass) {
+		this._aCustomStyles.push(sStyleClass);
+		this._oPopup?.addStyleClass(sStyleClass);
+		return this;
+	};
+
+	Popup.prototype.removeStyleClass = function(sStyleClass) {
+		this._aCustomStyles.splice(this._aCustomStyles.indexOf(sStyleClass), 1);
+		this._oPopup?.removeStyleClass(sStyleClass);
 	};
 
 	/**
@@ -491,6 +508,7 @@ sap.ui.define([
 			this._oPopup.destroy();
 		}
 		this._aPanels = null;
+		this._aCustomStyles = null;
 	};
 
 	return Popup;

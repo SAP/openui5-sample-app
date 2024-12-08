@@ -69,7 +69,7 @@ sap.ui.define([
 	 * @alias sap.m.p13n.Engine
 	 * @extends sap.m.p13n.modules.AdaptationProvider
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @public
 	 * @since 1.104
 	 */
@@ -364,7 +364,6 @@ sap.ui.define([
 	 * registered controller key and an object matching the inner subcontroller logic.
 	 *
 	 * @public
-	 * @experimental Since 1.104. Please note that the API of this control is not yet finalized!
 	 *
 	 * @example {
 	 *		RegisteredSortControllerKey: [{
@@ -466,7 +465,6 @@ sap.ui.define([
 	 *  state object of the control.
 	 *
 	 * @public
-	 * @experimental Since 1.104. Please note that the API of this control is not yet finalized!
 	 * @param {sap.ui.core.Control} oControl The control instance implementing IxState to retrieve the externalized state
 	 *
 	 * @returns {Promise<sap.m.p13n.State>} A Promise resolving in the current control state
@@ -535,7 +533,7 @@ sap.ui.define([
 	 * @param {sap.ui.core.Control} mDiffParameters.control The control instance that should be adapted
 	 * @param {string} mDiffParameters.key The key used to retrieve the related controller
 	 * @param {object} mDiffParameters.state The state that is applied to the provided control instance
-	 * @param {sap.m.p13n.enum.ProcessingStrategy} [mDiffParameters.applyAbsolute] Determines about the comparison algorithm between two states
+	 * @param {sap.m.p13n.enums.ProcessingStrategy} [mDiffParameters.applyAbsolute] Determines about the comparison algorithm between two states
 	 * @param {boolean} [mDiffParameters.stateBefore] If the state should be diffed manually;
 	 * for example, if "A" exists in the control state, but is not mentioned in the new state provided in the
 	 * mDiffParameters.state then the absolute appliance decides whether to remove "A" or to keep it.
@@ -758,7 +756,7 @@ sap.ui.define([
 
 		const oControl = Engine.getControlInstance(vControl);
 		const oRegistryEntry = this._getRegistryEntry(vControl);
-		const sPersistenceIdentifier = mEnhanceConfig && mEnhanceConfig.value && mEnhanceConfig.value.controllerKey ? mEnhanceConfig.value.controllerKey : undefined;
+		const sPersistenceIdentifier = mEnhanceConfig?.value?.controllerKey ?? mEnhanceConfig?.value?.persistenceIdentifier;
 		mEnhanceConfig.currentState = Engine.getInstance().getController(oControl, mEnhanceConfig.changeType, sPersistenceIdentifier)?.getCurrentState();
 
 		return xConfigAPI.enhanceConfig(oControl, mEnhanceConfig)

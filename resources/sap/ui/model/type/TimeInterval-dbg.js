@@ -19,7 +19,7 @@ sap.ui.define(['./DateInterval', 'sap/ui/core/format/DateFormat'],
 	 * @extends sap.ui.model.type.DateInterval
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @public
 	 * @param {object} [oFormatOptions] Formatting options. For a list of all available options, see {@link sap.ui.core.format.DateFormat.getTimeInstance DateFormat}.

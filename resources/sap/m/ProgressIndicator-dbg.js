@@ -61,7 +61,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -76,6 +76,7 @@ sap.ui.define([
 			properties : {
 				/**
 				 * Switches enabled state of the control. Disabled fields have different colors, and cannot be focused.
+				 * @deprecated As of version 1.130 with no replacement.
 				 */
 				enabled : {type : "boolean", group : "Behavior", defaultValue : true},
 

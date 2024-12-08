@@ -3240,6 +3240,9 @@ sap.ui.define([
 	 *   If no back-end request is needed, the function is not called.
 	 * @param {boolean} [bIndexIsSkip]
 	 *   Whether <code>iIndex</code> is a raw $skip index
+	 * @param {function} [fnSeparateReceived]
+	 *   The function is called for each completed separate property request; may be omitted only if
+	 *   there are no separate properties
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise to be resolved with the requested range given as an OData response object (with
 	 *   "@odata.context" and the rows as an array in the property <code>value</code>, enhanced
@@ -3254,7 +3257,7 @@ sap.ui.define([
 	 * @see sap.ui.model.odata.v4.lib._Requestor#request
 	 */
 	_CollectionCache.prototype.read = function (iIndex, iLength, iPrefetchLength, oGroupLock,
-			fnDataRequested, bIndexIsSkip) {
+			fnDataRequested, bIndexIsSkip, fnSeparateReceived) {
 		var iCreatedPersisted = 0,
 			oElement,
 			aElementsRange,
@@ -3275,7 +3278,7 @@ sap.ui.define([
 		if (oPromise) {
 			return oPromise.then(function () {
 				return that.read(iIndex, iLength, iPrefetchLength, oGroupLock, fnDataRequested,
-					bIndexIsSkip);
+					bIndexIsSkip, fnSeparateReceived);
 			});
 		}
 
@@ -3316,7 +3319,7 @@ sap.ui.define([
 
 		aReadIntervals.forEach(function (oInterval) {
 				that.requestElements(oInterval.start, oInterval.end, oGroupLock.getUnlockedCopy(),
-					iTransientElements, fnDataRequested);
+					iTransientElements, fnDataRequested, fnSeparateReceived);
 				fnDataRequested = undefined;
 			});
 
@@ -3484,6 +3487,9 @@ sap.ui.define([
 	 *   The number of transient elements within the given group
 	 * @param {function} [fnDataRequested]
 	 *   The function is called when the back-end requests have been sent.
+	 * @param {function} [fnSeparateReceived]
+	 *   The function is called for each completed separate property request; may be omitted only if
+	 *   there are no separate properties
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise which is resolved without a defined result when the request is finished and
 	 *   rejected in case of error; if the request has been obsoleted by a {@link #reset} the error
@@ -3494,7 +3500,7 @@ sap.ui.define([
 	 * @private
 	 */
 	_CollectionCache.prototype.requestElements = function (iStart, iEnd, oGroupLock,
-			iTransientElements, fnDataRequested) {
+			iTransientElements, fnDataRequested, fnSeparateReceived) {
 		var oPromise,
 			oReadRequest = {
 				iEnd : iEnd,
@@ -3544,7 +3550,7 @@ sap.ui.define([
 			that.aReadRequests.splice(that.aReadRequests.indexOf(oReadRequest), 1);
 		});
 
-		this.requestSeparateProperties(iStart, iEnd, oPromise);
+		this.requestSeparateProperties(iStart, iEnd, oPromise, fnSeparateReceived);
 
 		// Note: oPromise MUST be a SyncPromise for performance reasons, see SyncPromise#all
 		this.fill(oPromise, iStart, iEnd);
@@ -3560,46 +3566,61 @@ sap.ui.define([
 	 * @param {number} iEnd
 	 *   The index after the last element
 	 * @param {sap.ui.base.SyncPromise} oMainPromise
-	 *   A promise which is resolved when the main request is finished
+	 *   A promise which is resolved when the main request is finished; the caller must take care of
+	 *   error handling
+	 * @param {function} [fnSeparateReceived]
+	 *   The function is called for each completed separate property request; may be omitted only if
+	 *   there are no separate properties
 	 * @returns {Promise<void>}
 	 *   A promise which is resolved without a defined result at no defined point in time
 	 *
 	 * @private
 	 */
 	_CollectionCache.prototype.requestSeparateProperties = async function (iStart, iEnd,
-			oMainPromise) {
+			oMainPromise, fnSeparateReceived) {
 		if (!this.aSeparateProperties.length) {
 			return;
 		}
 
 		// types are needed for selecting the key properties, see #getQueryString called by
 		// #getResourcePathWithQuery
-		const oTypes = await this.fetchTypes();
+		const mTypeForMetaPath = await this.fetchTypes();
 		const oReadRange = {start : iStart, end : iEnd};
-		const aRequestPromises = this.aSeparateProperties.map((sProperty) => {
-			this.mSeparateProperty2ReadRequest[sProperty].push(oReadRange);
-			return this.oRequestor.request("GET",
-				this.getResourcePathWithQuery(iStart, iEnd, sProperty),
-				this.oRequestor.lockGroup("$single", this));
-		});
+		this.aSeparateProperties.forEach(async (sProperty) => {
+			try {
+				this.mSeparateProperty2ReadRequest[sProperty].push(oReadRange);
+				const oResult = await this.oRequestor.request("GET",
+					this.getResourcePathWithQuery(iStart, iEnd, sProperty),
+					this.oRequestor.lockGroup("$single", this));
 
-		await oMainPromise;
-		aRequestPromises.forEach(async (oRequestPromise, i) => {
-			const oResult = await oRequestPromise;
-			const sProperty = this.aSeparateProperties[i];
-			const iRangeIndex = this.mSeparateProperty2ReadRequest[sProperty].indexOf(oReadRange);
-			if (iRangeIndex < 0) { // stop import after #reset
-				return;
-			}
-			this.mSeparateProperty2ReadRequest[sProperty].splice(iRangeIndex, 1);
-			this.visitResponse(oResult, oTypes, undefined, undefined, iStart);
-			for (const oSeparateData of oResult.value) {
-				const sPredicate = _Helper.getPrivateAnnotation(oSeparateData, "predicate");
-				const oElement = this.aElements.$byPredicate[sPredicate];
-				if (oElement) {
-					_Helper.updateSelected(this.mChangeListeners, sPredicate, oElement,
-						oSeparateData, [sProperty]);
+				let bMainFailed;
+				await oMainPromise.catch(() => { /* handled by caller */
+					bMainFailed = true;
+				});
+
+				const iIndex = this.mSeparateProperty2ReadRequest[sProperty].indexOf(oReadRange);
+				if (iIndex < 0) { // stop import after #reset
+					return;
 				}
+
+				this.mSeparateProperty2ReadRequest[sProperty].splice(iIndex, 1);
+				if (bMainFailed) {
+					return;
+				}
+
+				this.visitResponse(oResult, mTypeForMetaPath, undefined, undefined, iStart);
+				for (const oSeparateData of oResult.value) {
+					const sPredicate = _Helper.getPrivateAnnotation(oSeparateData, "predicate");
+					const oElement = this.aElements.$byPredicate[sPredicate];
+					if (oElement) {
+						_Helper.updateSelected(this.mChangeListeners, sPredicate, oElement,
+							oSeparateData, [sProperty]);
+					}
+				}
+				fnSeparateReceived(sProperty, iStart, iEnd);
+			} catch (oError) {
+				// do not clean up mSeparateProperty2ReadRequest to avoid late property requests
+				fnSeparateReceived(sProperty, iStart, iEnd, oError);
 			}
 		});
 	};

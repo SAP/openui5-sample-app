@@ -1,0 +1,1 @@
+{"version":3,"file":"clamp.js","names":["sap","ui","define","clamp","val","min","max","Math"],"sources":["clamp-dbg.js"],"mappings":";;;;;AAOAA,IAAIC,GAAGC,OAAO,GAAI,WACjB,aAWA,MAAMC,EAAQ,CAACC,EAAKC,EAAKC,IAEjBC,KAAKF,IAAIE,KAAKD,IAAIF,EAAKC,GAAME,KAAKD,IAAID,EAAKC,IAGnD,OAAOH,CACR","ignoreList":[]}

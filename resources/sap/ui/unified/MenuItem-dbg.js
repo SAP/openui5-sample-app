@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @implements sap.ui.unified.IMenuItem
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -80,6 +80,14 @@ sap.ui.define([
 			shortcutText : {type : "string", group : "Appearance", defaultValue : ''}
 
 		},
+		aggregations: {
+			/**
+			 * Defines the content that is displayed at the end of a menu item. This aggregation allows for the addition of custom elements, such as icons and buttons.
+			 * @experimental
+	 		 * @since 1.131
+			 */
+			endContent: {type: "sap.ui.core.Control", multiple : true, singularName : "endContent"}
+		},
 		associations : {
 
 			/**
@@ -103,6 +111,7 @@ sap.ui.define([
 			oSubMenu = oItem.getSubmenu(),
 			bIsEnabled = oItem.getEnabled(),
 			bIsSelected = oItem.getSelected() && oItem._getItemSelectionMode() !== ItemSelectionMode.None,
+			aEndContent = oItem.getEndContent(),
 			sShortcutText = oItem.getShortcutText(),
 			sRole,
 			oIcon;
@@ -201,12 +210,21 @@ sap.ui.define([
 			rm.openEnd();
 			rm.close("div");
 			rm.close("div");
-		} else if (bIsSelected) {
-			// Selection column
-			rm.openStart("div", this.getId() + "-sel");
-			rm.class("sapUiMnuItmSel");
-			rm.openEnd();
-			rm.close("div");
+		} else if (bIsSelected || aEndContent.length) {
+			if (aEndContent.length) {
+				rm.openStart("div", this.getId() + "-endContent");
+				rm.class("sapUiMnuEndContent");
+				rm.openEnd();
+				aEndContent.forEach((oEndContent) => rm.renderControl(oEndContent));
+				rm.close("div");
+			}
+			if (bIsSelected){
+				// Selection column
+				rm.openStart("div", this.getId() + "-sel");
+				rm.class("sapUiMnuItmSel");
+				rm.openEnd();
+				rm.close("div");
+			}
 		}
 
 		rm.close("li");

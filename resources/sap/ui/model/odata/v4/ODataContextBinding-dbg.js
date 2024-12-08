@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.130.1
+		 * @version 1.131.1
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
@@ -1565,6 +1565,11 @@ sap.ui.define([
 				bHasChangeListeners = oCache.hasChangeListeners();
 				// remove all cached Caches before fetching a new one
 				that.removeCachesAndMessages(sResourcePathPrefix);
+				if (that.mLateQueryOptions) {
+					// with a refresh, late properties become regular properties
+					that.mAggregatedQueryOptions = that.mLateQueryOptions;
+					that.mLateQueryOptions = undefined;
+				}
 				that.fetchCache(that.oContext, false, /*bKeepQueryOptions*/false,
 					bKeepCacheOnError ? sGroupId : undefined);
 				// Do not fire a change event, or else ManagedObject destroys and recreates the

@@ -8,17 +8,22 @@ sap.ui.define([
 	"sap/ui/core/InvisibleText",
 	"sap/f/CardRenderer",
 	"sap/ui/core/Lib",
-	"sap/f/cards/util/CardBadgeEnabler"
+	"sap/f/cards/util/CardBadgeEnabler",
+	"sap/f/library",
+	"sap/base/Log"
 ], function (
 	Control,
 	InvisibleText,
 	CardRenderer,
 	Library,
-	CardBadgeEnabler
+	CardBadgeEnabler,
+	library,
+	Log
 ) {
 	"use strict";
 
-	var BADGE_AUTOHIDE_TIME = 3000;
+	var BADGE_AUTOHIDE_TIME = 3000,
+		SemanticRole = library.cards.SemanticRole;
 
 	/**
 	 * Constructor for a new <code>CardBase</code>.
@@ -32,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -55,7 +60,14 @@ sap.ui.define([
 				/**
 				 * Defines the height of the card.
 				 */
-				height: {type: "sap.ui.core.CSSSize", group: "Appearance", defaultValue: "auto"}
+				height: {type: "sap.ui.core.CSSSize", group: "Appearance", defaultValue: "auto"},
+
+				/**
+				 * Defines the role of the Card Header.
+				 *
+				 * @experimental since 1.131
+				 */
+				semanticRole: { type: "sap.f.cards.SemanticRole", defaultValue: SemanticRole.Region}
 			},
 			aggregations: {
 
@@ -76,6 +88,14 @@ sap.ui.define([
 					multiple: false,
 					visibility: "hidden"
 				}
+			},
+			events: {
+				/**
+				 * Fired when action is added on card level.
+				 * Note: Can be used only if <code>semanticRole</code> is <code>sap.f.cards.SemanticRole.ListItem</code>.
+				 * @experimental since 1.131
+				 */
+				press: {}
 			}
 		},
 		renderer: CardRenderer
@@ -268,6 +288,38 @@ sap.ui.define([
 	};
 
 	/**
+	 * Listens for ontap event
+	 *
+	 * @param {object} oEvent event
+	 */
+	CardBase.prototype.ontap = function (oEvent) {
+		this._handleTapOrSelect(oEvent);
+	};
+
+	/**
+	 * Listens for onsapselect event
+	 *
+	 * @param {object} oEvent event
+	 */
+	CardBase.prototype.onsapselect = function (oEvent) {
+		this._handleTapOrSelect(oEvent);
+	};
+
+	/**
+	 * Handles interaction logic
+	 *
+	 * @param {object} oEvent event
+	 */
+	CardBase.prototype._handleTapOrSelect = function (oEvent) {
+		if (!this.isInteractive() || oEvent.isMarked() || this.getSemanticRole() !== SemanticRole.ListItem) {
+			return;
+		}
+
+		this.firePress();
+		oEvent.preventDefault();
+	};
+
+	/**
 	 * Returns if the control is inside a sap.f.GridContainer
 	 *
 	 * @private
@@ -288,6 +340,15 @@ sap.ui.define([
 		}
 
 		return null;
+	};
+
+	CardBase.prototype.isInteractive = function() {
+		const bIsInteractive = this.hasListeners("press");
+
+		if (bIsInteractive && this.getSemanticRole() !== SemanticRole.ListItem) {
+			Log.error("The full card cannot be interactive if the 'semanticRole' is not 'ListItem'", this);
+		}
+		return bIsInteractive;
 	};
 
 	return CardBase;

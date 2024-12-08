@@ -33,7 +33,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.SelectionController
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 * @public
 	 * @alias sap.m.p13n.SortController
 	 */

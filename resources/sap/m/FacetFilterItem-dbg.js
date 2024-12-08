@@ -20,7 +20,7 @@ sap.ui.define(['./ListItemBase', './library', './FacetFilterItemRenderer'],
 	 * @class
 	 * Represents a value for the {@link sap.m.FacetFilterList} control.
 	 * @extends sap.m.ListItemBase
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @constructor
 	 * @public
@@ -102,6 +102,14 @@ sap.ui.define(['./ListItemBase', './library', './FacetFilterItemRenderer'],
 		ListItemBase.prototype.exit.apply(this);
 
 		this.detachEvent("_change", this._itemTextChange);
+	};
+
+	/**
+	 * @protected
+	 * @override
+	 */
+	FacetFilterItem.prototype.getContentAnnouncement = function(oBundle) {
+		return this.getText() ? this.getText().concat(" . ") : "";
 	};
 
 	/**

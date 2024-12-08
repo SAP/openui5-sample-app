@@ -27,7 +27,7 @@ sap.ui.define([
 	 * @extends sap.m.MessageStrip
 	 *
 	 * @author SAP SE
-	 * @version 1.130.1
+	 * @version 1.131.1
 	 *
 	 * @private
          * @ui5-restricted sap.m.p13n, sap.ui.mdc
@@ -36,6 +36,7 @@ sap.ui.define([
 	 */
 	const AccessibleMessageStrip = MessageStrip.extend("sap.m.p13n.MessageStrip", {
 		metadata: {
+			library: "sap.m",
 			properties: {
 				/**
 				 * Defines whether the message strip should be announced when initalized.
