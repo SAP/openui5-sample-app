@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Unit tests for Todo App</title>
+
+    <script
+      id="sap-ui-bootstrap"
+      src="/resources/sap-ui-core.js"
+      data-sap-ui-theme="sap_horizon"
+      data-sap-ui-resource-roots='{
+		"sap.ui.demo.todo": "../../../",
+		"test-resources.sap.ui.demo.todo": "../"
+		}'
+      data-sap-ui-language="EN"
+      data-sap-ui-logLevel="ERROR"
+      data-sap-ui-compat-version="edge"
+      data-sap-ui-async="true"
+    ></script>
+
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/resources/sap/ui/thirdparty/qunit-2.css"
+    />
+
+    <script defer src="/resources/sap/ui/thirdparty/qunit-2.js"></script>
+    <script defer src="/resources/sap/ui/thirdparty/sinon.js"></script>
+    <script defer src="/resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+	<script defer src="unitTests.qunit.js"></script>
+  </head>
+  <body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+  </body>
+</html>

@@ -7,6 +7,8 @@ export default [
         languageOptions: {
             globals: {
                 ...globals.browser,
+				...globals.mocha,
+				...globals.qunit,
                 sap: "readonly"
             },
             ecmaVersion: 2023,
