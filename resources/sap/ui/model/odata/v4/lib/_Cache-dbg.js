@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -758,13 +758,14 @@ sap.ui.define([
 				}
 			}
 
-			const aSeparateRequestRanges = that.mSeparateProperty2ReadRequest?.[sSegment];
+			const aSeparateRequestRanges = that.mSeparateProperty2ReadRequests?.[sSegment];
 			if (aSeparateRequestRanges) {
 				// separate properties always operate on entities of that.aElements
 				const iIndex = that.aElements.indexOf(oValue);
-				if (aSeparateRequestRanges.some(
-						(oRange) => iIndex >= oRange.start && iIndex < oRange.end)) {
-					return undefined; // separate property request still pending
+				const oRange = aSeparateRequestRanges.find(
+					(oRange0) => iIndex >= oRange0.start && iIndex < oRange0.end);
+				if (oRange) {
+					return oRange.promise; // separate property request still pending
 				}
 			}
 
@@ -878,6 +879,25 @@ sap.ui.define([
 						vValue[sSegment] = {};
 					}
 					vValue = vValue[vIndex];
+				}
+				if (aSegments.length === 1 && oGroupLock !== _GroupLock.$cached
+						&& that.mSeparateProperty2ReadRequests) {
+					// a single segment is just a key predicate => vValue is a complete entity;
+					// separate properties always operate on entities of that.aElements
+					const iIndex = that.aElements.indexOf(vValue);
+					const aSeparatePromises = [];
+					for (const sProperty in that.mSeparateProperty2ReadRequests) {
+						const oRange = that.mSeparateProperty2ReadRequests[sProperty]
+							.find((oRange0) => iIndex >= oRange0.start && iIndex < oRange0.end);
+						if (oRange) {
+							aSeparatePromises.push(oRange.promise);
+						}
+					}
+					if (aSeparatePromises.length) {
+						return Promise.all(aSeparatePromises).then(function () {
+							return step(oParentValue);
+						});
+					}
 				}
 				// missing advertisement or annotation is not an error
 				if (vValue === undefined && sSegment[0] !== "#" && sSegment[0] !== "@") {
@@ -1209,11 +1229,14 @@ sap.ui.define([
 	 *   The list's path relative to the cache; may be empty, but not <code>undefined</code>
 	 * @param {object} [mCustomQueryOptions]
 	 *   The custom query options, needed iff. a non-empty path is given
+	 * @param {object} [mAdditionalExpand]
+	 *   Additional query options to be added even for an empty path; should contain exactly one
+	 *   $expand
 	 * @returns {string} The download URL
 	 *
 	 * @public
 	 */
-	_Cache.prototype.getDownloadUrl = function (sPath, mCustomQueryOptions) {
+	_Cache.prototype.getDownloadUrl = function (sPath, mCustomQueryOptions, mAdditionalExpand) {
 		var mQueryOptions = this.mQueryOptions;
 
 		if (sPath) {
@@ -1222,11 +1245,15 @@ sap.ui.define([
 			// add the custom query options again
 			mQueryOptions = _Helper.merge({}, mCustomQueryOptions, mQueryOptions);
 		}
+
+		mQueryOptions = _Helper.merge({}, mQueryOptions, mAdditionalExpand);
+
 		return this.oRequestor.getServiceUrl()
 			+ _Helper.buildPath(this.sResourcePath, sPath)
 			+ this.oRequestor.buildQueryString(
 				_Helper.buildPath(this.sMetaPath, _Helper.getMetaPath(sPath)),
-				this.getDownloadQueryOptions(mQueryOptions), false, true);
+				this.getDownloadQueryOptions(mQueryOptions), false, /*bSortExpandSelect*/true,
+				/*bSortSystemQueryOptions*/!_Helper.isEmptyObject(mAdditionalExpand));
 	};
 
 	/**
@@ -2597,9 +2624,9 @@ sap.ui.define([
 		this.aReadRequests = [];
 		this.aSeparateProperties = aSeparateProperties ?? []; // properties to be loaded separately
 		// maps separate property to an array of requested $skip/$top ranges (see aReadRequests)
-		this.mSeparateProperty2ReadRequest = {};
+		this.mSeparateProperty2ReadRequests = {};
 		this.aSeparateProperties.forEach((sProperty) => {
-			this.mSeparateProperty2ReadRequest[sProperty] = [];
+			this.mSeparateProperty2ReadRequests[sProperty] = [];
 		});
 		this.bServerDrivenPaging = false;
 		this.oSyncPromiseAll = undefined;
@@ -3541,7 +3568,7 @@ sap.ui.define([
 			return that.handleCount(oGroupLock, iTransientElements, oReadRequest.iStart,
 				oReadRequest.iEnd, aResult[0], iFiltered);
 		}).catch(function (oError) {
-			if (!oError.canceled) {
+			if (!oError.canceled && !oReadRequest.bObsolete) {
 				that.checkRange(oPromise, oReadRequest.iStart, oReadRequest.iEnd);
 				that.fill(undefined, oReadRequest.iStart, oReadRequest.iEnd);
 			}
@@ -3585,10 +3612,24 @@ sap.ui.define([
 		// types are needed for selecting the key properties, see #getQueryString called by
 		// #getResourcePathWithQuery
 		const mTypeForMetaPath = await this.fetchTypes();
-		const oReadRange = {start : iStart, end : iEnd};
 		this.aSeparateProperties.forEach(async (sProperty) => {
+			let fnResolve;
+			let fnReject;
+			const oReadRange = {
+				start : iStart,
+				end : iEnd,
+				promise : new SyncPromise(function (resolve, reject) {
+					fnResolve = resolve;
+					fnReject = function () {
+						const oError = new Error("$$separate: canceled " + sProperty);
+						oError.canceled = true;
+						reject(oError);
+					};
+				})
+			};
+			oReadRange.promise.catch(() => { /* avoid "Uncaught (in promise)" */ });
 			try {
-				this.mSeparateProperty2ReadRequest[sProperty].push(oReadRange);
+				this.mSeparateProperty2ReadRequests[sProperty].push(oReadRange);
 				const oResult = await this.oRequestor.request("GET",
 					this.getResourcePathWithQuery(iStart, iEnd, sProperty),
 					this.oRequestor.lockGroup("$single", this));
@@ -3598,13 +3639,15 @@ sap.ui.define([
 					bMainFailed = true;
 				});
 
-				const iIndex = this.mSeparateProperty2ReadRequest[sProperty].indexOf(oReadRange);
+				const iIndex = this.mSeparateProperty2ReadRequests[sProperty].indexOf(oReadRange);
 				if (iIndex < 0) { // stop import after #reset
+					fnReject();
 					return;
 				}
 
-				this.mSeparateProperty2ReadRequest[sProperty].splice(iIndex, 1);
+				this.mSeparateProperty2ReadRequests[sProperty].splice(iIndex, 1);
 				if (bMainFailed) {
+					fnReject();
 					return;
 				}
 
@@ -3617,9 +3660,11 @@ sap.ui.define([
 							oSeparateData, [sProperty]);
 					}
 				}
+				fnResolve();
 				fnSeparateReceived(sProperty, iStart, iEnd);
 			} catch (oError) {
-				// do not clean up mSeparateProperty2ReadRequest to avoid late property requests
+				fnReject();
+				// do not clean up mSeparateProperty2ReadRequests to avoid late property requests
 				fnSeparateReceived(sProperty, iStart, iEnd, oError);
 			}
 		});
@@ -3841,8 +3886,8 @@ sap.ui.define([
 		this.aReadRequests?.forEach((oReadRequest) => {
 			oReadRequest.bObsolete = true;
 		});
-		for (const sProperty in this.mSeparateProperty2ReadRequest) {
-			this.mSeparateProperty2ReadRequest[sProperty] = [];
+		for (const sProperty in this.mSeparateProperty2ReadRequests) {
+			this.mSeparateProperty2ReadRequests[sProperty] = [];
 		}
 		if (mChangeListeners[""]) {
 			this.mChangeListeners[""] = mChangeListeners[""];
@@ -4200,8 +4245,8 @@ sap.ui.define([
 	 * @param {object} [oEntity]
 	 *   The entity which contains the ETag to be sent as "If-Match" header with the POST request.
 	 * @param {boolean} [bIgnoreETag]
-	 *   Whether the entity's ETag should be actively ignored (If-Match:*); used only in case an
-	 *   entity is given and an ETag is present
+	 *   Whether the entity's ETag should be actively ignored (If-Match:*); used only in case no
+	 *   entity is given or an ETag is present
 	 * @param {function} [fnOnStrictHandlingFailed]
 	 *   If this callback is given, then the preference "handling=strict" is applied.
 	 *   If the request fails with an error having <code>oError.strictHandlingFailed</code> set,
@@ -4223,9 +4268,7 @@ sap.ui.define([
 	_SingleCache.prototype.post = function (oGroupLock, oData, oEntity, bIgnoreETag,
 			fnOnStrictHandlingFailed, fnGetOriginalResourcePath) {
 		var sGroupId,
-			mHeaders = oEntity
-				? {"If-Match" : bIgnoreETag && "@odata.etag" in oEntity ? "*" : oEntity}
-				: {},
+			mHeaders = {},
 			sHttpMethod = "POST",
 			oRequestLock,
 			that = this;
@@ -4246,10 +4289,16 @@ sap.ui.define([
 			return SyncPromise.all([
 				that.oRequestor.request(sHttpMethod,
 					that.sResourcePath + that.sQueryString, oGroupLock0, mHeaders, oData,
-					oEntity && sGroupId !== "$single" && onSubmit),
+					oEntity && sGroupId !== "$single" && onSubmit, undefined, undefined, "R#V#C"),
 				that.fetchTypes()
 			]).then(function (aResult) {
 				that.buildOriginalResourcePath(aResult[0], aResult[1], fnGetOriginalResourcePath);
+				const aHeaderMessages = _Helper.getPrivateAnnotation(aResult[0], "headerMessages");
+				if (aHeaderMessages) {
+					that.oRequestor.getModelInterface().reportTransitionMessages(aHeaderMessages,
+						that.sResourcePath, /*bSilent*/false, that.sOriginalResourcePath);
+					_Helper.deletePrivateAnnotation(aResult[0], "headerMessages");
+				}
 				that.visitResponse(aResult[0], aResult[1]);
 				if (that.mQueryOptions && that.mQueryOptions.$select) {
 					// add "@$ui5.noData" annotations, e.g. for missing Edm.Stream properties
@@ -4311,10 +4360,17 @@ sap.ui.define([
 			}
 		}
 
-		this.bSentRequest = true;
+		if (oEntity && !("@odata.etag" in oEntity)) {
+			bIgnoreETag = false;
+		}
+		if (bIgnoreETag || oEntity) {
+			mHeaders["If-Match"] = bIgnoreETag ? "*" : oEntity;
+		}
 		if (fnOnStrictHandlingFailed) {
 			mHeaders["Prefer"] = "handling=strict";
 		}
+
+		this.bSentRequest = true;
 		this.oPromise = post(oGroupLock);
 
 		return this.oPromise;

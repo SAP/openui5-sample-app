@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -98,7 +98,7 @@ sap.ui.define([
 		 * the support is disabled.
 		 *
 		 * @return {string[]} The support settings.
-		 * @experimental
+		 * @private
 		 * @since 1.120.0
 		 */
 		getSupportSettings() {
@@ -115,7 +115,7 @@ sap.ui.define([
 		 * the test recorder is disabled.
 		 *
 		 * @return {string[]} The test recorder settings.
-		 * @experimental
+		 * @private
 		 * @since 1.120.0
 		 */
 		getTestRecorderSettings() {

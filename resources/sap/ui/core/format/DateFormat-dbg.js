@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -346,7 +346,8 @@ sap.ui.define([
 	 * DateFormat.getDateTimeWithTimezoneInstance({showDate: false, showTime: false}).format(oDate, "America/New_York");
 	 * // output: "Americas, New York"
 	 *
-	 * @param {Date} oJSDate The date to format
+	 * @param {Date} [oJSDate] The date to format. If it is <code>null</code> or <code>undefined</code> only the
+	 *   timezone will be formatted, any other invalid date is formatted as empty string.
 	 * @param {string} [sTimezone] The IANA timezone ID in which the date will be calculated and
 	 *   formatted e.g. "America/New_York". If the parameter is omitted, <code>null</code> or an empty string, the
 	 *   timezone will be taken from {@link module:sap/base/i18n/Localization.getTimezone Localization.getTimezone}.
@@ -2418,9 +2419,9 @@ sap.ui.define([
 			}
 		} else {
 			if (!isValidDateObject(vJSDate)) {
-				// Although an invalid date was given, the DATETIME_WITH_TIMEZONE instance might
-				// have a pattern with the timezone (VV) inside then the IANA timezone ID is returned
-				if (this.type === mDateFormatTypes.DATETIME_WITH_TIMEZONE && this.oFormatOptions.pattern.includes("VV")) {
+				const bNullish = vJSDate === undefined || vJSDate === null;
+				if (bNullish && this.type === mDateFormatTypes.DATETIME_WITH_TIMEZONE
+						&& this.oFormatOptions.pattern.includes("VV")) {
 					return this.oLocaleData.getTimezoneTranslations()[sTimezone] || sTimezone;
 				}
 				Log.error("The given date instance isn't valid.");
@@ -2438,7 +2439,7 @@ sap.ui.define([
 
 		// Support Japanese Gannen instead of Ichinen for first year of the era
 		if (sCalendarType === CalendarType.Japanese && this.oLocale.getLanguage() === "ja") {
-			sResult = sResult.replace(/(^|[^\d])1年/g, "$1元年");
+			sResult = sResult.replace(/(^|\D)1\u5e74/g, "$1\u5143\u5e74");
 		}
 
 		return sResult;
@@ -2904,7 +2905,7 @@ sap.ui.define([
 
 		// Support Japanese Gannen instead of Ichinen for first year of the era
 		if (sCalendarType === CalendarType.Japanese && this.oLocale.getLanguage() === "ja") {
-			sValue = sValue.replace(/元年/g, "1年");
+			sValue = sValue.replace(/\u5143\u5e74/g, "1\u5e74");
 		}
 
 		if (!this.oFormatOptions.interval) {

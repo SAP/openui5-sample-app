@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -104,7 +104,7 @@ function(
 		 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
 		 *
 		 * @author SAP SE
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 *
 		 * @constructor
 		 * @public
@@ -116,7 +116,8 @@ function(
 
 				interfaces: [
 					"sap.ui.core.IFormContent",
-					"sap.ui.core.ISemanticFormContent"
+					"sap.ui.core.ISemanticFormContent",
+					"sap.m.IToolbarInteractiveControl"
 				],
 				library: "sap.m",
 				properties: {
@@ -426,6 +427,19 @@ function(
 				sNewValueFixedPoint = this.toFixed(fValue, this.getDecimalPrecisionOfNumber(this.getStep()));
 
 			return Number(sNewValueFixedPoint);
+		};
+
+		/**
+		 * Required by the {@link sap.m.IToolbarInteractiveControl} interface.
+		 * Determines if the Control is interactive.
+		 *
+		 * @returns {boolean} If it is an interactive Control
+		 *
+		 * @private
+		 * @ui5-restricted sap.m.OverflowToolBar, sap.m.Toolbar
+		 */
+		Slider.prototype._getToolbarInteractive = function () {
+			return true;
 		};
 
 		/**

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([],
@@ -23,14 +23,17 @@ function() {
 	 */
 	SinglePlanningCalendarRenderer.render = function(oRm, oCalendar){
 		var oHeader = oCalendar._getHeader(),
-			oGrid = oCalendar._getCurrentGrid();
+			oGrid = oCalendar._getCurrentGrid(),
+			sTitleId = `${oHeader.getId()}-Title`;
 
 		oRm.openStart("div", oCalendar);
 		oRm.accessibilityState({
 			role: "region",
 			roledescription: oCalendar._oRB.getText("SPC_CONTROL_NAME"),
 			labelledby: {
-				value: oHeader.getId() + "-Title " + oGrid.getId() + "-nowMarkerText",
+				value: oGrid.isA("sap.m.SinglePlanningCalendarGrid")
+					? `${sTitleId} ${oGrid.getId()}-nowMarkerText`
+					: `${sTitleId}`,
 				append: true
 			}
 		});

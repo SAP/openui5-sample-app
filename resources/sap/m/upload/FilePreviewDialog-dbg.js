@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -16,8 +16,11 @@ sap.ui.define([
 	"sap/m/IllustratedMessageType",
 	"sap/m/Carousel",
 	"sap/base/Log",
-	"sap/ui/core/Lib"
-], function(Core, Element, HTML, Button, Image, PDFViewer, Dialog, IllustratedMessage, IllustratedMessageType, Carousel, Log, Library) {
+	"sap/ui/core/Lib",
+	"sap/m/VBox",
+	"sap/m/Bar",
+	"sap/m/Title"
+], function(Core, Element, HTML, Button, Image, PDFViewer, Dialog, IllustratedMessage, IllustratedMessageType, Carousel, Log, Library, VBox, Bar, Title) {
 	"use strict";
 
 	// get resource translation bundle;
@@ -67,7 +70,7 @@ sap.ui.define([
 	 * @constructor
 	 * @public
 	 * @since 1.120
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @extends sap.ui.core.Element
 	 * @name sap.m.upload.FilePreviewDialog
 	 */
@@ -99,12 +102,23 @@ sap.ui.define([
 
 		_items: [],
 
+		_aCachedPageIndexs: [],
+
 		init: function () {
 			this._oRichTextEditor = null;
 			this._oDialog = null;
 			this._oViewer = null;
 			this._oContentResource = null;
 			this._oCarouselItems = null;
+		},
+
+		exit: function () {
+			this._oRichTextEditor = null;
+			this._oDialog = null;
+			this._oViewer = null;
+			this._oContentResource = null;
+			this._oCarouselItems = null;
+			this._aCachedPageIndexs = [];
 		},
 
 		/**
@@ -118,8 +132,9 @@ sap.ui.define([
 				if (!this._oDialog) {
 					this._oDialog = this._createDialog();
 				} else {
+					var oTitle = this._oDialog?.getCustomHeader()?.getContentLeft()[0];
 					// Sets the title of the dialog to the currently previewed item filename.
-					this._oDialog.setTitle(this._previewItem?.getFileName() || "");
+					oTitle?.setText(this._previewItem?.getFileName() || "");
 					// Removes all the existing content and set the new content on the dialog.
 					this._oDialog.removeAllContent();
 					this._oDialog.insertContent(this._oCarousel);
@@ -264,66 +279,29 @@ sap.ui.define([
 			const oPreviewItem = this._previewItem;
 			let aItems = this._oCarouselItems = !this.getShowCarouselArrows() ? [this._previewItem] : this._items;
 			let sActivePageId = "";
+			let oActivePage = null;
 			aItems = aItems?.filter((oItem) => oItem?.isA("sap.m.upload.UploadSetwithTableItem") || oItem?.isA("sap.m.upload.UploadItem"));
 			const aPagePromises = aItems.map(async (oItem) => {
-				const sMediaType = oItem.getMediaType();
 
-				const sFileName = oItem.getFileName();
-				let oPage = this._createIllustratedMessage(sFileName);
+				let oPage = null;
 
-				if (oItem.getPreviewable() && this.isFileSizeWithinMaxLimit(oItem)) {
-					switch (sMediaType?.toLowerCase()) {
-						case PreviewableMediaType.Png:
-						case PreviewableMediaType.Bmp:
-						case PreviewableMediaType.Jpeg:
-						case PreviewableMediaType.Gif: {
-							oPage = new Image({
-								src: oItem.getUrl()
-							});
-							break;
-						}
-						case PreviewableMediaType.Txt: {
-							const oRte = await this._createRichTextEditor(oItem);
-							if (oRte) {
-								oPage = oRte;
-							}
-							break;
-						}
-						case PreviewableMediaType.Pdf:
-						case PreviewableMediaType.ChromePdf: {
-							oPage = new PDFViewer({
-								source: oItem.getUrl(),
-								showDownloadButton: false,
-								isTrustedSource: oItem?.getIsTrustedSource()
-							});
-							oPage.setBusy(true);
-							break;
-						}
-						case PreviewableMediaType.Mpeg:
-						case PreviewableMediaType.Mp4:
-						case PreviewableMediaType.Quicktime:
-						case PreviewableMediaType.MsVideo: {
-							oPage = new HTML({
-								content: `<video controls width='100%' height='100%' src=${oItem.getUrl()}>`
-							});
-							break;
-						}
-						case PreviewableMediaType.Tiff:
-						case PreviewableMediaType.Vds: {
-							const oVdsViewer = await this._createVdsViewer(oItem);
-							if (oVdsViewer) {
-								oPage = oVdsViewer;
-							}
-							break;
-						}
-						default:
-							break;
-					}
+				if (oItem?.getId() === oPreviewItem.getId() && oItem.getPreviewable() && this.isFileSizeWithinMaxLimit(oItem)) {
+					const oPageContent  = await this.getPageContent(oItem);
+					oPage = this._getContainerControl(oPageContent);
+				} else {
+					const oPlaceHolderControl = this._getPlaceHolderControl(oItem);
+					oPage = this._getContainerControl(oPlaceHolderControl);
 				}
 
 				oPage = !this.isFileSizeWithinMaxLimit(oItem) ? this._getMaxSizePageIllustration(oItem) : oPage;
 
 				sActivePageId = oItem?.getId() === oPreviewItem?.getId() ? oPage?.getId() : sActivePageId;
+
+				oActivePage =  oItem?.getId() === oPreviewItem?.getId() ? oPage : oActivePage;
+
+				if (oItem?.getId() === oPreviewItem?.getId()) {
+					this._aCachedPageIndexs.push(this.get);
+				}
 
 				return oPage;
 			});
@@ -337,14 +315,33 @@ sap.ui.define([
 				],
 				activePage: sActivePageId,
 				height: "85vh",
-				pageChanged: (oEvent) => {
+				pageChanged: async (oEvent) => {
 					const iIndex = aPages.findIndex(function(oPage) {
 						return oPage.sId === oEvent.getParameter("newActivePageId");
 					});
+					const oTargetPage = oCarousel.getPages()[iIndex];
+					// if the page is not cached, load the content and cache it.
+					if (!this._aCachedPageIndexs.includes(iIndex)) {
+						const oControl = await this.getPageContent(aItems[iIndex], aPages[iIndex]);
+						oTargetPage.removeAllItems();
+						oTargetPage.addItem(oControl);
+						this._aCachedPageIndexs.push(iIndex);
+					 }
+					// oCarousel.setActivePage(oTargetPage);
+
 					const sNewDialogTitle = aItems[iIndex].getFileName();
-					this._oDialog.setTitle(sNewDialogTitle);
+
+					var oTitle = this._oDialog?.getCustomHeader()?.getContentLeft()[0];
+					oTitle?.setText(sNewDialogTitle);
 				}
 			});
+
+			if (oActivePage && sActivePageId) {
+				const sActivePageIndex = oCarousel?.indexOfPage(oActivePage);
+				if (sActivePageIndex > -1) {
+					this._aCachedPageIndexs?.push(sActivePageIndex);
+				}
+			}
 
 			// prevent all swipe related events so carousel movement is disabled.
 			if (!this.getShowCarouselArrows()) {
@@ -356,6 +353,83 @@ sap.ui.define([
 			return oCarousel;
 		},
 
+		getPageContent: async function(oItem, oNewPage) {
+
+			const sMediaType = oItem.getMediaType();
+
+			let oPage = this._createIllustratedMessage(oItem.getFileName());
+
+			switch (sMediaType?.toLowerCase()) {
+				case PreviewableMediaType.Png:
+				case PreviewableMediaType.Bmp:
+				case PreviewableMediaType.Jpeg:
+				case PreviewableMediaType.Gif: {
+					const oPage = new Image({
+						src: oItem.getUrl()
+					});
+
+					return oPage;
+				}
+				case PreviewableMediaType.Txt: {
+					const oRte = await this._createRichTextEditor(oItem);
+					if (oRte) {
+						oPage = oRte;
+					}
+					return oPage;
+				}
+				case PreviewableMediaType.Pdf:
+				case PreviewableMediaType.ChromePdf: {
+					oPage = new PDFViewer({
+						source: oItem.getUrl(),
+						showDownloadButton: false,
+						isTrustedSource: oItem?.getIsTrustedSource()
+					});
+					oPage.setBusy(true);
+					return oPage;
+				}
+				case PreviewableMediaType.Mpeg:
+				case PreviewableMediaType.Mp4:
+				case PreviewableMediaType.Quicktime:
+				case PreviewableMediaType.MsVideo: {
+					const oPage = new HTML({
+						content: `<video controls width='100%' height='100%' src=${oItem.getUrl()}>`
+					});
+					return oPage;
+				}
+				case PreviewableMediaType.Tiff:
+				case PreviewableMediaType.Vds: {
+					const oVdsViewer = await this._createVdsViewer(oItem);
+					if (oVdsViewer) {
+						oPage = oVdsViewer;
+						return oPage;
+					}
+					break;
+				}
+				default:
+					return oPage;
+			}
+
+			return oPage;
+		},
+
+		_getPlaceHolderControl: function(oItem) {
+			return this._createIllustratedMessage(oItem.getFileName());
+		},
+
+		_getContainerControl: function(oItem) {
+			const oContainer = new VBox({
+				items: [
+					oItem
+				],
+				fitContainer: true,
+				alignItems: "Center",
+				justifyContent: "Center",
+				alignContent: "Center",
+				renderType: "Bare"
+			});
+			return oContainer;
+		},
+
 		/**
 		 * Creates a {@link sap.m.Dialog} with {@link sap.m.Carousel} for previewing uploaded files.
 		 * @return {sap.m.Dialog} The {@link sap.m.Dialog} control.
@@ -364,7 +438,9 @@ sap.ui.define([
 		_createDialog: function() {
 			const oActiveItem = this._getActiveUploadSetwithTableItem();
 			const oDialog = new Dialog({
-				title: oActiveItem.getFileName(),
+				customHeader: new Bar({
+					contentLeft: [new Title({ text:  oActiveItem.getFileName()}).addStyleClass("sapMDialogTitle")]
+				}),
 				content: this._oCarousel,
 				horizontalScrolling: false,
 				verticalScrolling: false,
@@ -381,7 +457,9 @@ sap.ui.define([
 					new Button({
 						text: oLibraryResourceBundle.getText("UPLOAD_SET_TABLE_FILE_PREVIEW_DIALOG_CLOSE"),
 						press: () => {
+							this._oCarousel.destroyPages();
 							this._oDialog.close();
+							this._aCachedPageIndexs = [];
 						}
 					})
 				]
@@ -421,7 +499,7 @@ sap.ui.define([
 			const oIllustratedMessage = new IllustratedMessage({
 				illustrationType: IllustratedMessageType.NoData,
 				title: oItem?.getFileName(),
-				description: oLibraryResourceBundle.getText("FILE_PREVIEW_DIALOG_MAX_PREVIEW_SIZE_EXCEEDED", this.getMaxFileSizeforPreview()),
+				description: oLibraryResourceBundle.getText("FILE_PREVIEW_DIALOG_MAX_PREVIEW_SIZE_EXCEEDED", [this.getMaxFileSizeforPreview()]),
 				enableVerticalResponsiveness: true
 			});
 			return oIllustratedMessage;

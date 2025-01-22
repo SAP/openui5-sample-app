@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -82,7 +82,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -333,6 +333,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Tokenizer.prototype._handleNMoreIndicatorPress = function () {
+		this._bIsOpenedByNMoreIndicator = true;
 		this._togglePopup(this.getTokensPopup());
 	};
 
@@ -526,6 +527,12 @@ sap.ui.define([
 					iWidestElement += Math.ceil(iWidestElement * ( 1 - fRatio ));
 					oPopup.setContentWidth(iWidestElement + "px");
 				});
+			}, this)
+			.attachAfterClose(function () {
+				if (this.getTokens().length && this._bIsOpenedByNMoreIndicator) {
+					this.getTokens()[0].focus();
+				}
+				this._bIsOpenedByNMoreIndicator = false;
 			}, this);
 
 		this.addDependent(this._oPopup);
@@ -643,7 +650,7 @@ sap.ui.define([
 		}
 
 		var iTokenizerWidth = this._getPixelWidth(),
-			aTokens = this._getVisibleTokens().reverse(),
+			aTokens = this._getVisibleTokens(),
 			iTokensCount = aTokens.length,
 			iLabelWidth, iFreeSpace,
 			iCounter, iFirstTokenToHide = -1;

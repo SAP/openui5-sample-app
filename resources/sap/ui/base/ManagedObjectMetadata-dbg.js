@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -79,7 +79,7 @@ function(
 	 *
 	 *
 	 * @author Frank Weigel
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @since 0.8.6
 	 * @alias sap.ui.base.ManagedObjectMetadata
 	 * @extends sap.ui.base.Metadata
@@ -1342,9 +1342,9 @@ function(
 	 *
 	 * @private
 	 * @ui5-restricted SAPUI5 Distribution Layer Libraries
-	 * @experimental As of 1.54, this method is still in an experimental state. Its signature might change or it might be removed
-	 *   completely. Controls should prefer to declare aggregation forwarding in the metadata for the aggregation. See property
-	 *   <code>forwarding</code> in the documentation of {@link sap.ui.base.ManagedObject.extend ManagedObject.extend}.
+	 *
+	 * Controls should prefer to declare aggregation forwarding in the metadata for the aggregation. See property
+	 * <code>forwarding</code> in the documentation of {@link sap.ui.base.ManagedObject.extend ManagedObject.extend}.
 	 */
 	ManagedObjectMetadata.prototype.forwardAggregation = function(sForwardedSourceAggregation, mOptions) {
 

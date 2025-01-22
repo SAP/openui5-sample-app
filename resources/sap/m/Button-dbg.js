@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -59,6 +59,9 @@ sap.ui.define([
 	// shortcut for sap.m.BadgeState
 	var BadgeState = library.BadgeState;
 
+	// shortcut for sap.m.BadgeStyle
+	var BadgeStyle = library.BadgeStyle;
+
 	// shortcut for sap.ui.core.aria.HasPopup
 	var AriaHasPopup = coreLibrary.aria.HasPopup;
 
@@ -98,7 +101,7 @@ sap.ui.define([
 	 * @mixes sap.ui.core.ContextMenuSupport
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -206,7 +209,18 @@ sap.ui.define([
 				 *
 				 * @private
 				 */
-				accesskey: { type: "string", defaultValue: "", visibility: "hidden" }
+				accesskey: { type: "string", defaultValue: "", visibility: "hidden" },
+
+				/**
+				 * Determines the style in which the badge notification will be represented:
+				 * <ul>
+				 * <li><code>BadgeStyle.Default</code> Use for badges that contain numbers </li>
+				 * <li><code>BadgeStyle.Attention</code> This badge is rendered as a single dot designed to capture user attention </li>
+				 * </ul>
+				 * @since 1.132.0
+				 */
+				badgeStyle: {type: "sap.m.BadgeStyle", group : "Misc", defaultValue: BadgeStyle.Default }
+
 
 			},
 			associations : {
@@ -266,7 +280,8 @@ sap.ui.define([
 
 		this.initBadgeEnablement({
 			position: "topRight",
-			selector: {suffix: "inner"}
+			selector: {suffix: "inner"},
+			style: this.getBadgeStyle()
 		});
 		this._oBadgeData = {
 			value: "",
@@ -277,6 +292,13 @@ sap.ui.define([
 		this._badgeMaxValue = BADGE_MAX_VALUE;
 
 		AccessKeysEnablement.registerControl(this);
+	};
+
+	Button.prototype.setBadgeStyle = function(sValue) {
+		this._oBadgeConfig.style = sValue;
+		this.setProperty("badgeStyle", sValue);
+
+		return this;
 	};
 
 	//Formatter callback of the badge pre-set value, before it is visualized

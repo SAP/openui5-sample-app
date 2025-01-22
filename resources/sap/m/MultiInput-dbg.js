@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -110,7 +110,7 @@ function(
 	* @extends sap.m.Input
 	*
 	* @author SAP SE
-	* @version 1.131.1
+	* @version 1.132.1
 	*
 	* @constructor
 	* @public
@@ -277,9 +277,9 @@ function(
 
 		// Override "focusfail" handler, see sap.ui.core.Element#onfocusfail
 		oTokenizer.onfocusfail = function() {
-			// Check if tokens are updated via binding and the delete key was pressed
-			if (that.bTokensUpdated && that.bDeletePressed) {
-				// If both conditions are true, do nothing further. The MultiInput will handle the focus for the tokenizer.
+			// Check if tokens are updated via binding
+			if (that.bTokensUpdated) {
+				// The MultiInput will handle the focus for the tokenizer.
 				return undefined;
 			} else {
 				return Element.prototype.onfocusfail.apply(this, arguments);

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -74,7 +74,7 @@ sap.ui.define([
 	 * </pre>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @author SAP SE
 	 * @public
 	 * @since 1.124
@@ -898,7 +898,7 @@ sap.ui.define([
 		if (oCharacterRegex.test(sValue)) {
 			oInput.setShowValueStateMessage(true);
 			oInput.setProperty("valueState", "Error", true);
-			oInput.setValueStateText(this._oRb.getText("UPLOADSET_WITH_TABLE_DOCUMENT_RENAME_SPLC_VALIDATION_ERROR_MESSAGE", '@#$'));
+			oInput.setValueStateText(this._oRb.getText("UPLOADSET_WITH_TABLE_DOCUMENT_RENAME_SPLC_VALIDATION_ERROR_MESSAGE", ['@#$']));
 		} else {
 			oInput.setShowValueStateMessage(false);
 			oInput.setProperty("valueState", "None", true);

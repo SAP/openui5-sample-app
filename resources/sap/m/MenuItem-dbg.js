@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -37,7 +37,7 @@ sap.ui.define([
 		 * @implements sap.m.IMenuItem
 		 *
 		 * @author SAP SE
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 *
 		 * @constructor
 		 * @public
@@ -96,7 +96,6 @@ sap.ui.define([
 
 				/**
 				 * Defines the content that is displayed at the end of a menu item. This aggregation allows for the addition of custom elements, such as icons and buttons.
-				 * @experimental
 	 			 * @since 1.131
 				 */
 				endContent: { type: "sap.ui.core.Control", multiple : true }

@@ -1,6 +1,6 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -258,7 +258,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -556,7 +556,6 @@ sap.ui.define([
 	 * @returns {string} component preload mode
 	 * @private
 	 * @ui5-restricted sap.ui.core, sap.ui.fl
-	 * @experimental Might change completely.
 	 * @since 1.120.0
 	 */
 	Component.getComponentPreloadMode = function() {
@@ -1136,7 +1135,7 @@ sap.ui.define([
 		}
 
 		// create all models which are not created, yet.
-		var mCreatedModels = Component._createManifestModels(mModelConfigurations, this._componentConfig);
+		var mCreatedModels = Component._createManifestModels(mModelConfigurations, this._componentConfig, this.getManifestObject());
 		for (sModelName in mCreatedModels) {
 			// keep the model instance to be able to destroy the created models on component destroy
 			this._mManifestModels[sModelName] = mCreatedModels[sModelName];
@@ -2158,10 +2157,11 @@ sap.ui.define([
 	 *
 	 * @param {object} mModelConfigurations key-value configuration object created via {@link sap.ui.core.Component._createManifestModelConfigurations}
 	 * @param {object} oConfig see <code>sap.ui.component</code> / <code>sap.ui.component.load</code>
+	 * @param {object} oManifest The manifest object
 	 * @returns {object} key-value map with model name as key and model instance as value
 	 * @private
 	 */
-	Component._createManifestModels = function(mModelConfigurations, oConfig) {
+	Component._createManifestModels = function(mModelConfigurations, oConfig, oManifest) {
 		var mModels = {};
 		for (var sModelName in mModelConfigurations) {
 			var oModelConfig = mModelConfigurations[sModelName];
@@ -2189,7 +2189,20 @@ sap.ui.define([
 
 			// Call hook and provide model instance, manifest model ID to UI5 flex lib
 			if (oModel.isA("sap.ui.model.odata.v2.ODataModel") || oModel.isA("sap.ui.model.odata.v4.ODataModel")) {
-				ComponentHooks.onModelCreated.execute(oModel, sModelName, oConfig);
+				const oInfo = {
+					factoryConfig: oConfig,
+					manifest: oManifest,
+					model: oModel,
+					modelId: sModelName
+				};
+				const oOwnerComponent = Component.getComponentById(ManagedObject._sOwnerId);
+				if (oOwnerComponent) {
+					oInfo.owner = {
+						id: ManagedObject._sOwnerId,
+						config: oOwnerComponent._componentConfig
+					};
+				}
+				ComponentHooks.onModelCreated.execute(oInfo);
 			}
 
 			// add model instance to the result map
@@ -3426,7 +3439,7 @@ sap.ui.define([
 								activeTerminologies: aActiveTerminologies
 							});
 
-							mModels = Component._createManifestModels(mAllModelConfigurations, oConfig);
+							mModels = Component._createManifestModels(mAllModelConfigurations, oConfig, oManifest);
 						}
 
 						return oManifest;

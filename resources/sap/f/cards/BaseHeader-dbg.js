@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -10,6 +10,7 @@ sap.ui.define([
 	"sap/ui/core/format/DateFormat",
 	"sap/ui/core/date/UniversalDate",
 	"sap/ui/core/library",
+	"sap/ui/events/KeyCodes",
 	"sap/m/library",
 	"sap/m/Text",
 	"sap/f/cards/util/addTooltipIfTruncated"
@@ -20,6 +21,7 @@ sap.ui.define([
 	DateFormat,
 	UniversalDate,
 	coreLibrary,
+	KeyCodes,
 	mLibrary,
 	Text,
 	addTooltipIfTruncated
@@ -47,10 +49,11 @@ sap.ui.define([
 	 * Provides basic functionality for header controls that can be used in <code>sap.f.Card</code.
 	 *
 	 * @extends sap.ui.core.Control
+	 * @implements sap.m.IBar
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -60,6 +63,7 @@ sap.ui.define([
 	var BaseHeader = Control.extend("sap.f.cards.BaseHeader", {
 		metadata: {
 			library: "sap.f",
+			interfaces: ["sap.m.IBar"],
 			"abstract" : true,
 			properties: {
 				/**
@@ -158,9 +162,25 @@ sap.ui.define([
 				 * @since 1.118
 				 */
 				bannerLines: { type: "sap.m.Text", group: "Appearance", multiple: true  }
+			},
+			events: {
+				/**
+				 * Fires when the user presses the control.
+				 */
+				press: {}
 			}
 		}
 	});
+
+	BaseHeader.prototype._setRootAccessibilityRole = function () {
+		// Do nothing. The sap.f.BaseHeader has the heading role already.
+	};
+	BaseHeader.prototype._setRootAriaLevel = function () {
+		// Do nothing. The sap.f.BaseHeader has aria-level set by headingLevel already.
+	};
+	BaseHeader.prototype._applyContextClassFor = function () {
+		// Do nothing. The sap.f.BaseHeader does not differ based on context classes.
+	};
 
 	BaseHeader.prototype.init = function () {
 		this._oRb = Library.getResourceBundleFor("sap.f");
@@ -217,6 +237,15 @@ sap.ui.define([
 	};
 
 	/**
+	 * Gets the id of the title element. Can be used for aria-labelledby.
+	 * @ui5-restricted sap.ui.integration
+	 * @returns {string} The id of the title element.
+	 */
+	BaseHeader.prototype.getTitleId = function () {
+		return null; // must override in Header and NumericHeader
+	};
+
+	/**
 	 * If the header must be rendered as <code>a</code> element.
 	 * @returns {boolean} True if the header must be rendered as <code>a</code> element.
 	 */
@@ -224,26 +253,46 @@ sap.ui.define([
 		return !!this.getHref();
 	};
 
-	BaseHeader.prototype.ontap = function (oEvent) {
-		this._handleTapOrSelect(oEvent);
-	};
-
-	BaseHeader.prototype.onsapselect = function (oEvent) {
-		this._handleTapOrSelect(oEvent);
-	};
-
-	BaseHeader.prototype._handleTapOrSelect = function (oEvent) {
-		if (!this.isInteractive() || this._isInsideToolbar(oEvent.target)) {
+	BaseHeader.prototype.onkeydown = function (oEvent) {
+		if (oEvent.key !== "Enter" && oEvent.keyCode !== KeyCodes.ENTER) {
 			return;
 		}
 
+		if (!this._hasModifierKeys(oEvent)) {
+			this._handleTap(oEvent);
+		}
+	};
+
+	BaseHeader.prototype.onkeyup = function (oEvent) {
+		if (oEvent.key !== " " && oEvent.keyCode !== KeyCodes.SPACE) {
+			return;
+		}
+
+		if (!this._hasModifierKeys(oEvent)) {
+			this._handleTap(oEvent);
+		}
+	};
+
+	BaseHeader.prototype.ontap = function (oEvent) {
 		if (this.isLink() && oEvent.ctrlKey) {
 			// ctrl + click should open the link in a new tab
 			return;
 		}
 
-		this.firePress();
+		this._handleTap(oEvent);
+	};
+
+	BaseHeader.prototype._handleTap = function (oEvent) {
+		if (!this.isInteractive() || this._isInsideToolbar(oEvent.target)) {
+			return;
+		}
+
+		this.firePress({
+			originalEvent: oEvent
+		});
+
 		oEvent.preventDefault();
+		oEvent.stopPropagation();
 	};
 
 	/**
@@ -469,6 +518,10 @@ sap.ui.define([
 		if (this.getProperty("useTooltips")) {
 			addTooltipIfTruncated(oText);
 		}
+	};
+
+	BaseHeader.prototype._hasModifierKeys = function (oEvent) {
+		return oEvent.shiftKey || oEvent.altKey || oEvent.ctrlKey || oEvent.metaKey;
 	};
 
 	return BaseHeader;

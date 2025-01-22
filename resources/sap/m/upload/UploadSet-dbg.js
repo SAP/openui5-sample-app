@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -56,7 +56,7 @@ sap.ui.define([
 	 * but it also helps to avoid template-related issues and ensures better data handling.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -782,12 +782,12 @@ sap.ui.define([
 		var sNoDataText = "";
 		var oIllustratedMessage = this.getAggregation("illustratedMessage");
 		if (!sText) {
-			sNoDataText = oIllustratedMessage.getTitle() + " " + this.getUploadEnabled() ? oIllustratedMessage.getDescription() : " ";
+			sNoDataText = oIllustratedMessage.getTitle() + " " + (this.getUploadEnabled() ? oIllustratedMessage.getDescription() : " ");
 		} else if (sText) {
 			if (bIsDescription) {
 				sNoDataText = oIllustratedMessage.getTitle() + " " + sText;
 			} else {
-				sNoDataText = sText + " " + this.getUploadEnabled() ? oIllustratedMessage.getDescription() : " ";
+				sNoDataText = sText + " " + (this.getUploadEnabled() ? oIllustratedMessage.getDescription() : " ");
 			}
 		}
 		return sNoDataText;
@@ -1623,7 +1623,7 @@ sap.ui.define([
 		if (!oItem.getFileName()) {
 			sMessageText = this._oRb.getText("UPLOAD_SET_DELETE_WITHOUT_FILE_NAME_TEXT");
 		} else {
-			sMessageText = this._oRb.getText("UPLOAD_SET_DELETE_TEXT", oItem.getFileName());
+			sMessageText = this._oRb.getText("UPLOAD_SET_DELETE_TEXT", [oItem.getFileName()]);
 		}
 		this._oItemToBeDeleted = UploadSetItem._findById(oItem.getId(), this._getAllItems());
 		MessageBox.warning(sMessageText, {

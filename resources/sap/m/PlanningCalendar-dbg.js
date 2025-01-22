@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -206,7 +206,7 @@ sap.ui.define([
 	 * {@link sap.m.PlanningCalendarView PlanningCalendarView}'s properties.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -1468,6 +1468,7 @@ sap.ui.define([
 			this._observeHeaderTitleText(oContent);
 			this._getHeader().setTitle(oContent.getText());
 			oContent.setVisible(false);
+			this.addAriaLabelledBy(oContent.getId());
 		}
 		this.addAggregation("toolbarContent", oContent);
 
@@ -1479,6 +1480,7 @@ sap.ui.define([
 			this._observeHeaderTitleText(oContent);
 			this._getHeader().setTitle(oContent.getText());
 			oContent.setVisible(false);
+			this.addAriaLabelledBy(oContent.getId());
 		}
 		this.insertAggregation("toolbarContent", oContent, iIndex);
 
@@ -3775,8 +3777,8 @@ sap.ui.define([
 
 
 	/**
-	 * Holds the selected appointments. If no appointments are selected, an empty array is returned.
-	 * @returns {sap.ui.unified.CalendarAppointment[]} Array of IDs of selected appointments
+	 * Returns the IDs of the selected appointments. If no appointments are selected, an empty array is returned.
+	 * @returns {string[]} Array with the IDs of the selected appointments
 	 * @since 1.54
 	 * @public
 	 */

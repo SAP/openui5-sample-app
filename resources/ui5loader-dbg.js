@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -2357,7 +2357,6 @@
 	 * @param {boolean} [bPreloadGroup=true] whether the name specifies a preload group, defaults to true
 	 * @param {boolean} [bUnloadAll] Whether all matching resources should be unloaded, even if they have been executed already.
 	 * @param {boolean} [bDeleteExports] Whether exports (global variables) should be destroyed as well. Will be done for UI5 module names only.
-	 * @experimental Since 1.16.3 API might change completely, apps must not develop against it.
 	 * @private
 	 */
 	function unloadResources(sName, bPreloadGroup, bUnloadAll, bDeleteExports) {
@@ -2680,7 +2679,7 @@
 	/**
 	 * Root namespace for JavaScript functionality provided by SAP SE.
 	 *
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @namespace
 	 * @public
 	 * @name sap

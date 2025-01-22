@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/ui/core/ControlBehavior","sap/ui/core/library","sap/ui/core/Configuration"],function(t,e,n){"use strict";var i=e.Orientation;var a={};a.render=function(e,a){var o=a.getId();var r=a.getOrientation()==i.Vertical;e.write("<div");e.writeControlData(a);e.addClass("sapUiUfdSpltCont");e.addClass("sapUiUfdSpltCont"+(r?"V":"H"));if(t.getAnimationMode()!==n.AnimationMode.none){e.addClass("sapUiUfdSpltContAnim")}if(!a.getShowSecondaryContent()){e.addClass("sapUiUfdSpltContPaneHidden")}e.writeClasses();e.write(">");var d=o+"-canvas";e.write("<section id='",d,"' class='sapUiUfdSpltContCanvas'>");this.renderContent(e,d,a.getContent(),a._bRootContent);e.write("</section>");var s=o+"-pane";var C=a.getShowSecondaryContent()?a.getSecondaryContentSize():"0";e.write("<aside id='",s);e.write("'");e.addStyle("width",C);e.writeStyles();e.addClass("sapUiUfdSpltContPane");if(!a.getShowSecondaryContent()){e.addClass("sapUiUfdSplitContSecondClosed")}e.writeClasses();e.write(">");this.renderContent(e,s,a.getSecondaryContent(),a._bRootContent);e.write("</aside>");e.write("</div>")};a.renderContent=function(t,e,n,i){t.write("<div id='",e,"cntnt' class='sapUiUfdSpltContCntnt'");if(i){t.writeAttribute("data-sap-ui-root-content","true")}t.write(">");for(var a=0;a<n.length;a++){t.renderControl(n[a])}t.write("</div>")};return a},true);

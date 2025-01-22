@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -104,20 +104,6 @@ sap.ui.define([
 		});
 
 		oRm.openEnd(); // div element
-
-		if (oMonth.getIntervalSelection()) {
-			oRm.openStart("span", sId + "-Start");
-			oRm.style("display", "none");
-			oRm.openEnd();
-			oRm.text(rb.getText("CALENDAR_START_DATE"));
-			oRm.close("span");
-
-			oRm.openStart("span", sId + "-End");
-			oRm.style("display", "none");
-			oRm.openEnd();
-			oRm.text(rb.getText("CALENDAR_END_DATE"));
-			oRm.close("span");
-		}
 
 		this.renderMonth(oRm, oMonth, oDate);
 
@@ -247,11 +233,22 @@ sap.ui.define([
 				oRm.style("width", sWidth);
 			}
 			oRm.accessibilityState(null, {
-				role: "columnheader",
-				label: aWeekDaysWide[(i + iStartDay) % 7]
+				role: "columnheader"
 			});
 			oRm.openEnd(); // div element
+
+			oRm.openStart("span");
+			oRm.attr("aria-hidden", "true");
+			oRm.openEnd();
 			oRm.text(aWeekDays[(i + iStartDay) % 7]);
+			oRm.close("span");
+
+			oRm.openStart("span");
+			oRm.class("sapUiPseudoInvisibleText");
+			oRm.openEnd();
+			oRm.text(aWeekDaysWide[(i + iStartDay) % 7]);
+			oRm.close("span");
+
 			oRm.close("div");
 		}
 
@@ -331,8 +328,14 @@ sap.ui.define([
 		oRm.class("sapUiCalDummy");
 		oRm.style("visibility", bVisible ? "visible" : "hidden");
 		oRm.attr("role", sRole);
-		oRm.attr("aria-label", Library.getResourceBundleFor("sap.ui.unified").getText("CALENDAR_WEEK"));
 		oRm.openEnd();
+
+		oRm.openStart("span");
+		oRm.class("sapUiPseudoInvisibleText");
+		oRm.openEnd();
+		oRm.text(Library.getResourceBundleFor("sap.ui.unified").getText("CALENDAR_WEEK"));
+		oRm.close("span");
+
 		oRm.close('div');
 	};
 
@@ -377,7 +380,7 @@ sap.ui.define([
 				iFirstDayOfWeek: oMonth._getFirstDayOfWeek(),
 				iWeekendStart: oLocaleData.getWeekendStart(),
 				iWeekendEnd: oLocaleData.getWeekendEnd(),
-				aNonWorkingDays: oMonth._getNonWorkingDays() || [],
+				aNonWorkingDays: oMonth._getNonWorkingDays(),
 				sToday: oLocaleData.getRelativeDay(0),
 				oToday: CalendarDate.fromLocalJSDate(UI5Date.getInstance(), oMonth.getPrimaryCalendarType()),
 				sId: oMonth.getId(),
@@ -439,7 +442,7 @@ sap.ui.define([
 		var bShouldBeMarkedAsSpecialDate = oMonth._isSpecialDateMarkerEnabled(oDay);
 		const sFirstSpecialDateType = aDayTypes.length > 0 && aDayTypes[0].type;
 		const sSecondaryDateType = aDayTypes.length > 0 && aDayTypes[0].secondaryType;
-		const bIsWeekend = oHelper.aNonWorkingDays.length
+		const bIsWeekend = oHelper.aNonWorkingDays && oHelper.aNonWorkingDays instanceof Array
 			? oHelper.aNonWorkingDays.some((iNonWorkingDay) => oDay.getDay() === iNonWorkingDay)
 			: CalendarUtils._isWeekend(oDay, oMonth._getLocaleData());
 		const bNonWorkingWeekend =  sFirstSpecialDateType !== CalendarDayType.Working
@@ -449,6 +452,8 @@ sap.ui.define([
 			|| sSecondaryDateType === CalendarDayType.NonWorking || bNonWorkingWeekend;
 		const bFilteredByTypeOrColor = !!(sSpecialDateTypeFilter || sSpecialDateColorFilter) && (sSpecialDateTypeFilter !== CalendarDayType.None || sSpecialDateColorFilter) ;
 		const sNonWorkingDayText = oMonth._oUnifiedRB.getText("LEGEND_NON_WORKING_DAY");
+		const sStartDateText = InvisibleText.getStaticId("sap.ui.unified", "CALENDAR_START_DATE");
+		const sEndDateText = InvisibleText.getStaticId("sap.ui.unified", "CALENDAR_END_DATE");
 		const aTooltipTexts = [];
 
 		// Days before 0001.01.01 should be disabled.
@@ -482,20 +487,20 @@ sap.ui.define([
 		}
 		if (iSelected === 2) {
 			oRm.class("sapUiCalItemSelStart"); // interval start
-			mAccProps["describedby"] = mAccProps["describedby"] + " " + oHelper.sId + "-Start";
+			mAccProps["describedby"] = `${mAccProps["describedby"]} ${sStartDateText}`.trim();
 		} else if (iSelected === 3) {
 			oRm.class("sapUiCalItemSelEnd"); // interval end
-			mAccProps["describedby"] = mAccProps["describedby"] + " " + oHelper.sId + "-End";
+			mAccProps["describedby"] = `${mAccProps["describedby"]} ${sEndDateText}`.trim();
 		} else if (iSelected === 4) {
 			oRm.class("sapUiCalItemSelBetween"); // interval between
 		} else if (iSelected === 5) {
 			oRm.class("sapUiCalItemSelStart"); // interval start
 			oRm.class("sapUiCalItemSelEnd"); // interval end
-			mAccProps["describedby"] = mAccProps["describedby"] + " " + oHelper.sId + "-Start";
-			mAccProps["describedby"] = mAccProps["describedby"] + " " + oHelper.sId + "-End";
+			mAccProps["describedby"] = `${mAccProps["describedby"]} ${sStartDateText}`.trim();
+			mAccProps["describedby"] = `${mAccProps["describedby"]} ${sEndDateText}`.trim();
 		}
 
-		if (this.renderWeekNumbers && oMonth._oDate) {
+		if (this.renderWeekNumbers && oMonth.getShowWeekNumbers() && oMonth._oDate) {
 			// TODO: We could replace the following lines with a sap.ui.unified.calendar.CalendarUtils.calculateWeekNumber usage
 			// once the same method starts to respect the sap/ui/core/date/CalendarWeekNumbering types.
 			const oWeekConfig = CalendarDateUtils.getWeekConfigurationValues(oMonth.getCalendarWeekNumbering(), new Locale(oMonth._getLocale()));

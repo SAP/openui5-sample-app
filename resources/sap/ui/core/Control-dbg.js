@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -84,7 +84,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @alias sap.ui.core.Control
 	 */
 	var Control = Element.extend("sap.ui.core.Control", /** @lends sap.ui.core.Control.prototype */ {
@@ -409,13 +409,15 @@ sap.ui.define([
 	 * Note that this method can only be called when the control already has a DOM representation (it has
 	 * been rendered before) and when the control still is assigned to a UIArea.
 	 *
-	 * @deprecated As of 1.70, using this method is no longer recommended, but still works. Synchronous DOM
-	 *   updates via this method have several drawbacks: they only work when the control has been rendered
-	 *   before (no initial rendering possible), multiple state changes won't be combined automatically into
-	 *   a single re-rendering, they might cause additional layout trashing, standard invalidation might
-	 *   cause another async re-rendering.
+	 * @deprecated As of 1.70, using this method is no longer recommended, but calling it still
+	 * causes a re-rendering of the control. Synchronous DOM updates via this method have several
+	 * drawbacks: they only work when the control has been rendered before (no initial rendering
+	 * possible), multiple state changes won't be combined automatically into a single re-rendering,
+	 * they might cause additional layout thrashing, standard invalidation might cause another
+	 * async re-rendering.
 	 *
-	 *   The recommended alternative is to rely on invalidation and standard re-rendering.
+	 * The recommended alternative is to rely on invalidation and standard re-rendering.
+	 *
 	 * @protected
 	 */
 	Control.prototype.rerender = function() {

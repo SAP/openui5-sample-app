@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -72,7 +72,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -390,7 +390,8 @@ function(
 	};
 
 	ListItemBase.prototype.getGroupAnnouncement = function() {
-		return this.$().prevAll(".sapMGHLI:first").text();
+		const oList = this.getList();
+		return oList?.getAriaRole() === "listbox" ? this.$().prevAll(".sapMGHLI:first").text() : "";
 	};
 
 	ListItemBase.prototype.getAccessibilityDescription = function(oBundle) {
@@ -424,9 +425,10 @@ function(
 		if (sType == ListItemType.Navigation) {
 			aOutput.push(oBundle.getText("LIST_ITEM_NAVIGATION"));
 		} else if (sType == ListItemType.Active || sType == ListItemType.DetailAndActive) {
-				aOutput.push(oBundle.getText("LIST_ITEM_ACTIVE"));
-			}
+			aOutput.push(oBundle.getText("LIST_ITEM_ACTIVE"));
+		}
 
+		// Do not announce group header if List
 		var sGroupAnnouncement = this.getGroupAnnouncement() || "";
 		if (sGroupAnnouncement) {
 			aOutput.push(sGroupAnnouncement);

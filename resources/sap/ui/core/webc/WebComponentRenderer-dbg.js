@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -269,11 +269,13 @@ function(Element, Control, hyphenate) {
 			if (oPropData._fnMappingFormatter) {
 				vPropValue = oWebComponent[oPropData._fnMappingFormatter].call(oWebComponent, vPropValue);
 			}
+			// WebComponentMetadata defines the render output, e.g. { mapping: { slotName: "valueStateMessage", to: "div", ... } }
 			var sTag = oPropData._sMapTo ? oPropData._sMapTo : "span";
+			const sSlotName = oPropData._sSlotName || sPropName;
 
 			if (vPropValue) {
 				oRm.openStart(sTag);
-				oRm.attr("slot", sPropName);
+				oRm.attr("slot", sSlotName);
 				oRm.openEnd();
 				oRm.text(vPropValue);
 				oRm.close(sTag);

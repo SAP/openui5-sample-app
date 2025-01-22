@@ -1,6 +1,6 @@
 /*!
 * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
 */
 
@@ -18,7 +18,7 @@ sap.ui.define([
 	'sap/m/Button',
 	'sap/m/ResponsivePopover',
 	'sap/m/HyphenationSupport',
-	"./ExpandableTextRenderer"
+	'./ExpandableTextRenderer'
 ],
 function(library,
 		 Control,
@@ -102,10 +102,10 @@ function(library,
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.core.IFormContent, sap.m.IHyphenation
+	 * @implements sap.ui.core.IFormContent, sap.m.IHyphenation, sap.ui.core.ILabelable
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -117,7 +117,8 @@ function(library,
 
 			interfaces: [
 				"sap.ui.core.IFormContent",
-				"sap.m.IHyphenation"
+				"sap.m.IHyphenation",
+				"sap.ui.core.ILabelable"
 			],
 			library: "sap.m",
 			properties: {
@@ -243,6 +244,16 @@ function(library,
 		}
 
 		return this.getDomRef("string");
+	};
+
+	/**
+	 * Returns if the control can be bound to a label
+	 *
+	 * @returns {boolean} <code>true</code> if the control can be bound to a label
+	 * @public
+	 */
+	ExpandableText.prototype.hasLabelableHTMLElement = function () {
+		return false;
 	};
 
 	/**

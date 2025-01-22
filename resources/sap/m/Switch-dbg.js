@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -52,7 +52,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 *
 		 * @constructor
 		 * @public
@@ -180,10 +180,6 @@ function(
 			this.getDomRef("handle").setAttribute("data-sap-ui-swt", b ? this._sOn : this._sOff);
 		};
 
-		Switch.prototype._getInvisibleElement = function(){
-			return this.$("invisible");
-		};
-
 		Switch.prototype.getInvisibleElementId = function() {
 			return this.getId() + "-invisible";
 		};
@@ -194,20 +190,11 @@ function(
 
 			switch (this.getType()) {
 				case SwitchType.Default:
-					if (bState) {
-						sText = this.getCustomTextOn().trim() || oBundle.getText("SWITCH_ON");
-					} else {
-						sText = this.getCustomTextOff().trim() || oBundle.getText("SWITCH_OFF");
-					}
+					sText = bState ? this.getCustomTextOn().trim() : this.getCustomTextOff().trim();
 					break;
 
 				case SwitchType.AcceptReject:
-					if (bState) {
-						sText = oBundle.getText("SWITCH_ARIA_ACCEPT");
-					} else {
-						sText = oBundle.getText("SWITCH_ARIA_REJECT");
-					}
-
+					sText = bState ? oBundle.getText("SWITCH_ARIA_ACCEPT") : oBundle.getText("SWITCH_ARIA_REJECT");
 					break;
 
 				// no default

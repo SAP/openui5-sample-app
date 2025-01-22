@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -32,7 +32,7 @@ sap.ui.define([
 	 * @param {sap.f.Card} oCard an object representation of the control that should be rendered
 	 */
 	CardRenderer.render = function (oRm, oCard) {
-		var oHeader = oCard.getCardHeader(),
+		var oHeader = oCard._getHeaderAggregation(),
 			bHeaderTop = oHeader && oCard.getCardHeaderPosition() === HeaderPosition.Top,
 			bHasCardBadgeCustomData = oCard._getCardBadgeCustomData().length > 0;
 

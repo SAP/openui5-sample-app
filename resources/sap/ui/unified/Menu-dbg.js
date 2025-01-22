@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -70,7 +70,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IContextMenu
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -804,6 +804,10 @@ sap.ui.define([
 	};
 
 	Menu.prototype.onkeyup = function(oEvent){
+		if (oEvent.keyCode === KeyCodes.ARROW_LEFT || oEvent.keyCode === KeyCodes.ARROW_RIGHT) {
+			return;
+		}
+
 		// focus menuItems
 		if (this.oHoveredItem && (jQuery(oEvent.target).prop("tagName") != "INPUT")) {
 			var oDomRef = this.oHoveredItem.getDomRef();
@@ -817,12 +821,12 @@ sap.ui.define([
 		//The attribute _sapSelectOnKeyDown is used to avoid the problem the other way round (Space is pressed
 		//on Button which opens the menu and the space keyup immediately selects the first item)
 		//The device checks are made, because of the new functionality of iOS13, that brings desktop view on tablet
-		if (!this._sapSelectOnKeyDown && ( oEvent.key !== KeyCodes.Space || (!Device.os.macintosh && window.navigator.maxTouchPoints <= 1))) {
+		if (!this._sapSelectOnKeyDown) {
 			return;
 		} else {
 			this._sapSelectOnKeyDown = false;
 		}
-		if (!PseudoEvents.events.sapselect.fnCheck(oEvent) && oEvent.key !== "Enter") {
+		if (!PseudoEvents.events.sapselect.fnCheck(oEvent) && oEvent.keyCode !== KeyCodes.ENTER) {
 			return;
 		}
 		this.selectItem(this.oHoveredItem, true, false);

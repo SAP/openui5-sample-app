@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -78,7 +78,7 @@ function(
 	 * @implements sap.ui.core.Toolbar,sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -411,12 +411,16 @@ function(
 	};
 
 	Toolbar.prototype._shouldAllowDefaultBehavior = function(oActiveElement, oEvent) {
+		if (!oActiveElement) {
+			return false;
+		}
 		var sActiveElementName = oActiveElement.getMetadata().getName(),
 			bIsSelectOrCombobox = ["sap.m.Select", "sap.m.ComboBox"].includes(sActiveElementName),
 			bIsUpOrDownArrowKey = [KeyCodes.ARROW_UP, KeyCodes.ARROW_DOWN].includes(oEvent.keyCode),
-			bIsBreadcrumbs = sActiveElementName === "sap.m.Breadcrumbs";
+			bIsBreadcrumbs = sActiveElementName === "sap.m.Breadcrumbs",
+			bIsSlider = ["sap.m.Slider", "sap.m.RangeSlider"].includes(sActiveElementName);
 
-		if (bIsUpOrDownArrowKey && bIsSelectOrCombobox || bIsBreadcrumbs) {
+		if (bIsUpOrDownArrowKey && bIsSelectOrCombobox || bIsBreadcrumbs || bIsSlider) {
 			return true;
 		}
 

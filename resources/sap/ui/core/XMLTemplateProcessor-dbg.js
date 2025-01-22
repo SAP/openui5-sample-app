@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -1435,8 +1435,9 @@ function(
 							}
 						} else if (oInfo && oInfo._iKind === -1) {
 							// SPECIAL SETTING - currently only allowed for:
-							// - View's async setting
-							if (oMetadata.isA("sap.ui.core.mvc.View") && sName == "async") {
+							// - "async"
+							// - "type" (value must be in the ViewType enum)
+							if (oMetadata.isA("sap.ui.core.mvc.View") && (sName == "async" || (sName == "type" && ViewType[sValue]))) {
 								mSettings[sName] = parseScalarType(oInfo.type, sValue, sName, oView._oContainingView.oController, oRequireModules);
 							} else {
 								future.warningThrows("" + oView + ": setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "') is not supported");

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -23,7 +23,7 @@ function(ElementMetadata, WebComponentRenderer, camelize) {
 	 *
 	 * @class
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @since 1.118.0
 	 * @experimental Since 1.118.0 The API might change. It is not intended for productive usage yet!
 	 * @alias sap.ui.core.webc.WebComponentMetadata
@@ -54,7 +54,9 @@ function(ElementMetadata, WebComponentRenderer, camelize) {
 		} else if (typeof info.mapping === "object") {
 			this._sMapping = fnValidateType(info.mapping.type);
 			this._sMapTo = info.mapping.to;
+			this._sSlotName = info.mapping.slotName;
 			this._fnMappingFormatter = info.mapping.formatter;
+			this._fnMappingParser = info.mapping.parser;
 		}
 	};
 	WebComponentProperty.prototype = Object.create(OriginalProperty.prototype);
@@ -81,6 +83,7 @@ function(ElementMetadata, WebComponentRenderer, camelize) {
 			this._sMapping = "property"; // Associations map only to properties, no matter what is set, it's always "property" mapping
 			this._sMapTo = info.mapping.to; // The property, to which the association is related
 			this._fnMappingFormatter = info.mapping.formatter;
+			this._fnMappingParser = info.mapping.parser;
 		}
 	};
 	WebComponentAssociation.prototype = Object.create(OriginalAssociation.prototype);

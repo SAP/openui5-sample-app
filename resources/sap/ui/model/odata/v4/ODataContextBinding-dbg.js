@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
@@ -232,8 +232,10 @@ sap.ui.define([
 			return that.refreshDependentBindings("", oGroupLock.getGroupId(), true);
 		}
 
-		oPromise = oMetaModel.fetchObject(sResolvedMetaPath + "/@$ui5.overload")
-			.then(function (aOperationMetadata) {
+		oPromise = SyncPromise.all([
+				oMetaModel.fetchObject(sResolvedMetaPath + "/@$ui5.overload"),
+				this.ready2Inherit()
+			]).then(function ([aOperationMetadata]) {
 				var fnGetEntity, iIndex, sPath;
 
 				if (!aOperationMetadata) {
@@ -626,7 +628,7 @@ sap.ui.define([
 
 			oResult = fnOnStrictHandlingFailed(
 				_Helper.extractMessages(oError).map(function (oRawMessage) {
-					return that.oModel.createUI5Message(oRawMessage);
+					return oModel.createUI5Message(oRawMessage);
 				})
 			);
 
@@ -646,7 +648,7 @@ sap.ui.define([
 		if (bAction && fnGetEntity) {
 			vEntity = fnGetEntity();
 		}
-		if (bIgnoreETag && !(bAction && oOperationMetadata.$IsBound && vEntity)) {
+		if (bIgnoreETag && !(bAction && oOperationMetadata.$IsBound && vEntity !== null)) {
 			throw new Error("Not a bound action: " + sPath);
 		}
 		if (this.bInheritExpandSelect
@@ -1292,7 +1294,8 @@ sap.ui.define([
 	 *   request like '$auto' (since 1.121.0).
 	 * @param {boolean} [bIgnoreETag]
 	 *   Whether the entity's ETag should be actively ignored (If-Match:*); supported for bound
-	 *   actions only, since 1.90.0. Ignored if there is no ETag (since 1.93.0).
+	 *   actions only, since 1.90.0. This parameter is ignored if there is no ETag (since 1.93.0)
+	 *   unless no data has been read so far (since 1.132.0).
 	 * @param {function(sap.ui.core.message.Message[]):Promise<boolean>} [fnOnStrictHandlingFailed]
 	 *   If this callback is given for an action, the preference "handling=strict" is applied. If
 	 *   the service responds with the HTTP status code 412 and a
@@ -1492,6 +1495,20 @@ sap.ui.define([
 			&& oMetadata.$ReturnType && !oMetadata.$ReturnType.$isCollection
 				&& oMetadata.$EntitySetPath // case 2
 			&& !oMetadata.$EntitySetPath.includes("/"); // case 3
+	};
+
+	/**
+	 * Returns a sync promise that tells whether we are ready to inherit $expand/$select.
+	 *
+	 * @returns {sap.ui.base.SyncPromise}
+	 *   A sync promise that resolves without a defined result as soon as we are ready to inherit
+	 *   $expand/$select
+	 *
+	 * @private
+	 */
+	ODataContextBinding.prototype.ready2Inherit = function () {
+		return this.bInheritExpandSelect && this.bRelative && this.oContext.getBinding?.().ready()
+			|| SyncPromise.resolve();
 	};
 
 	/**

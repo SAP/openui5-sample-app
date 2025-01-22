@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -55,9 +55,10 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.f.cards.BaseHeader
+	 * @implements sap.f.cards.IHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -272,13 +273,6 @@ sap.ui.define([
 				 * Displays the main and side indicators
 				 */
 				_numericIndicators: { type: "sap.f.cards.NumericIndicators", multiple: false, visibility: "hidden" }
-			},
-			events: {
-
-				/**
-				 * Fires when the user presses the control.
-				 */
-				press: {}
 			}
 		},
 		renderer: NumericHeaderRenderer
@@ -384,6 +378,13 @@ sap.ui.define([
 			mAriaProps.role = this.getTitleAriaRole();
 			mAriaProps.level = this.getAriaHeadingLevel();
 		}
+	};
+
+	/**
+	 * @override
+	 */
+	NumericHeader.prototype.getTitleId = function () {
+		return this._getTitle().getId();
 	};
 
 	/**

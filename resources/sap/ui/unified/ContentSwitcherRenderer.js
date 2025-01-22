@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/ui/core/ControlBehavior","sap/ui/unified/library","sap/base/security/encodeXML","sap/ui/core/Configuration"],function(t,e,i,n){"use strict";var r=e.ContentSwitcherAnimation;var o={};o.render=function(e,o){var a=o.getId();var s=o.getAnimation();if(t.getAnimationMode()===n.AnimationMode.none){s=r.None}var d=o.getActiveContent();e.write("<div");e.writeControlData(o);e.addClass("sapUiUfdCSwitcher");e.addClass("sapUiUfdCSwitcherAnimation"+i(s));e.writeClasses();e.write(">");e.write('<section id="'+a+'-content1" class="sapUiUfdCSwitcherContent sapUiUfdCSwitcherContent1'+(d==1?" sapUiUfdCSwitcherVisible":"")+'">');this.renderContent(e,o.getContent1());e.write("</section>");e.write('<section id="'+a+'-content2" class="sapUiUfdCSwitcherContent sapUiUfdCSwitcherContent2'+(d==2?" sapUiUfdCSwitcherVisible":"")+'">');this.renderContent(e,o.getContent2());e.write("</section>");e.write("</div>")};o.renderContent=function(t,e){for(var i=0;i<e.length;++i){t.renderControl(e[i])}};return o},true);

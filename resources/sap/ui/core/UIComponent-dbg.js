@@ -1,6 +1,6 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,6 +8,7 @@
 sap.ui.define([
 	'../base/ManagedObject',
 	'./Component',
+	'./ComponentHooks',
 	'./Element',
 	'sap/ui/core/mvc/ViewType',
 	'sap/ui/core/mvc/XMLProcessingMode',
@@ -21,6 +22,7 @@ sap.ui.define([
 	function(
 		ManagedObject,
 		Component,
+		ComponentHooks,
 		Element,
 		ViewType,
 		XMLProcessingMode,
@@ -59,7 +61,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Component
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @alias sap.ui.core.UIComponent
 	 * @since 1.9.2
 	 */
@@ -306,6 +308,7 @@ sap.ui.define([
 
 		function setRootControl(vRootControl) {
 			var fnFireInstanceInitialized = function() {
+				ComponentHooks.onUIComponentInstanceInitialized.execute(that);
 				if (typeof UIComponent._fnOnInstanceInitialized === "function") {
 					UIComponent._fnOnInstanceInitialized(that);
 				}
@@ -487,6 +490,7 @@ sap.ui.define([
 	UIComponent.prototype.destroy = function() {
 
 		// notify Component destruction callback handler
+		ComponentHooks.onUIComponentInstanceDestroy.execute(this);
 		if (typeof UIComponent._fnOnInstanceDestroy === "function") {
 			UIComponent._fnOnInstanceDestroy(this);
 		}

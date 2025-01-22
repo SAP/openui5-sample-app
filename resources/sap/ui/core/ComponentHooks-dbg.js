@@ -1,6 +1,6 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([], function() {
@@ -83,12 +83,19 @@ sap.ui.define([], function() {
 	const ComponentHooks = {
 		/**
 		 * Callback handler that executes when a manifest model (ODataModel v2 and v4) is created.
-		 * The model instance, the manifest model ID, and the configuration object will be passed into the registered function.
+		 * The registered function receives an object containing:
+		 * <ul>
+		 * 	<li>Model instance</li>
+		 * 	<li>Manifest object</li>
+		 * 	<li>Manifest model ID</li>
+		 * 	<li>Owner component ID (if available)</li>
+		 * 	<li>Configuration object from the component factory</li>
+		 * </ul>
 		 *
 		 * Example usage:
 		 * <pre>
 		 * sap.ui.require(['sap/ui/core/ComponentHooks'], function(ComponentHooks) {
-		 *   ComponentHooks.onModelCreated.register(function(oModel, sModelID, oConfig) {
+		 *   ComponentHooks.onModelCreated.register(function(oInfo) {
 		 *     // do some logic
 		 *   });
 		 * });
@@ -167,7 +174,47 @@ sap.ui.define([], function() {
 		 * @ui5-restricted sap.ui.fl
 		 * @since 1.37.0
 		 */
-		onComponentLoaded: new Hook(false)
+		onComponentLoaded: new Hook(false),
+
+		/**
+	 	* Callback handler which will be executed once a new Component instance is initialized.
+	 	*
+	 	* Example usage:
+	 	* <pre>
+	 	* sap.ui.require(['sap/ui/core/ComponentHooks'], function(ComponentHooks) {
+	 	*   ComponentHooks.onUIComponentInstanceInitialized.register(function(oComponent) {
+	 	*     // do some logic with the Component
+	 	*   });
+	 	* });
+	 	* </pre>
+	 	*
+	 	* <b>ATTENTION:</b> This hook must only be used by Fiori 2.0 adapter.
+	 	*
+	 	* @private
+	 	* @ui5-restricted sap.ushell
+	 	* @since 1.132.0
+	 	*/
+		onUIComponentInstanceInitialized: new Hook(false),
+
+		/**
+	 	* Callback handler which will be executed when a Component instance is destroyed.
+	 	*
+	 	* Example usage:
+	 	* <pre>
+	 	* sap.ui.require(['sap/ui/core/UIComponent'], function(UIComponent) {
+	 	*   ComponentHooks.onUIComponentInstanceDestroy.register(function(oComponent) {
+	 	*     // do some logic with the Component
+	 	*   });
+	 	* });
+	 	* </pre>
+	 	*
+	 	* <b>ATTENTION:</b> This hook must only be used by Fiori 2.0 adapter.
+	 	*
+	 	* @private
+	 	* @ui5-restricted sap.ushell
+	 	* @since 1.132.0
+	 	*/
+		onUIComponentInstanceDestroy: new Hook(false)
 	};
 
 	return ComponentHooks;

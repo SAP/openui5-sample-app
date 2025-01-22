@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -46,7 +46,7 @@ function(
 		 * @class
 		 * The FormattedText control allows the usage of a limited set of tags for inline display of formatted text in HTML format.
 		 * @extends sap.ui.core.Control
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 *
 		 * @constructor
 		 * @public
@@ -427,6 +427,27 @@ function(
 
 		FormattedText.prototype.getFocusDomRef = function () {
 			return this.getDomRef() && this.getDomRef().querySelector("a");
+		};
+
+		/**
+		 * Returns the <code>sap.m.FormattedText</code> accessibility information.
+		 *
+		 * @see sap.ui.core.Control#getAccessibilityInfo
+		 * @protected
+		 * @returns {sap.ui.core.AccessibilityInfo} The <code>sap.m.FormattedText</code> accessibility information
+		 */
+		FormattedText.prototype.getAccessibilityInfo = function() {
+			var aLinkAccessibleTexts = this.getControls().map(function(oLink) {
+				return `${oLink.getAccessibilityInfo().type} ${oLink.getAccessibilityInfo().description}`.trim();
+			});
+			var sDescription = this.getHtmlText().replace(/<[^>]*>/g, "");
+			aLinkAccessibleTexts.forEach(function(sText, iIndex) {
+				sDescription = sDescription.replace(`%%${iIndex}`, sText);
+			});
+
+			return {
+				description: sDescription
+			};
 		};
 
 		return FormattedText;

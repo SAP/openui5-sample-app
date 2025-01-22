@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -66,11 +66,11 @@ sap.ui.define([
 	};
 
 	StaticBinding.prototype.attachChange = function(fnFunction, oListener) {
-		this.attachEvent("change", fnFunction, oListener);
+		return this.attachEvent("change", fnFunction, oListener);
 	};
 
 	StaticBinding.prototype.detachChange = function(fnFunction, oListener) {
-		this.detachEvent("change", fnFunction, oListener);
+		return this.detachEvent("change", fnFunction, oListener);
 	};
 
 	return StaticBinding;

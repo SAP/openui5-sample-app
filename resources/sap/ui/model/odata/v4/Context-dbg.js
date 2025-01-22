@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -162,7 +162,7 @@ sap.ui.define([
 	 * Collapses the group node that this context points to.
 	 *
 	 * @param {boolean} [bAll]
-	 *   Whether to collapse the node and all its descendants (@experimental as of version 1.128.0)
+	 *   Whether to collapse the node and all its descendants (since 1.132.0)
 	 * @throws {Error}
 	 *   If the context points to a node that
 	 *   <ul>
@@ -170,7 +170,7 @@ sap.ui.define([
 	 *     <li> is already collapsed,
 	 *     <li> is a grand total,
 	 *   </ul>
-	 *   or if <code>bAll</code> is <code>true</code> but no recursive hierarchy is present.
+	 *   or if <code>bAll</code> is <code>true</code>, but no recursive hierarchy is present.
 	 *
 	 * @public
 	 * @see #expand
@@ -456,7 +456,7 @@ sap.ui.define([
 			throw oError;
 		});
 
-		if (oGroupLock && this.oModel.isApiGroup(oGroupLock.getGroupId())) {
+		if (oGroupLock && oModel.isApiGroup(oGroupLock.getGroupId())) {
 			oModel.getDependentBindings(this).forEach(function (oDependentBinding) {
 				oDependentBinding.setContext(undefined);
 			});
@@ -520,7 +520,7 @@ sap.ui.define([
 				oGroupLock.unlock();
 				oGroupLock = oGroupLock.getUnlockedCopy();
 				this.doSetProperty(sPath, vValue, null, true, true) // early UI update
-					.catch(this.oModel.getReporter());
+					.catch(oModel.getReporter());
 
 				return SyncPromise.resolve(oPromise).then(function (bSuccess) {
 					// in case of success, wait until creation is completed because context path's
@@ -531,9 +531,9 @@ sap.ui.define([
 				});
 			}
 		}
-		if (this.oModel.bAutoExpandSelect) {
+		if (oModel.bAutoExpandSelect) {
 			sPath = oMetaModel.getReducedPath(
-				this.oModel.resolve(sPath, this),
+				oModel.resolve(sPath, this),
 				this.oBinding.getBaseForPathReduction());
 		}
 		return this.withCache(function (oCache, sCachePath, oBinding) {
@@ -589,7 +589,7 @@ sap.ui.define([
 						// event listener
 						// runs synchronously - setProperty calls fetchValue with $cached
 						oCache.setProperty(oResult.propertyPath, vValue, sEntityPath, bUpdating)
-							.catch(that.oModel.getReporter());
+							.catch(oModel.getReporter());
 						that.bFiringCreateActivate = true;
 						that.bInactive = oBinding.fireCreateActivate(that) ? false : 1;
 						that.bFiringCreateActivate = false;
@@ -600,6 +600,7 @@ sap.ui.define([
 					// returned Promise is rejected -> no patch events
 					return oCache.update(oGroupLock, oResult.propertyPath, vValue,
 						bSkipRetry ? undefined : errorCallback, oResult.editUrl, sEntityPath,
+						// Note: use that.oModel intentionally, fails if already destroyed!
 						oMetaModel.getUnitOrCurrencyPath(that.oModel.resolve(sPath, that)),
 						oBinding.isPatchWithoutSideEffects(), patchSent,
 						that.isEffectivelyKeptAlive.bind(that)
@@ -647,35 +648,36 @@ sap.ui.define([
 	};
 
 	/**
-	 * Expands the group node that this context points to. Since 1.127.0, it is possible to expand
-	 * a group node by a given number of levels.
+	 * Expands the group node that this context points to. Since 1.132.0, it is possible to do a
+	 * full expand, that is to expand all levels below a node, even if a node is already partially
+	 * or fully expanded.
 	 *
-	 * @param {number} [iLevels=1]
-	 *   The number of levels to expand (@experimental as of version 1.127.0),
-	 *   <code>iLevels >= Number.MAX_SAFE_INTEGER</code> can be used to expand all levels. If a node
-	 *   is expanded a second time, the expand state of the descendants is not changed.
+	 * @param {boolean} [bAll]
+	 *   Whether to expand the node and all its descendants (since 1.132.0)
 	 * @returns {Promise<void>}
 	 *   A promise which is resolved without a defined result when the expand is successful, or
 	 *   rejected in case of an error
 	 * @throws {Error}
-	 *   If the context points to a node that is not expandable or already expanded, the given
-	 *   number of levels is not a positive number, or the given number of levels is greater than
-	 *   1 without a recursive hierarchy
+	 *   If <code>bAll</code> is <code>true</code>, but no recursive hierarchy is present, or if the
+	 *   context points to a node that is not expandable or is already expanded (unless a full
+	 *   expand is requested).
 	 *
 	 * @public
 	 * @see #collapse
 	 * @see #isExpanded
 	 * @since 1.77.0
 	 */
-	Context.prototype.expand = function (iLevels = 1) {
-		if (iLevels <= 0) {
-			throw new Error("Not a positive number: " + iLevels);
-		}
+	Context.prototype.expand = function (bAll) {
 		switch (this.isExpanded()) {
-			case false:
-				return Promise.resolve(this.oBinding.expand(this, iLevels)).then(() => {});
 			case true:
-				throw new Error("Already expanded: " + this);
+				if (!bAll) {
+					throw new Error("Already expanded: " + this);
+				}
+				// falls through
+			case false: {
+				const iLevels = bAll ? Number.MAX_SAFE_INTEGER : 1;
+				return Promise.resolve(this.oBinding.expand(this, iLevels)).then(() => {});
+			}
 			default:
 				throw new Error("Not expandable: " + this);
 		}
@@ -1204,6 +1206,35 @@ sap.ui.define([
 	};
 
 	/**
+	 * Tells whether this context represents aggregated data, as opposed to a single entity
+	 * instance. This method returns <code>true</code> only in case of data aggregation (but not for
+	 * a recursive hierarchy)
+	 * and not for non-expandable nodes (so-called leaves; see {@link #isExpanded}) if all of the
+	 * entity type's key properties are available as groups. For a list binding's
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#getHeaderContext header context}, the returned
+	 * value is the same as for every leaf.
+	 *
+	 * @returns {boolean} Whether this context represents aggregated data
+	 * @throws {Error} If this context's root binding is suspended
+	 *
+	 * @private
+	 * @see sap.ui.model.odata.v4.ODataListBinding#setAggregation
+	 * @since 1.132.0
+	 * @ui5-restricted sap.fe
+	 */
+	Context.prototype.isAggregated = function () {
+		this.oBinding.checkSuspended();
+		const bAggregated = this.oBinding.mParameters.$$aggregation?.$leafLevelAggregated;
+		if (bAggregated === undefined) {
+			return false;
+		}
+
+		// Note: #isExpanded fails for header context ("Invalid header path: @$ui5.node.isExpanded")
+		return bAggregated
+			|| this !== this.oBinding.getHeaderContext() && this.isExpanded() !== undefined;
+	};
+
+	/**
 	 * Tells whether this node is an ancestor of (or the same as) the given node (in case of a
 	 * recursive hierarchy, see {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation}).
 	 *
@@ -1650,8 +1681,8 @@ sap.ui.define([
 	 * @returns {Promise<sap.ui.model.odata.v4.Context|null>} A promise which:
 	 *   <ul>
 	 *     <li> Resolves if successful with either the parent node or <code>null</code> for a root
-	 *       node that has no parent</li>
-	 *     <li> Rejects with an <code>Error</code> instance otherwise</li>
+	 *       node that has no parent
+	 *     <li> Rejects with an <code>Error</code> instance otherwise
 	 *   </ul>
 	 * @throws {Error} If
 	 *   <ul>
@@ -2114,7 +2145,7 @@ sap.ui.define([
 			that = this;
 
 		if (this.iIndex === iVIRTUAL || this.isTransient() && !this.isInactive()
-			|| this.oBinding.getHeaderContext && this === this.oBinding.getHeaderContext()
+			|| this === this.oBinding.getHeaderContext?.()
 			// only operation bindings have a parameter context, for others the function fails
 			|| this.oBinding.oOperation && this === this.oBinding.getParameterContext()) {
 			throw new Error("Cannot reset: " + this);

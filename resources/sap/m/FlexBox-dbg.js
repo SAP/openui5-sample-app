@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -62,7 +62,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @public
 	 * @alias sap.m.FlexBox
@@ -110,7 +110,7 @@ function(
 				/**
 				 * Determines whether the layout is rendered as a series of divs or as an unordered list (ul).<br>
 				 * <br>
-				 * We recommend to use <code>Bare</code> in most cases to avoid layout issues due to browser inconsistencies.
+				 * <b>Note:</b> We recommend to use <code>Bare</code> in most cases to avoid layout issues due to browser inconsistencies.
 				 */
 				renderType : {type : "sap.m.FlexRendertype", group : "Misc", defaultValue : FlexRendertype.Div},
 

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -702,7 +702,7 @@ sap.ui.define([
 
 			var sAppVersion;
 			try {
-				sAppVersion = this._getText("TechInfo.SupportAssistantConfigPopup.AppVersionOption", this._oVersionInfo.version);
+				sAppVersion = this._getText("TechInfo.SupportAssistantConfigPopup.AppVersionOption", [this._oVersionInfo.version]);
 			} catch (oException) {
 				sAppVersion = "Application";
 			}
@@ -725,7 +725,7 @@ sap.ui.define([
 					"Value": "https://ui5.sap.com/resources/sap/ui/support/"
 				}
 			];
-			var sDebugModulesTitle = this._getText("TechInfo.DebugModulesConfigPopup.SelectionCounter", oViewModel.DebugModuleSelectionCount);
+			var sDebugModulesTitle = this._getText("TechInfo.DebugModulesConfigPopup.SelectionCounter", [oViewModel.DebugModuleSelectionCount]);
 			oViewModel.setProperty("/DebugModulesTitle", sDebugModulesTitle);
 			oViewModel.setProperty("/SupportAssistantPopoverURLs", aSupportedUrls);
 			oViewModel.setProperty("/ApplicationURL", document.location.href);
@@ -778,7 +778,7 @@ sap.ui.define([
 			var oDateFormat = DateFormat.getDateInstance({pattern: "dd.MM.yyyy HH:mm:ss"}),
 				sBuildDate = oDateFormat.format(this._convertBuildDate(sBuildTimestamp));
 
-			return this._getText("TechInfo.VersionBuildTime.Text", sBuildDate);
+			return this._getText("TechInfo.VersionBuildTime.Text", [sBuildDate]);
 		},
 
 		/**
@@ -986,7 +986,7 @@ sap.ui.define([
 			oModel.setProperty("/CustomDebugMode", this._treeHelper.toDebugInfo(oTreeData));
 			oModel.setProperty("/DebugModuleSelectionCount", this._treeHelper.getSelectionCount(oTreeData));
 			sDisplayCount = oModel.getProperty("/DebugModuleSelectionCount").toString();
-			oModel.setProperty("/DebugModulesTitle", this._getText("TechInfo.DebugModulesConfigPopup.SelectionCounter", sDisplayCount));
+			oModel.setProperty("/DebugModulesTitle", this._getText("TechInfo.DebugModulesConfigPopup.SelectionCounter", [sDisplayCount]));
 		},
 
 		_loadDebugPopover: function() {

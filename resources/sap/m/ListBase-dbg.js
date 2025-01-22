@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -10,6 +10,7 @@ sap.ui.define([
 	"sap/ui/core/ControlBehavior",
 	"sap/ui/core/RenderManager",
 	"sap/ui/Device",
+	"sap/ui/model/ChangeReason",
 	"sap/ui/core/Control",
 	"sap/ui/core/Element",
 	"sap/ui/core/InvisibleText",
@@ -36,6 +37,7 @@ function(
 	ControlBehavior,
 	RenderManager,
 	Device,
+	ChangeReason,
 	Control,
 	Element,
 	InvisibleText,
@@ -103,7 +105,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -252,6 +254,7 @@ function(
 				 * If set to true, this control remembers and retains the selection of the items after a binding update has been performed (e.g. sorting, filtering).
 				 * <b>Note:</b> This feature works only if two-way data binding for the <code>selected</code> property of the item is not used. It also needs to be turned off if the binding context of the item does not always point to the same entry in the model, for example, if the order of the data in the <code>JSONModel</code> is changed.
 				 * <b>Note:</b> This feature leverages the built-in selection mechanism of the corresponding binding context when the OData V4 model is used. Therefore, all binding-relevant limitations apply in this context as well. For more details, see the {@link sap.ui.model.odata.v4.Context#setSelected setSelected}, the {@link sap.ui.model.odata.v4.ODataModel#bindList bindList}, and the {@link sap.ui.model.odata.v4.ODataMetaModel#requestValueListInfo requestValueListInfo} API documentation. Do not enable this feature when <code>$$SharedRequests</code> or <code>$$clearSelectionOnFilter</code> is active.
+				 * <b>Note:</b> If this property is set to <code>false</code>, a possible binding context update of items (for example, filtering or sorting the list binding) would clear the selection of the items.
 				 * @since 1.16.6
 				 */
 				rememberSelections : {type : "boolean", group : "Behavior", defaultValue : true},
@@ -634,6 +637,7 @@ function(
 	// this gets called only with oData Model when first load or filter/sort
 	ListBase.prototype.refreshItems = function(sReason) {
 		this._bRefreshItems = true;
+		this._clearUnboundSelections(sReason);
 		if (this._oGrowingDelegate) {
 			// inform growing delegate to handle
 			this._oGrowingDelegate.refreshItems(sReason);
@@ -672,6 +676,8 @@ function(
 			this.invalidate();
 		}
 
+		this._clearUnboundSelections(sReason);
+
 		if (this._oGrowingDelegate) {
 			// inform growing delegate to handle
 			this._oGrowingDelegate.updateItems(sReason);
@@ -697,6 +703,7 @@ function(
 			this._updateFinished();
 		}
 
+		this._updateInvisibleGroupText();
 		this._bSkippedInvalidationOnRebind = false;
 	};
 
@@ -1400,6 +1407,16 @@ function(
 			/* reset focused position */
 			if (this._oItemNavigation && document.activeElement.id != this.getId("nodata")) {
 				this._oItemNavigation.iFocusedIndex = -1;
+			}
+		}
+	};
+
+	// clear the selection during filtering and sorting if the rememeberSelections is not active and selected property is not two-way bound
+	ListBase.prototype._clearUnboundSelections = function(sReason) {
+		if ((sReason === ChangeReason.Filter || sReason === ChangeReason.Sort || sReason === ChangeReason.Context) && !this.getRememberSelections()) {
+			const oFirstItem = this.getItems(true)[0];
+			if (oFirstItem && !oFirstItem.isSelectedBoundTwoWay()) {
+				this.removeSelections();
 			}
 		}
 	};
@@ -2120,37 +2137,57 @@ function(
 	};
 
 	ListBase.prototype.getAccessbilityPosition = function(oItem) {
-		var iSetSize, iPosInSet,
-			aItems = this.getVisibleItems(),
-			sAriaRole = this.getAriaRole(),
-			bExcludeGroupHeaderFromCount = (sAriaRole === "list" || sAriaRole === "listbox");
+		let iSetSize, iPosInSet,
+			aItems = this.getVisibleItems();
 
-		if (bExcludeGroupHeaderFromCount) {
-			aItems = aItems.filter(function(oItem) {
-				return !oItem.isGroupHeader();
-			});
+		iSetSize = this.getSize();
+		if (this._hasNestedGrouping()) {
+			const aGroupItems = aItems
+				.filter((oItem) =>  oItem.isGroupHeader())
+				.find((oGroupHeader) => {
+					const aGroupedItems = oGroupHeader.getGroupedItems() ?? [];
+					return aGroupedItems.some((sItemId) => sItemId === oItem.getId());
+				});
+
+			if (aGroupItems) {
+				const aGroupItemIds = aGroupItems.getGroupedItems();
+				aItems = aItems.filter((oItem) => aGroupItemIds.includes(oItem.getId()));
+				iSetSize = aItems.length;
+			}
+		} else if (this._skipGroupHeaderFocus()) {
+			aItems = aItems.filter((oItem) => !oItem.isGroupHeader());
 		}
 
 		if (oItem) {
 			iPosInSet = aItems.indexOf(oItem) + 1;
 		}
 
-		var oBinding = this.getBinding("items");
-		if (oBinding && this.getGrowing() && this.getGrowingScrollToLoad()) {
-			iSetSize = oBinding.getLength();
-			if (!bExcludeGroupHeaderFromCount && oBinding.isGrouped()) {
-				iSetSize += aItems.filter(function(oItem) {
-					return oItem.isGroupHeader();
-				}).length;
-			}
-		} else {
-			iSetSize = aItems.length;
-		}
-
 		return {
 			setsize: iSetSize,
 			posinset: iPosInSet
 		};
+	};
+
+	ListBase.prototype.getSize = function() {
+		let aItems = this.getVisibleItems();
+		const bExcludeGroupHeaderFromCount = (this._hasNestedGrouping() || this._skipGroupHeaderFocus());
+
+		if (bExcludeGroupHeaderFromCount) {
+			aItems = aItems.filter((oItem) => !oItem.isGroupHeader());
+		}
+		let iSize = aItems.length;
+
+		const oBinding = this.getBinding("items");
+		if (oBinding && this.getGrowing() && this.getGrowingScrollToLoad()) {
+			iSize = oBinding.getLength();
+			if (!bExcludeGroupHeaderFromCount && oBinding.isGrouped()) {
+				iSize += aItems.filter(function(oItem) {
+					return oItem.isGroupHeader();
+				}).length;
+			}
+		}
+
+		return iSize;
 	};
 
 	// this gets called when the focus is on the item or its content
@@ -2245,6 +2282,8 @@ function(
 		$FocusedItem.addAriaLabelledBy(oInvisibleText.getId(), bPrepend);
 	};
 
+	ListBase.prototype._updateInvisibleGroupText = function() {};
+
 	/* Keyboard Handling */
 	ListBase.prototype.getNavigationRoot = function() {
 		return this.getDomRef("listUl");
@@ -2331,7 +2370,12 @@ function(
 	 * @since 1.26
 	 */
 	ListBase.prototype.setNavigationItems = function(oItemNavigation, oNavigationRoot) {
-		var aNavigationItems = jQuery(oNavigationRoot).children(".sapMLIB").get();
+		let sSelector = ".sapMLIB";
+		if (this._skipGroupHeaderFocus()) {
+			// TODO: maybe use aria-roledescription instead, as CustomListItem and StandardListItem do not have MGHLI class
+			sSelector = ".sapMLIB:not(.sapMGHLI)";
+		}
+		var aNavigationItems = jQuery(oNavigationRoot).children(sSelector).get();
 		oItemNavigation.setItemDomRefs(aNavigationItems);
 		if (oItemNavigation.getFocusedIndex() == -1) {
 			if (this.getGrowing() && this.getGrowingDirection() == ListGrowingDirection.Upwards) {
@@ -2782,9 +2826,7 @@ function(
 			});
 		}
 
-		bGroupHeaders = this.getItems(true).some((oItem) => {
-			return oItem.isGroupHeader();
-		});
+		bGroupHeaders = this.isGrouped();
 
 		aSticky.forEach(function(sSticky) {
 			if (sSticky === Sticky.HeaderToolbar && bHeaderToolbarVisible) {
@@ -3076,6 +3118,14 @@ function(
 	 */
 	ListBase.prototype.getAriaRole = function() {
 		return "list";
+	};
+
+	ListBase.prototype._skipGroupHeaderFocus = function() {
+		return false;
+	};
+
+	ListBase.prototype._hasNestedGrouping = function() {
+		return false;
 	};
 
 	return ListBase;

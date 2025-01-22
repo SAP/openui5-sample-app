@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -112,7 +112,7 @@ sap.ui.define([
 		const aTargetAggregationItems = await modifier.getAggregation(oControl, sAggregationName);
 		const aAggregationItems = aTargetAggregationItems || [];
 		const aCurrentState = [];
-		if (oConfig && Object.keys(oConfig.aggregations[sAggregationName]).length > 0) {
+		if (oConfig?.aggregations?.[sAggregationName] !== undefined && Object.keys(oConfig.aggregations[sAggregationName]).length > 0) {
 			Object.entries(oConfig.aggregations[sAggregationName]).forEach(([sKey, oItem]) => {
 				if (oItem.visible !== false) {
 					aCurrentState.push({ key: sKey, position: oItem.position });

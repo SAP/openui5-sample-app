@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -44,8 +44,8 @@ sap.ui.define(["sap/base/i18n/Localization", 'sap/ui/Device', "sap/ui/dom/getScr
 		var sContentSize = oScrollBar.getContentSize();
 
 		var oBSS = getScrollbarSize(sScrollBarTouchClass);
-		var sWidth = oBSS.width;
-		var sHeight = oBSS.height;
+		var sWidth = oBSS.width || 1;
+		var sHeight = oBSS.height || 1;
 
 		if (bVertical) {
 			// First div. <div style="overflow:hidden;width:16px;height:200px">

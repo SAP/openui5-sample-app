@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -111,7 +111,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -281,9 +281,6 @@ function(
 				 * The appointments to be displayed in the grid. Appointments outside the visible time frame are not rendered.
 				 * Appointments, longer than a day, will be displayed in all of the affected days.
 				 * To display an all-day appointment, the appointment must start at 00:00 and end on any day in the future in 00:00h.
-				 *
-				 * Note: The <code>customContent</code> functionality of the <code>CalendarAppointment</code> is not available
-				 * in the <code>SinglePlanningCalendar</code>. If set, it will not make any effect.
 				 */
 				appointments : {
 					type: "sap.ui.unified.CalendarAppointment",
@@ -1162,12 +1159,14 @@ function(
 		this.getViews().forEach(function (oView) {
 			oView.setCalendarWeekNumbering(sCalendarWeekNumbering);
 		});
+
 		var oHeader = this._getHeader(),
 			oPicker = oHeader.getAggregation("_calendarPicker") ? oHeader.getAggregation("_calendarPicker") : oHeader._oPopup.getContent()[0],
 			oMonthGrid = this.getAggregation("_mvgrid");
 
-		oMonthGrid.setCalendarWeekNumbering(this.getCalendarWeekNumbering());
-		oPicker.setCalendarWeekNumbering(this.getCalendarWeekNumbering());
+		oHeader.setCalendarWeekNumbering(sCalendarWeekNumbering);
+		oMonthGrid.setCalendarWeekNumbering(sCalendarWeekNumbering);
+		oPicker.setCalendarWeekNumbering(sCalendarWeekNumbering);
 
 		this._alignColumns();
 

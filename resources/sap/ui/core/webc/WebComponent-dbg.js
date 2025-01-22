@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -28,6 +28,20 @@ function(
 	"use strict";
 
 	var TextDirection = coreLibrary.TextDirection;
+	const ValueState = coreLibrary.ValueState;
+
+	// Mapping sap.ui.core.ValueState to web component value sates
+	const webcValueStateMapping = {
+		[ValueState.Error]: "Negative",
+		[ValueState.Warning]: "Critical",
+		[ValueState.Success]: "Positive",
+		[ValueState.Information]: "Information",
+		[ValueState.None]: "None"
+	};
+	// reverse map for parsing
+	const coreValueStateMapping = Object.fromEntries(
+		Object.entries(webcValueStateMapping).map(([key, value]) => [value, key])
+	);
 
 	/**
 	 * Returns the sap.ui.core.Element instance for an arbitrary HTML Element, or undefined, if the HTML element is not a sap.ui.core.Element
@@ -108,7 +122,7 @@ function(
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @public
 	 * @since 1.118.0
 	 * @alias sap.ui.core.webc.WebComponent
@@ -516,13 +530,18 @@ function(
 			var vNewValue = oChangeInfo.newValue;
 			var oPropData = this.getMetadata().getProperty(sPropName);
 			if (oPropData) {
+				// some properties might need to parse a value before synchronizing it from webc level to ui5-control level
+				// refer to the WebComponentRenderer for the formatting part.
+				if (oPropData._fnMappingParser) {
+					vNewValue = this[oPropData._fnMappingParser](vNewValue);
+				}
 				this.setProperty(sPropName, vNewValue, true); // must suppress invalidation as this is intended to only sync the managed object state, not to trigger a rerender
 			}
 		}
 	};
 
 	WebComponent.prototype.__attachCustomEventsListeners = function() {
-		var oEvents = this.getMetadata().getEvents();
+		var oEvents = this.getMetadata().getAllEvents();
 		for (var sEventName in oEvents) {
 			var sCustomEventName = hyphenate(sEventName);
 			this.getDomRef().addEventListener(sCustomEventName, this.__handleCustomEventBound);
@@ -535,7 +554,7 @@ function(
 			return;
 		}
 
-		var oEvents = this.getMetadata().getEvents();
+		var oEvents = this.getMetadata().getAllEvents();
 		for (var sEventName in oEvents) {
 			if (oEvents.hasOwnProperty(sEventName)) {
 				var sCustomEventName = hyphenate(sEventName);
@@ -634,6 +653,29 @@ function(
 		}
 
 		return sTextDirection.toLowerCase();
+	};
+
+	/**
+	 * Maps the "valueState" property from "sap.ui.core.ValueState" to
+	 * the corresponding web component values.
+	 * @param {sap.ui.core.ValueState} sValueState the original core value state
+	 * @returns {string} the mapped ValueState values
+	 * @private
+	 * @since 1.132
+	 */
+	WebComponent.prototype._mapValueState = function(sValueState) {
+		return webcValueStateMapping[sValueState];
+	};
+
+	/**
+	 * Parses a web component value state string into the "sap.ui.core.ValueState" representation.
+	 * @param {string} sWebCValueState the web component's value state (refer to the maps at the top of this module)
+	 * @returns {sap.ui.core.ValueState} the value state in core representation
+	 * @private
+	 * @since 1.132
+	 */
+	WebComponent.prototype._parseValueState = function(sWebCValueState) {
+		return coreValueStateMapping[sWebCValueState];
 	};
 
 	/**

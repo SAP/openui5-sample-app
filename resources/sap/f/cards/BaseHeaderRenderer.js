@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([],function(){"use strict";var e={apiVersion:2};e.renderAvatar=function(e,r){var n=r.getAggregation("_avatar"),a=r.mBindingInfos,t=r.shouldShowIcon();if(t&&(!r.isPropertyInitial("iconSrc")||!r.isPropertyInitial("iconInitials"))){e.openStart("div").class("sapFCardHeaderImage").openEnd();if(a.iconSrc&&a.iconSrc.binding&&!a.iconSrc.binding.getValue()){n.addStyleClass("sapFCardHeaderItemBinded")}e.renderControl(n);e.renderControl(r._oAriaAvatarText);e.close("div")}};e.renderBanner=function(e,r){const n=r.getBannerLines()||[];const a=n.filter(e=>e.getVisible());if(!a.length){return}e.openStart("div").class("sapFCardHeaderBanner").openEnd();e.openStart("div").class("sapFCardHeaderBannerInner").openEnd();n.forEach(r=>{e.openStart("div").class("sapFCardHeaderBannerLine").openEnd();e.renderControl(r);e.close("div")});e.close("div");e.close("div")};e.linkAttributes=function(e,r){e.attr("href",r.getHref()).attr("rel","noopener noreferrer");const n=r.getTarget();if(n){e.attr("target",n)}e.attr("draggable","false")};return e},true);

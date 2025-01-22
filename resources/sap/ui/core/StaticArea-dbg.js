@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -109,8 +109,6 @@ sap.ui.define([
 		if (!oStaticArea) {
 
 			oStaticArea = document.createElement("div");
-			var oFirstFocusElement = document.createElement("span");
-
 			oStaticArea.setAttribute("id", StaticArea.STATIC_UIAREA_ID);
 
 			Object.assign(oStaticArea.style, {
@@ -119,12 +117,6 @@ sap.ui.define([
 				"overflow": "hidden",
 				"float":  Localization.getRTL() ? "right" : "left"
 			});
-
-			oFirstFocusElement.setAttribute("id", StaticArea.STATIC_UIAREA_ID + "-firstfe");
-			oFirstFocusElement.setAttribute("tabindex", -1);
-			oFirstFocusElement.style.fontSize = 0;
-
-			oStaticArea.appendChild(oFirstFocusElement);
 
 			document.body.insertBefore(oStaticArea, document.body.firstChild);
 		}

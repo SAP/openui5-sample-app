@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -35,8 +35,9 @@ sap.ui.define([
 		// auto-$expand/$select: promises to wait until child bindings have provided
 		// their path and query options
 		this.aChildCanUseCachePromises = [];
-		// whether the binding has a child with a path to the parent binding via path reduction
-		this.bHasPathReductionToParent = false;
+		// the child paths that are handled by the parent binding due to path reduction, see
+		// #fetchIfChildCanUseCache and ODLB#fetchDownloadUrl
+		this.mChildPathsReducedToParent = {};
 		// counts the sent but not yet completed PATCHes
 		this.iPatchCounter = 0;
 		// whether all sent PATCHes have been successfully processed
@@ -646,6 +647,8 @@ sap.ui.define([
 	ODataParentBinding.prototype.destroy = function () {
 		this.mAggregatedQueryOptions = undefined;
 		this.aChildCanUseCachePromises = [];
+		// cannot be set to undefined, it might be modified after destruction
+		this.mChildPathsReducedToParent = {};
 		this.removeReadGroupLock();
 		this.oRefreshPromise = undefined;
 		this.oResumePromise = undefined;
@@ -857,7 +860,7 @@ sap.ui.define([
 
 			if (sReducedChildMetaPath === undefined) {
 				// the child's data does not fit into this bindings's cache, try the parent
-				that.bHasPathReductionToParent = true;
+				that.mChildPathsReducedToParent[sChildPath] = true;
 				return oParentContext.getBinding().fetchIfChildCanUseCache(oParentContext,
 					_Helper.getRelativePath(sResolvedChildPath, oParentContext.getPath()),
 					mChildQueryOptions, bIsProperty);
@@ -971,7 +974,8 @@ sap.ui.define([
 			mConvertedQueryOptions,
 			sMetaPath,
 			oModel = this.oModel,
-			mQueryOptions = this.getQueryOptionsFromParameters();
+			mQueryOptions = this.getQueryOptionsFromParameters(),
+			that = this;
 
 		if (!(oModel.bAutoExpandSelect && mQueryOptions.$select)) {
 			return SyncPromise.resolve(mQueryOptions);
@@ -987,16 +991,22 @@ sap.ui.define([
 				sMetaSelectPath = sMetaSelectPath.slice(0, -1);
 			}
 
-			return _Helper.fetchPropertyAndType(fnFetchMetadata, sMetaSelectPath).then(function () {
-				var mWrappedQueryOptions = _Helper.wrapChildQueryOptions(
+			return _Helper.fetchPropertyAndType(fnFetchMetadata, sMetaSelectPath)
+				.then(function (oProperty) {
+					if (!oProperty && !sMetaSelectPath.endsWith("/*")) {
+						throw new Error("Invalid (navigation) property '" + sSelectPath
+							+ "' in $select of " + that);
+					}
+
+					const mWrappedQueryOptions = _Helper.wrapChildQueryOptions(
 						sMetaPath, sSelectPath, {}, fnFetchMetadata);
 
-				if (mWrappedQueryOptions) {
-					_Helper.aggregateExpandSelect(mConvertedQueryOptions, mWrappedQueryOptions);
-				} else {
-					_Helper.addToSelect(mConvertedQueryOptions, [sSelectPath]);
-				}
-			});
+					if (mWrappedQueryOptions) {
+						_Helper.aggregateExpandSelect(mConvertedQueryOptions, mWrappedQueryOptions);
+					} else {
+						_Helper.addToSelect(mConvertedQueryOptions, [sSelectPath]);
+					}
+				});
 		})).then(function () {
 			return mConvertedQueryOptions;
 		});

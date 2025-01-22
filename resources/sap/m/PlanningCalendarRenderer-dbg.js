@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -36,11 +36,7 @@ sap.ui.define([
 		oRm.class("sapMPlanCal");
 		oRm.accessibilityState({
 			role: "region",
-			roledescription: oPC._oRB.getText("PLANNINGCALENDAR"),
-			labelledby: {
-				value: oHeader.getId() + "-Title",
-				append: true
-			}
+			roledescription: oPC._oRB.getText("PLANNINGCALENDAR")
 		});
 		this.addAdditionalClasses(oRm, oPC);
 

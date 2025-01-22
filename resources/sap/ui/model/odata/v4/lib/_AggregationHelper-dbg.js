@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -273,6 +273,7 @@ sap.ui.define([
 				sLeaves,
 				aMinMaxAggregate = [], // concat(aggregate(???),.) content for min/max or count
 				sSkipTop,
+				aSortedGroups,
 				aSubtotalsAggregate = []; // groupby(.,aggregate(???)) content for subtotals/leaves
 
 			/*
@@ -307,18 +308,24 @@ sap.ui.define([
 
 			mQueryOptions = Object.assign({}, mQueryOptions);
 			oAggregation.groupLevels ??= [];
-			bIsLeafLevel = !iLevel || iLevel > oAggregation.groupLevels.length;
 
 			oAggregation.group ??= {};
 			oAggregation.groupLevels.forEach(function (sGroup) {
 				oAggregation.group[sGroup] ??= {};
 			});
+			aSortedGroups = Object.keys(oAggregation.group).sort();
+			if (aSortedGroups.length === oAggregation.groupLevels.length) {
+				// no other groups than those in groupLevels
+				oAggregation.groupLevels.pop();
+			}
+			bIsLeafLevel = !iLevel || iLevel > oAggregation.groupLevels.length;
 			aGroupBy = bIsLeafLevel
-				? Object.keys(oAggregation.group).sort().filter(function (sGroup) {
+				? aSortedGroups.filter(function (sGroup) {
 					return !oAggregation.groupLevels.includes(sGroup);
 				})
 				: [oAggregation.groupLevels[iLevel - 1]];
 			if (!iLevel) {
+				// Note: group levels are in front, in original order, followed by leaf level
 				aGroupBy = oAggregation.groupLevels.concat(aGroupBy);
 			}
 
@@ -350,7 +357,7 @@ sap.ui.define([
 				aGroupBy.forEach(function (sGroup) {
 					var aAdditionally = oAggregation.group[sGroup].additionally;
 
-					if (aAdditionally) {
+					if (aAdditionally) { // Note: addt'l properties intentionally at end
 						aGroupBy.push.apply(aGroupBy, aAdditionally);
 					}
 				});
@@ -389,8 +396,7 @@ sap.ui.define([
 					sApply += "/" + sSkipTop;
 				}
 				if (iLevel === 1 && mQueryOptions.$$leaves && !bFollowUp) {
-					sLeaves = "groupby(("
-						+ Object.keys(oAggregation.group).sort().join(",")
+					sLeaves = "groupby((" + aSortedGroups.join(",")
 						+ "))/aggregate($count as UI5__leaves)";
 				}
 				delete mQueryOptions.$$leaves;
@@ -402,8 +408,8 @@ sap.ui.define([
 				}
 			}
 			if (mQueryOptions.$$filterOnAggregate) {
-				sApply = "groupby((" + Object.keys(oAggregation.group).sort().join(",")
-					+ "),filter(" + mQueryOptions.$$filterOnAggregate + "))/" + sApply;
+				sApply = "groupby((" + aSortedGroups.join(",") + "),filter("
+					+ mQueryOptions.$$filterOnAggregate + "))/" + sApply;
 				delete mQueryOptions.$$filterOnAggregate;
 			}
 			if (oAggregation.search) {
@@ -608,7 +614,7 @@ sap.ui.define([
 
 		/**
 		 * Checks that the given value is of the given type. If <code>vType</code> is a string, then
-		 * <code>typeof vValue === vType<code> must hold. If <code>vType</code> is an array (of
+		 * <code>typeof vValue === vType</code> must hold. If <code>vType</code> is an array (of
 		 * length 1!), then <code>vValue</code> must be an array as well and each element is checked
 		 * recursively. If <code>vType</code> is an object, then <code>vValue</code> must be an
 		 * object (not an array, not <code>null</code>) as well, with a subset of keys, and each
@@ -1157,7 +1163,7 @@ sap.ui.define([
 		},
 
 		/**
-		 * Tells whether the binding with the given aggregation data and filters is affected when
+		 * Tells whether a binding with the given aggregation data and filters is affected when
 		 * requesting side effects for the given paths.
 		 *
 		 * @param {object} oAggregation
@@ -1173,38 +1179,39 @@ sap.ui.define([
 		 * @public
 		 */
 		isAffected : function (oAggregation, aFilters, aSideEffectPaths) {
-			// returns true if the side effect path affects the property path
-			function affects(sSideEffectPath, sPropertyPath) {
-				if (sSideEffectPath.endsWith("/*")) {
+			return aSideEffectPaths.some(function (sSideEffectPath) {
+				// returns true if the mandatory property path is affected by the side effect path
+				function isAffected(sPropertyPath) {
 					// To avoid metadata access, we do not distinguish between properties and
 					// navigation properties, so there is no need to look at "/*".
-					sSideEffectPath = sSideEffectPath.slice(0, -2);
+					return _Helper.hasPathPrefix(sPropertyPath, sSideEffectPath.endsWith("/*")
+							? sSideEffectPath.slice(0, -2)
+							: sSideEffectPath)
+						|| _Helper.hasPathPrefix(sSideEffectPath, sPropertyPath);
 				}
-				return _Helper.hasPathPrefix(sPropertyPath, sSideEffectPath)
-					|| _Helper.hasPathPrefix(sSideEffectPath, sPropertyPath);
-			}
 
-			// returns true if the array contains a filter affected by the side effect path
-			function hasAffectedFilter(sSideEffectPath, aFilters0) {
-				return aFilters0.some(function (oFilter) {
-					return oFilter.aFilters
-						? hasAffectedFilter(sSideEffectPath, oFilter.aFilters)
-						: affects(sSideEffectPath, oFilter.sPath);
-				});
-			}
-
-			return aSideEffectPaths.some(function (sSideEffectPath) {
-				var fnAffects = affects.bind(null, sSideEffectPath);
+				// returns true if the array contains a filter affected by the side effect path
+				function hasAffectedFilter(aFilters0) {
+					return aFilters0.some(function (oFilter) {
+						return oFilter.aFilters
+							? hasAffectedFilter(oFilter.aFilters)
+							: isAffected(oFilter.sPath);
+					});
+				}
 
 				return sSideEffectPath === "" || sSideEffectPath === "*"
-					|| Object.keys(oAggregation.aggregate).some(function (sAlias) {
-							var oDetails = oAggregation.aggregate[sAlias];
+					|| hasAffectedFilter(aFilters)
+					|| Object.keys(oAggregation.aggregate).some((sAlias) => {
+						const oDetails = oAggregation.aggregate[sAlias];
 
-							return affects(sSideEffectPath, oDetails.name || sAlias);
-						})
-					|| Object.keys(oAggregation.group).some(fnAffects)
-					|| oAggregation.groupLevels.some(fnAffects)
-					|| hasAffectedFilter(sSideEffectPath, aFilters);
+						return isAffected(oDetails.name || sAlias)
+							|| oDetails.unit && isAffected(oDetails.unit);
+					})
+					|| Object.keys(oAggregation.group).some((sGroup) => {
+						return isAffected(sGroup)
+							|| oAggregation.group[sGroup].additionally
+								?.some((sPath) => isAffected(sPath));
+					});
 			});
 		},
 
@@ -1304,19 +1311,21 @@ sap.ui.define([
 		 *   applied before data aggregation (which improves performance) because it is unrelated to
 		 *   aggregates. The third one is special in that it has to be applied before data
 		 *   aggregation via the special syntax "$these/aggregate(...)" because it relates to
-		 *   aggregates; it is present only when grand totals are used, but "grandTotal like 1.84"
-		 *   is not.
-		 * @param {object} [oEntityType]
-		 *   The metadata for the entity type; needed only in case of aggregates
+		 *   aggregates; it is present only in case of visual grouping or if grand totals are used,
+		 *   but "grandTotal like 1.84" is not. If the third one is present, then there is an
+		 *   additional fourth element which again is an array of filters: those exceptions where
+		 *   the special syntax is not applicable (for example, a currency filter that accompanies
+		 *   its amount).
 		 *
 		 * @public
 		 */
-		splitFilter : function (oFilter, oAggregation, oEntityType) {
+		splitFilter : function (oFilter, oAggregation) {
 			var aFiltersNoAggregate = [],
+				aFiltersNoThese = [],
 				aFiltersOnAggregate = [];
 
 			/*
-			 * Tells whether the given filter relates to an aggregate
+			 * Tells whether the given filter relates to an aggregate.
 			 *
 			 * @param {sap.ui.model.Filter} oFilter
 			 *   A filter
@@ -1330,6 +1339,20 @@ sap.ui.define([
 			}
 
 			/*
+			 * Tells whether the given filter path relates to an aggregate's unit.
+			 *
+			 * @param {string} sPath
+			 *   A filter's path (must not be <code>undefined</code>!)
+			 * @returns {boolean}
+			 *   Whether the filter path relates to an aggregate's unit
+			 */
+			function isRelatedToUnit(sPath) {
+				return Object.keys(oAggregation.aggregate).some((sAlias) => {
+						return oAggregation.aggregate[sAlias].unit === sPath;
+					});
+			}
+
+			/*
 			 * Splits the given filter tree along AND operations into filters that must be applied
 			 * with or without "$these/aggregate(...)".
 			 *
@@ -1339,6 +1362,10 @@ sap.ui.define([
 			function split(oFilter0) {
 				if (oFilter0.aFilters && oFilter0.bAnd) {
 					oFilter0.aFilters.forEach(split);
+				} else if (oFilter0.sPath && isRelatedToUnit(oFilter0.sPath)) {
+					aFiltersNoAggregate.push(oFilter0);
+					aFiltersNoThese.push(oFilter0); // avoid "$these/..." here
+					aFiltersOnAggregate.push(oFilter0);
 				} else {
 					(isRelatedToAggregate(oFilter0) ? aFiltersOnAggregate : aFiltersNoAggregate)
 						.push(oFilter0);
@@ -1357,11 +1384,11 @@ sap.ui.define([
 				return aFilters.length > 1 ? new Filter(aFilters, true) : aFilters[0];
 			}
 
-			if (!oAggregation || !oAggregation.aggregate) {
+			if (!oAggregation?.aggregate) {
 				// no data aggregation at all
 				return [oFilter];
 			}
-			if (oEntityType.$Key.every((sKey) => sKey in oAggregation.group)) {
+			if (!oAggregation.$leafLevelAggregated) {
 				// no data aggregation on leaf level (all keys used for grouping)
 				return [undefined, oFilter];
 			}
@@ -1369,13 +1396,10 @@ sap.ui.define([
 			split(oFilter);
 			let aResult = [wrap(aFiltersOnAggregate), wrap(aFiltersNoAggregate)];
 
-			if (!oAggregation["grandTotal like 1.84"]) {
-				const bHasSubtotals = Object.values(oAggregation.aggregate)
-					.some((oDetails) => oDetails.subtotals);
-
-				if (bHasSubtotals || _AggregationHelper.hasGrandTotal(oAggregation.aggregate)) {
-					aResult = [undefined, aResult[1], aResult[0]];
-				}
+			if (oAggregation.groupLevels.length
+					|| !oAggregation["grandTotal like 1.84"]
+					&& _AggregationHelper.hasGrandTotal(oAggregation.aggregate)) {
+				aResult = [undefined, aResult[1], aResult[0], aFiltersNoThese];
 			}
 
 			return aResult;

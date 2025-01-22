@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/ui/core/Element","./library"],function(e,l){"use strict";var t=e.extend("sap.f.FlexibleColumnLayoutAccessibleLandmarkInfo",{metadata:{library:"sap.f",properties:{firstColumnLabel:{type:"string",defaultValue:null},middleColumnLabel:{type:"string",defaultValue:null},lastColumnLabel:{type:"string",defaultValue:null},firstColumnBackArrowLabel:{type:"string",defaultValue:null},middleColumnForwardArrowLabel:{type:"string",defaultValue:null},middleColumnBackArrowLabel:{type:"string",defaultValue:null},lastColumnForwardArrowLabel:{type:"string",defaultValue:null}}}});t.prototype.setFirstColumnLabel=function(e){return this._setColumnsLabel("firstColumnLabel",e,"begin")};t.prototype.setMiddleColumnLabel=function(e){return this._setColumnsLabel("middleColumnLabel",e,"mid")};t.prototype.setLastColumnLabel=function(e){return this._setColumnsLabel("lastColumnLabel",e,"end")};t.prototype._setColumnsLabel=function(e,l,t){this.setProperty(e,l,true);this.fireEvent("_changeColumnsLabel",{column:t,label:l});return this};return t});

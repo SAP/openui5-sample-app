@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -130,8 +130,8 @@ sap.ui.define([
 									oRevertData.value = null;
 								}
 
-								if (!oPriorAggregationConfig) {
-									const aCurrentState = await xConfigAPI.getCurrentItemState(oControl, { propertyBag: mPropertyBag, changeType: oChange.getChangeType() }, oPriorAggregationConfig, sAffectedAggregation);
+								if (!oPriorAggregationConfig || !(oPriorAggregationConfig?.aggregations?.[sAffectedAggregation]?.length > 0)) {
+									const aCurrentState = await xConfigAPI.getCurrentItemState(oControl, {propertyBag: mPropertyBag, changeType: oChange.getChangeType()}, oPriorAggregationConfig, sAffectedAggregation);
 									if (aCurrentState) {
 										const oStateItem = aCurrentState?.find((oItem, iIndex) => {
 											return oItem.key === oChange.getContent().key;

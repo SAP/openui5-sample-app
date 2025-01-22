@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -59,7 +59,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -1867,8 +1867,19 @@ sap.ui.define([
 			return SyncPromise.resolve(null);
 		}
 
+		const sMetaPath = _Helper.getMetaPath(this.getResolvedPath());
+		// Note: All paths in mChildPathsReducedToParent start with the partner navigation property
+		// of the last segment in the binding's path because they are backlinks. When wrapped, this
+		// results in exactly one $expand.
+		const mAdditionalExpand = {};
+		for (const sChildPath in this.mChildPathsReducedToParent) {
+			const mQueryOptions = _Helper.wrapChildQueryOptions(sMetaPath, sChildPath, {},
+				this.oModel.oInterface.fetchMetadata, /*bDoNotSelectKeyProperties*/true);
+			_Helper.aggregateExpandSelect(mAdditionalExpand, mQueryOptions);
+		}
+
 		return this.withCache(function (oCache, sPath) {
-			return oCache.getDownloadUrl(sPath, mUriParameters);
+			return oCache.getDownloadUrl(sPath, mUriParameters, mAdditionalExpand);
 		});
 	};
 
@@ -1877,6 +1888,8 @@ sap.ui.define([
 	 * given arrays of dynamic application and control filters and the given static filter. If
 	 * {@link sap.ui.filter.Filter.NONE} is set as any of the dynamic filters, it will override
 	 * all static filters.
+	 *
+	 * As a side effect, this method computes <code>$$aggregation.$leafLevelAggregated</code>.
 	 *
 	 * @param {sap.ui.model.Context} oContext
 	 *   The context instance to be used; it is given as a parameter and this.oContext is unused
@@ -1896,6 +1909,7 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataListBinding.prototype.fetchFilter = function (oContext, sStaticFilter) {
+		let aFiltersNoThese;
 		const oMetaModel = this.oModel.getMetaModel();
 		const oMetaContext = oMetaModel.getMetaContext(this.oModel.resolve(this.sPath, oContext));
 
@@ -1917,7 +1931,7 @@ sap.ui.define([
 			}
 
 			bToLower = sEdmType === "Edm.String" && oFilter.bCaseSensitive === false;
-			sFilterPath = bThese
+			sFilterPath = bThese && !aFiltersNoThese?.includes(oFilter)
 				? setCase(`$these/aggregate(${oFilter.sPath})`)
 				: setCase(decodeURIComponent(oFilter.sPath));
 			sValue = setCase(_Helper.formatLiteral(oFilter.oValue1, sEdmType));
@@ -2043,20 +2057,26 @@ sap.ui.define([
 
 		const oCombinedFilter
 			= FilterProcessor.combineFilters(this.aFilters, this.aApplicationFilters);
-		if (!oCombinedFilter) {
-			return SyncPromise.resolve([sStaticFilter]);
-		}
-		if (oCombinedFilter === Filter.NONE) {
-			return SyncPromise.resolve(["false"]);
-		}
 
 		const oPromise = _Helper.isDataAggregation(this.mParameters)
 			? oMetaModel.fetchObject(oMetaContext.getPath() + "/")
-			: SyncPromise.resolve();
+			: SyncPromise.resolve(); // Note: no oEntityType available below!
 
 		return oPromise.then((oEntityType) => {
-			const aFilters = _AggregationHelper.splitFilter(oCombinedFilter,
-				this.mParameters.$$aggregation, oEntityType);
+			const oAggregation = this.mParameters.$$aggregation;
+			if (oEntityType) {
+				oAggregation.$leafLevelAggregated
+					= !oEntityType.$Key?.every((sKey) => sKey in oAggregation.group);
+			}
+
+			if (!oCombinedFilter) {
+				return [sStaticFilter];
+			}
+			if (oCombinedFilter === Filter.NONE) {
+				return ["false"];
+			}
+			const aFilters = _AggregationHelper.splitFilter(oCombinedFilter, oAggregation);
+			aFiltersNoThese = aFilters[3];
 
 			return SyncPromise.all([
 				fetchFilter(aFilters[0], {}, /*bWithinAnd*/sStaticFilter)
@@ -2509,7 +2529,7 @@ sap.ui.define([
 				aElements = oCache.getElements(sPath);
 			}, "", /*bSync*/true);
 
-		if (aElements && this.createContexts(0, aElements)) {
+		if (aElements && this.createContexts(0, aElements, /*bCreateOnly*/true)) {
 			// In the case that a control has requested new data and the data request is already
 			// completed, but the new contexts are not yet created, we have to ensure that a change
 			// event is fired to inform the control about these new contexts.
@@ -4379,7 +4399,7 @@ sap.ui.define([
 			}
 		}
 		if (bSingle) {
-			this.oModel.withUnresolvedBindings("removeCachesAndMessages",
+			oModel.withUnresolvedBindings("removeCachesAndMessages",
 				oContext.getPath().slice(1));
 
 			return this.refreshSingle(oContext, this.lockGroup(sGroupId), /*bAllowRemoval*/false,
@@ -4642,7 +4662,10 @@ sap.ui.define([
 	 *   </ul>
 	 * @param {string[]} [oAggregation.groupLevels]
 	 *   A list of groupable property names used to determine group levels. They may, but don't need
-	 *   to, be repeated in <code>oAggregation.group</code>. Group levels cannot be combined with:
+	 *   to, be repeated in <code>oAggregation.group</code>. Since 1.132.0, the last group level is
+	 *   interpreted as the leaf level in case there are no other groups than those given here. In
+	 *   that case, {@link #getAggregation} returns a shorter <code>groupLevels</code> list.
+	 *   Group levels cannot be combined with:
 	 *   <ul>
 	 *     <li> filtering for aggregated properties,
 	 *     <li> "$search" (since 1.93.0),
@@ -4793,7 +4816,9 @@ sap.ui.define([
 					this.oHeaderContext ??= Context.create(this.oModel, this, sResolvedPath);
 					if (this.mParameters.$$aggregation) {
 						_AggregationHelper.setPath(this.mParameters.$$aggregation, sResolvedPath);
-					} else if (this.bHasPathReductionToParent && this.oModel.bAutoExpandSelect) {
+					} else if (!_Helper.isEmptyObject(this.mChildPathsReducedToParent)
+							&& this.oModel.bAutoExpandSelect) {
+						// restart auto-$expand/$select
 						this.mCanUseCachePromiseByChildPath = {};
 						this.sChangeReason = "AddVirtualContext"; // JIRA: CPOUI5ODATAV4-848
 					}

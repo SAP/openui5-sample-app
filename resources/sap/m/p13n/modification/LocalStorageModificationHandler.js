@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/m/p13n/modification/ModificationHandler","sap/m/p13n/Engine"],(e,t)=>{"use strict";let n;const a=new WeakMap;const o=e.extend("sap.m.p13n.modification.LocalStorageModificationHandler");o.prototype.processChanges=function(n,a){const o=e.prototype.processChanges.apply(this,arguments);const r=n&&n[0]?n[0].selectorElement:undefined;return o.then(()=>t.getInstance().retrieveState(r).then(e=>{localStorage.setItem("$p13n.Engine.data--"+r.getId(),JSON.stringify(e))}))};o.prototype.initialize=e=>{let n=JSON.parse(localStorage.getItem("$p13n.Engine.data--"+e.getId()));let o;if(!n){o=t.getInstance().retrieveState(e).then(e=>{n=e})}else{o=t.getInstance().applyState(e,n,true)}a.set(e,n);return o};o.prototype.waitForChanges=(e,t)=>Promise.resolve();o.prototype.reset=(e,n)=>{const o=e.selector;localStorage.removeItem("$p13n.Engine.data--"+o.getId());return t.getInstance().applyState(o,a.get(o),true)};o.prototype.isModificationSupported=(e,t)=>false;o.getInstance=()=>{if(!n){n=new o}return n};return o});

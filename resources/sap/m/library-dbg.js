@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -29,6 +29,7 @@ sap.ui.define([
  "./AvatarSize",
  "./AvatarType",
  "./AvatarColor",
+ "./AvatarBadgeColor",
  "./AvatarImageFitType",
  "./IllustratedMessageSize",
  "./IllustratedMessageType",
@@ -59,6 +60,7 @@ sap.ui.define([
 	 AvatarSize,
 	 AvatarType,
 	 AvatarColor,
+	 AvatarBadgeColor,
 	 AvatarImageFitType,
 	 IllustratedMessageSize,
 	 IllustratedMessageType,
@@ -75,14 +77,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.m",
-		version: "1.131.1",
+		version: "1.132.1",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -91,8 +93,10 @@ sap.ui.define([
 			"sap.m.AvatarSize",
 			"sap.m.AvatarType",
 			"sap.m.AvatarColor",
+			"sap.m.AvatarBadgeColor",
 			"sap.m.BackgroundDesign",
 			"sap.m.BadgeState",
+			"sap.m.BadgeStyle",
 			"sap.m.BadgeAnimationType",
 			"sap.m.BarDesign",
 			"sap.m.BorderDesign",
@@ -819,20 +823,20 @@ sap.ui.define([
 	 * Types of badge rendering style.
 	 *
 	 * @enum {string}
-	 * @private
+	 * @public
 	 */
 	thisLib.BadgeStyle = {
 		/**
 		 * Default style. Use for badges which contain text or numbers.
 		 *
-		 * @private
+		 * @public
 		 */
 		Default: "Default",
 
 		/**
 		 * Attention style. This badge is rendered as a single dot meant to grab attention.
 		 *
-		 * @private
+		 * @public
 		 */
 		Attention: "Attention"
 	};
@@ -5419,6 +5423,7 @@ sap.ui.define([
 	thisLib.AvatarSize = AvatarSize;
 	thisLib.AvatarType = AvatarType;
 	thisLib.AvatarColor = AvatarColor;
+	thisLib.AvatarBadgeColor = AvatarBadgeColor;
 	thisLib.AvatarImageFitType = AvatarImageFitType;
 
 	thisLib.IllustratedMessageSize = IllustratedMessageSize;
@@ -6540,6 +6545,7 @@ sap.ui.define([
 	 */
 	DataType.registerEnum("sap.m.BackgroundDesign", thisLib.BackgroundDesign);
 	DataType.registerEnum("sap.m.BadgeState", thisLib.BadgeState);
+	DataType.registerEnum("sap.m.BadgeStyle", thisLib.BadgeStyle);
 	DataType.registerEnum("sap.m.BadgeAnimationType", thisLib.BadgeAnimationType);
 	DataType.registerEnum("sap.m.BarDesign", thisLib.BarDesign);
 	DataType.registerEnum("sap.m.BorderDesign", thisLib.BorderDesign);

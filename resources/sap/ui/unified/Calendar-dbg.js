@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 //Provides control sap.ui.unified.Calendar.
@@ -78,7 +78,7 @@ sap.ui.define([
 	 * Basic Calendar.
 	 * This calendar is used for DatePickers
 	 * @extends sap.ui.core.Control
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -121,9 +121,14 @@ sap.ui.define([
 			firstDayOfWeek : {type : "int", group : "Appearance", defaultValue : -1},
 
 			/**
+			 * This property sets chosen days of the week as non-working days, and overrides the weekend days defined in the locale settings.
 			 * If set, the provided weekdays are displayed as non-working days.
-			 * Valid values inside the array are 0 to 6.
-			 * If not set, the weekend defined in the locale settings is displayed as non-working days.
+			 *
+			 * <ul>Users could override the non-working days for each week. Valid values inside the array are from 0 to 6. For example:
+			 * <li>A single day for each week - <code>[3]</code>.</li>
+			 * <li>All days for each week - <code>[0,1,2,3,4,5,6]</code>.</li>
+			 * <li>None of the days for each week - <code>[]</code>. In this case all weekdays are working days.</li>
+			 * <ul>
 			 *
 			 * <b>Note:</b> Keep in mind that this property sets only weekly-recurring days
 			 * as non-working. If you need specific dates or dates ranges, such as national
@@ -532,11 +537,22 @@ sap.ui.define([
 				weekNumber: oEvent.getParameter("weekNumber"),
 				weekDays: oWeekDays
 			}),
-			iSelectedWeekMonth = oWeekDays.getStartDate() && oWeekDays.getStartDate().getMonth(),
-			iCurrentMonth = oEvent.getSource().getDate() && oEvent.getSource().getDate().getMonth();
-		const bOtherMonth = iSelectedWeekMonth !== iCurrentMonth;
+			iSelectedWeekMonth = oWeekDays?.getStartDate() && oWeekDays?.getStartDate().getMonth(),
+			iCurrentMonth = oEvent.getSource().getDate() && oEvent.getSource().getDate().getMonth(),
+			aMonth = this.getAggregation("month"),
+			oFirstMonthStartDate = CalendarDate.fromLocalJSDate(aMonth[0].getDate()),
+			oLastMonthEndDate = CalendarDate.fromLocalJSDate(aMonth[aMonth.length - 1].getDate());
 
-		this._focusDate(CalendarDate.fromLocalJSDate(oWeekDays.getStartDate(), this._getPrimaryCalendarType()), bOtherMonth, false, false);
+			oFirstMonthStartDate.setDate(1);
+			oLastMonthEndDate.setDate(1);
+			oLastMonthEndDate.setMonth(oLastMonthEndDate.getMonth() + 1);
+			oLastMonthEndDate.setDate(0);
+
+		const bOtherMonth = aMonth.length >= 2 ?
+			!CalendarUtils._isBetween(CalendarDate.fromLocalJSDate(oEvent.getSource().getDate()), oFirstMonthStartDate, oLastMonthEndDate, true) :
+			iSelectedWeekMonth !== iCurrentMonth;
+
+		oWeekDays && this._focusDate(CalendarDate.fromLocalJSDate(oWeekDays.getStartDate(), this._getPrimaryCalendarType()), bOtherMonth, false, false);
 
 		if (!bExecuteDefault) {
 			oEvent.preventDefault();

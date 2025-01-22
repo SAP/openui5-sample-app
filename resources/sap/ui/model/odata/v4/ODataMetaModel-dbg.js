@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -58,7 +58,7 @@ sap.ui.define([
 			}
 		}),
 		oBooleanType,
-		mCodeListUrl2Promise = new Map(),
+		mCodeListUrl2Promise = {},
 		DEBUG = Log.Level.DEBUG,
 		aInt64Names = ["$count", "@$ui5.node.groupLevelCount", "@$ui5.node.level"],
 		oInt64Type,
@@ -68,7 +68,6 @@ sap.ui.define([
 		rPredicate = /\(.*\)$/,
 		oRawType = new Raw(),
 		rRightBraces = /\$\)/g,
-		mSharedModelByUrl = new Map(),
 		mSupportedEvents = {
 			messageChange : true
 		},
@@ -158,7 +157,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
@@ -552,6 +551,7 @@ sap.ui.define([
 		//   "B." : {"/B/$metadata" : true} // namespace already read
 		// }
 		this.mSchema2MetadataUrl = {};
+		this.mSharedModelByUrl = {}; // see #getOrCreateSharedModel
 		this.mSupportedBindingModes = {OneTime : true, OneWay : true};
 		this.bSupportReferences = bSupportReferences !== false; // default is true
 		// ClientListBinding#filter calls checkFilter on the model; ClientModel does
@@ -1009,6 +1009,8 @@ sap.ui.define([
 	 */
 	ODataMetaModel.prototype.destroy = function () {
 		this.oMetaModelForAnnotations = undefined;
+		Object.values(this.mSharedModelByUrl).forEach((oModel) => oModel.destroy());
+		this.mSharedModelByUrl = undefined;
 
 		MetaModel.prototype.destroy.apply(this);
 	};
@@ -2493,40 +2495,50 @@ sap.ui.define([
 	/**
 	 * Creates an OData model for the given URL, normalizes the path, caches it, and retrieves it
 	 * from the cache upon further requests. The model is read-only ("OneWay") and can, thus, safely
-	 * be shared. It shares this meta model's security token. The function expects that the metadata
-	 * and the local annotation files have already been loaded.
+	 * be shared across multiple calls to this method (but not across multiple meta models). It
+	 * shares this meta model's security token and "Retry-After" handler. Annotations are copied if
+	 * requested; in this case it is expected that the metadata and the local annotation files have
+	 * already been loaded.
 	 *
 	 * @param {string} sUrl
 	 *   The (relative) $metadata URL, for example "../ValueListService/$metadata"
-	 * @param {string} [sGroupId]
-	 *   The group ID, for example "$direct"
+	 * @param {boolean} [bCopyAnnotations]
+	 *   Whether to copy annotations to the shared model, which is a value list model - not a code
+	 *   list model!
 	 * @param {boolean} [bAutoExpandSelect]
 	 *   Whether the model is to be created with autoExpandSelect
 	 * @returns {sap.ui.model.odata.v4.ODataModel}
-	 *   The value list model
+	 *   The shared model
 	 *
 	 * @private
 	 */
-	ODataMetaModel.prototype.getOrCreateSharedModel = function (sUrl, sGroupId, bAutoExpandSelect) {
-		var sCacheKey,
-			oSharedModel;
-
+	ODataMetaModel.prototype.getOrCreateSharedModel = function (sUrl, bCopyAnnotations,
+			bAutoExpandSelect) {
 		sUrl = this.getAbsoluteServiceUrl(sUrl);
-		sCacheKey = !!bAutoExpandSelect + sUrl;
-		oSharedModel = mSharedModelByUrl.get(sCacheKey);
+		const sMapKey = !!bAutoExpandSelect + sUrl; // no separator needed as sUrl.startsWith("/")
+		let mSharedModelByUrl = this.mSharedModelByUrl;
+		if (!bCopyAnnotations) {
+			// #requestCodeList must not fail, but no need to share if already destroyed
+			mSharedModelByUrl ??= {};
+		}
+		let oSharedModel = mSharedModelByUrl[sMapKey];
 		if (!oSharedModel) {
 			oSharedModel = new this.oModel.constructor({
 				autoExpandSelect : bAutoExpandSelect,
-				groupId : sGroupId,
+				groupId : bCopyAnnotations ? undefined : "$direct",
 				httpHeaders : this.oModel.getHttpHeaders(),
 				metadataUrlParams : this.sLanguage && {"sap-language" : this.sLanguage},
 				operationMode : OperationMode.Server,
 				serviceUrl : sUrl,
 				sharedRequests : true
 			});
-			oSharedModel.getMetaModel()._copyAnnotations(this.oMetaModelForAnnotations ?? this);
-
-			mSharedModelByUrl.set(sCacheKey, oSharedModel);
+			if (bCopyAnnotations) {
+				oSharedModel.getMetaModel()._copyAnnotations(this.oMetaModelForAnnotations ?? this);
+			}
+			oSharedModel.setRetryAfterHandler((oError) => {
+				return this.oModel.getOrCreateRetryAfterPromise(oError);
+			});
+			mSharedModelByUrl[sMapKey] = oSharedModel;
 		}
 		return oSharedModel;
 	};
@@ -2739,14 +2751,17 @@ sap.ui.define([
 					return null;
 				}
 
-				sUrl = _Helper.setLanguage(oCodeList.Url, that.sLanguage);
-				sCacheKey = that.getAbsoluteServiceUrl(sUrl) + "#" + oCodeList.CollectionPath;
-				oPromise = mCodeListUrl2Promise.get(sCacheKey);
+				sUrl = that.getAbsoluteServiceUrl(
+					_Helper.setLanguage(oCodeList.Url, that.sLanguage));
+				// separator needed (Note: path must not include hash)
+				sCacheKey = oCodeList.CollectionPath + "#" + sUrl;
+				oPromise = mCodeListUrl2Promise[sCacheKey];
 				if (oPromise) {
 					return oPromise;
 				}
 
-				oCodeListModel = that.getOrCreateSharedModel(sUrl, "$direct");
+				const bDestroyAlreadyCalled = !that.mSharedModelByUrl;
+				oCodeListModel = that.getOrCreateSharedModel(sUrl);
 				oCodeListMetaModel = oCodeListModel.getMetaModel();
 				sTypePath = "/" + oCodeList.CollectionPath + "/";
 				oPromise = oCodeListMetaModel.requestObject(sTypePath).then(function (oType) {
@@ -2849,9 +2864,12 @@ sap.ui.define([
 							return aContexts.reduce(addCustomizing, {});
 						}).finally(function () {
 							oCodeListBinding.destroy();
+							if (bDestroyAlreadyCalled) {
+								oCodeListModel.destroy();
+							}
 						});
 				});
-				mCodeListUrl2Promise.set(sCacheKey, oPromise);
+				mCodeListUrl2Promise[sCacheKey] = oPromise;
 
 				return oPromise;
 			});
@@ -3334,7 +3352,9 @@ sap.ui.define([
 	 *   data model. Since 1.80.0, that model's parameter "sharedRequests" is set automatically (see
 	 *   {@link sap.ui.model.odata.v4.ODataModel#constructor}). If the value list model is the data
 	 *   model associated with this meta model, use the binding-specific parameter "$$sharedRequest"
-	 *   instead, see {@link sap.ui.model.odata.v4.ODataModel#bindList}.
+	 *   instead, see {@link sap.ui.model.odata.v4.ODataModel#bindList}. Since 1.132.0, the data
+	 *   model's {@link sap.ui.model.odata.v4.ODataModel#setRetryAfterHandler "Retry-After" handler}
+	 *   is reused by default, but can of course be overwritten.
 	 *
 	 *   For fixed values, only one mapping is expected and the qualifier is ignored. The mapping
 	 *   is available with key "" and has an additional property "$qualifier" which is the original
@@ -3404,7 +3424,7 @@ sap.ui.define([
 			function addMapping(mValueListMapping, sQualifier, sMappingUrl, oModel) {
 				if ("CollectionRoot" in mValueListMapping) {
 					oModel = that.getOrCreateSharedModel(mValueListMapping.CollectionRoot,
-						undefined, bAutoExpandSelect);
+						/*bCopyAnnotations*/true, bAutoExpandSelect);
 					if (oValueListInfo[sQualifier]
 							&& oValueListInfo[sQualifier].$model === oModel) {
 						// same model -> allow overriding the qualifier
@@ -3438,8 +3458,8 @@ sap.ui.define([
 
 				// fetch mappings for each entry and wait for all
 				return Promise.all(aMappingUrls.map(function (sMappingUrl) {
-					var oValueListModel = that.getOrCreateSharedModel(sMappingUrl, undefined,
-							bAutoExpandSelect);
+					var oValueListModel = that.getOrCreateSharedModel(sMappingUrl,
+							/*bCopyAnnotations*/true, bAutoExpandSelect);
 
 					// fetch the mappings for the given mapping URL
 					return that.fetchValueListMappings(oValueListModel,
@@ -3664,6 +3684,15 @@ sap.ui.define([
 		delete mScope.$LastModified;
 
 		return mScope;
+	};
+
+	/**
+	 * Clears the cache used in {@link #requestCodeList}. To be used by test code only!
+	 *
+	 * @private
+	 */
+	ODataMetaModel.clearCodeListsCache = function () {
+		mCodeListUrl2Promise = {};
 	};
 
 	return ODataMetaModel;

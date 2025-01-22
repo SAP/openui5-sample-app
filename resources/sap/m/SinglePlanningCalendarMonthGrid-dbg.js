@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -95,7 +95,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 *
 		 * @constructor
 		 * @private
@@ -648,6 +648,14 @@ sap.ui.define([
 			}
 		};
 
+		/**
+		 * @returns {boolean} true if there are any selected appointments
+		 * @private
+		 */
+		SinglePlanningCalendarMonthGrid.prototype._hasSelectedAppointments = function() {
+			return this.getAppointments().some((oAppointment) => oAppointment.getSelected());
+		};
+
 		SinglePlanningCalendarMonthGrid.prototype._isSelectAppointment = function (oEvent) {
 			return oEvent.target.classList.contains("sapUiCalendarRowApps") || (oEvent.target.parentElement && oEvent.target.parentElement.classList.contains("sapUiCalendarRowApps"));
 		};
@@ -781,11 +789,14 @@ sap.ui.define([
 			if ((oSrcControl && oSrcControl.isA("sap.m.SinglePlanningCalendarMonthGrid") && bIsCell && !bIsLink) || bWeekNumberSelect) {
 				this._lastPressedAppointment = undefined;
 				this._fireGridCellSelectionEvent(oEvent, bWeekNumberSelect);
+
 				// deselect all appointments
-				this.fireAppointmentSelect({
-					appointment: undefined,
-					appointments: this._toggleAppointmentSelection(undefined, true)
-				});
+				if (this._hasSelectedAppointments()) {
+					this.fireAppointmentSelect({
+						appointment: undefined,
+						appointments: this._toggleAppointmentSelection(undefined, true)
+					});
+				}
 			} else if (oSrcControl && oSrcControl.isA("sap.ui.unified.CalendarAppointment")) {
 				this._lastPressedAppointment = oSrcControl;
 				const bCtrlKeyOrMetaKey = oEvent.ctrlKey || oEvent.metaKey;
@@ -956,11 +967,19 @@ sap.ui.define([
 			var aDays = this._getVisibleDays(this.getStartDate()),
 				iColumns = this._getColumns(),
 				aResult = [],
-				sLocale = new Locale(Formatting.getLanguageTag()).toString();
+				sLocale = new Locale(Formatting.getLanguageTag()).toString(),
+				oStartDate = new CalendarDate(this.getStartDate().getFullYear(), this.getStartDate().getMonth(), this.getStartDate().getDate()).toUTCJSDate(),
+				iWeekNumber;
 
 			for (var i = 0; i < this._getRows(); i++) {
 				var oDateFormat = DateFormat.getInstance({pattern: "w", calendarType: "Gregorian", calendarWeekNumbering: this.getCalendarWeekNumbering()}, new Locale(sLocale));
-				var iWeekNumber = Number(oDateFormat.format(aDays[i * iColumns].toUTCJSDate(), true));
+				var iFirstWeekDayInMonth = aDays[i * iColumns].toUTCJSDate();
+
+				if (iFirstWeekDayInMonth < oStartDate) {
+					iFirstWeekDayInMonth = oStartDate;
+				}
+
+				iWeekNumber = Number(oDateFormat.format(iFirstWeekDayInMonth, true));
 
 				aResult.push(iWeekNumber);
 			}

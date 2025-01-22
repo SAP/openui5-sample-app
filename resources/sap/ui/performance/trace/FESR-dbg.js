@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -316,6 +316,9 @@ sap.ui.define([
 				XHRInterceptor.register("FESR", "open" , fesrHeaderOverride);
 			}
 			Interaction.setFESR(FESR);
+			await Device.os.getPlatformInfo().then((platform) => {
+				CLIENT_OS = `${platform.name}_${platform.version}`;
+			});
 		} else if (!bActive && bFesrActive) {
 			bFesrActive = false;
 			await Interaction.setActive(false);

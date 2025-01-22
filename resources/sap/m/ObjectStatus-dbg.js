@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -59,7 +59,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
 	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
@@ -210,11 +210,11 @@ sap.ui.define([
 	 */
 	ObjectStatus.prototype._getImageControl = function() {
 		var sImgId = this.getId() + '-icon',
-			bIsIconOnly = !this.getText() && !this.getTitle(),
+			bUseIconTooltip = !this.getText() && !this.getTitle() && !this.getTooltip(),
 			mProperties = {
 				src : this.getIcon(),
 				densityAware : this.getIconDensityAware(),
-				useIconTooltip : bIsIconOnly,
+				useIconTooltip : bUseIconTooltip,
 				decorative: !this.getActive()
 			};
 

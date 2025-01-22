@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -83,7 +83,7 @@ sap.ui.define([
 	 * If used inside the calendar the properties and aggregation are directly taken from the parent
 	 * (To not duplicate and sync DateRanges and so on...)
 	 * @extends sap.ui.core.Control
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -1097,12 +1097,14 @@ sap.ui.define([
 			return;
 		}
 
-		var $oEventTarget = jQuery(oEvent.target),
-			oExtractedDate = $oEventTarget.siblings().eq(0).attr("data-sap-day"),
+		var oEventTarget = oEvent.target,
+			oNextSiblingElement = oEventTarget.nextElementSibling,
+			oExtractedDate = oNextSiblingElement.getAttribute("data-sap-day"),
+			bFocusStartDate = !oNextSiblingElement.classList.contains("sapUiCalItemOtherMonth"),
 			oParsedDate = this._oFormatYyyymmdd.parse(oExtractedDate),
 			oFirstDayOfWeekCalendarDate = CalendarDate.fromLocalJSDate(oParsedDate, this._getPrimaryCalendarType());
 
-		this._handleWeekSelection(oFirstDayOfWeekCalendarDate, true);
+		this._handleWeekSelection(oFirstDayOfWeekCalendarDate, bFocusStartDate);
 	};
 
 	Month.prototype.onmouseup = function(oEvent){
@@ -2005,7 +2007,7 @@ sap.ui.define([
 					for ( i = 0; i < aSelectedDates.length; i++) {
 						oStartDate = aSelectedDates[i].getStartDate();
 						if (oStartDate && oDate.isSame(CalendarDate.fromLocalJSDate(oStartDate, sCalendarType))) {
-							oAggOwner.removeAggregation("selectedDates", i, true); // no re-rendering
+							oAggOwner.removeAggregation("selectedDates", i);
 							break;
 						}
 					}
@@ -2013,7 +2015,7 @@ sap.ui.define([
 					// not selected -> select
 					this._oInvisibleMessage.announce(this._oUnifiedRB.getText("APPOINTMENT_SELECTED"), InvisibleMessageMode.Assertive);
 					oDateRange = new DateRange({startDate: oDate.toLocalJSDate()});
-					oAggOwner.addAggregation("selectedDates", oDateRange, true); // no re-rendering
+					oAggOwner.addAggregation("selectedDates", oDateRange);
 				}
 				sYyyymmdd = this._oFormatYyyymmdd.format(oDate.toUTCJSDate(), true);
 				for ( i = 0; i < aDomRefs.length; i++) {

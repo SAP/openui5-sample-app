@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -140,7 +140,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @public
 	 * @alias sap.ui.core.Element
 	 */
@@ -861,13 +861,14 @@ sap.ui.define([
 	/**
 	 * This triggers immediate rerendering of its parent and thus of itself and its children.
 	 *
-	 * @deprecated As of 1.70, using this method is no longer recommended, but still works. Synchronous DOM
-	 *   updates via this method have several drawbacks: they only work when the control has been rendered
-	 *   before (no initial rendering possible), multiple state changes won't be combined automatically into
-	 *   a single re-rendering, they might cause additional layout trashing, standard invalidation might
-	 *   cause another async re-rendering.
+	 * @deprecated As of 1.70, using this method is no longer recommended, but calling it still
+	 * causes a re-rendering of the element. Synchronous DOM updates via this method have several
+	 * drawbacks: they only work when the control has been rendered before (no initial rendering
+	 * possible), multiple state changes won't be combined automatically into a single re-rendering,
+	 * they might cause additional layout thrashing, standard invalidation might cause another
+	 * async re-rendering.
 	 *
-	 *   The recommended alternative is to rely on invalidation and standard re-rendering.
+	 * The recommended alternative is to rely on invalidation and standard re-rendering.
 	 *
 	 * As <code>sap.ui.core.Element</code> "bubbles up" the rerender, changes to
 	 * child-<code>Elements</code> will also result in immediate rerendering of the whole sub tree.
@@ -937,7 +938,6 @@ sap.ui.define([
 		// update the focus information (potentially) stored by the central UI5 focus handling
 		Element._updateFocusInfo(this);
 
-		var oDomRef = this.getDomRef();
 
 		ManagedObject.prototype.destroy.call(this, bSuppressInvalidate);
 
@@ -945,6 +945,7 @@ sap.ui.define([
 		this.data = noCustomDataAfterDestroy;
 
 		// exit early if there is no control DOM to remove
+		var oDomRef = this.getDomRef();
 		if (!oDomRef) {
 			return;
 		}

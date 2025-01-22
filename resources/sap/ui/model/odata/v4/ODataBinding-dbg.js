@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 //Provides mixin sap.ui.model.odata.v4.ODataBinding for classes extending sap.ui.model.Binding
@@ -52,6 +52,7 @@ sap.ui.define([
 		// query options resulting from child bindings added when this binding already has data
 		this.mLateQueryOptions = undefined;
 		// the absolute binding path (possibly reduced if the binding uses a parent binding's cache)
+		// may be incorrect while cache creation is pending (this.oCache === undefined)
 		this.sReducedPath = undefined;
 		// change reason to be used when the binding is resumed
 		this.sResumeChangeReason = undefined;
@@ -1124,7 +1125,7 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataBinding.prototype.isTransient = function () {
-		return this.sReducedPath && this.sReducedPath.includes("($uid=");
+		return this.bRelative && this.oContext?.getPath().includes("($uid=");
 	};
 
 	/**
@@ -1188,6 +1189,19 @@ sap.ui.define([
 			}
 		}
 		return !mQueryOptions;
+	};
+
+	/**
+	 * Returns a sync promise that is resolved when this binding is ready to be used (that is, when
+	 * its cache has been determined).
+	 *
+	 * @returns {sap.ui.base.SyncPromise}
+	 *   A sync promise that is resolved without a defined result when this binding is ready
+	 *
+	 * @private
+	 */
+	ODataBinding.prototype.ready = function () {
+		return this.oCachePromise;
 	};
 
 	/**

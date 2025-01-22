@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -172,11 +172,14 @@ sap.ui.define([
 		 *   operation parameter, except the binding parameter
 		 * @param {string} [sContextPath]
 		 *   The context path for a bound operation
+		 * @param {string} [sOriginalResourcePath]
+		 *   The "original resource path" to be used to build the target path for bound messages
+		 *   that do not address "$Parameter/...", useful in case of a return value context (R.V.C.)
 		 *
 		 * @public
 		 */
 		adjustTargets : function (oMessage, oOperationMetadata, sParameterContextPath,
-				sContextPath) {
+				sContextPath, sOriginalResourcePath) {
 			var sAdditionalTargetsKey = "additionalTargets" in oMessage
 					? "additionalTargets"
 					: _Helper.getAnnotationKey(oMessage, ".additionalTargets"),
@@ -185,7 +188,7 @@ sap.ui.define([
 			aTargets = [oMessage.target].concat(oMessage[sAdditionalTargetsKey])
 				.map(function (sTarget) {
 					return sTarget && _Helper.getAdjustedTarget(sTarget, oOperationMetadata,
-						sParameterContextPath, sContextPath);
+						sParameterContextPath, sContextPath, sOriginalResourcePath);
 				}).filter(function (sTarget) {
 					return sTarget;
 				});
@@ -1305,22 +1308,30 @@ sap.ui.define([
 		 *   operation parameter, except the binding parameter
 		 * @param {string} [sContextPath]
 		 *   The context path for a bound operation
+		 * @param {string} [sOriginalResourcePath]
+		 *   The "original resource path" to be used to build the target path for bound messages
+		 *   that do not address "$Parameter/...", useful in case of a return value context (R.V.C.)
+		 *   - but not applicable in an error case!
 		 * @returns {string|undefined} The adjusted target, or <code>undefined</code> if the target
 		 *   is unknown
 		 *
 		 * @private
 		 */
 		getAdjustedTarget : function (sTarget, oOperationMetadata, sParameterContextPath,
-				sContextPath) {
+				sContextPath, sOriginalResourcePath) {
 			var bIsParameterName,
 				sParameterName,
 				aSegments;
 
 			aSegments = sTarget.split("/");
 			sParameterName = aSegments.shift();
+			// Note: "$Parameter/" is optional in error case (where we cannot have a R.V.C.), but
+			// mandatory in success case!
 			if (sParameterName === "$Parameter") {
 				sTarget = aSegments.join("/");
 				sParameterName = aSegments.shift();
+			} else if (sOriginalResourcePath) {
+				return "/" + sOriginalResourcePath + "/" + sTarget;
 			}
 			if (oOperationMetadata.$IsBound
 					&& sParameterName === oOperationMetadata.$Parameter[0].$Name) {
@@ -3187,11 +3198,11 @@ sap.ui.define([
 		/**
 		 * Creates the query options for a child binding with the meta path given by its base
 		 * meta path and relative meta path. Adds the key properties to $select of all expanded
-		 * navigation properties. Requires that metadata for the meta path is already loaded so
-		 * that synchronous access to all prefixes of the relative meta path is possible.
-		 * If the relative meta path contains segments which are not a structural property or a
-		 * navigation property, the child query options cannot be created and the method returns
-		 * undefined.
+		 * navigation properties, except if <code>bDoNotSelectKeyProperties</code> is given.
+		 * Requires that metadata for the meta path is already loaded so that synchronous access to
+		 * all prefixes of the relative meta path is possible. If the relative meta path contains
+		 * segments which are not a structural property or a navigation property, the child query
+		 * options cannot be created and the method returns undefined.
 		 *
 		 * @param {string} sBaseMetaPath
 		 *   The meta path which is the starting point for the relative meta path
@@ -3201,6 +3212,8 @@ sap.ui.define([
 		 *   The child binding's query options
 		 * @param {function} fnFetchMetadata
 		 *   Function which fetches metadata for a given meta path
+		 * @param {boolean} [bDoNotSelectKeyProperties]
+		 *   Whether to not add key properties to $select of all expanded navigation properties
 		 *
 		 * @returns {object|undefined} The query options for the child binding or
 		 *   <code>undefined</code> in case the query options cannot be created, e.g. because $apply
@@ -3209,7 +3222,7 @@ sap.ui.define([
 		 * @public
 		 */
 		wrapChildQueryOptions : function (sBaseMetaPath, sChildMetaPath, mChildQueryOptions,
-				fnFetchMetadata) {
+				fnFetchMetadata, bDoNotSelectKeyProperties) {
 			var sExpandSelectPath = "",
 				aMetaPathSegments = sChildMetaPath.split("/"),
 				oProperty,
@@ -3232,7 +3245,7 @@ sap.ui.define([
 				oProperty = fnFetchMetadata(sPropertyMetaPath).getResult();
 				if (oProperty.$kind === "NavigationProperty") {
 					mQueryOptionsForPathPrefix.$expand = {};
-					if (i === aMetaPathSegments.length - 1) {
+					if (!bDoNotSelectKeyProperties && i === aMetaPathSegments.length - 1) {
 						// avoid that mChildQueryOptions.$select is modified by selectKeyProperties
 						mChildQueryOptions = Object.assign({}, mChildQueryOptions);
 						mChildQueryOptions.$select &&= mChildQueryOptions.$select.slice();
@@ -3242,8 +3255,10 @@ sap.ui.define([
 						= (i === aMetaPathSegments.length - 1) // last segment in path
 							? mChildQueryOptions
 							: {};
-					_Helper.selectKeyProperties(mQueryOptionsForPathPrefix,
-						fnFetchMetadata(sPropertyMetaPath + "/").getResult());
+					if (!bDoNotSelectKeyProperties) {
+						_Helper.selectKeyProperties(mQueryOptionsForPathPrefix,
+							fnFetchMetadata(sPropertyMetaPath + "/").getResult());
+					}
 					sExpandSelectPath = "";
 				} else if (oProperty.$kind !== "Property") {
 					return undefined;

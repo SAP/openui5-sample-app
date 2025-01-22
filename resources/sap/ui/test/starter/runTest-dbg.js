@@ -2,7 +2,7 @@
 //@ui5-bundle-raw-include ui5loader.js
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -2359,7 +2359,6 @@
 	 * @param {boolean} [bPreloadGroup=true] whether the name specifies a preload group, defaults to true
 	 * @param {boolean} [bUnloadAll] Whether all matching resources should be unloaded, even if they have been executed already.
 	 * @param {boolean} [bDeleteExports] Whether exports (global variables) should be destroyed as well. Will be done for UI5 module names only.
-	 * @experimental Since 1.16.3 API might change completely, apps must not develop against it.
 	 * @private
 	 */
 	function unloadResources(sName, bPreloadGroup, bUnloadAll, bDeleteExports) {
@@ -2682,7 +2681,7 @@
 	/**
 	 * Root namespace for JavaScript functionality provided by SAP SE.
 	 *
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @namespace
 	 * @public
 	 * @name sap
@@ -3373,7 +3372,7 @@
 //@ui5-bundle-raw-include sap/ui/test/starter/_configureLoader.js
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -3411,7 +3410,7 @@
 //@ui5-bundle-raw-include ui5loader-autoconfig.js
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -3579,6 +3578,7 @@
 		var oWriteableConfig = Object.create(null);
 		var rAlias = /^(sapUiXx|sapUi|sap)((?:[A-Z0-9][a-z]*)+)$/; //for getter
 		var mFrozenProperties = Object.create(null);
+		const multipleParams = new Map();
 		var bFrozen = false;
 		var Configuration;
 
@@ -3594,7 +3594,7 @@
 					if (!sNormalizedKey) {
 						ui5loader._.logger.error("Invalid configuration option '" + sKey + "' in global['sap-ui-config']!");
 					} else if (Object.hasOwn(oConfig, sNormalizedKey)) {
-						ui5loader._.logger.error("Configuration option '" + sKey + "' was already set by '" + mOriginalGlobalParams[sNormalizedKey] + "' and will be ignored!");
+						multipleParams.set(sNormalizedKey, mOriginalGlobalParams[sNormalizedKey]);
 					} else if (Object.hasOwn(mFrozenProperties, sNormalizedKey) && oGlobalConfig[sKey] !== vFrozenValue) {
 						oConfig[sNormalizedKey] = vFrozenValue;
 						ui5loader._.logger.error("Configuration option '" + sNormalizedKey + "' was frozen and cannot be changed to " + oGlobalConfig[sKey] + "!");
@@ -3615,10 +3615,14 @@
 		}
 
 		function get(sKey, bFreeze) {
+			var vValue = oWriteableConfig[sKey] || oConfig[sKey];
+			if (multipleParams.has(sKey)) {
+				ui5loader._.logger.error("Configuration option '" + multipleParams.get(sKey) + "' was set multiple times. Value '" + vValue + "' will be used");
+				multipleParams.delete(sKey);
+			}
 			if (Object.hasOwn(mFrozenProperties,sKey)) {
 				return mFrozenProperties[sKey];
 			}
-			var vValue = oWriteableConfig[sKey] || oConfig[sKey];
 			if (!Object.hasOwn(oConfig, sKey) && !Object.hasOwn(oWriteableConfig, sKey)) {
 				var vMatch = sKey.match(rAlias);
 				var sLowerCaseAlias = vMatch ? vMatch[1] + vMatch[2][0] + vMatch[2].slice(1).toLowerCase() : undefined;
@@ -3669,6 +3673,7 @@
 	], function(camelize) {
 		var oConfig = Object.create(null);
 		var rAlias = /^(sapUiXx|sapUi|sap)((?:[A-Z0-9][a-z]*)+)$/; //for getter
+		const multipleParams = new Map();
 
 		var bootstrap = getBootstrapTag();
 		if (bootstrap.tag) {
@@ -3679,7 +3684,7 @@
 					if (!sNormalizedKey) {
 						ui5loader._.logger.error("Invalid configuration option '" + sKey + "' in bootstrap!");
 					} else if (Object.hasOwn(oConfig, sNormalizedKey)) {
-						ui5loader._.logger.error("Configuration option '" + sKey + "' already exists and will be ignored!");
+						multipleParams.set(sNormalizedKey, sKey);
 					} else {
 						oConfig[sNormalizedKey] = dataset[sKey];
 					}
@@ -3689,6 +3694,10 @@
 
 		function get(sKey) {
 			var vValue = oConfig[sKey];
+			if (multipleParams.has(sKey)) {
+				ui5loader._.logger.error("Configuration option '" + multipleParams.get(sKey) + "' was set multiple times. Value '" + vValue + "' will be used");
+				multipleParams.delete(sKey);
+			}
 			if (vValue === undefined) {
 				var vMatch = sKey.match(rAlias);
 				var sLowerCaseAlias = vMatch ? vMatch[1] + vMatch[2][0] + vMatch[2].slice(1).toLowerCase() : undefined;
@@ -3710,6 +3719,7 @@
 		"sap/base/strings/_camelize"
 	], function(camelize) {
 		var oConfig = Object.create(null);
+		const multipleParams = new Map();
 
 		if (globalThis.location) {
 			oConfig = Object.create(null);
@@ -3721,7 +3731,7 @@
 				var sNormalizedKey = camelize(key);
 				if (sNormalizedKey) {
 					if (Object.hasOwn(oConfig, sNormalizedKey)) {
-						ui5loader._.logger.error("Configuration option '" + key + "' was already set by '" + mOriginalUrlParams[sNormalizedKey] + "' and will be ignored!");
+						multipleParams.set(sNormalizedKey, mOriginalUrlParams[sNormalizedKey]);
 					} else {
 						oConfig[sNormalizedKey] = value;
 						mOriginalUrlParams[sNormalizedKey] = key;
@@ -3734,6 +3744,10 @@
 		}
 
 		function get(sKey) {
+			if (multipleParams.has(sKey)) {
+				ui5loader._.logger.error("Configuration option '" + multipleParams.get(sKey) + "' was set multiple times. Value '" + oConfig[sKey] + "' will be used");
+				multipleParams.delete(sKey);
+			}
 			return oConfig[sKey];
 		}
 
@@ -3749,6 +3763,7 @@
 		"sap/base/strings/_camelize"
 	], function (camelize) {
 		var oConfig = Object.create(null);
+		const multipleParams = new Map();
 
 		if (globalThis.document) {
 			oConfig = Object.create(null);
@@ -3759,7 +3774,7 @@
 				const bSapParam = /sap\-?([Uu]?i\-?)?/.test(tag.name);
 				if (sNormalizedKey) {
 					if (Object.hasOwn(oConfig, sNormalizedKey)) {
-						ui5loader._.logger.error("Configuration option '" + tag.name + "' was already set by '" + mOriginalTagNames[sNormalizedKey] + "' and will be ignored!");
+						multipleParams.set(sNormalizedKey, mOriginalTagNames[sNormalizedKey]);
 					} else {
 						oConfig[sNormalizedKey] = tag.content;
 						mOriginalTagNames[sNormalizedKey] = tag.name;
@@ -3772,6 +3787,10 @@
 		}
 
 		function get(sKey) {
+			if (multipleParams.has(sKey)) {
+				ui5loader._.logger.error("Configuration option '" + multipleParams.get(sKey) + "' was set multiple times. Value '" + oConfig[sKey] + "' will be used");
+				multipleParams.delete(sKey);
+			}
 			return oConfig[sKey];
 		}
 

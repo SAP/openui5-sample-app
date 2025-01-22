@@ -1,7 +1,7 @@
 /*!
 
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -46,7 +46,8 @@ sap.ui.define(['./BarInPageEnabler', "sap/base/i18n/Localization", 'sap/ui/Devic
 
 		oRM.accessibilityState(oControl, {
 			"role": oControl._getAccessibilityRole(),
-			"level":  oControl._getRootAriaLevel()
+			"level":  oControl._getRootAriaLevel(),
+			"labelledby": {value: oControl._getAccessibilityRole() ? oControl.getAriaLabelledBy() : "", append: false}
 		});
 
 		/**

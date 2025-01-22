@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -19,6 +19,7 @@ sap.ui.define([
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/dom/getScrollbarSize",
 	"sap/ui/thirdparty/jquery",
+	"sap/ui/thirdparty/URI",
 	"./IllustratedMessageRenderer"
 ], function(
 	library,
@@ -34,6 +35,7 @@ sap.ui.define([
 	ResizeHandler,
 	getScrollbarSize,
 	jQuery,
+	URI,
 	IllustratedMessageRenderer
 ) {
 	"use strict";
@@ -90,7 +92,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -159,11 +161,28 @@ sap.ui.define([
 				 * <ul>
 				 * <li>First is the the illustration set - sapIllus</li>
 				 * <li>Second is the illustration type - UnableToLoad</li>
+				 * <li>The <code>src</code> property takes precedence over this property.</li>
 				 * </ul>
 				 *
 				 * @since 1.98
 				 */
 				illustrationType : {type: "string", group: "Appearance", defaultValue: IllustratedMessageType.NoSearchResults},
+
+				/**
+				 * Defines the illustration to be displayed as graphical element within the <code>IllustratedMessage</code>.
+				 * It can be an illustration from the illustration set described in the URI.
+				 *
+				 * <b>Notes:</b>
+				 * <ul>
+				 * <li>The <code>sap-illustration://name</code> syntax supports only the default illustration set.
+				 * If you want to include another illustration set in the URI <code>sap-illustration://tnt/name</code>, you
+				 * have to register it in the {@link sap.m.IllustrationPool}.</li>
+				 * <li>This property takes precedence over the <code>illustrationType</code> property.</li>
+				 * </ul>
+				 *
+				 * @since 1.132
+				 */
+				src : {type : "sap.ui.core.URI", group : "Data", defaultValue: "" },
 
 				/**
 				 * Defines the title that is displayed below the illustration.
@@ -334,7 +353,7 @@ sap.ui.define([
 
 	IllustratedMessage.prototype.init = function () {
 		this._sLastKnownMedia = null;
-		this._updateInternalIllustrationSetAndType(this.getIllustrationType());
+		this._updateInternalIllustrationSetAndType();
 		EventBus.getInstance().subscribe("sapMIllusPool-assetLdgFailed", this._handleMissingAsset.bind(this));
 	};
 
@@ -359,15 +378,24 @@ sap.ui.define([
 	 */
 
 	IllustratedMessage.prototype.setIllustrationType = function (sValue) {
-		if (this.getIllustrationType() === sValue) {
-			return this;
-		}
+
+		this.setProperty("illustrationType", sValue);
 
 		if (typeof sValue === 'string') {
-			this._updateInternalIllustrationSetAndType(sValue);
+			this._updateInternalIllustrationSetAndType();
 		}
 
-		return this.setProperty("illustrationType", sValue);
+		return this;
+	};
+
+	IllustratedMessage.prototype.setSrc = function (sValue) {
+
+		this.setProperty("src", sValue);
+
+		if (typeof sValue === 'string') {
+			this._updateInternalIllustrationSetAndType();
+		}
+		return this;
 	};
 
 	/**
@@ -599,14 +627,31 @@ sap.ui.define([
 
 	/**
 	 * Caches the <code>IllustratedMessage</code> illustration set and illustration type in private instance variables.
-	 * @param {string} sValue The Set-Type pair which should be stored
 	 * @private
 	 */
-	IllustratedMessage.prototype._updateInternalIllustrationSetAndType = function (sValue) {
-		var aValues = sValue.split("-");
+	IllustratedMessage.prototype._updateInternalIllustrationSetAndType = function () {
+		var sURI = this.getSrc(),
+			aIllusType,
+			oURI;
 
-		this._sIllustrationSet = aValues[0];
-		this._sIllustrationType = aValues[1];
+		if (sURI) {
+			oURI = URI.parse(sURI);
+			if (oURI.protocol === "sap-illustration") {
+				if (oURI.path !== "/") {
+					this._sIllustrationSet = oURI.hostname;
+					this._sIllustrationType = oURI.path.substring(1);
+				} else {
+					this._sIllustrationSet = "sapIllus";
+					this._sIllustrationType = oURI.hostname;
+				}
+			} else {
+				Log.warning("Invalid pattern. Use sap-illustration://name syntax for the default illustration set. Use sap-illustration://setname/name syntax for custom set, you also have to register it in the IllustrationPool.");
+			}
+		} else {
+			aIllusType = this.getIllustrationType().split("-");
+			this._sIllustrationSet = aIllusType[0];
+			this._sIllustrationType = aIllusType[1];
+		}
 	};
 
 	/**

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -920,22 +920,6 @@ sap.ui.define([
 			this._selectAllCheckBox.setSelected(bSelected);
 		} else if (this._clearAllIcon) {
 			this._clearAllIcon.toggleStyleClass("sapMTableDisableClearAll", !this.getSelectedItems().length);
-		}
-	};
-
-	/**
-	 * This method is a hook for the RenderManager that gets called
-	 * during the rendering of child Controls. It allows to add,
-	 * remove and update existing accessibility attributes (ARIA) of
-	 * those controls.
-	 *
-	 * @param {sap.ui.core.Control} oElement - The Control that gets rendered by the RenderManager
-	 * @param {object} mAriaProps - The mapping of "aria-" prefixed attributes
-	 * @protected
-	 */
-	Table.prototype.enhanceAccessibilityState = function(oElement, mAriaProps) {
-		if (oElement == this._selectAllCheckBox) {
-			mAriaProps.label = Library.getResourceBundleFor("sap.m").getText("TABLE_CHECKBOX_SELECT_ALL");
 		}
 	};
 

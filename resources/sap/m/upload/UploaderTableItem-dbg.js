@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -26,7 +26,7 @@ sap.ui.define([
 	 * @constructor
 	 * @public
 	 * @since 1.120
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @alias sap.m.upload.UploaderTableItem
 	 */
 	var Uploader = Element.extend("sap.m.upload.UploaderTableItem", {
@@ -178,6 +178,26 @@ sap.ui.define([
 			sHttpRequestMethod = this.getHttpRequestMethod(),
 			sUploadUrl = oItem.getUploadUrl() || this.getUploadUrl();
 
+		const _isBrowserOffline = () => {
+			return !window.navigator.onLine;
+		};
+
+		const _fireBrowserOfflineEvent = () => {
+			that.fireUploadCompleted({
+				item: oItem,
+				responseXHR: {
+					response: null, // No server response
+					responseXML: null,
+					responseText: JSON.stringify({
+						error: "Internet is offline. Please check your connection and try again."
+					}),
+					readyState: 4, // Indicates request has been processed (mocking completed state)
+					status: 0, // 0 typically indicates a network error
+					headers: ""
+				}
+			});
+		};
+
 		oXhr.open(sHttpRequestMethod, sUploadUrl, true);
 
 		if ((Device.browser.edge || Device.browser.internet_explorer) && oFile.type && oXhr.readyState === 1) {
@@ -218,12 +238,22 @@ sap.ui.define([
 			oFile = oFormData;
 
 			this._mRequestHandlers[oItem.getId()] = oRequestHandler;
-			oXhr.send(oFile);
-			this.fireUploadStarted({item: oItem});
+			if (_isBrowserOffline()) {
+				this.fireUploadStarted({item: oItem});
+				_fireBrowserOfflineEvent();
+			} else {
+				oXhr.send(oFile);
+				this.fireUploadStarted({item: oItem});
+			}
 		} else {
 			this._mRequestHandlers[oItem.getId()] = oRequestHandler;
-			oXhr.send(oFile);
-			this.fireUploadStarted({item: oItem});
+			if (_isBrowserOffline()) {
+				this.fireUploadStarted({item: oItem});
+				_fireBrowserOfflineEvent();
+			} else {
+				oXhr.send(oFile);
+				this.fireUploadStarted({item: oItem});
+			}
 		}
 
 	};

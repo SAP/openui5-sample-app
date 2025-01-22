@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -728,7 +728,7 @@ sap.ui.define([
 					});
 
 					if (!vParams || (typeof vParams === "object" && (Object.keys(vParams).length !== aNames.length))) {
-						future.errorThrows(`sap.ui.core.theming.Parameters: The following parameters could not be found: "${aNames.filter((n) => vParams && !Object.hasOwn(vParams, n))}"`);
+						Log.error(`sap.ui.core.theming.Parameters: The following parameters could not be found: "${aNames.length === 1 ? aNames[0] : aNames.filter((n) => vParams && !Object.hasOwn(vParams, n))}"`);
 					}
 
 					fnAsyncCallback(vParams);

@@ -1,11 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides class sap.ui.core.support.plugins.Performance
 sap.ui.define([
+	"sap/base/config",
 	"sap/ui/core/RenderManager",
 	'sap/ui/core/Supportability',
 	'sap/ui/core/support/Plugin',
@@ -20,6 +21,7 @@ sap.ui.define([
 	"sap/ui/core/date/UI5Date"
 ],
 	function(
+		BaseConfig,
 		RenderManager,
 		Supportability,
 		Plugin,
@@ -42,7 +44,7 @@ sap.ui.define([
 		 * With this plugIn the performance measurements are displayed
 		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 * @private
 		 * @alias sap.ui.core.support.plugins.Interaction
 		 */
@@ -191,11 +193,20 @@ sap.ui.define([
 		}
 
 		function initInApps(oSupportStub) {
-			var _bFesrActive = /sap-ui-xx-fesr=(true|x|X)/.test(window.location.search);
+			var _bFesrActive = BaseConfig.get({
+				name: "sapUiFesr",
+				type: BaseConfig.Type.Boolean,
+				external: true,
+				freeze: true
+			});
 			var _bODATA_Stats_On = Supportability.isStatisticsEnabled();
 
-			this._oStub.sendEvent(this.getId() + "SetQueryString", {"queryString": { bFesrActive: _bFesrActive,
-				bODATA_Stats_On: _bODATA_Stats_On}});
+			this._oStub.sendEvent(this.getId() + "SetQueryString", {
+				"queryString": {
+					bFesrActive: _bFesrActive,
+					bODATA_Stats_On: _bODATA_Stats_On
+				}
+			});
 			getPerformanceData.call(this);
 		}
 

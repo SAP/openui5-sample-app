@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -60,7 +60,9 @@ sap.ui.define([
 		_Cache.call(this, oRequestor, sResourcePath, mQueryOptions, true);
 
 		this.oAggregation = oAggregation;
-		this.sDownloadUrl = _Cache.prototype.getDownloadUrl.call(this, "");
+		// #getDownloadUrl must be called early (for recursive hierarchy to determine
+		// $DistanceFromRoot and for data aggregation before adding $$leaves)
+		this.sToString = this.getDownloadUrl("");
 		this.aElements = [];
 		this.aElements.$byPredicate = {};
 		this.aElements.$count = undefined;
@@ -1097,14 +1099,6 @@ sap.ui.define([
 		}
 
 		return _AggregationHelper.buildApply(this.oAggregation, mQueryOptions, 0, true);
-	};
-
-	/**
-	 * @override
-	 * @see sap.ui.model.odata.v4.lib._Cache#getDownloadUrl
-	 */
-	_AggregationCache.prototype.getDownloadUrl = function (_sPath, _mCustomQueryOptions) {
-		return this.sDownloadUrl;
 	};
 
 	/**
@@ -2303,8 +2297,8 @@ sap.ui.define([
 		// "super" call (like @borrows ...)
 		const fnSuper = this.oFirstLevel.reset;
 		fnSuper.call(this, aKeptElementPredicates, sGroupId, mQueryOptions);
-		// reset modifies the cache's query options => recalculate the download URL
-		this.sDownloadUrl = _Cache.prototype.getDownloadUrl.call(this, "");
+		// reset modifies the cache's query options => recalculate result of #toString
+		this.sToString = this.getDownloadUrl("");
 		if (sGroupId) { // sGroupId means we are in a side-effects refresh
 			this.oBackup.oCountPromise = this.oCountPromise;
 			this.oBackup.oFirstLevel = this.oFirstLevel;
@@ -2422,16 +2416,11 @@ sap.ui.define([
 	};
 
 	/**
-	 * Returns the cache's URL.
-	 *
-	 * @returns {string} The URL
-	 *
-	 * @public
-	 * @see sap.ui.model.odata.v4.lib._AggregationCache#getDownloadUrl
+	 * @override
+	 * @see sap.ui.model.odata.v4.lib._Cache#toString
 	 */
-	// @override sap.ui.model.odata.v4.lib._Cache#toString
 	_AggregationCache.prototype.toString = function () {
-		return this.sDownloadUrl;
+		return this.sToString;
 	};
 
 	/**

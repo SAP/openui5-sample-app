@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -25,7 +25,7 @@ function(Control, ScrollBarRenderer) {
 	 * care of only rendering the currently visible rows and use this <code>ScrollBar</code> control to make
 	 * the users think they are actually scrolling through a long list.
 	 * @extends sap.ui.core.Control
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @private
 	 * @alias sap.m.ScrollBar

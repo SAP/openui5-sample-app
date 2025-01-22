@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,12 +8,14 @@
 sap.ui.define([
 	'sap/ui/core/Element',
 	'sap/ui/core/IconPool',
+	"sap/ui/events/KeyCodes",
 	'./MenuItemBase',
 	'./library',
 	'sap/ui/core/library'
 ], function(
 	Element,
 	IconPool,
+	KeyCodes,
 	MenuItemBase,
 	library,
 	coreLibrary
@@ -37,7 +39,7 @@ sap.ui.define([
 	 * @implements sap.ui.unified.IMenuItem
 	 *
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 * @since 1.21.0
 	 *
 	 * @constructor
@@ -83,7 +85,6 @@ sap.ui.define([
 		aggregations: {
 			/**
 			 * Defines the content that is displayed at the end of a menu item. This aggregation allows for the addition of custom elements, such as icons and buttons.
-			 * @experimental
 	 		 * @since 1.131
 			 */
 			endContent: {type: "sap.ui.core.Control", multiple : true, singularName : "endContent"}
@@ -240,6 +241,54 @@ sap.ui.define([
 		} else {
 			oMenu.focus();
 		}
+	};
+
+	MenuItem.prototype._handleContentNavigation = function (oEvent) {
+		const bArrowLeftRight = oEvent.keyCode === KeyCodes.ARROW_LEFT || oEvent.keyCode === KeyCodes.ARROW_RIGHT;
+		if (!this.getEndContent().length || !bArrowLeftRight) {
+			this.oHoveredItem = null;
+			return;
+		}
+
+		const iIdx = this.oHoveredItem ? this.getEndContent().indexOf(this.oHoveredItem) : -1;
+		let oSelectableItem;
+		if (oEvent.keyCode === KeyCodes.ARROW_LEFT) {
+			oSelectableItem = this.getPreviousSelectableItem(iIdx);
+		} else {
+			oSelectableItem = this.getNextSelectableItem(iIdx);
+		}
+
+		this.setHoveredItem(oSelectableItem);
+		oSelectableItem && oSelectableItem.focus();
+
+		oEvent.preventDefault();
+		oEvent.stopPropagation();
+	};
+
+	MenuItem.prototype.onsapnext = MenuItem.prototype._handleContentNavigation;
+	MenuItem.prototype.onsapprevious = MenuItem.prototype._handleContentNavigation;
+
+	MenuItem.prototype.getNextSelectableItem = function(iIdx){
+		const aItems = this.getEndContent();
+		const iNextIndex = iIdx + 1 >= aItems.length ? aItems.length - 1 : iIdx + 1;
+
+		return aItems[iNextIndex];
+	};
+
+	MenuItem.prototype.getPreviousSelectableItem = function(iIdx){
+		const aItems = this.getEndContent();
+		const iNextIndex = iIdx - 1 < 0 ? 0 : iIdx - 1;
+
+		return aItems[iNextIndex];
+	};
+
+	MenuItem.prototype.setHoveredItem = function(oItem){
+		if (!oItem) {
+			this.oHoveredItem = null;
+			return;
+		}
+
+		this.oHoveredItem = oItem;
 	};
 
 	MenuItem.prototype._getItemSelectionMode = function() {

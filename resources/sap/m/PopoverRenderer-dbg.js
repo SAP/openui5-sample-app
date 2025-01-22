@@ -1,20 +1,25 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
 	'sap/ui/Device',
 	'sap/m/library',
+	'sap/ui/core/library',
 	"sap/ui/core/ControlBehavior",
 	"sap/ui/dom/getScrollbarSize",
 	"sap/ui/core/IconPool" // side effect: required when calling RenderManager#icon
 ],
-	function(Device, library, ControlBehavior, getScrollbarSize) {
+	function(Device, library, coreLibrary, ControlBehavior, getScrollbarSize) {
 		"use strict";
 
 		// shortcut for sap.m.PlacementType
 		var PlacementType = library.PlacementType;
+
+		// shortcut for sap.ui.core.OpenState
+		var OpenState = coreLibrary.OpenState;
+
 
 		/**
 		 * Popover renderer.
@@ -33,7 +38,11 @@ sap.ui.define([
 		PopoverRenderer.render = function(oRm, oControl) {
 			oRm.openStart("div", oControl);
 			var aClassNames = this.generateRootClasses(oControl),
-				sContentWidth = oControl.getContentWidth();
+				sContentWidth = oControl._getActualContentWidth();
+
+			if (!oControl.isOpen() && oControl.oPopup?.eOpenState !== OpenState.OPENING) {
+				oRm.class("sapMPopoverHidden");
+			}
 
 			aClassNames.forEach(function(sClassName) {
 				oRm.class(sClassName);
@@ -96,9 +105,9 @@ sap.ui.define([
 				contents = oControl._getAllContent(),
 				oFooter = oControl.getFooter(),
 				oSubHeader = oControl.getSubHeader(),
-				sContentWidth = oControl.getContentWidth(),
+				sContentWidth = oControl._getActualContentWidth(),
 				sContentMinWidth = oControl.getContentMinWidth(),
-				sContentHeight = oControl.getContentHeight();
+				sContentHeight = oControl._getActualContentHeight();
 
 			if (Device.system.desktop) {
 				// invisible element for cycling keyboard navigation

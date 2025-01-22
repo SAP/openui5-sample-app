@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -20,7 +20,6 @@ sap.ui.define([
 	/**
 	 * Provide methods for sap.ui.core.routing.Target in async mode
 	 * @private
-	 * @experimental
 	 * @since 1.33
 	 */
 	return {

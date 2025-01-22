@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -240,7 +240,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.131.1
+		 * @version 1.132.1
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
@@ -2627,13 +2627,17 @@ sap.ui.define([
 	 *   parameter
 	 * @param {boolean} [bSilent]
 	 *   Whether the created UI5 messages should only be returned without reporting them
+	 * @param {string} [sOriginalResourcePath]
+	 *   The "original resource path" to be used to build the target path for bound messages that
+	 *   do not address "$Parameter/...", useful in case of a return value context (R.V.C.)
 	 * @returns {sap.ui.core.message.Message[]|undefined}
 	 *   An array of <code>aMessages</code> transformed to UI5 message instances, or
 	 *   <code>undefined</code> in case there are no messages
 	 *
 	 * @private
 	 */
-	ODataModel.prototype.reportTransitionMessages = function (aMessages, sResourcePath, bSilent) {
+	ODataModel.prototype.reportTransitionMessages = function (aMessages, sResourcePath, bSilent,
+			sOriginalResourcePath) {
 		var sContextPath, oOperationMetadata;
 
 		if (!aMessages.length) {
@@ -2658,7 +2662,8 @@ sap.ui.define([
 			if (oOperationMetadata) {
 				oMessage = _Helper.clone(oMessage);
 				// make targets absolute, will not be adjusted again in #createUI5Message
-				_Helper.adjustTargets(oMessage, oOperationMetadata, undefined, sContextPath);
+				_Helper.adjustTargets(oMessage, oOperationMetadata, undefined, sContextPath,
+					sOriginalResourcePath);
 			}
 			oMessage.transition = true;
 
@@ -3050,7 +3055,7 @@ sap.ui.define([
 			// $$canonicalPath is not allowed, binding path and resource path are (almost) identical
 			const oTemporaryBinding = this.mKeepAliveBindingsByPath[oBinding.getResolvedPath()];
 			if (oTemporaryBinding) {
-				return oTemporaryBinding.oCachePromise;
+				return oTemporaryBinding.ready();
 			}
 		}
 		return SyncPromise.resolve();

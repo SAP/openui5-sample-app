@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -162,7 +162,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 *
 	 * @constructor
 	 * @public
@@ -1733,7 +1733,7 @@ function(
 			sValue = "";
 		}
 
-		if (sValue.length >= this.getStartSuggestion()) {
+		if (sValue.length >= this.getStartSuggestion() && this.getEditable()) {
 			this._iSuggestDelay = setTimeout(function(){
 
 				// when using non ASCII characters the value might be the same as previous
@@ -2169,9 +2169,9 @@ function(
 			oPopupInput = oSuggestionsPopover && oSuggestionsPopover.getInput(),
 			oPopupInputDomRef = oPopupInput && oPopupInput.getFocusDomRef();
 
-		// Trigger the ListItems refresh only when the focus is on the input field or the device is phone.
+		// Trigger the ListItems refresh only when the focus is on the input field (incl. busy indicator in case of being busy) or the device is phone.
 		// In all other cases this instantiates list population and it might not be needed at all.
-		if (document.activeElement === this.getFocusDomRef() || document.activeElement === oPopupInputDomRef) {
+		if (document.activeElement === this.getFocusDomRef() || document.activeElement === oPopupInputDomRef || this.getDomRef()?.contains(document.activeElement)) {
 			this._bShouldRefreshListItems = true;
 			this._refreshItemsDelayed();
 		}

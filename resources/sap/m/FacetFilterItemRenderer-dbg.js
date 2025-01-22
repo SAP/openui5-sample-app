@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -21,7 +21,7 @@ sap.ui.define(['./ListItemBaseRenderer', 'sap/ui/core/Renderer'],
 	 */
 	FacetFilterItemRenderer.renderLIContent = function(oRm, oControl) {
 
-		oRm.openStart("div", oControl);
+		oRm.openStart("div");
 		if (oControl.getParent() && oControl.getParent().getWordWrap()) {
 			oRm.class("sapMFFLITitleWrap");
 		} else {

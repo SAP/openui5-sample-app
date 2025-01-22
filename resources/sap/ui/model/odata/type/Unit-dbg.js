@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -47,8 +47,14 @@ sap.ui.define([
 	 *   Whether to skip validation of the number of decimals based on the code list customizing;
 	 *   since 1.93.0
 	 * @param {string[]} [aDynamicFormatOptionNames] Not supported
-	 * @throws {Error} If called with more parameters than <code>oFormatOptions</code> or if the
-	 *   format option <code>customUnits</code> is set
+	 * @throws {Error}
+	 *   If
+	 *   <ul>
+	 *     <li>More parameters than <code>oFormatOptions</code> and <code>oConstraints</code> are given</li>
+	 *     <li>The <code>customUnits</code> format option is set</li>
+	 *     <li>Any constraint other than <code>skipDecimalsValidation</code> is set</li>
+	 *     <li>The <code>oFormatOptions.decimalPadding</code> is set but is not allowed</li>
+	 *   </ul>
 	 *
 	 * @alias sap.ui.model.odata.type.Unit
 	 * @author SAP SE
@@ -66,7 +72,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.type.Unit
 	 * @public
 	 * @since 1.63.0
-	 * @version 1.131.1
+	 * @version 1.132.1
 	 */
 	var Unit = BaseUnit.extend("sap.ui.model.odata.type.Unit", {
 		constructor : function (oFormatOptions, oConstraints, aDynamicFormatOptionNames) {
