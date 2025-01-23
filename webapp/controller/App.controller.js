@@ -1,19 +1,19 @@
-jQuery.sap.declare("sap.ui.demo.todo.controller.App");
+sap.ui.define(["sap/ui/Device", "sap/ui/core/mvc/Controller", "sap/ui/model/Filter", "sap/ui/model/FilterOperator", "sap/ui/model/json/JSONModel", "sap/base/strings/formatMessage"], function(Device, Controller, Filter, FilterOperator, JSONModel, formatMessage) {
 
-jQuery.sap.require("sap.ui.Device");
-jQuery.sap.require("sap.ui.core.mvc.Controller");
-jQuery.sap.require("sap.ui.model.Filter");
-jQuery.sap.require("sap.ui.model.FilterOperator");
-jQuery.sap.require("sap.ui.model.json.JSONModel");
 
-sap.ui.controller("sap.ui.demo.todo.controller.App", {
+
+
+
+
+
+return Controller.extend("sap.ui.demo.todo.controller.App", {
 
 	onInit: function() {
 		this.aSearchFilters = [];
 		this.aTabFilters = [];
 
-		this.getView().setModel(new sap.ui.model.json.JSONModel({
-			isMobile: sap.ui.Device.browser.mobile
+		this.getView().setModel(new JSONModel({
+			isMobile: Device.browser.mobile
 		}), "view");
 	},
 
@@ -98,7 +98,7 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 		this.sSearchQuery = oEvent.getSource().getValue();
 		if (this.sSearchQuery && this.sSearchQuery.length > 0) {
 			oModel.setProperty("/itemsRemovable", false);
-			const filter = new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, this.sSearchQuery);
+			const filter = new Filter("title", FilterOperator.Contains, this.sSearchQuery);
 			this.aSearchFilters.push(filter);
 		} else {
 			oModel.setProperty("/itemsRemovable", true);
@@ -116,10 +116,10 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 
 		switch (this.sFilterKey) {
 			case "active":
-				this.aTabFilters.push(new sap.ui.model.Filter("completed", sap.ui.model.FilterOperator.EQ, false));
+				this.aTabFilters.push(new Filter("completed", FilterOperator.EQ, false));
 				break;
 			case "completed":
-				this.aTabFilters.push(new sap.ui.model.Filter("completed", sap.ui.model.FilterOperator.EQ, true));
+				this.aTabFilters.push(new Filter("completed", FilterOperator.EQ, true));
 				break;
 			case "all":
 			default:
@@ -143,7 +143,7 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 				path: sI18nKey,
 				model: "i18n",
 				formatter: (textWithPlaceholder) => {
-					return jQuery.sap.formatMessage(textWithPlaceholder, [this.sSearchQuery]);
+					return formatMessage(textWithPlaceholder, [this.sSearchQuery]);
 				}
 			});
 		}
@@ -158,4 +158,5 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 			return "COMPLETED_ITEMS" + (sSearchQuery ? "_CONTAINING" : "");
 		}
 	}
+});
 });

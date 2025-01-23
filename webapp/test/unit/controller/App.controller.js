@@ -1,8 +1,8 @@
 /* global jQuery, QUnit, sinon */
 
-jQuery.sap.declare("test-resources.sap.ui.demo.todo.unit.controller.App");
+sap.ui.define(["sap/ui/model/json/JSONModel", "sap/ui/core/mvc/Controller"], function(JSONModel, Controller) {
 
-jQuery.sap.require("sap.ui.model.json.JSONModel");
+
 
 let oAppController;
 
@@ -43,7 +43,7 @@ QUnit.test("getTodos", (assert) => {
 	// Prepare
 	const oViewStub = {};
 	oViewStub.getModel = () => {
-		return new sap.ui.model.json.JSONModel();
+		return new JSONModel();
 	};
 	const oGetViewStub = sinon.stub(oAppController, "getView");
 	oGetViewStub.returns(oViewStub);
@@ -53,4 +53,5 @@ QUnit.test("getTodos", (assert) => {
 
 	// Clean-up
 	oGetViewStub.restore();
+});
 });
