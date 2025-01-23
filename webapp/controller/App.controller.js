@@ -1,165 +1,161 @@
-sap.ui.define([
-	"sap/ui/Device",
-	"sap/ui/core/mvc/Controller",
-	"sap/ui/model/Filter",
-	"sap/ui/model/FilterOperator",
-	"sap/ui/model/json/JSONModel",
-	"sap/base/strings/formatMessage"
-], (Device, Controller, Filter, FilterOperator, JSONModel, formatMessage) => {
-	"use strict";
+jQuery.sap.declare("sap.ui.demo.todo.controller.App");
 
-	return Controller.extend("sap.ui.demo.todo.controller.App", {
+jQuery.sap.require("sap.ui.Device");
+jQuery.sap.require("sap.ui.core.mvc.Controller");
+jQuery.sap.require("sap.ui.model.Filter");
+jQuery.sap.require("sap.ui.model.FilterOperator");
+jQuery.sap.require("sap.ui.model.json.JSONModel");
 
-		onInit() {
-			this.aSearchFilters = [];
-			this.aTabFilters = [];
+sap.ui.controller("sap.ui.demo.todo.controller.App", {
 
-			this.getView().setModel(new JSONModel({
-				isMobile: Device.browser.mobile
-			}), "view");
-		},
+	onInit: function() {
+		this.aSearchFilters = [];
+		this.aTabFilters = [];
 
-		/**
-		 * Get the default model from the view
-		 *
-		 * @returns {sap.ui.model.json.JSONModel} The model containing the todo list, etc.
-		 */
-		getModel() {
-			return this.getView().getModel();
-		},
+		this.getView().setModel(new sap.ui.model.json.JSONModel({
+			isMobile: sap.ui.Device.browser.mobile
+		}), "view");
+	},
 
-		/**
-		 * Adds a new todo item to the bottom of the list.
-		 */
-		addTodo() {
-			const oModel = this.getModel();
-			const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
+	/**
+	 * Get the default model from the view
+	 *
+	 * @returns {sap.ui.model.json.JSONModel} The model containing the todo list, etc.
+	 */
+	getModel: function() {
+		return this.getView().getModel();
+	},
 
-			aTodos.push({
-				title: oModel.getProperty("/newTodo"),
-				completed: false
-			});
+	/**
+	 * Adds a new todo item to the bottom of the list.
+	 */
+	addTodo: function() {
+		const oModel = this.getModel();
+		const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
 
-			oModel.setProperty("/todos", aTodos);
-			oModel.setProperty("/newTodo", "");
-		},
+		aTodos.push({
+			title: oModel.getProperty("/newTodo"),
+			completed: false
+		});
 
-		/**
-		 * Trigger removal of all completed items from the todo list.
-		 */
-		onClearCompleted() {
-			const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
-			this.removeCompletedTodos(aTodos);
-			this.getModel().setProperty("/todos", aTodos);
-		},
+		oModel.setProperty("/todos", aTodos);
+		oModel.setProperty("/newTodo", "");
+	},
 
-		/**
-		 * Removes all completed items from the given todos.
-		 *
-		 * @param {object[]} aTodos
-		 */
-		removeCompletedTodos(aTodos) {
-			let i = aTodos.length;
-			while (i--) {
-				const oTodo = aTodos[i];
-				if (oTodo.completed) {
-					aTodos.splice(i, 1);
-				}
-			}
-		},
+	/**
+	 * Trigger removal of all completed items from the todo list.
+	 */
+	onClearCompleted: function() {
+		const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
+		this.removeCompletedTodos(aTodos);
+		this.getModel().setProperty("/todos", aTodos);
+	},
 
-		/**
-		 * Determines the todo list
-		 *
-		 * @returns {object[]} The todo list
-		 */
-		getTodos(){
-			const oModel = this.getModel();
-			return oModel && oModel.getProperty("/todos") || [];
-		},
-
-		/**
-		 * Updates the number of items not yet completed
-		 */
-		onUpdateItemsLeftCount() {
-			const iItemsLeft = this.getTodos().filter((oTodo) => oTodo.completed !== true).length;
-			this.getModel().setProperty("/itemsLeftCount", iItemsLeft);
-		},
-
-		/**
-		 * Trigger search for specific items. The removal of items is disable as long as the search is used.
-		 * @param {sap.ui.base.Event} oEvent Input changed event
-		 */
-		onSearch(oEvent) {
-			const oModel = this.getModel();
-
-			// First reset current filters
-			this.aSearchFilters = [];
-
-			// add filter for search
-			this.sSearchQuery = oEvent.getSource().getValue();
-			if (this.sSearchQuery && this.sSearchQuery.length > 0) {
-				oModel.setProperty("/itemsRemovable", false);
-				const filter = new Filter("title", FilterOperator.Contains, this.sSearchQuery);
-				this.aSearchFilters.push(filter);
-			} else {
-				oModel.setProperty("/itemsRemovable", true);
-			}
-
-			this._applyListFilters();
-		},
-
-		onFilter(oEvent) {
-			// First reset current filters
-			this.aTabFilters = [];
-
-			// add filter for search
-			this.sFilterKey = oEvent.getParameter("item").getKey();
-
-			switch (this.sFilterKey) {
-				case "active":
-					this.aTabFilters.push(new Filter("completed", FilterOperator.EQ, false));
-					break;
-				case "completed":
-					this.aTabFilters.push(new Filter("completed", FilterOperator.EQ, true));
-					break;
-				case "all":
-				default:
-				// Don't use any filter
-			}
-
-			this._applyListFilters();
-		},
-
-		_applyListFilters() {
-			const oList = this.byId("todoList");
-			const oBinding = oList.getBinding("items");
-
-			oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");
-
-			const sI18nKey = this.getI18NKey(this.sFilterKey, this.sSearchQuery);
-
-			this.byId("filterToolbar").setVisible(!!sI18nKey);
-			if (sI18nKey) {
-				this.byId("filterLabel").bindProperty("text", {
-					path: sI18nKey,
-					model: "i18n",
-					formatter: (textWithPlaceholder) => {
-						return formatMessage(textWithPlaceholder, [this.sSearchQuery]);
-					}
-				});
-			}
-		},
-
-		getI18NKey(sFilterKey, sSearchQuery) {
-			if (!sFilterKey || sFilterKey === "all") {
-				return sSearchQuery ? "ITEMS_CONTAINING" : undefined;
-			} else if (sFilterKey === "active") {
-				return "ACTIVE_ITEMS" + (sSearchQuery ? "_CONTAINING" : "");
-			} else {
-				return "COMPLETED_ITEMS" + (sSearchQuery ? "_CONTAINING" : "");
+	/**
+	 * Removes all completed items from the given todos.
+	 *
+	 * @param {object[]} aTodos
+	 */
+	removeCompletedTodos: function(aTodos) {
+		let i = aTodos.length;
+		while (i--) {
+			const oTodo = aTodos[i];
+			if (oTodo.completed) {
+				aTodos.splice(i, 1);
 			}
 		}
-	});
+	},
 
+	/**
+	 * Determines the todo list
+	 *
+	 * @returns {object[]} The todo list
+	 */
+	getTodos: function(){
+		const oModel = this.getModel();
+		return oModel && oModel.getProperty("/todos") || [];
+	},
+
+	/**
+	 * Updates the number of items not yet completed
+	 */
+	onUpdateItemsLeftCount: function() {
+		const iItemsLeft = this.getTodos().filter((oTodo) => oTodo.completed !== true).length;
+		this.getModel().setProperty("/itemsLeftCount", iItemsLeft);
+	},
+
+	/**
+	 * Trigger search for specific items. The removal of items is disable as long as the search is used.
+	 * @param {sap.ui.base.Event} oEvent Input changed event
+	 */
+	onSearch: function(oEvent) {
+		const oModel = this.getModel();
+
+		// First reset current filters
+		this.aSearchFilters = [];
+
+		// add filter for search
+		this.sSearchQuery = oEvent.getSource().getValue();
+		if (this.sSearchQuery && this.sSearchQuery.length > 0) {
+			oModel.setProperty("/itemsRemovable", false);
+			const filter = new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, this.sSearchQuery);
+			this.aSearchFilters.push(filter);
+		} else {
+			oModel.setProperty("/itemsRemovable", true);
+		}
+
+		this._applyListFilters();
+	},
+
+	onFilter: function(oEvent) {
+		// First reset current filters
+		this.aTabFilters = [];
+
+		// add filter for search
+		this.sFilterKey = oEvent.getParameter("item").getKey();
+
+		switch (this.sFilterKey) {
+			case "active":
+				this.aTabFilters.push(new sap.ui.model.Filter("completed", sap.ui.model.FilterOperator.EQ, false));
+				break;
+			case "completed":
+				this.aTabFilters.push(new sap.ui.model.Filter("completed", sap.ui.model.FilterOperator.EQ, true));
+				break;
+			case "all":
+			default:
+			// Don't use any filter
+		}
+
+		this._applyListFilters();
+	},
+
+	_applyListFilters: function() {
+		const oList = this.byId("todoList");
+		const oBinding = oList.getBinding("items");
+
+		oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");
+
+		const sI18nKey = this.getI18NKey(this.sFilterKey, this.sSearchQuery);
+
+		this.byId("filterToolbar").setVisible(!!sI18nKey);
+		if (sI18nKey) {
+			this.byId("filterLabel").bindProperty("text", {
+				path: sI18nKey,
+				model: "i18n",
+				formatter: (textWithPlaceholder) => {
+					return jQuery.sap.formatMessage(textWithPlaceholder, [this.sSearchQuery]);
+				}
+			});
+		}
+	},
+
+	getI18NKey: function(sFilterKey, sSearchQuery) {
+		if (!sFilterKey || sFilterKey === "all") {
+			return sSearchQuery ? "ITEMS_CONTAINING" : undefined;
+		} else if (sFilterKey === "active") {
+			return "ACTIVE_ITEMS" + (sSearchQuery ? "_CONTAINING" : "");
+		} else {
+			return "COMPLETED_ITEMS" + (sSearchQuery ? "_CONTAINING" : "");
+		}
+	}
 });
