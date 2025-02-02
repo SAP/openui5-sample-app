@@ -21,13 +21,13 @@
 	"devDependencies": {
 		"@eslint/js": "^9.14.0",
 		"@ui5/cli": "^4.0.13",
-		"@ui5/linter": "^1.7.0",
+		"@ui5/linter": "^1.8.0",
 		"@ui5/middleware-code-coverage": "^2.0.1",
 		"eslint": "^9.19.0",
 		"globals": "^15.14.0",
 		"local-web-server": "^5.4.0",
 		"rimraf": "^6.0.1",
 		"start-server-and-test": "^2.0.10",
-		"ui5-test-runner": "^5.4.2"
+		"ui5-test-runner": "^5.4.3"
 	}
 }
