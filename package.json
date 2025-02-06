@@ -8,12 +8,10 @@
 		"npm": ">= 8"
 	},
 	"scripts": {
-		"start": "ui5 serve",
+		"start": "ui5 serve --port 8080",
 		"lint": "eslint webapp && ui5lint",
-		"test-ui5": "npm run test-runner-coverage -- --start start",
-		"test-runner": "ui5-test-runner --url http://localhost:8080/test/testsuite.qunit.html",
-		"test-runner-coverage": "ui5-test-runner --url http://localhost:8080/test/testsuite.qunit.html --coverage -ccb 100 -ccf 100 -ccl 100 -ccs 100",
-		"test": "npm run lint && npm run test-ui5",
+		"test-runner": "ui5-test-runner --url http://localhost:8080/test/testsuite.qunit.html --start start --coverage -ccb 100 -ccf 100 -ccl 100 -ccs 100",
+		"test": "npm run lint && npm run test-runner",
 		"build": "ui5 build -a --clean-dest",
 		"build-self-contained": "ui5 build self-contained -a --clean-dest",
 		"serve-dist": "ws --compress -d dist"
