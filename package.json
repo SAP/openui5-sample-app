@@ -24,7 +24,10 @@
 		"eslint": "^9.20.1",
 		"globals": "^15.15.0",
 		"local-web-server": "^5.4.0",
+		"qunit": "^2.24.1",
 		"rimraf": "^6.0.1",
-		"ui5-test-runner": "^5.4.3"
+		"sinon": "^19.0.2",
+		"ui5-test-runner": "^5.4.3",
+		"ui5-tooling-modules": "^3.22.1"
 	}
 }

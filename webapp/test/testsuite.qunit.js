@@ -5,10 +5,22 @@ sap.ui.define(function () {
 		defaults: {
 			page: "ui5://test-resources/sap/ui/demo/todo/Test.qunit.html?testsuite={suite}&test={name}",
 			qunit: {
-				version: 2
+				versions: {
+					"2.24": {
+						module : "qunit",
+						css: "qunit/qunit/qunit.css"
+					}
+				},
+				version: "2.24"
 			},
 			sinon: {
-				version: 4
+				versions: {
+					"19" : {
+						module : "sinon",
+						bridge: "sap/ui/qunit/sinon-qunit-bridge"
+					}
+				},
+				version: "19"
 			},
 			ui5: {
 				language: "EN",
@@ -21,6 +33,12 @@ sap.ui.define(function () {
 			loader: {
 				paths: {
 					"sap/ui/demo/todo": "../"
+				},
+				map: {
+					"*": {
+						// Ensures that sinon is loaded from UI5 tooling modules middleware instead of sap/ui/thirdparty
+						"sinon": "sinon"
+					}
 				}
 			}
 		},

@@ -18,3 +18,5 @@ server:
         excludePatterns:
           - "resources/"
           - "test/"
+    - name: ui5-tooling-modules-middleware
+      afterMiddleware: compression
