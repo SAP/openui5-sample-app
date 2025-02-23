@@ -157,7 +157,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.132.1
+		 * @version 1.133.0
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
@@ -1817,7 +1817,9 @@ sap.ui.define([
 	 * @param {sap.ui.model.odata.v4.Context} oContext
 	 *   A context, used for building the path and for determining the key predicate
 	 * @param {boolean} [bNoEditUrl]
-	 *   Whether no edit URL is required
+	 *   Whether no edit URL is required; must be <code>undefined</code> from APIs for canonical
+	 *   paths (based on {@link #fetchCanonicalPath}). Since 1.133.0, when a boolean value is given,
+	 *   the edit URL is allowed to be adjusted for upsert use cases.
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise that gets resolved with an object having the following properties:
 	 *   <ul>
@@ -1840,7 +1842,9 @@ sap.ui.define([
 		function error(sMessage) {
 			var oError = new Error(sResolvedPath + ": " + sMessage);
 
-			oModel.reportError(sMessage, sODataMetaModel, oError);
+			if (bNoEditUrl !== undefined) {
+				oModel.reportError(sMessage, sODataMetaModel, oError);
+			} // else: do not log to console or message model for APIs
 			throw oError;
 		}
 
@@ -1865,7 +1869,8 @@ sap.ui.define([
 				//sPropertyPath,
 				aSegments, // The resource path split in segments (encoded)
 				bTransient = false, // Whether the property is within a transient entity
-				oType; // The type of the data at sInstancePath
+				oType, // The type of the data at sInstancePath
+				bUpsert = false; // Whether the entity is already or about to be created via upsert
 
 			// Determines the predicate from a segment (empty string if there is none)
 			function predicate(sSegment) {
@@ -1965,7 +1970,7 @@ sap.ui.define([
 			}
 
 			// aEditUrl may still contain key predicate requests, run them and wait for the promises
-			return SyncPromise.all(aEditUrl.map(function (vSegment) {
+			return SyncPromise.all(aEditUrl.map(function (vSegment, i) {
 				if (typeof vSegment === "string") {
 					return vSegment;
 				}
@@ -1973,6 +1978,12 @@ sap.ui.define([
 				return oContext.fetchValue(vSegment.path).then(function (oEntity) {
 					var sPredicate;
 
+					if (bNoEditUrl !== undefined && i === aEditUrl.length - 1
+							&& (oEntity === null
+								|| oEntity && _Helper.hasPrivateAnnotation(oEntity, "upsert"))) {
+						bUpsert = true;
+						return undefined;
+					}
 					if (!oEntity) {
 						error("No instance to calculate key predicate at " + vSegment.path);
 					}
@@ -1986,7 +1997,7 @@ sap.ui.define([
 				});
 			})).then(function (aFinalEditUrl) {
 				return {
-					editUrl : aFinalEditUrl.join("/"),
+					editUrl : bUpsert ? sEntityPath.slice(1) : aFinalEditUrl.join("/"),
 					entityPath : sEntityPath,
 					propertyPath : sPropertyPath
 				};

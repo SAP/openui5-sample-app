@@ -7,6 +7,7 @@
 // Provides control sap.m.DateTimeField.
 sap.ui.define([
 	"sap/base/i18n/Formatting",
+	"sap/base/i18n/date/CalendarType",
 	"sap/ui/core/Lib",
 	"sap/ui/core/Locale",
 	'sap/ui/model/type/Date',
@@ -27,6 +28,7 @@ sap.ui.define([
 	"sap/ui/dom/jquery/cursorPos"
 ], function(
 	Formatting,
+	CalendarType,
 	Library,
 	Locale,
 	SimpleDateType,
@@ -46,9 +48,6 @@ sap.ui.define([
 ) {
 	"use strict";
 
-	// shortcut for sap.ui.core.CalendarType
-	var CalendarType = coreLibrary.CalendarType;
-
 	// shortcut for sap.ui.core.ValueState
 	var ValueState = coreLibrary.ValueState;
 
@@ -67,7 +66,7 @@ sap.ui.define([
 	 * @extends sap.m.InputBase
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public

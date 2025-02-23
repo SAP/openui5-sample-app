@@ -82,7 +82,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @public
 	 * @abstract
@@ -190,6 +190,7 @@ sap.ui.define([
 
 	//inner model name
 	BasePanel.prototype.P13N_MODEL = "$p13n";
+	BasePanel.prototype.LOCALIZATION_MODEL = "$p13nPanelLocalization";
 
 	//constants for change event reasoning
 	BasePanel.prototype.CHANGE_REASON_ADD = "Add";
@@ -229,6 +230,9 @@ sap.ui.define([
 		this._bFocusOnRearrange = true;
 
 		this._setInnerLayout();
+
+		const oModel = new JSONModel({});
+		this.setModel(oModel, this.LOCALIZATION_MODEL);
 	};
 
 	BasePanel.prototype.onAfterRendering = function() {
@@ -902,6 +906,29 @@ sap.ui.define([
 		if (bFocus) {
 			oTableItem.focus();
 		}
+	};
+
+	/**
+	 * @deprecated As of version 1.120
+	 */
+	BasePanel.prototype.onlocalizationChanged = function() {
+		this._onLocalizationChanged();
+	};
+
+	/**
+	 * Localization changed
+	 * @private
+	 */
+	BasePanel.prototype.onLocalizationChanged = function() {
+		this._onLocalizationChanged();
+	};
+
+	BasePanel.prototype._onLocalizationChanged = function() {
+		this.oResourceBundle = Library.getResourceBundleFor("sap.m");
+		if (this._updateLocalizationTexts && typeof this._updateLocalizationTexts === "function") {
+			this._updateLocalizationTexts();
+		}
+		this.invalidate();
 	};
 
 	BasePanel.prototype.exit = function() {

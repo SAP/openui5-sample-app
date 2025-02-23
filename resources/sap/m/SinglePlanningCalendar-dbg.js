@@ -27,7 +27,7 @@ sap.ui.define([
 	'sap/ui/base/ManagedObjectObserver',
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/date/CalendarWeekNumbering"
+	"sap/base/i18n/date/CalendarWeekNumbering"
 ],
 function(
 	library,
@@ -51,7 +51,7 @@ function(
 	ManagedObjectObserver,
 	UI5Date,
 	jQuery,
-	CalendarWeekNumbering
+	_CalendarWeekNumbering // type of `calendarWeekNumbering`
 ) {
 	"use strict";
 
@@ -111,7 +111,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -253,7 +253,7 @@ function(
 				 * Note: This property should not be used with firstDayOfWeek property.
 				 * @since 1.110.0
 				 */
-				calendarWeekNumbering : { type : "sap.ui.core.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
+				calendarWeekNumbering : { type : "sap.base.i18n.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
 
 				/**
 				 * Determines whether more than one day will be selectable.
@@ -1640,6 +1640,16 @@ function(
 			oStartDate: oCalViewStartDate,
 			oEndDate: oCalViewEndDate
 		};
+	};
+
+	/**
+	 * Finds the start and end dates in the visible range.
+	 * @public
+	 * @since 1.133
+	 * @returns {Object} returns an object that stores both the start and end date within the currently visible range.
+	 */
+	SinglePlanningCalendar.prototype.getFirstAndLastVisibleDates = function () {
+		return this._getCurrentGrid()._getFirstAndLastVisibleDates();
 	};
 
 	/**

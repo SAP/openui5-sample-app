@@ -23,10 +23,11 @@ sap.ui.define([
 	 * @extends sap.m.table.columnmenu.ItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @public
 	 * @since 1.110
+	 * @deprecated As of version 1.132, the concept has been discarded.
 	 *
 	 * @alias sap.m.table.columnmenu.Item
 	 */

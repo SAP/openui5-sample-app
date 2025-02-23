@@ -6,8 +6,8 @@
 
 sap.ui.define([
 	"sap/base/Log",
+	"sap/base/i18n/date/CalendarType",
 	"sap/base/util/extend",
-	"sap/ui/core/CalendarType",
 	"sap/ui/core/Lib",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/format/DateFormat",
@@ -15,7 +15,7 @@ sap.ui.define([
 	"sap/ui/model/ParseException",
 	"sap/ui/model/ValidateException",
 	"sap/ui/model/odata/type/ODataType"
-], function(Log, extend, CalendarType, Library, UI5Date, DateFormat, FormatException, ParseException,
+], function(Log, CalendarType, extend, Library, UI5Date, DateFormat, FormatException, ParseException,
 	ValidateException, ODataType) {
 	"use strict";
 
@@ -93,7 +93,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 * @public
 	 * @since 1.37.0
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 */
 	var TimeOfDay = ODataType.extend("sap.ui.model.odata.type.TimeOfDay", {
 			constructor : function (oFormatOptions, oConstraints) {

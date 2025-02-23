@@ -59,7 +59,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.132.1
+		 * @version 1.133.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -738,7 +738,7 @@ sap.ui.define([
 
 		iCount ??= this.oCache.collapse(
 			_Helper.getRelativePath(oContext.getPath(), this.oHeaderContext.getPath()),
-			bAll ? this.lockGroup() : undefined);
+			bAll ? this.lockGroup() : undefined, bSilent);
 
 		if (iCount > 0) {
 			const aContexts = this.aContexts;
@@ -1543,7 +1543,8 @@ sap.ui.define([
 		oCache ??= _AggregationCache.create(this.oModel.oRequestor, sResourcePath,
 			sDeepResourcePath, mQueryOptions, this.mParameters.$$aggregation,
 			this.oModel.bAutoExpandSelect || "$$separate" in this.mParameters,
-			this.bSharedRequest, this.isGrouped(), this.mParameters.$$separate);
+			this.bSharedRequest, this.isGrouped());
+		oCache.setSeparate?.(this.mParameters.$$separate);
 		if (mKeptElementsByPredicate) {
 			aKeepAlivePredicates.forEach(function (sPredicate) {
 				oCache.addKeptElement(mKeptElementsByPredicate[sPredicate]);
@@ -2065,8 +2066,12 @@ sap.ui.define([
 		return oPromise.then((oEntityType) => {
 			const oAggregation = this.mParameters.$$aggregation;
 			if (oEntityType) {
-				oAggregation.$leafLevelAggregated
-					= !oEntityType.$Key?.every((sKey) => sKey in oAggregation.group);
+				oAggregation.$leafLevelAggregated = !oEntityType.$Key?.every((sKey) => {
+					// "group" and "additionally" determine groupby()
+					return sKey in oAggregation.group
+						|| Object.keys(oAggregation.group).some(
+							(sGroup) => oAggregation.group[sGroup].additionally?.includes(sKey));
+				});
 			}
 
 			if (!oCombinedFilter) {
@@ -3403,6 +3408,8 @@ sap.ui.define([
 	 *   The insertion index
 	 * @param {boolean} [bAtEnd]
 	 *   The relative position in the creation area
+	 *
+	 * @private
 	 */
 	ODataListBinding.prototype.insertContext = function (oContext, iIndex, bAtEnd) {
 		if (iIndex !== undefined) {
@@ -3557,6 +3564,7 @@ sap.ui.define([
 	 *
 	 * @returns {sap.ui.model.odata.v4.Context[]} The list of kept contexts
 	 *
+	 * @private
 	 * @see #getCurrentContexts
 	 */
 	ODataListBinding.prototype.keepOnlyVisibleContexts = function () {
@@ -4596,14 +4604,6 @@ sap.ui.define([
 	 *   used to remove the data aggregation object, which allows to set <code>$apply</code>
 	 *   explicitly afterwards. <code>null</code> is not supported.
 	 *   <br>
-	 *   Since 1.89.0, the <b>deprecated</b> property <code>"grandTotal like 1.84" : true</code> can
-	 *   be used to turn on the handling of grand totals like in 1.84.0, using aggregates of
-	 *   aggregates and thus allowing to filter by aggregated properties while grand totals are
-	 *   needed. Beware that methods like "average" or "countdistinct" are not compatible with this
-	 *   approach, and it cannot be combined with group levels. Since 1.129.0, this property is not
-	 *   needed anymore and filtering by aggregated properties is supported even while grand totals
-	 *   or subtotals are needed.
-	 *   <br>
 	 *   Since 1.117.0, either a read-only recursive hierarchy or pure data aggregation is
 	 *   supported, but no mix; <code>hierarchyQualifier</code> is the leading property that decides
 	 *   between those two use cases. Since 1.125.0, maintenance of a recursive hierarchy is
@@ -4701,6 +4701,14 @@ sap.ui.define([
 	 *   separate row after all children, when a group level node is expanded (since 1.86.0);
 	 *   <code>true</code> for bottom only, <code>false</code> for top and bottom, the default is
 	 *   top only (that is, as part of the group level node)
+	 * @param {boolean} [oAggregation."grandTotal like 1.84"]
+	 *   Since 1.89.0, the <b>deprecated</b> property <code>"grandTotal like 1.84" : true</code> can
+	 *   be used to turn on the handling of grand totals like in 1.84.0, using aggregates of
+	 *   aggregates and thus allowing to filter by aggregated properties while grand totals are
+	 *   needed. Beware that methods like "average" or "countdistinct" are not compatible with this
+	 *   approach, and it cannot be combined with group levels. Since 1.129.0, this property is not
+	 *   needed anymore and filtering by aggregated properties is supported even while grand totals
+	 *   or subtotals are needed.
 	 * @throws {Error} If
 	 *   <ul>
 	 *     <li> the given data aggregation object is unsupported,
@@ -4738,6 +4746,7 @@ sap.ui.define([
 	 * @public
 	 * @see #getAggregation
 	 * @since 1.55.0
+	 * @ui5-transform-hint replace-param oAggregation."grandTotal like 1.84" false
 	 */
 	ODataListBinding.prototype.setAggregation = function (oAggregation) {
 		var mParameters;

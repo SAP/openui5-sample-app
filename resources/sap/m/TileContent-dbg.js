@@ -24,7 +24,7 @@ sap.ui.define(['./library', "sap/base/i18n/Localization", 'sap/ui/core/library',
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 * @since 1.34.0
 	 *
 	 * @public

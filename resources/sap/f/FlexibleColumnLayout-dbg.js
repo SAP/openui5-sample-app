@@ -108,7 +108,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -851,9 +851,9 @@ sap.ui.define([
 	FlexibleColumnLayout.prototype._onColumnsLabelChanged = function (oEvent) {
 		var sColumn = oEvent.getParameter("column"),
 			sLabel = oEvent.getParameter("label"),
-			$Column = this._$columns[sColumn];
+			$Column = this._$columns?.[sColumn];
 
-		$Column.attr("aria-label", sLabel);
+		$Column?.length && $Column.attr("aria-label", sLabel);
 	};
 
 	/**
@@ -1728,12 +1728,17 @@ sap.ui.define([
 		this._previewResizedColumnsOnMoveSeparator(iCursonX, true /* resize end */);
 		this._saveResizedColumWidths();
 
-		if (this._oMoveInfo.layout !== this.getLayout()) {
-			this.setLayout(this._oMoveInfo.layout);
-			this._fireStateChange(true, false);
+		if (this._oMoveInfo.layout == this.getLayout()) {
+			this._exitInteractiveResizeMode();
+			return;
 		}
+		this.setLayout(this._oMoveInfo.layout);
 
-		this._exitInteractiveResizeMode();
+		try {
+			this._fireStateChange(true, false);
+		} finally {
+			this._exitInteractiveResizeMode();
+		}
 	};
 
 	/**

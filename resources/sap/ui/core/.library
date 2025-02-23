@@ -6,7 +6,7 @@
   <copyright>OpenUI5
  * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.132.1</version>
+  <version>1.133.0</version>
 
   <documentation>The SAPUI5 Core Runtime.
 
@@ -197,7 +197,7 @@
             <pattern>../test/sap/ui/core/qunit/thirdparty/qunit-2.18.css</pattern>
             <pattern>../test/sap/ui/core/qunit/thirdparty/qunit-2.18.js</pattern>
         </lib>
-        <lib name="jquery-migrate" displayName="jQuery-Migrate" npmName="jquery-migrate" version="3.3.1" hash="5421254af7837b366e32343522b87ef2" homepage="https://github.com/jquery/jquery-migrate/" id="73555000106100043843">
+        <lib name="jquery-migrate" displayName="jQuery-Migrate" npmName="jquery-migrate" version="3.3.1" hash="f0db1b18e75cbe903cedfdcf5fc4c706" homepage="https://github.com/jquery/jquery-migrate/" id="73555000106100043843">
             <license url="https://github.com/jquery/jquery-migrate/blob/3.3.1/LICENSE.txt" type="MIT" />
             <copyright>OpenJS Foundation and other contributors</copyright>
             <pattern>sap/ui/thirdparty/jquery-compat.js</pattern>
@@ -274,9 +274,9 @@
             <copyright>Google Inc.</copyright>
             <pattern>sap/ui/thirdparty/caja-html-sanitizer.js</pattern>
         </lib>
-        <lib name="cldr" displayName="Unicode Common Locale Data Repository" npmName="cldr-core" version="44" hash="5857b9f6cb0c3e26ae4957ef346c0ed5" homepage="http://cldr.unicode.org/" id="73555000106100189306">
-            <license url="http://www.unicode.org/copyright.html" type="Unicode-DFS-2015" />
-            <copyright>1991-2023 Unicode, Inc.</copyright>
+        <lib name="cldr" displayName="Unicode Common Locale Data Repository" npmName="cldr-core" version="46.1.0" hash="9223f0ba34bea363c9b8b212fffad1bd" homepage="http://cldr.unicode.org/" id="73555000106100189306">
+            <license url="http://www.unicode.org/copyright.html" type="LicenseRef-Unicode-3.0" />
+            <copyright>1991-2024 Unicode, Inc.</copyright>
             <pattern>sap/ui/core/cldr/*</pattern>
         </lib>
         <lib name="mobiscroll" displayName="MobiScroll" npmName="n/a" version="2.9.0" hash="2a76d1439bbc5afaf10324b2108e4d9c" homepage="http://mobiscroll.com" id="73554900106100005562">
@@ -407,7 +407,7 @@
             <copyright>Isaac Z. Schlueter and Contributors</copyright>
             <pattern partial="true" otherContent="SAP" explanation="LRUPersistentCache.js is overall written by SAP, but portions ('Least Recently Used' logic) are taken from the node-lru-cache project (see https://github.com/isaacs/node-lru-cache/blob/v2.7.3/README.md) and modified.">sap/ui/core/cache/LRUPersistentCache.js</pattern>
         </lib>
-        <lib name="tzdata" displayName="Time Zone Database" npmName="n/a" version="2023d" homepage="http://www.iana.org/time-zones" id="73555000106100181707">
+        <lib name="tzdata" displayName="Time Zone Database" npmName="n/a" version="2024b" homepage="http://www.iana.org/time-zones" id="73555000106100181707">
             <license url="https://github.com/eggert/tz/blob/main/LICENSE" type="LicenseRef-tzdata-PublicDomain" />
             <copyright>Arthur David Olson, Paul Eggert and other contributors</copyright>
             <pattern partial="true" otherContent="SAP" explanation="_timezones.js is overall written by SAP, but the list of IANA timezone IDs is taken from the Timezone Database">../test/sap/ui/core/qunit/i18n/helper/_timezones.js</pattern>

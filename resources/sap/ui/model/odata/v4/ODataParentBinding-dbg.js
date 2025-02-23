@@ -599,6 +599,8 @@ sap.ui.define([
 	 * @throws {Error}
 	 *   If the cache promise for this binding is not yet fulfilled, or if the cache is shared
 	 *
+	 * @abstract
+	 * @function
 	 * @name sap.ui.model.odata.v4.ODataParentBinding#delete
 	 * @private
 	 */
@@ -1020,6 +1022,7 @@ sap.ui.define([
 	 * @returns {sap.ui.model.odata.v4.Context}
 	 *   A matching context or <code>undefined</code> if there is none
 	 *
+	 * @abstract
 	 * @function
 	 * @name sap.ui.model.odata.v4.ODataParentBinding#findContextForCanonicalPath
 	 * @private
@@ -1029,6 +1032,7 @@ sap.ui.define([
 	 * Fire event 'patchCompleted' to attached listeners, if the last PATCH request is completed.
 	 *
 	 * @param {boolean} bSuccess Whether the current PATCH request has been processed successfully
+	 *
 	 * @private
 	 */
 	ODataParentBinding.prototype.firePatchCompleted = function (bSuccess) {
@@ -1257,6 +1261,8 @@ sap.ui.define([
 	 * @param {string} sName - The parameter's name
 	 * @param {any} vOtherValue - The parameter's other value
 	 * @returns {boolean} Whether the parameter is "unchanged"
+	 *
+	 * @private
 	 */
 	ODataParentBinding.prototype.isUnchangedParameter = function (sName, vOtherValue) {
 		return this.mParameters[sName] === vOtherValue;

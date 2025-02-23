@@ -251,7 +251,7 @@ sap.ui.define([
 			if (oKeptElement && oKeptElement !== oElement
 					&& !(oKeptElement instanceof SyncPromise)) {
 				if (!sHierarchyQualifier || aElements.includes(oKeptElement)) {
-					throw new Error("Duplicate predicate: " + sPredicate);
+					throw new Error("Duplicate key predicate: " + sPredicate);
 				}
 				if (!oKeptElement["@odata.etag"]
 						|| oElement["@odata.etag"] === oKeptElement["@odata.etag"]) {
@@ -381,6 +381,8 @@ sap.ui.define([
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} [oGroupLock]
 	 *   An unlocked lock for the group to associate the clean-up request with; this indicates
 	 *   whether to collapse the node and all its descendants
+	 * @param {boolean} [bSilent]
+	 *   Whether no ("change") events should be fired
 	 * @param {boolean} [bNested]
 	 *   Whether the "collapse all" was performed at an ancestor
 	 * @returns {number}
@@ -389,10 +391,11 @@ sap.ui.define([
 	 * @public
 	 * @see #expand
 	 */
-	_AggregationCache.prototype.collapse = function (sGroupNodePath, oGroupLock, bNested) {
+	_AggregationCache.prototype.collapse = function (sGroupNodePath, oGroupLock, bSilent, bNested) {
 		const oGroupNode = this.getValue(sGroupNodePath);
 		const oCollapsed = _AggregationHelper.getCollapsedObject(oGroupNode);
-		_Helper.updateAll(this.mChangeListeners, sGroupNodePath, oGroupNode, oCollapsed);
+		_Helper.updateAll(bSilent ? {} : this.mChangeListeners, sGroupNodePath, oGroupNode,
+			oCollapsed);
 		const bAll = !!oGroupLock;
 		this.oTreeState.collapse(oGroupNode, bAll, bNested);
 
@@ -415,7 +418,7 @@ sap.ui.define([
 			}
 			if (bAll && oElement["@$ui5.node.isExpanded"]) {
 				iRemaining -= this.collapse(
-					_Helper.getPrivateAnnotation(oElement, "predicate"), oGroupLock, true);
+					_Helper.getPrivateAnnotation(oElement, "predicate"), oGroupLock, bSilent, true);
 			}
 			// exceptions of selection are effectively kept alive (with recursive hierarchy)
 			if (!this.isSelectionDifferent(oElement)) {
@@ -2681,8 +2684,6 @@ sap.ui.define([
 	 *   error.
 	 * @param {boolean} [bIsGrouped]
 	 *   Whether the list binding is grouped via its first sorter
-	 * @param {string[]} [aSeparateProperties]
-	 *   An array of properties which are requested separately
 	 * @returns {sap.ui.model.odata.v4.lib._Cache}
 	 *   The cache
 	 * @throws {Error}
@@ -2697,8 +2698,7 @@ sap.ui.define([
 	 * @public
 	 */
 	_AggregationCache.create = function (oRequestor, sResourcePath, sDeepResourcePath,
-			mQueryOptions, oAggregation, bSortExpandSelect, bSharedRequest, bIsGrouped,
-			aSeparateProperties) {
+			mQueryOptions, oAggregation, bSortExpandSelect, bSharedRequest, bIsGrouped) {
 		var bHasGrandTotal, bHasGroupLevels;
 
 		function checkExpandSelect() {
@@ -2768,7 +2768,7 @@ sap.ui.define([
 		}
 
 		return _Cache.create(oRequestor, sResourcePath, mQueryOptions, bSortExpandSelect,
-			sDeepResourcePath, bSharedRequest, aSeparateProperties);
+			sDeepResourcePath, bSharedRequest);
 	};
 
 	return _AggregationCache;

@@ -77,14 +77,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.m",
-		version: "1.132.1",
+		version: "1.133.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -170,6 +170,7 @@ sap.ui.define([
 			"sap.m.PopinLayout",
 			"sap.m.QuickViewGroupElementType",
 			"sap.m.RatingIndicatorVisualMode",
+			"sap.m.ReactiveAreaMode",
 			"sap.m.ScreenSize",
 			"sap.m.CarouselScrollMode",
 			"sap.m.SelectColumnRatio",
@@ -4545,6 +4546,28 @@ sap.ui.define([
 
 	};
 
+	/**
+	 * Reactive area modes of interactable elements.
+	 *
+	 * @enum {string}
+	 * @public
+	 */
+	thisLib.ReactiveAreaMode = {
+
+		/**
+		 * The target element is displayed as part of a sentence.
+		 * @public
+		 */
+		Inline : "Inline",
+
+		/**
+		 * The target element is displayed as on overlay on top of other interactive parts of the page.
+		 * @public
+		 */
+		Overlay : "Overlay"
+
+	};
+
 
 	/**
 	 * Breakpoint names for different screen sizes.
@@ -4828,6 +4851,30 @@ sap.ui.define([
 		Generic: "Generic"
 	};
 
+	/**
+	 * Defines the available content sizes for the <code>sap.m.table.columnmenu.QuickAction</code> control.
+	 *
+	 * @enum {string}
+	 * @public
+	 */
+	thisLib.table.columnmenu.QuickActionContentSize = {
+
+		/**
+		 * Large: Recommended for larger input controls, such as {@link sap.m.Input} or {@link sap.m.RatingIndicator}. If there is limited space,
+		 * the input control moves to a new line below the label.
+		 * @public
+		 */
+		L : "L",
+
+		/**
+		 * Small: Recommended for smaller controls, such as {@link sap.m.Switch} or {@link sap.m.Checkbox}. If there is limited space, only the label
+		 * is wrapped. The input control is always right-aligned horizontally and middle-aligned vertically.
+		 * @public
+		 */
+		S : "S"
+
+	};
+	DataType.registerEnum("sap.m.table.columnmenu.QuickActionContentSize", thisLib.table.columnmenu.QuickActionContentSize);
 
 	/**
 	 * Predefined types for ObjectMarker.
@@ -6615,6 +6662,7 @@ sap.ui.define([
 	DataType.registerEnum("sap.m.PopinLayout", thisLib.PopinLayout);
 	DataType.registerEnum("sap.m.QuickViewGroupElementType", thisLib.QuickViewGroupElementType);
 	DataType.registerEnum("sap.m.RatingIndicatorVisualMode", thisLib.RatingIndicatorVisualMode);
+	DataType.registerEnum("sap.m.ReactiveAreaMode", thisLib.ReactiveAreaMode);
 	DataType.registerEnum("sap.m.ScreenSize", thisLib.ScreenSize);
 	DataType.registerEnum("sap.m.CarouselScrollMode", thisLib.CarouselScrollMode);
 	DataType.registerEnum("sap.m.SelectColumnRatio", thisLib.SelectColumnRatio);

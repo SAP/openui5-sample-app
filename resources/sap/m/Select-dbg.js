@@ -116,7 +116,7 @@ function(
 		 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
 		 *
 		 * @author SAP SE
-		 * @version 1.132.1
+		 * @version 1.133.0
 		 *
 		 * @constructor
 		 * @public
@@ -1700,6 +1700,9 @@ function(
 			}
 
 			this.toggleOpenState();
+			if (!this.getSelectedItem()) {
+				this.selectNextSelectableItem();
+			}
 		};
 
 		/**
@@ -1844,11 +1847,7 @@ function(
 			// note: prevent document scrolling when arrow keys are pressed
 			oEvent.preventDefault();
 
-			var oNextSelectableItem,
-				aSelectableItems = this.getSelectableItems();
-
-			oNextSelectableItem = aSelectableItems[aSelectableItems.indexOf(this.getSelectedItem()) + 1];
-			fnHandleKeyboardNavigation.call(this, oNextSelectableItem);
+			this.selectNextSelectableItem();
 		};
 
 		/**
@@ -3330,6 +3329,22 @@ function(
 		 */
 		Select.prototype.hasLabelableHTMLElement = function () {
 			return true;
+		};
+
+		/**
+		 * Select next selectable item in the select list
+		 *
+		 * @returns {sap.ui.core.Item} item to be selected
+		 * @public
+		 */
+
+		Select.prototype.selectNextSelectableItem = function () {
+			var oNextSelectableItem,
+				aSelectableItems = this.getSelectableItems();
+
+				oNextSelectableItem = aSelectableItems[aSelectableItems.indexOf(this.getSelectedItem()) + 1];
+				fnHandleKeyboardNavigation.call(this, oNextSelectableItem);
+				return oNextSelectableItem;
 		};
 
 		return Select;

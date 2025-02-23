@@ -20,12 +20,12 @@ sap.ui.define(['sap/ui/core/Element'],
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.132.1
+		 * @version 1.133.0
 		 *
 		 * @constructor
 		 * @alias sap.m.p13n.AbstractContainerItem
 		 * @author SAP SE
-		 * @version 1.132.1
+		 * @version 1.133.0
 		 * @since 1.96
 		 * @private
 		 * @ui5-restricted
@@ -55,6 +55,13 @@ sap.ui.define(['sap/ui/core/Element'],
 					icon: {
 						type: "string",
 						defaultValue: null
+					},
+					/**
+					 * Item type.
+					 */
+					type: {
+						type: "string",
+						defaultValue: "Active"
 					}
 				},
 				aggregations: {

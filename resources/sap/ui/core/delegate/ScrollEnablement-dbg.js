@@ -18,7 +18,8 @@ sap.ui.define([
 	'sap/ui/core/IntervalTrigger',
 	'sap/ui/core/ResizeHandler',
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/events/KeyCodes"
+	"sap/ui/events/KeyCodes",
+	'sap/ui/core/Element'
 ],
 	function(
 		Localization,
@@ -27,7 +28,8 @@ sap.ui.define([
 		IntervalTrigger,
 		ResizeHandler,
 		jQuery,
-		KeyCodes
+		KeyCodes,
+		Element
 	) {
 	"use strict";
 
@@ -59,7 +61,7 @@ sap.ui.define([
 		 *
 		 * @protected
 		 * @alias sap.ui.core.delegate.ScrollEnablement
-		 * @version 1.132.1
+		 * @version 1.133.0
 		 * @author SAP SE
 		 */
 		var ScrollEnablement = BaseObject.extend("sap.ui.core.delegate.ScrollEnablement", /** @lends sap.ui.core.delegate.ScrollEnablement.prototype */ {
@@ -438,8 +440,8 @@ sap.ui.define([
 
 			_customScrollTo : function(left, top, oEvent) {
 				var sNodeName = oEvent.target.nodeName;
-				// do not prevent events coming from input controls
-				if (sNodeName != "INPUT" && sNodeName != "TEXTAREA") {
+				// do not prevent events coming from input controls or sap.m.Select
+				if (sNodeName != "INPUT" && sNodeName != "TEXTAREA" && !Element.closestTo(oEvent.target)?.isA("sap.m.Select")) {
 					oEvent.preventDefault();
 					oEvent.setMarked();
 

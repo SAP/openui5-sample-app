@@ -94,7 +94,7 @@ sap.ui.define([
 	 *
 	 * Each click/tap fires an event, and in the event handler specific content can be added/changed
 	 * to the <code>content</code> aggregation of the clicked/tapped action item or data can be
-	 * retreived from the same aggregation depending on the state of the action item.
+	 * retrieved from the same aggregation depending on the state of the action item.
 	 *
 	 * If the side content is displayed, there is automatically generated header of the side content which
 	 * contains the icon and title of the selected action item and a close button that closes the area where
@@ -151,7 +151,7 @@ sap.ui.define([
  	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public

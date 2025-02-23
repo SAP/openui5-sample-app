@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.132.1"
+      "version": "1.133.0"
     },
     "title": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
     "description": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
@@ -34,17 +34,17 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.132",
+      "minUI5Version": "1.133",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.132.1"
+          "minVersion": "1.133.0"
         },
         "sap.ui.layout": {
-          "minVersion": "1.132.1",
+          "minVersion": "1.133.0",
           "lazy": true
         },
         "sap.ui.unified": {
-          "minVersion": "1.132.1",
+          "minVersion": "1.133.0",
           "lazy": true
         }
       }
@@ -495,6 +495,7 @@
           "sap.m.PopinLayout",
           "sap.m.QuickViewGroupElementType",
           "sap.m.RatingIndicatorVisualMode",
+          "sap.m.ReactiveAreaMode",
           "sap.m.ScreenSize",
           "sap.m.CarouselScrollMode",
           "sap.m.SelectColumnRatio",

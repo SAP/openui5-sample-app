@@ -7,6 +7,7 @@
 //Provides control sap.ui.unified.Calendar.
 sap.ui.define([
 	"sap/base/i18n/Formatting",
+	"sap/base/i18n/date/CalendarType",
 	'sap/ui/core/Control',
 	'sap/ui/Device',
 	'sap/ui/core/delegate/ItemNavigation',
@@ -24,6 +25,7 @@ sap.ui.define([
 	"sap/ui/thirdparty/jquery"
 ], function(
 	Formatting,
+	CalendarType,
 	Control,
 	Device,
 	ItemNavigation,
@@ -42,9 +44,6 @@ sap.ui.define([
 ) {
 	"use strict";
 
-	// shortcut for sap.ui.core.CalendarType
-	var CalendarType = coreLibrary.CalendarType;
-
 	/*
 	* Inside the YearPicker CalendarDate objects are used. But in the API JS dates are used.
 	* So conversion must be done on API functions.
@@ -62,7 +61,7 @@ sap.ui.define([
 	 * As in all date-time controls, all pubic JS Date objects that are given (e.g. <code>setDate()</code>) or read
 	 * (e.g. <code>getFirstRenderedDate</code>) with values which are considered as date objects in browser(local) timezone.
 	 * @extends sap.ui.core.Control
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -112,14 +111,14 @@ sap.ui.define([
 			 * If not set, the calendar type of the global configuration is used.
 			 * @since 1.34.0
 			 */
-			primaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
+			primaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
 
 			/**
 			 * If set, the years are also displayed in this calendar type
 			 * If not set, the years are only displayed in the primary calendar type
 			 * @since 1.104.0
 			 */
-			secondaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
+			secondaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
 
 			/**
 			 * Date as CalendarDate object. Holds the rendered date in the middle of the grid.

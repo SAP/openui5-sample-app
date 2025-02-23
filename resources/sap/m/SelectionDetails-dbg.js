@@ -43,7 +43,7 @@ function(
 	 * <b><i>Note:</i></b>It is protected and should only be used within the framework itself.
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @extends sap.ui.core.Control
 	 * @constructor
@@ -337,7 +337,8 @@ function(
 		if (showBackButton) {
 			var oBackButton = new Button({
 				icon: "sap-icon://nav-back",
-				press: this._onBackButtonPress.bind(this)
+				press: this._onBackButtonPress.bind(this),
+				tooltip: this._oRb.getText("SELECTIONDETAILS_BACK_BUTTON")
 			});
 			oToolbar.addAggregation("content", oBackButton, true);
 		}

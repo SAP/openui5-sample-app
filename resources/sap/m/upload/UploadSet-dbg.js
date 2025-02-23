@@ -56,7 +56,7 @@ sap.ui.define([
 	 * but it also helps to avoid template-related issues and ensures better data handling.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 * @constructor
 	 * @public
 	 * @since 1.63

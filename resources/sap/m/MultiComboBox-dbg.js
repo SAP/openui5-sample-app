@@ -145,7 +145,7 @@ function(
 	 * </ul>
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @extends sap.m.ComboBoxBase
@@ -787,6 +787,8 @@ function(
 
 		if (this.getEditable() && oEvent.target === this.getDomRef("inner")) {
 			oTokenizer.setRenderMode(TokenizerRenderMode.Loose);
+			setTimeout(oTokenizer["scrollToEnd"].bind(oTokenizer), 0);
+
 		}
 
 		if (oEvent.target === this.getFocusDomRef()) {
@@ -2215,7 +2217,6 @@ function(
 		}
 		setTimeout(this._syncInputWidth.bind(this, oTokenizer), 0);
 		setTimeout(this._handleNMoreAccessibility.bind(this), 0);
-		setTimeout(oTokenizer["scrollToEnd"].bind(oTokenizer), 0);
 	};
 
 	/**

@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.132.1
+		 * @version 1.133.0
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
@@ -841,6 +841,8 @@ sap.ui.define([
 	/**
 	 * Handles setting a parameter property in case of a deferred operation binding, otherwise it
 	 * returns <code>undefined</code>.
+	 *
+	 * @private
 	 */
 	// @override sap.ui.model.odata.v4.ODataParentBinding#doSetProperty
 	ODataContextBinding.prototype.doSetProperty = function (sPath, vValue, oGroupLock) {

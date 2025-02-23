@@ -31,7 +31,7 @@ sap.ui.define([
 		 * @extends sap.m.StandardListItem
 		 *
 		 * @author SAP SE
-		 * @version 1.132.1
+		 * @version 1.133.0
 		 *
 		 * @constructor
 		 * @private
@@ -42,7 +42,7 @@ sap.ui.define([
 				library: "sap.m",
 				properties: {
 					activeTitle: { type: "boolean", group: "Misc", defaultValue: false},
-					messageType: { type: "sap.ui.core.MessageType", group: "Appearance", defaultValue: MessageType.Error }
+					messageType: { type: "sap.ui.core.message.MessageType", group: "Appearance", defaultValue: MessageType.Error }
 				},
 				aggregations: {
 					link: { type: "sap.m.Link", group: "Misc", multiple: false },

@@ -69,7 +69,7 @@ sap.ui.define([
 	 * @alias sap.m.p13n.Engine
 	 * @extends sap.m.p13n.modules.AdaptationProvider
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 * @public
 	 * @since 1.104
 	 */
@@ -1355,14 +1355,13 @@ sap.ui.define([
 
 			const vP13nData = oController.getP13nData();
 			if (vP13nData) {
-				const p = this.createChanges({
+				const p = (oController.isA("sap.ui.mdc.p13n.subcontroller.FilterController") ? Promise.resolve([]) : this.createChanges({
 					control: oControl,
 					key: sControllerKey,
 					state: vP13nData,
 					suppressAppliance: true,
 					applyAbsolute: true
-				})
-					.then((aItemChanges) => {
+				})).then((aItemChanges) => {
 
 						return oController.getBeforeApply().then((aChanges) => {
 

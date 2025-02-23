@@ -4,10 +4,15 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define([],
-	function() {
+sap.ui.define(["./library"],
+	function(library) {
 		"use strict";
 
+	// shortcut for sap.m.ObjectMarkerType
+	var ObjectMarkerType = library.ObjectMarkerType;
+
+	// shortcut for sap.m.ReactiveAreaMode
+	var ReactiveAreaMode = library.ReactiveAreaMode;
 
 	/**
 	 * <code>ObjectMarker</code> renderer.
@@ -31,6 +36,11 @@ sap.ui.define([],
 		// start control wrapper
 		oRm.openStart("span", oControl);
 		oRm.class("sapMObjectMarker");
+		if (oControl.hasListeners("press")
+			&& oControl.getReactiveAreaMode() === ReactiveAreaMode.Overlay
+			&& (oControl.getType() === ObjectMarkerType.Flagged || oControl.getType() === ObjectMarkerType.Favorite)) {
+			oRm.class("sapMLnkLargeReactiveArea");
+		}
 		oRm.openEnd();
 		if (oInnerControl) {
 			oInnerControl.setIconOnly(bIsIconOnly);

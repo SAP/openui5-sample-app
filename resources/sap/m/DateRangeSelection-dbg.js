@@ -168,8 +168,8 @@ sap.ui.define([
 	 * compact mode and provides a touch-friendly size in cozy mode.
 	 *
 	 * @extends sap.m.DatePicker
-	 * @version 1.132.1
-	 * @version 1.132.1
+	 * @version 1.133.0
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -243,6 +243,7 @@ sap.ui.define([
 
 		if (oCalendar instanceof CustomYearPicker) {
 			oCalendar._getYearPicker().setIntervalSelection(true);
+			oCalendar._getYearRangePicker().setIntervalSelection(true);
 		}
 
 		this._getCalendar().detachWeekNumberSelect(this._handleWeekSelect, this);

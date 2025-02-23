@@ -12,9 +12,10 @@ sap.ui.define([
 	'sap/ui/core/Lib',
 	'sap/ui/core/message/MessageType',
 	'sap/ui/core/mvc/ViewType', // provides sap.ui.core.mvc.ViewType
-	'./CalendarType' // provides sap.ui.core.CalendarType
+	'./CalendarType', // provides sap.ui.core.CalendarType
+	'sap/ui/core/date/CalendarWeekNumbering' // ensures availability of legacy DataType "sap.ui.core.date.CalendarWeekNumbering"
 ],
-	function(DataType, Library, MessageType, ViewType, CalendarType) {
+	function(DataType, Library, MessageType, ViewType, CalendarType, _CalendarWeekNumbering) {
 	"use strict";
 
 	/**
@@ -26,13 +27,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.132.1",
+		 version: "1.133.0",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 apiVersion: 2,
 		 types: [
@@ -67,6 +68,7 @@ sap.ui.define([
 			 "sap.ui.core.ImeMode",
 			 "sap.ui.core.IndicationColor",
 			 "sap.ui.core.ItemSelectionMode",
+			 /** @deprecated As of version 1.120. Please use {@link module:sap/ui/core/message/MessageType} instead. */
 			 "sap.ui.core.MessageType",
 			 "sap.ui.core.OpenState",
 			 "sap.ui.core.Orientation",
@@ -1609,7 +1611,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0

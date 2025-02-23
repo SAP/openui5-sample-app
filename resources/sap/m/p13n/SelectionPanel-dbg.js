@@ -71,7 +71,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.BasePanel
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @public
 	 * @since 1.96
@@ -110,7 +110,7 @@ sap.ui.define([
 				 */
 				fieldColumn: {
 					type: "string",
-					defaultValue: Library.getResourceBundleFor("sap.m").getText("p13n.DEFAULT_DESCRIPTION")
+					defaultValue: ""
 				},
 				/**
 				 * The second column in the panel showing the move buttons for reordering.
@@ -144,6 +144,19 @@ sap.ui.define([
 		}
 	});
 
+	SelectionPanel.prototype.init = function() {
+		BasePanel.prototype.init.apply(this, arguments);
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showSelectedText", this._getResourceText("p13n.SHOW_SELECTED"));
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showAllText", this._getResourceText("p13n.SHOW_ALL"));
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/fieldColumn", this._getResourceText("p13n.DEFAULT_DESCRIPTION"));
+		if (this.isPropertyInitial("fieldColumn")) {
+			this.bindProperty("fieldColumn", {
+				model: this.LOCALIZATION_MODEL,
+				path: `/fieldColumn`
+			});
+		}
+	};
+
 	SelectionPanel.prototype.applySettings = function() {
 		BasePanel.prototype.applySettings.apply(this, arguments);
 		this._setTemplate(this._getListTemplate());
@@ -152,9 +165,11 @@ sap.ui.define([
 		//Do not show the factory by default
 		this._bShowFactory = false;
 		this.addStyleClass("SelectionPanelHover");
+		// needed for automatic localization of text when language is switched without refreshing the browser
 		this._displayColumns();
 		this._updateMovement(this.getEnableReorder());
 		this._oListControl.setMultiSelectMode(this.getMultiSelectMode());
+
 	};
 
 	SelectionPanel.prototype.setMultiSelectMode = function(sMultiSelectMode) {
@@ -252,7 +267,8 @@ sap.ui.define([
 					this._bShowSelected = !this._bShowSelected;
 					this._filterList(this._bShowSelected, this._sSearch);
 					this._updateShowSelectedButton();
-				}
+				},
+				text: `{${this.LOCALIZATION_MODEL}>/showSelectedText}`
 			});
 			this._updateShowSelectedButton();
 
@@ -272,7 +288,7 @@ sap.ui.define([
 		const sShowSelected = this._getResourceText("p13n.SHOW_SELECTED");
 		const sShowAll = this._getResourceText("p13n.SHOW_ALL");
 
-		this._oShowSelectedButton?.setText(this._bShowSelected ? sShowAll : sShowSelected);
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showSelectedText", this._bShowSelected ? sShowAll : sShowSelected);
 	};
 
 	SelectionPanel.prototype.getSelectedFields = function() {
@@ -542,6 +558,13 @@ sap.ui.define([
 			oTableItem.getCells()[1].addItem(this._getMoveDownButton());
 			oTableItem.getCells()[1].addItem(this._getMoveBottomButton());
 		}
+	};
+
+	SelectionPanel.prototype._updateLocalizationTexts = function() {
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showSelectedText", this._getResourceText("p13n.SHOW_SELECTED"));
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showAllText", this._getResourceText("p13n.SHOW_ALL"));
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/fieldColumn", this._getResourceText("p13n.DEFAULT_DESCRIPTION"));
+		this._updateShowSelectedButton();
 	};
 
 	SelectionPanel.prototype.exit = function() {

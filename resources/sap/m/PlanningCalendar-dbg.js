@@ -33,7 +33,8 @@ sap.ui.define([
 	'sap/ui/core/dnd/DropInfo',
 	'sap/ui/core/dnd/DragDropInfo',
 	'sap/ui/core/format/DateFormat',
-	'sap/ui/core/date/CalendarWeekNumbering',
+	'sap/base/i18n/date/CalendarType',
+	'sap/base/i18n/date/CalendarWeekNumbering',
 	'sap/ui/core/date/CalendarUtils',
 	'sap/ui/core/Locale',
 	"sap/ui/core/date/UI5Date",
@@ -85,7 +86,8 @@ sap.ui.define([
 	DropInfo,
 	DragDropInfo,
 	DateFormat,
-	CalendarWeekNumbering,
+	_CalendarType, // indirectly used for properties `primaryCalendarType` and `secondaryCalendarType`
+	_CalendarWeekNumbering, // indirectly required for property `calendarWeekNumbering`
 	CalendarDateUtils,
 	Locale,
 	UI5Date,
@@ -206,7 +208,7 @@ sap.ui.define([
 	 * {@link sap.m.PlanningCalendarView PlanningCalendarView}'s properties.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -405,14 +407,14 @@ sap.ui.define([
 				 * If not set, the calendar week numbering of the global configuration is used.
 				 * @since 1.110.0
 				 */
-				calendarWeekNumbering : { type : "sap.ui.core.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
+				calendarWeekNumbering : { type : "sap.base.i18n.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
 
 				/**
 				 * If set, the calendar type is used for display.
 				 * If not set, the calendar type of the global configuration is used.
 				 * @since 1.108.0
 				 */
-				primaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
+				primaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
 
 				/**
 				 * If set, the days are also represented in this calendar type.
@@ -420,7 +422,7 @@ sap.ui.define([
 				 * Note: The second calendar type won't be represented in the DOM when this property is not set explicitly.
 				 * @since 1.109.0
 				 */
-				secondaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
+				secondaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
 
 				/**
 				 * Determines whether the selection of multiple appointments is enabled.
@@ -1677,7 +1679,7 @@ sap.ui.define([
 
 	/**
 	 * Sets the primaryCalendarType. If not set, the calendar type of the global configuration is used.
-	 * @param {sap.ui.core.CalendarType} sPrimaryCalendarType the <code>sap.ui.core.CalendarType</code> to set as <code>sap.m.PlanningCalendar</code> <code>primaryCalendarType</code>.
+	 * @param {module:sap/base/i18n/date/CalendarType} sPrimaryCalendarType the <code>CalendarType</code> to set as <code>sap.m.PlanningCalendar</code> <code>primaryCalendarType</code>.
 	 * @returns {this} <code>this</code> to allow method chaining
 	 * @public
 	 */
@@ -1718,7 +1720,7 @@ sap.ui.define([
 
 	/**
 	 * Sets the secondaryCalendarType.
-	 * @param {sap.ui.core.CalendarType} sSecondaryCalendarType the <code>sap.ui.core.CalendarType</code> to set as <code>sap.m.PlanningCalendar</code> <code>secondaryCalendarType</code>.
+	 * @param {module:sap/base/i18n/date/CalendarType} sSecondaryCalendarType the <code>CalendarType</code> to set as <code>sap.m.PlanningCalendar</code> <code>secondaryCalendarType</code>.
 	 * @returns {this} <code>this</code> to allow method chaining
 	 * @public
 	 */

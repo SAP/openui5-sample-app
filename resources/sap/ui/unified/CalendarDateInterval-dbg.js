@@ -15,11 +15,11 @@ sap.ui.define([
 	'./calendar/CalendarDate',
 	'./library',
 	"sap/base/i18n/Localization",
+	"sap/base/i18n/date/CalendarType",
 	'sap/ui/Device',
 	"./CalendarDateIntervalRenderer",
 	"sap/base/util/deepEqual",
 	"sap/m/Popover",
-	"sap/ui/core/CalendarType",
 	"sap/base/Log",
 	"./DateRange",
 	"sap/ui/core/date/UI5Date"
@@ -34,11 +34,11 @@ sap.ui.define([
 	CalendarDate,
 	library,
 	Localization,
+	CalendarType,
 	Device,
 	CalendarDateIntervalRenderer,
 	deepEqual,
 	Popover,
-	CalendarType,
 	Log,
 	DateRange,
     UI5Date
@@ -59,7 +59,7 @@ sap.ui.define([
 	 * @class
 	 * <code>CalendarDateInterval</code> only visualizes the dates in a one-line interval and allows the selection of a single day.
 	 * @extends sap.ui.unified.Calendar
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public

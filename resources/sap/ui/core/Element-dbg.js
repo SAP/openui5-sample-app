@@ -140,7 +140,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 * @public
 	 * @alias sap.ui.core.Element
 	 */
@@ -183,6 +183,8 @@ sap.ui.define([
 
 				/**
 				 * Custom Data, a data structure like a map containing arbitrary key value pairs.
+				 *
+				 * @default sap/ui/core/CustomData
 				 */
 				customData : {type : "sap.ui.core.CustomData", multiple : true, singularName : "customData"},
 

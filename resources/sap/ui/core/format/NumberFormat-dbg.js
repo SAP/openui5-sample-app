@@ -48,13 +48,23 @@ sap.ui.define([
 		}
 	});
 
+	// Regex for replacing the number part of a decimal or currency pattern
+	const rNumberPattern = /[0#.,]+/;
 	const rAllWhiteSpaces = /\s/g;
-	const rDigit = /\d/;
+	// Regex for checking whether the last character belongs to the Unicode General Category L (letter)
+	const rEndsWithLetter = /\p{L}$/u;
+	// Regex for checking whether the first character belongs to the Unicode General Category L (letter)
+	const rStartsWithLetter = /^\p{L}/u;
+	// splits a currency pattern into following matching groups:
+	// 0: complete match
+	// 1: the optional number pattern in front of the currency placeholder
+	// 2: the characters between the number pattern in front of the currency placeholder and the currency placeholder
+	// 3: the currency placeholder
+	// 4: the characters between the currency placeholder and the number pattern after the currency placeholder
+	// 5: the optional number pattern after the currency placeholder
+	const rSplitCurrencyPattern = /([0#.,]*)([^0#.,]*)(¤)([^0#.,]*)([0#.,]*)/;
 	// Regex for checking if a number has leading zeros
 	const rLeadingZeros = /^(-?)0+(\d)/;
-	// Not matching Sc (currency symbol) and Z (separator) characters
-	// https://www.unicode.org/reports/tr44/#General_Category_Values
-	const rNotSAndNotZ = /[^\$\xA2-\xA5\u058F\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0-\u20BD\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6\u0020\xA0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/;
 	// Regex for matching the number placeholder in pattern
 	const rNumPlaceHolder = /0+(\.0+)?/;
 	// Regex for checking that the given string only consists of '0' characters
@@ -640,11 +650,12 @@ sap.ui.define([
 	 * @public
 	 */
 	NumberFormat.getFloatInstance = function(oFormatOptions, oLocale) {
-		this.checkDecimalPadding(oFormatOptions);
-		var oFormat = this.createInstance(oFormatOptions, oLocale),
-			oLocaleFormatOptions = this.getLocaleFormatOptions(oFormat.oLocaleData, mNumberType.FLOAT);
+		NumberFormat.checkDecimalPadding(oFormatOptions);
+		const oFormat = NumberFormat.createInstance(oFormatOptions, oLocale);
+		const oLocaleFormatOptions = oFormat.getLocaleFormatOptions(mNumberType.FLOAT);
+		oFormat.oFormatOptions = extend({}, this.oDefaultFloatFormat, oLocaleFormatOptions,
+			oFormat.oOriginalFormatOptions);
 
-		oFormat.oFormatOptions = extend({}, this.oDefaultFloatFormat, oLocaleFormatOptions, oFormat.oOriginalFormatOptions);
 		return oFormat;
 	};
 
@@ -744,11 +755,13 @@ sap.ui.define([
 	 * @public
 	 */
 	NumberFormat.getIntegerInstance = function(oFormatOptions, oLocale) {
-		this.checkDecimalPadding(oFormatOptions, false);
-		var oFormat = this.createInstance(oFormatOptions, oLocale),
-			oLocaleFormatOptions = this.getLocaleFormatOptions(oFormat.oLocaleData, mNumberType.INTEGER);
+		NumberFormat.checkDecimalPadding(oFormatOptions, false);
+		const oFormat = NumberFormat.createInstance(oFormatOptions, oLocale);
+		const oLocaleFormatOptions = oFormat.getLocaleFormatOptions(mNumberType.INTEGER);
 
-		oFormat.oFormatOptions = extend({}, this.oDefaultIntegerFormat, oLocaleFormatOptions, oFormat.oOriginalFormatOptions);
+		oFormat.oFormatOptions = extend({}, NumberFormat.oDefaultIntegerFormat, oLocaleFormatOptions,
+			oFormat.oOriginalFormatOptions);
+
 		return oFormat;
 	};
 
@@ -911,34 +924,25 @@ sap.ui.define([
 	 * @public
 	 */
 	NumberFormat.getCurrencyInstance = function(oFormatOptions, oLocale) {
-		this.checkDecimalPadding(oFormatOptions, true, true);
-		var oFormat = this.createInstance(oFormatOptions, oLocale);
-		var sContext = oFormat.oOriginalFormatOptions && oFormat.oOriginalFormatOptions.currencyContext;
+		NumberFormat.checkDecimalPadding(oFormatOptions, true, true);
+		const oFormat = NumberFormat.createInstance(oFormatOptions, oLocale);
+		const oLocaleFormatOptions = oFormat.getLocaleFormatOptions(mNumberType.CURRENCY);
+		oFormat.oFormatOptions = extend({}, NumberFormat.oDefaultCurrencyFormat, oLocaleFormatOptions,
+			oFormat.oOriginalFormatOptions);
 
-		// currency code trailing
-		var bShowTrailingCurrencyCode = showTrailingCurrencyCode(oFormat.oOriginalFormatOptions);
-
-
-		// prepend "sap-" to pattern params to load (context and short)
-		if (bShowTrailingCurrencyCode) {
-			sContext = sContext || this.oDefaultCurrencyFormat.style;
-			sContext = "sap-" + sContext;
-		}
-		var oLocaleFormatOptions = this.getLocaleFormatOptions(oFormat.oLocaleData, mNumberType.CURRENCY, sContext);
-
-		oFormat.oFormatOptions = extend({}, this.oDefaultCurrencyFormat, oLocaleFormatOptions, oFormat.oOriginalFormatOptions);
-
-		// Trailing currency code option
-		//
-		// The format option "trailingCurrencyCode" is influenced by other options, such as pattern, currencyCode, global config
+		// The format option "trailingCurrencyCode" is influenced by other options, such as pattern, currencyCode,
+		// global config
 		// Therefore set it manually without modifying the original oFormatOptions.
 		// E.g. the "pattern" option would overwrite this option, even if the "trailingCurrencyCode" option is set
 		// oFormatOptions.pattern = "###"
 		// oFormatOptions.trailingCurrencyCode = true
 		// ->
 		// oFormatOptions.trailingCurrencyCode = false
-		oFormat.oFormatOptions.trailingCurrencyCode = bShowTrailingCurrencyCode;
+		oFormat.oFormatOptions.trailingCurrencyCode = oFormat.showTrailingCurrencyCode();
 		oFormat._defineCustomCurrencySymbols();
+		if (oFormat.oFormatOptions.style === "long") {
+			oFormat.oFormatOptions.style = "short";
+		}
 
 		return oFormat;
 	};
@@ -1061,11 +1065,13 @@ sap.ui.define([
 	 * @public
 	 */
 	NumberFormat.getUnitInstance = function(oFormatOptions, oLocale) {
-		this.checkDecimalPadding(oFormatOptions, true, true);
-		var oFormat = this.createInstance(oFormatOptions, oLocale),
-			oLocaleFormatOptions = this.getLocaleFormatOptions(oFormat.oLocaleData, mNumberType.UNIT);
+		NumberFormat.checkDecimalPadding(oFormatOptions, true, true);
+		const oFormat = NumberFormat.createInstance(oFormatOptions, oLocale);
+		const oLocaleFormatOptions = oFormat.getLocaleFormatOptions(mNumberType.UNIT);
 
-		oFormat.oFormatOptions = extend({}, this.oDefaultUnitFormat, oLocaleFormatOptions, oFormat.oOriginalFormatOptions);
+		oFormat.oFormatOptions = extend({}, NumberFormat.oDefaultUnitFormat, oLocaleFormatOptions,
+			oFormat.oOriginalFormatOptions);
+
 		return oFormat;
 	};
 
@@ -1153,11 +1159,13 @@ sap.ui.define([
 	 * @public
 	 */
 	NumberFormat.getPercentInstance = function(oFormatOptions, oLocale) {
-		this.checkDecimalPadding(oFormatOptions, false);
-		var oFormat = this.createInstance(oFormatOptions, oLocale),
-			oLocaleFormatOptions = this.getLocaleFormatOptions(oFormat.oLocaleData, mNumberType.PERCENT);
+		NumberFormat.checkDecimalPadding(oFormatOptions, false);
+		const oFormat = NumberFormat.createInstance(oFormatOptions, oLocale);
+		const oLocaleFormatOptions = oFormat.getLocaleFormatOptions(mNumberType.PERCENT);
 
-		oFormat.oFormatOptions = extend({}, this.oDefaultPercentFormat, oLocaleFormatOptions, oFormat.oOriginalFormatOptions);
+		oFormat.oFormatOptions = extend({}, NumberFormat.oDefaultPercentFormat, oLocaleFormatOptions,
+			oFormat.oOriginalFormatOptions);
+
 		return oFormat;
 	};
 
@@ -1232,29 +1240,35 @@ sap.ui.define([
 	};
 
 	/**
-	 * Get locale dependent default format options.
+	 * Gets the default locale-dependent format options for the given number format type.
 	 *
-	 * @static
+	 * @param {"integer"|"float"|"currency"|"unit"|"percent"} sType
+	 *   The number format type
+	 * @returns {object} The default locale-dependent format options for the given number format type
+	 *
+	 * @private
 	 */
-	NumberFormat.getLocaleFormatOptions = function(oLocaleData, iType, sContext) {
-		var oLocaleFormatOptions,
-			sNumberPattern;
-
-		switch (iType) {
+	NumberFormat.prototype.getLocaleFormatOptions = function (sType) {
+		const oLocaleData = this.oLocaleData;
+		let sNumberPattern;
+		let sContext;
+		switch (sType) {
 			case mNumberType.PERCENT:
 				sNumberPattern = oLocaleData.getPercentPattern();
 				break;
 			case mNumberType.CURRENCY:
+				sContext = this.oOriginalFormatOptions?.currencyContext || NumberFormat.oDefaultCurrencyFormat.style;
+				// prepend "sap-" to pattern params to load (context and short)
+				if (this.showTrailingCurrencyCode()) {
+					sContext = "sap-" + sContext;
+				}
 				sNumberPattern = oLocaleData.getCurrencyPattern(sContext);
-				break;
-			case mNumberType.UNIT:
-				sNumberPattern = oLocaleData.getDecimalPattern();
 				break;
 			default:
 				sNumberPattern = oLocaleData.getDecimalPattern();
 		}
 
-		oLocaleFormatOptions = this.parseNumberPattern(sNumberPattern);
+		const oLocaleFormatOptions = NumberFormat.parseNumberPattern(sNumberPattern);
 
 		oLocaleFormatOptions.plusSign = oLocaleData.getNumberSymbol("plusSign");
 		oLocaleFormatOptions.minusSign = oLocaleData.getNumberSymbol("minusSign");
@@ -1265,14 +1279,7 @@ sap.ui.define([
 
 		// Some options need to be overridden to stay compatible with the formatting defaults
 		// before pattern parsing was added to the NumberFormat
-		switch (iType) {
-			case mNumberType.UNIT:
-			case mNumberType.FLOAT:
-			case mNumberType.PERCENT:
-				// Unlimited fraction digits for float and percent values
-				oLocaleFormatOptions.minFractionDigits = 0;
-				oLocaleFormatOptions.maxFractionDigits = 99;
-				break;
+		switch (sType) {
 			case mNumberType.INTEGER:
 				// No fraction digits and no grouping for integer values
 				oLocaleFormatOptions.minFractionDigits = 0;
@@ -1284,6 +1291,11 @@ sap.ui.define([
 				oLocaleFormatOptions.minFractionDigits = undefined;
 				oLocaleFormatOptions.maxFractionDigits = undefined;
 				break;
+			default:
+				// cases: mNumberType.UNIT, mNumberType.FLOAT and mNumberType.PERCENT
+				// Unlimited fraction digits
+				oLocaleFormatOptions.minFractionDigits = 0;
+				oLocaleFormatOptions.maxFractionDigits = 99;
 		}
 
 		return oLocaleFormatOptions;
@@ -1521,7 +1533,6 @@ sap.ui.define([
 			oOrigOptions = this.oOriginalFormatOptions,
 			bIndianCurrency = oOptions.type === mNumberType.CURRENCY && sMeasure === "INR" &&
 				this.oLocale.getLanguage() === "en" && this.oLocale.getRegion() === "IN",
-			aPatternParts,
 			oShortFormat,
 			nShortRefNumber,
 			sPluralCategory,
@@ -1599,8 +1610,9 @@ sap.ui.define([
 			oOptions.decimals = NumberFormat.getMaximumDecimals(oOptions);
 			oOptions.precision = (mUnitPatterns && (typeof mUnitPatterns.precision === "number" && mUnitPatterns.precision >= 0)) ? mUnitPatterns.precision : oOptions.precision;
 		}
-
-		if (oOptions.type == mNumberType.CURRENCY) {
+		let sCurrencySymbolOrCode;
+		if (oOptions.type === mNumberType.CURRENCY) {
+			sCurrencySymbolOrCode = this.getCurrencySymbolOrCode(sMeasure, oOptions.currencyCode);
 			// Make sure the "trailingCurrencyCode" mode is only used on currency codes:
 			// The "customCurrencies" format option takes precedence over CLDR and global configuration. If the given measure isn't found
 			// there, we already return an empty string in the check above (look for error log 'Currency "xy" is unknown').
@@ -1609,29 +1621,14 @@ sap.ui.define([
 			// it shouldn't be formatted with the "trailingCurrencyCode" pattern.
 			if (sMeasure && oOptions.trailingCurrencyCode) {
 				if (!this.mKnownCurrencyCodes[sMeasure] && !/(^[A-Z]{3}$)/.test(sMeasure)) {
-					oOptions.trailingCurrencyCode = false;
 					// Revert to non-"sap-" prefixed (trailing-currency-code) pattern. Also see code in getCurrencyInstance()
-					oOptions.pattern = this.oLocaleData.getCurrencyPattern(oOptions.currencyContext);
+					oOptions.trailingCurrencyCode = false;
 				}
 			}
 
 			if (!oOptions.showNumber) {
 				// if the number should not be shown, return the sMeasure part standalone, without anything number specific
-				if (!oOptions.currencyCode) {
-					var sSymbol;
-					// custom currencies provided
-					if (oOptions.customCurrencies && typeof oOptions.customCurrencies === "object") {
-						// the custom currency symbol map was preprocessed on instance creation
-						sSymbol = this.mKnownCurrencySymbols[sMeasure];
-					} else {
-						sSymbol = this.oLocaleData.getCurrencySymbol(sMeasure);
-					}
-
-					if (sSymbol && sSymbol !== sMeasure) {
-						sMeasure = sSymbol;
-					}
-				}
-				return sMeasure;
+				return sCurrencySymbolOrCode;
 			}
 
 			if (oOptions.style === "long" || oOptions.style === "short") {
@@ -1654,7 +1651,7 @@ sap.ui.define([
 
 		if (oOptions.shortLimit === undefined || Math.abs(vValue) >= oOptions.shortLimit) {
 			nShortRefNumber = oOptions.shortRefNumber === undefined ? vValue : oOptions.shortRefNumber;
-			oShortFormat = getShortenedFormat(nShortRefNumber, oOptions, this.oLocaleData, bIndianCurrency);
+			oShortFormat = this.getShortenedFormat(nShortRefNumber, oOptions, bIndianCurrency);
 			if (oShortFormat && oShortFormat.formatString != "0") {
 				vValue = vValue / oShortFormat.magnitude;
 				// If shortDecimals is defined, override the fractionDigits
@@ -1818,86 +1815,37 @@ sap.ui.define([
 			sResult += oOptions.decimalSeparator + sFractionPart;
 		}
 
-		if (oShortFormat && oShortFormat.formatString && oOptions.showScale && oOptions.type !== mNumberType.CURRENCY) {
+		const bUseCompactPattern = oShortFormat && oShortFormat.formatString && oOptions.showScale;
+		let sCompactPattern;
+		if (bUseCompactPattern) {
 			// Get correct format string based on actual decimal/fraction digits
-			// the plural category of a compact number is determined for the reduced short number without compact
-			// notation, e.g. "1.2M" must check "1.2" (see CLDR "decimalFormat-short" and "decimalFormat-long")
+			// the plural category of a compact number/currency is determined for the reduced short number without
+			// compact notation, e.g. "1.2M" must check "1.2"
+			// (see CLDR "decimalFormat-short" and "decimalFormat-long" or "currencyFormat-short")
 			sPluralCategory = this._getPluralCategory(sIntegerPart, sFractionPart);
-			oShortFormat.formatString = this.oLocaleData.getDecimalFormat(oOptions.style, oShortFormat.key, sPluralCategory);
-			//inject formatted shortValue in the formatString
-			sResult = oShortFormat.formatString.replace(oShortFormat.valueSubString, sResult);
-			//formatString may contain '.' (quoted to differentiate them decimal separator)
-			//which must be replaced with .
-			sResult = sResult.replace(/'.'/g, ".");
+			sCompactPattern = this.getCompactPattern(oOptions.type, oOptions.style, oShortFormat.key, sPluralCategory,
+				oOptions.trailingCurrencyCode, bIndianCurrency, sMeasure && oOptions.showMeasure, sCurrencySymbolOrCode,
+				bNegative);
+			if (oOptions.type !== mNumberType.CURRENCY) {
+				// inject formatted shortValue in the formatString
+				sResult = sCompactPattern.replace(oShortFormat.valueSubString, sResult);
+			}
 		}
 
 		if (oOptions.type === mNumberType.CURRENCY) {
-			sPattern = oOptions.pattern;
+			sPattern = bUseCompactPattern
+				? sCompactPattern
+				: this.getCurrencyPattern(oOptions.currencyContext, oOptions.trailingCurrencyCode,
+					sMeasure && oOptions.showMeasure, sCurrencySymbolOrCode, bNegative);
 
-			if (oShortFormat && oShortFormat.formatString && oOptions.showScale) {
-				var sStyle;
-
-				// Currency formatting has only short style (no long)
-				if (oOptions.trailingCurrencyCode) {
-					sStyle = "sap-short";
-				} else {
-					sStyle = "short";
-				}
-
-				// Get correct format string based on actual decimal/fraction digits
-				// the plural category of a compact currency is determined for the reduced short number without compact
-				// notation, e.g. "1.2M" must check "1.2" (see CLDR "currencyFormat-short")
-				sPluralCategory = this._getPluralCategory(sIntegerPart, sFractionPart);
-				if (bIndianCurrency) {
-					sPattern = getIndianCurrencyFormat(sStyle, oShortFormat.key, sPluralCategory);
-				} else {
-					sPattern = this.oLocaleData.getCurrencyFormat(sStyle, oShortFormat.key, sPluralCategory);
-				}
-				//formatString may contain '.' (quoted to differentiate them decimal separator)
-				//which must be replaced with .
-				sPattern = sPattern.replace(/'.'/g, ".");
-			}
-
-			// The currency pattern is defined in some locale, for example in "ko", as: ¤#,##0.00;(¤#,##0.00)
-			// where the pattern after ';' should be used for negative numbers.
-			// Therefore it's needed to check whether the pattern contains ';' and use the later part for
-			// negative values
-			aPatternParts = sPattern.split(";");
-			if (aPatternParts.length === 2) {
-				sPattern = bNegative ? aPatternParts[1] : aPatternParts[0];
-				if (bNegative) {
-					sResult = sResult.substring(oOptions.minusSign.length);
-				}
-			}
-
-			// check if we need to render a symbol instead of a currency-code
-			if (!oOptions.currencyCode) {
-				var sSymbol;
-				// custom currencies provided
-				if (oOptions.customCurrencies && typeof oOptions.customCurrencies === "object") {
-					// the custom currency symbol map was preprocessed on instance creation
-					sSymbol = this.mKnownCurrencySymbols[sMeasure];
-				} else {
-					sSymbol = this.oLocaleData.getCurrencySymbol(sMeasure);
-				}
-
-				if (sSymbol && sSymbol !== sMeasure) {
-					sMeasure = sSymbol;
-				}
-			}
-
-			sResult = this._composeCurrencyResult(sPattern, sResult, sMeasure, {
-				decimalPadding: iDecimalPadding,
-				showMeasure: oOptions.showMeasure,
-				negative: bNegative,
-				minusSign: oOptions.minusSign
-			});
+			sResult = NumberFormat._composeCurrencyResult(sPattern, sResult, sCurrencySymbolOrCode, oOptions.minusSign,
+				bNegative);
 		}
 
 		// format percent values:
 		if (oOptions.type === mNumberType.PERCENT) {
 			sPattern = oOptions.pattern;
-			sResult = sPattern.replace(/[0#.,]+/, sResult);
+			sResult = sPattern.replace(rNumberPattern, sResult);
 			sResult = sResult.replace(/%/, oOptions.percentSign);
 		}
 
@@ -1941,6 +1889,28 @@ sap.ui.define([
 	};
 
 	/**
+	 * Gets the currency symbol or the currency code for the given currency code depending on the given format options.
+	 *
+	 * @param {string} sCurrencyCode
+	 *   The currency code
+	 * @param {boolean} bCurrencyCode
+	 *   Whether to show the currency code instead of the currency symbol, see {@link Numberformat.getCurrencyInstance}
+	 * @returns {string}
+	 *   The currency symbol or the currency code
+	 *
+	 * @private
+	 */
+	NumberFormat.prototype.getCurrencySymbolOrCode = function (sCurrencyCode, bCurrencyCode) {
+		if (bCurrencyCode) {
+			return sCurrencyCode;
+		}
+		// the custom currency symbol map was preprocessed on instance creation
+		return (typeof this.oFormatOptions.customCurrencies === "object"
+			? this.mKnownCurrencySymbols[sCurrencyCode]
+			: this.oLocaleData.getCurrencySymbol(sCurrencyCode)) || sCurrencyCode;
+	};
+
+	/**
 	 * Gets the plural category for the given number information. With a given <code>oShortFormat</code>
 	 * the category is determined based on the compact notation.
 	 *
@@ -1981,60 +1951,43 @@ sap.ui.define([
 		return sResult;
 	};
 
-
-	NumberFormat.prototype._composeCurrencyResult = function(sPattern, sFormattedNumber, sMeasure, oOptions) {
-		let sMinusSign = oOptions.minusSign;
-		let sResult = sPattern.replace(/[0#.,]+/, sFormattedNumber);
-		if (oOptions.showMeasure && sMeasure) {
-			var sPlaceHolder = "\u00a4",
-				mRegex = {
-					"[:digit:]": rDigit,
-					"[[:^S:]&[:^Z:]]": rNotSAndNotZ
-				},
-				iMeasureStart = sResult.indexOf(sPlaceHolder),
-				// determine whether the number is before the measure or after it by comparing the position of measure placeholder with half of the length of the pattern string
-				sPosition = iMeasureStart < sResult.length / 2 ? "after" : "before",
-				oSpacingSetting = this.oLocaleData.getCurrencySpacing(sPosition),
-				sCurrencyChar = (sPosition === "after" ? sMeasure.charAt(sMeasure.length - 1) : sMeasure.charAt(0)),
-				sNumberChar,
-				rCurrencyChar = mRegex[oSpacingSetting.currencyMatch],
-				rNumberChar = mRegex[oSpacingSetting.surroundingMatch],
-				iInsertPos;
-
-			sResult = sResult.replace(sPlaceHolder, sMeasure);
-
-			sNumberChar = (sPosition === "after" ? sResult.charAt(iMeasureStart + sMeasure.length)
-				: sResult.charAt(iMeasureStart - 1));
-
-			if (rCurrencyChar && rCurrencyChar.test(sCurrencyChar) && rNumberChar && rNumberChar.test(sNumberChar)) {
-				// when both checks are valid, insert the defined space
-
-				if (sPosition === "after") {
-					iInsertPos = iMeasureStart + sMeasure.length;
-				} else {
-					iInsertPos = iMeasureStart;
-				}
-
-				// insert the space char between the measure and the number
-				sResult = sResult.slice(0, iInsertPos) + oSpacingSetting.insertBetween + sResult.slice(iInsertPos);
-			} else if (oOptions.negative && sPosition === "after") {
-				// when no space is inserted between measure and number
-				// and when the number is negative and the measure is shown before the number
-				// a zero-width non-breakable space ("\ufeff") is inserted before the minus sign
-				// in order to prevent the formatted currency number from being wrapped after the
-				// minus sign when the space isn't enough for displaying the currency number within
-				// one line
-				sMinusSign = "\ufeff" + oOptions.minusSign;
+	/**
+	 * Replaces the amount, measure, and minus sign parts in the given pattern with the given values and returns the
+	 * result.
+	 *
+	 * @param {string} sPattern
+	 *   The currency pattern, e.g. "¤#,##0.00;(¤#,##0.00)", "¤#,##0.00;¤-#,##0.00", "#,##0.00", or "¤ 000K"
+	 * @param {string} sAmount
+	 *   The formatted amount, e.g. "1,234.56"
+	 * @param {string} sMeasure
+	 *   The currency symbol or code
+	 * @param {string} sMinusSign
+	 *   The locale specific minus sign
+	 * @param {boolean} bNegative
+	 *   Whether the amount is negative
+	 * @returns {string}
+	 *   The resulting string after replacing the amount, measure, and minus sign parts in the given pattern with the
+	 *   given values
+	 *
+	 * @private
+	 */
+	NumberFormat._composeCurrencyResult = function (sPattern, sAmount, sMeasure, sMinusSign, bNegative) {
+		const aPatternParts = sPattern.split(";");
+		if (aPatternParts.length === 2) {
+			sPattern = aPatternParts[bNegative ? 1 : 0];
+			if (bNegative) {
+				sAmount = sAmount.slice(sMinusSign.length);
 			}
-		} else {
-			if (oOptions.decimalPadding > 0) {
-				sResult = sResult.replace(rAllRTLCharacters, "");
-			}
-			sResult = sResult.replace(/\s*\u00a4\s*/, "");
 		}
-
-		if (oOptions.negative) {
-			sResult = sResult.replace(/-/, sMinusSign);
+		let sResult = sPattern.replace("-", sMinusSign).replace(rNumberPattern, sAmount).replace("\u00a4", sMeasure);
+		if (bNegative) {
+			// when no space is inserted between measure and number
+			// and when the number is negative and the measure is shown before the number
+			// a zero-width non-breakable space ("\ufeff") is inserted before the minus sign
+			// in order to prevent the formatted currency number from being wrapped after the
+			// minus sign when the space isn't enough for displaying the currency number within
+			// one line
+			sResult = sResult.replace(sMeasure + sMinusSign, sMeasure + "\ufeff" + sMinusSign);
 		}
 
 		return sResult;
@@ -2342,7 +2295,7 @@ sap.ui.define([
 			return;
 		}
 
-		var oShortFormat = getShortenedFormat(this.oFormatOptions.shortRefNumber, this.oFormatOptions, this.oLocaleData),
+		var oShortFormat = this.getShortenedFormat(this.oFormatOptions.shortRefNumber, this.oFormatOptions),
 			sScale;
 		if (oShortFormat && oShortFormat.formatString) {
 			// remove the placeholder of number
@@ -2448,8 +2401,166 @@ sap.ui.define([
 		}
 	};
 
-	function getShortenedFormat(fValue, oOptions, oLocaleData, bIndianCurrency) {
-		var oShortFormat, iKey, sKey, sCldrFormat,
+	/**
+	 * Checks whether there is a letter next to the number using the given currency pattern.
+	 *
+	 * @param {string} sPattern
+	 *   The currency pattern, e.g. "¤#,##0.00;(¤#,##0.00)" or "¤ 000K"
+	 * @param {string} sCurrency
+	 *   The currency code or the currency symbol to check, e.g. "USD" or "$"
+	 * @param {boolean} bNegative
+	 *   Whether the value to be formatted is negative
+	 * @returns {boolean}
+	 *   Whether there is a letter next to the number for the given pattern and currency
+	 *
+	 * @private
+	 */
+	NumberFormat.isAlphaNextToNumber = function (sPattern, sCurrency, bNegative) {
+		if (!sPattern || !sCurrency) {
+			return false;
+		}
+		const aPatterns = sPattern.split(";");
+		sPattern = (aPatterns[bNegative ? 1 : 0] || aPatterns[0]).replace(rAllRTLCharacters, "");
+		const aMatches = rSplitCurrencyPattern.exec(sPattern);
+
+		// number in front of the currency placeholder
+		if (aMatches[1]) {
+			return rStartsWithLetter.test(sCurrency) && !aMatches[2];
+		}
+
+		// currency placeholder in front of the number
+		return !aMatches[4] // no characters between the placeholder and the number
+			&& rEndsWithLetter.test(sCurrency) // currency ends with a letter
+			// if there is no separate negative pattern and the value is negative, there is a minus sign between
+			// the currency and the number, so there is no need for the alphaNextToNumber pattern
+			&& (!bNegative || aPatterns.length !== 1);
+	};
+
+	/**
+	 * Gets the compact decimal or currency pattern for the given power of ten and plural category.
+	 *
+	 * @param {"integer"|"float"|"currency"|"unit"|"percent"} sType
+	 *   The number format type
+	 * @param {"long"|"short"} sStyle
+	 *   The style of the compact format
+	 * @param {string} sPowerOfTen
+	 *   The power of ten
+	 * @param {"few"|"many"|"one"|"other"|"two"|"zero"} sPluralCategory
+	 *   The plural category
+	 * @param {boolean} [bTrailingCurrencyCode]
+	 *   Whether the currency code is formatted after the amount; only relevant if type "currency" is used
+	 * @param {boolean} [bIndianCurrency]
+	 *   Whether to use the Indian currency format; only relevant if type "currency" is used
+	 * @param {boolean} [bShowMeasure]
+	 *   Whether to show the measure
+	 * @param {string} [sCurrency]
+	 *   The currency code or symbol
+	 * @param {boolean} [bNegative]
+	 *   Whether the number is negative
+	 * @returns {string|undefined}
+	 *   The compact decimal or currency pattern for the given power of ten and plural category; or
+	 *   <code>undefined</code> if there is no pattern for the given parameters
+	 *
+	 * @private
+	 */
+	NumberFormat.prototype.getCompactPattern = function (sType, sStyle, sPowerOfTen, sPluralCategory,
+			bTrailingCurrencyCode, bIndianCurrency, bShowMeasure, sCurrency, bNegative) {
+		let sPattern;
+		if (sType === mNumberType.CURRENCY) {
+			if (bTrailingCurrencyCode) {
+				sStyle = "sap-short";
+			}
+			if (bIndianCurrency) {
+				sStyle += "-indian";
+			}
+			if (bShowMeasure) {
+				// Use currency specific format because for some languages there is a difference between the
+				// decimalFormat and the currencyFormat
+				sPattern = this.oLocaleData.getCompactCurrencyPattern(sStyle, sPowerOfTen, sPluralCategory);
+				if (NumberFormat.isAlphaNextToNumber(sPattern, sCurrency, bNegative)) {
+					sPattern = this.oLocaleData.getCompactCurrencyPattern(sStyle, sPowerOfTen, sPluralCategory,
+						"alphaNextToNumber") || sPattern;
+				}
+			} else {
+				sPattern = this.oLocaleData.getCompactCurrencyPattern(sStyle, sPowerOfTen, sPluralCategory,
+					"noCurrency");
+				if (!sPattern) {
+					if (sStyle.startsWith("sap-")) {
+						sStyle = sStyle.slice(4);
+					}
+					sPattern = this.oLocaleData.getCompactDecimalPattern(sStyle, sPowerOfTen, sPluralCategory);
+				}
+			}
+		} else {
+			sPattern = this.oLocaleData.getCompactDecimalPattern(sStyle, sPowerOfTen, sPluralCategory);
+		}
+
+		// pattern may contain a single quoted dot ('.') to differentiate them from decimal separator; replace it
+		// with an unquoted dot (.)
+		sPattern = sPattern?.replace(/'.'/g, ".");
+
+		return sPattern;
+	};
+
+	/**
+	 * Gets the locale specific currency pattern for the given parameters.
+	 *
+	 * @param {"accounting"|"standard"} sContext The context of the currency pattern
+	 * @param {boolean} [bShowTrailingCurrencyCode] Whether the currency code shall be shown after the amount
+	 * @param {boolean} [bShowMeasure] Whether to include the measure (currency code or currency symbol) in the pattern
+	 * @param {string} [sCurrency] The currency code or symbol to use
+	 * @param {boolean} [bNegative] Whether the current value is negative
+	 * @returns {string} The currency pattern
+	 *
+	 * @private
+	 */
+	NumberFormat.prototype.getCurrencyPattern = function (sContext, bShowTrailingCurrencyCode, bShowMeasure, sCurrency,
+			bNegative) {
+		if (bShowTrailingCurrencyCode) {
+			sContext = "sap-" + sContext;
+		}
+		let sPattern = this.oLocaleData.getCurrencyPattern(sContext, bShowMeasure ? undefined : "noCurrency");
+		if (bShowMeasure && NumberFormat.isAlphaNextToNumber(sPattern, sCurrency, bNegative)) {
+			sPattern = this.oLocaleData.getCurrencyPattern(sContext, "alphaNextToNumber") || sPattern;
+		}
+
+		return sPattern;
+	};
+
+	/**
+	 * Gets the compact decimal or currency format for the given value and parameters.
+	 *
+	 * @param {number|string} vValue
+	 *   The value for which the shortened format is determined
+	 * @param {object} oOptions
+	 *   The options used for getting the compact pattern
+	 * @param {int} [oOptions.precision = 2]
+	 *   The maximum number of digits in the formatted representation of the number
+	 * @param {"long"|"short"} oOptions.style
+	 *   The style of the compact format
+	 * @param {boolean} [oOptions.trailingCurrencyCode]
+	 *   Whether the currency code is formatted after the amount; only relevant if type "currency" is used
+	 * @param {"integer"|"float"|"currency"|"unit"|"percent"} oOptions.type
+	 *   The number format type
+	 * @param {boolean} [bIndianCurrency]
+	 *   Whether to use the Indian currency format; only relevant if type "currency" is used
+	 *
+	 * @returns {object|undefined}
+	 *   The compact decimal or currency format for the given value; or <code>undefined</code> if neither the "short"
+	 *   or the "long" style is used, or if there is no compact format for the given parameters; the returned object
+	 *   contains the following properties:
+	 *   <ul>
+	 *     <li><code>decimals</code>: The number of decimals used in the compact format pattern</li>
+	 *     <li><code>formatString</code>: The compact format pattern to use</li>
+	 *     <li><code>key</code>: The power of ten matching the given value</li>
+	 *     <li><code>magnitude</code>: The divisor to get the compact number to show from the given value</li>
+	 *     <li><code>valueSubString</code>: The number part of the format pattern</li>
+	 *  </ul>
+	 *
+	 * @private
+	 */
+	NumberFormat.prototype.getShortenedFormat = function (vValue, oOptions, bIndianCurrency) {
+		var oShortFormat, iKey, sKey,
 			sStyle = oOptions.style,
 			iPrecision = oOptions.precision !== undefined ? oOptions.precision : 2;
 
@@ -2459,7 +2570,7 @@ sap.ui.define([
 
 		for (var i = 0; i < 15; i++) {
 			iKey = Math.pow(10, i);
-			if (rounding(Math.abs(fValue) / iKey, iPrecision - 1) < 10) {
+			if (rounding(Math.abs(vValue) / iKey, iPrecision - 1) < 10) {
 				break;
 			}
 		}
@@ -2467,20 +2578,8 @@ sap.ui.define([
 
 		// Use "other" format to find the right magnitude, the actual format will be retrieved later
 		// after the value has been calculated
-		if (oOptions.type === mNumberType.CURRENCY) {
-			if (oOptions.trailingCurrencyCode) {
-				sStyle = "sap-short";
-			}
-			if (bIndianCurrency) {
-				sCldrFormat = getIndianCurrencyFormat(sStyle, sKey, "other", true);
-			} else {
-				// Use currency specific format because for some languages there is a difference between the decimalFormat and the currencyFormat
-				sCldrFormat = oLocaleData.getCurrencyFormat(sStyle, sKey, "other");
-			}
-		} else {
-			sCldrFormat = oLocaleData.getDecimalFormat(sStyle, sKey, "other");
-		}
-
+		const sCldrFormat = this.getCompactPattern(oOptions.type, oOptions.style, sKey, "other",
+			oOptions.trailingCurrencyCode, bIndianCurrency, oOptions.showMeasure);
 		if (!sCldrFormat || sCldrFormat == "0") {
 			//no format or special "0" format => number doesn't need to be shortened
 			return undefined;
@@ -2512,8 +2611,7 @@ sap.ui.define([
 		}
 
 		return oShortFormat;
-
-	}
+	};
 
 	function getNumberFromShortened(sValue, oLocaleData, bIndianCurrency) {
 		var sNumber,
@@ -2523,12 +2621,8 @@ sap.ui.define([
 			sCldrFormat,
 			bestResult = {number: undefined,
 				factor: iFactor},
-			fnGetFactor = function(sPlural, iKey, sStyle, bIndian) {
-				if (bIndian) {
-					sCldrFormat = getIndianCurrencyFormat(sStyle, iKey.toString(), sPlural, true);
-				} else {
-					sCldrFormat = oLocaleData.getDecimalFormat(sStyle, iKey.toString(), sPlural);
-				}
+			fnGetFactor = function(sPlural, iKey, sStyle) {
+				sCldrFormat = oLocaleData.getCompactDecimalPattern(sStyle, iKey.toString(), sPlural);
 
 				if (sCldrFormat) {
 					// Note: CLDR uses a non-breaking space and right-to-left mark u+200f in the format string
@@ -2587,7 +2681,7 @@ sap.ui.define([
 			while (iKey < 1e15) {
 				for (var i = 0; i < aPluralCategories.length; i++) {
 					var sPluralCategory = aPluralCategories[i];
-					fnGetFactor(sPluralCategory, iKey, "short", true);
+					fnGetFactor(sPluralCategory, iKey, "short-indian");
 				}
 				iKey = iKey * 10;
 			}
@@ -2602,131 +2696,20 @@ sap.ui.define([
 	}
 
 	/**
-	 * Based on the format options and the global config, determine whether to display a trailing currency code
-	 * @param oFormatOptions
-	 * @returns {boolean}
+	 * Whether to show the currency code at the end based on the original format options and the global configuration.
+	 *
+	 * @returns {boolean} Whether to show trailing currency code
 	 */
-	function showTrailingCurrencyCode(oFormatOptions) {
-		var bShowTrailingCurrencyCodes = Formatting.getTrailingCurrencyCode();
-		if (oFormatOptions) {
-
-			// overwritten by instance configuration
-			if (oFormatOptions.trailingCurrencyCode !== undefined) {
-				bShowTrailingCurrencyCodes = oFormatOptions.trailingCurrencyCode;
-			}
-
-			// is false when custom pattern is used
-			if (oFormatOptions.pattern) {
-				bShowTrailingCurrencyCodes = false;
-			}
-
-			// is false when currencyCode is not used
-			if (oFormatOptions.currencyCode === false) {
-				bShowTrailingCurrencyCodes = false;
-			}
+	NumberFormat.prototype.showTrailingCurrencyCode = function () {
+		const oFormatOptions = this.oOriginalFormatOptions;
+		// use default currency mode if custom pattern is given or currency code shall not be shown
+		if (oFormatOptions?.pattern || oFormatOptions?.currencyCode === false) {
+			return false;
 		}
-		return bShowTrailingCurrencyCodes;
-	}
-
-	function getIndianCurrencyFormat(sStyle, sKey, sPlural, bDecimal) {
-		var sFormat,
-			oCurrencyFormats = {
-				"short": {
-					"1000-one": "\xa40000",
-					"1000-other": "\xa40000",
-					"10000-one": "\xa400000",
-					"10000-other": "\xa400000",
-					"100000-one": "\xa40 Lk",
-					"100000-other": "\xa40 Lk",
-					"1000000-one": "\xa400 Lk",
-					"1000000-other": "\xa400 Lk",
-					"10000000-one": "\xa40 Cr",
-					"10000000-other": "\xa40 Cr",
-					"100000000-one": "\xa400 Cr",
-					"100000000-other": "\xa400 Cr",
-					"1000000000-one": "\xa4000 Cr",
-					"1000000000-other": "\xa4000 Cr",
-					"10000000000-one": "\xa40000 Cr",
-					"10000000000-other": "\xa40000 Cr",
-					"100000000000-one": "\xa400000 Cr",
-					"100000000000-other": "\xa400000 Cr",
-					"1000000000000-one": "\xa40 Lk Cr",
-					"1000000000000-other": "\xa40 Lk Cr",
-					"10000000000000-one": "\xa400 Lk Cr",
-					"10000000000000-other": "\xa400 Lk Cr",
-					"100000000000000-one": "\xa40 Cr Cr",
-					"100000000000000-other": "\xa40 Cr Cr"
-				},
-				"sap-short": {
-					"1000-one": "0000\xa0\xa4",
-					"1000-other": "0000\xa0\xa4",
-					"10000-one": "00000\xa0\xa4",
-					"10000-other": "00000\xa0\xa4",
-					"100000-one": "0 Lk\xa0\xa4",
-					"100000-other": "0 Lk\xa0\xa4",
-					"1000000-one": "00 Lk\xa0\xa4",
-					"1000000-other": "00 Lk\xa0\xa4",
-					"10000000-one": "0 Cr\xa0\xa4",
-					"10000000-other": "0 Cr\xa0\xa4",
-					"100000000-one": "00 Cr\xa0\xa4",
-					"100000000-other": "00 Cr\xa0\xa4",
-					"1000000000-one": "000 Cr\xa0\xa4",
-					"1000000000-other": "000 Cr\xa0\xa4",
-					"10000000000-one": "0000 Cr\xa0\xa4",
-					"10000000000-other": "0000 Cr\xa0\xa4",
-					"100000000000-one": "00000 Cr\xa0\xa4",
-					"100000000000-other": "00000 Cr\xa0\xa4",
-					"1000000000000-one": "0 Lk Cr\xa0\xa4",
-					"1000000000000-other": "0 Lk Cr\xa0\xa4",
-					"10000000000000-one": "00 Lk Cr\xa0\xa4",
-					"10000000000000-other": "00 Lk Cr\xa0\xa4",
-					"100000000000000-one": "0 Cr Cr\xa0\xa4",
-					"100000000000000-other": "0 Cr Cr\xa0\xa4"
-				}
-			},
-			oDecimalFormats = {
-				"short": {
-					"1000-one": "0000",
-					"1000-other": "0000",
-					"10000-one": "00000",
-					"10000-other": "00000",
-					"100000-one": "0 Lk",
-					"100000-other": "0 Lk",
-					"1000000-one": "00 Lk",
-					"1000000-other": "00 Lk",
-					"10000000-one": "0 Cr",
-					"10000000-other": "0 Cr",
-					"100000000-one": "00 Cr",
-					"100000000-other": "00 Cr",
-					"1000000000-one": "000 Cr",
-					"1000000000-other": "000 Cr",
-					"10000000000-one": "0000 Cr",
-					"10000000000-other": "0000 Cr",
-					"100000000000-one": "00000 Cr",
-					"100000000000-other": "00000 Cr",
-					"1000000000000-one": "0 Lk Cr",
-					"1000000000000-other": "0 Lk Cr",
-					"10000000000000-one": "00 Lk Cr",
-					"10000000000000-other": "00 Lk Cr",
-					"100000000000000-one": "0 Cr Cr",
-					"100000000000000-other": "0 Cr Cr"
-				}
-			};
-		// decimal format for short and sap-short is the same
-		oDecimalFormats["sap-short"] = oDecimalFormats["short"];
-
-		// use the appropriate format (either decimal or currency)
-		var oTargetFormat = bDecimal ? oDecimalFormats : oCurrencyFormats;
-		var oStyledFormat = oTargetFormat[sStyle];
-		if (!oStyledFormat) {
-			oStyledFormat = oTargetFormat["short"];
-		}
-		if (sPlural !== "one") {
-			sPlural = "other";
-		}
-		sFormat = oStyledFormat[sKey + "-" + sPlural];
-		return sFormat;
-	}
+		return oFormatOptions?.trailingCurrencyCode !== undefined
+			? oFormatOptions.trailingCurrencyCode // overwritten by instance configuration
+			: Formatting.getTrailingCurrencyCode();
+	};
 
 	/**
 	 * Checks if grouping is performed correctly (decimal separator is not confused with grouping separator).

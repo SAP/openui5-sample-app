@@ -51,7 +51,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 * @since 1.34
 	 *
 	 * @public
@@ -158,6 +158,7 @@ sap.ui.define([
 		this._oInvisibleText = new InvisibleText(this.getId() + "-ariaText");
 		this._oLeftScroll = new Button({
 			icon : "sap-icon://navigation-left-arrow",
+			tooltip: this._oRb.getText("SLIDETILE_PREVIOUS_BUTTON"),
 			type: ButtonType.Transparent,
 			ariaDescribedBy: this._oInvisibleText,
 			press: () => {
@@ -168,6 +169,7 @@ sap.ui.define([
 		this._oRightScroll = new Button({
 			icon : "sap-icon://navigation-right-arrow",
 			type: ButtonType.Transparent,
+			tooltip: this._oRb.getText("SLIDETILE_NEXT_BUTTON"),
 			ariaDescribedBy: this._oInvisibleText,
 			press: () => {
 				this._scrollToNextTile(true,false,null,true);

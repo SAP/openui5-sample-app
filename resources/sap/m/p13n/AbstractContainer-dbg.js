@@ -22,12 +22,12 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @alias sap.m.p13n.AbstractContainer
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 * @since 1.96
 	 *
 	 * @private
@@ -166,7 +166,7 @@ sap.ui.define([
 	};
 
 	AbstractContainer.prototype._initializeContent = function() {
-		this.oLayout = new Page(this.getId() + "-AbstractContainer");
+		this.oLayout = new Page({id: this.getId() + "-AbstractContainer", backgroundDesign: "Transparent"});
 		this.oLayout.onfocusfail = function() {};
 		this.setAggregation("_content", this.oLayout);
 	};

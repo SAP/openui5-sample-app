@@ -27,7 +27,7 @@ sap.ui.define([
 	 * @constructor
 	 * @public
 	 * @since 1.124
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 * @alias sap.m.upload.UploadItem
 	 */
     var UploadItem = Element.extend("sap.m.upload.UploadItem", {
@@ -322,6 +322,13 @@ sap.ui.define([
 
     UploadItem.IMAGE_FILE_ICON = "sap-icon://card";
 	UploadItem.MEGABYTE = 1048576;
+	UploadItem.FILETYPES = {
+		"VDS": ".vds"
+	};
+
+	UploadItem.MEDIATYPES = {
+		"VDS": "application/vnd.vds"
+	};
 
     return UploadItem;
 });

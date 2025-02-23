@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -995,6 +995,13 @@ sap.ui.define([
 			mPosition.setsize += !this._headerHidden + !!this._hasFooter;
 		}
 		return mPosition;
+	};
+
+	Table.prototype.updateAccessbilityOfItems = function() {
+		const iStartIndex = this.hasHeaderRow() ? 1 : 0;
+		this.getVisibleItems().forEach((oItem, iIndex) => {
+			oItem.getFocusDomRef()?.setAttribute("aria-rowindex", iStartIndex + iIndex + 1);
+		});
 	};
 
 	Table.prototype._setHeaderAnnouncement = function() {

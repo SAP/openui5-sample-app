@@ -1,7 +1,7 @@
 {
 	"__license": "This file has been derived from Unicode Common Locale Data Repository (CLDR) files (http://cldr.unicode.org). See the copyright and permission notice in the Unicode-Data-Files-LICENSE.txt available at the same location as this file or visit http://www.unicode.org/copyright.html",
-	"__version": "44.0.0",
-	"__buildtime": "2024-01-12T14:24:50.280Z",
+	"__version": "46.1.0",
+	"__buildtime": "2025-01-28T09:40:27.437Z",
 	"languages": {
 		"aa": "afarščina",
 		"ab": "abhaščina",
@@ -55,6 +55,7 @@
 		"bik": "bikolski jezik",
 		"bin": "edo",
 		"bla": "siksika",
+		"blo": "anii",
 		"bm": "bambarščina",
 		"bn": "bengalščina",
 		"bo": "tibetanščina",
@@ -277,6 +278,7 @@
 		"kv": "komijščina",
 		"kw": "kornijščina",
 		"kwk": "kvakvala",
+		"kxv": "kuvi",
 		"ky": "kirgiščina",
 		"la": "latinščina",
 		"lad": "ladinščina",
@@ -287,8 +289,10 @@
 		"lez": "lezginščina",
 		"lg": "ganda",
 		"li": "limburščina",
+		"lij": "ligurščina",
 		"lil": "lilovetščina",
 		"lkt": "lakotščina",
+		"lmo": "lombardščina",
 		"ln": "lingala",
 		"lo": "laoščina",
 		"lol": "mongo",
@@ -301,7 +305,6 @@
 		"lua": "luba-lulua",
 		"lui": "luisenščina",
 		"lun": "lunda",
-		"luo": "luo",
 		"lus": "mizojščina",
 		"luy": "luhijščina",
 		"lv": "latvijščina",
@@ -476,6 +479,7 @@
 		"swb": "šikomor",
 		"syc": "klasična sirščina",
 		"syr": "sirščina",
+		"szl": "šlezijščina",
 		"ta": "tamilščina",
 		"tce": "južna tučonščina",
 		"te": "telugijščina",
@@ -523,7 +527,9 @@
 		"uz": "uzbeščina",
 		"vai": "vajščina",
 		"ve": "venda",
+		"vec": "beneščina",
 		"vi": "vietnamščina",
+		"vmw": "makuva",
 		"vo": "volapik",
 		"vot": "votjaščina",
 		"vun": "vunjo",
@@ -537,6 +543,7 @@
 		"wuu": "wu-kitajščina",
 		"xal": "kalmiščina",
 		"xh": "koščina",
+		"xnr": "kangri",
 		"xog": "sogščina",
 		"yao": "jaojščina",
 		"yap": "japščina",
@@ -547,6 +554,7 @@
 		"yrl": "nheengatu",
 		"yue": "kantonščina",
 		"yue_alt-menu": "kitajščina (kantonščina)",
+		"za": "džuangščina",
 		"zap": "zapoteščina",
 		"zbl": "znakovni jezik Bliss",
 		"zen": "zenaščina",
@@ -4273,7 +4281,6 @@
 			"Montserrat": "Montserrat",
 			"Nassau": "Nassau",
 			"New_York": "New York",
-			"Nipigon": "Nipigon",
 			"Nome": "Nome",
 			"Noronha": "Noronha",
 			"North_Dakota": {
@@ -4284,7 +4291,6 @@
 			"Nuuk": "Nuuk",
 			"Ojinaga": "Ojinaga",
 			"Panama": "Panama",
-			"Pangnirtung": "Pangnirtung",
 			"Paramaribo": "Paramaribo",
 			"Phoenix": "Phoenix",
 			"Port-au-Prince": "Port-au-Prince",
@@ -4292,13 +4298,11 @@
 			"Porto_Velho": "Porto Velho",
 			"Puerto_Rico": "Portoriko",
 			"Punta_Arenas": "Punta Arenas",
-			"Rainy_River": "Rainy River",
 			"Rankin_Inlet": "Rankin Inlet",
 			"Recife": "Recife",
 			"Regina": "Regina",
 			"Resolute": "Resolute",
 			"Rio_Branco": "Rio Branco",
-			"Santa_Isabel": "Santa Isabel",
 			"Santarem": "Santarem",
 			"Santiago": "Santiago",
 			"Santo_Domingo": "Santo Domingo",
@@ -4314,7 +4318,6 @@
 			"Swift_Current": "Swift Current",
 			"Tegucigalpa": "Tegucigalpa",
 			"Thule": "Thule",
-			"Thunder_Bay": "Thunder Bay",
 			"Tijuana": "Tijuana",
 			"Toronto": "Toronto",
 			"Tortola": "Tortola",
@@ -4322,7 +4325,6 @@
 			"Whitehorse": "Whitehorse",
 			"Winnipeg": "Winnipeg",
 			"Yakutat": "Yakutat",
-			"Yellowknife": "Yellowknife",
 			"_parent": "Amerike"
 		},
 		"Antarctica": {
@@ -4360,7 +4362,6 @@
 			"Bishkek": "Biškek",
 			"Brunei": "Brunej",
 			"Chita": "Čita",
-			"Choibalsan": "Čojbalsan",
 			"Colombo": "Kolombo",
 			"Damascus": "Damask",
 			"Dhaka": "Daka",
@@ -4509,7 +4510,6 @@
 			"Tallinn": "Talin",
 			"Tirane": "Tirana",
 			"Ulyanovsk": "Uljanovsk",
-			"Uzhgorod": "Užgorod",
 			"Vaduz": "Vaduz",
 			"Vatican": "Vatikan",
 			"Vienna": "Dunaj",
@@ -4517,7 +4517,6 @@
 			"Volgograd": "Volgograd",
 			"Warsaw": "Varšava",
 			"Zagreb": "Zagreb",
-			"Zaporozhye": "Zaporožje",
 			"Zurich": "Zürich",
 			"_parent": "Evropa"
 		},
@@ -4532,7 +4531,7 @@
 			"Maldives": "Maldivi",
 			"Mauritius": "Mauritius",
 			"Mayotte": "Mayotte",
-			"Reunion": "Reunion"
+			"Reunion": "Réunion"
 		},
 		"Pacific": {
 			"Apia": "Apia",
@@ -4665,21 +4664,13 @@
 	},
 	"currencyFormat": {
 		"standard": "#,##0.00 ¤",
+		"standard-noCurrency": "#,##0.00",
 		"accounting": "#,##0.00 ¤;(#,##0.00 ¤)",
-		"currencySpacing": {
-			"beforeCurrency": {
-				"currencyMatch": "[[:^S:]&[:^Z:]]",
-				"surroundingMatch": "[:digit:]",
-				"insertBetween": " "
-			},
-			"afterCurrency": {
-				"currencyMatch": "[[:^S:]&[:^Z:]]",
-				"surroundingMatch": "[:digit:]",
-				"insertBetween": " "
-			}
-		},
+		"accounting-noCurrency": "#,##0.00;(#,##0.00)",
 		"sap-standard": "#,##0.00 ¤",
-		"sap-accounting": "#,##0.00 ¤;(#,##0.00 ¤)"
+		"sap-accounting": "#,##0.00 ¤;(#,##0.00 ¤)",
+		"sap-standard-noCurrency": "#,##0.00",
+		"sap-accounting-noCurrency": "#,##0.00;(#,##0.00)"
 	},
 	"miscPattern": {
 		"approximately": "~ {0}",
@@ -4761,6 +4752,7 @@
 		"USD": "$",
 		"VND": "₫",
 		"XAF": "FCFA",
+		"XCG": "Cg.",
 		"XOF": "F CFA",
 		"XPF": "CFPF",
 		"XXX": "¤"
@@ -5276,7 +5268,10 @@
 			},
 			"graphics-em": {
 				"displayName": "em",
-				"unitPattern-count-other": "{0} em"
+				"unitPattern-count-one": "{0} emov",
+				"unitPattern-count-two": "{0} ema",
+				"unitPattern-count-few": "{0} emi",
+				"unitPattern-count-other": "{0} emov"
 			},
 			"graphics-pixel": {
 				"displayName": "px",
@@ -5407,7 +5402,7 @@
 				"unitPattern-count-other": "{0} smi"
 			},
 			"length-point": {
-				"displayName": "pt",
+				"displayName": "točke",
 				"unitPattern-count-other": "{0} pt"
 			},
 			"length-solar-radius": {
@@ -5821,6 +5816,25 @@
 				"unitPattern-count-few": "{0} imp. qt",
 				"unitPattern-count-other": "{0} imp. qt"
 			},
+			"speed-light-speed": {
+				"displayName": "svetloba",
+				"unitPattern-count-one": "{0} svetloba",
+				"unitPattern-count-two": "{0} svetlobi",
+				"unitPattern-count-few": "{0} svetlobe",
+				"unitPattern-count-other": "{0} svetlob"
+			},
+			"concentr-portion-per-1e9": {
+				"displayName": "ppb",
+				"unitPattern-count-other": "{0} ppb"
+			},
+			"duration-night": {
+				"displayName": "noči",
+				"unitPattern-count-one": "{0} noč",
+				"unitPattern-count-two": "{0} noči",
+				"unitPattern-count-few": "{0} noči",
+				"unitPattern-count-other": "{0} noči",
+				"perUnitPattern": "{0}/noč"
+			},
 			"coordinateUnit": {
 				"displayName": "smer",
 				"east": "{0} V",
@@ -5831,9 +5845,9 @@
 		}
 	},
 	"lenient-scope-number": {
-		"minusSign": "-－﹣ ‑‒−⁻₋➖",
-		"commaSign": ",，﹐︐ ،٫、﹑､︑",
-		"plusSign": "+＋﹢⁺₊ ➕"
+		"minusSign": "-－﹣‑‒−⁻₋➖",
+		"commaSign": ",，﹐︐،٫、﹑､︑",
+		"plusSign": "+＋﹢⁺₊➕"
 	},
 	"currencyFormat-sap-short": {
 		"1000-one": "0 tis'.' ¤",

@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.132.1
+		 * @version 1.133.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -88,10 +88,7 @@ sap.ui.define([
 		}
 		BaseContext.call(this, oModel, sPath);
 		this.oBinding = oBinding;
-		this.oCreatedPromise = oCreatePromise
-			// ensure to return a promise that is resolved w/o data
-			&& Promise.resolve(oCreatePromise).then(function () {});
-		this.oSyncCreatePromise = oCreatePromise;
+		this.setCreated(oCreatePromise);
 		// a promise waiting for the deletion, also used as indicator for #isDeleted
 		this.oDeletePromise = null;
 		// avoids recursion when calling #doSetProperty within the createActivate event handler
@@ -294,6 +291,8 @@ sap.ui.define([
 	 *       {@link #isKeepAlive kept alive},
 	 *     <li> the context is already being deleted,
 	 *     <li> the context's binding is a list binding with data aggregation,
+	 *     <li> the context is transient but its binding is not a list binding ("upsert") and it
+	 *       therefore must be reset via {@link #resetChanges},
 	 *     <li> the restrictions for deleting from a recursive hierarchy (see above) are not met.
 	 *   </ul>
 	 *
@@ -322,12 +321,15 @@ sap.ui.define([
 		}
 		this.oBinding.checkSuspended();
 		if (this.isTransient()) {
+			if (!this.oBinding.getHeaderContext) { // upsert
+				throw new Error("Cannot delete " + this);
+			}
 			if (this.iIndex === undefined) {
 				return Promise.resolve(); // already deleted, nothing to do
 			}
 			sGroupId = null;
 		} else if (sGroupId === null) {
-			if (!(this.isKeepAlive() && this.iIndex === undefined)) {
+			if (this.iIndex !== undefined || !this.isKeepAlive()) {
 				throw new Error("Cannot delete " + this);
 			}
 		}
@@ -584,7 +586,7 @@ sap.ui.define([
 							bUpdating);
 					}
 
-					if (that.isInactive() && !that.bFiringCreateActivate) {
+					if (that.bInactive && !that.bFiringCreateActivate) {
 						// early cache update so that the new value is properly available on the
 						// event listener
 						// runs synchronously - setProperty calls fetchValue with $cached
@@ -596,6 +598,10 @@ sap.ui.define([
 						oCache.setInactive(sEntityPath, that.bInactive);
 					}
 
+					const fnSetUpsertPromise = _Helper.hasPathSuffix(that.sPath, sEntityPath)
+						? that.setCreated.bind(that)
+						: null;
+
 					// if request is canceled fnPatchSent and fnErrorCallback are not called and
 					// returned Promise is rejected -> no patch events
 					return oCache.update(oGroupLock, oResult.propertyPath, vValue,
@@ -603,7 +609,7 @@ sap.ui.define([
 						// Note: use that.oModel intentionally, fails if already destroyed!
 						oMetaModel.getUnitOrCurrencyPath(that.oModel.resolve(sPath, that)),
 						oBinding.isPatchWithoutSideEffects(), patchSent,
-						that.isEffectivelyKeptAlive.bind(that)
+						that.isEffectivelyKeptAlive.bind(that), fnSetUpsertPromise
 					).then(function () {
 						firePatchCompleted(true);
 					}, function (oError) {
@@ -673,6 +679,7 @@ sap.ui.define([
 				if (!bAll) {
 					throw new Error("Already expanded: " + this);
 				}
+				this.oBinding.collapse(this, /*bAll*/false, /*bSilent*/true);
 				// falls through
 			case false: {
 				const iLevels = bAll ? Number.MAX_SAFE_INTEGER : 1;
@@ -1195,7 +1202,7 @@ sap.ui.define([
 		var that = this;
 
 		return this.isTransient() && this.isInactive() !== true
-			|| this.oDeletePromise && this.oDeletePromise.isPending()
+			|| this.oDeletePromise?.isPending()
 			|| this.oBinding.hasPendingChangesForPath(this.sPath)
 			|| this.oModel.getDependentBindings(this).some(function (oDependentBinding) {
 				return oDependentBinding.oCache
@@ -1287,7 +1294,7 @@ sap.ui.define([
 			|| !mParameters.$$sharedRequest
 			&& this.oBinding.getHeaderContext?.()
 			&& this.oBinding.getHeaderContext().isSelected() !== this.isSelected()
-			&& !(this.oBinding.isRelative() && !mParameters.$$ownRequest)
+			&& (mParameters.$$ownRequest || !this.oBinding.isRelative())
 			&& !_Helper.isDataAggregation(mParameters)
 			// check for key predicate in the last path segment
 			&& this.sPath.indexOf("(", this.sPath.lastIndexOf("/")) > 0;
@@ -1403,7 +1410,7 @@ sap.ui.define([
 	 * @since 1.43.0
 	 */
 	Context.prototype.isTransient = function () {
-		return this.oSyncCreatePromise && this.oSyncCreatePromise.isPending();
+		return this.oSyncCreatePromise?.isPending();
 	};
 
 	/**
@@ -1475,11 +1482,11 @@ sap.ui.define([
 		if (oNextSibling === undefined && oParent === undefined) {
 			return Promise.resolve(); // "no move happens"
 		}
-		if (this.isDeleted() || this.isTransient() || this.iIndex === undefined) {
+		if (this.iIndex === undefined || this.isDeleted() || this.isTransient()) {
 			throw new Error("Cannot move " + this);
 		}
 		if (oParent
-			&& (oParent.isDeleted() || oParent.isTransient() || oParent.iIndex === undefined)) {
+			&& (oParent.iIndex === undefined || oParent.isDeleted() || oParent.isTransient())) {
 			throw new Error("Cannot move to " + oParent);
 		}
 		if (this.isAncestorOf(oParent)) {
@@ -2126,8 +2133,8 @@ sap.ui.define([
 	 *   <li> the binding's root binding is suspended,
 	 *   <li> a change of this context has already been sent to the server and there is no response
 	 *     yet,
-	 *   <li> this context is transient, but not inactive and therefore should rather be reset via
-	 *     {@link #delete}.
+	 *   <li> this context is a transient row context but not inactive and therefore must be reset
+	 *     via {@link #delete}.
 	 *   <li> this context is a
 	 *     {@link sap.ui.model.odata.v4.ODataListBinding#getHeaderContext header context}.
 	 *   <li> this context is a
@@ -2144,7 +2151,8 @@ sap.ui.define([
 				: [],
 			that = this;
 
-		if (this.iIndex === iVIRTUAL || this.isTransient() && !this.isInactive()
+		if (this.iIndex === iVIRTUAL
+			|| this.oBinding.getHeaderContext && !this.bInactive && this.isTransient()
 			|| this === this.oBinding.getHeaderContext?.()
 			// only operation bindings have a parameter context, for others the function fails
 			|| this.oBinding.oOperation && this === this.oBinding.getParameterContext()) {
@@ -2178,6 +2186,30 @@ sap.ui.define([
 	Context.prototype.resetKeepAlive = function () {
 		this.bKeepAlive = false;
 		this.bSelected = false;
+	};
+
+	/**
+	 * Sets this context's {@link #created created} promise based on the given one.
+	 *
+	 * Note: this is a private and internal API. Do not call this!
+	 *
+	 * @param {sap.ui.base.SyncPromise} [oSyncCreatePromise]
+	 *   A promise which is resolved with the created entity when the PATCH or POST request has been
+	 *   successfully sent and the entity has been marked as non-transient; used as base for
+	 *   {@link #created}. If missing, this context's {@link #created created} promise is removed
+	 *   again. Don't use <code>null</code>!
+	 * @throws {Error} If this context is not "created" or still transient
+	 *
+	 * @private
+	 */
+	Context.prototype.setCreated = function (oSyncCreatePromise) {
+		if (oSyncCreatePromise && this.oCreatedPromise) {
+			throw new Error("Already 'created'");
+		}
+		this.oCreatedPromise = oSyncCreatePromise
+			// ensure to return a promise that is resolved w/o data
+			&& Promise.resolve(oSyncCreatePromise).then(function () {});
+		this.oSyncCreatePromise = oSyncCreatePromise;
 	};
 
 	/**

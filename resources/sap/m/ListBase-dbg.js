@@ -105,7 +105,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -1351,6 +1351,8 @@ function(
 	 * @protected
 	 */
 	ListBase.prototype.onAfterPageLoaded = function(oGrowingInfo, sChangeReason) {
+		this._updateStickyClasses();
+		this._oLastGroupHeaderBeforeGrowing = null;
 		this._fireUpdateFinished(oGrowingInfo);
 		this.fireGrowingFinished(oGrowingInfo);
 	};
@@ -2166,6 +2168,21 @@ function(
 			setsize: iSetSize,
 			posinset: iPosInSet
 		};
+	};
+
+	/**
+	 * Updates the accessibility state of all items after the binding update of individual items.
+	 *
+	 * @private
+	 * @ui5-restricted sap.m.GrowingEnablement
+	 */
+	ListBase.prototype.updateAccessbilityOfItems = function() {
+		const iSetSize = this.getSize();
+		this.getVisibleItems().forEach((oItem, iIndex) => {
+			const oFocusDomRef = oItem.getFocusDomRef();
+			oFocusDomRef?.setAttribute("aria-setsize", iSetSize);
+			oFocusDomRef?.setAttribute("aria-posinset", iIndex + 1);
+		});
 	};
 
 	ListBase.prototype.getSize = function() {
@@ -3090,21 +3107,23 @@ function(
 	};
 
 	ListBase.prototype._onToolbarPropertyChanged = function(oEvent) {
-		if (oEvent.getParameter("name") !== "visible") {
-			return;
+		if (oEvent.getParameter("name") === "visible") {
+			this._updateStickyClasses();
 		}
+	};
 
-		// update the sticky style class
+	ListBase.prototype._updateStickyClasses = function() {
 		var iOldStickyValue = this._iStickyValue,
 			iNewStickyValue = this.getStickyStyleValue();
 
 		if (iOldStickyValue !== iNewStickyValue) {
-			var oDomRef = this.getDomRef();
+			const oDomRef = this.getDomRef();
 			if (oDomRef) {
-				var aClassList = oDomRef.classList;
-				aClassList.toggle("sapMSticky", !!iNewStickyValue);
+				const bSticky = iNewStickyValue > 0;
+				const aClassList = oDomRef.classList;
+				aClassList.toggle("sapMSticky", bSticky);
 				aClassList.remove("sapMSticky" + iOldStickyValue);
-				aClassList.toggle("sapMSticky" + iNewStickyValue, !!iNewStickyValue);
+				aClassList.toggle("sapMSticky" + iNewStickyValue, bSticky);
 			}
 		}
 	};

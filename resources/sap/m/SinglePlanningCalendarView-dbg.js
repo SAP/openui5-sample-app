@@ -7,9 +7,10 @@
 sap.ui.define([
 	'./library',
 	'sap/base/Log',
+	'sap/base/i18n/date/CalendarWeekNumbering',
 	'sap/ui/core/Element'
 ],
-function (library, Log, Element) {
+function (library, Log, _CalendarWeekNumbering, Element) {
 	"use strict";
 
 	/**
@@ -26,7 +27,7 @@ function (library, Log, Element) {
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -67,7 +68,7 @@ function (library, Log, Element) {
 				 * Note: This property should not be used with firstDayOfWeek property.
 				 * @since 1.110.0
 				 */
-				calendarWeekNumbering : { type : "sap.ui.core.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null}
+				calendarWeekNumbering : { type : "sap.base.i18n.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null}
 
 			}
 		}

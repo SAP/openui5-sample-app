@@ -27,6 +27,7 @@ sap.ui.define([
 	"./MessageItem",
 	"./GroupHeaderListItem",
 	'sap/ui/core/InvisibleText',
+	"sap/ui/core/InvisibleMessage",
 	"sap/ui/core/library",
 	"sap/ui/core/message/MessageType",
 	"sap/ui/base/ManagedObject",
@@ -58,6 +59,7 @@ sap.ui.define([
 	MessageItem,
 	GroupHeaderListItem,
 	InvisibleText,
+	InvisibleMessage,
 	coreLibrary,
 	MessageType,
 	ManagedObject,
@@ -117,7 +119,7 @@ sap.ui.define([
 	 * The responsiveness of the <code>MessageView</code> is determined by the container in which it is embedded. For that reason the control could not be visualized if the
 	 * container’s sizes are not defined.
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @extends sap.ui.core.Control
 	 * @constructor
@@ -206,9 +208,8 @@ sap.ui.define([
 						item: {type: "sap.m.MessageItem"},
 						/**
 						 * Refers to the type of messages being shown.
-						 * See sap.ui.core.MessageType values for types.
 						 */
-						messageTypeFilter: {type: "sap.ui.core.MessageType"}
+						messageTypeFilter: {type: "module:sap/ui/core/message/MessageType"}
 					}
 				},
 				/**
@@ -219,7 +220,7 @@ sap.ui.define([
 						/**
 						 * This parameter refers to the type of messages being shown.
 						 */
-						messageTypeFilter: {type: "sap.ui.core.MessageType"}
+						messageTypeFilter: {type: "module:sap/ui/core/message/MessageType"}
 					}
 				},
 				/**
@@ -391,6 +392,10 @@ sap.ui.define([
 			aListItems,
 			aItems = this.getItems();
 
+		if (!this._oInvisibleMessage) {
+			this._oInvisibleMessage = InvisibleMessage.getInstance();
+		}
+
 		this._clearLists();
 		this._detailsPage.setShowHeader(this.getShowDetailsPageHeader());
 
@@ -506,6 +511,11 @@ sap.ui.define([
 	MessageView.prototype.exit = function () {
 		if (this._oLists) {
 			this._destroyLists();
+		}
+
+		if (this._oInvisibleMessage) {
+			this._oInvisibleMessage.destroy();
+			this._oInvisibleMessage = null;
 		}
 
 		if (this._oMessageItemTemplate) {
@@ -838,7 +848,7 @@ sap.ui.define([
 	/**
 	 * Map ValueState according the MessageType of the message.
 	 *
-	 * @param {sap.ui.core.MessageType} sType Type of Message
+	 * @param {module:sap/ui/core/message/MessageType} sType Type of Message
 	 * @returns {sap.ui.core.ValueState | null} The ValueState
 	 * @private
 	 */
@@ -864,7 +874,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Map a MessageType to the Icon URL.
+	 * Map a `ValueState` to the Icon URL.
 	 *
 	 * @param {sap.ui.core.ValueState} sIcon Type of Error
 	 * @returns {string | null} Icon string
@@ -1271,6 +1281,13 @@ sap.ui.define([
 		this._setIcon(oMessageItem, oListItem);
 		this._detailsPage.invalidate();
 		this.fireLongtextLoaded();
+
+		const oContentTitle = this._detailsPage.getContent()[0];
+
+		if (oContentTitle && !oContentTitle.isA("sap.m.Link")) {
+			const sAnnouncement = oContentTitle.getText() + " Additional information available via reading keys";
+			this._oInvisibleMessage.announce(sAnnouncement, "Assertive");
+		}
 
 		if (!bSuppressNavigate) {
 			this._navContainer.to(this._detailsPage, sTransiotionName);

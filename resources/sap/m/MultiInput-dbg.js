@@ -110,7 +110,7 @@ function(
 	* @extends sap.m.Input
 	*
 	* @author SAP SE
-	* @version 1.132.1
+	* @version 1.133.0
 	*
 	* @constructor
 	* @public
@@ -309,6 +309,7 @@ function(
 				}
 
 				oTokenizer.getTokensPopup().getDomRef().style.setProperty("min-width", iInputWidth + "px");
+				oTokenizer.getTokensPopup().setContentWidth(iInputWidth + "px");
 			}
 		}, this);
 
@@ -365,6 +366,8 @@ function(
 		oTokenizer.addEventDelegate({
 			onThemeChanged: this._handleInnerVisibility.bind(this),
 			onAfterRendering: function () {
+				var bIsInputFocused = this.getEditable() && document.activeElement === this.getDomRef("inner");
+
 				if (this.isMobileDevice() && this.getEditable()) {
 					oTokenizer.addStyleClass("sapMTokenizerIndicatorDisabled");
 				} else {
@@ -378,6 +381,10 @@ function(
 					this._handleInnerVisibility();
 					this._handleNMoreAccessibility();
 					this._registerTokenizerResizeHandler();
+				}
+
+				if (!this.isMobileDevice() && !this._getIsSuggestionPopupOpen() && bIsInputFocused) {
+					oTokenizer.scrollToEnd();
 				}
 			}.bind(this)
 		}, this);
@@ -436,7 +443,6 @@ function(
 		this._bTokenIsValidated = false;
 
 		oTokenizer.setMaxWidth(this._calculateSpaceForTokenizer());
-		oTokenizer.scrollToEnd();
 
 		this._registerResizeHandler();
 
@@ -1115,7 +1121,9 @@ function(
 			oTokenizer._togglePopup(oTokenizer.getTokensPopup());
 		}
 
-		this.focus();
+		if (!containsOrEquals(oTokenizer.getFocusDomRef(), document.activeElement)) {
+			this.focus();
+		}
 	};
 
 	/**
@@ -1647,8 +1655,10 @@ function(
 	 * @private
 	 */
 	MultiInput.prototype._onAfterCloseTokensPicker = function () {
-		if (document.activeElement !== this.getDomRef("inner")) {
-			this.getAggregation("tokenizer").setRenderMode(TokenizerRenderMode.Narrow);
+		var oTokenizer = this.getAggregation("tokenizer");
+
+		if (document.activeElement !== this.getDomRef("inner") && !oTokenizer.checkFocus()) {
+			oTokenizer.setRenderMode(TokenizerRenderMode.Narrow);
 		}
 	};
 

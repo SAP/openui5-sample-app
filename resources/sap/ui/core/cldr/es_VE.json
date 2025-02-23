@@ -1,7 +1,7 @@
 {
 	"__license": "This file has been derived from Unicode Common Locale Data Repository (CLDR) files (http://cldr.unicode.org). See the copyright and permission notice in the Unicode-Data-Files-LICENSE.txt available at the same location as this file or visit http://www.unicode.org/copyright.html",
-	"__version": "44.0.0",
-	"__buildtime": "2024-01-12T14:24:50.280Z",
+	"__version": "46.1.0",
+	"__buildtime": "2025-01-28T09:40:27.437Z",
 	"languages": {
 		"aa": "afar",
 		"ab": "abjasio",
@@ -59,6 +59,7 @@
 		"bin": "bini",
 		"bkm": "kom",
 		"bla": "siksiká",
+		"blo": "anii",
 		"bm": "bambara",
 		"bn": "bengalí",
 		"bo": "tibetano",
@@ -289,6 +290,7 @@
 		"kv": "komi",
 		"kw": "córnico",
 		"kwk": "kwakʼwala",
+		"kxv": "kuvi",
 		"ky": "kirguís",
 		"la": "latín",
 		"lad": "ladino",
@@ -299,6 +301,7 @@
 		"lez": "lezgiano",
 		"lg": "ganda",
 		"li": "limburgués",
+		"lij": "genovés",
 		"lil": "lillooet",
 		"lkt": "lakota",
 		"lmo": "lombardo",
@@ -314,7 +317,6 @@
 		"lua": "luba-lulua",
 		"lui": "luiseño",
 		"lun": "lunda",
-		"luo": "luo",
 		"lus": "mizo",
 		"luy": "luyia",
 		"lv": "letón",
@@ -497,6 +499,7 @@
 		"swb": "comorense",
 		"syc": "siríaco clásico",
 		"syr": "siríaco",
+		"szl": "silesio",
 		"ta": "tamil",
 		"tce": "tutchone meridional",
 		"te": "telugu",
@@ -544,9 +547,10 @@
 		"und": "lengua desconocida",
 		"ur": "urdu",
 		"uz": "uzbeko",
-		"vai": "vai",
 		"ve": "venda",
+		"vec": "véneto",
 		"vi": "vietnamita",
+		"vmw": "makua",
 		"vo": "volapük",
 		"vot": "vótico",
 		"vun": "vunjo",
@@ -560,6 +564,7 @@
 		"wuu": "wu",
 		"xal": "calmuco",
 		"xh": "xhosa",
+		"xnr": "kangri",
 		"xog": "soga",
 		"yao": "yao",
 		"yap": "yapés",
@@ -1127,11 +1132,11 @@
 			"intervalFormats": {
 				"intervalFormatFallback": "{0} – {1}",
 				"Bh": {
-					"B": "h B – h B",
+					"B": "h B – h B",
 					"h": "h–h B"
 				},
 				"Bhm": {
-					"B": "h:mm B – h:mm B",
+					"B": "h:mm B – h:mm B",
 					"h": "h:mm–h:mm B",
 					"m": "h:mm–h:mm B"
 				},
@@ -1671,11 +1676,11 @@
 			"intervalFormats": {
 				"intervalFormatFallback": "{0}–{1}",
 				"Bh": {
-					"B": "h B – h B",
+					"B": "h B – h B",
 					"h": "h–h B"
 				},
 				"Bhm": {
-					"B": "h:mm B – h:mm B",
+					"B": "h:mm B – h:mm B",
 					"h": "h:mm–h:mm B",
 					"m": "h:mm–h:mm B"
 				},
@@ -2194,11 +2199,11 @@
 			"intervalFormats": {
 				"intervalFormatFallback": "{0}–{1}",
 				"Bh": {
-					"B": "h B – h B",
+					"B": "h B – h B",
 					"h": "h–h B"
 				},
 				"Bhm": {
-					"B": "h:mm B – h:mm B",
+					"B": "h:mm B – h:mm B",
 					"h": "h:mm–h:mm B",
 					"m": "h:mm–h:mm B"
 				},
@@ -2737,11 +2742,11 @@
 			"intervalFormats": {
 				"intervalFormatFallback": "{0}–{1}",
 				"Bh": {
-					"B": "h B – h B",
+					"B": "h B – h B",
 					"h": "h–h B"
 				},
 				"Bhm": {
-					"B": "h:mm B – h:mm B",
+					"B": "h:mm B – h:mm B",
 					"h": "h:mm–h:mm B",
 					"m": "h:mm–h:mm B"
 				},
@@ -3260,11 +3265,11 @@
 			"intervalFormats": {
 				"intervalFormatFallback": "{0}–{1}",
 				"Bh": {
-					"B": "h B – h B",
+					"B": "h B – h B",
 					"h": "h–h B"
 				},
 				"Bhm": {
-					"B": "h:mm B – h:mm B",
+					"B": "h:mm B – h:mm B",
 					"h": "h:mm–h:mm B",
 					"m": "h:mm–h:mm B"
 				},
@@ -4201,7 +4206,6 @@
 			"Montserrat": "Montserrat",
 			"Nassau": "Nasáu",
 			"New_York": "Nueva York",
-			"Nipigon": "Nipigon",
 			"Nome": "Nome",
 			"Noronha": "Noronha",
 			"North_Dakota": {
@@ -4212,7 +4216,6 @@
 			"Nuuk": "Nuuk",
 			"Ojinaga": "Ojinaga",
 			"Panama": "Panamá",
-			"Pangnirtung": "Pangnirtung",
 			"Paramaribo": "Paramaribo",
 			"Phoenix": "Phoenix",
 			"Port-au-Prince": "Puerto Príncipe",
@@ -4220,13 +4223,11 @@
 			"Porto_Velho": "Porto Velho",
 			"Puerto_Rico": "Puerto Rico",
 			"Punta_Arenas": "Punta Arenas",
-			"Rainy_River": "Rainy River",
 			"Rankin_Inlet": "Rankin Inlet",
 			"Recife": "Recife",
 			"Regina": "Regina",
 			"Resolute": "Resolute",
 			"Rio_Branco": "Río Branco",
-			"Santa_Isabel": "Santa Isabel",
 			"Santarem": "Santarém",
 			"Santiago": "Santiago",
 			"Santo_Domingo": "Santo Domingo",
@@ -4242,7 +4243,6 @@
 			"Swift_Current": "Swift Current",
 			"Tegucigalpa": "Tegucigalpa",
 			"Thule": "Thule",
-			"Thunder_Bay": "Thunder Bay",
 			"Tijuana": "Tijuana",
 			"Toronto": "Toronto",
 			"Tortola": "Tórtola",
@@ -4250,7 +4250,6 @@
 			"Whitehorse": "Whitehorse",
 			"Winnipeg": "Winnipeg",
 			"Yakutat": "Yakutat",
-			"Yellowknife": "Yellowknife",
 			"_parent": "América"
 		},
 		"Antarctica": {
@@ -4288,7 +4287,6 @@
 			"Bishkek": "Bishkek",
 			"Brunei": "Brunéi",
 			"Chita": "Chitá",
-			"Choibalsan": "Choibalsan",
 			"Colombo": "Colombo",
 			"Damascus": "Damasco",
 			"Dhaka": "Daca",
@@ -4437,7 +4435,6 @@
 			"Tallinn": "Tallin",
 			"Tirane": "Tirana",
 			"Ulyanovsk": "Uliánovsk",
-			"Uzhgorod": "Úzhgorod",
 			"Vaduz": "Vaduz",
 			"Vatican": "El Vaticano",
 			"Vienna": "Viena",
@@ -4445,7 +4442,6 @@
 			"Volgograd": "Volgogrado",
 			"Warsaw": "Varsovia",
 			"Zagreb": "Zagreb",
-			"Zaporozhye": "Zaporiyia",
 			"Zurich": "Zúrich",
 			"_parent": "Europa"
 		},
@@ -4529,7 +4525,7 @@
 		"100000000000-one": "000 mil millones",
 		"100000000000-other": "000 mil millones",
 		"1000000000000-one": "0 billón",
-		"1000000000000-other": "0 billón",
+		"1000000000000-other": "0 billones",
 		"10000000000000-one": "00 billones",
 		"10000000000000-other": "00 billones",
 		"100000000000000-one": "000 billones",
@@ -4569,21 +4565,13 @@
 	},
 	"currencyFormat": {
 		"standard": "¤#,##0.00;¤-#,##0.00",
+		"standard-noCurrency": "#,##0.00",
 		"accounting": "¤#,##0.00;¤-#,##0.00",
-		"currencySpacing": {
-			"beforeCurrency": {
-				"currencyMatch": "[[:^S:]&[:^Z:]]",
-				"surroundingMatch": "[:digit:]",
-				"insertBetween": " "
-			},
-			"afterCurrency": {
-				"currencyMatch": "[[:^S:]&[:^Z:]]",
-				"surroundingMatch": "[:digit:]",
-				"insertBetween": " "
-			}
-		},
+		"accounting-noCurrency": "#,##0.00",
 		"sap-standard": "#,##0.00¤;-#,##0.00¤",
-		"sap-accounting": "#,##0.00¤;-#,##0.00¤"
+		"sap-accounting": "#,##0.00¤;-#,##0.00¤",
+		"sap-standard-noCurrency": "#,##0.00",
+		"sap-accounting-noCurrency": "#,##0.00"
 	},
 	"miscPattern": {
 		"approximately": "~{0}",
@@ -4592,30 +4580,54 @@
 		"range": "{0}-{1}"
 	},
 	"currencyFormat-short": {
-		"1000-one": "¤ 0 K",
-		"1000-other": "¤ 0 K",
-		"10000-one": "¤ 00 K",
-		"10000-other": "¤ 00 K",
-		"100000-one": "¤ 000 K",
-		"100000-other": "¤ 000 K",
-		"1000000-one": "¤ 0 M",
-		"1000000-other": "¤ 0 M",
-		"10000000-one": "¤ 00 M",
-		"10000000-other": "¤ 00 M",
-		"100000000-one": "¤ 000 M",
-		"100000000-other": "¤ 000 M",
-		"1000000000-one": "¤ 0000 M",
-		"1000000000-other": "¤ 0000 M",
-		"10000000000-one": "¤ 00 MRD",
-		"10000000000-other": "¤ 00 MRD",
-		"100000000000-one": "¤ 000 MRD",
-		"100000000000-other": "¤ 000 MRD",
-		"1000000000000-one": "¤ 0 B",
-		"1000000000000-other": "¤ 0 B",
-		"10000000000000-one": "¤ 00 B",
-		"10000000000000-other": "¤ 00 B",
-		"100000000000000-one": "¤ 000 B",
-		"100000000000000-other": "¤ 000 B"
+		"1000-one": "¤0 K",
+		"1000-one-alphaNextToNumber": "¤ 0 K",
+		"1000-other": "¤0 K",
+		"1000-other-alphaNextToNumber": "¤ 0 K",
+		"10000-one": "¤00 K",
+		"10000-one-alphaNextToNumber": "¤ 00 K",
+		"10000-other": "¤00 K",
+		"10000-other-alphaNextToNumber": "¤ 00 K",
+		"100000-one": "¤000 K",
+		"100000-one-alphaNextToNumber": "¤ 000 K",
+		"100000-other": "¤000 K",
+		"100000-other-alphaNextToNumber": "¤ 000 K",
+		"1000000-one": "¤0 M",
+		"1000000-one-alphaNextToNumber": "¤ 0 M",
+		"1000000-other": "¤0 M",
+		"1000000-other-alphaNextToNumber": "¤ 0 M",
+		"10000000-one": "¤00 M",
+		"10000000-one-alphaNextToNumber": "¤ 00 M",
+		"10000000-other": "¤00 M",
+		"10000000-other-alphaNextToNumber": "¤ 00 M",
+		"100000000-one": "¤000 M",
+		"100000000-one-alphaNextToNumber": "¤ 000 M",
+		"100000000-other": "¤000 M",
+		"100000000-other-alphaNextToNumber": "¤ 000 M",
+		"1000000000-one": "¤0000 M",
+		"1000000000-one-alphaNextToNumber": "¤ 0000 M",
+		"1000000000-other": "¤0000 M",
+		"1000000000-other-alphaNextToNumber": "¤ 0000 M",
+		"10000000000-one": "¤00 MRD",
+		"10000000000-one-alphaNextToNumber": "¤ 00 MRD",
+		"10000000000-other": "¤00 MRD",
+		"10000000000-other-alphaNextToNumber": "¤ 00 MRD",
+		"100000000000-one": "¤000 MRD",
+		"100000000000-one-alphaNextToNumber": "¤ 000 MRD",
+		"100000000000-other": "¤000 MRD",
+		"100000000000-other-alphaNextToNumber": "¤ 000 MRD",
+		"1000000000000-one": "¤0 B",
+		"1000000000000-one-alphaNextToNumber": "¤ 0 B",
+		"1000000000000-other": "¤0 B",
+		"1000000000000-other-alphaNextToNumber": "¤ 0 B",
+		"10000000000000-one": "¤00 B",
+		"10000000000000-one-alphaNextToNumber": "¤ 00 B",
+		"10000000000000-other": "¤00 B",
+		"10000000000000-other-alphaNextToNumber": "¤ 00 B",
+		"100000000000000-one": "¤000 B",
+		"100000000000000-one-alphaNextToNumber": "¤ 000 B",
+		"100000000000000-other": "¤000 B",
+		"100000000000000-other-alphaNextToNumber": "¤ 000 B"
 	},
 	"symbols-latn-decimal": ",",
 	"symbols-latn-group": ".",
@@ -4634,6 +4646,7 @@
 		"ESP": "₧",
 		"VEF": "Bs.",
 		"VES": "Bs.S",
+		"XCG": "Cg.",
 		"XPF": "CFPF",
 		"XXX": "¤"
 	},
@@ -5601,6 +5614,21 @@
 				"unitPattern-count-one": "{0} qt imp.",
 				"unitPattern-count-other": "{0} qt imp."
 			},
+			"speed-light-speed": {
+				"displayName": "luz",
+				"unitPattern-count-one": "{0} luz",
+				"unitPattern-count-other": "{0} luz"
+			},
+			"concentr-portion-per-1e9": {
+				"displayName": "partes/millardo",
+				"unitPattern-count-other": "{0} ppb"
+			},
+			"duration-night": {
+				"displayName": "noches",
+				"unitPattern-count-one": "{0} noche",
+				"unitPattern-count-other": "{0} noches",
+				"perUnitPattern": "{0}/noche"
+			},
 			"coordinateUnit": {
 				"displayName": "punto",
 				"east": "{0} E",
@@ -5611,9 +5639,9 @@
 		}
 	},
 	"lenient-scope-number": {
-		"minusSign": "-－﹣ ‑‒−⁻₋➖",
-		"commaSign": ",，﹐︐ ،٫、﹑､︑",
-		"plusSign": "+＋﬩﹢⁺₊ ➕"
+		"minusSign": "-－﹣‑‒−⁻₋➖",
+		"commaSign": ",，﹐︐،٫、﹑､︑",
+		"plusSign": "+＋﬩﹢⁺₊➕"
 	},
 	"currencyFormat-sap-short": {
 		"1000-one": "0 K ¤",

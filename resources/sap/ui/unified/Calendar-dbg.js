@@ -7,7 +7,7 @@
 sap.ui.define([
 	"sap/base/i18n/Formatting",
 	"sap/base/i18n/Localization",
-	'sap/ui/core/CalendarType',
+	'sap/base/i18n/date/CalendarType',
 	'sap/ui/core/Control',
 	"sap/ui/core/Element",
 	'sap/ui/core/LocaleData',
@@ -31,7 +31,7 @@ sap.ui.define([
 	"sap/ui/dom/containsOrEquals",
 	"sap/base/util/deepEqual",
 	"sap/base/Log",
-	"sap/ui/core/date/CalendarWeekNumbering"
+	"sap/base/i18n/date/CalendarWeekNumbering"
 ], function(
 	Formatting,
 	Localization,
@@ -59,7 +59,7 @@ sap.ui.define([
 	containsOrEquals,
 	deepEqual,
 	Log,
-	CalendarWeekNumbering
+	_CalendarWeekNumbering // type of `calendarWeekNumbering`
 ) {
 	"use strict";
 
@@ -78,7 +78,7 @@ sap.ui.define([
 	 * Basic Calendar.
 	 * This calendar is used for DatePickers
 	 * @extends sap.ui.core.Control
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -145,14 +145,14 @@ sap.ui.define([
 			 * If not set, the calendar type of the global configuration is used.
 			 * @since 1.34.0
 			 */
-			primaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
+			primaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
 
 			/**
 			 * If set, the days are also displayed in this calendar type
 			 * If not set, the dates are only displayed in the primary calendar type
 			 * @since 1.34.0
 			 */
-			secondaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
+			secondaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
 
 			/**
 			 * Width of Calendar
@@ -216,7 +216,7 @@ sap.ui.define([
 			 * Note: This property should not be used with firstDayOfWeek property.
 			 * @since 1.108.0
 			 */
-			calendarWeekNumbering : { type : "sap.ui.core.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
+			calendarWeekNumbering : { type : "sap.base.i18n.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
 
 			/**
 			 * Holds a reference to a UI5Date or JavaScript Date object to define the initially navigated date in the calendar.
@@ -520,6 +520,8 @@ sap.ui.define([
 		oYearRangePicker.attachEvent("select", this._selectYearRange, this);
 		oYearRangePicker.setPrimaryCalendarType(this._getPrimaryCalendarType());
 		this.setAggregation("yearRangePicker", oYearRangePicker); // do not invalidate
+
+		oYearRangePicker._setSelectedDatesControlOrigin(this);
 	};
 
 	Calendar.prototype._createMonth = function(sId){
@@ -971,7 +973,7 @@ sap.ui.define([
 
 	/**
 	 * Returns if there is secondary calendar type set and if it is different from the primary one.
-	 * @returns {string} if there is secondary calendar type set and if it is different from the primary one
+	 * @returns {module:sap/base/i18n/date/CalendarType} if there is secondary calendar type set and if it is different from the primary one
 	 */
 	Calendar.prototype._getSecondaryCalendarType = function(){
 		var sSecondaryCalendarType = this.getSecondaryCalendarType();
@@ -2559,7 +2561,7 @@ sap.ui.define([
 
 		if (!this._getSucessorsPickerPopup()) {
 			// An evaluation about the count of year cells that could fit in the sap.ui.unified.calendar.YearRangePicker
-			// has to be made based not only on the sap.ui.core.CalendarType, but also on the language configuration.
+			// has to be made based not only on the sap/base/i18n/date/CalendarType, but also on the language configuration.
 			// Based on those two criteria a couple of groups with different year cells count would be indicated and we
 			// could cover those scenarios with visual tests afterwards. Currently only the scenario with korean language
 			// is covered.

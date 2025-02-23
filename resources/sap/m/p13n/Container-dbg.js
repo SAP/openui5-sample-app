@@ -35,9 +35,6 @@ sap.ui.define([
 	// shortcut for sap.m.ButtonType
 	const ButtonType = mLibrary.ButtonType;
 
-	// shortcut for sap.m.ListType
-	const ListItemType = mLibrary.ListType;
-
 	// shortcut for sap.ui.core.TitleLevel
 	const TitleLevel = coreLibrary.TitleLevel;
 
@@ -55,7 +52,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.AbstractContainer
 	 *
 	 * @author SAP SE
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @private
 	 * @ui5-restricted
@@ -240,7 +237,7 @@ sap.ui.define([
 					const oItem = oEvt.getParameter("listItem");
 					this.switchView(oItem._key);
 				}
-			}).addStyleClass("p13nContainerDefaultList");
+			});
 			this.addDependent(this._oNavigationList);
 		}
 		if (!this.getView(this.DEFAULT_KEY)) {
@@ -252,6 +249,17 @@ sap.ui.define([
 		}
 
 		return this._oNavigationList;
+	};
+
+	/**
+	 * Sets the <code>headerToolbar</code> aggregation of the navigation list.
+	 *
+	 * @param {sap.m.Toolbar} oToolbar The toolbar instance
+	 * @returns {sap.m.p13n.Container} The container instance for method chaining
+	 * @ui5-restricted sap.m.table.columnmenu.Menu
+	 */
+	Container.prototype.setListHeader = function(oToolbar) {
+		return this._oNavigationList.setHeaderToolbar(oToolbar);
 	};
 
 	Container.prototype._getNavBackBtn = function() {
@@ -282,6 +290,7 @@ sap.ui.define([
 		const oContainerItemTextBindingInfo = oContainerItem.getBindingInfo("text");
 		let vText = oContainerItem.getText();
 		const sIcon = oContainerItem.getIcon();
+		const sType = oContainerItem.getType();
 
 		//In case the text of the Abstract container item is bound, the binding should be forwarded instead of the value
 		if (oContainerItemTextBindingInfo && oContainerItemTextBindingInfo.parts) {
@@ -297,7 +306,7 @@ sap.ui.define([
 		if (this.getListLayout()) {
 			this.getView(this.DEFAULT_KEY);
 			const oItem = new StandardListItem({
-				type: ListItemType.Navigation,
+				type: sType,
 				icon: sIcon,
 				title: vText
 			});

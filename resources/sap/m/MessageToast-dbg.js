@@ -74,7 +74,7 @@ sap.ui.define([
 		 * The message toast has the same behavior on all devices. However, you can adjust the width of the control, for example, for use on a desktop device.
 		 *
 		 * @author SAP SE
-		 * @version 1.132.1
+		 * @version 1.133.0
 		 *
 		 * @namespace
 		 * @public
@@ -407,6 +407,12 @@ sap.ui.define([
 		 * @public
 		 */
 		MessageToast.show = function(sMessage, mOptions) {
+			// disable opening of toasts then notoasts is set to true
+			// required for performance measurements
+			if (/sap-ui-xx-no-toasts=true/.test(document.location.search)) {
+				return;
+			}
+
 			var oOpener = Element.closestTo(document.activeElement);
 			var oUI5Area = oOpener && oOpener.getUIArea && oOpener.getUIArea();
 			var oAccSpan;

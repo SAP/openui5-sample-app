@@ -6,20 +6,19 @@
 
 //Provides the locale object sap.ui.core.LocaleData
 sap.ui.define([
-	"./Lib",
 	"./Locale",
 	"sap/base/assert",
 	"sap/base/i18n/Formatting",
 	"sap/base/i18n/LanguageTag",
 	"sap/base/i18n/Localization",
 	"sap/base/i18n/date/CalendarType",
+	"sap/base/i18n/date/CalendarWeekNumbering",
 	"sap/base/util/extend",
 	"sap/base/util/LoaderExtensions",
 	"sap/ui/base/Object",
-	"sap/ui/base/SyncPromise",
-	"sap/ui/core/date/CalendarWeekNumbering"
-], function(Lib, Locale, assert, Formatting, LanguageTag, Localization, CalendarType, extend, LoaderExtensions,
-		BaseObject, SyncPromise, CalendarWeekNumbering) {
+	"sap/ui/base/SyncPromise"
+], function(Locale, assert, Formatting, LanguageTag, Localization, CalendarType, CalendarWeekNumbering,
+		extend, LoaderExtensions, BaseObject, SyncPromise) {
 	"use strict";
 
 	var rCIgnoreCase = /c/i,
@@ -78,7 +77,7 @@ sap.ui.define([
 	 *   {@link https://cldr.unicode.org/ Unicode CLDR}.
 	 * @hideconstructor
 	 * @public
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 */
 	var LocaleData = BaseObject.extend("sap.ui.core.LocaleData", /** @lends sap.ui.core.LocaleData.prototype */ {
 
@@ -1261,7 +1260,7 @@ sap.ui.define([
 		},
 
 		/**
-		 * Get currency format pattern for the given context.
+		 * Gets the currency format pattern for the given context or selects an alternative pattern if desired.
 		 *
 		 * CLDR format pattern:
 		 *
@@ -1277,17 +1276,18 @@ sap.ui.define([
 		 *
 		 * @see https://cldr.unicode.org/translation/numbers-currency/number-patterns
 		 *
-		 * @param {"accounting"|"standard"} sContext the context of the currency pattern
-		 * @returns {string} The pattern
+		 * @param {"accounting"|"sap-accounting"|"sap-standard"|"standard"} sContext
+		 *   The context of the currency pattern; "sap-" prefix is used for the trailing currency code variant
+		 * @param {"alphaNextToNumber"|"noCurrency"} [sAlternative]
+		 *   The alternate currency pattern; since 1.133.0
+		 * @returns {string|undefined}
+		 *   The currency format pattern for the given parameters; <code>undefined</code> if no corresponding pattern is
+		 *   found
+		 *
 		 * @public
 		 */
-		getCurrencyPattern: function(sContext) {
-			// Undocumented contexts for NumberFormat internal use: "sap-standard" and "sap-accounting"
-			return this._get("currencyFormat")[sContext] || this._get("currencyFormat").standard;
-		},
-
-		getCurrencySpacing: function(sPosition) {
-			return this._get("currencyFormat", "currencySpacing", sPosition === "after" ? "afterCurrency" : "beforeCurrency");
+		getCurrencyPattern: function (sContext, sAlternative) {
+			return this._get("currencyFormat")[sAlternative ? sContext + "-" + sAlternative : sContext];
 		},
 
 		/**
@@ -1790,81 +1790,55 @@ sap.ui.define([
 		},
 
 		/**
-		 * Returns the short decimal format (like 1K, 1M....) of the given number in the given style and plural
-		 * category.
+		 * Returns the compact decimal format pattern (like "000K" or "0M") for the given power of ten in the given
+		 * style and plural category, see {@link topic:91f2f2866f4d1014b6dd926db0e91070 Number Format - Compact Format}.
 		 *
-		 * @param {"long"|"short"} sStyle the style
-		 * @param {string} sNumber the number in string representation as power of ten, for example "1000" or "10000"
-		 * @param {"one"|"other"} [sPlural="other"]
-		 *   the plural category; defaults to "other" if the given plural category does not exist for this locale
-		 * @returns {string} the short decimal format
+		 * @param {"long"|"short"|"short-indian"} sStyle
+		 *   The style
+		 * @param {string} sPowerOfTen
+		 *   The power of ten, for example "1000" or "10000"
+		 * @param {"few"|"many"|"one"|"other"|"two"|"zero"} [sPlural="other"]
+		 *   The plural category; defaults to "other" if the given plural category does not exist for this locale
+		 * @returns {string|undefined}
+		 *   The compact decimal format pattern, or <code>undefined</code> if no decimal format for the given parameters
+		 *   is found
+		 *
 		 * @public
-		 * @since 1.25.0
+		 * @since 1.133.0
 		 */
-		getDecimalFormat: function(sStyle, sNumber, sPlural) {
+		getCompactDecimalPattern: function (sStyle, sPowerOfTen, sPlural = "other") {
+			const oFormats = this._get("decimalFormat-" + sStyle);
 
-			var sFormat;
-			var oFormats;
-
-			switch (sStyle) {
-			case "long":
-				oFormats = this._get("decimalFormat-long");
-				break;
-
-			default: //short
-				oFormats = this._get("decimalFormat-short");
-				break;
-			}
-
-			if (oFormats) {
-				var sName = sNumber + "-" + sPlural;
-				sFormat = oFormats[sName];
-				if (!sFormat) {
-					sName = sNumber + "-other";
-					sFormat = oFormats[sName];
-				}
-			}
-
-			return sFormat;
-
+			return oFormats && (oFormats[sPowerOfTen + "-" + sPlural] || oFormats[sPowerOfTen + "-other"]);
 		},
 
 		/**
-		 * Returns the short currency format (like 1K USD, 1M USD....) of the given number in the given style and
-		 * plural category.
+		 * Returns the compact currency format pattern (like "¤000K" or "¤0M") for the given power of ten in the given
+		 * style, plural category, and in an optional alternative format if desired, see
+		 * {@link topic:91f2f2866f4d1014b6dd926db0e91070 Number Format - Compact Format}.
 		 *
-		 * @param {"short"} sStyle the style
-		 * @param {string} sNumber the number in string representation as power of ten, for example "1000" or "10000"
+		 * @param {"short"|"sap-short"|"short-indian"|"sap-short-indian"} sStyle
+		 *   The style; "sap-" prefix is used for the trailing currency code variant
+		 * @param {string} sPowerOfTen
+		 *   The power of ten, for example "1000" or "10000"
 		 * @param {"few"|"many"|"one"|"other"|"two"|"zero"} [sPlural="other"]
-		 *   the plural category; defaults to "other" if the given plural category does not exist for this locale
-		 * @returns {string} the short currency format
+		 *   The plural category; defaults to "other" if the given plural category does not exist for this locale
+		 * @param {"alphaNextToNumber"|"noCurrency"} [sAlternative]
+		 *   The alternate currency format
+		 * @returns {string|undefined}
+		 *   The compact currency format pattern, or <code>undefined</code> if no currency format pattern for the given
+		 *   parameters is found
+		 *
 		 * @public
-		 * @since 1.51.0
+		 * @since 1.133.0
 		 */
-		getCurrencyFormat: function(sStyle, sNumber, sPlural) {
+		getCompactCurrencyPattern: function (sStyle, sPowerOfTen, sPlural = "other", sAlternative = undefined) {
+			const oFormats = this._get("currencyFormat-" + sStyle);
+			const sAlternativeSuffix = sAlternative ? "-" + sAlternative : "";
 
-			var sFormat;
-			var oFormats = this._get("currencyFormat-" + sStyle);
-
-			// Defaults to "short" if not found
-			if (!oFormats) {
-				if (sStyle === "sap-short") {
-					throw new Error("Failed to get CLDR data for property \"currencyFormat-sap-short\"");
-				}
-				oFormats = this._get("currencyFormat-short");
-			}
-
-			if (oFormats) {
-				var sName = sNumber + "-" + sPlural;
-				sFormat = oFormats[sName];
-				if (!sFormat) {
-					sName = sNumber + "-other";
-					sFormat = oFormats[sName];
-				}
-			}
-
-			return sFormat;
-
+			return oFormats
+				&& (oFormats[sPowerOfTen + "-" + sPlural + sAlternativeSuffix]
+					|| oFormats[sPowerOfTen + "-other" + sAlternativeSuffix]);
 		},
 
 		/**
@@ -2876,6 +2850,49 @@ sap.ui.define([
 		}
 		return sValue;
 	};
+
+	/**
+	 * Replaced by {@link #getCompactCurrencyPattern}.
+	 *
+	 * @param {"short"|"sap-short"|"short-indian"|"sap-short-indian"} sStyle
+	 *   See {@link #getCompactCurrencyPattern}; "short-indian" and "sap-short-indian" are only available since 1.133.0
+	 *   for the "en-IN" locale
+	 * @param {string} sPowerOfTen
+	 *   See {@link #getCompactCurrencyPattern}
+	 * @param {"few"|"many"|"one"|"other"|"two"|"zero"} [sPlural="other"]
+	 *   See {@link #getCompactCurrencyPattern}
+	 * @param {"alphaNextToNumber"|"noCurrency"} [sAlternative]
+	 *   See {@link #getCompactCurrencyPattern}; since 1.133.0
+	 * @returns {string|undefined}
+	 *   See {@link #getCompactCurrencyPattern}
+	 *
+	 * @function
+	 * @name sap.ui.core.LocaleData.prototype.getCurrencyFormat
+	 * @public
+	 * @since 1.51.0
+	 * @deprecated since 1.133.0, use {@link #getCompactCurrencyPattern} instead
+	 */
+	LocaleData.prototype.getCurrencyFormat = LocaleData.prototype.getCompactCurrencyPattern;
+
+	/**
+	 * Replaced by {@link #getCompactDecimalPattern}.
+	 *
+	 * @param {"long"|"short"|"short-indian"} sStyle
+	 *   See {@link #getCompactDecimalPattern}; "short-indian" is only available since 1.133.0 for the "en-IN" locale
+	 * @param {string} sPowerOfTen
+	 *   See {@link #getCompactDecimalPattern}
+	 * @param {"few"|"many"|"one"|"other"|"two"|"zero"} [sPlural="other"]
+	 *   See {@link #getCompactDecimalPattern}
+	 * @returns {string|undefined}
+	 *   See {@link #getCompactDecimalPattern}
+	 *
+	 * @function
+	 * @name sap.ui.core.LocaleData.prototype.getDecimalFormat
+	 * @public
+	 * @since 1.25.0
+	 * @deprecated since 1.133.0, use {@link #getCompactDecimalPattern} instead
+	 */
+	LocaleData.prototype.getDecimalFormat = LocaleData.prototype.getCompactDecimalPattern;
 
 	return LocaleData;
 });

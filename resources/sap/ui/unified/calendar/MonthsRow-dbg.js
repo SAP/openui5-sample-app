@@ -7,6 +7,7 @@
 //Provides control sap.ui.unified.CalendarMonthInterval.
 sap.ui.define([
 	"sap/base/i18n/Formatting",
+	"sap/base/i18n/date/CalendarType",
 	'sap/ui/core/Control',
 	"sap/ui/core/Element",
 	"sap/ui/core/Lib",
@@ -25,6 +26,7 @@ sap.ui.define([
 	'sap/ui/core/InvisibleText'
 ], function(
 	Formatting,
+	_CalendarType, // type of `primaryCalendarType` and `secondaryCalendarType`
 	Control,
 	Element,
 	Library,
@@ -66,7 +68,7 @@ sap.ui.define([
 	 * The MontsRow works with UI5Date or JavaScript Date objects, but only the month and the year are used to display and interact.
 	 * As representation for a month, the 1st of the month will always be returned in the API.
 	 * @extends sap.ui.core.Control
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -119,7 +121,7 @@ sap.ui.define([
 			 * @ui5-restricted sap.ui.unified.MonthsRow
 			 * @since 1.108.0
 			 */
-			primaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
+			primaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
 
 			/**
 			 * If set, the days are also displayed in this calendar type
@@ -128,7 +130,7 @@ sap.ui.define([
 			 * @ui5-restricted sap.ui.unified.MonthsRow
 			 * @since 1.109.0
 			 */
-			 secondaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"}
+			 secondaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"}
 		},
 		aggregations : {
 

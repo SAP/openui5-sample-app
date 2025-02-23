@@ -6,6 +6,7 @@
 
 //Provides control sap.ui.unified.Calendar.
 sap.ui.define([
+	"sap/base/i18n/date/CalendarWeekNumbering",
 	"sap/ui/core/Lib",
 	"sap/ui/core/RenderManager",
 	'sap/ui/unified/calendar/CalendarUtils',
@@ -18,7 +19,7 @@ sap.ui.define([
 	'sap/ui/core/Locale',
 	'sap/ui/core/date/UI5Date',
 	'sap/ui/core/InvisibleText'
-], function(Library, RenderManager, CalendarUtils, CalendarDate, Month, library, DatesRowRenderer, jQuery, DateFormat, Locale, UI5Date, InvisibleText) {
+], function(_CalendarWeekNumbering, Library, RenderManager, CalendarUtils, CalendarDate, Month, library, DatesRowRenderer, jQuery, DateFormat, Locale, UI5Date, InvisibleText) {
 	"use strict";
 
 	/*
@@ -38,7 +39,7 @@ sap.ui.define([
 	 * If used inside the calendar the properties and aggregation are directly taken from the parent
 	 * (To not duplicate and sync DateRanges and so on...)
 	 * @extends sap.ui.unified.calendar.Month
-	 * @version 1.132.1
+	 * @version 1.133.0
 	 *
 	 * @constructor
 	 * @public
@@ -76,7 +77,7 @@ sap.ui.define([
 			 * Note: This property should not be used with <code>Month.prototype.firstDayOfWeek</code> property.
 			 * @since 1.110.0
 			 */
-			 calendarWeekNumbering : { type : "sap.ui.core.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null}
+			 calendarWeekNumbering : { type : "sap.base.i18n.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null}
 
 		}
 	}, renderer: DatesRowRenderer});
