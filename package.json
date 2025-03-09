@@ -21,10 +21,10 @@
 		"@ui5/cli": "^4.0.13",
 		"@ui5/linter": "^1.11.0",
 		"@ui5/middleware-code-coverage": "^2.0.1",
-		"eslint": "^9.21.0",
+		"eslint": "^9.22.0",
 		"globals": "^16.0.0",
 		"local-web-server": "^5.4.0",
 		"rimraf": "^6.0.1",
-		"ui5-test-runner": "^5.4.3"
+		"ui5-test-runner": "^5.5.0"
 	}
 }
