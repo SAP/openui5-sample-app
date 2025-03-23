@@ -2681,7 +2681,7 @@
 	/**
 	 * Root namespace for JavaScript functionality provided by SAP SE.
 	 *
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 * @namespace
 	 * @public
 	 * @name sap
@@ -2892,6 +2892,7 @@
 		 * @public
 		 * @since 1.56.0
 		 * @function
+		 * @name sap.ui.loader.config
 		 * @ui5-global-only
 		 */
 		config: ui5Config,
@@ -2900,8 +2901,10 @@
 		 * Internal API of the UI5 loader.
 		 *
 		 * Must not be used by code outside sap.ui.core.
+		 * @name sap.ui.loader._
 		 * @private
 		 * @ui5-restricted sap.ui.core
+		 * @ui5-global-only
 		 */
 		_: privateAPI
 	};

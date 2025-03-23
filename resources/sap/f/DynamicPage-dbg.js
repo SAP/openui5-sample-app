@@ -118,7 +118,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -2500,6 +2500,17 @@ sap.ui.define([
 		}
 
 		return {};
+	};
+
+	DynamicPage.prototype._getAccessibilityStateTitle = function () {
+		var oInfo = this._formatLandmarkInfo(this.getLandmarkInfo(), "Header"),
+			oTitle = this.getTitle();
+
+		if (oTitle) {
+			oInfo.label = oTitle._getTitleText() || oInfo.label;
+		}
+
+		return oInfo;
 	};
 
 	/**

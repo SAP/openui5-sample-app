@@ -26,7 +26,7 @@ sap.ui.define(['./Metadata', "sap/base/Log"],
 	 * @class Base class for all SAPUI5 Objects.
 	 * @abstract
 	 * @author Malte Wedel
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 * @public
 	 * @alias sap.ui.base.Object
 	 * @throws {Error} When an instance of the class or its subclasses is created without the <code>new</code> operator.

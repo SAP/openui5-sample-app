@@ -102,6 +102,8 @@ sap.ui.define([
 	 * <li>The property <code>growing</code> must not be used together with two-way binding.
 	 * <li>When the property <code>growing</code> is set to <code>true</code> (default value), selected count (if present) and search, will work for currently loaded items only.
 	 * To make sure that all items in the table are loaded at once and the above features work properly, set the property to <code>false</code>.
+	 * <b>Note: </b>The default size limit for entries used for table bindings is set to 100.
+	 * To change this behavior, you can adjust the size limit by using <code>sap.ui.model.Model.prototype.setSizeLimit</code>; see {@link sap.ui.model.Model#setSizeLimit}.
 	 * <li>Since version 1.58, the columns headers and the info toolbar are sticky (remain fixed on top when scrolling). This feature is not supported in all browsers.
 	 * <li>The TableSelectDialog is usually displayed at the center of the screen. Its size and position can be changed by the user.
 	 * To enable this you need to set the <code>resizable</code> and <code>draggable</code> properties. Both properties are available only in desktop mode.</li>
@@ -114,7 +116,7 @@ sap.ui.define([
 	 * When using the <code>sap.m.TableSelectDialog</code> in SAP Quartz and Horizon themes, the breakpoints and layout paddings could be determined by the dialog's width. To enable this concept and add responsive paddings to an element of the control, you have to add the following classes depending on your use case: <code>sapUiResponsivePadding--header</code>, <code>sapUiResponsivePadding--subHeader</code>, <code>sapUiResponsivePadding--content</code>, <code>sapUiResponsivePadding--footer</code>.
 	 * @extends sap.m.SelectDialogBase
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public

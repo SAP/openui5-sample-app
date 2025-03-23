@@ -58,7 +58,7 @@ function(
 	 * @implements sap.f.IShellBar, sap.m.IBar, sap.tnt.IToolHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public

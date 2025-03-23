@@ -1290,6 +1290,9 @@ sap.ui.define([
 			}
 		});
 		aResultingRequests.iChangeSet = aRequests.iChangeSet;
+		if (aRequests.bContinueOnError) {
+			aResultingRequests.bContinueOnError = true;
+		}
 
 		return aResultingRequests;
 	};
@@ -1972,7 +1975,8 @@ sap.ui.define([
 		return this.processOptimisticBatch(aRequests, sGroupId)
 			|| this.sendRequest("POST", "$batch" + this.sQueryParams,
 				Object.assign(oBatchRequest.headers, mBatchHeaders,
-					bHasChanges ? undefined : {"sap-cancel-on-close" : "true"}),
+					bHasChanges ? undefined : {"sap-cancel-on-close" : "true"},
+					aRequests.bContinueOnError ? {Prefer : "odata.continue-on-error"} : undefined),
 				oBatchRequest.body
 			).then(function (oResponse) {
 				if (oResponse.messages !== null) {
@@ -2134,6 +2138,19 @@ sap.ui.define([
 				send();
 			}
 		});
+	};
+
+	/**
+	 * Sets the "odata.continue-on-error" preference once for the <b>current</b> batch request
+	 * associated with the given group ID.
+	 *
+	 * @param {string} sGroupId
+	 *   The group ID
+	 *
+	 * @public
+	 */
+	_Requestor.prototype.setContinueOnError = function (sGroupId) {
+		this.getOrCreateBatchQueue(sGroupId).bContinueOnError = true;
 	};
 
 	/**

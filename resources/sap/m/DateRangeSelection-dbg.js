@@ -168,8 +168,8 @@ sap.ui.define([
 	 * compact mode and provides a touch-friendly size in cozy mode.
 	 *
 	 * @extends sap.m.DatePicker
-	 * @version 1.133.0
-	 * @version 1.133.0
+	 * @version 1.134.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -234,17 +234,6 @@ sap.ui.define([
 	 */
 	DateRangeSelection.prototype._createPopupContent = function() {
 		DatePicker.prototype._createPopupContent.apply(this, arguments);
-
-		var oCalendar = this._getCalendar();
-
-		if (oCalendar instanceof CustomMonthPicker) {
-			oCalendar._getMonthPicker().setIntervalSelection(true);
-		}
-
-		if (oCalendar instanceof CustomYearPicker) {
-			oCalendar._getYearPicker().setIntervalSelection(true);
-			oCalendar._getYearRangePicker().setIntervalSelection(true);
-		}
 
 		this._getCalendar().detachWeekNumberSelect(this._handleWeekSelect, this);
 		this._getCalendar().attachWeekNumberSelect(this._handleWeekSelect, this);
@@ -515,7 +504,7 @@ sap.ui.define([
 
 	/**
 	 * Set the start date of the range.
-	 * @param {Date|module:sap/ui/core/date/UI5Date} oFrom A date instance
+	 * @param {Date|module:sap/ui/core/date/UI5Date|null} oFrom A date instance
 	 * @returns {this} Reference to <code>this</code> for method chaining
 	 * @public
 	 * @deprecated since version 1.22.0, replaced by <code>dateValue</code> property of the {@link sap.m.DateTimeField}
@@ -527,7 +516,7 @@ sap.ui.define([
 
 	/**
 	 * Get the start date of the range.
-	 * @returns {Date} the start date of the date range
+	 * @returns {Date|module:sap/ui/core/date/UI5Date|null} the start date of the date range
 	 * @public
 	 * @deprecated since version 1.22.0, replaced by <code>dateValue</code> property of the {@link sap.m.DateTimeField}
 	 */
@@ -537,7 +526,7 @@ sap.ui.define([
 
 	/**
 	 * Set the end date of the range.
-	 * @param {Date|module:sap/ui/core/date/UI5Date} oTo A date instance
+	 * @param {Date|module:sap/ui/core/date/UI5Date|null} oTo A date instance
 	 * @returns {this} Reference to <code>this</code> for method chaining
 	 * @public
 	 * @deprecated since version 1.22.0, replaced by <code>secondDateValue</code> property
@@ -549,7 +538,7 @@ sap.ui.define([
 
 	/**
 	 * Get the end date of the range.
-	 * @returns {Date|module:sap/ui/core/date/UI5Date} the end date of the date range
+	 * @returns {Date|module:sap/ui/core/date/UI5Date|null} the end date of the date range
 	 * @public
 	 * @deprecated since version 1.22.0, replaced by <code>secondDateValue</code> property
 	 */
@@ -566,10 +555,10 @@ sap.ui.define([
 	 *
 	 * <b>Note:</b> If this property is used, the <code>value</code> property should not be changed from the caller.
 	 *
-	 * @returns {Date|module:sap/ui/core/date/UI5Date} the value of property <code>dateValue</code>
+	 * @returns {Date|module:sap/ui/core/date/UI5Date|null} the value of property <code>dateValue</code>
 	 * @public
 	 * @name sap.m.DateRangeSelection#getDateValue
-	 * @function
+	 * @method
 	 */
 
 	/**
@@ -579,7 +568,7 @@ sap.ui.define([
 	 *
 	 * <b>Note:</b> If this property is used, the <code>value</code> property should not be changed from the caller.
 	 *
-	 * @param {Date|module:sap/ui/core/date/UI5Date} oDateValue New value for property <code>dateValue</code>
+	 * @param {Date|module:sap/ui/core/date/UI5Date|null} oDateValue New value for property <code>dateValue</code>
 	 * @returns {this} Reference to <code>this</code> for method chaining
 	 * @public
 	 */
@@ -607,10 +596,10 @@ sap.ui.define([
 	 *
 	 * <b>Note:</b> If this property is used, the <code>value</code> property should not be changed from the caller.
 	 *
-	 * @returns {Date|module:sap/ui/core/date/UI5Date} the value of property <code>secondDateValue</code>
+	 * @returns {Date|module:sap/ui/core/date/UI5Date|null} the value of property <code>secondDateValue</code>
 	 * @public
 	 * @name sap.m.DateRangeSelection#getSecondDateValue
-	 * @function
+	 * @method
 	 */
 
 	/**
@@ -620,7 +609,7 @@ sap.ui.define([
 	 *
 	 * <b>Note:</b> If this property is used, the <code>value</code> property should not be changed from the caller.
 	 *
-	 * @param {Date|module:sap/ui/core/date/UI5Date} oSecondDateValue New value for property <code>dateValue</code>
+	 * @param {Date|module:sap/ui/core/date/UI5Date|null} oSecondDateValue New value for property <code>dateValue</code>
 	 * @returns {this} Reference to <code>this</code> for method chaining
 	 * @public
 	 */

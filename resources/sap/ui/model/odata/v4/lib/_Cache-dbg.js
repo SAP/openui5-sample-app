@@ -2914,6 +2914,24 @@ sap.ui.define([
 	};
 
 	/**
+	 * Checks whether an element with a duplicate key predicate is allowed to be imported into
+	 * aElements, and if so, creates a new unique key predicate.
+	 *
+	 * @param {object} oElement
+	 *   The element with the duplicate key predicate
+	 * @param {string} sPredicate
+	 *   The duplicate key predicate
+	 * @returns {string|undefined}
+	 *   The newly created predicate, or <code>undefined</code> if the predicate cannot be fixed
+	 *
+	 * @public
+	 */
+	// eslint-disable-next-line no-unused-vars
+	_CollectionCache.prototype.fixDuplicatePredicate = function (oElement, sPredicate) {
+		// Note: overridden by _AggregationCache.fixDuplicatePredicate
+	};
+
+	/**
 	 * Returns a filter that excludes all created entities in this cache's collection and all
 	 * entities that have been deleted on the client, but not on the server yet.
 	 *
@@ -3178,28 +3196,35 @@ sap.ui.define([
 			if (sPredicate) {
 				oKeptElement = aElements.$byPredicate[sPredicate];
 				if (oKeptElement) {
+					if (iCreated && aElements.lastIndexOf(oKeptElement, iCreated - 1) >= 0) {
+						// client-side filter for newly created persisted
+						iOffset += 1;
+						aElements[iStart + iResultLength - iOffset] = undefined;
+						continue;
+					}
+
+					const iIndex = aElements.indexOf(oKeptElement);
+					if (iIndex >= 0 && iIndex !== iStart + i - iOffset) {
+						const sNewPredicate = this.fixDuplicatePredicate(oElement, sPredicate);
+						if (sNewPredicate) {
+							sPredicate = sNewPredicate;
+							oKeptElement = oElement; // leads to no-op for _Helper.updateNonExisting
+						} else {
+							throw new Error("Duplicate key predicate: " + sPredicate);
+						}
+					}
+
 					// only check for ETag change if the cache contains one; otherwise either the
 					// cache element is empty (via #addKeptElement) or the server did not send
 					// one last time
 					if (!oKeptElement["@odata.etag"]
 							|| oElement["@odata.etag"] === oKeptElement["@odata.etag"]) {
-						if (iCreated && aElements.lastIndexOf(oKeptElement, iCreated - 1) >= 0) {
-							// client-side filter for newly created persisted
-							iOffset += 1;
-							aElements[iStart + iResultLength - iOffset] = undefined;
-							continue;
-						}
 						_Helper.updateNonExisting(oKeptElement, oElement);
 						oElement = oKeptElement;
 					} else if (this.hasPendingChangesForPath(sPredicate)) {
 						throw new Error("Modified on client and on server: "
 							+ this.sResourcePath + sPredicate);
 					} // else: ETag changed, ignore kept element!
-
-					const iIndex = aElements.indexOf(oKeptElement);
-					if (iIndex >= 0 && iIndex !== iStart + i - iOffset) {
-						throw new Error("Duplicate key predicate: " + sPredicate);
-					}
 				}
 				aElements.$byPredicate[sPredicate] = oElement;
 			}
@@ -3681,6 +3706,54 @@ sap.ui.define([
 		this.fill(oPromise, iStart, iEnd);
 
 		return oPromise;
+	};
+
+	/**
+	 * Sends a request for the elements identified by the given key predicates. Returns predicates
+	 * for elements matching the current filter, arranged according to the current sort order.
+	 *
+	 * @param {string[]} aPredicates
+	 *   A list of key predicates for known elements, in no special order
+	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
+	 *   A lock for the group ID
+	 * @returns {Promise<string[]>}
+	 *   A promise that resolves with an array of predicates (see above), or rejects with an
+	 *   instance of <code>Error</code> in case of failure, for exmaple if the cache is shared
+	 *
+	 * @public
+	 */
+	_CollectionCache.prototype.requestFilteredOrderedPredicates = async function (aPredicates,
+			oGroupLock) {
+		this.checkSharedRequest();
+
+		const mTypeForMetaPath = this.getTypes();
+		const aKeyFilters = aPredicates.map((sPredicate) => _Helper.getKeyFilter(
+			this.aElements.$byPredicate[sPredicate], this.sMetaPath, mTypeForMetaPath));
+
+		const mQueryOptions = {...this.mQueryOptions};
+		delete mQueryOptions.$count;
+		mQueryOptions.$filter = mQueryOptions.$filter
+			? `${mQueryOptions.$filter} and (${aKeyFilters.join(" or ")})`
+			: aKeyFilters.join(" or ");
+		mQueryOptions.$top = aKeyFilters.length;
+		const sResourcePath = this.sResourcePath
+			+ this.oRequestor.buildQueryString(this.sMetaPath, mQueryOptions, false, true, true);
+
+		const oResponse = await this.oRequestor.request("GET", sResourcePath, oGroupLock);
+
+		this.visitResponse(oResponse, mTypeForMetaPath, undefined, undefined, 0);
+
+		return oResponse.value.map((oNewElement) => {
+			const sPredicate = _Helper.getPrivateAnnotation(oNewElement, "predicate");
+			const oOldElement = this.aElements.$byPredicate[sPredicate];
+			_Helper.copySelected(oOldElement, oNewElement);
+			this.aElements.$byPredicate[sPredicate] = oNewElement;
+			this.aElements[this.aElements.indexOf(oOldElement)] = oNewElement;
+			_Helper.fireChanges(this.mChangeListeners, sPredicate, oOldElement, true);
+			_Helper.fireChanges(this.mChangeListeners, sPredicate, oNewElement);
+
+			return sPredicate;
+		});
 	};
 
 	/**

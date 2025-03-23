@@ -82,7 +82,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @public
 	 * @abstract
@@ -874,7 +874,8 @@ sap.ui.define([
 
 	BasePanel.prototype._onRearrange = function(oEvent) {
 		const oDraggedItem = oEvent.getParameter("draggedControl");
-		if (!oDraggedItem?.getMultiSelectControl()?.getEnabled()) {
+		// SNOW DINC0418886: dedicated check, if a disabled checkbox exists. If a checkbox exists, or it is enabled, skip this check
+		if (oDraggedItem?.getMultiSelectControl() && !oDraggedItem.getMultiSelectControl().getEnabled()) {
 			return;
 		}
 

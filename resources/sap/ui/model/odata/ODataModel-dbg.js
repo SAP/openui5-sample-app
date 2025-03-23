@@ -78,7 +78,7 @@ sap.ui.define([
 	 *
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @public
 	 * @deprecated As of version 1.48, please use {@link sap.ui.model.odata.v2.ODataModel} instead.
@@ -3793,7 +3793,7 @@ sap.ui.define([
 			this.oMetaModel.loaded().then(function() {
 				that.bMetaModelLoaded = true;
 				that.checkUpdate(false, false, null, true);
-			});
+			}).catch(() => { /* avoid uncaught in promise */ });
 		}
 		return this.oMetaModel;
 	};

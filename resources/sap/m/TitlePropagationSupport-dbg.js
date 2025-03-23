@@ -51,7 +51,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior"],
 		 * style class support on existing elements by calling this function.
 		 *
 		 * @author SAP SE
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 *
 		 * @param {string} sAggregationName the name of the aggregation which should be affected
 		 * @param {object} fnGetTitleID function that would return the ID of the title

@@ -13,8 +13,7 @@ sap.ui.define([
 	library
 ) {
 	"use strict";
-	var HeaderPosition = library.cards.HeaderPosition,
-		SemanticRole = library.cards.SemanticRole;
+	var HeaderPosition = library.cards.HeaderPosition;
 
 	/**
 	 * <code>Card</code> renderer.
@@ -84,7 +83,8 @@ sap.ui.define([
 			bHasContent = !!oContent,
 			bCardHeaderBottom = bHasHeader && oCard.getCardHeaderPosition() === HeaderPosition.Bottom,
 			sTooltip = oCard.getTooltip_AsString(),
-			bHasCardBadgeCustomData = oCard._getCardBadgeCustomData().length > 0;
+			bHasCardBadgeCustomData = oCard._getCardBadgeCustomData().length > 0,
+			sAriaRole = oCard.getGridItemRole() || oCard.getSemanticRole().toLowerCase();
 
 		oRm.class("sapFCard")
 			.style("width", oCard.getWidth());
@@ -102,13 +102,16 @@ sap.ui.define([
 			oRm.class("sapFCardSectionInteractive");
 		}
 
-
-		if (oCard.getSemanticRole() === SemanticRole.ListItem) {
+		if (oCard.isRoleListItem()) {
 			oRm.class("sapFCardFocus");
 			oRm.attr("tabindex", "0");
 
 			if (bIsInteractive) {
 				oRm.class("sapFCardInteractive");
+
+				if (oCard.isMouseInteractionDisabled()) {
+					oRm.class("sapFCardDisableMouseInteraction");
+				}
 			}
 		}
 
@@ -127,7 +130,7 @@ sap.ui.define([
 		//Accessibility state
 		oRm.accessibilityState(oCard, {
 			// TODO if role is not only used with accessibility values, this should be changed
-			role: oCard.getSemanticRole().toLowerCase(),
+			role: sAriaRole,
 			labelledby: { value: oCard._getAriaLabelledIds(), append: true },
 			describedby: {value: bHasCardBadgeCustomData ? oCard._getInvisibleCardBadgeText().getId() : undefined}
 		});

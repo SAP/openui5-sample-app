@@ -292,6 +292,7 @@ sap.ui.define([
 
 		oRm.openStart("div", sId);
 		oRm.class("sapUiCalendarRowAppsInt");
+		oRm.style("position", "relative");
 		oRm.style("width", iWidth + "%");
 
 		if (iInterval >= iDaysLength && (oRow.getIntervalType() === CalendarIntervalType.OneMonth || oRow.getIntervalType() === "OneMonth")){
@@ -318,6 +319,10 @@ sap.ui.define([
 		oRm.openEnd(); // div element
 
 		if (aFilteredItemsForCurrentHours.length) {
+			oRm.openStart("div");
+			oRm.class("sapUiCalendarRowAppsIntNoWork");
+			oRm.openEnd();
+
 			RecurrenceUtils.getWorkingAndNonWorkingSegments(oCellStartDate, aFilteredItemsForCurrentHours).forEach((oHourParts) => {
 				if (oHourParts.type === "working") {
 					this.renderWorkingParts(oRm, oHourParts.duration);
@@ -325,6 +330,8 @@ sap.ui.define([
 					this.renderNonWorkingParts(oRm, oHourParts.duration);
 				}
 			});
+
+			oRm.close("div");
 		}
 
 		if (bShowIntervalHeaders) {

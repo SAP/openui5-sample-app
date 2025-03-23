@@ -27,13 +27,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.133.0",
+		 version: "1.134.0",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 apiVersion: 2,
 		 types: [
@@ -56,6 +56,7 @@ sap.ui.define([
 			 "sap.ui.core.BusyIndicatorSize",
 			 "sap.ui.core.CalendarType",
 			 "sap.ui.core.CSSColor",
+			 "sap.ui.core.CSSGapShortHand",
 			 "sap.ui.core.CSSSize",
 			 "sap.ui.core.CSSSizeShortHand",
 			 "sap.ui.core.Collision",
@@ -921,6 +922,34 @@ sap.ui.define([
 		DataType.getType('string')
 	);
 
+	/**
+	 * @classdesc A string type that represents a short hand CSS gap.
+	 *
+	 * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/gap}
+	 * @since 1.134
+	 * @public
+	 * @namespace
+	 */
+	thisLib.CSSGapShortHand = DataType.createType("sap.ui.core.CSSGapShortHand", {
+			isValid: function (vValue) {
+				var bResult = true,
+					aValues = vValue.split(/\s+/);
+
+				aValues.forEach(function (sValue) {
+					if (!thisLib.CSSSize.isValid(sValue)) {
+						bResult = false;
+					}
+				});
+
+				return bResult;
+			},
+			parseValue: function (sValue) {
+				return sValue.trim().split(/\s+/).join(" ");
+			}
+		},
+		DataType.getType("string")
+	);
+
 
 	/**
 	 * @classdesc A string type that represents CSS size values.
@@ -1611,7 +1640,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0

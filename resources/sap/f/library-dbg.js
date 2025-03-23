@@ -39,14 +39,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.f
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 * @since 1.44
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.f",
-		version: "1.133.0",
+		version: "1.134.0",
 		dependencies : ["sap.ui.core", "sap.m", "sap.ui.layout"],
 		designtime: "sap/f/designtime/library.designtime",
 		interfaces: [
@@ -443,6 +443,40 @@ sap.ui.define([
 	 * @name sap.f.IDynamicPageStickyContent._setStickySubHeaderSticked
 	 * @param {boolean} bIsInStickyContainer
 	 * @private
+	 */
+
+	/**
+	 * Interface for controls suitable for the <code>items</code>
+	 * aggregation of <code>{@link sap.f.GridContainer}</code>.
+	 *
+	 * Classes implementing this interface should use the
+	 * accessibility role provided by the <code>sap.f.IGridContainerItem.getGridItemRole</code> method.
+	 *
+	 * @since 1.134
+	 * @name sap.f.IGridContainerItem
+	 * @interface
+	 * @public
+	 */
+
+	/**
+	 * Returns the accessibility role for the <code>sap.f.GridContainer</code> item.
+	 *
+	 * @function
+	 * @name sap.f.IGridContainerItem.getGridItemRole
+	 * @returns {string} The accessibility role for the <code>sap.f.GridContainer</code> item
+	 * @public
+	 */
+
+	/**
+	 * Sets the accessibility role for the <code>sap.f.GridContainer</code> item.
+	 *
+	 * **Note:** This method is automatically called by the <code>sap.f.GridContainer</code> control.
+	 *
+	 * @function
+	 * @name sap.f.IGridContainerItem.setGridItemRole
+	 * @param {string} sRole The accessibility role for the <code>sap.f.GridContainer</code> item
+	 * @private
+	 * @ui5-restricted sap.f.GridContainer
 	 */
 
 	/**

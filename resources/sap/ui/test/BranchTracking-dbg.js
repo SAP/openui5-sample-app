@@ -6,7 +6,7 @@
 
 /**
  * @fileOverview Helper code for branch tracking with Blanket.js and QUnit
- * @deprecated since 1.120.2, use sap.ui.test.ModuleTracking instead.
+ * @deprecated As of version 1.120.2, use sap.ui.test.ModuleTracking instead.
  */
 (function () {
 	"use strict";

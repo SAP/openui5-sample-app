@@ -59,7 +59,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -882,9 +882,9 @@ sap.ui.define([
 	 *   <br>
 	 *   Since 1.98.0, when the first property updates happens, the context is no longer
 	 *   {@link sap.ui.model.odata.v4.Context#isInactive inactive} and the
-	 *   {@link sap.ui.model.odata.v4.ODataListBinding#event:createActivate 'createActivate'} event
-	 *   is fired. While inactive, it does not count as a {@link #hasPendingChanges pending change}
-	 *   and does not contribute to the {@link #getCount count}.
+	 *   {@link #event:createActivate 'createActivate'} event is fired. While inactive, it does not
+	 *   count as a {@link #hasPendingChanges pending change} and does not contribute to the
+	 *   {@link #getCount count}.
 	 * @returns {sap.ui.model.odata.v4.Context}
 	 *   The context object for the created entity; its method
 	 *   {@link sap.ui.model.odata.v4.Context#created} returns a promise that is resolved when the
@@ -1853,7 +1853,7 @@ sap.ui.define([
 	 *   A promise that is resolved with the download URL or <code>null</code>
 	 * @throws {Error}
 	 *   If the binding is unresolved or is {@link #isTransient transient} (part of a
-	 *   {@link sap.ui.model.odata.v4.ODataListBinding#create deep create})
+	 *   {@link #create deep create})
 	 *
 	 * @private
 	 */
@@ -1931,20 +1931,21 @@ sap.ui.define([
 				return bToLower ? "tolower(" + sText + ")" : sText;
 			}
 
-			bToLower = sEdmType === "Edm.String" && oFilter.bCaseSensitive === false;
+			bToLower = sEdmType === "Edm.String" && oFilter.isCaseSensitive() === false;
 			sFilterPath = bThese && !aFiltersNoThese?.includes(oFilter)
-				? setCase(`$these/aggregate(${oFilter.sPath})`)
-				: setCase(decodeURIComponent(oFilter.sPath));
-			sValue = setCase(_Helper.formatLiteral(oFilter.oValue1, sEdmType));
+				? setCase(`$these/aggregate(${oFilter.getPath()})`)
+				: setCase(decodeURIComponent(oFilter.getPath()));
+			sValue = setCase(_Helper.formatLiteral(oFilter.getValue1(), sEdmType));
 
-			switch (oFilter.sOperator) {
+			switch (oFilter.getOperator()) {
 				case FilterOperator.BT:
 					sFilter = sFilterPath + " ge " + sValue + " and " + sFilterPath + " le "
-						+ setCase(_Helper.formatLiteral(oFilter.oValue2, sEdmType));
+						+ setCase(_Helper.formatLiteral(oFilter.getValue2(), sEdmType));
 					break;
 				case FilterOperator.NB:
 					sFilter = wrap(sFilterPath + " lt " + sValue + " or " + sFilterPath + " gt "
-						+ setCase(_Helper.formatLiteral(oFilter.oValue2, sEdmType)), bWithinAnd);
+						+ setCase(_Helper.formatLiteral(oFilter.getValue2(), sEdmType)),
+						bWithinAnd);
 					break;
 				case FilterOperator.EQ:
 				case FilterOperator.GE:
@@ -1952,7 +1953,8 @@ sap.ui.define([
 				case FilterOperator.LE:
 				case FilterOperator.LT:
 				case FilterOperator.NE:
-					sFilter = sFilterPath + " " + oFilter.sOperator.toLowerCase() + " " + sValue;
+					sFilter = sFilterPath + " " + oFilter.getOperator().toLowerCase() + " "
+						+ sValue;
 					break;
 				case FilterOperator.Contains:
 				case FilterOperator.EndsWith:
@@ -1960,11 +1962,11 @@ sap.ui.define([
 				case FilterOperator.NotEndsWith:
 				case FilterOperator.NotStartsWith:
 				case FilterOperator.StartsWith:
-					sFilter = oFilter.sOperator.toLowerCase().replace("not", "not ")
+					sFilter = oFilter.getOperator().toLowerCase().replace("not", "not ")
 						+ "(" + sFilterPath + "," + sValue + ")";
 					break;
 				default:
-					throw new Error("Unsupported operator: " + oFilter.sOperator);
+					throw new Error("Unsupported operator: " + oFilter.getOperator());
 			}
 			return sFilter;
 		}
@@ -1985,18 +1987,18 @@ sap.ui.define([
 				return SyncPromise.resolve();
 			}
 
-			if (oFilter.aFilters) {
-				return SyncPromise.all(oFilter.aFilters.map(function (oSubFilter) {
-					return fetchFilter(oSubFilter, mLambdaVariableToPath, oFilter.bAnd, bThese);
+			if (oFilter.getFilters()) {
+				return SyncPromise.all(oFilter.getFilters().map(function (oSubFilter) {
+					return fetchFilter(oSubFilter, mLambdaVariableToPath, oFilter.isAnd(), bThese);
 				})).then(function (aFilterStrings) {
 					// wrap it if it's an 'or' filter embedded in an 'and'
-					return wrap(aFilterStrings.join(oFilter.bAnd ? " and " : " or "),
-						bWithinAnd && !oFilter.bAnd);
+					return wrap(aFilterStrings.join(oFilter.isAnd() ? " and " : " or "),
+						bWithinAnd && !oFilter.isAnd());
 				});
 			}
 
 			sResolvedPath = oMetaModel.resolve(
-				replaceLambdaVariables(oFilter.sPath, mLambdaVariableToPath), oMetaContext);
+				replaceLambdaVariables(oFilter.getPath(), mLambdaVariableToPath), oMetaContext);
 
 			return oMetaModel.fetchObject(sResolvedPath).then(function (oPropertyMetadata) {
 				var oCondition, sLambdaVariable, sOperator;
@@ -2006,23 +2008,23 @@ sap.ui.define([
 						+ sResolvedPath);
 				}
 
-				sOperator = oFilter.sOperator;
+				sOperator = oFilter.getOperator();
 				if (sOperator === FilterOperator.All || sOperator === FilterOperator.Any) {
-					oCondition = oFilter.oCondition;
-					sLambdaVariable = oFilter.sVariable;
+					oCondition = oFilter.getCondition();
+					sLambdaVariable = oFilter.getVariable();
 					if (sOperator === FilterOperator.Any && !oCondition) {
-						return oFilter.sPath + "/any()";
+						return oFilter.getPath() + "/any()";
 					}
 					// multifilters are processed in parallel, so clone mLambdaVariableToPath
 					// to allow same lambda variables in different filters
 					mLambdaVariableToPath = Object.create(mLambdaVariableToPath);
 					mLambdaVariableToPath[sLambdaVariable]
-						= replaceLambdaVariables(oFilter.sPath, mLambdaVariableToPath);
+						= replaceLambdaVariables(oFilter.getPath(), mLambdaVariableToPath);
 
 					return fetchFilter(
 						oCondition, mLambdaVariableToPath
 					).then(function (sFilterValue) {
-						return oFilter.sPath + "/" + oFilter.sOperator.toLowerCase()
+						return oFilter.getPath() + "/" + oFilter.getOperator().toLowerCase()
 							+ "(" + sLambdaVariable + ":" + sFilterValue + ")";
 					});
 				}
@@ -2317,8 +2319,8 @@ sap.ui.define([
 	 * @throws {Error} If
 	 *   <ul>
 	 *     <li> there are pending changes that cannot be ignored,
-	 *     <li> the binding is {@link #isTransient transient} (part of a
-	 *       {@link sap.ui.model.odata.v4.ODataListBinding#create deep create}),
+	 *     <li> the binding is part of a {@link #create deep create} because it is relative to a
+	 *       {@link sap.ui.model.odata.v4.Context#isTransient transient} context,
 	 *     <li> an unsupported operation mode is used (see
 	 *       {@link sap.ui.model.odata.v4.ODataModel#bindList}),
 	 *     <li> the {@link sap.ui.model.Filter.NONE} filter instance is contained in
@@ -3108,8 +3110,8 @@ sap.ui.define([
 	 *     <li> the binding is unresolved,
 	 *     <li> the given context path does not match this binding,
 	 *     <li> the binding's root binding is suspended,
-	 *     <li> the binding is {@link #isTransient transient} (part of a
-	 *       {@link sap.ui.model.odata.v4.ODataListBinding#create deep create}).
+	 *     <li> the binding is part of a {@link #create deep create} because it is relative to a
+	 *       {@link sap.ui.model.odata.v4.Context#isTransient transient} context,
 	 *     <li> {@link sap.ui.model.odata.v4.Context#setKeepAlive} fails
 	 *   </ul>
 	 *
@@ -3248,7 +3250,7 @@ sap.ui.define([
 
 		this.aSorters.forEach(function (oSorter) {
 			if (oSorter instanceof Sorter) {
-				aOrderbyOptions.push(oSorter.sPath + (oSorter.bDescending ? " desc" : ""));
+				aOrderbyOptions.push(oSorter.getPath() + (oSorter.isDescending() ? " desc" : ""));
 			} else {
 				throw new Error("Unsupported sorter: " + oSorter + " - " + that);
 			}
@@ -3268,8 +3270,7 @@ sap.ui.define([
 	 * @returns {Object<any>} mQueryOptions
 	 *   The object with the query options. Query options can be provided with
 	 *   {@link sap.ui.model.odata.v4.ODataModel#bindList},
-	 *   {@link sap.ui.model.odata.v4.ODataModel#bindContext},
-	 *   {@link sap.ui.model.odata.v4.ODataListBinding#changeParameters}, and
+	 *   {@link sap.ui.model.odata.v4.ODataModel#bindContext}, {@link #changeParameters}, and
 	 *   {@link sap.ui.model.odata.v4.ODataContextBinding#changeParameters}. System query options
 	 *   can also be calculated, e.g. <code>$filter</code> can be calculated based on provided
 	 *   filter objects.
@@ -3987,10 +3988,8 @@ sap.ui.define([
 	 *   A lock for the group ID to be used for refresh
 	 * @param {boolean} [bAllowRemoval]
 	 *   Allows the list binding to remove the given context from its collection because the
-	 *   entity does not match the binding's filter anymore,
-	 *   see {@link sap.ui.model.odata.v4.ODataListBinding#filter}; a removed context is
-	 *   destroyed, see {@link sap.ui.model.Context#destroy}.
-	 *   Supported since 1.55.0
+	 *   entity does not match the binding's filter anymore, see {@link #filter}; a removed context
+	 *   is destroyed, see {@link sap.ui.model.Context#destroy}. Supported since 1.55.0
 	 *
 	 *   A removed context is destroyed unless it is
 	 *   {@link sap.ui.model.odata.v4.Context#isKeepAlive kept alive} and still exists on the
@@ -4284,8 +4283,8 @@ sap.ui.define([
 	 *   messages; it resolves with <code>null</code> if the binding is not resolved or if there is
 	 *   no message for any entry
 	 * @throws {Error}
-	 *   If the binding is {@link #isTransient transient} (part of a
-	 *   {@link sap.ui.model.odata.v4.ODataListBinding#create deep create}).
+	 *   If the binding is part of a {@link #create deep create} because it is relative to a
+	 *   {@link sap.ui.model.odata.v4.Context#isTransient transient} context
 	 *
 	 * @protected
 	 * @see sap.ui.model.ListBinding#requestFilterForMessages
@@ -4336,6 +4335,79 @@ sap.ui.define([
 
 			return aFilters.length === 1 ? aFilters[0] : new Filter({filters : aFilters});
 		});
+	};
+
+	/**
+	 * Requests selected contexts matching the binding's filters and ordered by its sorters. A
+	 * context which is selected but no longer part of this list binding's collection (that is,
+	 * which doesn't match the filters) is not returned but still shown as selected on the UI
+	 * (see {@link #requestSelectionValidation}).
+	 *
+	 * Note: Data for all selected contexts is reread from the server, even if it is already
+	 * available on the client. Any data updates are reflected on the UI but no order is changed.
+	 *
+	 * @param {string} [sGroupId]
+	 *   The group ID to be used for the request; if not specified, the group ID for this binding is
+	 *   used, see {@link #getGroupId}. Valid values are <code>undefined</code>, '$auto', '$auto.*',
+	 *   '$direct' or application group IDs as specified in
+	 *   {@link sap.ui.model.odata.v4.ODataModel}.
+	 * @returns {Promise<sap.ui.model.odata.v4.Context[]>}
+	 *   A promise which resolves with an array of selected contexts (which may well be empty), or
+	 *   rejects with an instance of <code>Error</code> in case of failure
+	 * @throws {Error} If
+	 *   <ul>
+	 *     <li> the binding uses or inherits the <code>$$sharedRequest</code> parameter
+	 *       (see {@link sap.ui.model.odata.v4.ODataModel#bindList}),
+	 *     <li> the binding uses data aggregation or a recursive hierarchy (see
+	 *       {@link #setAggregation}),
+	 *     <li> the binding's root binding is suspended,
+	 *     <li> the binding is part of a {@link #create deep create} because it is relative to a
+	 *       {@link sap.ui.model.odata.v4.Context#isTransient transient} context,
+	 *     <li> the binding's header context is selected ("Select All"),
+	 *     <li> there are pending changes,
+	 *     <li> the given group ID is invalid.
+	 *   </ul>
+	 *
+	 * @private
+	 * @since 1.134.0
+	 * @ui5-restricted sap.m.Table
+	 */
+	ODataListBinding.prototype.requestSelectedContexts = function (sGroupId) {
+		if (this.bSharedRequest) {
+			throw new Error("Unsupported $$sharedRequest at " + this);
+		}
+		if ("$$aggregation" in this.mParameters) {
+			throw new Error("Unsupported $$aggregation at " + this);
+		}
+		this.checkSuspended();
+		this.checkTransient();
+		if (this.oHeaderContext.isSelected()) {
+			throw new Error('Unsupported "Select All": ' + this.oHeaderContext);
+		}
+		if (this.hasPendingChanges()) {
+			throw new Error("Unsupported pending changes");
+		}
+		_Helper.checkGroupId(sGroupId);
+
+		const mPath2Context = {};
+		const iStartOfPredicate = this.getResolvedPath().length;
+		const aPredicatesIn = this._getAllExistingContexts()
+			.filter((oContext) => oContext.isSelected())
+			.map((oContext) => {
+				mPath2Context[oContext.getPath()] = oContext;
+
+				return oContext.getPath().slice(iStartOfPredicate);
+			});
+		if (!aPredicatesIn.length) {
+			return Promise.resolve([]);
+		}
+
+		return this.oCache.requestFilteredOrderedPredicates(aPredicatesIn, this.lockGroup(sGroupId))
+			.then((aPredicatesOut) => {
+				// Note: make sure to respect back-end sort order
+				return aPredicatesOut
+					.map((sPredicate) => mPath2Context[this.oHeaderContext.getPath() + sPredicate]);
+			});
 	};
 
 	/**
@@ -4719,8 +4791,8 @@ sap.ui.define([
 	 *     <li> there are pending changes,
 	 *     <li> a recursive hierarchy is requested, but the model does not use the
 	 *       <code>autoExpandSelect</code> parameter,
-	 *     <li> the binding is {@link #isTransient transient} (part of a
-	 *       {@link sap.ui.model.odata.v4.ODataListBinding#create deep create}),
+	 *     <li> the binding is part of a {@link #create deep create} because it is relative to a
+	 *       {@link sap.ui.model.odata.v4.Context#isTransient transient} context,
 	 *     <li> the binding has {@link sap.ui.model.Filter.NONE}
 	 *   </ul>
 	 *
@@ -4900,8 +4972,8 @@ sap.ui.define([
 	 * @throws {Error} If
 	 *   <ul>
 	 *     <li> there are pending changes that cannot be ignored,
-	 *     <li> the binding is {@link #isTransient transient} (part of a
-	 *       {@link sap.ui.model.odata.v4.ODataListBinding#create deep create}),
+	 *     <li> the binding is part of a {@link #create deep create} because it is relative to a
+	 *       {@link sap.ui.model.odata.v4.Context#isTransient transient} context,
 	 *     <li> an unsupported operation mode is used (see
 	 *       {@link sap.ui.model.odata.v4.ODataModel#bindList}).
 	 *   </ul>

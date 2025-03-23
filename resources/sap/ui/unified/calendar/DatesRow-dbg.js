@@ -39,7 +39,7 @@ sap.ui.define([
 	 * If used inside the calendar the properties and aggregation are directly taken from the parent
 	 * (To not duplicate and sync DateRanges and so on...)
 	 * @extends sap.ui.unified.calendar.Month
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -391,9 +391,7 @@ sap.ui.define([
 		}
 
 		this._aWeekNumbers = aDisplayedDates.reduce(function (aWeekNumbers, oDay) {
-			var oDateFormat = DateFormat.getInstance({pattern: "w", calendarType: this.getPrimaryCalendarType(), calendarWeekNumbering: this.getCalendarWeekNumbering()}, new Locale(sLocale));
-
-			var iWeekNumber = Number(oDateFormat.format(oDay.toUTCJSDate(), true));
+			var iWeekNumber = CalendarUtils.calculateWeekNumber(oDay, this.getPrimaryCalendarType(), sLocale, this.getCalendarWeekNumbering(), this._getFirstWeekDay());
 
 			if (!aWeekNumbers.length || aWeekNumbers[aWeekNumbers.length - 1].number !== iWeekNumber) {
 				aWeekNumbers.push({

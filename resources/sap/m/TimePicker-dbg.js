@@ -181,7 +181,7 @@ function(
 		 * @extends sap.m.DateTimeField
 		 *
 		 * @author SAP SE
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 *
 		 * @constructor
 		 * @public
@@ -679,6 +679,7 @@ function(
 			}
 
 			oClocks._setTimeValues(oDateValue, TimePickerInternals._isHoursValue24(this._$input.val(), iIndexOfHH, iIndexOfH));
+			oClocks.prepareForOpen();
 
 			/* Mark input as active */
 			this.$().addClass(InputBase.ICON_PRESSED_CSS_CLASS);
@@ -694,9 +695,9 @@ function(
 			var oClocks = this._getClocks();
 
 			if (oClocks) {
-				oClocks.showFirstClock();
 				oClocks._focusActiveButton();
 			}
+
 			this.fireAfterValueHelpOpen();
 		};
 
@@ -708,7 +709,6 @@ function(
 		 */
 		 TimePicker.prototype.onAfterClose = function() {
 			this.$().removeClass(InputBase.ICON_PRESSED_CSS_CLASS);
-			this._getClocks().showFirstClock(); // prepare for the next opening
 			this.fireAfterValueHelpClose();
 		};
 

@@ -105,7 +105,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -822,7 +822,9 @@ function(
 		const oItem = this.getItems().find((oItem) => oItem.getBindingContext(sModelName) === oContext);
 
 		if (!oItem) {
-			Log.warning("Selecting a context that is not related to a visible item does not affect the list selection", this);
+			if (oContext.isSelected()) {
+				Log.warning("Selecting a context that is not related to an existing item does not affect the list selection", this);
+			}
 			return;
 		}
 
@@ -1772,7 +1774,7 @@ function(
 			iIndex > -1 && this._aSelectedPaths.splice(iIndex, 1);
 		}
 
-		if (oBindingContext.setSelected && !oBindingContext.isTransient()) {
+		if (oBindingContext.setSelected) {
 			oBindingContext.setSelected(bSelect);
 		}
 	};

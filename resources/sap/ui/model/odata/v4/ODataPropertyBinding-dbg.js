@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -136,8 +136,7 @@ sap.ui.define([
 	 *       when it gets a new type via {@link #setType}, or when the data state is reset via
 	 *       {@link sap.ui.model.odata.v4.ODataModel#resetChanges},
 	 *       {@link sap.ui.model.odata.v4.ODataContextBinding#resetChanges},
-	 *       {@link sap.ui.model.odata.v4.ODataListBinding#resetChanges} or
-	 *       {@link sap.ui.model.odata.v4.ODataPropertyBinding#resetChanges},
+	 *       {@link sap.ui.model.odata.v4.ODataListBinding#resetChanges} or {@link #resetChanges},
 	 *     <li> {@link sap.ui.model.ChangeReason.Refresh Refresh} when the binding is refreshed,
 	 *     <li> {@link sap.ui.model.ChangeReason.Context Context} when the parent context is
 	 *       changed.
@@ -560,7 +559,7 @@ sap.ui.define([
 	 *   determined, or rejected in case of an error
 	 *
 	 * @public
-	 * @since 1.69
+	 * @since 1.69.0
 	 */
 	ODataPropertyBinding.prototype.requestValue = function () {
 		var that = this;

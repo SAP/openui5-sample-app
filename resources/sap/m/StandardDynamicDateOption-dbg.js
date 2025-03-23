@@ -54,7 +54,7 @@ sap.ui.define([
 		 * @extends sap.m.DynamicDateOption
 		 *
 		 * @author SAP SE
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 *
 		 * @private
 		 * @alias sap.m.StandardDynamicDateOption
@@ -597,13 +597,13 @@ sap.ui.define([
 				return sOptionName.toUpperCase();
 			});
 
-			const filteredArray = aOptionsStrings.filter(function(str) {
+			const aFilteredOptions = aOptionsStrings.filter(function(str) {
 				return str !== "";
 			});
 
 			var oControl = new Select({
 				items: [
-					filteredArray.map(makeSelectOption)
+					aFilteredOptions.map(makeSelectOption)
 				]
 			});
 
@@ -909,7 +909,24 @@ sap.ui.define([
 			return aTargetOptions.indexOf(sOptionKey) !== -1 && iRepetitionCounter === 1;
 		};
 
+		StandardDynamicDateOption.prototype._isLastOrNextOption = function () {
+			const aLastNextKeys = StandardDynamicDateOption.LastXKeys.concat(StandardDynamicDateOption.NextXKeys);
+
+			return aLastNextKeys.includes(this.getKey());
+		};
+
 		StandardDynamicDateOption.prototype.alignValueHelpUI = function(oControl) {
+			const aControls = oControl.aControlsByParameters[this.getKey()];
+			const oSelectControl = aControls[1];
+			const bIsSelectControl = oSelectControl instanceof Select;
+
+			if (bIsSelectControl && this._isLastOrNextOption() && oSelectControl.getSelectableItems().length === 1) {
+				oSelectControl.setVisible(false);
+
+				const oSelectControlLabel = oControl.aInputControls[2];
+				oSelectControlLabel.setVisible(false);
+			}
+
 			const bHasIncludedLastOptions = aLastOptions.indexOf(this.getKey()) !== -1 && oControl.aControlsByParameters[Object.keys(oControl.aControlsByParameters)[0]].length > 1;
 			const bHasIncludedNextOptions = aNextOptions.indexOf(this.getKey()) !== -1 && oControl.aControlsByParameters[Object.keys(oControl.aControlsByParameters)[0]].length > 1;
 			const bHasRadioButtons = bHasIncludedLastOptions || bHasIncludedNextOptions;
@@ -918,11 +935,11 @@ sap.ui.define([
 				return;
 			}
 
-			const sSelectedOption = oControl.aControlsByParameters[this.getKey()][1].getSelectedKey();
+			const sSelectedOption = oSelectControl.getSelectedKey();
 			const sFullOptionName = this.getKey().slice(0,4) + sSelectedOption.toUpperCase();
-			const oIncludedControl = oControl.aControlsByParameters[this.getKey()][2];
+			const oIncludedControl = aControls[2];
 			const oIncludedControlLabel = oControl.aInputControls[4];
-			const oInputControl = oControl.aControlsByParameters[this.getKey()][0];
+			const oInputControl = aControls[0];
 			const oIncludedDates = this.toDates({"operator": sFullOptionName + "INCLUDED", "values": [oInputControl.getValue()]});
 			const oExcludedDates = this.toDates({"operator": sFullOptionName, "values": [oInputControl.getValue()]});
 			const sIncludedLabel = oControl._getDatesLabelFormatter().format(oIncludedDates);

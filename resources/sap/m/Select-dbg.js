@@ -116,7 +116,7 @@ function(
 		 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
 		 *
 		 * @author SAP SE
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 *
 		 * @constructor
 		 * @public
@@ -1784,7 +1784,7 @@ function(
 		 * @private
 		 */
 		Select.prototype.onkeydown = function(oEvent) {
-			if (oEvent.which === KeyCodes.SPACE) {
+			if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER) {
 				this._bSpaceDown = true;
 			}
 
@@ -1811,7 +1811,7 @@ function(
 				return;
 			}
 
-			if (oEvent.which === KeyCodes.SPACE) {
+			if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER) {
 				if (!oEvent.shiftKey && !this._bSupressNextAction) {
 
 					// mark the event for components that needs to know if the event was handled

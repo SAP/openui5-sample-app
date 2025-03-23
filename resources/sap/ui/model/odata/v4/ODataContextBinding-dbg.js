@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
@@ -1287,9 +1287,8 @@ sap.ui.define([
 	 *
 	 * @param {string} [sGroupId]
 	 *   The group ID to be used for the request; if not specified, the group ID for this binding is
-	 *   used, see {@link sap.ui.model.odata.v4.ODataContextBinding#constructor} and
-	 *   {@link #getGroupId}. To use the update group ID, see {@link #getUpdateGroupId}, it needs to
-	 *   be specified explicitly.
+	 *   used, see {@link #constructor} and {@link #getGroupId}. To use the update group ID, see
+	 *   {@link #getUpdateGroupId}, it needs to be specified explicitly.
 	 *   Valid values are <code>undefined</code>, '$auto', '$auto.*', '$direct', '$single', or
 	 *   application group IDs as specified in {@link sap.ui.model.odata.v4.ODataModel}. If
 	 *   '$single' is used, the request will be sent as fast as '$direct', but wrapped in a batch

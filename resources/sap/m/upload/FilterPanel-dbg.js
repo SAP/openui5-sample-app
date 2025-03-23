@@ -80,6 +80,7 @@ sap.ui.define(
 		 */
 		const FilterPanel = BasePanel.extend("sap.m.upload.FilterPanel", {
 			metadata: {
+				library: "sap.m",
 				properties: {
 					/**
 					 * A short text describing the panel.

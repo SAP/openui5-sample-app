@@ -69,7 +69,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -1220,6 +1220,15 @@ sap.ui.define([
 
 		// Update color values
 		this._updateColorString();
+	};
+
+	/**
+	 * Updates the value of the Alpha channel to the provided value.
+	 * @private
+	 * @param {number} vAlphaValue the new value of the Alpha channel
+	 */
+	ColorPicker.prototype._updateAlphaValue = function(vAlphaValue) {
+		this.Color.a = this._getValueInRange(vAlphaValue, 0, 1);
 	};
 
 	ColorPicker.prototype._updateColorString = function() {

@@ -13,7 +13,7 @@ sap.ui.define(["sap/ui/core/Lib"], function(Library) {
 	 *
 	 * @author SAP SE
 	 * @since 1.56.0
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @function
 	 * @param {string} sMessage - Dialog message

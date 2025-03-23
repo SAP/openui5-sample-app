@@ -6,7 +6,7 @@
   <copyright>OpenUI5
  * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.133.0</version>
+  <version>1.134.0</version>
 
   <documentation>The SAPUI5 Core Runtime.
 
@@ -406,11 +406,6 @@
             <license url="https://github.com/isaacs/node-lru-cache/blob/master/LICENSE" type="ISC" />
             <copyright>Isaac Z. Schlueter and Contributors</copyright>
             <pattern partial="true" otherContent="SAP" explanation="LRUPersistentCache.js is overall written by SAP, but portions ('Least Recently Used' logic) are taken from the node-lru-cache project (see https://github.com/isaacs/node-lru-cache/blob/v2.7.3/README.md) and modified.">sap/ui/core/cache/LRUPersistentCache.js</pattern>
-        </lib>
-        <lib name="tzdata" displayName="Time Zone Database" npmName="n/a" version="2024b" homepage="http://www.iana.org/time-zones" id="73555000106100181707">
-            <license url="https://github.com/eggert/tz/blob/main/LICENSE" type="LicenseRef-tzdata-PublicDomain" />
-            <copyright>Arthur David Olson, Paul Eggert and other contributors</copyright>
-            <pattern partial="true" otherContent="SAP" explanation="_timezones.js is overall written by SAP, but the list of IANA timezone IDs is taken from the Timezone Database">../test/sap/ui/core/qunit/i18n/helper/_timezones.js</pattern>
         </lib>
         <ignore>
             <file pattern="sap/ui/thirdparty/RequestRecorder.js" />

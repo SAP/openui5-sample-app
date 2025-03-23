@@ -93,7 +93,7 @@ sap.ui.define([
 			serviceUrl : true,
 			sharedRequests : true,
 			supportReferences : true,
-			/** @deprecated As of Version 1.110.0 */
+			/** @deprecated As of version 1.110.0 */
 			synchronizationMode : true,
 			updateGroupId : true,
 			withCredentials : true
@@ -240,7 +240,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
@@ -278,7 +278,7 @@ sap.ui.define([
 		// do not pass any parameters to Model
 		Model.call(this);
 
-		/** @deprecated As of Version 1.110.0 */
+		/** @deprecated As of version 1.110.0 */
 		if ("synchronizationMode" in mParameters && mParameters.synchronizationMode !== "None") {
 			throw new Error("Synchronization mode must be 'None'");
 		}
@@ -774,8 +774,8 @@ sap.ui.define([
 	 * @param {string|string[]} [mParameters.$select]
 	 *   A comma separated list or an array of items which determine the value for the
 	 *   "5.1.3 System Query Option $select". Since 1.75.0, when using the "autoExpandSelect" model
-	 *   parameter (see {@link sap.ui.model.odata.v4.ODataModel#constructor}), paths with navigation
-	 *   properties can be included and will contribute to the "5.1.2 System Query Option $expand".
+	 *   parameter (see {@link #constructor}), paths with navigation properties can be included and
+	 *   will contribute to the "5.1.2 System Query Option $expand".
 	 * @param {boolean} [mParameters.$$canonicalPath]
 	 *   Whether a binding relative to an {@link sap.ui.model.odata.v4.Context} uses the canonical
 	 *   path computed from its context's path for data service requests; only the value
@@ -783,7 +783,7 @@ sap.ui.define([
 	 * @param {string} [mParameters.$$groupId]
 	 *   The group ID to be used for <b>read</b> requests initiated by this binding; if not
 	 *   specified, either the parent binding's group ID (if the binding is relative) or the
-	 *   model's group ID is used, see {@link sap.ui.model.odata.v4.ODataModel#constructor}.
+	 *   model's group ID is used, see {@link #constructor}.
 	 *   Valid values are <code>undefined</code>, '$auto', '$auto.*', '$direct' or application group
 	 *   IDs as specified in {@link sap.ui.model.odata.v4.ODataModel}.
 	 * @param {boolean} [mParameters.$$inheritExpandSelect]
@@ -802,8 +802,7 @@ sap.ui.define([
 	 * @param {string} [mParameters.$$updateGroupId]
 	 *   The group ID to be used for <b>update</b> requests initiated by this binding;
 	 *   if not specified, either the parent binding's update group ID (if the binding is relative)
-	 *   or the model's update group ID is used, see
-	 *   {@link sap.ui.model.odata.v4.ODataModel#constructor}.
+	 *   or the model's update group ID is used, see {@link #constructor}.
 	 *   For valid values, see parameter "$$groupId".
 	 * @returns {sap.ui.model.odata.v4.ODataContextBinding}
 	 *   The context binding
@@ -917,8 +916,8 @@ sap.ui.define([
 	 * @param {string|string[]} [mParameters.$select]
 	 *   A comma separated list or an array of items which determine the value for the
 	 *   "5.1.3 System Query Option $select". Since 1.75.0, when using the "autoExpandSelect" model
-	 *   parameter (see {@link sap.ui.model.odata.v4.ODataModel#constructor}), paths with navigation
-	 *   properties can be included and will contribute to the "5.1.2 System Query Option $expand".
+	 *   parameter (see {@link #constructor}), paths with navigation properties can be included and
+	 *   will contribute to the "5.1.2 System Query Option $expand".
 	 * @param {object} [mParameters.$$aggregation]
 	 *   An object holding the information needed for data aggregation, see
 	 *   {@link sap.ui.model.odata.v4.ODataListBinding#setAggregation} for details.
@@ -940,7 +939,7 @@ sap.ui.define([
 	 * @param {string} [mParameters.$$groupId]
 	 *   The group ID to be used for <b>read</b> requests initiated by this binding; if not
 	 *   specified, either the parent binding's group ID (if the binding is relative) or the
-	 *   model's group ID is used, see {@link sap.ui.model.odata.v4.ODataModel#constructor}.
+	 *   model's group ID is used, see {@link #constructor}.
 	 *   Valid values are <code>undefined</code>, '$auto', '$auto.*', '$direct' or application group
 	 *   IDs as specified in {@link sap.ui.model.odata.v4.ODataModel}.
 	 * @param {sap.ui.model.odata.OperationMode} [mParameters.$$operationMode]
@@ -964,13 +963,13 @@ sap.ui.define([
 	 *   the main list becoming available faster, while the separate properties are merged as soon
 	 *   as the data is received. Note that the separate properties must be single valued and part
 	 *   of the '$expand' system query option, either automatically via the "autoExpandSelect" model
-	 *   parameter (see {@link sap.ui.model.odata.v4.ODataModel#constructor}) or manually. The
-	 *   <code>$$separate</code> parameter must not be combined with <code>$$aggregation</code>.
+	 *   parameter (see {@link #constructor}) or manually. The <code>$$separate</code> parameter
+	 *   must not be combined with <code>$$aggregation</code>.
 	 * @param {boolean} [mParameters.$$sharedRequest]
 	 *   Whether multiple bindings for the same resource path share the data, so that it is
 	 *   requested only once.
 	 *   This parameter can be inherited from the model's parameter "sharedRequests", see
-	 *   {@link sap.ui.model.odata.v4.ODataModel#constructor}. Supported since 1.80.0
+	 *   {@link #constructor}. Supported since 1.80.0
 	 *   <b>Note:</b> These bindings are read-only, so they may be especially useful for value
 	 *   lists; state messages (since 1.108.0) and the following APIs are <b>not</b> allowed
 	 *   <ul>
@@ -1005,8 +1004,7 @@ sap.ui.define([
 	 * @param {string} [mParameters.$$updateGroupId]
 	 *   The group ID to be used for <b>update</b> requests initiated by this binding;
 	 *   if not specified, either the parent binding's update group ID (if the binding is relative)
-	 *   or the model's update group ID is used,
-	 *   see {@link sap.ui.model.odata.v4.ODataModel#constructor}.
+	 *   or the model's update group ID is used, see {@link #constructor}.
 	 *   For valid values, see parameter "$$groupId".
 	 * @returns {sap.ui.model.odata.v4.ODataListBinding}
 	 *   The list binding
@@ -1081,7 +1079,7 @@ sap.ui.define([
 	 * @param {string} [mParameters.$$groupId]
 	 *   The group ID to be used for <b>read</b> requests initiated by this binding; if not
 	 *   specified, either the parent binding's group ID (if the binding is relative) or the
-	 *   model's group ID is used, see {@link sap.ui.model.odata.v4.ODataModel#constructor}.
+	 *   model's group ID is used, see {@link #constructor}.
 	 *   Valid values are <code>undefined</code>, '$auto', '$auto.*', '$direct' or application group
 	 *   IDs as specified in {@link sap.ui.model.odata.v4.ODataModel}.
 	 * @param {boolean} [mParameters.$$ignoreMessages]
@@ -1842,7 +1840,7 @@ sap.ui.define([
 	 *   The group ID
 	 *
 	 * @public
-	 * @see sap.ui.model.odata.v4.ODataModel#constructor
+	 * @see #constructor
 	 * @since 1.41.0
 	 */
 	ODataModel.prototype.getGroupId = function () {
@@ -1861,7 +1859,7 @@ sap.ui.define([
 	 * @throws {Error} If the name of the group property is not 'submit'
 	 *
 	 * @private
-	 * @see sap.ui.model.odata.v4.ODataModel#constructor
+	 * @see #constructor
 	 */
 	ODataModel.prototype.getGroupProperty = function (sGroupId, sPropertyName) {
 		switch (sPropertyName) {
@@ -1892,7 +1890,7 @@ sap.ui.define([
 	 *
 	 * @public
 	 * @see #changeHttpHeaders
-	 * @since 1.71
+	 * @since 1.71.0
 	 */
 	ODataModel.prototype.getHttpHeaders = function (bIncludeContextId) {
 		var mHeadersCopy = Object.assign({}, this.mHeaders);
@@ -2173,8 +2171,7 @@ sap.ui.define([
 
 	/**
 	 * Returns this model's root URL of the service to request data from (as defined by the
-	 * "serviceUrl" model parameter, see {@link sap.ui.model.odata.v4.ODataModel#constructor}),
-	 * without query options.
+	 * "serviceUrl" model parameter, see {@link #constructor}), without query options.
 	 *
 	 * @returns {string} The service URL
 	 *
@@ -2192,7 +2189,7 @@ sap.ui.define([
 	 *   The update group ID
 	 *
 	 * @public
-	 * @see sap.ui.model.odata.v4.ODataModel#constructor
+	 * @see #constructor
 	 * @since 1.41.0
 	 */
 	ODataModel.prototype.getUpdateGroupId = function () {
@@ -2692,7 +2689,7 @@ sap.ui.define([
 	 *   in case of success, or rejected with an instance of <code>Error</code> in case of failure,
 	 *   e.g. when the given context does not point to an entity
 	 *
-	 * @deprecated since 1.39.0
+	 * @deprecated As of version 1.39.0
 	 *   Use {@link sap.ui.model.odata.v4.Context#requestCanonicalPath} instead.
 	 * @public
 	 * @since 1.37.0
@@ -2770,7 +2767,7 @@ sap.ui.define([
 	 *   given group ID are running.
 	 *
 	 * @public
-	 * @see sap.ui.model.odata.v4.ODataModel#constructor
+	 * @see #constructor
 	 * @see #hasPendingChanges
 	 * @since 1.39.0
 	 */
@@ -2858,6 +2855,31 @@ sap.ui.define([
 	};
 
 	/**
+	 * Sets the "odata.continue-on-error" preference once for the <b>current</b> batch request
+	 * associated with the given group ID. This method can be called early on, when that batch queue
+	 * is still empty, or even synchronously after {@link #submitBatch} - just as long as the $batch
+	 * request is not already being sent to the server. It needs to be called again for future
+	 * batch requests with the same group ID.
+	 *
+	 * @param {string} sGroupId
+	 *   A valid group ID as specified in {@link sap.ui.model.odata.v4.ODataModel}. Note that
+	 *   '$auto' should be avoided to control exactly which requests are affected by this
+	 *   preference. Using a {@link module:sap/base/util/uid UID} may be one way to achieve this,
+	 *   but take care to replace dashes with underscores.
+	 * @throws {Error}
+	 *   If the given group ID is not a valid group ID or has
+	 *   {@link sap.ui.model.odata.v4.SubmitMode.Direct}
+	 *
+	 * @private
+	 * @since 1.134.0
+	 * @ui5-restricted sap.fe
+	 */
+	ODataModel.prototype.setContinueOnError = function (sGroupId) {
+		this.checkBatchGroupId(sGroupId);
+		this.oRequestor.setContinueOnError(sGroupId);
+	};
+
+	/**
 	 * Sets a listener for HTTP responses which is called every time with the full set of headers
 	 * received.
 	 *
@@ -2923,7 +2945,7 @@ sap.ui.define([
 	 * There are several preconditions on the usage of this API:
 	 * <ul>
 	 *   <li> Optimistic batch handling requires the "earlyRequests" model parameter; see
-	 *     {@link sap.ui.model.odata.v4.ODataModel#constructor},
+	 *     {@link #constructor},
 	 *   <li> the setter has to be called before the first $batch request is sent,
 	 *   <li> the setter may only be called once for an OData model,
 	 *   <li> the callback has to return a boolean, or a <code>Promise</code> resolving with a
@@ -2979,9 +3001,8 @@ sap.ui.define([
 	 * @param {function(Error):Promise<undefined>} fnRetryAfter
 	 *   A "Retry-After" handler
 	 *
-	 * @private
-	 * @ui5-restricted sap.fe
-	 * @since 1.129.0
+	 * @public
+	 * @since 1.134.0
 	 */
 	ODataModel.prototype.setRetryAfterHandler = function (fnRetryAfter) {
 		this.fnRetryAfter = fnRetryAfter;
@@ -3110,14 +3131,14 @@ sap.ui.define([
 		});
 	};
 
-	/** @deprecated */
+	/** @deprecated As of version 1.120.0 */
 	(() => {
 		const fnOriginalExtend = ODataModel.extend;
 		/**
 		 * DO NOT EXTEND THIS CLASS.
 		 *
 		 * @returns {function} The created class / constructor function
-		 * @deprecated
+		 * @deprecated As of version 1.120.0
 		 */
 		ODataModel.extend = function () {
 			Log.error("[FUTURE FATAL] sap.ui.model.odata.v4.ODataModel must not be extended");

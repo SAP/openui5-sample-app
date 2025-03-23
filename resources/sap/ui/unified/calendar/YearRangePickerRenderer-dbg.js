@@ -65,8 +65,12 @@ sap.ui.define([
 			bApplySelectionBetween,
 			mAccProps, sYyyymmdd, i;
 
-		oFirstDate.setYear(oFirstDate.getYear() - Math.floor(oYRP.getRangeSize() / 2));
-		oFirstDate.setYear(oFirstDate.getYear() - Math.floor(iYears / 2) * oYRP.getRangeSize());
+		if (oYRP.getColumns() % 2 !== 0) {
+			oFirstDate.setYear(oFirstDate.getYear() - Math.floor(oYRP.getRangeSize() / 2));
+			oFirstDate.setYear(oFirstDate.getYear() - Math.floor(iYears / 2) * oYRP.getRangeSize());
+		} else {
+			oFirstDate.setYear(oFirstDate.getYear() - (iYears / 2) * oYRP.getRangeSize());
+		}
 
 		if (oFirstDate.getYear() < oMinYear) {
 			oFirstDate.setYear(oMinYear);
@@ -99,8 +103,8 @@ sap.ui.define([
 			oRm.openStart("div", sId + "-y" + sYyyymmdd);
 			oRm.class("sapUiCalItem");
 
-			bApplySelection = oYRP._fnShouldApplySelection(oFirstDate);
-			bApplySelectionBetween = oYRP._fnShouldApplySelectionBetween(oFirstDate);
+			bApplySelection = oYRP._isYearSelected(oFirstDate);
+			bApplySelectionBetween = oYRP._isYearInsideSelectionRange(oFirstDate);
 
 			if (bApplySelection) {
 				oRm.class("sapUiCalItemSel");

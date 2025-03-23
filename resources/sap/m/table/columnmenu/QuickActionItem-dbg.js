@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.m.table.columnmenu.Entry
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -34,7 +34,8 @@ sap.ui.define([
 	var QuickActionItem = Entry.extend("sap.m.table.columnmenu.QuickActionItem", {
 
 		metadata: {
-			library: "sap.m", properties: {
+			library: "sap.m",
+			properties: {
 				/**
 				 * The property name
 				 */

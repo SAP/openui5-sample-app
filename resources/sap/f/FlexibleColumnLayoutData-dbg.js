@@ -21,7 +21,7 @@ sap.ui.define(["sap/ui/core/LayoutData", "sap/ui/base/ManagedObjectObserver", "s
 		 *
 		 *
 		 * @author SAP SE
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 *
 		 * @extends sap.ui.core.LayoutData
 		 *

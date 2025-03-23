@@ -110,7 +110,7 @@ function(
 	* @extends sap.m.Input
 	*
 	* @author SAP SE
-	* @version 1.133.0
+	* @version 1.134.0
 	*
 	* @constructor
 	* @public
@@ -691,13 +691,18 @@ function(
 	};
 
 	MultiInput.prototype._onLiveChange = function (eventArgs) {
-		var bClearTokens = this.getAggregation("tokenizer").getTokens().every(function(oToken) {
-			return oToken.getSelected();
-		});
+		var aTokens = this.getAggregation("tokenizer").getTokens();
+		var bClearTokens = aTokens.length > 0 && aTokens.every((oToken) => oToken.getSelected());
 
 		if (!bClearTokens) {
 			return;
 		}
+
+		this.fireTokenUpdate({
+			type: Tokenizer.TokenUpdateType.Removed,
+			addedTokens: [],
+			removedTokens: aTokens
+		});
 
 		this.removeAllTokens();
 	};

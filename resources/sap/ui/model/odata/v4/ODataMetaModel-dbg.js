@@ -157,7 +157,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
@@ -2435,8 +2435,8 @@ sap.ui.define([
 	 *   of "cross-service references" (see parameter <code>supportReferences</code> of
 	 *   {@link sap.ui.model.odata.v4.ODataModel#constructor}).
 	 *
-	 * @deprecated As of 1.51.0, use {@link #getETags} instead because modifications to old files
-	 *   may be shadowed by a new file in certain scenarios.
+	 * @deprecated As of version 1.51.0, use {@link #getETags} instead because modifications to old
+	 *   files may be shadowed by a new file in certain scenarios.
 	 * @public
 	 * @since 1.47.0
 	 */

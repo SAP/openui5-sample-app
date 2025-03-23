@@ -17,7 +17,7 @@ sap.ui.define([
 	 * @class This element is used within the GenericTile control that generates a combination of an icon and a text to create a TileInfo
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 * @constructor
 	 * @public
 	 * @since 1.124

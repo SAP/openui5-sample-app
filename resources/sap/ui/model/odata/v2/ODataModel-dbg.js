@@ -218,7 +218,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -270,7 +270,8 @@ sap.ui.define([
 			}
 
 			// Creates a parameters map to be used for the instantiation of the code list model,
-			// based on this OData model's parameters
+			// based on this OData model's parameters; createCodeListModelParameters has to be
+			// called before the service URL is modified
 			this.mCodeListModelParams = this.createCodeListModelParameters(mParameters);
 
 			if (mParameters) {
@@ -337,7 +338,9 @@ sap.ui.define([
 			this.mChangeHandles = {};
 			this.mDeferredGroups = {};
 			this.mLaunderingState = {};
-			this.sDefaultUpdateMethod = ODataModel._fixUpdateMethod(sDefaultUpdateMethod) || UpdateMethod.MERGE;
+			/** @deprecated As of version 1.133.0, reason sap.ui.model.odata.UpdateMethod.Merge|Put */
+			sDefaultUpdateMethod = ODataModel._fixUpdateMethod(sDefaultUpdateMethod);
+			this.sDefaultUpdateMethod = sDefaultUpdateMethod || UpdateMethod.MERGE;
 
 			this.bTokenHandling = vTokenHandling !== false;
 			this.bWithCredentials = bWithCredentials === true;
@@ -973,6 +976,7 @@ sap.ui.define([
 	 *
 	 * @param {string} [sUpdateMethod] The update method to fix
 	 * @returns {string|undefined} The fixed update method
+	 * @deprecated As of version 1.133.0, reason sap.ui.model.odata.UpdateMethod.Merge|Put
 	 * @private
 	 */
 	ODataModel._fixUpdateMethod = function (sUpdateMethod) {
@@ -2156,6 +2160,9 @@ sap.ui.define([
 	 * annotations including the <code>hierarchy-node-descendant-count-for</code> annotation, do
 	 * <b>not</b> support the operation modes <code>Client</code> and <code>Auto</code>.
 	 * <b>Note:</b> {@link sap.ui.model.odata.OperationMode.Auto} is deprecated since 1.102.0.
+	 *
+	 * <b>Note:</b> OData tree bindings do neither support
+	 * {@link sap.ui.model.Binding#suspend suspend} nor {@link sap.ui.model.Binding#resume resume}.
 	 *
 	 * @param {string} sPath
 	 *   The binding path, either absolute or relative to a given <code>oContext</code>
@@ -4017,16 +4024,17 @@ sap.ui.define([
 		var sUrl, oRequest,
 		oChangeHeader = {},
 		oPayload = {},
-		bCancelOnClose = true;
+		sCancelOnClose = "true";
 
 		oPayload.__batchRequests = aBatchRequests;
 
 
 		// If one requests leads to data changes at the back-end side, the canceling of the batch request must be prevented.
 		for (var sIndex in aBatchRequests) {
-			if (aBatchRequests[sIndex] && aBatchRequests[sIndex].__changeRequests ||
-				aBatchRequests[sIndex] && aBatchRequests[sIndex].headers && !aBatchRequests[sIndex].headers['sap-cancel-on-close']) {
-				bCancelOnClose = false;
+			if (aBatchRequests[sIndex] && aBatchRequests[sIndex].__changeRequests
+				|| aBatchRequests[sIndex] && aBatchRequests[sIndex].headers
+					&& aBatchRequests[sIndex].headers['sap-cancel-on-close'] !== "true") {
+				sCancelOnClose = "false";
 				break;
 			}
 		}
@@ -4045,7 +4053,7 @@ sap.ui.define([
 		// reset
 		delete oChangeHeader["Content-Type"];
 
-		oChangeHeader['sap-cancel-on-close'] = bCancelOnClose;
+		oChangeHeader['sap-cancel-on-close'] = sCancelOnClose;
 
 		oRequest = {
 				headers : oChangeHeader,
@@ -7082,8 +7090,10 @@ sap.ui.define([
 				}
 			});
 		}
-		//The 'sap-cancel-on-close' header marks the OData request as cancelable. This helps to save resources at the back-end.
-		return extend({'sap-cancel-on-close': !!bCancelOnClose}, this.mCustomHeaders, mCheckedHeaders, this.oHeaders);
+		// The 'sap-cancel-on-close' header marks the OData request as cancelable. This helps to save resources at the
+		// back-end.
+		return extend({'sap-cancel-on-close': String(!!bCancelOnClose)}, this.mCustomHeaders, mCheckedHeaders,
+			this.oHeaders);
 	};
 
 	/**
@@ -7641,7 +7651,8 @@ sap.ui.define([
 			vProperties = mParameters.properties;
 			sGroupId = mParameters.groupId || mParameters.batchGroupId;
 			sChangeSetId = mParameters.changeSetId;
-			oContext  = mParameters.context;
+			// ignore context if path is absolute
+			oContext  = sPath.startsWith("/") ? undefined : mParameters.context;
 			fnSuccess = mParameters.success;
 			fnError   = mParameters.error;
 			fnCreated = mParameters.created;
@@ -7779,9 +7790,8 @@ sap.ui.define([
 	 * @property {string} message Error message returned by the 503 HTTP status response
 	 * @property {Date} retryAfter The earliest point in time the request may be repeated
 	 *
-	 * @private
-	 * @ui5-restricted sap.suite.ui.generic.template
-	 * @since 1.127.0
+	 * @public
+	 * @since 1.134.0
 	 */
 
 	/**
@@ -7804,9 +7814,8 @@ sap.ui.define([
 	 * @param {function(module:sap/ui/model/odata/v2/RetryAfterError):Promise<undefined>} fnRetryAfter
 	 *   A "Retry-After" handler
 	 *
-	 * @private
-	 * @ui5-restricted sap.suite.ui.generic.template
-	 * @since 1.127.0
+	 * @public
+	 * @since 1.134.0
 	 */
 	ODataModel.prototype.setRetryAfterHandler = function (fnRetryAfter) {
 		this.fnRetryAfter = fnRetryAfter;

@@ -18,7 +18,7 @@ sap.ui.define([
 	 * @class A simple eventing implementation that manages listeners and can fire events.
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @since 1.120.0
 	 * @private

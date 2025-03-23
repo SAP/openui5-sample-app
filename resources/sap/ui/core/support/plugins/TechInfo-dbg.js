@@ -36,7 +36,7 @@ sap.ui.define([
 		 * @class This class represents the technical info plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.133.0
+		 * @version 1.134.0
 		 * @private
 		 * @alias sap.ui.core.support.plugins.TechInfo
 		 */

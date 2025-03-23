@@ -45,7 +45,7 @@ sap.ui.define([
 	 * @extends sap.ui.unified.calendar.YearPicker
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @private
@@ -123,12 +123,18 @@ sap.ui.define([
 		// check if first date is outside of min and max date
 		var iYears = this.getYears();
 		var oMaxStartYear = new CalendarDate(this._oMaxDate, this._getPrimaryCalendarType());
+		const iPageSize = iYears * this.getRangeSize();
 
 		if (!oMaxStartYear.isSame(CalendarUtils._maxDate(this._getPrimaryCalendarType()))) {
 			return oDate;
 		}
 
-		oMaxStartYear.setYear(oMaxStartYear.getYear() - Math.floor(iYears / 2) * this.getRangeSize() + 1 - Math.floor(this.getRangeSize() / 2));
+		if (this.getColumns() % 2 === 0) {
+			oMaxStartYear.setYear(oMaxStartYear.getYear() - iPageSize / 2 + 1);
+		} else {
+			Math.floor(iYears / 2) * this.getRangeSize() + 1 - Math.floor(this.getRangeSize() / 2);
+		}
+
 		if (oDate.isAfter(oMaxStartYear) && oDate.getYear() != oMaxStartYear.getYear()) {
 			oDate = new CalendarDate(oMaxStartYear, this._getPrimaryCalendarType());
 			oDate.setMonth(0, 1);
@@ -143,35 +149,49 @@ sap.ui.define([
 
 	YearRangePicker.prototype._updatePage = function (bForward, iSelectedIndex, bFireEvent){
 
-		var aDomRefs = this._oItemNavigation.getItemDomRefs(),
-			oFirstDate = CalendarDate.fromLocalJSDate(this._oFormatYyyymmdd.parse(jQuery(aDomRefs[0]).attr("data-sap-year-start")), this._getPrimaryCalendarType()),
-			iYears = this.getYears(),
-			iYearRangeSize = this.getRangeSize();
+		const aDomRefs = this._oItemNavigation.getItemDomRefs();
+		const oFirstDateInCurrentPage = CalendarDate.fromLocalJSDate(this._oFormatYyyymmdd.parse(aDomRefs[0].getAttribute("data-sap-year-start")), this._getPrimaryCalendarType());
+		const iYears = this.getYears();
+		const iYearRangeSize = this.getRangeSize();
+		const oFirstDateInNextPage = new CalendarDate(oFirstDateInCurrentPage, this._getPrimaryCalendarType());
+		const iPageSize = iYears * iYearRangeSize;
+		const iHalfYearForPage = this.getColumns() % 2 === 0 ? iPageSize / 2 :  Math.floor(iYears / 2) * iYearRangeSize + Math.floor(iYearRangeSize / 2);
+		let oMiddleDateInNextPage;
 
 		if (bForward) {
-			var oMaxDate = new CalendarDate(this._oMaxDate, this._getPrimaryCalendarType());
-			oMaxDate.setYear(oMaxDate.getYear() - iYears * iYearRangeSize + 1);
-			if (oFirstDate.isBefore(oMaxDate)) {
-				oFirstDate.setYear(oFirstDate.getYear() + iYears * iYearRangeSize + Math.floor(iYearRangeSize / 2) + Math.floor(iYears / 2) * iYearRangeSize);
-				oFirstDate = this._checkFirstDate(oFirstDate);
+			const oMaxDate = new CalendarDate(this._oMaxDate, this._getPrimaryCalendarType());
+			oMaxDate.setYear(oMaxDate.getYear() - iPageSize + 1);
+			if (oFirstDateInCurrentPage.isBefore(oMaxDate)) {
+
+				oFirstDateInNextPage.setYear(oFirstDateInCurrentPage.getYear() + iPageSize);
+				const oLastDateInNextPage = new CalendarDate(oFirstDateInNextPage, this._getPrimaryCalendarType());
+				oLastDateInNextPage.setYear(oFirstDateInNextPage.getYear() + iPageSize);
+
+				if (oLastDateInNextPage.isAfter(oMaxDate)) {
+					oFirstDateInNextPage.setYear(oMaxDate.getYear());
+				}
+				oMiddleDateInNextPage = new CalendarDate(oFirstDateInNextPage, this._getPrimaryCalendarType());
+				oMiddleDateInNextPage.setYear(oFirstDateInNextPage.getYear() + iHalfYearForPage);
 			} else {
 				return;
 			}
 		} else {
-			if (oFirstDate.isAfter(this._oMinDate)) {
-				oFirstDate.setYear(oFirstDate.getYear() - iYears * iYearRangeSize);
-				if (oFirstDate.isBefore(this._oMinDate)) {
-					oFirstDate = new CalendarDate(this._oMinDate, this._getPrimaryCalendarType());
+			if (oFirstDateInCurrentPage.isAfter(this._oMinDate)) {
+				const oMinDate = new CalendarDate(this._oMinDate, this._getPrimaryCalendarType());
+
+				oFirstDateInNextPage.setYear(oFirstDateInCurrentPage.getYear() -  iPageSize);
+				if (oFirstDateInNextPage.isBefore(oMinDate)) {
+					oFirstDateInNextPage.setYear(oMinDate.getYear());
 				}
-				oFirstDate.setYear(oFirstDate.getYear() + Math.floor(iYears / 2) * iYearRangeSize + Math.floor(iYearRangeSize / 2));
-				oFirstDate = this._checkFirstDate(oFirstDate);
+				oMiddleDateInNextPage = new CalendarDate(oFirstDateInNextPage, this._getPrimaryCalendarType());
+				oMiddleDateInNextPage.setYear(oFirstDateInNextPage.getYear() + iHalfYearForPage);
 			} else {
 				return;
 			}
 		}
 
 		this._iSelectedIndex = iSelectedIndex;
-		this.setProperty("_middleDate", oFirstDate);
+		this.setProperty("_middleDate", oMiddleDateInNextPage);
 
 		if (bFireEvent) {
 			this.firePageChange();
@@ -210,51 +230,62 @@ sap.ui.define([
 	};
 
 	/**
-	 * Determines if a given calendar year range contains the start or end of a given selected date range.
+	 * Determines if any of the <code>selectedDates</code> fall within a given year range.
+	 * <b>Note:</b> If <code>intervalSelection</code> is set to <code>true</code>, the range is selected if it contains the start or end of the interval.
 	 *
 	 * @private
 	 * @override
-	 * @param {sap.ui.unified.calendar.oYearRangeStartDate} oYearRangeStartDate Start date of the calendar year range
+	 * @param {sap.ui.unified.calendar.CalendarDate} oCurrentYearRangeStart First date of the year range
+	 * @returns {boolean} Returns <code>true</code> if the current year range contains any selected dates
 	 */
-	YearRangePicker.prototype._fnShouldApplySelection = function(oYearRangeStartDate) {
-		const oSelectedDates = this._getSelectedDates()[0];
-		let oSelectionStartDate, oSelectionEndDate;
-
-		if (!oSelectedDates) {
+	YearRangePicker.prototype._isYearSelected = function(oCurrentYearRangeStart) {
+		const aSelectedDateRanges = this.getSelectedDates();
+		if (!(aSelectedDateRanges && aSelectedDateRanges.length)) {
 			return false;
 		}
 
-		oSelectionStartDate = oSelectedDates.getStartDate();
-		oSelectionEndDate = oSelectedDates.getEndDate();
+		const oCurrentYearRangeEnd = new CalendarDate(oCurrentYearRangeStart, this.getPrimaryCalendarType());
+		oCurrentYearRangeEnd.setYear(oCurrentYearRangeEnd.getYear() + this.getRangeSize() - 1);
+		oCurrentYearRangeEnd.setMonth(0, 1);
 
-		if (!oSelectionStartDate) {
-			return false;
+		const oDateRange = aSelectedDateRanges[0];
+		const oStartDate = oDateRange.getStartDate();
+		const oEndDate = oDateRange.getEndDate();
+
+		if (this.getIntervalSelection() && oStartDate && oEndDate) {
+
+			const oCalStartDate = CalendarDate.fromLocalJSDate(oStartDate, this._getPrimaryCalendarType());
+			oCalStartDate.setMonth(0, 1);
+
+			const oCalEndDate = CalendarDate.fromLocalJSDate(oEndDate, this._getPrimaryCalendarType());
+			oCalEndDate.setMonth(0, 1);
+
+			return CalendarUtils._isBetween(oCalStartDate, oCurrentYearRangeStart, oCurrentYearRangeEnd, true) ||
+				CalendarUtils._isBetween(oCalEndDate, oCurrentYearRangeStart, oCurrentYearRangeEnd, true);
 		}
 
-		const oYearRangeEndDate = new CalendarDate(oYearRangeStartDate, this.getPrimaryCalendarType());
-		oYearRangeEndDate.setYear(oYearRangeEndDate.getYear() + this.getRangeSize() - 1);
+		const fnHasDateInRange = (oDateRange) => {
+			const oStartDate = oDateRange.getStartDate();
 
-		oSelectionStartDate = CalendarDate.fromLocalJSDate(oSelectionStartDate, this._getPrimaryCalendarType());
-		oSelectionStartDate.setMonth(0, 1);
-
-		if (CalendarUtils._isBetween(oSelectionStartDate, oYearRangeStartDate, oYearRangeEndDate, true)) {
-			return true;
-		}
-
-		if (this.getIntervalSelection()) {
-			if (!oSelectionEndDate) {
+			if (!oStartDate) {
 				return false;
 			}
 
-			oSelectionEndDate = CalendarDate.fromLocalJSDate(oSelectionEndDate, this._getPrimaryCalendarType());
-			oSelectionEndDate.setMonth(0, 1);
+			const oCalStartDate = CalendarDate.fromLocalJSDate(oStartDate, this._getPrimaryCalendarType());
+			oStartDate.setMonth(0, 1);
 
-			if (CalendarUtils._isBetween(oSelectionEndDate, oYearRangeStartDate, oYearRangeEndDate, true)) {
+			if (CalendarUtils._isBetween(oCalStartDate, oCurrentYearRangeStart, oCurrentYearRangeEnd, true)) {
 				return true;
 			}
+
+			return false;
+		};
+
+		if (this.getProperty("_singleSelection")) {
+			return fnHasDateInRange(oDateRange);
 		}
 
-		return false;
+		return aSelectedDateRanges.some(fnHasDateInRange);
 	};
 
 	/**

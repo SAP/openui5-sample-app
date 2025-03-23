@@ -97,7 +97,7 @@ sap.ui.define([
 	 * @extends sap.m.table.columnmenu.MenuBase
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -269,9 +269,8 @@ sap.ui.define([
 
 	function createTableSettingsButton(oMenu) {
 		return new Button({
-			text: oMenu._getResourceText("table.COLUMNMENU_TABLE_SETTINGS"),
 			icon: "sap-icon://action-settings",
-			type: "Transparent",
+			tooltip: oMenu._getResourceText("table.COLUMNMENU_TABLE_SETTINGS"),
 			press: () => {
 				oMenu._oPopover.close();
 				oMenu.fireTableSettingsPressed();
@@ -465,6 +464,7 @@ sap.ui.define([
 
 	var AssociativeControl = Control.extend("sap.m.table.columnmenu.AssociativeControl", {
 		metadata: {
+			library: "sap.m",
 			"final": true,
 			properties: {
 				height: {type: "boolean", defaultValue: false}
@@ -569,10 +569,13 @@ sap.ui.define([
 			}, this]
 		});
 
-		const oResourceBundle = Library.getResourceBundleFor("sap.m");
+		const sTitle = this._hasQuickActions() ?
+					this._getResourceText("table.COLUMNMENU_LIST_ITEMS_TITLE") :
+					this._getResourceText("table.COLUMNMENU_LIST_ITEMS_ONLY_TITLE");
+
 		this._oItemsContainer.setListHeader(new OverflowToolbar({
 			content: [
-				new Title({text: oResourceBundle.getText("table.COLUMNMENU_LIST_ITEMS_TITLE")})
+				new Title({text: sTitle})
 			]
 		}));
 		this._oItemsContainer.getHeader().addContentRight(new Button({
@@ -685,18 +688,26 @@ sap.ui.define([
 		oListItem?.setVisible(bVisible);
 	};
 
+	function _hasNonGenericQuickActions() {
+		return this._getAllEffectiveQuickActions(true).filter(function(oQuickAction) {
+			return oQuickAction.getVisible() && oQuickAction.getCategory() !== Category.Generic;
+		}).length > 0;
+	}
+
 	Menu.prototype._initQuickActionList = function (sCategory) {
 		var oList;
 		var aQuickActions = this._getAllEffectiveQuickActions().filter(function (oQuickAction) {
 			return oQuickAction.getVisible() && oQuickAction.getCategory() === sCategory;
 		});
 
+		const sTitle = (sCategory === Category.Generic && !_hasNonGenericQuickActions.call(this)) ?
+					this._getResourceText("table.COLUMNMENU_QUICK_GENERIC_ONLY_TITLE") :
+					this._getResourceText("table.COLUMNMENU_QUICK_" + sCategory.toUpperCase() + "_TITLE");
+
 		if (aQuickActions.length) {
 			oList = new List({
 				headerToolbar: new OverflowToolbar({
-					content: [
-						new Title({text: this._getResourceText("table.COLUMNMENU_QUICK_" + sCategory.toUpperCase() + "_TITLE")})
-					]
+					content: [new Title({text: sTitle})]
 				}),
 				keyboardMode: "Edit",
 				items: []

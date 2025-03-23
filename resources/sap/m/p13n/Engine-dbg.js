@@ -69,7 +69,7 @@ sap.ui.define([
 	 * @alias sap.m.p13n.Engine
 	 * @extends sap.m.p13n.modules.AdaptationProvider
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 * @public
 	 * @since 1.104
 	 */
@@ -802,7 +802,12 @@ sap.ui.define([
 		Object.keys(oInternalState).forEach((sInternalKey) => {
 			const oController = this.getController(Engine.getControlInstance(vControl), sInternalKey);
 			if (oController) {
-				oExternalState[oController.getStateKey()] = oInternalState[sInternalKey];
+				const oStateKey = oController.getStateKey();
+				if (oExternalState.hasOwnProperty(oStateKey)) {
+					merge(oExternalState[oStateKey], oInternalState[sInternalKey]);
+				} else {
+					oExternalState[oController.getStateKey()] = oInternalState[sInternalKey];
+				}
 			}
 		});
 		return oExternalState;
@@ -822,9 +827,13 @@ sap.ui.define([
 		const aControllerKeys = this.getRegisteredControllers(vControl),
 			oInternalState = {};
 		aControllerKeys.forEach((sInternalRegistryKey) => {
-			const sExternalStateKey = this.getController(vControl, sInternalRegistryKey).getStateKey();
+			const oController = this.getController(vControl, sInternalRegistryKey);
+			const sExternalStateKey = oController.getStateKey();
 			if (oExternalState.hasOwnProperty(sExternalStateKey)) {
-				oInternalState[sInternalRegistryKey] = oExternalState[sExternalStateKey];
+				const oState = oController.formatToInternalState(oExternalState[sExternalStateKey]);
+				if (oState) {
+					oInternalState[sInternalRegistryKey] = oState;
+				}
 			}
 		});
 		return oInternalState;

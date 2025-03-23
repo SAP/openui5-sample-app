@@ -127,13 +127,42 @@ sap.ui.define([
 
 		// map of meta model -> promise on text to ID mapping
 		// Map(<string, Promise<sap.ui.core.fieldhelp.Text2IdByType>>)
-		static #mMetaModel2TextMappingPromise = new Map();
+		#mMetaModel2TextMappingPromise = new Map();
+
+		/**
+		 * @typedef {object} sap.ui.core.fieldhelp.TextPropertyInfo
+		 *
+		 * Information about the text to ID property mapping for a meta model including the visited types, that is the
+		 * types, for which this mapping has already been computed.
+		 *
+		 * @property {Set<string>} visitedTypes
+		 *   Set of QNames of already visited types for the meta model
+		 * @property {sap.ui.core.fieldhelp.Text2IdByType} text2IdByType
+		 *   The mapping of text properties to id properties by type for the meta model
+		 */
+		// metamodel -> text property info
+		// Map<sap.ui.model.odata.ODataMetaModel|sap.ui.model.odata.v4.ODataMetaModel,
+		//     sap.ui.core.fieldhelp.TextPropertyInfo>
+		#mMetamodel2TextPropertyInfo = new Map();
 
 		/**
 		 * @interface
 		 * @name sap.ui.core.fieldhelp.MetaModelInterface
 		 * @description Interface for uniform access to OData V4 and OData V2 meta models to retrieve information
 		 *   required to compute text to ID property mappings.
+		 */
+
+		/**
+		 * Gets the string value of the <code>com.sap.vocabulary.Common.DocumentationRef</code> annotation for the
+		 * property with the given path.
+		 * Calling this method requires that {@link #requestTypes} has been called before, so that metadata is
+		 * loaded and can be accessed synchronously.
+		 *
+		 * @function
+		 * @name sap.ui.core.fieldhelp.MetaModelInterface#getDocumentationRef
+		 * @param {string} sPropertyPath The property path
+		 * @returns {string|undefined} The string value of the <code>com.sap.vocabulary.Common.DocumentationRef</code>
+		 *   annotation targeting the given property or <code>undefined</code> if the property has no such annotation
 		 */
 
 		/**
@@ -148,7 +177,7 @@ sap.ui.define([
 		 */
 
 		/**
-		 * Gets the path of the <code>com.sap.vocabulary.common.Text</code> annotation for the given property in the
+		 * Gets the path of the <code>com.sap.vocabulary.Common.Text</code> annotation for the given property in the
 		 * given entity type or complex type.
 		 * Calling this method requires that {@link #requestTypes} has been called before, so that metadata is
 		 * loaded and can be accessed synchronously.
@@ -157,7 +186,10 @@ sap.ui.define([
 		 * @name sap.ui.core.fieldhelp.MetaModelInterface#getTextPropertyPath
 		 * @param {string} sType The type name
 		 * @param {string} sProperty The property name
-		 * @returns {string|undefined} The path value of the <code>com.sap.vocabulary.common.Text</code> annotation
+		 * @param {number} [iTypeIndex] (OData V2 only) The type index in the corresponding collection metamodel data
+		 * @param {number} [iPropertyIndex] (OData V2 only) The property index in the type object's property array
+		 * @param {boolean} [bComplexType] (OData V2 only) Whether the type is a complex type
+		 * @returns {string|undefined} The path value of the <code>com.sap.vocabulary.Common.Text</code> annotation
 		 *   targeting the given property or <code>undefined</code> if the property has no such annotation
 		 */
 
@@ -172,6 +204,7 @@ sap.ui.define([
 		 * @returns {string|undefined}
 		 *   The qualified type name for the resolved path or <code>undefined</code>, if the path does not correspond to
 		 *   a type
+		 * @throws {Error} In case the resolved path does not comply to the metadata
 		 */
 
 		/**
@@ -192,6 +225,11 @@ sap.ui.define([
 	 	 * @implements {sap.ui.core.fieldhelp.MetaModelInterface}
 	 	 */
 		static #oMetaModelInterfaceV4 = {
+			getDocumentationRef(sPropertyPath) {
+				return this.oMetaModel.getObject("@" + sDocumentationRef,
+					this.oMetaModel.getMetaContext(sPropertyPath));
+			},
+
 			getProperties(oType) {
 				return Object.keys(oType).filter((sKey) => oType[sKey].$kind === "Property");
 			},
@@ -219,23 +257,76 @@ sap.ui.define([
 			}
 		};
 
+		static #oMetaModelInterfaceV2 = {
+			getDocumentationRef(sPropertyPath) {
+				return this.oMetaModel.getObject("", this.oMetaModel.getMetaContext(sPropertyPath))
+					[sDocumentationRef]?.String;
+			},
+
+			getProperties(oType) {
+				return oType.property?.map((oProperty) => oProperty.name) ?? [];
+			},
+
+			getTextPropertyPath(sType, sProperty, iTypeIndex, iPropertyIndex, bComplexType) {
+				const sKindOfType = bComplexType ? "complexType" : "entityType";
+				// do not access "Path" property of Text annotation directly via metamodel path, as this leads to
+				// a console warning in case there is no Text annotation
+				return this.oMetaModel.getObject(
+					`/dataServices/schema/0/${sKindOfType}/${iTypeIndex}/property/${iPropertyIndex}`
+					+ "/com.sap.vocabularies.Common.v1.Text")?.Path;
+			},
+
+			getTypeQName(sResolvedPath) {
+				let oMetaContext;
+				try {
+					oMetaContext = this.oMetaModel.getMetaContext(sResolvedPath);
+				} catch (oCause) {
+					const oError = new Error(`Failed to determine type QName for path '${sResolvedPath}'`);
+					oError.cause = oCause;
+					throw oError;
+				}
+
+				const oMetaObject = this.oMetaModel.getObject("", oMetaContext);
+				if (oMetaObject.namespace) {
+					return `${oMetaObject.namespace}.${oMetaObject.name}`; // path to entity or entity collection
+				}
+
+				return oMetaObject.type; // path to (possibly complex typed) property
+			},
+
+			async requestTypes() {
+				await this.oMetaModel.loaded();
+				const oSchema = this.oMetaModel.getObject("/dataServices/schema/0");
+				const createTypeMap =
+					(aTypes) => new Map(aTypes?.map((oType) => [`${oType.namespace}.${oType.name}`, oType]) ?? []);
+				return [createTypeMap(oSchema.entityType), createTypeMap(oSchema.complexType)];
+			}
+		};
+
 		/**
-		 * Gets the meta model interface for the given OData meta model. If computing a text to ID property mapping is
-		 * not supported for the given meta model, <code>undefined</code> is returned.
+		 * Gets the meta model interface for the given OData model's meta model or <code>undefined</code>, if the model
+		 * is not a <code>sap.ui.model.odata.v4.ODataModel</code> or <code>sap.ui.model.odata.v2.ODataModel</code>.
 		 *
-		 * @param {sap.ui.model.odata.ODataMetaModel|sap.ui.model.odata.v4.ODataMetaModel} oMetaModel
-		 *   The OData meta model to retrieve the meta model interface for
-		 * @returns {sap.ui.core.fieldhelp.MetaModelInterface|undefined} The meta model interface or
-		 *   <code>undefined</code>
+		 * @param {sap.ui.model.Model} [oModel] The model
+		 * @returns {sap.ui.core.fieldhelp.MetaModelInterface|undefined} The meta model interface of the given model's
+		 *   meta model or <code>undefined</code>, if the model is not set or is not an OData V4 or OData V2 model
 		 */
-		static _getMetamodelInterface(oMetaModel) {
-			if (oMetaModel.isA("sap.ui.model.odata.v4.ODataMetaModel")) {
-				const oInterface = Object.create(FieldHelp.#oMetaModelInterfaceV4);
-				oInterface.oMetaModel = oMetaModel;
-				return oInterface;
+		static _getMetamodelInterface(oModel) {
+			if (!oModel) {
+				return undefined;
 			}
 
-			return undefined;
+			let oInterface;
+			if (oModel.isA("sap.ui.model.odata.v4.ODataModel")) {
+				oInterface = Object.create(FieldHelp.#oMetaModelInterfaceV4);
+			} else if (oModel.isA("sap.ui.model.odata.v2.ODataModel")) {
+				oInterface = Object.create(FieldHelp.#oMetaModelInterfaceV2);
+			} else {
+				return undefined;
+			}
+
+			oInterface.oMetaModel = oModel.getMetaModel();
+			return oInterface;
 		}
 
 		/**
@@ -249,10 +340,10 @@ sap.ui.define([
 		 * @returns {Promise<string>}
 		 *   A promise that resolves with the ID property path for the given resolved path, if it points to a text
 		 *   property or the given resolved path otherwise. The promise rejects, if the requested metadata cannot
-		 *   be loaded.
+		 *   be loaded or - for OData V2 only - in case of a resolved path which does not comply to the metadata.
 		 */
-		static async _requestIDPropertyPath(oMetaModelInterface, sResolvedPath) {
-			const mText2IdByType = await FieldHelp._requestText2IdByType(oMetaModelInterface);
+		async _requestIDPropertyPath(oMetaModelInterface, sResolvedPath) {
+			const mText2IdByType = await this._requestText2IdByType(oMetaModelInterface);
 			const [sFirstSegment, ...aSuffixSegments] = sResolvedPath.slice(1).split("/");
 			const aPrefixSegments = [sFirstSegment];
 			while (aSuffixSegments.length) {
@@ -277,28 +368,45 @@ sap.ui.define([
 		 *   A promise on the mapping of text to ID properties by type. The promise rejects, if the requested metadata
 		 *   cannot be loaded.
 		 */
-		static _requestText2IdByType(oMetaModelInterface) {
-			if (FieldHelp.#mMetaModel2TextMappingPromise.has(oMetaModelInterface.oMetaModel)) {
-				return FieldHelp.#mMetaModel2TextMappingPromise.get(oMetaModelInterface.oMetaModel);
+		_requestText2IdByType(oMetaModelInterface) {
+			const oMetaModel = oMetaModelInterface.oMetaModel;
+			if (this.#mMetaModel2TextMappingPromise.has(oMetaModel)) {
+				return this.#mMetaModel2TextMappingPromise.get(oMetaModel);
 			}
 
 			const oTextMappingPromise = oMetaModelInterface.requestTypes().then(([mEntityTypes, mComplexTypes]) => {
-				const mText2IdByType = new Map();
+				const oTextPropertyInfo = this.#mMetamodel2TextPropertyInfo.get(oMetaModel);
+				const mText2IdByType = oTextPropertyInfo?.text2IdByType ?? new Map();
+				const oVisitedTypes = oTextPropertyInfo?.visitedTypes ?? new Set();
 				const mAllTypes = new Map([...mEntityTypes, ...mComplexTypes]);
+				const iEntityTypesCount = mEntityTypes.size;
+				let i = 0;
 				for (const [sType, oType] of mAllTypes) {
-					for (const sProperty of oMetaModelInterface.getProperties(oType)) {
-						const sTextPropertyPath = oMetaModelInterface.getTextPropertyPath(sType, sProperty);
+					const bComplexType = i >= iEntityTypesCount;
+					const iTypeIndex = bComplexType ? i - iEntityTypesCount : i;
+					i += 1;
+					if (oVisitedTypes.has(sType)) {
+						continue;
+					}
+					oVisitedTypes.add(sType);
+					oMetaModelInterface.getProperties(oType).forEach((sProperty, iPropertyIndex) => {
+						const sTextPropertyPath = oMetaModelInterface.getTextPropertyPath(sType, sProperty, iTypeIndex,
+							iPropertyIndex, bComplexType);
 						if (!sTextPropertyPath) {
-							continue;
+							return;
 						}
 						const mIdByType = mText2IdByType.get(sTextPropertyPath) ??
 							mText2IdByType.set(sTextPropertyPath, new Map()).get(sTextPropertyPath);
 						mIdByType.set(sType, sProperty);
-					}
+					});
 				}
+				this.#mMetamodel2TextPropertyInfo.set(oMetaModel, {
+					text2IdByType: mText2IdByType,
+					visitedTypes: oVisitedTypes
+				});
 				return mText2IdByType;
 			});
-			FieldHelp.#mMetaModel2TextMappingPromise.set(oMetaModelInterface.oMetaModel, oTextMappingPromise);
+			this.#mMetaModel2TextMappingPromise.set(oMetaModelInterface.oMetaModel, oTextMappingPromise);
 			return oTextMappingPromise;
 		}
 
@@ -307,49 +415,40 @@ sap.ui.define([
 		 * annotation for the given binding.
 		 *
 		 * @param {sap.ui.model.Binding} oBinding The binding
-		 * @returns {Promise<string>|undefined}
+		 * @returns {Promise<string|undefined>}
 		 *   If the binding is destroyed, or does not belong to an OData model, or the resolved path of the binding is a
-		 *   meta model path or referencing an annotation, then <code>undefined</code> is returned; if the binding
-		 *   belongs to an OData model the <code>com.sap.vocabularies.Common.v1.DocumentationRef</code> annotation value
-		 *   for the binding is asynchronously requested via the OData meta model and the resulting <code>Promise</code>
-		 *   either resolves with the <code>String</code> value of that annotation or with <code>undefined</code> if the
-		 *   annotation is not available; the <code>Promise</code> never rejects
+		 *   meta model path or referencing an annotation, a promise resolving with <code>undefined</code> is returned;
+		 *   if the binding belongs to an OData model the <code>com.sap.vocabularies.Common.v1.DocumentationRef</code>
+		 *   annotation value for the binding is asynchronously requested via the OData meta model and the resulting
+		 *   <code>Promise</code> either resolves with the <code>String</code> value of that annotation or with
+		 *   <code>undefined</code> if the annotation is not available; the <code>Promise</code> never rejects
 		 */
-		static _requestDocumentationRef(oBinding) {
+		async _requestDocumentationRef(oBinding) {
 			if (oBinding.isDestroyed()) {
 				return undefined;
 			}
+
 			let sResolvedPath = oBinding.getResolvedPath();
 			if (!sResolvedPath || sResolvedPath.includes("#") /*meta model path*/
 					|| sResolvedPath.includes("@") /*annotation path*/) {
 				return undefined;
 			}
-			const oMetaModel = oBinding.getModel()?.getMetaModel();
-			if (!oMetaModel || !oMetaModel.getMetaContext) {
+
+			const oMetaModelInterface = FieldHelp._getMetamodelInterface(oBinding.getModel());
+			if (!oMetaModelInterface) {
 				return undefined;
 			}
 
-			let oFieldHelpAnnotationPromise;
-			if (oMetaModel.isA("sap.ui.model.odata.ODataMetaModel")) {
-				oFieldHelpAnnotationPromise = oMetaModel.loaded().then(() => {
-					// first get the object for the meta context then get the annotation to avoid warnings that an
-					// invalid path is used; getMetaContext has to be called after the meta model is loaded.
-					return oMetaModel.getObject("", oMetaModel.getMetaContext(sResolvedPath))?.[sDocumentationRef]
-						?.String;
-				});
-			} else { // V4 meta model
-				const oFieldHelpPathPromise = FieldHelp._requestIDPropertyPath(
-					FieldHelp._getMetamodelInterface(oMetaModel), sResolvedPath);
-				oFieldHelpAnnotationPromise = oFieldHelpPathPromise.then((sFieldHelpPropertyPath) => {
-					sResolvedPath = sFieldHelpPropertyPath; // for message logged in case of errors below
-					return oMetaModel.requestObject("@" + sDocumentationRef, oMetaModel.getMetaContext(sResolvedPath));
-				});
+			let sDocumentationRefValue;
+			try {
+				const sFieldHelpPath = await this._requestIDPropertyPath(oMetaModelInterface, sResolvedPath);
+				sResolvedPath = sFieldHelpPath; // for message logged in case of errors below
+				sDocumentationRefValue = oMetaModelInterface.getDocumentationRef(sFieldHelpPath);
+			} catch (oError) {
+				Log.error(`Failed to request '${sDocumentationRef}' annotation for path '${sResolvedPath}'`,
+					oError, sClassName);
 			}
-			return oFieldHelpAnnotationPromise.catch((oReason) => {
-					Log.error(`Failed to request '${sDocumentationRef}' annotation for path '${sResolvedPath}'`,
-						oReason, sClassName);
-					return undefined;
-				});
+			return sDocumentationRefValue;
 		}
 
 		/**
@@ -364,7 +463,7 @@ sap.ui.define([
 		 *   Maps a control ID having a field help information to the control ID at which it shall be displayed
 		 */
 		_getFieldHelpDisplayMapping() {
-			const mControlIDToFieldHelpDisplayControlID = {};
+			const mControlIDToDisplayControlID = {};
 			for (const sControlID in this.#mDocuRefControlToFieldHelp) {
 				const oControl = Element.getElementById(sControlID);
 				if (!oControl) { // control has been destroyed, cleanup internal data structure
@@ -380,10 +479,10 @@ sap.ui.define([
 					oTempControl = oTempControl.getParent();
 				} while (!sFieldHelpDisplayControlId && oTempControl);
 				if (sFieldHelpDisplayControlId) {
-					mControlIDToFieldHelpDisplayControlID[sControlID] = sFieldHelpDisplayControlId;
+					mControlIDToDisplayControlID[sControlID] = sFieldHelpDisplayControlId;
 				}
 			}
-			return mControlIDToFieldHelpDisplayControlID;
+			return mControlIDToDisplayControlID;
 		}
 
 		/**
@@ -392,30 +491,31 @@ sap.ui.define([
 		 * @returns {module:sap/ui/core/fieldhelp/FieldHelpInfo[]} The array of field help hotspots
 		 */
 		_getFieldHelpHotspots() {
-			const mControlIDToFieldHelpDisplayControlID = this._getFieldHelpDisplayMapping();
-			const oFieldHelpDisplayControlIDToAddedURNs = {};
+			const mControlIDToDisplayControlID = this._getFieldHelpDisplayMapping();
+			const mDisplayControlIDToURNs = new Map();
 			const aFieldHelpHotspots = [];
 			Object.keys(this.#mDocuRefControlToFieldHelp).forEach((sControlID) => {
-				const sControlIDToDisplayFieldHelp = mControlIDToFieldHelpDisplayControlID[sControlID] || sControlID;
-				const oControl = Element.getElementById(sControlIDToDisplayFieldHelp);
-				const sLabel = LabelEnablement._getLabelTexts(oControl)[0];
-				if (!sLabel) {
-					Log.error(`Cannot find a label for control '${sControlID}'; ignoring field help`,
-						JSON.stringify(this.#mDocuRefControlToFieldHelp[sControlID]), sClassName);
-
-					return;
-				}
-				const oURNSet = new Set();
-				Object.values(this.#mDocuRefControlToFieldHelp[sControlID]).forEach((aURNs) => {
+				const sDisplayControlID = mControlIDToDisplayControlID[sControlID] || sControlID;
+				const oURNSet = mDisplayControlIDToURNs.get(sDisplayControlID)
+					?? mDisplayControlIDToURNs.set(sDisplayControlID, new Set()).get(sDisplayControlID);
+				const aDocuRefsForControl = this.#mDocuRefControlToFieldHelp[sControlID][undefined];
+				const aDocuRefs = aDocuRefsForControl
+					? [aDocuRefsForControl]
+					: Object.values(this.#mDocuRefControlToFieldHelp[sControlID]);
+				aDocuRefs.forEach((aURNs) => {
 					aURNs.forEach(oURNSet.add.bind(oURNSet)); // add to the Set to filter duplicates
 				});
-				Array.from(oURNSet).forEach((sURN) => {
-					if (oFieldHelpDisplayControlIDToAddedURNs[sControlIDToDisplayFieldHelp]?.[sURN]) {
-						return; // already added for another control
-					}
+			});
 
-					oFieldHelpDisplayControlIDToAddedURNs[sControlIDToDisplayFieldHelp] ??= {};
-					oFieldHelpDisplayControlIDToAddedURNs[sControlIDToDisplayFieldHelp][sURN] = true;
+			for (const [sDisplayControlID, oURNSet] of mDisplayControlIDToURNs) {
+				const oControl = Element.getElementById(sDisplayControlID);
+				const sLabel = LabelEnablement._getLabelTexts(oControl)[0];
+				if (!sLabel) {
+					Log.error(`Cannot find a label for control '${sDisplayControlID}'; ignoring field help`,
+						Array.from(oURNSet).join(), sClassName);
+					continue;
+				}
+				for (const sURN of oURNSet) {
 					const oParameters = new URLSearchParams(sURN.slice(sURNPrefix.length));
 					const sOrigin = oParameters.get("origin");
 					aFieldHelpHotspots.push({
@@ -424,11 +524,11 @@ sap.ui.define([
 							type: oParameters.get("type"),
 							...(sOrigin && {origin: sOrigin})
 						},
-						hotspotId: sControlIDToDisplayFieldHelp,
+						hotspotId: sDisplayControlID,
 						labelText: sLabel
 					});
-				});
-			});
+				}
+			}
 
 			return aFieldHelpHotspots;
 		}
@@ -482,7 +582,7 @@ sap.ui.define([
 		 * Calls the <code>fnUpdateHotspotsCallback</code> as given in {@link #activate} asynchronously with the latest
 		 * field help hotspots.
 		 *
-		 * @returns {Promise}
+		 * @returns {Promise<undefined>}
 		 *   A Promise that resolves when the <code>fnUpdateHotspotsCallback</code> as given in {@link #activate} has
 		 *   been called with the latest field help hotspots; rejects if the field help has been deactivated in between.
 		 */
@@ -500,6 +600,7 @@ sap.ui.define([
 			setTimeout(() => {
 				if (this.isActive()) {
 					this.#fnUpdateHotspotsCallback(this._getFieldHelpHotspots());
+					this.#mMetaModel2TextMappingPromise.clear();
 					fnResolve();
 				} else {
 					fnReject();
@@ -538,7 +639,7 @@ sap.ui.define([
 				aBindings = [oBinding];
 			}
 			Promise.all(
-				aBindings.map((oBinding) => FieldHelp._requestDocumentationRef(oBinding))
+				aBindings.map((oBinding) => this._requestDocumentationRef(oBinding))
 			).then((aDocumentationRefs) => {
 				aDocumentationRefs = aDocumentationRefs.filter((sDocumentationRef) => sDocumentationRef);
 				this._setFieldHelpDocumentationRefs(oElement, sControlProperty, aDocumentationRefs);
@@ -607,7 +708,8 @@ sap.ui.define([
 			this.#bActive = false;
 			this.#mDocuRefControlToFieldHelp = {};
 			this.#fnUpdateHotspotsCallback = null;
-			FieldHelp.#mMetaModel2TextMappingPromise.clear();
+			this.#mMetaModel2TextMappingPromise.clear();
+			this.#mMetamodel2TextPropertyInfo.clear();
 			ManagedObject.prototype.updateFieldHelp = undefined; // restore the default
 		}
 

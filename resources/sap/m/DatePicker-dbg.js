@@ -186,7 +186,7 @@ sap.ui.define([
 	 * the close event), or select Cancel.
 	 *
 	 * @extends sap.m.DateTimeField
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -360,7 +360,7 @@ sap.ui.define([
 	 * @returns {string} the value of property <code>displayFormat</code>
 	 * @public
 	 * @name sap.m.DatePicker#getDisplayFormat
-	 * @function
+	 * @method
 	 */
 
 	/**
@@ -377,7 +377,7 @@ sap.ui.define([
 	 * @returns {string} the value of property <code>valueFormat</code>
 	 * @public
 	 * @name sap.m.DatePicker#getValueFormat
-	 * @function
+	 * @method
 	 */
 
 	/**
@@ -385,10 +385,10 @@ sap.ui.define([
 	 *
 	 * <b>Note:</b> If this property is used, the <code>value</code> property should not be changed from the caller.
 	 *
-	 * @returns {Date|module:sap/ui/core/date/UI5Date} the value of property <code>dateValue</code>
+	 * @returns {Date|module:sap/ui/core/date/UI5Date|null} the value of property <code>dateValue</code>
 	 * @public
 	 * @name sap.m.DatePicker#getDateValue
-	 * @function
+	 * @method
 	 */
 
 	DatePicker.prototype.init = function() {
@@ -1288,6 +1288,14 @@ sap.ui.define([
 		}
 	};
 
+	DatePicker.prototype._getCalendarWeekNumbering = function () {
+		if (this.isPropertyInitial("calendarWeekNumbering")) {
+			return;
+		}
+
+		return this.getCalendarWeekNumbering();
+	};
+
 	// to be overwritten by DateTimePicker
 	DatePicker.prototype._openPopup = function(oDomRef){
 		if (!this._oPopup) {
@@ -1347,7 +1355,6 @@ sap.ui.define([
 				minDate: this.getMinDate(),
 				maxDate: this.getMaxDate(),
 				legend: this.getLegend(),
-				calendarWeekNumbering: this.getCalendarWeekNumbering(),
 				startDateChange: function () {
 						this.fireNavigate({
 							dateRange: this._getVisibleDatesRange(this._getCalendar())
@@ -1356,6 +1363,7 @@ sap.ui.define([
 				});
 
 			this._oCalendar.setShowCurrentDateButton(this.getShowCurrentDateButton());
+			!this.isPropertyInitial("calendarWeekNumbering") && this._oCalendar.setCalendarWeekNumbering(this._getCalendarWeekNumbering());
 			this._oDateRange = new DateRange();
 			this._getCalendar().addSelectedDate(this._oDateRange);
 			this._getCalendar()._setSpecialDatesControlOrigin(this);

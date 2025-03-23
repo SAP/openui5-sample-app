@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -48,7 +48,8 @@ sap.ui.define([
 			library: "sap.f",
 			interfaces: [
 				"sap.f.ICard",
-				"sap.m.IBadge"
+				"sap.m.IBadge",
+				"sap.f.IGridContainerItem"
 			],
 			properties: {
 
@@ -63,7 +64,10 @@ sap.ui.define([
 				height: {type: "sap.ui.core.CSSSize", group: "Appearance", defaultValue: "auto"},
 
 				/**
-				 * Defines the role of the Card Header.
+				 * Defines the accessibility role of the control.
+				 *
+				 * **Note:** When the control is placed inside a <code>sap.f.GridContainer</code>,
+				 * its accessibility role is overridden by the accessibility role specified by the <code>sap.f.GridContainer</code>.
 				 *
 				 * @experimental since 1.131
 				 */
@@ -92,7 +96,9 @@ sap.ui.define([
 			events: {
 				/**
 				 * Fired when action is added on card level.
-				 * Note: Can be used only if <code>semanticRole</code> is <code>sap.f.cards.SemanticRole.ListItem</code>.
+				 *
+				 * **Note**: Can be used only if <code>semanticRole</code> is <code>sap.f.cards.SemanticRole.ListItem</code>
+				 * or the control is placed inside a <code>sap.f.GridContainer</code>.
 				 * @experimental since 1.131
 				 */
 				press: {}
@@ -117,6 +123,8 @@ sap.ui.define([
 
 		this._ariaText = new InvisibleText({id: this.getId() + "-ariaText"});
 		this._ariaText.setText(this._oRb.getText("ARIA_ROLEDESCRIPTION_CARD"));
+
+		this._sGridItemRole = null;
 
 		this.initCardBadgeEnablement();
 	};
@@ -205,7 +213,7 @@ sap.ui.define([
 	 * @protected
 	 */
 	CardBase.prototype.getFocusDomRef = function () {
-		if (this.isInteractive() && this.getSemanticRole() === SemanticRole.ListItem) {
+		if (this.isRoleListItem()) {
 			return this.getDomRef();
 		}
 
@@ -261,13 +269,6 @@ sap.ui.define([
 		const sBlockingMessageAriaLabelsIds = this._getBlockingMessageAriaLabelledByIds();
 
 		if (oHeader) {
-			if (this._isInsideGridContainer()) {
-				if (sBlockingMessageAriaLabelsIds) {
-					return oHeader._getAriaLabelledBy() + " " + sBlockingMessageAriaLabelsIds;
-				}
-				return oHeader._getAriaLabelledBy();
-			}
-
 			if (oHeader._getTitle && oHeader._getTitle()) {
 				if (sBlockingMessageAriaLabelsIds) {
 					return oHeader._getTitle().getId() + " " + sBlockingMessageAriaLabelsIds;
@@ -305,6 +306,9 @@ sap.ui.define([
 	 * @param {object} oEvent event
 	 */
 	CardBase.prototype.ontap = function (oEvent) {
+		if (this.isMouseInteractionDisabled()) {
+			return;
+		}
 		this._handleTapOrSelect(oEvent);
 	};
 
@@ -323,7 +327,9 @@ sap.ui.define([
 	 * @param {object} oEvent event
 	 */
 	CardBase.prototype._handleTapOrSelect = function (oEvent) {
-		if (!this.isInteractive() || oEvent.isMarked() || this.getSemanticRole() !== SemanticRole.ListItem) {
+		if (!this.isInteractive() ||
+			oEvent.isMarked() ||
+			!this.isRoleListItem()) {
 			return;
 		}
 
@@ -335,16 +341,6 @@ sap.ui.define([
 			originalEvent: oEvent
 		});
 		oEvent.preventDefault();
-	};
-
-	/**
-	 * Returns if the control is inside a sap.f.GridContainer
-	 *
-	 * @private
-	 */
-	CardBase.prototype._isInsideGridContainer = function() {
-		var oParent = this.getParent();
-		return oParent && oParent.isA("sap.f.GridContainer");
 	};
 
 	/**
@@ -360,13 +356,57 @@ sap.ui.define([
 		return null;
 	};
 
+	/**
+	 * Checks if the card is interactive.
+	 * @private
+	 * @ui5-restricted sap.f.CardRenderer
+	 * @returns {boolean} Whether the card is interactive.
+	 */
 	CardBase.prototype.isInteractive = function() {
 		const bIsInteractive = this.hasListeners("press");
 
-		if (bIsInteractive && this.getSemanticRole() !== SemanticRole.ListItem) {
-			Log.error("The full card cannot be interactive if the 'semanticRole' is not 'ListItem'", this);
+		if (bIsInteractive && !this.isRoleListItem()) {
+			Log.error("The full card cannot be interactive if the 'semanticRole' is not 'ListItem' or the control is not placed inside a sap.f.GridContainer", this);
 		}
 		return bIsInteractive;
+	};
+
+	/**
+	 * Checks if the card should be fully interactive with the mouse.
+	 * @private
+	 * @ui5-restricted sap.f.CardRenderer
+	 * @returns {boolean} False if the card should not be fully interactive with the mouse.
+	 */
+	CardBase.prototype.isMouseInteractionDisabled = function() {
+		return false;
+	};
+
+	/**
+	 * Sets the accessibility role for the <code>sap.f.GridContainer</code> item.
+	 *
+	 * **Note:** This method is automatically called by the <code>sap.f.GridContainer</code> control.
+	 *
+	 * @param {string} sRole The accessibility role for the <code>sap.f.GridContainer</code> item
+	 * @private
+	 * @ui5-restricted sap.f.GridContainer
+	 *
+	 */
+	CardBase.prototype.setGridItemRole = function (sRole) {
+		this._sGridItemRole = sRole;
+	};
+
+	/**
+	 * Returns the accessibility role for the <code>sap.f.GridContainer</code> item.
+	 *
+	 * @returns {string} The accessibility role for the <code>sap.f.GridContainer</code> item
+	 * @public
+	 */
+	CardBase.prototype.getGridItemRole = function () {
+		return this._sGridItemRole;
+	};
+
+	CardBase.prototype.isRoleListItem = function () {
+		return (this.getSemanticRole() === SemanticRole.ListItem) || this.getGridItemRole();
 	};
 
 	return CardBase;

@@ -78,7 +78,7 @@ sap.ui.define([
 	 * Basic Calendar.
 	 * This calendar is used for DatePickers
 	 * @extends sap.ui.core.Control
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -92,12 +92,16 @@ sap.ui.define([
 		properties : {
 
 			/**
-			 * If set, interval selection is allowed
+			 * Determines if an interval of dates can be selected.
+			 *
+			 * <b>Note:</b> This property should be set to <code>false</code> if <code>singleSelection</code> is set to <code>false</code>, as selecting multiple intervals is not supported.
 			 */
 			intervalSelection : {type : "boolean", group : "Behavior", defaultValue : false},
 
 			/**
-			 * If set, only a single date or interval, if intervalSelection is enabled, can be selected
+			 * Determines if a single date or single interval, when <code>intervalSelection</code> is set to <code>true</code>, can be selected.
+			 *
+			 * <b>Note:</b> This property should be set to <code>true</code> if <code>intervalSelection</code> is set to <code>true</code>, as selecting multiple intervals is not supported.
 			 */
 			singleSelection : {type : "boolean", group : "Behavior", defaultValue : true},
 
@@ -525,7 +529,8 @@ sap.ui.define([
 	};
 
 	Calendar.prototype._createMonth = function(sId){
-		var oMonth = new Month(sId, {width: "100%", calendarWeekNumbering: this.getCalendarWeekNumbering()});
+		var oMonth = new Month(sId, {width: "100%"});
+		this._setMonthCalendarWeekNumbering(oMonth);
 		oMonth._bCalendar = true;
 		oMonth.attachEvent("datehovered", this._handleDateHovered, this);
 		oMonth.attachEvent("weekNumberSelect", this._handleWeekNumberSelect, this);
@@ -686,6 +691,14 @@ sap.ui.define([
 	 */
 	Calendar.prototype._setSpecialDatesControlOrigin = function (oControl) {
 		this._oSpecialDatesControlOrigin = oControl;
+	};
+
+	Calendar.prototype._getCalendarWeekNumbering = function () {
+		if (this.isPropertyInitial("calendarWeekNumbering")) {
+			return;
+		}
+
+		return this.getCalendarWeekNumbering();
 	};
 
 	/**
@@ -849,10 +862,18 @@ sap.ui.define([
 		this.setProperty("calendarWeekNumbering", sCalendarWeekNumbering);
 
 		for (var i = 0; i < aMonths.length; i++) {
-			aMonths[i].setProperty("calendarWeekNumbering", sCalendarWeekNumbering);
+			this._setMonthCalendarWeekNumbering(aMonths[i]);
 		}
 
 		return this;
+	};
+
+	Calendar.prototype._setMonthCalendarWeekNumbering = function(oMonth) {
+		if (this.isPropertyInitial("calendarWeekNumbering")) {
+			return this;
+		}
+
+		return oMonth.setCalendarWeekNumbering(this.getCalendarWeekNumbering());
 	};
 
 	Calendar.prototype.setMonths = function(iMonths) {
@@ -874,8 +895,8 @@ sap.ui.define([
 				oMonth.attachEvent("_bindMousemove", _handleBindMousemove, this);
 				oMonth.attachEvent("_unbindMousemove", _handleUnbindMousemove, this);
 				oMonth._bNoThemeChange = true;
-				oMonth.setCalendarWeekNumbering(this.getCalendarWeekNumbering());
 				oMonth.setSecondaryCalendarType(this._getSecondaryCalendarType());
+				this._setMonthCalendarWeekNumbering(oMonth);
 				this.addAggregation("month", oMonth);
 			}
 			this._toggleTwoMonthsInColumnsCSS();
@@ -1127,6 +1148,60 @@ sap.ui.define([
 	Calendar.prototype.setShowCurrentDateButton = function(bShow){
 		this.getAggregation("header").setVisibleCurrentDateButton(bShow);
 		return this.setProperty("showCurrentDateButton", bShow);
+	};
+
+	/**
+	 * Setter for the property <code>intervalSelection</code>. If set to <code>true</code>, an interval of dates can be selected.
+	 *
+	 * <b>Note:</b> This property should be set to <code>false</code> if <code>singleSelection</code> is set to <code>false</code>, as selecting multiple intervals is not supported.
+	 *
+	 * @param {boolean} bEnabled Indicates if <code>intervalSelection</code> should be enabled
+	 * @returns {this} Reference to <code>this</code> for method chaining
+	 */
+	Calendar.prototype.setIntervalSelection = function(bEnabled){
+		const oMonthPicker = this._getMonthPicker();
+		if (oMonthPicker) {
+			oMonthPicker.setIntervalSelection(bEnabled);
+		}
+
+		const oYearPicker = this._getYearPicker();
+		if (oYearPicker) {
+			oYearPicker.setIntervalSelection(bEnabled);
+		}
+
+		const oYearRangePicker = this._getYearRangePicker();
+		if (oYearRangePicker) {
+			oYearRangePicker.setIntervalSelection(bEnabled);
+		}
+
+		return this.setProperty("intervalSelection", bEnabled);
+	};
+
+	/**
+	 * Setter for the property <code>singleSelection</code>. If set to <code>true</code> only a single date or single interval, when <code>intervalSelection</code> is set to <code>true</code>, can be selected.
+	 *
+	 * <b>Note:</b> This property should be set to <code>true</code> if <code>intervalSelection</code> is set to <code>true</code>, as selecting multiple intervals is not supported.
+	 *
+	 * @param {boolean} bEnabled Indicates if <code>singleSelection</code> should be enabled
+	 * @returns {this} Reference to <code>this</code> for method chaining
+	 */
+	Calendar.prototype.setSingleSelection = function(bEnabled){
+		const oMonthPicker = this._getMonthPicker();
+		if (oMonthPicker) {
+			oMonthPicker.setProperty("_singleSelection", bEnabled);
+		}
+
+		const oYearPicker = this._getYearPicker();
+		if (oYearPicker) {
+			oYearPicker.setProperty("_singleSelection", bEnabled);
+		}
+
+		const oYearRangePicker = this._getYearRangePicker();
+		if (oYearRangePicker) {
+			oYearRangePicker.setProperty("_singleSelection", bEnabled);
+		}
+
+		return this.setProperty("singleSelection", bEnabled);
 	};
 
 	/**
@@ -2313,7 +2388,10 @@ sap.ui.define([
 
 		this.setProperty("_currentPicker", CURRENT_PICKERS.YEAR_RANGE_PICKER);
 
-		oRangeMidDate.setYear(oRangeMidDate.getYear() + Math.floor(oYearRangePicker.getRangeSize() / 2));
+		oYearRangePicker.getColumns() % 2 !== 0 ?
+			oRangeMidDate.setYear(oRangeMidDate.getYear() + Math.floor(oYearRangePicker.getRangeSize() / 2)) :
+			oRangeMidDate.setYear(oRangeMidDate.getYear());
+
 		oYearRangePicker.setDate(oRangeMidDate.toLocalJSDate());
 		this._togglePrevNexYearPicker();
 	};
@@ -2551,13 +2629,9 @@ sap.ui.define([
 
 	Calendar.prototype._adjustYearRangeDisplay = function() {
 		var oYearRangePicker = this.getAggregation("yearRangePicker"),
-			sLang = Localization.getLanguage().toLocaleLowerCase(),
 			sPrimaryCalendarType = this._getPrimaryCalendarType(),
 			sSecondaryCalendarType = this._getSecondaryCalendarType(),
-			bKorean = sLang == "ko" || sLang == "ko-kr",
-			bJapaneseCalendar = sPrimaryCalendarType === CalendarType.Japanese || sSecondaryCalendarType === CalendarType.Japanese,
-			bGregorianCalendar = sPrimaryCalendarType === CalendarType.Gregorian
-				&& (sSecondaryCalendarType === CalendarType.Gregorian || !sSecondaryCalendarType);
+			bJapaneseCalendar = sPrimaryCalendarType === CalendarType.Japanese || sSecondaryCalendarType === CalendarType.Japanese;
 
 		if (!this._getSucessorsPickerPopup()) {
 			// An evaluation about the count of year cells that could fit in the sap.ui.unified.calendar.YearRangePicker
@@ -2568,12 +2642,9 @@ sap.ui.define([
 			if (bJapaneseCalendar) {
 				oYearRangePicker.setColumns(1);
 				oYearRangePicker.setYears(4);
-			} else if (bKorean || !bGregorianCalendar) {
+			} else {
 				oYearRangePicker.setColumns(2);
 				oYearRangePicker.setYears(8);
-			} else if (bGregorianCalendar) {
-				oYearRangePicker.setColumns(3);
-				oYearRangePicker.setYears(9);
 			}
 		}
 	};

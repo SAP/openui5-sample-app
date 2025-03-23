@@ -53,7 +53,7 @@ sap.ui.define([
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -187,7 +187,8 @@ sap.ui.define([
 
 		this._oToolbarDelegate = {
 			onfocusin: this._onToolbarFocusin,
-			onfocusout: this._onToolbarFocusout
+			onfocusout: this._onToolbarFocusout,
+			onAfterRendering: this._addMarginToHeaderText
 		};
 	};
 
@@ -226,6 +227,8 @@ sap.ui.define([
 		if (oToolbar) {
 			oToolbar.addEventDelegate(this._oToolbarDelegate, this);
 		}
+
+		this._addMarginToHeaderText();
 
 		this.getBannerLines()?.forEach((oText) => {
 			this._enhanceText(oText);
@@ -283,7 +286,7 @@ sap.ui.define([
 	};
 
 	BaseHeader.prototype._handleTap = function (oEvent) {
-		if (!this.isInteractive() || this._isInsideToolbar(oEvent.target)) {
+		if (!oEvent.target.closest(".sapFCardSectionClickable") || !this.isInteractive() || this._isInsideToolbar(oEvent.target)) {
 			return;
 		}
 
@@ -310,6 +313,23 @@ sap.ui.define([
 	 */
 	BaseHeader.prototype._onToolbarFocusout = function () {
 		this.removeStyleClass("sapFCardHeaderToolbarFocused");
+	};
+
+	/**
+	 * Adds margin to the header text, which ensures the text will be visible under the toolbar.
+	 * @private
+	 */
+	BaseHeader.prototype._addMarginToHeaderText = function () {
+		const oToolbar = this.getToolbar();
+		const oHeaderText = this.getDomRef().getElementsByClassName("sapFCardHeaderText")[0];
+
+		if (oHeaderText && oToolbar) {
+			if (oToolbar.getVisible()) {
+				oHeaderText.style.marginInlineEnd = oToolbar.getDomRef().offsetWidth + "px";
+			} else {
+				oHeaderText.style.marginInlineEnd = 0;
+			}
+		}
 	};
 
 	/*
@@ -480,27 +500,21 @@ sap.ui.define([
 		}).join(" ");
 	};
 
-	/**
-	 * Returns if the control is inside a sap.f.GridContainer
-	 *
-	 * @private
-	 */
-	BaseHeader.prototype._isInsideGridContainer = function() {
-		var oParent = this.getParent();
-		if (!oParent) {
-			return false;
-		}
-
-		oParent = oParent.getParent();
-		if (!oParent) {
-			return false;
-		}
-
-		return oParent.isA("sap.f.GridContainer");
-	};
-
 	BaseHeader.prototype.isInteractive = function() {
 		return this.hasListeners("press");
+	};
+
+	BaseHeader.prototype.isFocusable = function() {
+		if (!this.getProperty("focusable")) {
+			return false;
+		}
+
+		const oParent = this.getParent();
+		if (oParent && oParent.isA("sap.f.CardBase") && oParent.isRoleListItem()) {
+			return this.isInteractive();
+		}
+
+		return true;
 	};
 
 	BaseHeader.prototype._isInsideToolbar = function(oElement) {
@@ -510,7 +524,8 @@ sap.ui.define([
 	};
 
 	/**
-	 * When the option <code>useTooltips</code> is set to <code>true</code> - enhances the given text with a tooltip if the text is truncated.
+	 * When the option <code>useTooltips</code> is set to <code>true</code>,
+	 * a tooltip is added to the text in case it gets truncated.
 	 * @private
 	 * @param {sap.m.Text} oText The text control.
 	 */

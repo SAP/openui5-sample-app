@@ -58,7 +58,7 @@ sap.ui.define([
 	 * @implements sap.f.cards.IHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -286,16 +286,10 @@ sap.ui.define([
 		BaseHeader.prototype.init.apply(this, arguments);
 
 		this.data("sap-ui-fastnavgroup", "true", true); // Define group for F6 handling
-
-		this._oAriaAvatarText = new InvisibleText({id: this.getId() + "-ariaAvatarText"});
-		this._oAriaAvatarText.setText(this._oRb.getText("ARIA_HEADER_AVATAR_TEXT"));
 	};
 
 	NumericHeader.prototype.exit = function () {
 		BaseHeader.prototype.exit.apply(this, arguments);
-
-		this._oAriaAvatarText.destroy();
-		this._oAriaAvatarText = null;
 	};
 
 	/**
@@ -401,7 +395,7 @@ sap.ui.define([
 				id: this.getId() + "-title",
 				wrapping: true,
 				maxLines: this.getTitleMaxLines()
-			});
+			}).addStyleClass("sapFCardTitle");
 
 			this.setAggregation("_title", oControl);
 		}
@@ -540,7 +534,7 @@ sap.ui.define([
 		aIds.push(this._getUnitOfMeasurement().getId());
 
 		if (this.getIconSrc() || this.getIconInitials()) {
-			aIds.push(this.getId() + "-ariaAvatarText");
+			aIds.push(this._getAvatar().getId());
 		}
 
 		if (this.getNumber() || this.getScale()) {

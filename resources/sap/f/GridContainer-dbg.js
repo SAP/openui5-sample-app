@@ -15,7 +15,6 @@ sap.ui.define([
 	"sap/base/strings/capitalize",
 	"sap/ui/core/Lib",
 	"sap/ui/core/RenderManager",
-	'sap/ui/core/delegate/ItemNavigation',
 	"sap/ui/base/ManagedObjectObserver",
 	"sap/ui/core/Control",
 	"sap/ui/core/Element",
@@ -37,7 +36,6 @@ sap.ui.define([
 	capitalize,
 	Library,
 	RenderManager,
-	ItemNavigation,
 	ManagedObjectObserver,
 	Control,
 	Element,
@@ -49,21 +47,6 @@ sap.ui.define([
 	jQuery
 ) {
 	"use strict";
-
-	/**
-	 * For these controls check if the grid item visual focus can be displayed from the control inside.
-	 */
-	var mOwnVisualFocusControls = {
-		"sap.f.Card": function (oCard) {
-			return oCard.getCardHeader() || oCard.getCardContent();
-		},
-		"sap.ui.integration.widgets.Card": function (oCard) {
-			return oCard.getCardHeader() || oCard.getCardContent();
-		},
-		"sap.m.GenericTile": function () {
-			return true;
-		}
-	};
 
 	/**
 	 * Gets the column-span property from the item's layout data.
@@ -115,6 +98,9 @@ sap.ui.define([
 	 * The number of columns and rows each item takes can be configured with the use of the <code>{@link sap.f.GridContainerItemLayoutData}</code>.
 	 *
 	 * All rows have the same height and all columns have the same width. Their sizes can be configured with the use of the <code>layout</code> aggregation and <code>{@link sap.f.GridContainerSettings}</code>.
+	 *
+	 * **Note:** To ensure better keyboard and accessibility support,
+	 * child items should implement <code>sap.f.IGridContainerItem</code> interface.
 	 *
 	 * <h3>Usage</h3>
 	 *
@@ -177,7 +163,7 @@ sap.ui.define([
 	 * @see {@link sap.f.dnd.GridDropInfo}
 	 *
 	 * @author SAP SE
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 *
 	 * @extends sap.ui.core.Control
 	 *
@@ -398,6 +384,10 @@ sap.ui.define([
 		}
 
 		oContainer._reflectItemVisibilityToWrapper(this);
+
+		if (this.isA("sap.f.IGridContainerItem")) {
+			this.setGridItemRole("listitem");
+		}
 	};
 
 	/**
@@ -407,35 +397,11 @@ sap.ui.define([
 	GridContainer.prototype._onAfterItemRendering = function () {
 		var oContainer = this.getParent();
 
-		oContainer._checkOwnVisualFocus(this);
-
 		oContainer._resizeListeners[this.getId()] = ResizeHandler.register(this, oContainer._resizeItemHandler);
 
 		oContainer._setItemNavigationItems();
 
 		oContainer._applyItemAutoRows(this);
-	};
-
-	GridContainer.prototype._onItemWrapperFocusIn = function (oEvent) {
-		var oFocusedDomRef = this._oItemNavigation.getFocusedDomRef(),
-			oControl,
-			sAccText;
-
-		if (!oFocusedDomRef || !oFocusedDomRef.firstChild) {
-			return;
-		}
-
-		oControl = Element.closestTo(oFocusedDomRef.firstChild);
-
-		if (!oControl || !oControl.getAriaRoleDescription) {
-			return;
-		}
-
-		// announce the aria role description text, if any
-		sAccText = oControl.getAriaRoleDescription();
-		if (sAccText) {
-			InvisibleMessage.getInstance().announce(sAccText);
-		}
 	};
 
 	/**
@@ -445,7 +411,6 @@ sap.ui.define([
 	 * @param {sap.ui.core.Control} oItem The control of which we will check "visible" property.
 	 */
 	GridContainer.prototype._reflectItemVisibilityToWrapper = function (oItem) {
-
 		var oItemWrapper = GridContainerUtils.getItemWrapper(oItem),
 			$oItemWrapper;
 
@@ -504,32 +469,28 @@ sap.ui.define([
 		if (!this._isRenderingFinished) {
 			return;
 		}
-		var that = this,
-			aWrapperItemsDomRef = [];
+		var aItemsDomRef = [];
 
 		//Initialize the ItemNavigation
-		if (!that._oItemNavigation) {
-			that._oItemNavigation = new GridContainerItemNavigation()
+		if (!this._oItemNavigation) {
+			this._oItemNavigation = new GridContainerItemNavigation()
 				.setCycling(false)
 				.setDisabledModifiers({
 					sapnext : ["alt", "meta", "ctrl"],
 					sapprevious : ["alt", "meta", "ctrl"]
 				})
 				.setTableMode(true, true)
-				.setFocusedIndex(0)
-				.attachEvent(ItemNavigation.Events.AfterFocus, this._onItemWrapperFocusIn.bind(this));
+				.setFocusedIndex(0);
 
-			that.addDelegate(this._oItemNavigation);
+			this.addDelegate(this._oItemNavigation);
 		}
 
-		that.$("listUl").children().map(function (iIndex, oWrapperItem) {
-			if (oWrapperItem.getAttribute("class").indexOf("sapFGridContainerItemWrapper") > -1) {
-				aWrapperItemsDomRef.push(oWrapperItem);
-			}
+		this.getItems().map((oItem) => {
+			aItemsDomRef.push(GridContainerUtils.getItemFocusDomRef(oItem));
 		});
 
-		that._oItemNavigation.setRootDomRef(that.getDomRef());
-		that._oItemNavigation.setItemDomRefs(aWrapperItemsDomRef);
+		this._oItemNavigation.setRootDomRef(this.getDomRef());
+		this._oItemNavigation.setItemDomRefs(aItemsDomRef);
 	};
 
 	/**
@@ -955,8 +916,15 @@ sap.ui.define([
 			mStyles = mStylesInfo.styles,
 			aClasses = mStylesInfo.classes,
 			oWrapper = document.createElement("div");
-			oWrapper.setAttribute("id", GridContainerRenderer.generateWrapperId(oItem, this));
+
+		oWrapper.setAttribute("id", GridContainerRenderer.generateWrapperId(oItem, this));
+
+		if (!oItem.isA("sap.f.IGridContainerItem")) {
 			oWrapper.setAttribute("tabindex", "0");
+			oWrapper.classList.add("sapFGCFocusable");
+		} else {
+			oItem.setGridItemRole("listitem");
+		}
 
 		mStyles.forEach(function (sValue, sKey) {
 			oWrapper.style.setProperty(sKey, sValue);
@@ -979,53 +947,8 @@ sap.ui.define([
 		this.fireEvent("borderReached", mParameters);
 	};
 
-	/**
-	 * Keyboard handling of [keydown], [keyup], [enter], [space] keys
-	 * Stops propagation to avoid triggering the listeners for the same keys of the parent control (the AnchorBar)
-	 */
-	["onkeypress", "onkeyup", "onkeydown", "onsapenter", "onsapselect", "onsapspace"].forEach(function (sName) {
-		GridContainer.prototype[sName] = function (oEvent) {
-			if (!this._isItemWrapper(oEvent.target)) {
-				return;
-			}
-
-			if (sName === "onsapspace") {
-				// prevent page scrolling
-				oEvent.preventDefault();
-			}
-
-			var oItem = Element.closestTo(oEvent.target.firstChild);
-
-			if (oItem) {
-				var oFocusDomRef = oItem.getFocusDomRef(),
-				oFocusControl = Element.closestTo(oFocusDomRef);
-
-				if (oFocusControl && oFocusControl[sName]) {
-					oFocusControl[sName].call(oFocusControl, oEvent);
-				}
-			}
-		};
-	});
-
-	/**
-	 * Checks if the control will display the grid item visual focus.
-	 * @param {sap.ui.core.Control} oControl The control
-	 * @private
-	 */
-	GridContainer.prototype._checkOwnVisualFocus = function (oControl) {
-		var sName = oControl.getMetadata().getName(),
-			oFocusDomRef;
-
-		if (mOwnVisualFocusControls[sName] && mOwnVisualFocusControls[sName](oControl)) {
-			oFocusDomRef = oControl.getFocusDomRef();
-
-			// remove the focus DOM ref from the tab chain
-			if (oFocusDomRef.getAttribute("tabindex") === "0") {
-				oFocusDomRef.setAttribute("tabindex", -1);
-				oFocusDomRef.tabIndex = -1;
-			}
-			GridContainerUtils.getItemWrapper(oControl).classList.add("sapFGridContainerItemWrapperNoVisualFocus");
-		}
+	GridContainer.prototype._isListItem = function (oControl) {
+		return oControl.isA("sap.f.IGridContainerItem");
 	};
 
 	/**
@@ -1038,11 +961,14 @@ sap.ui.define([
 			return;
 		}
 
-		if (!this._isItemWrapper(oEvent.target)) {
+		const oSource = oEvent.srcControl;
+		const bIsGridContainerItem = oSource?.isA("sap.f.IGridContainerItem");
+
+		if (!bIsGridContainerItem && !oEvent.target.classList.contains("sapFGridContainerItemWrapper")) {
 			return;
 		}
 
-		var oItem = Element.closestTo(oEvent.target.firstElementChild),
+		var oItem = bIsGridContainerItem ? oSource : Element.closestTo(oEvent.target.firstElementChild),
 			iLength = this.getItems().length,
 			iItemIndex = this.indexOfItem(oItem),
 			iInsertAt = -1,
@@ -1169,14 +1095,38 @@ sap.ui.define([
 		return GridNavigationMatrix.create(this.getDomRef("listUl"), aItemsDomRefs);
 	};
 
-	GridContainer.prototype._isItemWrapper = function (oElement) {
-		return oElement.classList.contains("sapFGridContainerItemWrapper");
-	};
-
 	GridContainer.prototype._handleThemeApplied = function () {
 		this._bThemeApplied = true;
 		Theming.detachApplied(this._handleThemeAppliedBound);
 	};
+
+	/**
+	 * Keyboard handling of [keydown], [keyup], [enter], [space] keys
+	 * Stops propagation to avoid triggering the listeners for the same keys of the parent control (the AnchorBar)
+	 */
+	["onkeypress", "onkeyup", "onkeydown", "onsapenter", "onsapselect", "onsapspace"].forEach(function (sName) {
+		GridContainer.prototype[sName] = function (oEvent) {
+			if (!oEvent.target?.classList.contains("sapFGCFocusable")) {
+				return;
+			}
+
+			if (sName === "onsapspace") {
+				// prevent page scrolling
+				oEvent.preventDefault();
+			}
+
+			var oItem = Element.closestTo(oEvent.target.firstChild);
+
+			if (oItem) {
+				var oFocusDomRef = oItem.getFocusDomRef(),
+					oFocusControl = Element.closestTo(oFocusDomRef);
+
+				if (oFocusControl && oFocusControl[sName]) {
+					oFocusControl[sName].call(oFocusControl, oEvent);
+				}
+			}
+		};
+	});
 
 	return GridContainer;
 });

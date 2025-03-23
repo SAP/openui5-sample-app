@@ -70,7 +70,7 @@ sap.ui.define([
 	 * @constructor
 	 * @public
 	 * @since 1.120
-	 * @version 1.133.0
+	 * @version 1.134.0
 	 * @extends sap.ui.core.Element
 	 * @name sap.m.upload.FilePreviewDialog
 	 */
@@ -314,7 +314,6 @@ sap.ui.define([
 					aPages
 				],
 				activePage: sActivePageId,
-				height: "85vh",
 				pageChanged: async (oEvent) => {
 					const iIndex = aPages.findIndex(function(oPage) {
 						return oPage.sId === oEvent.getParameter("newActivePageId");
@@ -349,6 +348,8 @@ sap.ui.define([
 					oEvent.preventDefault();
 				};
 			}
+
+			oCarousel.addStyleClass("sapMFilePreviewDialogCarousel");
 
 			return oCarousel;
 		},
@@ -444,8 +445,8 @@ sap.ui.define([
 				content: this._oCarousel,
 				horizontalScrolling: false,
 				verticalScrolling: false,
-				contentWidth: "100%",
-				contentHeight: "100%",
+				contentWidth: "auto",
+				contentHeight: "80vh",
 				buttons: [
 					this.getAdditionalFooterButtons(),
 					new Button({
