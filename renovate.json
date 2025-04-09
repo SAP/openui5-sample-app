@@ -1,0 +1,52 @@
+{
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": [
+		"github>ui5/renovate-config"
+	],
+	"lockFileMaintenance": {
+		"enabled": true,
+		"automerge": true
+	},
+	"packageRules": [
+		{
+			"matchDepNames": [
+				"*"
+			],
+			"automerge": true,
+			"commitMessagePrefix": "build(deps-dev):",
+			"commitMessageAction": "Bump",
+			"schedule": [
+				"* 7-8 * * 1"
+			]
+		},
+		{
+			"matchManagers": [
+				"github-actions"
+			],
+			"automerge": true,
+			"commitMessagePrefix": "build(github-actions):",
+			"commitMessageAction": "Bump",
+			"schedule": [
+				"* 7-8 * * 1"
+			]
+		},
+		{
+			"matchPackageNames": [
+				"node",
+				"npm"
+			],
+			"enabled": false
+		},
+		{
+			"matchDepNames": [
+				"openui5"
+			],
+			"automerge": true,
+			"commitMessagePrefix": "deps:",
+			"commitMessageAction": "Update",
+			"schedule": [
+				"* 7-8 * * 1"
+			]
+		}
+	]
+}
