@@ -5,7 +5,11 @@
 	],
 	"lockFileMaintenance": {
 		"enabled": true,
-		"automerge": true
+		"automerge": true,
+		"commitMessagePrefix": "build:",
+		"schedule": [
+			"* 5-6 * * 1"
+		]
 	},
 	"packageRules": [
 		{
