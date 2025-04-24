@@ -85,7 +85,9 @@ sap.ui.define([
 	 * @param {object} mMetaConfig A map describing the metadata structure that is affected by this changehandler
 	 * @param {boolean} mMetaConfig.aggregationBased Defines whether the aggregation space or the property space should be used in the xConfig object
 	 * @param {string} mMetaConfig.property The property name (such as <code>width</code> or <code>label</code>)
+	 * @param {string} mMetaConfig.aggregation The aggregation name
 	 * @param {string} mMetaConfig.operation The operation to be executed by the handler (add, remove, move, set)
+	 * @param {string[]} mMetaConfig.additionalProperties Property names of the change content that are added to the revert data
 	 *
 	 * @returns {object} The created changehandler object
 	 */
@@ -112,12 +114,19 @@ sap.ui.define([
 							propertyBag: mPropertyBag
 						})
 							.then(async (oPriorAggregationConfig) => {
+								const oChangeContent = oChange.getContent();
 								const sOperation = getOperationType(oChange.getChangeType());
-								sAffectedAggregation = oChange.getContent().targetAggregation;
+								sAffectedAggregation = oChangeContent.targetAggregation;
 
 								const oRevertData = {
-									key: oChange.getContent().key
+									key: oChangeContent.key
 								};
+
+								mMetaConfig.additionalProperties?.forEach((vProperty) => {
+									if (typeof vProperty === "string" && oChangeContent[vProperty] !== undefined) {
+										oRevertData[vProperty] = oChangeContent[vProperty];
+									}
+								});
 
 								if (sChangePersistenceIdentifier) {
 									oRevertData.persistenceIdentifier = sChangePersistenceIdentifier;
@@ -130,32 +139,32 @@ sap.ui.define([
 									oRevertData.value = null;
 								}
 
-								if (!oPriorAggregationConfig || !(oPriorAggregationConfig?.aggregations?.[sAffectedAggregation]?.length > 0)) {
-									const aCurrentState = await xConfigAPI.getCurrentItemState(oControl, {propertyBag: mPropertyBag, changeType: oChange.getChangeType()}, oPriorAggregationConfig, sAffectedAggregation);
+								if ((!oPriorAggregationConfig || !(oPriorAggregationConfig?.aggregations?.[sAffectedAggregation]?.length > 0)) && typeof mMetaConfig.getCurrentState == "function") {
+									const aCurrentState = await mMetaConfig.getCurrentState?.(oControl, oPriorAggregationConfig, sAffectedAggregation, oChange, mPropertyBag);
 									if (aCurrentState) {
 										const oStateItem = aCurrentState?.find((oItem, iIndex) => {
-											return oItem.key === oChange.getContent().key;
+											return oItem.key === oChangeContent.key;
 										});
 										oRevertData.index = aCurrentState.indexOf(oStateItem);
 									}
 								}
 
-								oRevertData.targetAggregation = oChange.getContent().targetAggregation;
+								oRevertData.targetAggregation = oChangeContent.targetAggregation;
 
-								const oAffectedItem = oPriorAggregationConfig?.aggregations?.[sAffectedAggregation]?.[oChange.getContent().key];
+								const oAffectedItem = oPriorAggregationConfig?.aggregations?.[sAffectedAggregation]?.[oChangeContent.key];
 								if (oAffectedItem) {
 									if (oAffectedItem?.[sAffectedProperty]) {
-										oRevertData.value = oPriorAggregationConfig.aggregations[sAffectedAggregation][oChange.getContent().key][sAffectedProperty];
+										oRevertData.value = oPriorAggregationConfig.aggregations[sAffectedAggregation][oChangeContent.key][sAffectedProperty];
 									}
-									oRevertData.index = oPriorAggregationConfig.aggregations[sAffectedAggregation][oChange.getContent().key].position !== undefined ? oPriorAggregationConfig.aggregations[sAffectedAggregation][oChange.getContent().key].position : oRevertData.index;
+									oRevertData.index = oPriorAggregationConfig.aggregations[sAffectedAggregation][oChangeContent.key].position !== undefined ? oPriorAggregationConfig.aggregations[sAffectedAggregation][oChangeContent.key].position : oRevertData.index;
 								}
 
 								oChange.setRevertData(oRevertData);
 
 								const oConfig = {
 									property: sAffectedProperty,
-									key: oChange.getContent().key,
-									value: oChange.getContent(),
+									key: oChangeContent.key,
+									value: oChangeContent,
 									operation: sOperation,
 									changeType: oChange.getChangeType(),
 									propertyBag: mPropertyBag,

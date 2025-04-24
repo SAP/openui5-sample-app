@@ -21,14 +21,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.layout
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 * @since 1.15
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.ui.layout",
-		version: "1.134.0",
+		version: "1.135.0",
 		dependencies: ["sap.ui.core"],
 		designtime: "sap/ui/layout/designtime/library.designtime",
 		types: [
@@ -831,6 +831,7 @@ sap.ui.define([
 	 * @since 1.60.0
 	 * @extends sap.ui.core.CSSSizeShortHand
 	 * @public
+	 * @deprecated since 1.135 use {@link sap.ui.core.CSSGapShortHand} instead
 	 * @namespace
 	 * @final
 	 */

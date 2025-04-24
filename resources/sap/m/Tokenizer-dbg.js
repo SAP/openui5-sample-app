@@ -79,7 +79,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -539,14 +539,7 @@ sap.ui.define([
 					oPopup.setContentWidth(iWidestElement + "px");
 				});
 			}, this)
-			.attachAfterClose(function (oEvent) {
-				if (!this.checkFocus()) {
-					this.setRenderMode(RenderMode.Narrow);
-					this.fireRenderModeChange({
-						renderMode: "Narrow"
-					});
-				}
-			}, this)
+			.attachAfterClose(this.afterPopupClose, this)
 			.attachAfterOpen(function () {
 				var aTokenListItems = oTokenList.getItems();
 				this.setRenderMode(RenderMode.Loose);
@@ -573,6 +566,20 @@ sap.ui.define([
 		}
 
 		return this._oPopup;
+	};
+
+	/**
+	 * Function to execute after the n-more popover is closed.
+	 *
+	 * @protected
+	 */
+	Tokenizer.prototype.afterPopupClose = function () {
+		if (!this.checkFocus()) {
+			this.setRenderMode(RenderMode.Narrow);
+			this.fireRenderModeChange({
+				renderMode: "Narrow"
+			});
+		}
 	};
 
 	Tokenizer.prototype._getDialogTitle = function () {

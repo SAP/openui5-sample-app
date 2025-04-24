@@ -21,7 +21,7 @@ sap.ui.define(['sap/ui/core/LayoutData'],
 		 * @see {@link topic:32d4b9c2b981425dbc374d3e9d5d0c2e Grid Controls}
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.135.0
 		 *
 		 * @extends sap.ui.core.LayoutData
 		 *

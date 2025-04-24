@@ -30,8 +30,9 @@
 		}
 	}
 
-	.sapUiCal {
+	.sapUiCal:not(.sapUiCalInt) {
 		padding: 0;
+		min-width: auto;
 	}
 
 	.sapUiCalMonthPicker {
@@ -75,4 +76,8 @@
 
 .sapMDDRHiddenInput > .sapMInputBase {
 	display: none;
+}
+
+.sapMDDRPopover .sapMTB-Info-CTX .sapMLabel .sapMLabelTextWrapper {
+	padding-right: 0.125rem;
 }

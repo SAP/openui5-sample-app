@@ -74,7 +74,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.134.0
+		 * @version 1.135.0
 		 *
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
@@ -1133,7 +1133,7 @@ sap.ui.define([
 			return undefined;
 		}
 		return sBindingParameterPath.split("/").map((sSegment, i) => {
-			return sSegment.slice(0, sSegment.lastIndexOf("("))
+			return sSegment.slice(0, sSegment.indexOf("("))
 				+ (i ? sPredicate : sPartnerPredicate);
 		}).join("/");
 	};
@@ -1588,8 +1588,8 @@ sap.ui.define([
 					that.mAggregatedQueryOptions = that.mLateQueryOptions;
 					that.mLateQueryOptions = undefined;
 				}
-				that.fetchCache(that.oContext, false, /*bKeepQueryOptions*/false,
-					bKeepCacheOnError ? sGroupId : undefined);
+				that.fetchCache(that.oContext, false, /*bKeepQueryOptions*/false, sGroupId,
+					bKeepCacheOnError);
 				// Do not fire a change event, or else ManagedObject destroys and recreates the
 				// binding hierarchy causing a flood of events.
 				if (bHasChangeListeners) {

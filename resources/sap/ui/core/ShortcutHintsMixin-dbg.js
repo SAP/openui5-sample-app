@@ -459,6 +459,11 @@ sap.ui.define([
 				return;
 			}
 
+			// add native tooltip to element so it can override the native tooltip of the container / parent element
+			if (!oDOMRef.getAttribute('title')) {
+				oDOMRef.setAttribute('title', '');
+			}
+
 			if (checkMouseEnterOrLeave(oEvent, oDOMRef)) {
 				ShortcutHintsMixin.hideAll();
 
@@ -482,6 +487,10 @@ sap.ui.define([
 					return;
 				}
 
+				// remove the native tooltip that was set onmouseover
+				if (oShortcutHintRefs[0].ref.getAttribute('title') === '') {
+					oShortcutHintRefs[0].ref.removeAttribute('title');
+				}
 				this.hideShortcutHint();
 			}
 		},

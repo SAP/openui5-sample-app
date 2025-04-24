@@ -118,7 +118,7 @@ sap.ui.define([
 	 * @private
 	 * @ui5-restricted sap.ui.core, sap.ui.test
 	 */
-	const sVersion = "1.134.0";
+	const sVersion = "1.135.0";
 
 	/**
 	 * The buildinfo.
@@ -443,7 +443,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 * @final
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 * @alias sap.ui.core.Core
 	 * @public
 	 * @hideconstructor
@@ -1133,6 +1133,9 @@ sap.ui.define([
 
 		// add FieldHelpEndpoint to list of modules
 		this.aModules.push("sap/ui/core/boot/FieldHelpEndpoint");
+
+		// add KeyboardInteractionEndpoint to list of modules
+		this.aModules.push("sap/ui/core/boot/KeyboardInteractionEndpoint");
 
 		// load all modules now
 		if ( bAsync ) {
@@ -2770,6 +2773,11 @@ sap.ui.define([
 		}
 	};
 
+	/**
+	 * Retrieve default propagated properties from a fresh MO (which then is garbage collected)
+	 * @deprecated As of 1.118, as it needs to be removed together with setModel
+	 */
+	const { oPropagatedProperties: defaultPropagatedProperties } = new ManagedObject();
 
 	/**
 	 * Sets or unsets a model for the given model name.
@@ -2801,7 +2809,7 @@ sap.ui.define([
 		if (!oModel && this.oModels[sName]) {
 			delete this.oModels[sName];
 			if (isEmptyObject(that.oModels) && isEmptyObject(that.oBindingContexts)) {
-				oProperties = ManagedObject._oEmptyPropagatedProperties;
+				oProperties = defaultPropagatedProperties;
 			} else {
 				oProperties = {
 					oModels: Object.assign({}, that.oModels),

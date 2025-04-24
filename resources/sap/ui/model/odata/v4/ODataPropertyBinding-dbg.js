@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.134.0
+		 * @version 1.135.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -541,7 +541,8 @@ sap.ui.define([
 			if (that.oCache && that.oCache.reset) {
 				that.oCache.reset();
 			} else {
-				that.fetchCache(that.oContext, false, /*bKeepQueryOptions*/true, bKeepCacheOnError);
+				that.fetchCache(that.oContext, false, /*bKeepQueryOptions*/true, sGroupId,
+					bKeepCacheOnError);
 			}
 
 			if (bCheckUpdate) {

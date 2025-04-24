@@ -95,7 +95,8 @@ sap.ui.define([
 			.style("height", oCarousel.getHeight())
 			.attr("data-sap-ui-customfastnavgroup", true) // custom F6 handling
 			.accessibilityState(oCarousel, {
-				role: "listbox"
+				role: "list",
+				roledescription: Library.getResourceBundleFor("sap.m").getText("CAROUSEL_ARIA_ROLE_DESCRIPTION")
 			});
 
 		if (sTooltip) {
@@ -149,7 +150,7 @@ sap.ui.define([
 		oRM.openStart("div", oCarousel.getId() + "-" + oPage.getId() + "-slide")
 			.class("sapMCrslItem")
 			.accessibilityState(oPage, {
-				role: "option",
+				role: "listitem",
 				posinset: iIndex + 1,
 				setsize: aArray.length,
 				selected: bSelected,

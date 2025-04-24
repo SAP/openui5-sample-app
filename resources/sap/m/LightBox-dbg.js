@@ -96,7 +96,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -429,6 +429,8 @@ sap.ui.define([
 	 * @private
 	 */
 	LightBox.prototype._fnPopupOpened = function() {
+		this.$().firstFocusableDomRef()?.focus();
+
 		this._onResize();
 
 		jQuery("#sap-ui-blocklayer-popup").on("click", function() {

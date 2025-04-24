@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -124,7 +124,6 @@ sap.ui.define([
 			this._oScroller = oParent && oParent.getScrollDelegate ? oParent.getScrollDelegate() : null;
 
 			if (this._oScroller) {
-				this._oScroller.setBounce(true);
 				this._oScroller.setPullDown(this.getVisible() ? this : null);
 			}
 		}

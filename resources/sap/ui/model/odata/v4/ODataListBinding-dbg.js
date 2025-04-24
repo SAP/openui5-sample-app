@@ -59,7 +59,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.134.0
+		 * @version 1.135.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -193,14 +193,20 @@ sap.ui.define([
 	/**
 	 * Returns all currently existing contexts of this list binding in no special order.
 	 *
+	 * @param {boolean} [bNoCreated]
+	 *   Whether to exclude created contexts
 	 * @returns {sap.ui.model.odata.v4.Context[]}
 	 *   All currently existing contexts of this list binding, in no special order
 	 *
 	 * @private
 	 * @see #getAllCurrentContexts
 	 */
-	ODataListBinding.prototype._getAllExistingContexts = function () {
-		return (this.aContexts ?? []).filter(function (oContext) {
+	ODataListBinding.prototype._getAllExistingContexts = function (bNoCreated) {
+		let aContexts = this.aContexts ?? [];
+		if (bNoCreated) {
+			aContexts = aContexts.slice(this.iCreatedContexts);
+		}
+		return aContexts.filter(function (oContext) {
 			return oContext;
 		}).concat(Object.values(this.mPreviousContextsByPath).filter(function (oContext) {
 			return oContext.isEffectivelyKeptAlive();
@@ -1500,7 +1506,7 @@ sap.ui.define([
 	 * @see sap.ui.model.odata.v4.ODataBinding#doCreateCache
 	 */
 	ODataListBinding.prototype.doCreateCache = function (sResourcePath, mQueryOptions, oContext,
-			sDeepResourcePath, sGroupId, oOldCache) {
+			sDeepResourcePath, sGroupId, bSideEffectsRefresh, oOldCache) {
 		var oCache,
 			aKeepAlivePredicates,
 			mKeptElementsByPredicate,
@@ -1518,12 +1524,14 @@ sap.ui.define([
 					&& oOldCache instanceof _AggregationCache) {
 				if (bResetViaSideEffects && this.mParameters.$$aggregation?.hierarchyQualifier) {
 					sGroupId = this.getGroupId(); // reset via a side-effects refresh
+					bSideEffectsRefresh = true;
 					oOldCache.resetOutOfPlace();
 				}
+				this.validateSelection(oOldCache, sGroupId);
 				// Note: #inheritQueryOptions as called below should not matter in case of own
 				// requests, which are a precondition for kept-alive elements
-				oOldCache.reset(aKeepAlivePredicates, sGroupId, mQueryOptions,
-					this.mParameters.$$aggregation, this.isGrouped());
+				oOldCache.reset(aKeepAlivePredicates, bSideEffectsRefresh ? sGroupId : undefined,
+					mQueryOptions, this.mParameters.$$aggregation, this.isGrouped());
 
 				return oOldCache;
 			}
@@ -2867,9 +2875,7 @@ sap.ui.define([
 	 * @since 1.91.0
 	 */
 	ODataListBinding.prototype.getCount = function () {
-		var oHeaderContext = this.getHeaderContext();
-
-		return oHeaderContext ? oHeaderContext.getProperty("$count") : undefined;
+		return this.getHeaderContext()?.getProperty("$count");
 	};
 
 	/**
@@ -3307,6 +3313,25 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns the count of selected elements as a number of type <code>Edm.Int64</code>. The count
+	 * is bindable via the header context (see {@link #getHeaderContext}) and path
+	 * <code>$selectionCount</code>; it is either available synchronously or unknown. It is unknown
+	 * if the binding is relative but has no context and also if the list binding's
+	 * {@link sap.ui.model.odata.v4.ODataListBinding#getHeaderContext header context} is selected
+	 * ("select all").
+	 *
+	 * @returns {number|undefined}
+	 *   The count of selected elements or <code>undefined</code> if the count or the header
+	 *   context is not available.
+	 *
+	 * @public
+	 * @since 1.135.0
+	 */
+	ODataListBinding.prototype.getSelectionCount = function () {
+		return this.getHeaderContext()?.getProperty("$selectionCount");
+	};
+
+	/**
 	 * Returns true if the binding has {@link sap.ui.model.Filter.NONE} in its filters.
 	 *
 	 * @returns {boolean} Whether there is a {@link sap.ui.model.Filter.NONE}
@@ -3628,13 +3653,14 @@ sap.ui.define([
 	 * Moves the given (child) node to the given parent, just before the given next sibling. An
 	 * expanded (child) node is silently collapsed before and expanded after the move. A collapsed
 	 * parent is automatically expanded; so is a leaf. The (child) node is added to the parent at
-	 * its proper position ("in place") and simply "persisted". Specifying a next sibling always
-	 * leads to a subsequent side-effects refresh within the same $batch, but still the moved
-	 * (child) node's index is updated to the new position.
+	 * its proper position ("in place") and simply "persisted". If needed, a subsequent side-effects
+	 * refresh within the same $batch is requested, but still the moved (child) node's index is
+	 * updated to the new position.
 	 *
 	 * @param {sap.ui.model.odata.v4.Context} oChildContext - The (child) node to be moved
 	 * @param {sap.ui.model.odata.v4.Context|null} oParentContext - The new parent's context
 	 * @param {sap.ui.model.odata.v4.Context|null} [oSiblingContext] - The next sibling's context
+	 * @param {boolean} [bCopy] - Whether the node should be copied instead of moved
 	 * @returns {sap.ui.base.SyncPromise<void>}
 	 *   A promise which is resolved without a defined result when the move is finished, or
 	 *   rejected in case of an error
@@ -3643,7 +3669,8 @@ sap.ui.define([
 	 *
 	 * @private
 	 */
-	ODataListBinding.prototype.move = function (oChildContext, oParentContext, oSiblingContext) {
+	ODataListBinding.prototype.move = function (oChildContext, oParentContext, oSiblingContext,
+			bCopy) {
 		/*
 		 * Sets the <code>iIndex</code> of every context instance inside the given range. Allows for
 		 * start greater than end and swaps both in that case.
@@ -3681,7 +3708,7 @@ sap.ui.define([
 			: oChildContext.getPath().slice(1);
 		const bUpdateSiblingIndex = oSiblingContext?.isEffectivelyKeptAlive();
 		const {promise : oPromise, refresh : bRefresh} = this.oCache.move(oGroupLock, sChildPath,
-			sParentPath, sSiblingPath, sNonCanonicalChildPath, bUpdateSiblingIndex);
+			sParentPath, sSiblingPath, sNonCanonicalChildPath, bUpdateSiblingIndex, bCopy);
 
 		if (bRefresh) {
 			return SyncPromise.all([
@@ -3887,7 +3914,7 @@ sap.ui.define([
 					oCache.reset([]);
 				} else {
 					that.fetchCache(that.oContext, false, /*bKeepQueryOptions*/true,
-						bKeepCacheOnError ? sGroupId : undefined);
+						sGroupId, bKeepCacheOnError);
 					oKeptElementsPromise = that.refreshKeptElements(sGroupId,
 						/*bIgnorePendingChanges*/ bKeepCacheOnError);
 					if (that.iCurrentEnd > 0) {
@@ -4082,6 +4109,7 @@ sap.ui.define([
 
 					if (!bStillAlive) {
 						bDestroyed = true;
+						oContext.doSetSelected(false, true);
 						oContext.destroy();
 					}
 				}
@@ -4340,8 +4368,7 @@ sap.ui.define([
 	/**
 	 * Requests selected contexts matching the binding's filters and ordered by its sorters. A
 	 * context which is selected but no longer part of this list binding's collection (that is,
-	 * which doesn't match the filters) is not returned but still shown as selected on the UI
-	 * (see {@link #requestSelectionValidation}).
+	 * which doesn't match the filters) is not returned but still shown as selected on the UI.
 	 *
 	 * Note: Data for all selected contexts is reread from the server, even if it is already
 	 * available on the client. Any data updates are reflected on the UI but no order is changed.
@@ -5176,6 +5203,46 @@ sap.ui.define([
 					}))
 			};
 		}
+	};
+
+	/**
+	 * Validates the selected contexts against the list binding's filter criteria and removes the
+	 * selection from contexts that no longer match.
+	 *
+	 * @param {sap.ui.model.odata.v4.lib._Cache} oCache
+	 *   The cache to be used
+	 * @param {string} [sGroupId]
+	 *   The group ID to be used for the request
+	 *
+	 * @private
+	 */
+	ODataListBinding.prototype.validateSelection = function (oCache, sGroupId) {
+		if (!this.mParameters.$$clearSelectionOnFilter || "$$aggregation" in this.mParameters
+			|| this.oHeaderContext.isSelected()) {
+			return;
+		}
+
+		const aSelectedContexts = this._getAllExistingContexts(true)
+			.filter((oContext) => oContext.isSelected());
+
+		if (!aSelectedContexts.length) {
+			return;
+		}
+
+		const iStartOfPredicate = this.getResolvedPath().length;
+		const aPredicatesIn = aSelectedContexts
+			.map((oContext) => oContext.getPath().slice(iStartOfPredicate));
+		oCache.requestFilteredOrderedPredicates(aPredicatesIn, this.lockGroup(sGroupId), true)
+			.then((aPredicatesOut) => {
+				const oPredicates = new Set(aPredicatesOut);
+				aSelectedContexts.forEach((oContext) => {
+					if (!oPredicates.has(oContext.getPath().slice(iStartOfPredicate))) {
+						oContext.setSelected(false);
+					}
+				});
+			}, (oError) => {
+				this.oModel.reportError("Failed to validate selection", sClassName, oError);
+			});
 	};
 
 	//*********************************************************************************************

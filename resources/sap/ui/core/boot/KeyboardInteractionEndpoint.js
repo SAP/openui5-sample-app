@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/base/Log"],function(e){"use strict";let i;function t(){i??=new Promise((e,i)=>{sap.ui.require(["sap/ui/core/interaction/KeyboardInteractionDisplay"],e,i)});return i}const n=new Map;const s={"sap.ui.interaction.RequestMessagePort":e=>{const i=e.data;const t=i?.id;if(!t){return}const o=n.get(t);if(o){e.source.postMessage({service:"sap.ui.interaction.MessagePortReady"},e.origin,[o.port])}else{const i=new MessageChannel;n.set(t,{origin:e.origin,port:i.port2});i.port1.onmessage=e=>{const t=e.data;const n=t?.service;const o=s[n];if(o){o(e,i.port1)}};e.source.postMessage({service:"sap.ui.interaction.MessagePortReady"},e.origin,[i.port2])}},"sap.ui.interaction.StartDisplay":async(e,i)=>{const n=await t();await n.activate(i)},"sap.ui.interaction.StopDisplay":async e=>{const i=await t();i.deactivate()}};window.addEventListener("message",i=>{const t=i?.data?.service;const n=s[t];if(n){const t=new URL(sap.ui.require.toUrl(""),document.baseURI)?.origin;if(i.origin!==document.location.origin&&i.origin!==t){e.error(`Received message from an unauthorized origin: ${i.origin}.`);return}n?.(i)}});return{run:function(){return Promise.resolve()}}});
+//# sourceMappingURL=KeyboardInteractionEndpoint.js.map

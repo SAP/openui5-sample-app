@@ -74,7 +74,7 @@ function(
 	 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -426,7 +426,12 @@ function(
 
 		// Announce error value state update, only when the visual focus is in the input field
 		if (this.getErrorMessageAnnouncementState() && this.hasStyleClass("sapMFocus")) {
-			sValueStateMessageHiddenText && this._oInvisibleMessage.announce(sValueStateMessageHiddenText.textContent);
+			if (sValueStateMessageHiddenText) {
+				const sValueStateMessageHiddenTextLinks = document.getElementById(this.getValueStateLinksShortcutsId());
+				const sLinksAnnouncement = sValueStateMessageHiddenTextLinks ? sValueStateMessageHiddenTextLinks.textContent : "";
+				const sTextToAnnounce = `${sValueStateMessageHiddenText.textContent} ${sLinksAnnouncement}`;
+				this._oInvisibleMessage.announce(sTextToAnnounce);
+			}
 			this.setErrorMessageAnnouncementState(false);
 		}
 
@@ -736,6 +741,11 @@ function(
 			oEvent.preventDefault();
 		}
 	};
+
+	InputBase.prototype.areHotKeysPressed = function (oEvent) {
+		return (oEvent.ctrlKey || oEvent.metaKey) && oEvent.altKey && oEvent.which === KeyCodes.F8;
+	};
+
 
 	/**
 	 * Handle cut event.
@@ -1067,6 +1077,38 @@ function(
 	};
 
 	/**
+	 * Gets the ID of the hidden value state message related to value state links
+	 *
+	 * @returns {string} The ID of the hidden value state message related to value state links
+	 * @protected
+	 */
+	InputBase.prototype.getValueStateLinksShortcutsId = function() {
+		return this.getValueStateMessageId() + "-shortcuts";
+	};
+
+	/**
+	 * Returns the keyboard shortcuts announcement for the value state links
+	 *
+	 * @returns {string} The text for value state links shortcuts
+	 * @protected
+	 */
+	InputBase.prototype.getValueStateLinksShortcutsTextAcc = function () {
+		const aLinks = this.getValueStateLinksForAcc();
+		if (!aLinks.length) {
+			return "";
+		}
+
+		let sSingleLinkShortcutKey = "INPUTBASE_VALUE_STATE_LINK";
+		let sMultipleLinksShortcutKey = "INPUTBASE_VALUE_STATE_LINKS";
+
+		if (Device.os.macintosh){
+			sSingleLinkShortcutKey += "_MAC";
+			sMultipleLinksShortcutKey += "_MAC";
+		}
+		return Library.getResourceBundleFor("sap.m").getText(aLinks.length === 1 ? sSingleLinkShortcutKey : sMultipleLinksShortcutKey);
+	};
+
+	/**
 	 * Gets the state of the value state message announcemnt.
 	 *
 	 * @returns {boolean} True, if the error value state should be announced.
@@ -1368,6 +1410,14 @@ function(
 	 */
 	InputBase.prototype._getToolbarInteractive = function () {
 		return true;
+	};
+
+	/**
+	 * Hook function
+	 * @returns {Array} Array of links for the value state message acc
+	 */
+	InputBase.prototype.getValueStateLinksForAcc = function(){
+		return [];
 	};
 
 	return InputBase;

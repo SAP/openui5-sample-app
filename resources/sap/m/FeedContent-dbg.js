@@ -28,7 +28,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 * @since 1.34
 	 *
 	 * @public
@@ -95,7 +95,6 @@ sap.ui.define([
 		this._oContentText = new Text(this.getId() + "-content-text", {
 			maxLines : 2
 		});
-		this._oContentText.cacheLineHeight = false;
 		this.setAggregation("_contentTextAgr", this._oContentText, true);
 		this.setTooltip("{AltText}");
 	};

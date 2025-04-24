@@ -17,7 +17,8 @@ sap.ui.define([
 	"sap/m/p13n/modules/UIManager",
 	"sap/m/p13n/modules/StateHandlerRegistry",
 	"sap/m/p13n/modules/xConfigAPI",
-	"sap/m/p13n/enums/ProcessingStrategy"
+	"sap/m/p13n/enums/ProcessingStrategy",
+	"sap/m/p13n/enums/PersistenceMode"
 ], (
 	AdaptationProvider,
 	merge,
@@ -31,7 +32,8 @@ sap.ui.define([
 	UIManager,
 	StateHandlerRegistry,
 	xConfigAPI,
-	ProcessingStrategy
+	ProcessingStrategy,
+	PersistenceMode
 ) => {
 	"use strict";
 
@@ -69,7 +71,7 @@ sap.ui.define([
 	 * @alias sap.m.p13n.Engine
 	 * @extends sap.m.p13n.modules.AdaptationProvider
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 * @public
 	 * @since 1.104
 	 */
@@ -692,14 +694,6 @@ sap.ui.define([
 
 		let fResolveRTA;
 
-		//var aVMs = this.hasForReference(oControl, "sap.ui.fl.variants.VariantManagement");
-		// TODO: clarify if we need this error handling / what to do with the Link if we want to keep it
-		const aPVs = this.hasForReference(oControl, "sap.m.p13n.PersistenceProvider");
-
-		if (aPVs.length > 0 && !oControl.isA("sap.ui.mdc.link.Panel")) {
-			return Promise.reject("Please do not use a PeristenceProvider in RTA.");
-		}
-
 		const oOriginalModifHandler = this.getModificationHandler(oControl);
 		const oTemporaryRTAHandler = new FlexModificationHandler();
 
@@ -715,7 +709,8 @@ sap.ui.define([
 		this._setModificationHandler(oControl, oTemporaryRTAHandler);
 
 		this.uimanager.show(oControl, aKeys, {
-			showReset: false
+			showReset: false,
+			refreshPropertyHelper: true
 		}).then((oContainer) => {
 			const oCustomHeader = oContainer.getCustomHeader();
 			if (oCustomHeader) {
@@ -889,18 +884,18 @@ sap.ui.define([
 	 *
 	 * @param {sap.ui.core.Control} vControl The registered control instance
 	 * @param {string|string[]} aKeys The key for the related controller
-	 * @param {Object[]} aCustomInfo A custom set of propertyinfos as base to create the UI
+	 * @param {boolean | undefined} bRefreshPropertyHelper A custom set of propertyinfos as base to create the UI
 	 *
 	 * @returns {Promise} A Promise resolving after the adaptation housekeeping has been initialized
 	 */
-	Engine.prototype.initAdaptation = function(vControl, aKeys) {
+	Engine.prototype.initAdaptation = function(vControl, aKeys, bRefreshPropertyHelper) {
 		this.verifyController(vControl, aKeys);
 
 		//1) Cache property helper
 		const oRegistryEntry = this._getRegistryEntry(vControl);
 		const oControl = Engine.getControlInstance(vControl);
 
-		if (oRegistryEntry.helper) {
+		if (!bRefreshPropertyHelper && oRegistryEntry.helper) {
 			return Promise.resolve(oRegistryEntry.helper);
 		}
 
@@ -1197,6 +1192,42 @@ sap.ui.define([
 		}
 
 		return oModificationSetting;
+	};
+
+	/**
+	 * Determines global persistence mode enablement based on the given modification payload
+	 *
+	 * @private
+	 * @param {object} oModificationPayload The modification registry entry payload
+	 * @returns {boolean|undefined} <code>undefined</code> if the given payload does not allow for persistence, or a boolean indicating enablement of global persistence
+	 */
+	Engine.prototype._determineGlobalPersistence = function(oModificationPayload) {
+		const {mode, hasVM} = oModificationPayload;
+
+		if (mode === PersistenceMode.Transient) {
+			return undefined;
+		}
+
+		if (mode === PersistenceMode.Auto) {
+			return hasVM ? false : true;
+		}
+
+		return mode === PersistenceMode.Global;
+	};
+
+	/**
+	 * Executes a given callback only if the control's configuration allows for change persistence
+	 *
+	 * @private
+	 * @param {string|sap.ui.core.Control} vControl The control id or instance
+	 * @param {function(bGlobalPersistenceEnabled:boolean)} fCallback The callback to be executed, if change persistence is available
+	 * @returns {any} The return value of the callback
+	 */
+	Engine.prototype._runWithPersistence = function(vControl, fCallback) {
+		const {payload} = oEngine._determineModification(vControl);
+		const vGlobalPersistence = oEngine._determineGlobalPersistence(payload);
+		const bPersistenceEnabled = typeof vGlobalPersistence === "boolean";
+		return bPersistenceEnabled && fCallback(vGlobalPersistence);
 	};
 
 	Engine.prototype.hasForReference = (vControl, sControlType) => {

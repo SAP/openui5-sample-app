@@ -60,7 +60,45 @@ sap.ui.define([
 		oBooleanType,
 		mCodeListUrl2Promise = {},
 		DEBUG = Log.Level.DEBUG,
-		aInt64Names = ["$count", "@$ui5.node.groupLevelCount", "@$ui5.node.level"],
+		oGeoJSON = {
+			$kind : "ComplexType",
+			$OpenType : true,
+			bbox : {
+				$kind : "Property",
+				$Type : "Edm.Double",
+				$isCollection : true
+			},
+			type : {
+				$kind : "Property",
+				$Nullable : false,
+				$Type : "Edm.String"
+			}
+		},
+		oGeometry = {
+			...oGeoJSON, // "$BaseType" : "GeoJSON",
+			coordinates : {
+				$kind : "Property",
+				$Nullable : false,
+				$Type : "Edm.Double",
+				$isCollection : true
+			}
+		},
+		mEdmScope = {
+			"Edm.Geography" : {...oGeoJSON, $Abstract : true},
+			"Edm.GeographyLineString" : oGeometry,
+			"Edm.GeographyMultiLineString" : oGeometry,
+			"Edm.GeographyMultiPoint" : oGeometry,
+			"Edm.GeographyMultiPolygon" : oGeometry,
+			"Edm.GeographyPoint" : oGeometry,
+			"Edm.GeographyPolygon" : oGeometry
+			// Note: same for "Edm.Geometry*", see end of file
+		},
+		aInt64Names = [
+			"$count",
+			"$selectionCount",
+			"@$ui5.node.groupLevelCount",
+			"@$ui5.node.level"
+		],
 		oInt64Type,
 		rLeftBraces = /\$\(/g,
 		rNumber = /^-?\d+$/,
@@ -157,7 +195,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.134.0
+		 * @version 1.135.0
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
@@ -1091,7 +1129,7 @@ sap.ui.define([
 			if (!bPrefetch) {
 				aPromises.push(this.oModel._requestAnnotationChanges());
 				this.oMetadataPromise = SyncPromise.all(aPromises).then(function (aMetadata) {
-					var mScope = aMetadata[0];
+					var mScope = Object.assign(aMetadata[0], mEdmScope);
 
 					that.aAnnotationChanges = aMetadata.pop();
 					that._mergeAnnotations(mScope, aMetadata.slice(1));
@@ -1785,7 +1823,7 @@ sap.ui.define([
 				return oProperty["$ui5.type"];
 			}
 
-			if (oProperty.$isCollection) {
+			if (oProperty.$isCollection && !rNumber.test(sLastSegment)) {
 				Log.warning("Unsupported collection type, using " + oType.getName(), sPath,
 					sODataMetaModel);
 			} else {
@@ -2674,6 +2712,22 @@ sap.ui.define([
 	 */
 	ODataMetaModel.prototype.getValueListType
 		= _Helper.createGetMethod("fetchValueListType", true);
+
+	/**
+	 * Tells whether this metadata model's service prefers requests to use a resource path with
+	 * navigation properties instead of a canonical path, thus reflecting the object composition.
+	 * See "com.sap.vocabularies.Common.v1.AddressViaNavigationPath" for more details.
+	 *
+	 * @returns {boolean|undefined}
+	 *   <code>true</code> if the "com.sap.vocabularies.Common.v1.AddressViaNavigationPath" tag is
+	 *   present, <code>undefined</code> if it is missing or metadata is not (yet) available
+	 *
+	 * @public
+	 * @since 1.135.0
+	 */
+	ODataMetaModel.prototype.isAddressViaNavigationPath = function () {
+		return this.getObject("/@com.sap.vocabularies.Common.v1.AddressViaNavigationPath");
+	};
 
 	/**
 	 * Method not supported
@@ -3705,6 +3759,11 @@ sap.ui.define([
 	ODataMetaModel.clearCodeListsCache = function () {
 		mCodeListUrl2Promise = {};
 	};
+
+	Object.keys(mEdmScope).forEach((sGeographyName) => {
+		const sGeometryName = sGeographyName.replace("Geography", "Geometry");
+		mEdmScope[sGeometryName] = mEdmScope[sGeographyName];
+	});
 
 	return ODataMetaModel;
 });

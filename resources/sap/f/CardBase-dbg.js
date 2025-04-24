@@ -10,7 +10,10 @@ sap.ui.define([
 	"sap/ui/core/Lib",
 	"sap/f/cards/util/CardBadgeEnabler",
 	"sap/f/library",
-	"sap/base/Log"
+	"sap/base/Log",
+	"sap/ui/events/KeyCodes",
+	// jQuery Plugin "firstFocusableDomRef", "lastFocusableDomRef"
+	"sap/ui/dom/jquery/Focusable"
 ], function (
 	Control,
 	InvisibleText,
@@ -18,7 +21,8 @@ sap.ui.define([
 	Library,
 	CardBadgeEnabler,
 	library,
-	Log
+	Log,
+	KeyCodes
 ) {
 	"use strict";
 
@@ -37,7 +41,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -124,6 +128,12 @@ sap.ui.define([
 		this._ariaText = new InvisibleText({id: this.getId() + "-ariaText"});
 		this._ariaText.setText(this._oRb.getText("ARIA_ROLEDESCRIPTION_CARD"));
 
+		this._describedByInteractiveText = new InvisibleText({ id: this.getId() + "-describedByInteractive" });
+		this._describedByInteractiveText.setText(this._oRb.getText("ARIA_ACTIVATE_CARD"));
+
+		this._describedByCardTypeText = new InvisibleText({ id: this.getId() + "-describedByCardTypeText"});
+		this._describedByCardTypeText.setText(this._oRb.getText("ARIA_ROLEDESCRIPTION_CARD"));
+
 		this._sGridItemRole = null;
 
 		this.initCardBadgeEnablement();
@@ -141,6 +151,17 @@ sap.ui.define([
 		if (this._ariaText) {
 			this._ariaText.destroy();
 			this._ariaText = null;
+		}
+
+		this._describedByInteractiveText.destroy();
+		this._describedByInteractiveText = null;
+
+		this._describedByCardTypeText.destroy();
+		this._describedByCardTypeText = null;
+
+		if (this._invisibleTitle) {
+			this._invisibleTitle.destroy();
+			this._invisibleTitle = null;
 		}
 
 		this.destroyCardBadgeEnablement();
@@ -236,7 +257,10 @@ sap.ui.define([
 		this._hideBadge();
 	};
 
-	CardBase.prototype.onfocusin = function () {
+	CardBase.prototype.onfocusin = function (oEvent) {
+		if (oEvent.target !== this.getDomRef()) {
+			this.oLastFocusedElement = oEvent.target;
+		}
 		this._startBadgeHiding();
 	};
 
@@ -267,17 +291,40 @@ sap.ui.define([
 	CardBase.prototype._getAriaLabelledIds = function () {
 		var oHeader = this.getCardHeader();
 		const sBlockingMessageAriaLabelsIds = this._getBlockingMessageAriaLabelledByIds();
-
-		if (oHeader) {
+		if (oHeader && oHeader.getVisible()) {
 			if (oHeader._getTitle && oHeader._getTitle()) {
 				if (sBlockingMessageAriaLabelsIds) {
 					return oHeader._getTitle().getId() + " " + sBlockingMessageAriaLabelsIds;
 				}
 				return oHeader._getTitle().getId();
 			}
+		} else if (oHeader?.getTitle()) {
+			if (!this._invisibleTitle) {
+				this._invisibleTitle = new InvisibleText({ id: this.getId() + "-invisibleTitle" });
+			}
+			this._invisibleTitle.setText(oHeader.getTitle());
+
+			return this._invisibleTitle.getId();
 		}
 
 		return this._ariaText.getId();
+	};
+
+	CardBase.prototype._getAriaDescribedByIds = function () {
+		const bHasCardBadgeCustomData = this._getCardBadgeCustomData().length > 0;
+		const aIds = [];
+
+		aIds.push(this._describedByCardTypeText.getId());
+
+		if (this.isInteractive() && this.isRoleListItem()) {
+			aIds.push(this._describedByInteractiveText.getId());
+		}
+
+		if (bHasCardBadgeCustomData) {
+			aIds.push(this._getInvisibleCardBadgeText().getId());
+		}
+
+		return aIds.join(" ");
 	};
 
 	/**
@@ -300,6 +347,35 @@ sap.ui.define([
 		return sTitleId;
 	};
 
+	CardBase.prototype.onkeydown = function (oEvent) {
+
+		if (oEvent.code === "F7") {
+			this._handleF7Key(oEvent);
+			return;
+		}
+
+		if (oEvent.target === this.getDomRef() && !oEvent.ctrlKey && !oEvent.metaKey) {
+			if (oEvent.which === KeyCodes.ENTER) {
+				this._handleTap(oEvent);
+			} else if (oEvent.which === KeyCodes.SPACE) {
+				// To prevent the browser scrolling.
+				oEvent.preventDefault();
+			} else if (oEvent.which === KeyCodes.SHIFT || oEvent.which === KeyCodes.ESCAPE) {
+				this._bPressedEscapeOrShift = true;
+			}
+		}
+	};
+
+	CardBase.prototype.onkeyup = function (oEvent) {
+		if (oEvent.target === this.getDomRef()) {
+			if (oEvent.which === KeyCodes.SPACE && !this._bPressedEscapeOrShift) {
+				this._handleTap(oEvent);
+			} else if (oEvent.which === KeyCodes.SHIFT || oEvent.which === KeyCodes.ESCAPE) {
+				this._bPressedEscapeOrShift = false;
+			}
+		}
+	};
+
 	/**
 	 * Listens for ontap event
 	 *
@@ -309,16 +385,7 @@ sap.ui.define([
 		if (this.isMouseInteractionDisabled()) {
 			return;
 		}
-		this._handleTapOrSelect(oEvent);
-	};
-
-	/**
-	 * Listens for onsapselect event
-	 *
-	 * @param {object} oEvent event
-	 */
-	CardBase.prototype.onsapselect = function (oEvent) {
-		this._handleTapOrSelect(oEvent);
+		this._handleTap(oEvent);
 	};
 
 	/**
@@ -326,7 +393,7 @@ sap.ui.define([
 	 *
 	 * @param {object} oEvent event
 	 */
-	CardBase.prototype._handleTapOrSelect = function (oEvent) {
+	CardBase.prototype._handleTap = function (oEvent) {
 		if (!this.isInteractive() ||
 			oEvent.isMarked() ||
 			!this.isRoleListItem()) {
@@ -340,7 +407,34 @@ sap.ui.define([
 		this.firePress({
 			originalEvent: oEvent
 		});
+
 		oEvent.preventDefault();
+		oEvent.stopPropagation();
+	};
+
+	/**
+	 * Handler for F7 key
+	 * @param {Object} oEvent - key object
+	 * @private
+	 */
+	CardBase.prototype._handleF7Key = function (oEvent) {
+		if (!this.isInteractive() || !this.isRoleListItem()) {
+			return;
+		}
+
+		const oTarget = oEvent.target;
+		const $FirstFocusableItem = this.$().firstFocusableDomRef();
+
+		if (oTarget !== this.getDomRef()) {
+			this.getDomRef().focus();
+		} else if (this.oLastFocusedElement && !$FirstFocusableItem.classList.contains("sapMListUl")) { // to prevent the list from getting the F7 event and trap the focus
+			this.oLastFocusedElement.focus();
+		} else if ($FirstFocusableItem) {
+			$FirstFocusableItem.focus();
+		}
+
+		oEvent.preventDefault();
+		oEvent.stopPropagation();
 	};
 
 	/**

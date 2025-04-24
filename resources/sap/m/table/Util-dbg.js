@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m.table.Util
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 * @since 1.96.0
 	 * @private
 	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp
@@ -549,7 +549,7 @@ sap.ui.define([
 
 		oDetailsList.bindItems({
 			...mSettings.itemsBindingInfo,
-			templateShareable: false,
+			templateShareable: true,
 			template: oItemsTemplate
 		});
 

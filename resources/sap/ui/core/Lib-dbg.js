@@ -613,29 +613,7 @@ sap.ui.define([
 
 				if (aDependencies && aDependencies.length) {
 					if (!mOptions.sync) {
-						var aEagerDependencies = [],
-							aLazyDependencies = [];
-
-						aDependencies.forEach(function(oDependency) {
-							if (oDependency.lazy) {
-								aLazyDependencies.push(oDependency);
-							} else {
-								aEagerDependencies.push(oDependency.name);
-							}
-						});
-						// aEagerDependencies contains string elements before executing the next line
-
-						aEagerDependencies = VersionInfo._getTransitiveDependencyForLibraries(aEagerDependencies)
-							.map(function(sDependencyName) {
-								return {
-									name: sDependencyName
-								};
-							});
-						// aEagerDependencies contains object elements after executing the above line
-
-						// combine transitive closure of eager dependencies and direct lazy dependencies,
-						// the latter might be redundant
-						aDependencies = aEagerDependencies.concat(aLazyDependencies);
+						aDependencies = VersionInfo._getTransitiveDependencyForLibraries(aDependencies);
 					}
 
 					aPromises = aDependencies.map(function(oDependency) {
@@ -1028,7 +1006,9 @@ sap.ui.define([
 					// add known library name to cache to avoid later guessing
 					mGuessedLibraries[sBundleUrl] = this;
 
-					vResult = ResourceBundle.create({
+					const fnResourceBundleCreate = bSync ? ResourceBundle._createSync : ResourceBundle.create;
+
+					vResult = fnResourceBundleCreate({
 						bundleUrl: sBundleUrl,
 						supportedLocales: vI18n.supportedLocales,
 						fallbackLocale: vI18n.fallbackLocale,
@@ -1648,15 +1628,15 @@ sap.ui.define([
 		}
 
 		var mAdditionalConfig = {};
-		var aLibraryNames = [];
+		var aAllLibraries = [];
 		vLibConfigs.forEach(function(vLibrary) {
 			if (typeof vLibrary === "object") {
 				if (vLibrary.hasOwnProperty("url") || vLibrary.hasOwnProperty("json")) {
 					mAdditionalConfig[vLibrary.name] = vLibrary;
 				}
-				aLibraryNames.push(vLibrary.name);
+				aAllLibraries.push(vLibrary);
 			} else {
-				aLibraryNames.push(vLibrary);
+				aAllLibraries.push({name: vLibrary});
 			}
 		});
 
@@ -1664,14 +1644,14 @@ sap.ui.define([
 			bRequire = !mOptions.preloadOnly;
 
 		if (!mOptions.sync) {
-			aLibraryNames = VersionInfo._getTransitiveDependencyForLibraries(aLibraryNames);
+			aAllLibraries = VersionInfo._getTransitiveDependencyForLibraries(aAllLibraries);
 		}
 
-		var aLibs = aLibraryNames.map(function(sLibraryName) {
-			var oLib = Library._get(sLibraryName, true /* bCreate */);
+		var aLibs = aAllLibraries.map(function(oLibrary) {
+			var oLib = Library._get(oLibrary.name, true /* bCreate */);
 
-			if (oLib._loadingStatus == null && mAdditionalConfig[sLibraryName] && mAdditionalConfig[sLibraryName].url) {
-				registerModulePath(sLibraryName, mAdditionalConfig[sLibraryName].url);
+			if (oLib._loadingStatus == null && mAdditionalConfig[oLibrary.name] && mAdditionalConfig[oLibrary.name].url) {
+				registerModulePath(oLibrary.name, mAdditionalConfig[oLibrary.name].url);
 			}
 
 			return oLib;

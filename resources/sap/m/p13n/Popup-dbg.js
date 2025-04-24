@@ -58,7 +58,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @public
 	 * @since 1.97
@@ -215,6 +215,7 @@ sap.ui.define([
 	 * @param {object} [mSettings] Configuration for the related popup container
 	 * @param {sap.ui.core.CSSSize} [mSettings.contentHeight] Height configuration for the related popup container
 	 * @param {sap.ui.core.CSSSize} [mSettings.contentWidth] Width configuration for the related popup container
+	 * @param {string} [mSettings.activePanel] Key of active panel that is opened initially
 	 */
 	Popup.prototype.open = function(oSource, mSettings) {
 
@@ -237,6 +238,10 @@ sap.ui.define([
 			this._oPopup.open();
 		} else {
 			this._oPopup.openBy(oSource);
+		}
+
+		if (mSettings?.activePanel) {
+			this._getContainer(true).switchView(mSettings.activePanel);
 		}
 
 		const oParent = this.getParent();
@@ -490,12 +495,12 @@ sap.ui.define([
 		});
 	};
 
-	Popup.prototype._getContainer = function(oSource) {
+	Popup.prototype._getContainer = function(bWithoutSwitch) {
 		if (!this._oContainer) {
 			this._oContainer = new Container();
 		}
 
-		if (this._oContainer.getViews().length > 1) {
+		if (this._oContainer.getViews().length > 1 && !bWithoutSwitch) {
 			this._oContainer.switchView(this._oContainer.getViews()[1].getKey());
 		}
 

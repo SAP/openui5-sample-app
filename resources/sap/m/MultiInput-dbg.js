@@ -87,8 +87,8 @@ function(
 	* <li> When you want the user to select from a predefined set of options. Use {@link sap.m.MultiComboBox} instead.</li>
 	* </ul>
 	* <h3>Responsive Behavior</h3>
-	* If there are many tokens, the control shows only the last selected tokens that fit and for the others a label <i>N-more</i> is provided.
-	* In case the length of the last selected token is exceeding the width of the control, only a label <i>N-Items</i> is shown.
+	* If there are many tokens, the control shows only the first selected tokens that fit and for the others a label <i>N-more</i> is provided.
+	* In case the length of the first selected token is exceeding the width of the control, only a label <i>N-Items</i> is shown.
 	* In both cases, pressing on the label will show the tokens in a popup.
 	* <u>On Phones:</u>
 	* <ul>
@@ -110,7 +110,7 @@ function(
 	* @extends sap.m.Input
 	*
 	* @author SAP SE
-	* @version 1.134.0
+	* @version 1.135.0
 	*
 	* @constructor
 	* @public
@@ -290,10 +290,13 @@ function(
 
 		this.setAggregation("tokenizer", oTokenizer);
 
+		// Predefine the afterPopupClose function because in the standalone tokenizer the n-more popup
+		// closes when the focus is lost and the tokenizer goes to Narrow mode
+		// The tokenizer should stay in Loose mode when the focus goes to the input
+		oTokenizer.afterPopupClose = this._onAfterCloseTokensPicker.bind(this);
+
 		oTokenizer.getTokensPopup()
 			.attachBeforeOpen(this._onBeforeOpenTokensPicker.bind(this))
-			.attachAfterClose(this._onAfterCloseTokensPicker.bind(this))
-
 			/* Prevent closing of n more popover when input is clicked */
 			._getPopup().setExtraContent([oTokenizer, this]);
 

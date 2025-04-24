@@ -183,7 +183,7 @@ sap.ui.define([
 	 * mobile devices, it opens in full screen.
 	 *
 	 * @extends sap.m.DatePicker
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -1209,6 +1209,7 @@ sap.ui.define([
 	};
 
 	function _handleAfterOpen(oEvent){
+		this._oClocks._showFirstClock();
 		this._oCalendar.focus();
 
 		Device.media.attachHandler(this._handleWindowResize, this);

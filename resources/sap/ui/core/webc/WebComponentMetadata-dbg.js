@@ -23,7 +23,7 @@ function(ElementMetadata, WebComponentRenderer, camelize) {
 	 *
 	 * @class
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 * @since 1.118.0
 	 * @experimental Since 1.118.0 The API might change. It is not intended for productive usage yet!
 	 * @alias sap.ui.core.webc.WebComponentMetadata

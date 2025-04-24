@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -1056,13 +1056,26 @@ sap.ui.define([
 	 * This is used to determine the role for screenreader support
 	 *
 	 * @param {sap.ui.layout.form.FormContainer} oContainer FormContainer
-	 * @return {boolean} <code>true</code> if the  <code>FormContainer</code> is labelled
+	 * @return {boolean} <code>true</code> if the <code>FormContainer</code> is labelled
 	 * @private
 	 * @since: 1.126.0
 	 */
 	FormLayout.prototype.isContainerLabelled = function(oContainer) {
 
 		return !!oContainer.getTitle() || !!oContainer.getToolbar() || oContainer.getAriaLabelledBy().length > 0 || oContainer.getExpandable();
+
+	};
+
+	/**
+	 * Defines if the rendering of the layout depends on the <code>editable</code> property.
+	 *
+	 * @return {boolean} <code>true</code> if the switching <code>editable</code> must trigger re-rendering
+	 * @private
+	 * @since: 1.135.0
+	 */
+	FormLayout.prototype.invalidateEditableChange = function() {
+
+		return false;
 
 	};
 

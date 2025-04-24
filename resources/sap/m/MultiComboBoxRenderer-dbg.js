@@ -3,9 +3,11 @@
  * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(['./ComboBoxBaseRenderer','./ComboBoxTextFieldRenderer', "sap/ui/core/Lib", 'sap/ui/core/Renderer'],
-	function(ComboBoxBaseRenderer, ComboBoxTextFieldRenderer, Library, Renderer) {
+sap.ui.define(['./ComboBoxBaseRenderer','./ComboBoxTextFieldRenderer', "sap/ui/core/Lib", 'sap/ui/core/Renderer', 'sap/ui/core/library'],
+	function(ComboBoxBaseRenderer, ComboBoxTextFieldRenderer, Library, Renderer, coreLibrary) {
 	"use strict";
+
+	var ValueState = coreLibrary.ValueState;
 
 	/**
 	 * MultiComboBox renderer.
@@ -45,6 +47,12 @@ sap.ui.define(['./ComboBoxBaseRenderer','./ComboBoxTextFieldRenderer', "sap/ui/c
 			oTokenizer = oControl.getAggregation("tokenizer"),
 			oInvisibleTextId = oTokenizer && oTokenizer.getTokensInfoId();
 
+		if (oControl.getValueState() !== ValueState.Error && oControl.getValueStateLinksForAcc().length ){
+			sAriaDescribedBy = sAriaDescribedBy
+				? `${sAriaDescribedBy} ${oControl.getValueStateLinksShortcutsId()}`
+				: oControl.getValueStateLinksShortcutsId();
+		}
+
 		return (sAriaDescribedBy ? sAriaDescribedBy + " " : "") + oInvisibleTextId;
 	};
 
@@ -59,6 +67,12 @@ sap.ui.define(['./ComboBoxBaseRenderer','./ComboBoxTextFieldRenderer', "sap/ui/c
 			oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 		mAccessibilityState.roledescription = oResourceBundle.getText("MULTICOMBOBOX_ARIA_ROLE_DESCRIPTION");
+
+		if (oControl.getValueState() === ValueState.Error && oControl.getValueStateLinksForAcc().length) {
+			mAccessibilityState.errormessage = mAccessibilityState.errormessage
+			? `${mAccessibilityState.errormessage} ${oControl.getValueStateLinksShortcutsId()}`
+			: oControl.getValueStateLinksShortcutsId();
+		}
 
 		return mAccessibilityState;
 	};

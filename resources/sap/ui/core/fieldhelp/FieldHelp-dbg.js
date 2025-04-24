@@ -23,6 +23,27 @@ sap.ui.define([
 	const sURNPrefix = "urn:sap-com:documentation:key?=";
 
 	/**
+	 * Returns whether the two given sets are identical.
+	 *
+	 * @param {Set<any>} oSet0 The first set
+	 * @param {Set<any>} oSet1 The second set
+	 * @returns {boolean} Whether the given sets are identical
+	 */
+	function isSetIdentical(oSet0, oSet1) {
+		if (oSet0.size !== oSet1.size) {
+			return false;
+		}
+
+		for (const oItem of oSet0) {
+			if (!oSet1.has(oItem)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Replacement for <code>ManagedObject.prototype.updateFieldHelp</code> to update the field help information
 	 * for the given control property name of <code>this</code> control instance, if the corresponding binding has been
 	 * created or destroyed, or its context has been changed.
@@ -92,20 +113,20 @@ sap.ui.define([
 		#fnUpdateHotspotsCallback = null;
 
 		/**
-		 * Maps a control ID to an object mapping a control property to a back-end help key URNs.
+		 * Maps a control ID to an object mapping a control property to an array of back-end help key URNs.
 		 *
 		 * @default {}
 		 * @type {Object<string, Object<string, string[]>>}
 		 */
-		#mDocuRefControlToFieldHelp = {};
+		mDocuRefControlToFieldHelp = {};
 
 		/**
-		 * A Promise that resolves when all hotspot updates are done.
+		 * A boolean that is <code>true</code> as long as the hotspots are updated.
 		 *
-		 * @default null
-		 * @type {Promise}
+		 * @default false
+		 * @type {boolean}
 		 */
-		#oUpdateHotspotsPromise = null;
+		#bUpdateHotspotsPending = false;
 
 		/**
 		 * @typedef {Map<string,Map<string,string>>} sap.ui.core.fieldhelp.Text2IdByType
@@ -464,10 +485,10 @@ sap.ui.define([
 		 */
 		_getFieldHelpDisplayMapping() {
 			const mControlIDToDisplayControlID = {};
-			for (const sControlID in this.#mDocuRefControlToFieldHelp) {
+			for (const sControlID in this.mDocuRefControlToFieldHelp) {
 				const oControl = Element.getElementById(sControlID);
 				if (!oControl) { // control has been destroyed, cleanup internal data structure
-					delete this.#mDocuRefControlToFieldHelp[sControlID];
+					delete this.mDocuRefControlToFieldHelp[sControlID];
 					continue;
 				}
 
@@ -486,28 +507,62 @@ sap.ui.define([
 		}
 
 		/**
+		 * Returns the map of control ID to the corresponding set of documentation reference URNs.
+		 *
+		 * The method considers the following precedence for <em>explicit</em> field help set using
+		 * <code>FieldHelpUtil.setDocumentationRef</code> or <code>FieldHelpCustomData</code> and <em>implicit</em>
+		 * field help derived from OData bindings.
+		 * 1. Explicit field help on the control itself
+		 * 2. Explicit field help defined for controls pointing to the control as field help display control
+		 * 3. Union of implicit field helps defined on the control itself and controls pointing to the control as field
+		 *   help display control
+		 *
+		 * @returns {Map<string, Set<string>>}
+		 *   The map of control ID to the corresponding set of documentation reference URNs
+		 */
+		_getDisplayControlIDToURNs() {
+			const mControlIDToDisplayControlID = this._getFieldHelpDisplayMapping();
+			const mExplicitDisplay = new Map();
+			const mExplicitSelf = new Map();
+			const mImplicit = new Map();
+
+			for (const sControlID in this.mDocuRefControlToFieldHelp) {
+				const sDisplayControlID = mControlIDToDisplayControlID[sControlID] || sControlID;
+				const aDocuRefsForControl = this.mDocuRefControlToFieldHelp[sControlID][undefined];
+				if (aDocuRefsForControl) { // explicit field help
+					const oURNSet = new Set(aDocuRefsForControl);
+					if (mControlIDToDisplayControlID[sControlID]) { // on display control
+						const oExistingURNSet = mExplicitDisplay.get(sDisplayControlID);
+						if (oExistingURNSet && !isSetIdentical(oURNSet, oExistingURNSet)) {
+							Log.error("Cannot display field help for control '" + sControlID
+									+ "': different field help already set on hotspot '" + sDisplayControlID + "'",
+								undefined, sClassName);
+							continue;
+						}
+						mExplicitDisplay.set(sDisplayControlID, oURNSet);
+					} else { // on control itself
+						mExplicitSelf.set(sDisplayControlID, oURNSet);
+					}
+				} else {
+					const aDocuRefs = Object.values(this.mDocuRefControlToFieldHelp[sControlID]).flat();
+					// add to a Set to filter duplicates
+					const oURNSet = mImplicit.get(sDisplayControlID) ?? new Set();
+					aDocuRefs.forEach(oURNSet.add.bind(oURNSet));
+					mImplicit.set(sDisplayControlID, oURNSet);
+				}
+			}
+
+			return new Map([...mImplicit, ...mExplicitDisplay, ...mExplicitSelf]);
+		}
+
+		/**
 		 * Gets an array of field help hotspots as required by the SAP Companion.
 		 *
 		 * @returns {module:sap/ui/core/fieldhelp/FieldHelpInfo[]} The array of field help hotspots
 		 */
 		_getFieldHelpHotspots() {
-			const mControlIDToDisplayControlID = this._getFieldHelpDisplayMapping();
-			const mDisplayControlIDToURNs = new Map();
 			const aFieldHelpHotspots = [];
-			Object.keys(this.#mDocuRefControlToFieldHelp).forEach((sControlID) => {
-				const sDisplayControlID = mControlIDToDisplayControlID[sControlID] || sControlID;
-				const oURNSet = mDisplayControlIDToURNs.get(sDisplayControlID)
-					?? mDisplayControlIDToURNs.set(sDisplayControlID, new Set()).get(sDisplayControlID);
-				const aDocuRefsForControl = this.#mDocuRefControlToFieldHelp[sControlID][undefined];
-				const aDocuRefs = aDocuRefsForControl
-					? [aDocuRefsForControl]
-					: Object.values(this.#mDocuRefControlToFieldHelp[sControlID]);
-				aDocuRefs.forEach((aURNs) => {
-					aURNs.forEach(oURNSet.add.bind(oURNSet)); // add to the Set to filter duplicates
-				});
-			});
-
-			for (const [sDisplayControlID, oURNSet] of mDisplayControlIDToURNs) {
+			for (const [sDisplayControlID, oURNSet] of this._getDisplayControlIDToURNs()) {
 				const oControl = Element.getElementById(sDisplayControlID);
 				const sLabel = LabelEnablement._getLabelTexts(oControl)[0];
 				if (!sLabel) {
@@ -548,16 +603,16 @@ sap.ui.define([
 		 */
 		_setFieldHelpDocumentationRefs(oElement, sControlProperty, aDocumentationRefs) {
 			const sControlID = oElement.getId();
-			this.#mDocuRefControlToFieldHelp[sControlID] ||= {};
+			this.mDocuRefControlToFieldHelp[sControlID] ||= {};
 			if (aDocumentationRefs.length > 0) {
-				this.#mDocuRefControlToFieldHelp[sControlID][sControlProperty] = aDocumentationRefs;
+				this.mDocuRefControlToFieldHelp[sControlID][sControlProperty] = aDocumentationRefs;
 			} else {
-				delete this.#mDocuRefControlToFieldHelp[sControlID][sControlProperty];
-				if (Object.keys(this.#mDocuRefControlToFieldHelp[sControlID]).length === 0) {
-					delete this.#mDocuRefControlToFieldHelp[sControlID];
+				delete this.mDocuRefControlToFieldHelp[sControlID][sControlProperty];
+				if (Object.keys(this.mDocuRefControlToFieldHelp[sControlID]).length === 0) {
+					delete this.mDocuRefControlToFieldHelp[sControlID];
 				}
 			}
-			this._updateHotspots().catch(() => {/* avoid uncaught in Promise; do nothing */});
+			this._updateHotspots();
 		}
 
 		/**
@@ -581,34 +636,21 @@ sap.ui.define([
 		/**
 		 * Calls the <code>fnUpdateHotspotsCallback</code> as given in {@link #activate} asynchronously with the latest
 		 * field help hotspots.
-		 *
-		 * @returns {Promise<undefined>}
-		 *   A Promise that resolves when the <code>fnUpdateHotspotsCallback</code> as given in {@link #activate} has
-		 *   been called with the latest field help hotspots; rejects if the field help has been deactivated in between.
 		 */
 		_updateHotspots() {
-			if (this.#oUpdateHotspotsPromise) {
-				return this.#oUpdateHotspotsPromise;
+			if (this.#bUpdateHotspotsPending) {
+				return;
 			}
-			let fnResolve, fnReject;
-			this.#oUpdateHotspotsPromise = new Promise((resolve, reject) => {
-				fnResolve = resolve;
-				fnReject = reject;
-			});
+			this.#bUpdateHotspotsPending = true;
 
 			// gather and send field help info in task so that e.g. field help can be displayed at a column header
 			setTimeout(() => {
 				if (this.isActive()) {
 					this.#fnUpdateHotspotsCallback(this._getFieldHelpHotspots());
 					this.#mMetaModel2TextMappingPromise.clear();
-					fnResolve();
-				} else {
-					fnReject();
 				}
-				this.#oUpdateHotspotsPromise = null;
+				this.#bUpdateHotspotsPending = false;
 			}, 0);
-
-			return this.#oUpdateHotspotsPromise;
 		}
 
 		/**
@@ -706,7 +748,7 @@ sap.ui.define([
 		 */
 		deactivate() {
 			this.#bActive = false;
-			this.#mDocuRefControlToFieldHelp = {};
+			this.mDocuRefControlToFieldHelp = {};
 			this.#fnUpdateHotspotsCallback = null;
 			this.#mMetaModel2TextMappingPromise.clear();
 			this.#mMetamodel2TextPropertyInfo.clear();

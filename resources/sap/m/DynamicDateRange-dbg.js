@@ -288,7 +288,7 @@ sap.ui.define([
 		 * is opened. The dialog is closed via a date time period value selection or by pressing the "Cancel" button.
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.135.0
 		 *
 		 * @constructor
 		 * @public
@@ -586,6 +586,7 @@ sap.ui.define([
 			};
 
 			this._oInput._getValueHelpIcon().setDecorative(bValueHelpDecorative);
+			this._oInput._getValueHelpIcon().setTooltip(oResourceBundle.getText("OPEN_PICKER_TEXT"));
 
 			this._oInput.addDelegate(this._onBeforeInputRenderingDelegate, this);
 

@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -1006,10 +1006,22 @@ sap.ui.define([
 
 	Table.prototype._setHeaderAnnouncement = function() {
 		var oBundle = Library.getResourceBundleFor("sap.m"),
-			sAnnouncement = oBundle.getText("ACC_CTR_TYPE_HEADER_ROW") + " ";
+			sAnnouncement = oBundle.getText("ACC_CTR_TYPE_HEADER_ROW") + " . ";
 
-		if (this.getMultiSelectMode() !== "ClearAll" && this.isAllSelectableSelected()) {
-			sAnnouncement += oBundle.getText("LIST_ALL_SELECTED");
+		if (this.getMode() === "MultiSelect") {
+			if (this.getMultiSelectMode() !== "ClearAll") {
+				if (this.isAllSelectableSelected()) {
+					sAnnouncement += oBundle.getText("LIST_ALL_SELECTED") + " . ";
+				} else {
+					sAnnouncement += oBundle.getText("TABLE_SELECT_ALL_ROWS") + " . ";
+				}
+			} else {
+				sAnnouncement += oBundle.getText("TABLE_DESELECT_ALL_ROWS");
+				if (this.getSelectedItems().length === 0) {
+					sAnnouncement += " " + oBundle.getText("CONTROL_DISABLED");
+				}
+				sAnnouncement += " . ";
+			}
 		}
 
 		this.getColumns(true).forEach(function(oColumn, i) {

@@ -37,7 +37,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -699,7 +699,7 @@ sap.ui.define(["./PluginBase", "sap/base/Log", "sap/base/strings/formatMessage",
 				oTable.attachRowsUpdated(fnHandler, oListener);
 			},
 			detachSelectionChange: function(oTable, fnHandler, oListener) {
-				oTable._getSelectionPlugin().detachSelectionChange(fnHandler, oListener);
+				oTable._getSelectionPlugin()?.detachSelectionChange(fnHandler, oListener);
 				oTable.detachRowsUpdated(fnHandler, oListener);
 			}
 		}

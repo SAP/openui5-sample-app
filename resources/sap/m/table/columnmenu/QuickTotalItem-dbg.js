@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @extends sap.m.table.columnmenu.QuickActionItem
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -46,33 +46,42 @@ sap.ui.define([
 				 * Specifies whether a total for the respective column is shown.
 				 */
 				totaled: { type: "boolean", defaultValue: false }
+			},
+			aggregations: {
+				/**
+				 * Defines the quick action of the quick total item.
+				 */
+				quickAction: { type: "sap.m.table.columnmenu.QuickAction", multiple: false, visibility: "hidden" }
 			}
 		}
 	});
 
 	QuickTotalItem.prototype._getAction = function() {
+		var oQuickAction = this.getAggregation("quickAction");
 		var sLabel = this.getLabel();
-		var oQuickAction = new QuickAction({
-			label: sLabel,
-			content: [this.getContent()],
-			category: library.table.columnmenu.Category.Aggregate,
-			contentSize: library.InputListItemContentSize.S
-		});
 
-		this.addDependent(oQuickAction);
+		if (oQuickAction) {
+			oQuickAction.setLabel(sLabel);
+		} else {
+			oQuickAction = new QuickAction({
+				label: sLabel,
+				content: [this._createContent()],
+				category: library.table.columnmenu.Category.Aggregate,
+				contentSize: library.InputListItemContentSize.S
+			});
+		}
+
+		this.setAggregation("quickAction", oQuickAction, true);
 		return oQuickAction;
 	};
 
-	QuickTotalItem.prototype.getContent = function() {
-		if (!this._oContent) {
-			this._oContent = new Switch({
-				state: this.getTotaled(),
-				customTextOn: " ",
-				customTextOff: " ",
-				change: [{item: this}, this._onTotalChange, this]
-			});
-		}
-		return this._oContent;
+	QuickTotalItem.prototype._createContent = function() {
+		return new Switch({
+			state: this.getTotaled(),
+			customTextOn: " ",
+			customTextOff: " ",
+			change: [{item: this}, this._onTotalChange, this]
+		});
 	};
 
 	/*
@@ -80,7 +89,12 @@ sap.ui.define([
 	 */
 	QuickTotalItem.prototype.setTotaled = function(bTotaled) {
 		this.setProperty("totaled", bTotaled, true);
-		this.getContent().setState(bTotaled);
+
+		var oQuickAction = this.getAggregation("quickAction");
+		if (oQuickAction) {
+			var oSwitch = oQuickAction.getContent()[0];
+			oSwitch.setState(bTotaled);
+		}
 		return this;
 	};
 

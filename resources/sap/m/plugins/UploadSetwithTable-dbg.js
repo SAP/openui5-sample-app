@@ -28,8 +28,9 @@ sap.ui.define([
 	"sap/m/Button",
 	"sap/ui/core/Core",
 	"sap/m/Text",
-	"sap/m/VBox"
-], function (PluginBase, Element, Log, Library1, FileUploader, UploaderHttpRequestMethod, UploadItem, deepEqual, Library, IllustratedMessageType, IllustratedMessage, IllustratedMessageSize, Uploader, DragDropInfo, DropInfo, FilePreviewDialog, EventBase, Dialog, Label, Input, MessageBox, Button, Core, TextField, VBox) {
+	"sap/m/VBox",
+	"sap/ui/model/BindingMode"
+], function (PluginBase, Element, Log, Library1, FileUploader, UploaderHttpRequestMethod, UploadItem, deepEqual, Library, IllustratedMessageType, IllustratedMessage, IllustratedMessageSize, Uploader, DragDropInfo, DropInfo, FilePreviewDialog, EventBase, Dialog, Label, Input, MessageBox, Button, Core, TextField, VBox, BindingMode) {
 	"use strict";
 
 	/**
@@ -74,7 +75,7 @@ sap.ui.define([
 	 * </pre>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 * @author SAP SE
 	 * @public
 	 * @since 1.124
@@ -411,6 +412,7 @@ sap.ui.define([
 		}
 	};
 	UploadSetwithTable.prototype.init = function () {
+		this._oRb = Library1.getResourceBundleFor("sap.m");
 		setPluginBaseConfigs();	// Set PluginBase configurations
 	};
 
@@ -418,7 +420,6 @@ sap.ui.define([
 
 		this._filesTobeUploaded = [];
 		this._filePreviewDialogControl = null;
-		this._oRb = Library1.getResourceBundleFor("sap.m");
 
 		oControl.addDelegate(EventDelegate, false, this);
 
@@ -555,7 +556,7 @@ sap.ui.define([
 	 * @public
 	 */
 	UploadSetwithTable.prototype.getDefaultFileUploader = function () {
-		var sTooltip = "Upload";
+		var sTooltip = this._oRb.getText("UPLOADSET_WITH_TABLE_UPLOADBUTTON_TEXT");
 		if (!this._oFileUploader) {
 			this._oFileUploader = new FileUploader(this.getId() + "-uploader", {
 				buttonOnly: true,
@@ -736,7 +737,7 @@ sap.ui.define([
 			return;
 		}
 		if (oBindingContext) {
-			const oItem = await this.getItemForContext(oBindingContext);
+			const oItem = await this.getItemForContext(oBindingContext, true);
 			const oDialog = this._getFileRenameDialog(oItem);
 			oDialog.open();
 		}
@@ -1618,9 +1619,9 @@ sap.ui.define([
 		const {property, propertyPath, modelName} = mBindingInfo;
 
 		return new Promise((resolve, reject) => {
-			let oBindingInfo = {
+			const oBindingInfo = {
 				path: modelName ? `${modelName}>${propertyPath}` : propertyPath,
-				mode: sap.ui.model.BindingMode.TwoWay,
+				mode: createStaticBinding ? BindingMode.OneWay : BindingMode.TwoWay,
 				events: {
 					change: function () {
 						oItem?.getBinding(property)?.detachChange((oEvent) => {
@@ -1630,7 +1631,6 @@ sap.ui.define([
 					}
 				}
 			};
-			oBindingInfo = createStaticBinding ? Object.assign(oBindingInfo, {value: mBindingInfo?.value}) : oBindingInfo;
 
 			oItem.bindProperty(property, oBindingInfo);
 		});

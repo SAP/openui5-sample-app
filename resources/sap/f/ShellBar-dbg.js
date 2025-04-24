@@ -55,10 +55,10 @@ function(
 	 * positioned in dedicated places of the control.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @implements sap.f.IShellBar, sap.m.IBar, sap.tnt.IToolHeader
+	 * @implements sap.f.IShellBar, sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -70,8 +70,7 @@ function(
 			library: "sap.f",
 			interfaces: [
 				"sap.f.IShellBar",
-				"sap.m.IBar",
-				"sap.tnt.IToolHeader"
+				"sap.m.IBar"
 			],
 			properties: {
 				/**

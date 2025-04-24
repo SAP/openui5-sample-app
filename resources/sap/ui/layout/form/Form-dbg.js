@@ -44,7 +44,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -199,7 +199,9 @@ sap.ui.define([
 
 	Form.prototype.setEditable = function(bEditable) {
 
-		this.setProperty("editable", bEditable, true);
+		const oLayout = this.getLayout();
+		const bSuppressInvalidate = !oLayout?.invalidateEditableChange();
+		this.setProperty("editable", bEditable, bSuppressInvalidate);
 
 		return this;
 

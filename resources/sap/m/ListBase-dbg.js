@@ -105,7 +105,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -1577,6 +1577,10 @@ function(
 			this._oLastGroupHeader.setGroupedItem(oItem);
 		}
 
+		if (oItem.isGroupHeader()) {
+			this.setLastGroupHeader(oItem);
+		}
+
 		if (bSelectedDelayed) {
 			// item was already selected before inserted to the list
 			this.onItemSelectedChange(oItem, true);
@@ -2070,7 +2074,6 @@ function(
 
 		oHeader._bGroupHeader = true;
 		this.addAggregation("items", oHeader, bSuppressInvalidate);
-		this.setLastGroupHeader(oHeader);
 		return oHeader;
 	};
 
@@ -2713,6 +2716,9 @@ function(
 	};
 
 	ListBase.prototype.onItemContextMenu = function(oLI, oEvent) {
+		// Clear the range selection after the context menu is opened by shift+f10
+		this._mRangeSelection = null;
+
 		var oContextMenu = this.getContextMenu();
 		if (!oContextMenu) {
 			return;

@@ -78,7 +78,7 @@ sap.ui.define([
 	 * Basic Calendar.
 	 * This calendar is used for DatePickers
 	 * @extends sap.ui.core.Control
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -623,7 +623,7 @@ sap.ui.define([
 
 		this._updateLegendParent();
 		if (this.getInitialFocusedDate()) {
-			this.focusDate(this.getInitialFocusedDate());
+			this._oFocusedDate = CalendarDate.fromLocalJSDate(this.getInitialFocusedDate(), this._getPrimaryCalendarType());
 		}
 	};
 
@@ -1157,6 +1157,7 @@ sap.ui.define([
 	 *
 	 * @param {boolean} bEnabled Indicates if <code>intervalSelection</code> should be enabled
 	 * @returns {this} Reference to <code>this</code> for method chaining
+	 * @public
 	 */
 	Calendar.prototype.setIntervalSelection = function(bEnabled){
 		const oMonthPicker = this._getMonthPicker();
@@ -1184,6 +1185,7 @@ sap.ui.define([
 	 *
 	 * @param {boolean} bEnabled Indicates if <code>singleSelection</code> should be enabled
 	 * @returns {this} Reference to <code>this</code> for method chaining
+	 * @public
 	 */
 	Calendar.prototype.setSingleSelection = function(bEnabled){
 		const oMonthPicker = this._getMonthPicker();

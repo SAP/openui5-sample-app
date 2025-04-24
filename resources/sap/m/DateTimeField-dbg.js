@@ -66,7 +66,7 @@ sap.ui.define([
 	 * @extends sap.m.InputBase
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -327,6 +327,14 @@ sap.ui.define([
 		}
 
 		this._sPreviousValue = this.getDOMValue();
+	};
+
+	DateTimeField.prototype.shouldValueStateMessageBeOpened = function() {
+		return (this.getValueState() !== ValueState.None) &&
+				this.getEditable() &&
+				this.getEnabled() &&
+				this.getShowValueStateMessage() &&
+				!(this._oPopup && this._oPopup.isOpen());
 	};
 
 	/**

@@ -52,7 +52,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.135.0
 		 *
 		 * @constructor
 		 * @public
@@ -574,6 +574,22 @@ sap.ui.define([
 				iActiveClock = this._getActiveClockIndex();
 
 			aButtons && aButtons[iActiveClock] && aButtons[iActiveClock].focus();
+		};
+
+		/**
+		 * Displays the first available clock and focus its buttom.
+		 * @private
+		 */
+		TimePickerClocks.prototype._showFirstClock = function() {
+			var aButtons = this.getAggregation("_buttons"),
+				iActiveClock = 0;
+
+			if (aButtons && aButtons[iActiveClock])	{
+				aButtons[iActiveClock].setPressed(true);
+				this._switchClock(iActiveClock, true);
+				aButtons[iActiveClock].focus();
+				this._activeClock = iActiveClock;
+			}
 		};
 
 		/**

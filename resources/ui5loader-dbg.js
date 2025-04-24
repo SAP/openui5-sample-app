@@ -412,6 +412,9 @@
 		}
 	}
 
+	// remember original setTimeout for task splitting to avoid clashes using sinon.useFakeTimers()
+	const nativeSetTimeout = __global.setTimeout;
+
 	function waitForNextTask() {
 		if ( pWaitForNextTask == null ) {
 			/**
@@ -424,7 +427,7 @@
 					oNextTaskMessageChannel.port2.start();
 				}
 				oNextTaskMessageChannel.port2.addEventListener("message", function() {
-					setTimeout(function() {
+					nativeSetTimeout(function() {
 						pWaitForNextTask = null;
 						iMaxTaskTime = Date.now() + iMaxTaskDuration;
 						resolve();
@@ -2245,6 +2248,7 @@
 	 */
 	const amdRequire = createContextualRequire(null, true);
 
+	/** @deprecated as of 1.120 */
 	function requireSync(sModuleName) {
 		sModuleName = getMappedName(sModuleName + '.js');
 		if ( log.isLoggable() ) {
@@ -2517,6 +2521,9 @@
 				syncCallBehavior = report;
 			}
 		},
+		/**
+		 * @deprecated As of 1.135, superceded by option <code>amd</code>
+		 */
 		noConflict(bValue) {
 			log.warning("Config option 'noConflict' has been deprecated, use option 'amd' instead, if still needed.");
 			mUI5ConfigHandlers.amd(!bValue);
@@ -2576,7 +2583,8 @@
 			return {
 				amd: bExposeAsAMDLoader,
 				async: bGlobalAsyncMode,
-				noConflict: !bExposeAsAMDLoader // TODO needed?
+				/** @deprecated As of 1.135, superceded by option <code>amd</code> */
+				noConflict: !bExposeAsAMDLoader
 			};
 		}
 		handleConfigObject(cfg, mUI5ConfigHandlers);
@@ -2670,6 +2678,9 @@
 		resolveURL,
 		guessResourceName,
 		toUrl,
+		/**
+		 * @deprecated As of version 1.135 without replacement (private API)
+		 */
 		unloadResources
 	};
 
@@ -2679,7 +2690,7 @@
 	/**
 	 * Root namespace for JavaScript functionality provided by SAP SE.
 	 *
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 * @namespace
 	 * @public
 	 * @name sap
@@ -2747,6 +2758,7 @@
 		 *     },
 		 *
 		 *     // activate real async loading and module definitions
+		 *     // (will become obsolete in 2.0 contexts as async will be the only mode there)
 		 *     async: true,
 		 *
 		 *     // provide dependency and export metadata for non-UI5 modules
@@ -2874,6 +2886,8 @@
 		 *
 		 *   <b>Note:</b> Switching back from async to sync is not supported and trying to do so will throw
 		 *   an <code>Error</code>
+		 *
+		 *   In the next major version of UI5, this option will become obsolete as async will be the only mode.
 		 *
 		 * @param {boolean} [cfg.amd=false]
 		 *   When set to true, the ui5loader will overwrite the global properties <code>define</code>
@@ -3367,6 +3381,8 @@
 	 * @deprecated As of version 1.120, sync loading is deprecated without replacement due to the deprecation
 	 *   of sync XMLHttpRequests in the web standard.
 	 */
+
+	/** @deprecated */
 	sap.ui.requireSync = requireSync;
 
 }(globalThis));

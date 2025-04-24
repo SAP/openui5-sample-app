@@ -18,7 +18,7 @@ sap.ui.define([
 		iGenerationCounter = 0,
 		oModule,
 		// index of virtual context used for auto-$expand/$select
-		iVIRTUAL = -9007199254740991/*Number.MIN_SAFE_INTEGER*/,
+		iVIRTUAL = Number.MIN_SAFE_INTEGER, // -9007199254740991
 		/**
 		 * @alias sap.ui.model.odata.v4.Context
 		 * @author SAP SE
@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.134.0
+		 * @version 1.135.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -96,6 +96,7 @@ sap.ui.define([
 		this.iGeneration = iGeneration || 0;
 		this.bInactive = bInactive || undefined; // be in sync with the annotation
 		this.iIndex = iIndex;
+		// this.iSelectionCount = 0; // on demand, for header contexts only
 		this.bKeepAlive = false;
 		this.bOutOfPlace = false;
 		this.bSelected = false;
@@ -356,9 +357,19 @@ sap.ui.define([
 
 		return Promise.resolve(
 			oEditUrlPromise.then(function (sEditUrl) {
+				if (oGroupLock && that.oModel.getMetaModel().isAddressViaNavigationPath()) {
+					sEditUrl = that.getPath().slice(1);
+				}
+
 				return that.oBinding.delete(oGroupLock, sEditUrl, that, /*oETagEntity*/null,
 					bDoNotRequestCount, function () {
-						that.oDeletePromise = null;
+						// Note: may well be called twice when changes are canceled/reset!
+						if (that.oDeletePromise) {
+							that.oDeletePromise = null;
+							if (that.bSelected) {
+								that.oBinding.getHeaderContext().onSelectionChanged(that);
+							}
+						}
 					}
 				);
 			}).catch(function (oError) {
@@ -456,6 +467,9 @@ sap.ui.define([
 			that.checkUpdate();
 			throw oError;
 		});
+		if (this.bSelected) {
+			this.oBinding.getHeaderContext().onSelectionChanged(this);
+		}
 
 		if (oGroupLock && oModel.isApiGroup(oGroupLock.getGroupId())) {
 			oModel.getDependentBindings(this).forEach(function (oDependentBinding) {
@@ -597,6 +611,9 @@ sap.ui.define([
 						oCache.setInactive(sEntityPath, that.bInactive);
 					}
 
+					const sEditUrl = oMetaModel.isAddressViaNavigationPath()
+						? oResult.entityPath.slice(1)
+						: oResult.editUrl;
 					const fnSetUpsertPromise = _Helper.hasPathSuffix(that.sPath, sEntityPath)
 						? that.setCreated.bind(that)
 						: null;
@@ -604,7 +621,7 @@ sap.ui.define([
 					// if request is canceled fnPatchSent and fnErrorCallback are not called and
 					// returned Promise is rejected -> no patch events
 					return oCache.update(oGroupLock, oResult.propertyPath, vValue,
-						bSkipRetry ? undefined : errorCallback, oResult.editUrl, sEntityPath,
+						bSkipRetry ? undefined : errorCallback, sEditUrl, sEntityPath,
 						// Note: use that.oModel intentionally, fails if already destroyed!
 						oMetaModel.getUnitOrCurrencyPath(that.oModel.resolve(sPath, that)),
 						oBinding.isPatchWithoutSideEffects(), patchSent,
@@ -627,27 +644,33 @@ sap.ui.define([
 	 * @param {boolean} [bDoNotUpdateAnnotation]
 	 *   Whether the client-side annotation "@$ui5.context.isSelected" should not be updated
 	 * @returns {boolean}
-	 *   Whether the selection state of the context has changed
+	 *   Whether the selection state of this context has changed
 	 *
 	 * @private
 	 * @see #setSelected
 	 */
 	Context.prototype.doSetSelected = function (bSelected, bDoNotUpdateAnnotation) {
-		if (bSelected === this.bSelected) {
-			return false;
-		}
-
-		if (!bDoNotUpdateAnnotation) {
+		if (!bDoNotUpdateAnnotation && this.bSelected !== bSelected) {
 			this.withCache((oCache, sPath) => {
 				if (this.oBinding) {
 					oCache.setProperty("@$ui5.context.isSelected", bSelected, sPath);
 				} // else: context already destroyed
 			}, "");
 		}
+		// Note: data binding may cause #setSelected to be called redundantly!
+		if (this.bSelected === bSelected) {
+			return false;
+		}
 
+		if (!bSelected && this.oBinding.getHeaderContext() === this) {
+			this.iSelectionCount = 0; // reset after previous "select all"
+		}
 		this.bSelected = bSelected;
-
-		this.oBinding?.onKeepAliveChanged(this); // selected contexts are effectively kept alive
+		if (!this.isDeleted() && this.oBinding.getHeaderContext() !== this) {
+			// Note: deleted contexts can only be deselected, but are not currently counted anyway
+			this.oBinding.getHeaderContext().onSelectionChanged(this);
+		}
+		this.oBinding.onKeepAliveChanged(this); // selected contexts are effectively kept alive
 
 		return true;
 	};
@@ -760,13 +783,14 @@ sap.ui.define([
 	 * @see #getProperty
 	 */
 	Context.prototype.fetchValue = function (sPath, oListener, bCached) {
-		var oBinding = this.oBinding,
-			that = this;
-
 		if (this.iIndex === iVIRTUAL) {
 			return SyncPromise.resolve(); // no cache access for virtual contexts
 		}
-		if (oBinding.getHeaderContext?.() === this) {
+
+		if (this.oBinding.getHeaderContext?.() === this) {
+			const iSelectionCount = this.bSelected
+				? undefined // unknown
+				: this.iSelectionCount ?? 0;
 			if (sPath && sPath.startsWith(this.sPath)) {
 				sPath = sPath.slice(this.sPath.length + 1);
 			}
@@ -774,21 +798,28 @@ sap.ui.define([
 				if (oListener) {
 					throw new Error("Cannot register change listener for header context object");
 				}
-				return oBinding.fetchValue(this.sPath + "/$count", null, bCached).then((iCount) => {
-					return {
-						"@$ui5.context.isSelected" : that.bSelected,
-						$count : iCount
-					};
-				});
+				return this.oBinding.fetchValue(this.sPath + "/$count", null, bCached)
+					.then((iCount) => {
+						return {
+							"@$ui5.context.isSelected" : this.bSelected,
+							$count : iCount,
+							$selectionCount : iSelectionCount
+						};
+					});
 			} else if (sPath === "@$ui5.context.isSelected") {
 				// @$ui5.context.isSelected is a virtual property for header contexts and not part
 				// of the cache (in contrast to row contexts, where it is saved in the cache).
 				// Therefore, change listeners are saved and fired via the header context
 				this.mChangeListeners ??= {};
-				_Helper.registerChangeListener(this, "", oListener);
+				_Helper.registerChangeListener(this, sPath, oListener);
 
 				return SyncPromise.resolve(this.bSelected);
-			} else if (sPath !== "$count" && sPath !== "@$ui5.context.isSelected") {
+			} else if (sPath === "$selectionCount") {
+				this.mChangeListeners ??= {};
+				_Helper.registerChangeListener(this, sPath, oListener);
+
+				return SyncPromise.resolve(iSelectionCount);
+			} else if (sPath !== "$count") {
 				throw new Error("Invalid header path: " + sPath);
 			}
 		}
@@ -854,6 +885,7 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @public
+	 * @see #requestCanonicalPath
 	 * @since 1.39.0
 	 */
 	Context.prototype.getCanonicalPath = _Helper.createGetMethod("fetchCanonicalPath", true);
@@ -1237,7 +1269,7 @@ sap.ui.define([
 
 		// Note: #isExpanded fails for header context ("Invalid header path: @$ui5.node.isExpanded")
 		return bAggregated
-			|| this !== this.oBinding.getHeaderContext() && this.isExpanded() !== undefined;
+			|| this.oBinding.getHeaderContext() !== this && this.isExpanded() !== undefined;
 	};
 
 	/**
@@ -1453,6 +1485,8 @@ sap.ui.define([
 	 * its {@link #getIndex index} becomes <code>undefined</code>.
 	 *
 	 * @param {object} oParameters - A parameter object
+	 * @param {boolean} [oParameters.copy]
+	 *   Whether the node should be copied instead of moved (@experimental as of version 1.135.0)
 	 * @param {sap.ui.model.odata.v4.Context|null} [oParameters.nextSibling]
 	 *   The next sibling's context, or <code>null</code> to turn this node into the last sibling.
 	 *   Omitting the sibling moves this node to a position determined by the server.
@@ -1477,7 +1511,8 @@ sap.ui.define([
 	 * @public
 	 * @since 1.125.0
 	 */
-	Context.prototype.move = function ({nextSibling : oNextSibling, parent : oParent} = {}) {
+	Context.prototype.move = function (
+			{copy : bCopy, nextSibling : oNextSibling, parent : oParent} = {}) {
 		if (oNextSibling === undefined && oParent === undefined) {
 			return Promise.resolve(); // "no move happens"
 		}
@@ -1488,11 +1523,30 @@ sap.ui.define([
 			&& (oParent.iIndex === undefined || oParent.isDeleted() || oParent.isTransient())) {
 			throw new Error("Cannot move to " + oParent);
 		}
-		if (this.isAncestorOf(oParent)) {
+		if (!bCopy && this.isAncestorOf(oParent)) {
 			throw new Error("Unsupported parent context: " + oParent);
 		}
 
-		return Promise.resolve(this.oBinding.move(this, oParent, oNextSibling));
+		return Promise.resolve(this.oBinding.move(this, oParent, oNextSibling, bCopy));
+	};
+
+	/**
+	 * Informs this header context that some row context's {@link #isSelected selection state} has
+	 * changed.
+	 *
+	 * @param {sap.ui.model.odata.v4.Context} oRowContext - Some row context
+	 * @throws {Error}
+	 *   If the selection count becomes negative or <code>oRowContext === this</code>
+	 *
+	 * @private
+	 */
+	Context.prototype.onSelectionChanged = function (oRowContext) {
+		this.iSelectionCount ??= 0;
+		this.iSelectionCount += oRowContext.isSelected() ? +1 : -1;
+		if (this.iSelectionCount < 0 || oRowContext === this) {
+			throw new Error("Unexpected $selectionCount: " + this.iSelectionCount);
+		}
+		_Helper.fireChange(this.mChangeListeners, "$selectionCount", this.iSelectionCount);
 	};
 
 	/**
@@ -1635,6 +1689,7 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @public
+	 * @see #getCanonicalPath
 	 * @since 1.39.0
 	 */
 	Context.prototype.requestCanonicalPath = _Helper.createRequestMethod("fetchCanonicalPath");
@@ -2150,9 +2205,9 @@ sap.ui.define([
 
 		if (this.iIndex === iVIRTUAL
 			|| this.oBinding.getHeaderContext && !this.bInactive && this.isTransient()
-			|| this === this.oBinding.getHeaderContext?.()
+			|| this.oBinding.getHeaderContext?.() === this
 			// only operation bindings have a parameter context, for others the function fails
-			|| this.oBinding.oOperation && this === this.oBinding.getParameterContext()) {
+			|| this.oBinding.oOperation && this.oBinding.getParameterContext() === this) {
 			throw new Error("Cannot reset: " + this);
 		}
 
@@ -2182,7 +2237,7 @@ sap.ui.define([
 	 */
 	Context.prototype.resetKeepAlive = function () {
 		this.bKeepAlive = false;
-		this.bSelected = false;
+		this.doSetSelected(false, true);
 	};
 
 	/**
@@ -2482,7 +2537,7 @@ sap.ui.define([
 	 * @since 1.130.0
 	 */
 	Context.prototype.setSelected = function (bSelected) {
-		if (this.oBinding && !this.oBinding.getHeaderContext) {
+		if (!this.oBinding?.getHeaderContext) {
 			throw new Error("Unsupported context: " + this);
 		}
 		if (bSelected && this.isDeleted()) {
@@ -2497,7 +2552,7 @@ sap.ui.define([
 		const bSelectionChanged = this.doSetSelected(bSelected);
 
 		if (bSelectionChanged && this.mChangeListeners) { // header context: "select all"
-			_Helper.fireChange(this.mChangeListeners, "", bSelected);
+			_Helper.fireChange(this.mChangeListeners, "@$ui5.context.isSelected", bSelected);
 		}
 
 		if (bSelectionChanged || bRowsChanged) {

@@ -3716,6 +3716,9 @@ sap.ui.define([
 	 *   A list of key predicates for known elements, in no special order
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
 	 *   A lock for the group ID
+	 * @param {boolean} [bMinimal]
+	 *   Whether to select only key properties (and not expand anything) in an undefined order;
+	 *   <b>Note:</b> in this case no data is updated from the response
 	 * @returns {Promise<string[]>}
 	 *   A promise that resolves with an array of predicates (see above), or rejects with an
 	 *   instance of <code>Error</code> in case of failure, for exmaple if the cache is shared
@@ -3723,7 +3726,7 @@ sap.ui.define([
 	 * @public
 	 */
 	_CollectionCache.prototype.requestFilteredOrderedPredicates = async function (aPredicates,
-			oGroupLock) {
+			oGroupLock, bMinimal) {
 		this.checkSharedRequest();
 
 		const mTypeForMetaPath = this.getTypes();
@@ -3736,6 +3739,12 @@ sap.ui.define([
 			? `${mQueryOptions.$filter} and (${aKeyFilters.join(" or ")})`
 			: aKeyFilters.join(" or ");
 		mQueryOptions.$top = aKeyFilters.length;
+		if (bMinimal) {
+			delete mQueryOptions.$expand;
+			delete mQueryOptions.$orderby;
+			mQueryOptions.$select = [];
+			_Helper.selectKeyProperties(mQueryOptions, mTypeForMetaPath[this.sMetaPath]);
+		}
 		const sResourcePath = this.sResourcePath
 			+ this.oRequestor.buildQueryString(this.sMetaPath, mQueryOptions, false, true, true);
 
@@ -3745,12 +3754,14 @@ sap.ui.define([
 
 		return oResponse.value.map((oNewElement) => {
 			const sPredicate = _Helper.getPrivateAnnotation(oNewElement, "predicate");
-			const oOldElement = this.aElements.$byPredicate[sPredicate];
-			_Helper.copySelected(oOldElement, oNewElement);
-			this.aElements.$byPredicate[sPredicate] = oNewElement;
-			this.aElements[this.aElements.indexOf(oOldElement)] = oNewElement;
-			_Helper.fireChanges(this.mChangeListeners, sPredicate, oOldElement, true);
-			_Helper.fireChanges(this.mChangeListeners, sPredicate, oNewElement);
+			if (!bMinimal) {
+				const oOldElement = this.aElements.$byPredicate[sPredicate];
+				_Helper.copySelected(oOldElement, oNewElement);
+				this.aElements.$byPredicate[sPredicate] = oNewElement;
+				this.aElements[this.aElements.indexOf(oOldElement)] = oNewElement;
+				_Helper.fireChanges(this.mChangeListeners, sPredicate, oOldElement, true);
+				_Helper.fireChanges(this.mChangeListeners, sPredicate, oNewElement);
+			}
 
 			return sPredicate;
 		});
@@ -3783,6 +3794,9 @@ sap.ui.define([
 		// types are needed for selecting the key properties, see #getQueryString called by
 		// #getResourcePathWithQuery
 		const mTypeForMetaPath = await this.fetchTypes();
+		// This function resolves at no defined point in time as it is not (yet) relevant for the
+		// function caller. This may changes in the future. The completion of each separate property
+		// can be observed with the below oReadRange.promise
 		this.aSeparateProperties.forEach(async (sProperty) => {
 			let fnResolve;
 			let fnReject;
@@ -3801,8 +3815,8 @@ sap.ui.define([
 			oReadRange.promise.catch(() => { /* avoid "Uncaught (in promise)" */ });
 			try {
 				this.mSeparateProperty2ReadRequests[sProperty].push(oReadRange);
-				const oResult = await this.oRequestor.request("GET",
-					this.getResourcePathWithQuery(iStart, iEnd, sProperty),
+				const sReadUrl = this.getResourcePathWithQuery(iStart, iEnd, sProperty);
+				const oResult = await this.oRequestor.request("GET", sReadUrl,
 					this.oRequestor.lockGroup("$single", this));
 
 				let bMainFailed;
@@ -3827,8 +3841,13 @@ sap.ui.define([
 					const sPredicate = _Helper.getPrivateAnnotation(oSeparateData, "predicate");
 					const oElement = this.aElements.$byPredicate[sPredicate];
 					if (oElement) {
-						_Helper.updateSelected(this.mChangeListeners, sPredicate, oElement,
-							oSeparateData, [sProperty]);
+						if (oElement["@odata.etag"] === oSeparateData["@odata.etag"]) {
+							_Helper.updateSelected(this.mChangeListeners, sPredicate, oElement,
+								oSeparateData, [sProperty]);
+						} else {
+							Log.error(`ETag changed: ${this.sResourcePath + sPredicate}`,
+								sReadUrl, sClassName);
+						}
 					}
 				}
 				fnResolve();

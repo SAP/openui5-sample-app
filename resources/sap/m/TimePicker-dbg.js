@@ -181,7 +181,7 @@ function(
 		 * @extends sap.m.DateTimeField
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.135.0
 		 *
 		 * @constructor
 		 * @public
@@ -454,6 +454,7 @@ function(
 				noTabStop: true,
 				decorative: !Device.support.touch || Device.system.desktop ? true : false,
 				useIconTooltip: false,
+				tooltip: this._oResourceBundle.getText("OPEN_PICKER_TEXT"),
 				alt: this._oResourceBundle.getText("OPEN_PICKER_TEXT")
 			});
 

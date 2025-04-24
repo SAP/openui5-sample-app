@@ -69,7 +69,7 @@ sap.ui.define([
 	 * <b>Note:</b> If a more complex form is needed, use the <code>{@link sap.ui.layout.form.Form Form}</code> control instead.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -1319,6 +1319,10 @@ sap.ui.define([
 			_addLayoutData.call(this);
 			if (this.getDomRef()) {
 				_updateLayout.call(this);
+				var oForm = this.getAggregation("form");
+				if (!oForm.getDomRef()) { // Form not rendered right now - invalidate to trigger rendering
+					this.invalidate();
+				}
 			}
 		}
 

@@ -186,7 +186,7 @@ sap.ui.define([
 	 * the close event), or select Cancel.
 	 *
 	 * @extends sap.m.DateTimeField
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -410,6 +410,7 @@ sap.ui.define([
 			noTabStop: true,
 			decorative: !Device.support.touch || Device.system.desktop ? true : false,
 			useIconTooltip: false,
+			tooltip: oResourceBundle.getText("OPEN_PICKER_TEXT"),
 			alt: oResourceBundle.getText("OPEN_PICKER_TEXT")
 		});
 

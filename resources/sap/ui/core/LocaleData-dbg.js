@@ -23,35 +23,35 @@ sap.ui.define([
 
 	var rCIgnoreCase = /c/i,
 		rEIgnoreCase = /e/i,
-		/**
-		 * With the upgrade of the CLDR to version 41 some unit keys have changed.
-		 * For compatibility reasons this map is used for formatting units.
-		 * It maps a legacy unit key to its renamed key.
-		 *
-		 * @deprecated As of version 1.122.0, this map is no longer maintained and stays for compatibility reasons
-		 *   only. Reason for the depreciation: The assumption of homogeneous unit keys in the CLDR data has been proven
-		 *   wrong. Additionally, it is unclear if, those CLDR unit keys are actually used. Implementing a complex logic
-		 *   to maintain potentially unused entries did not seem reasonable. Therefore, it was decided to deprecate this
-		 *   feature.
-		 *   This map was last updated with CLDR V43, in 1.119.0.
-		 * @private
-		 */
-		mLegacyUnit2CurrentUnit = {
-			"acceleration-meter-per-second-squared": "acceleration-meter-per-square-second",
-			"concentr-milligram-per-deciliter": "concentr-milligram-ofglucose-per-deciliter",
-			"concentr-part-per-million": "concentr-permillion",
-			"consumption-liter-per-100kilometers": "consumption-liter-per-100-kilometer",
-			"mass-metric-ton": "mass-tonne",
-			"pressure-millimeter-of-mercury": "pressure-millimeter-ofhg",
-			"pressure-pound-per-square-inch": "pressure-pound-force-per-square-inch",
-			"pressure-inch-hg": "pressure-inch-ofhg",
-			"torque-pound-foot": "torque-pound-force-foot"
-		},
 		rNumberInScientificNotation = /^([+-]?)((\d+)(?:\.(\d+))?)[eE]([+-]?\d+)$/,
 		rTrailingZeroes = /0+$/;
 	const rFallbackPatternTextParts = /(.*)?\{[0|1]}(.*)?\{[0|1]}(.*)?/;
 	const rOnlyZeros = /^0+$/;
 	const aSupportedWidths = ["narrow", "abbreviated", "wide"];
+	/**
+	 * With the upgrade of the CLDR to version 41 some unit keys have changed.
+	 * For compatibility reasons this map is used for formatting units.
+	 * It maps a legacy unit key to its renamed key.
+	 *
+	 * @deprecated As of version 1.122.0, this map is no longer maintained and stays for compatibility reasons
+	 *   only. Reason for the depreciation: The assumption of homogeneous unit keys in the CLDR data has been proven
+	 *   wrong. Additionally, it is unclear if, those CLDR unit keys are actually used. Implementing a complex logic
+	 *   to maintain potentially unused entries did not seem reasonable. Therefore, it was decided to deprecate this
+	 *   feature.
+	 *   This map was last updated with CLDR V43, in 1.119.0.
+	 * @private
+	 */
+	const mLegacyUnit2CurrentUnit = {
+		"acceleration-meter-per-second-squared": "acceleration-meter-per-square-second",
+		"concentr-milligram-per-deciliter": "concentr-milligram-ofglucose-per-deciliter",
+		"concentr-part-per-million": "concentr-permillion",
+		"consumption-liter-per-100kilometers": "consumption-liter-per-100-kilometer",
+		"mass-metric-ton": "mass-tonne",
+		"pressure-millimeter-of-mercury": "pressure-millimeter-ofhg",
+		"pressure-pound-per-square-inch": "pressure-pound-force-per-square-inch",
+		"pressure-inch-hg": "pressure-inch-ofhg",
+		"torque-pound-foot": "torque-pound-force-foot"
+	};
 
 	/**
 	 * The locale data cache. Maps a locale ID, formatted as either the language_region (e.g. "ar_SA"),
@@ -78,7 +78,7 @@ sap.ui.define([
 	 *   {@link https://cldr.unicode.org/ Unicode CLDR}.
 	 * @hideconstructor
 	 * @public
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 */
 	var LocaleData = BaseObject.extend("sap.ui.core.LocaleData", /** @lends sap.ui.core.LocaleData.prototype */ {
 
@@ -1409,34 +1409,42 @@ sap.ui.define([
 		},
 
 		/**
-		 * Returns the number of digits of the specified currency.
+		 * Returns the number of digits of the given currency considering a custom currency first and falling
+		 * back to the CLDR data if no custom currency is defined.
 		 *
-		 * @param {string} sCurrency ISO 4217 currency code
-		 * @returns {int} digits of the currency
+		 * @param {string} sCurrency The ISO 4217 currency code
+		 * @returns {int} The number of digits for the given currency
 		 * @public
 		 * @since 1.21.1
 		 */
 		getCurrencyDigits: function(sCurrency) {
+			const mCurrencyDigits = this.getAllCurrencyDigits();
+			return mCurrencyDigits[sCurrency] ?? mCurrencyDigits["DEFAULT"];
+		},
 
-			// try to lookup currency digits from custom currencies
-			var mCustomCurrencies = this._get("currency");
+		/**
+		 * Returns a language dependent map of ISO 4217 currency codes to the number of digits from the CLDR. The map
+		 * only contains currency codes for which the number of digits deviates from the value with the key
+		 * <code>DEFAULT</code>. If custom currencies are defined, they are merged into the map overwriting the CLDR
+		 * values including the default value if a custom default value is set.
+		 *
+		 * @returns {Object<string, number>} The map of currency codes to the number of digits
+		 * @private
+		 * @ui5-restricted sap.ui.export.Spreadsheet
+		 * @since 1.135
+		 */
+		getAllCurrencyDigits() {
+			const mCurrencyDigits = {...this._get("currencyDigits")};
+			const mCustomCurrencies = this._get("currency");
 			if (mCustomCurrencies) {
-				if (mCustomCurrencies[sCurrency] && mCustomCurrencies[sCurrency].hasOwnProperty("digits")) {
-					return mCustomCurrencies[sCurrency].digits;
-				} else if (mCustomCurrencies["DEFAULT"] && mCustomCurrencies["DEFAULT"].hasOwnProperty("digits")) {
-					return mCustomCurrencies["DEFAULT"].digits;
+				for (const sCurrencyCode in mCustomCurrencies) {
+					if (mCustomCurrencies[sCurrencyCode].digits !== undefined) {
+						mCurrencyDigits[sCurrencyCode] = mCustomCurrencies[sCurrencyCode].digits;
+					}
 				}
 			}
 
-			var iDigits = this._get("currencyDigits", sCurrency);
-			if (iDigits == null) {
-				iDigits = this._get("currencyDigits", "DEFAULT");
-
-				if (iDigits == null) {
-					iDigits = 2; // default
-				}
-			}
-			return iDigits;
+			return mCurrencyDigits;
 		},
 
 		/**
@@ -1871,7 +1879,7 @@ sap.ui.define([
 		 * }
 		 *
 		 * @param {string} sUnit unit name, e.g. "duration-hour" or "my"
-		 * @return {Object<string,string>}
+		 * @return {Object<string, string>}
 		 *   The unit format pattern for the given unit name as a map from a pattern key like
 		 *   <code>"unitPattern-count-other"</code> to the corresponding pattern
 		 * @public
@@ -1890,18 +1898,21 @@ sap.ui.define([
 		 * Note: Does not take unit mapping into consideration.
 		 *
 		 * @param {string} sUnit unit name, e.g. "duration-hour"
-		 * @return {Object<string,string>}
+		 * @return {Object<string, string>|undefined}
 		 *  The unit format pattern for the given unit name as a map from a pattern key like
-		 *  <code>"unitPattern-count-other"</code> to the corresponding pattern
+		 *  <code>"unitPattern-count-other"</code> to the corresponding pattern or <code>undefined</code> if no
+		 *  corresponding pattern is found
 		 * @public
 		 * @since 1.54
 		 */
 		getUnitFormat: function (sUnit) {
 			var oResult = this._get("units", "short", sUnit);
 
+			/** @deprecated As of version 1.122.0, reason mLegacyUnit2CurrentUnit */
 			if (!oResult && mLegacyUnit2CurrentUnit[sUnit]) {
 				oResult = this._get("units", "short", mLegacyUnit2CurrentUnit[sUnit]);
 			}
+
 			return oResult;
 		},
 
@@ -1911,7 +1922,7 @@ sap.ui.define([
 		 *
 		 * Note: Does not take unit mapping into consideration.
 		 *
-		 * @return {Object<string,Object<string,string>>} The unit format patterns as a map from a unit key to a map
+		 * @return {Object<string, Object<string, string>>} The unit format patterns as a map from a unit key to a map
 		 *   from a pattern key like <code>"unitPattern-count-other"</code> to the corresponding pattern
 		 * @public
 		 * @since 1.54
@@ -2417,54 +2428,17 @@ sap.ui.define([
 	};
 
 	/**
-	 * Helper to analyze and parse designtime (aka buildtime) variables
-	 *
-	 * At buildtime, the build can detect a pattern like $some-variable-name:some-value$
-	 * and replace 'some-value' with a value determined at buildtime (here: the actual list of locales).
-	 *
-	 * At runtime, this method removes the surrounding pattern ('$some-variable-name:' and '$') and leaves only the 'some-value'.
-	 * Additionally, this value is parsed as a comma-separated list (because this is the only use case here).
-	 *
-	 * The mimic of the comments is borrowed from the CVS (Concurrent Versions System),
-	 * see http://web.mit.edu/gnu/doc/html/cvs_17.html.
-	 *
-	 * If no valid <code>sValue</code> is given, <code>null</code> is returned
-	 *
-	 * @param {string} sValue The raw designtime property e.g. $cldr-rtl-locales:ar,fa,he$
-	 * @returns {string[]|null} The designtime property e.g. ['ar', 'fa', 'he']
-	 * @private
-	 */
-	 function getDesigntimePropertyAsArray(sValue) {
-		var m = /\$([-a-z0-9A-Z._]+)(?::([^$]*))?\$/.exec(sValue);
-		return (m && m[2]) ? m[2].split(/,/) : null;
-	}
-
-	/**
 	 * A list of locales for which CLDR data is bundled with the UI5 runtime.
-	 * @private
-	 */
-	var _cldrLocales = getDesigntimePropertyAsArray("$cldr-locales:ar,ar_EG,ar_SA,bg,ca,cnr,cy,cs,da,de,de_AT,de_CH,el,el_CY,en,en_AU,en_GB,en_HK,en_IE,en_IN,en_NZ,en_PG,en_SG,en_ZA,es,es_AR,es_BO,es_CL,es_CO,es_MX,es_PE,es_UY,es_VE,et,fa,fi,fr,fr_BE,fr_CA,fr_CH,fr_LU,he,hi,hr,hu,id,it,it_CH,ja,kk,ko,lt,lv,mk,ms,nb,nl,nl_BE,pl,pt,pt_PT,ro,ru,ru_UA,sk,sl,sr,sr_Latn,sv,th,tr,uk,vi,zh_CN,zh_HK,zh_SG,zh_TW$");
-
-	/**
-	 * A set of locales for which the UI5 runtime contains a CLDR JSON file.
-	 *
-	 * Helps to avoid unsatisfiable backend calls.
+	 * The value of this constant must only be updated by the CLDR generator; do not modify it manually.
 	 *
 	 * @private
 	 */
-	var M_SUPPORTED_LOCALES = (function() {
-		var LOCALES = _cldrLocales,
-			result = {},
-			i;
-
-		if ( LOCALES ) {
-			for (i = 0; i < LOCALES.length; i++) {
-				result[LOCALES[i]] = true;
-			}
-		}
-
-		return result;
-	}());
+	const A_SUPPORTED_LOCALES = ["ar","ar_EG","ar_SA","bg","ca","cnr","cs","cy","da","de","de_AT","de_CH","el","el_CY",
+		"en","en_AU","en_GB","en_HK","en_IE","en_IN","en_NZ","en_PG","en_SG","en_ZA","es",
+		"es_AR","es_BO","es_CL","es_CO","es_MX","es_PE","es_UY","es_VE","et","fa","fi","fr",
+		"fr_BE","fr_CA","fr_CH","fr_LU","he","hi","hr","hu","id","it","it_CH","ja","kk","ko",
+		"lt","lv","mk","ms","nb","nl","nl_BE","pl","pt","pt_PT","ro","ru","ru_UA","sk","sl",
+		"sr","sr_Latn","sv","th","tr","uk","vi","zh_CN","zh_HK","zh_SG","zh_TW"];
 
 	/**
 	 * Creates a flat map from an object structure which contains a link to the parent ("_parent").
@@ -2595,7 +2569,7 @@ sap.ui.define([
 		}
 
 		function getOrLoad(sId) {
-			if (!mLocaleIdToData[sId] && (!M_SUPPORTED_LOCALES || M_SUPPORTED_LOCALES[sId] === true)
+			if (!mLocaleIdToData[sId] && A_SUPPORTED_LOCALES.includes(sId)
 					|| mLocaleIdToData[sId] instanceof Promise && !bAsync) {
 				mLocaleIdToData[sId] = SyncPromise.resolve(LoaderExtensions.loadResource(`sap/ui/core/cldr/${sId}.json`,
 					{
@@ -2829,7 +2803,7 @@ sap.ui.define([
 		return Promise.resolve(oLocaleData.loaded);
 	};
 
-	LocaleData._cldrLocales = _cldrLocales;
+	LocaleData._cldrLocales = A_SUPPORTED_LOCALES;
 	// maps a locale to a map of time zone translations, which maps an IANA time zone ID to the translated time zone
 	// name
 	LocaleData._mTimezoneTranslations = {};

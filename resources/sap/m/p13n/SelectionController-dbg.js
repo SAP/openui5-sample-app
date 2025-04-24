@@ -58,7 +58,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @public
 	 * @alias sap.m.p13n.SelectionController
@@ -591,6 +591,7 @@ sap.ui.define([
 			const oExisting = mItemState[oProperty.name || oProperty.key];
 			mItem.visible = !!oExisting;
 			mItem.position = oExisting ? oExisting.position : -1;
+			mItem.isRedundant = oExisting?.isRedundant ?? false;
 			return !(oProperty.visible === false || (this._aStableKeys.indexOf(oProperty.name || oProperty.key) > -1));
 		});
 
@@ -728,6 +729,7 @@ sap.ui.define([
 
 		const oControllerHelper = this.getMetadataHelper();
 		const oHelper = oControllerHelper ? oControllerHelper : oPropertyHelper;
+		const aColumnsWithTextArrangement = (oHelper.getRedundantProperties?.() ?? []).map((p) => p.key);
 		oHelper.getProperties().forEach((oProperty) => {
 
 			const mItem = {};
@@ -743,6 +745,7 @@ sap.ui.define([
 
 			mItem.label = oProperty.label || mItem.key;
 			mItem.tooltip = oProperty.tooltip;
+			mItem.isRedundant = aColumnsWithTextArrangement.includes(mItem.key);
 
 			if (mItemsGrouped) {
 				mItem.group = oProperty.group ? oProperty.group : "BASIC";

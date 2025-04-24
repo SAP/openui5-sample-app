@@ -240,7 +240,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.134.0
+		 * @version 1.135.0
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
@@ -928,7 +928,11 @@ sap.ui.define([
 	 * @param {boolean} [mParameters.$$clearSelectionOnFilter]
 	 *   Whether the selection state of the list binding is cleared when a filter is changed; this
 	 *   includes dynamic filters, '$filter', '$search', and <code>$$aggregation.search</code>.
-	 *   Supported since 1.120.13.
+	 *   Supported since 1.120.13. Since 1.135.0, the selection state is validated when reloading
+	 *   the list binding's data. The
+	 *   {@link sap.ui.model.odata.v4.Context#isSelected selection states of contexts} which no
+	 *   longer match the current filter are reset. <b>Note:</b> The selection state is not
+	 *   validated if the <code>$$aggregation</code> parameter is used.
 	 * @param {boolean} [mParameters.$$getKeepAliveContext]
 	 *   Whether this binding is considered for a match when {@link #getKeepAliveContext} is called;
 	 *   only the value <code>true</code> is allowed. Must not be combined with <code>$apply</code>,
@@ -1044,6 +1048,14 @@ sap.ui.define([
 	 * be {@link sap.ui.model.BindingMode.OneTime}. {@link sap.ui.model.BindingMode.OneWay OneWay}
 	 * is also supported (since 1.130.0) for complex types and collections thereof; for entity
 	 * types, use {@link #bindContext} instead.
+	 *
+	 * Since 1.135.0, the binding may also point to an array element inside a collection of
+	 * primitive type, for example in the context of geography locations. Let's assume
+	 * "GeoLocation" is a structural property of type "Edm.GeographyPoint", then "coordinates" is a
+	 * structural property of type "Collection(Edm.Double)":
+	 * <pre>
+	 * &lt;Text id="longitude" text="{Address/GeoLocation/coordinates/0}"/>
+	 * </pre>
 	 *
 	 * @param {string} sPath
 	 *   The binding path in the model; must not end with a slash

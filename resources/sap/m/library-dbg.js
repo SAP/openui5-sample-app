@@ -77,14 +77,14 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 * @since 1.4
 	 * @public
 	 */
 	var thisLib = Library.init({
 		apiVersion: 2,
 		name : "sap.m",
-		version: "1.134.0",
+		version: "1.135.0",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/m/designtime/library.designtime",
 		types: [
@@ -201,6 +201,7 @@ sap.ui.define([
 			"sap.m.UploadState",
 			"sap.m.UploadType",
 			"sap.m.ValueColor",
+            /** @deprecated since 1.135 */
 			"sap.m.ValueCSSColor",
 			"sap.m.VerticalPlacementType",
 			"sap.m.WrappingType",
@@ -486,7 +487,6 @@ sap.ui.define([
 			"sap.m.upload.Uploader",
 			"sap.m.upload.UploaderTableItem",
 			"sap.m.upload.UploadSetItem",
-			"sap.m.upload.FilePreviewDialog",
 			"sap.m.VariantItem",
 			"sap.m.ViewSettingsCustomItem",
 			"sap.m.ViewSettingsCustomTab",
@@ -2526,6 +2526,27 @@ sap.ui.define([
 	 */
 
 	/**
+	 * Interface for controls placed in the <code>content</code> aggregation of <code>{@link sap.m.Toolbar}</code> or <code>{@link sap.m.OverflowToolbar}</code>,
+	 * which need to indicate whether they are interactive or not.
+	 *
+	 * Controls that implement this interface should have the following method:
+	 * <code>_getToolbarInteractive</code> - returns boolean value that shows whether the control is interactive or not
+	 *
+	 * @name sap.m.IToolbarInteractiveControl
+	 * @interface
+	 * @public
+	 */
+
+	/**
+	 * Returns whether the control is interactive or not.
+	 *
+	 * @function
+	 * @name sap.m.IToolbarInteractiveControl._getToolbarInteractive
+	 * @returns {boolean} Whether it is an interactive Control
+	 * @private
+	 */
+
+	/**
 	 *
 	 * Interface for controls which can have special behavior inside <code>sap.m.OverflowToolbar</code>.
 	 * Controls that implement this interface must provide a <code>getOverflowToolbarConfig</code> method
@@ -2861,6 +2882,7 @@ sap.ui.define([
 	 * @final
 	 * @namespace
 	 * @public
+	 * @deprecated As of version 1.135, the concept has been discarded.
 	 */
 	thisLib.ValueCSSColor = DataType.createType("sap.m.ValueCSSColor", {
 		isValid : function (vValue) {
@@ -6691,6 +6713,7 @@ sap.ui.define([
 	DataType.registerEnum("sap.m.UploadState", thisLib.UploadState);
 	DataType.registerEnum("sap.m.UploadType", thisLib.UploadType);
 	DataType.registerEnum("sap.m.ValueColor", thisLib.ValueColor);
+	/** @deprecated since 1.135 */
 	DataType.registerEnum("sap.m.ValueCSSColor", thisLib.ValueCSSColor);
 	DataType.registerEnum("sap.m.VerticalPlacementType", thisLib.VerticalPlacementType);
 	DataType.registerEnum("sap.m.WrappingType", thisLib.WrappingType);

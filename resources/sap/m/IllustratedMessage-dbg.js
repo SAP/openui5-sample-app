@@ -92,7 +92,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.135.0
 	 *
 	 * @constructor
 	 * @public
@@ -347,6 +347,13 @@ sap.ui.define([
 		SPOT: "sapMIllustratedMessage-Spot",
 		DIALOG: "sapMIllustratedMessage-Dialog",
 		SCENE: "sapMIllustratedMessage-Scene"
+	};
+
+	IllustratedMessage.MEDIA_SIZE = {
+		EXTRASMALL: IllustratedMessage.MEDIA.DOT,
+		SMALL: IllustratedMessage.MEDIA.SPOT,
+		MEDIUM: IllustratedMessage.MEDIA.DIALOG,
+		LARGE: IllustratedMessage.MEDIA.SCENE
 	};
 
 	IllustratedMessage.RESIZE_HANDLER_ID = {
@@ -623,7 +630,7 @@ sap.ui.define([
 			if (sSize === IllustratedMessageSize.Auto) {
 				this._updateMedia(oDomRef.getBoundingClientRect().width, oDomRef.getBoundingClientRect().height);
 			} else {
-				sCustomSize = IllustratedMessage.MEDIA[sSize.toUpperCase()];
+				sCustomSize = IllustratedMessage.MEDIA[sSize.toUpperCase()] || IllustratedMessage.MEDIA_SIZE[sSize.toUpperCase()];
 				this._updateSymbol(sCustomSize);
 				this._updateMediaStyle(sCustomSize);
 			}
