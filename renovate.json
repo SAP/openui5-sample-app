@@ -1,6 +1,7 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": [
+		"config:recommended",
 		"github>ui5/renovate-config"
 	],
 	"lockFileMaintenance": {
@@ -9,7 +10,7 @@
 		"commitMessagePrefix": "build:",
 		"commitMessageAction": "In-range update of npm dependencies",
 		"schedule": [
-			"* 5-6 * * 1"
+			"* 0-8 * * 1"
 		]
 	},
 	"packageRules": [
@@ -21,7 +22,7 @@
 			"commitMessagePrefix": "build(deps-dev):",
 			"commitMessageAction": "Bump",
 			"schedule": [
-				"* 7-8 * * 1"
+				"* 8-16 * * 1"
 			]
 		},
 		{
@@ -32,7 +33,7 @@
 			"commitMessagePrefix": "build(github-actions):",
 			"commitMessageAction": "Bump",
 			"schedule": [
-				"* 7-8 * * 1"
+				"* 8-16 * * 1"
 			]
 		},
 		{
@@ -50,7 +51,7 @@
 			"commitMessagePrefix": "deps:",
 			"commitMessageAction": "Update",
 			"schedule": [
-				"* 7-8 * * 1"
+				"* 8-16 * * 1"
 			]
 		}
 	]
