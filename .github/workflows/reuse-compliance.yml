@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+# No permissions are required for this workflow
+permissions: {}
+
 jobs:
   compliance-check:
     name: Compliance Check
