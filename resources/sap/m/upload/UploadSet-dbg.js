@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -56,7 +56,7 @@ sap.ui.define([
 	 * but it also helps to avoid template-related issues and ensures better data handling.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -1053,7 +1053,7 @@ sap.ui.define([
 
 		// Set the illustrated message based on drag indicator presence
 		if (this._getDragIndicator()) {
-			oAggregation.setIllustrationType(IllustratedMessageType.UploadCollection);
+			oAggregation.setIllustrationType(IllustratedMessageType.DragFilesToUpload);
 			oAggregation.setTitle(this.getDragDropText());
 			oAggregation.setDescription(this.getUploadEnabled() ? this.getDragDropDescription() : " ");
 		} else {

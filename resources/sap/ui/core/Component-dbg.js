@@ -1,6 +1,6 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -283,7 +283,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -2449,6 +2449,8 @@ sap.ui.define([
 	 *     A non-empty string value will be interpreted as the URL to load the manifest from.
 	 *     If the manifest could not be loaded from a given URL, the Promise returned by the </code>Component.create</code> factory rejects.
 	 *     A non-null object value will be interpreted as manifest content.
+	 *     <b>Note:</b> If a manifest is provided as URL or plain object, it must use the same major schema version as the original manifest
+	 *      to avoid incompatible changes in the behavior of the component.
 	 * @param {string} [mOptions.altManifestUrl] @since 1.61.0 Alternative URL for the manifest.json. If <code>mOptions.manifest</code>
 	 *     is set to an object value, this URL specifies the location to which the manifest object should resolve the relative
 	 *     URLs to.
@@ -2607,6 +2609,9 @@ sap.ui.define([
 	 */
 	function loadModuleAndLog(sModuleName, sComponentName) {
 		const def = new Deferred();
+
+		// might be in module if define in the manifest
+		sModuleName = sModuleName.replace("module:", "");
 
 		sap.ui.require([sModuleName], def.resolve, (err) => {
 			future.warningRejects(def.resolve, def.reject, `sap.ui.core.Component: Cannot load module '${sModuleName}' during creation of component: "${sComponentName}".`);

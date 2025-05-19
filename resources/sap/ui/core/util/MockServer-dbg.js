@@ -1,6 +1,6 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -46,7 +46,7 @@ sap.ui
 			 * @class Class to mock http requests made to a remote server supporting the OData V2 REST protocol.
 			 * @extends sap.ui.base.ManagedObject
 			 * @author SAP SE
-			 * @version 1.135.0
+			 * @version 1.136.0
 			 * @public
 			 * @alias sap.ui.core.util.MockServer
 			 */

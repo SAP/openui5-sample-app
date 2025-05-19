@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/m/library","./QuickAction","./QuickActionItem","sap/m/Switch"],function(t,e,n,i){"use strict";var a=n.extend("sap.m.table.columnmenu.QuickTotalItem",{metadata:{library:"sap.m",properties:{totaled:{type:"boolean",defaultValue:false}},aggregations:{quickAction:{type:"sap.m.table.columnmenu.QuickAction",multiple:false,visibility:"hidden"}}}});a.prototype._getAction=function(){var n=this.getAggregation("quickAction");var i=this.getLabel();if(n){n.setLabel(i)}else{n=new e({label:i,content:[this._createContent()],category:t.table.columnmenu.Category.Aggregate,contentSize:t.InputListItemContentSize.S})}this.setAggregation("quickAction",n,true);return n};a.prototype._createContent=function(){return new i({state:this.getTotaled(),customTextOn:" ",customTextOff:" ",change:[{item:this},this._onTotalChange,this]})};a.prototype.setTotaled=function(t){this.setProperty("totaled",t,true);var e=this.getAggregation("quickAction");if(e){var n=e.getContent()[0];n.setState(t)}return this};a.prototype._onTotalChange=function(t,e){var n=t.getSource().getState();this.setTotaled(n);this.getParent().onChange(e.item)};return a});

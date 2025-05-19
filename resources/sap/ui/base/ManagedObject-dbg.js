@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -264,7 +264,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @public
 	 * @alias sap.ui.base.ManagedObject
 	 */
@@ -3781,7 +3781,7 @@ sap.ui.define([
 			// set default for templateShareable
 			if ( vBindingInfo.template._sapui_candidateForDestroy ) {
 				// template became active again, we should no longer consider to destroy it
-				Log.warning(
+				future.warningThrows(
 					"A binding template that is marked as 'candidate for destroy' is reused in a binding. " +
 					"You can use 'templateShareable:true' to fix this issue for all bindings that are affected " +
 					"(The template is used in aggregation '" + sName + "' of object '" + this.getId() + "'). " +
@@ -3790,6 +3790,13 @@ sap.ui.define([
 			}
 			if (vBindingInfo.templateShareable === undefined) {
 				vBindingInfo.templateShareable = MAYBE_SHAREABLE_OR_NOT;
+			} else if (typeof vBindingInfo.templateShareable === "string") {
+				future.warningThrows(`Parameter 'templateShareable' is defined with type boolean but is set for binding template ${vBindingInfo.template.toString()} with string value "${vBindingInfo.templateShareable}". This can easily lead to errors. To avoid unintended behavior, always set the parameter to true or false`);
+				if (vBindingInfo.templateShareable === "true") {
+					vBindingInfo.templateShareable = true;
+				} else if (vBindingInfo.templateShareable === "false") {
+					vBindingInfo.templateShareable = false;
+				}
 			}
 		}
 		vBindingInfo = BindingInfo.createAggregation(vBindingInfo, oAggregationInfo._doesNotRequireFactory);
@@ -4642,7 +4649,7 @@ sap.ui.define([
 			} else if ( oBindingInfo.templateShareable === MAYBE_SHAREABLE_OR_NOT ) {
 				// a 'clone' operation implies sharing the template (if templateShareable is not set to false)
 				oBindingInfo.templateShareable = oCloneBindingInfo.templateShareable = true;
-				Log.error(
+				future.errorThrows(
 					"During a clone operation, a template was found that neither was marked with 'templateShareable:true' nor 'templateShareable:false'. " +
 					"The framework won't destroy the template. This could cause errors (e.g. duplicate IDs) or memory leaks " +
 					"(The template is used in aggregation '" + sName + "' of object '" + oSource.getId() + "')." +

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(['sap/ui/core/routing/Targets', './TargetHandler', './Target', './async/Targets'],
@@ -391,6 +391,10 @@ sap.ui.define(['sap/ui/core/routing/Targets', './TargetHandler', './Target', './
 
 			_constructTarget : function (oOptions, oParent) {
 				return new Target(oOptions, this.getViews(), oParent, this._oTargetHandler);
+			},
+
+			_getDeprecatedOptions : function() {
+				return Object.assign(Targets.prototype._getDeprecatedOptions.apply(this), {"viewLevel": "level"});
 			},
 
 			/**

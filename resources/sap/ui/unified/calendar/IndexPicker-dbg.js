@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -32,7 +32,7 @@ sap.ui.define([
 	 * This control serves for picking an item from a grid with items which are relative periods in Plannig Calendar.
 	 * This is used inside the sap.m.PlanningCalendar relative views. Not for stand alone usage.
 	 * @extends sap.ui.core.Control
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @private

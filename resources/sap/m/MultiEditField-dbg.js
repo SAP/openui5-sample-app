@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/ui/core/Lib", "sap/ui/core/XMLComposite", "./library", "sap/ui/core/Item"], function(Library, XMLComposite, library, Item) {
@@ -17,7 +17,7 @@ sap.ui.define(["sap/ui/core/Lib", "sap/ui/core/XMLComposite", "./library", "sap/
 	 * @implements sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @experimental since 1.52
 	 * @since 1.52.0
 	 * @alias sap.m.MultiEditField

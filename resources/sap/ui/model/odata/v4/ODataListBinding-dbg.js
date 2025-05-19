@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -59,7 +59,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataParentBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.135.0
+		 * @version 1.136.0
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -194,7 +194,7 @@ sap.ui.define([
 	 * Returns all currently existing contexts of this list binding in no special order.
 	 *
 	 * @param {boolean} [bNoCreated]
-	 *   Whether to exclude created contexts
+	 *   Whether to exclude created and out of place contexts
 	 * @returns {sap.ui.model.odata.v4.Context[]}
 	 *   All currently existing contexts of this list binding, in no special order
 	 *
@@ -209,7 +209,8 @@ sap.ui.define([
 		return aContexts.filter(function (oContext) {
 			return oContext;
 		}).concat(Object.values(this.mPreviousContextsByPath).filter(function (oContext) {
-			return oContext.isEffectivelyKeptAlive();
+			const bKeptAlive = oContext.isEffectivelyKeptAlive();
+			return bNoCreated ? bKeptAlive && !oContext.isOutOfPlace() : bKeptAlive;
 		}));
 	};
 
@@ -665,6 +666,34 @@ sap.ui.define([
 				+ "': v4.ODataListBinding#attachEvent");
 		}
 		return ListBinding.prototype.attachEvent.apply(this, arguments);
+	};
+
+	/**
+	 * Attach event handler <code>fnFunction</code> to the 'selectionChanged' event of this binding.
+	 *
+	 * @param {function} fnFunction The function to call when the event occurs
+	 * @param {object} [oListener] Object on which to call the given function
+	 * @returns {this} <code>this</code> to allow method chaining
+	 *
+	 * @public
+	 * @since 1.136.0
+	 */
+	ODataListBinding.prototype.attachSelectionChanged = function (fnFunction, oListener) {
+		return this.attachEvent("selectionChanged", fnFunction, oListener);
+	};
+
+	/**
+	 * Attach event handler <code>fnFunction</code> to the 'separateReceived' event of this binding.
+	 *
+	 * @param {function} fnFunction The function to call when the event occurs
+	 * @param {object} [oListener] Object on which to call the given function
+	 * @returns {this} <code>this</code> to allow method chaining
+	 *
+	 * @public
+	 * @since 1.136.0
+	 */
+	ODataListBinding.prototype.attachSeparateReceived = function (fnFunction, oListener) {
+		return this.attachEvent("separateReceived", fnFunction, oListener);
 	};
 
 	/**
@@ -1502,6 +1531,36 @@ sap.ui.define([
 	};
 
 	/**
+	 * Detach event handler <code>fnFunction</code> from the 'selectionChanged' event of this
+	 * binding.
+	 *
+	 * @param {function} fnFunction The function to call when the event occurs
+	 * @param {object} [oListener] Object on which to call the given function
+	 * @returns {this} <code>this</code> to allow method chaining
+	 *
+	 * @public
+	 * @since 1.136.0
+	 */
+	ODataListBinding.prototype.detachSelectionChanged = function (fnFunction, oListener) {
+		return this.detachEvent("selectionChanged", fnFunction, oListener);
+	};
+
+	/**
+	 * Detach event handler <code>fnFunction</code> from the 'separateReceived' event of this
+	 * binding.
+	 *
+	 * @param {function} fnFunction The function to call when the event occurs
+	 * @param {object} [oListener] Object on which to call the given function
+	 * @returns {this} <code>this</code> to allow method chaining
+	 *
+	 * @public
+	 * @since 1.136.0
+	 */
+	ODataListBinding.prototype.detachSeparateReceived = function (fnFunction, oListener) {
+		return this.detachEvent("separateReceived", fnFunction, oListener);
+	};
+
+	/**
 	 * @override
 	 * @see sap.ui.model.odata.v4.ODataBinding#doCreateCache
 	 */
@@ -1527,11 +1586,12 @@ sap.ui.define([
 					bSideEffectsRefresh = true;
 					oOldCache.resetOutOfPlace();
 				}
-				this.validateSelection(oOldCache, sGroupId);
 				// Note: #inheritQueryOptions as called below should not matter in case of own
 				// requests, which are a precondition for kept-alive elements
 				oOldCache.reset(aKeepAlivePredicates, bSideEffectsRefresh ? sGroupId : undefined,
 					mQueryOptions, this.mParameters.$$aggregation, this.isGrouped());
+				// validate selection after the old cache is reset
+				this.validateSelection(oOldCache, sGroupId);
 
 				return oOldCache;
 			}
@@ -3660,10 +3720,12 @@ sap.ui.define([
 	 * @param {sap.ui.model.odata.v4.Context} oChildContext - The (child) node to be moved
 	 * @param {sap.ui.model.odata.v4.Context|null} oParentContext - The new parent's context
 	 * @param {sap.ui.model.odata.v4.Context|null} [oSiblingContext] - The next sibling's context
-	 * @param {boolean} [bCopy] - Whether the node should be copied instead of moved
-	 * @returns {sap.ui.base.SyncPromise<void>}
-	 *   A promise which is resolved without a defined result when the move is finished, or
-	 *   rejected in case of an error
+	 * @param {boolean} [bCopy]
+	 *   Whether the node should be copied instead of moved. The returned promise resolves with the
+	 *   index for the copied node.
+	 * @returns {sap.ui.base.SyncPromise<number|undefined>}
+	 *   A promise which is resolved without a defined result when the move is finished, or with the
+	 *   index for the copied node, or rejected in case of an error
 	 * @throws {Error} If there is no recursive hierarchy or if this binding's root binding is
 	 *   suspended
 	 *
@@ -3716,10 +3778,14 @@ sap.ui.define([
 				this.requestSideEffects(sUpdateGroupId, [""])
 			]).then(([fnGetIndices]) => {
 				// Note: wait for side-effects refresh before getting index!
-				const [iChildIndex, iSiblingIndex] = fnGetIndices();
+				const [iChildIndex, iSiblingIndex, oCopyIndexPromise] = fnGetIndices();
 				oChildContext.iIndex = iChildIndex;
 				if (bUpdateSiblingIndex) {
 					oSiblingContext.iIndex = iSiblingIndex;
+				}
+
+				if (bCopy) {
+					return oCopyIndexPromise;
 				}
 			});
 		}
@@ -5217,7 +5283,8 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataListBinding.prototype.validateSelection = function (oCache, sGroupId) {
-		if (!this.mParameters.$$clearSelectionOnFilter || "$$aggregation" in this.mParameters
+		if (!this.mParameters.$$clearSelectionOnFilter
+			|| _Helper.isDataAggregation(this.mParameters)
 			|| this.oHeaderContext.isSelected()) {
 			return;
 		}

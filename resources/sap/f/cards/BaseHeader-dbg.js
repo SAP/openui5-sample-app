@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -55,7 +55,7 @@ sap.ui.define([
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @public
@@ -141,6 +141,14 @@ sap.ui.define([
 				target: { type: "string" }
 			},
 			aggregations: {
+
+				/**
+				 * Info sections to be displayed in the header.
+				 * @experimental Since 1.136
+				 * @since 1.136
+				 */
+				infoSection: {type: "sap.ui.core.Control", multiple: true, singularName: "infoSection"},
+
 				/**
 				 * Holds the internal data timestamp text aggregation.
 				 */

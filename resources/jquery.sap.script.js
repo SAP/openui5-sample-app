@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["jquery.sap.global","sap/base/util/uid","sap/base/strings/hash","sap/base/util/array/uniqueSort","sap/base/util/deepEqual","sap/base/util/each","sap/base/util/array/diff","sap/base/util/JSTokenizer","sap/base/util/merge","sap/base/util/UriParameters"],function(jQuery,e,r,a,t,n,o,i,s,l){"use strict";jQuery.sap.uid=e;jQuery.sap.hashCode=r;jQuery.sap.unique=a;jQuery.sap.equal=t;jQuery.sap.each=n;jQuery.sap.arraySymbolDiff=o;jQuery.sap._createJSTokenizer=function(){return new i};jQuery.sap.parseJS=i.parseJS;jQuery.sap.extend=function(){var e=arguments,r=false;if(typeof arguments[0]==="boolean"){r=arguments[0];e=Array.prototype.slice.call(arguments,1)}if(r){return s.apply(this,e)}else{

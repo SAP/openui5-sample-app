@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -37,7 +37,7 @@ sap.ui.define([
 		 * @implements sap.m.IMenuItem
 		 *
 		 * @author SAP SE
-		 * @version 1.135.0
+		 * @version 1.136.0
 		 *
 		 * @constructor
 		 * @public
@@ -339,7 +339,7 @@ sap.ui.define([
 		 * @private
 		 */
 		MenuItem.prototype._addCustomData = function (oVisualItem, oCustomData) {
-			oVisualItem.addCustomData(oCustomData.clone(MenuItem.UNIFIED_MENU_ITEMS_ID_SUFFIX, undefined, { bCloneChildren: false, bCloneBindings: true }));
+			oVisualItem.addCustomData(oCustomData.clone(MenuItem.UNIFIED_MENU_ITEMS_ID_SUFFIX, undefined, {}));
 			this._observeCustomDataChanges(oCustomData);
 		};
 
@@ -351,7 +351,7 @@ sap.ui.define([
 		 * @private
 		 */
 		MenuItem.prototype._addEndContent = function (oVisualItem, oEndContent) {
-			oVisualItem.addEndContent(oEndContent.clone(MenuItem.UNIFIED_MENU_ITEMS_ID_SUFFIX, undefined, { bCloneChildren: false, bCloneBindings: true }));
+			oVisualItem.addEndContent(oEndContent.clone(MenuItem.UNIFIED_MENU_ITEMS_ID_SUFFIX, undefined, { cloneChildren: true, cloneBindings: false }));
 			this._observeEndContentChanges(oEndContent);
 		};
 

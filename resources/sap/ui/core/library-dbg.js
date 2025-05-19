@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -27,13 +27,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.135.0",
+		 version: "1.136.0",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 apiVersion: 2,
 		 ...{
@@ -894,9 +894,12 @@ sap.ui.define([
 	};
 	DataType.registerEnum("sap.ui.core.BusyIndicatorSize", thisLib.BusyIndicatorSize);
 
+	/** @deprecated */
+	(() => {
 	// this assignment here is kept so that imports via the library module continue to work
 	// even when the export via globals is abandoned
 	thisLib.CalendarType = CalendarType;
+	})();
 
 	/**
 	 * @classdesc A string type that represents CSS color values (CSS Color Level 3).
@@ -1643,7 +1646,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0

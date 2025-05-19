@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -18,7 +18,7 @@ sap.ui.define(['sap/ui/core/LayoutData', './library'],
 	 * @class
 	 * Holds layout data for the BlockLayoutCells contents.
 	 * @extends sap.ui.core.LayoutData
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @constructor
 	 * @public
 	 * @since 1.50.0

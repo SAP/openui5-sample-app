@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.135.0
+		 * @version 1.136.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -650,29 +650,31 @@ sap.ui.define([
 	 * @see #setSelected
 	 */
 	Context.prototype.doSetSelected = function (bSelected, bDoNotUpdateAnnotation) {
-		if (!bDoNotUpdateAnnotation && this.bSelected !== bSelected) {
+		if (this.bSelected === bSelected) {
+			return false;
+		}
+		this.bSelected = bSelected;
+		this.oBinding.onKeepAliveChanged(this); // selected contexts are effectively kept alive
+		const oHeaderContext = this.oBinding.getHeaderContext();
+		if (oHeaderContext === this) {
+			if (!bSelected) {
+				this.iSelectionCount = 0; // reset after previous "select all"
+			}
+		} else if (!this.isDeleted()) {
+			// Note: deleted contexts can only be deselected, but are not currently counted anyway
+			oHeaderContext.onSelectionChanged(this); // incl. "change" event for "$selectionCount"
+		}
+
+		// Note: data binding may cause #setSelected to be called redundantly!
+		if (!bDoNotUpdateAnnotation) {
 			this.withCache((oCache, sPath) => {
 				if (this.oBinding) {
 					oCache.setProperty("@$ui5.context.isSelected", bSelected, sPath);
 				} // else: context already destroyed
 			}, "");
 		}
-		// Note: data binding may cause #setSelected to be called redundantly!
-		if (this.bSelected === bSelected) {
-			return false;
-		}
 
-		if (!bSelected && this.oBinding.getHeaderContext() === this) {
-			this.iSelectionCount = 0; // reset after previous "select all"
-		}
-		this.bSelected = bSelected;
-		if (!this.isDeleted() && this.oBinding.getHeaderContext() !== this) {
-			// Note: deleted contexts can only be deselected, but are not currently counted anyway
-			this.oBinding.getHeaderContext().onSelectionChanged(this);
-		}
-		this.oBinding.onKeepAliveChanged(this); // selected contexts are effectively kept alive
-
-		return true;
+		return true; // fire "selectionChanged"
 	};
 
 	/**
@@ -1486,15 +1488,16 @@ sap.ui.define([
 	 *
 	 * @param {object} oParameters - A parameter object
 	 * @param {boolean} [oParameters.copy]
-	 *   Whether the node should be copied instead of moved (@experimental as of version 1.135.0)
+	 *   Whether the node should be copied instead of moved (@experimental as of version 1.135.0).
+	 *   The returned promise resolves with the index for the copied node.
 	 * @param {sap.ui.model.odata.v4.Context|null} [oParameters.nextSibling]
 	 *   The next sibling's context, or <code>null</code> to turn this node into the last sibling.
 	 *   Omitting the sibling moves this node to a position determined by the server.
 	 * @param {sap.ui.model.odata.v4.Context|null} oParameters.parent
 	 *   The new parent's context, or <code>null</code> to turn this node into a root node
-	 * @returns {Promise<void>}
-	 *   A promise which is resolved without a defined result when the move is finished, or
-	 *   rejected in case of an error
+	 * @returns {Promise<number|undefined>}
+	 *   A promise which is resolved without a defined result when the move is finished, or with the
+	 *   index for the copied node, or rejected in case of an error
 	 * @throws {Error} If
 	 *   <ul>
 	 *     <li> there is no recursive hierarchy,

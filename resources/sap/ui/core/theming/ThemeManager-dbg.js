@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -410,6 +410,11 @@ sap.ui.define([
 							const rBaseTheme = /~v=[^\/]+\(([a-zA-Z0-9_]+)\)/;
 							// base theme should be matched in the first capturing group
 							_sFallbackTheme = rBaseTheme.exec(sThemeRoot)?.[1];
+							// pass derived fallback theme through our default theme handling
+							// in case the fallback theme is not supported anymore, we fall up to the latest default theme
+							if (_sFallbackTheme) {
+								_sFallbackTheme = ThemeHelper.validateAndFallbackTheme(_sFallbackTheme);
+							}
 						}
 					}
 
@@ -695,7 +700,7 @@ sap.ui.define([
 	 */
 	function getLibraryCssQueryParams(oLibInfo) {
 		var sQuery;
-		if (Library.getVersionedLibCss() && oLibInfo) {
+		if (oLibInfo) {
 			sQuery = "?version=" + oLibInfo.version;
 
 			// distribution version may not be available (will be loaded in Core constructor syncpoint2)

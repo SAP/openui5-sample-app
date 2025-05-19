@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -41,6 +41,10 @@ sap.ui.define([], function () {
 		oRm.openEnd();
 
 		this.renderMainPart(oRm, oHeader);
+
+		if (!oError) {
+			this._renderInfoSections(oRm, oHeader);
+		}
 
 		if (bHasNumericPart && !oError) {
 			this.renderNumericPart(oRm, oHeader);
@@ -287,6 +291,23 @@ sap.ui.define([], function () {
 			.openEnd();
 
 		oRm.renderControl(oToolbar);
+
+		oRm.close("div");
+	};
+
+	BaseHeaderRenderer._renderInfoSections = function (oRm, oHeader) {
+		const aInfoSections = oHeader.getInfoSection();
+		if (!aInfoSections.length) {
+			return;
+		}
+
+		oRm.openStart("div")
+			.class("sapFCardHeaderInfoSection")
+			.openEnd();
+
+		aInfoSections.forEach((oContent) => {
+			oRm.renderControl(oContent);
+		});
 
 		oRm.close("div");
 	};

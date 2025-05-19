@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -110,7 +110,7 @@ function(
 	* @extends sap.m.Input
 	*
 	* @author SAP SE
-	* @version 1.135.0
+	* @version 1.136.0
 	*
 	* @constructor
 	* @public
@@ -377,6 +377,12 @@ function(
 					oTokenizer.removeStyleClass("sapMTokenizerIndicatorDisabled");
 				}
 				this._syncInputWidth(oTokenizer);
+
+				if (this.getEditable()) {
+					oTokenizer.addStyleClass("sapMTokenizerIndicatorDisabled");
+				} else {
+					oTokenizer.removeStyleClass("sapMTokenizerIndicatorDisabled");
+				}
 
 				// Prevent layout thrashing from the methods below as the Tokenizer
 				// does not need any adjustments without tokens
@@ -931,7 +937,7 @@ function(
 
 		// ctrl/meta + I -> Open suggestions
 		if ((oEvent.ctrlKey || oEvent.metaKey) && oEvent.which === KeyCodes.I && oTokenizer.getTokens().length) {
-			oTokenizer._togglePopup(oTokenizer.getTokensPopup());
+			oTokenizer._togglePopup(oTokenizer.getTokensPopup(), this.getDomRef());
 			oEvent.preventDefault();
 		}
 	};
@@ -965,6 +971,12 @@ function(
 		// in this case we leave it as plain text input
 		if (aSeparatedText.length <= 1) {
 			return;
+		}
+
+		const iMaxTokens = this.getMaxTokens();
+
+		if (iMaxTokens) {
+			aSeparatedText = aSeparatedText.slice(0, iMaxTokens);
 		}
 
 		setTimeout(function () {
@@ -1126,7 +1138,7 @@ function(
 		if (!this.getEditable()
 			&& oTokenizer.getHiddenTokensCount()
 			&& oEvent.target === this.getFocusDomRef()) {
-			oTokenizer._togglePopup(oTokenizer.getTokensPopup());
+			oTokenizer._togglePopup(oTokenizer.getTokensPopup(), this.getDomRef());
 		}
 
 		if (!containsOrEquals(oTokenizer.getFocusDomRef(), document.activeElement)) {
@@ -1187,7 +1199,7 @@ function(
 		}
 
 		if (!bFocusIsInSelectedItemPopup && !bNewFocusIsInTokenizer) {
-			oSelectedItemsPopup.isOpen() && !this.isMobileDevice() && oTokenizer._togglePopup(oSelectedItemsPopup);
+			oSelectedItemsPopup.isOpen() && !this.isMobileDevice() && oTokenizer._togglePopup(oSelectedItemsPopup, this.getDomRef());
 			oTokenizer.setRenderMode(TokenizerRenderMode.Narrow);
 		}
 
@@ -1200,7 +1212,12 @@ function(
 	 * @param {jQuery.Event} oEvent The event object
 	 */
 	MultiInput.prototype.ontap = function (oEvent) {
-		var oTokenizer = this.getAggregation("tokenizer");
+		const oTokenizer = this.getAggregation("tokenizer");
+		const bNMoreLabelClick = oEvent.target?.className && oEvent.target.className.indexOf("sapMTokenizerIndicator") > -1;
+
+		if (bNMoreLabelClick) {
+			this._handleNMoreIndicatorPress();
+		}
 
 		//deselect tokens when focus is on text field
 		if (document.activeElement === this._$input[0]
@@ -1261,7 +1278,7 @@ function(
 		this.selectText(0, 0);
 
 		if (oPopup.isOpen()) {
-			oTokenizer._togglePopup(oPopup);
+			oTokenizer._togglePopup(oPopup, this.getDomRef());
 		}
 
 		Input.prototype.onsapescape.apply(this, arguments);
@@ -1778,6 +1795,12 @@ function(
 		}
 	};
 
+	MultiInput.prototype._handleNMoreIndicatorPress = function () {
+		const oTokenizer = this.getAggregation("tokenizer");
+
+		oTokenizer._bIsOpenedByNMoreIndicator = true;
+		oTokenizer._togglePopup(oTokenizer.getTokensPopup(), this.getDomRef());
+	};
 
 	/**
 	 * A helper function calculating if the SuggestionsPopover should be opened on mobile.

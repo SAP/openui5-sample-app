@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -1505,19 +1505,21 @@ sap.ui.define([
 	 * @param {boolean} [bRequestSiblingRank]
 	 *   Whether to request the next sibling's rank and return its new index
 	 * @param {boolean} [bCopy]
-	 *   Whether the node should be copied instead of moved
+	 *   Whether the node should be copied instead of moved. The returned promise resolves with the
+	 *   index for the copied node.
 	 * @returns {{promise : sap.ui.base.SyncPromise<function():number|number[]>, refresh : boolean}}
 	 *   An object with two properties:
 	 *   - <code>promise</code>: A promise which is resolved when the move is finished, or rejected
 	 *     in case of an error. In case a refresh is needed, the promise is resolved with a function
 	 *     that can be called w/o args once the refresh is finished - it then returns an array with
 	 *     the new indices of the moved node (or <code>undefined</code>) and of the next sibling (if
-	 *     requested). Else it is resolved with an array of:
+	 *     requested), and in case of copy a promise which resolves with the index of the copied
+	 *     node. Else it is resolved with an array of:
 	 *     - the number of child nodes added (normally one, but maybe more in case the parent node
 	 *       was collapsed before),
 	 *     - the new index of the moved node,
 	 *     - the number of descendant nodes that were affected by collapsing the moved node
-	 *       (<code>undefined</code> in case the moved node was not expanded before)
+	 *       (<code>undefined</code> in case the moved node was not expanded before),
 	 *   - <code>refresh</code>: A flag indicating whether a side-effects refresh is needed
 	 *
 	 * @public
@@ -1586,10 +1588,13 @@ sap.ui.define([
 		let oCopyActionPromise;
 		if (bCopy) {
 			bRefreshNeeded = true;
-			oCopyActionPromise = this.oRequestor.request("POST", sChildPath + "/"
-					+ this.oAggregation.$Actions.CopyAction, oGroupLock.getUnlockedCopy(), {
-					"If-Match" : oChildNode,
-					Prefer : "return=minimal"
+			const mQueryOptions = {$select : []};
+			_Helper.selectKeyProperties(mQueryOptions, this.getTypes()[this.sMetaPath]);
+			const sResourcePath = sChildPath + "/" + this.oAggregation.$Actions.CopyAction
+				+ this.oRequestor.buildQueryString(this.sMetaPath, mQueryOptions, false, true);
+			oCopyActionPromise = this.oRequestor.request("POST", sResourcePath,
+				oGroupLock.getUnlockedCopy(), {
+					"If-Match" : oChildNode
 				}, {});
 			// Note: "$-1" references the previous request. Requests with the same path could
 			// possibly be merged, but it is not allowed to invoke several moves at the same time
@@ -1609,11 +1614,17 @@ sap.ui.define([
 		]);
 
 		if (bRefreshNeeded) { // side-effects refresh needed
-			oPromise = oPromise.then(([,, iRank, iSiblingRank]) => {
+			oPromise = oPromise.then(([,, iRank, iSiblingRank, oCopy]) => {
 				return () => { // Note: caller MUST wait for side-effects refresh first
+					let oCopyIndexPromise;
+					if (bCopy) {
+						oCopyIndexPromise = this.requestRank(oCopy, oGroupLock, true)
+							.then((iCopyIndex) => this.findIndex(iCopyIndex));
+					}
 					return [
 						iRank === undefined ? undefined : this.findIndex(iRank),
-						bRequestSiblingRank && this.findIndex(iSiblingRank)
+						bRequestSiblingRank && this.findIndex(iSiblingRank),
+						oCopyIndexPromise
 					];
 				};
 			});
@@ -2085,6 +2096,54 @@ sap.ui.define([
 		const fnSuper = this.oFirstLevel.refreshKeptElements;
 		return fnSuper.call(this, oGroupLock, fnOnRemove, bIgnorePendingChanges,
 			/*bDropApply*/true);
+	};
+
+	/**
+	 * Sends a request for the elements identified by the given key predicates. Returns predicates
+	 * for elements matching the current filter.
+	 *
+	 * @param {string[]} aPredicates
+	 *   A list of key predicates for known elements, in no special order
+	 * @param {sap.ui.model.odata.v4.lib._GroupLock} oGroupLock
+	 *   A lock for the group ID
+	 * @param {boolean} [bMinimal]
+	 *   Whether to select only key properties (and not expand anything) in an undefined order;
+	 *   only <code>true</code> is supported; <b>Note:</b> in this case no data is updated from the
+	 *   response
+	 * @returns {Promise<string[]>}
+	 *   A promise that resolves with an array of predicates (see above), or rejects with an
+	 *   instance of <code>Error</code> in case of failure
+	 *
+	 * @public
+	 * @see sap.ui.model.odata.v4.lib._CollectionCache#requestFilteredOrderedPredicates
+	 */
+	_AggregationCache.prototype.requestFilteredOrderedPredicates = async function (aPredicates,
+			oGroupLock, bMinimal) {
+		if (!bMinimal) {
+			throw new Error("Not implemented");
+		}
+		let mQueryOptions = {...this.mQueryOptions};
+		delete mQueryOptions.$count;
+		delete mQueryOptions.$expand;
+		delete mQueryOptions.$orderby;
+		mQueryOptions
+			= _AggregationHelper.buildApply4Hierarchy(this.oAggregation, mQueryOptions, true);
+		mQueryOptions.$select = [];
+		const mTypeForMetaPath = this.getTypes();
+		_Helper.selectKeyProperties(mQueryOptions, mTypeForMetaPath[this.sMetaPath]);
+		const aKeyFilters = aPredicates.map((sPredicate) => _Helper.getKeyFilter(
+			this.aElements.$byPredicate[sPredicate], this.sMetaPath, mTypeForMetaPath));
+		mQueryOptions.$top = aKeyFilters.length;
+		mQueryOptions.$filter = aKeyFilters.join(" or ");
+		const sResourcePath = this.sResourcePath
+			+ this.oRequestor.buildQueryString(this.sMetaPath, mQueryOptions, false, true, true);
+
+		const oResponse = await this.oRequestor.request("GET", sResourcePath, oGroupLock);
+
+		return oResponse.value.map((oNode) => {
+			this.calculateKeyPredicate(oNode, mTypeForMetaPath, this.sMetaPath);
+			return _Helper.getPrivateAnnotation(oNode, "predicate");
+		});
 	};
 
 	/**

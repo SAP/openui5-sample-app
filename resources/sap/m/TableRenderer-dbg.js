@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -232,6 +232,7 @@ sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/Renderer", "sap/ui/cor
 						rm.style("text-align", sAlign);
 					}
 					rm.openEnd();
+					rm.renderControl(oColumn.getAggregation("_action"));
 					rm.renderControl(oControl.addStyleClass("sapMColumnHeaderContent"));
 					rm.close("div");
 				} else {

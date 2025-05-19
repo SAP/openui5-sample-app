@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -162,7 +162,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @public
@@ -759,7 +759,7 @@ function(
 			while the suggestions popover is open update the value state header.
 			If the input has FormattedText aggregation while the suggestions popover is open then
 			it's new, because the old is already switched to have the value state header as parent */
-			this._updateSuggestionsPopoverValueState();
+			this._updateSuggestionsPopoverValueState(true);
 		}
 	};
 
@@ -1859,11 +1859,15 @@ function(
 		this._bBackspaceOrDelete = (oEvent.which === KeyCodes.BACKSPACE) || (oEvent.which === KeyCodes.DELETE);
 		this._bDoTypeAhead = !Device.os.android && this.getAutocomplete() && !this._bBackspaceOrDelete;
 
-		if (this.areHotKeysPressed(oEvent) && this._isSuggestionsPopoverOpen()) {
-			var oSuggestionsPopover = this._getSuggestionsPopover();
-			oSuggestionsPopover.setValueStateActiveState(true);
-			oSuggestionsPopover._handleValueStateLinkNav(this, oEvent);
-			oSuggestionsPopover.updateFocus(this, null);
+		if (this.areHotKeysPressed(oEvent)) {
+			if (this._isSuggestionsPopoverOpen()){
+				var oSuggestionsPopover = this._getSuggestionsPopover();
+				oSuggestionsPopover.setValueStateActiveState(true);
+				oSuggestionsPopover._handleValueStateLinkNav(this, oEvent);
+				oSuggestionsPopover.updateFocus(this, null);
+			} else {
+				this._handleValueStateLinkNav();
+			}
 		}
 	};
 
@@ -2608,6 +2612,10 @@ function(
 	 * @public
 	 */
 	Input.prototype.setValue = function(sValue) {
+		// set the type syncronously before the value is set
+		// to avoid password field's text to be shown when triggering type
+		this.getDomRef("inner")?.setAttribute("type", this.getType().toLowerCase());
+
 		this._iSetCount++;
 		InputBase.prototype.setValue.call(this, sValue);
 		this._onValueUpdated(sValue);
@@ -3332,10 +3340,10 @@ function(
 
 	/**
 	 * Updates the suggestions popover value state
-	 *
+	 * @param {boolean} bUpdateValueStateLinkDelagate Whether to reinitialize the value state link delegate
 	 * @private
 	 */
-	Input.prototype._updateSuggestionsPopoverValueState = function() {
+	Input.prototype._updateSuggestionsPopoverValueState = function(bUpdateValueStateLinkDelagate) {
 		var oSuggPopover = this._getSuggestionsPopover(),
 			sValueState = this.getValueState(),
 			bNewValueState = this.getValueState() !== oSuggPopover._getValueStateHeader().getValueState(),
@@ -3353,7 +3361,7 @@ function(
 			this.setFormattedValueStateText(oSuggPopover._getValueStateHeader().getFormattedText());
 		}
 
-		oSuggPopover.updateValueState(sValueState, (oNewFormattedValueStateText || sValueStateText), this.getShowValueStateMessage());
+		oSuggPopover.updateValueState(sValueState, (oNewFormattedValueStateText || sValueStateText), this.getShowValueStateMessage(), bUpdateValueStateLinkDelagate);
 
 		if (this.isMobileDevice()) {
 			oSuggPopover.getInput().setValueState(sValueState);

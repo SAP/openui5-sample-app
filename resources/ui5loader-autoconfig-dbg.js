@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -1248,9 +1248,11 @@
 				deps: ['sap/viz/library', 'sap/ui/thirdparty/jquery', 'sap/ui/thirdparty/d3', 'sap/viz/libs/canvg']
 			},
 			'sap/viz/libs/sap-viz-info-charts': {
+				amd: true,
 				deps: ['sap/viz/libs/sap-viz-info-framework']
 			},
 			'sap/viz/libs/sap-viz-info-framework': {
+				amd: true,
 				deps: ['sap/ui/thirdparty/jquery', 'sap/ui/thirdparty/d3']
 			},
 			'sap/viz/ui5/container/libs/sap-viz-controls-vizcontainer': {

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -21,7 +21,7 @@ sap.ui.define([
 	 * @public
 	 * @since 1.15.0
 	 * @deprecated since 1.56, use an {@link sap.ui.core.mvc.XMLView} or a {@link topic:e6bb33d076dc4f23be50c082c271b9f0 Typed View} instead
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @alias sap.ui.core.plugin.TemplatingSupport
 	 */
 	var TemplatingSupport = function() {

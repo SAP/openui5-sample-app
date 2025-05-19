@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -113,7 +113,7 @@ sap.ui.define([
 	 * bound content aggregation. An error will be thrown when the above combination is detected.
 	 *
 	 * @extends sap.ui.core.mvc.View
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.XMLView
@@ -770,10 +770,10 @@ sap.ui.define([
 	};
 
 	XMLView.prototype.getControllerModuleName = function() {
-		if (this._controllerName) {
+		if (typeof this._controllerName === "string") {
 			return this._controllerName.replace(/\./g, "/") + ".controller";
 		}
-		return this._controllerModuleName.substring("module:".length);
+		return typeof this._controllerModuleName === "string" ? this._controllerModuleName.substring("module:".length) : "";
 	};
 
 	XMLView.prototype._getControllerModuleName = function() {

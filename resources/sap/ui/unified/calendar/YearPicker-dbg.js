@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -61,7 +61,7 @@ sap.ui.define([
 	 * As in all date-time controls, all pubic JS Date objects that are given (e.g. <code>setDate()</code>) or read
 	 * (e.g. <code>getFirstRenderedDate</code>) with values which are considered as date objects in browser(local) timezone.
 	 * @extends sap.ui.core.Control
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @public
@@ -102,6 +102,14 @@ sap.ui.define([
 			 * @since 1.134
 			 */
 			_singleSelection : {type : "boolean", group : "Behavior", defaultValue : true,  visibility: "hidden"},
+
+			/**
+			 * When set to <code>true</code>, an interval of years will show as selected even when <code>intervalSelection</code> is set to <code>false</code>.
+			 * If there is no currently selected date range, the end of the date range will be the currently focused or hovered date.
+			 *
+			 * @private
+			 */
+			_showSelectedRange : {type : "boolean", group : "Appearance", defaultValue : false,  visibility: "hidden"},
 
 			/**
 			 * number of years in each row
@@ -350,6 +358,42 @@ sap.ui.define([
 
 		return this;
 
+	};
+
+	/**
+	 * Setter for the property <code>intervalSelection</code>. If set to <code>true</code>, an interval of years can be selected.
+	 *
+	 * @param {boolean} bEnabled Indicates if <code>intervalSelection</code> should be enabled
+	 * @returns {this} Reference to <code>this</code> for method chaining
+	 * @public
+	 */
+	YearPicker.prototype.setIntervalSelection = function(bEnabled){
+		this._setShowSelectedRange(bEnabled);
+
+		return this.setProperty("intervalSelection", bEnabled);
+	};
+
+	/**
+	 * Setter for property <code>_showSelectedRange</code>. If set to <code>true</code>, an interval of years can be shown as selected.
+	 *
+	 * @param {boolean} bEnabled Indicates if <code>_showSelectedRange</code> should be enabled
+	 * @returns {this} Reference to <code>this</code> for method chaining
+	 * @private
+	 */
+	YearPicker.prototype._setShowSelectedRange = function(bEnabled){
+
+		return this.setProperty("_showSelectedRange", bEnabled);
+	};
+
+	/**
+	 * Getter for property <code>_showSelectedRange</code>. If set to <code>true</code>, an interval of years can be shown as selected.
+	 *
+	 * @returns {boolean} Returns <code>true</code> if <code>_showSelectedRange</code> is enabled
+	 * @private
+	 */
+	YearPicker.prototype._getShowSelectedRange = function(){
+
+		return this.getProperty("_showSelectedRange");
 	};
 
 	/**
@@ -792,11 +836,12 @@ sap.ui.define([
 	};
 
 	YearPicker.prototype._isSelectionInProgress = function() {
-		var oSelectedDates = this._getSelectedDates()[0];
+		const bShowInterval = this._getShowSelectedRange();
+		const oSelectedDates = this._getSelectedDates()[0];
 		if (!oSelectedDates) {
 			return false;
 		}
-		return this.getIntervalSelection() && oSelectedDates.getStartDate() && !oSelectedDates.getEndDate();
+		return bShowInterval && oSelectedDates.getStartDate() && !oSelectedDates.getEndDate();
 	};
 
 	function _initItemNavigation(){
@@ -991,6 +1036,8 @@ sap.ui.define([
 	 */
 	YearPicker.prototype._isYearSelected = function(oCurrentDate) {
 		const aSelectedDateRanges = this.getSelectedDates();
+		const bShowInterval = this._getShowSelectedRange();
+
 		if (!(aSelectedDateRanges && aSelectedDateRanges.length)) {
 			return false;
 		}
@@ -999,7 +1046,7 @@ sap.ui.define([
 		const oStartDate = oDateRange.getStartDate();
 		const oEndDate = oDateRange.getEndDate();
 
-		if (this.getIntervalSelection() && oStartDate && oEndDate) {
+		if (bShowInterval && oStartDate && oEndDate) {
 			const oCalStartDate = CalendarDate.fromLocalJSDate(oStartDate, this._getPrimaryCalendarType());
 			const oCalEndDate = CalendarDate.fromLocalJSDate(oEndDate, this._getPrimaryCalendarType());
 
@@ -1032,6 +1079,8 @@ sap.ui.define([
 	 */
 	YearPicker.prototype._isYearInsideSelectionRange = function(oCurrentDate) {
 		const aSelectedDateRanges = this.getSelectedDates();
+		const bShowInterval = this._getShowSelectedRange();
+
 		if (!(aSelectedDateRanges && aSelectedDateRanges.length)) {
 			return false;
 		}
@@ -1041,7 +1090,7 @@ sap.ui.define([
 			return false;
 		}
 
-		if (this.getIntervalSelection()) {
+		if (bShowInterval) {
 			const oStartDate = oDateRange.getStartDate();
 			const oEndDate = oDateRange.getEndDate();
 

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -11,12 +11,14 @@ sap.ui.define([
 	"sap/ui/core/InvisibleText",
 	"./WizardStepRenderer",
 	"./Button",
+	"sap/ui/events/F6Navigation",
+	"sap/ui/thirdparty/jquery",
 	"./TitlePropagationSupport",
 	"sap/base/Log",
 	"sap/ui/core/Lib",
 	"sap/ui/core/library"
 ],
-	function(library, Control, Element, InvisibleText, WizardStepRenderer, Button, TitlePropagationSupport, Log, Library, coreLibrary) {
+	function(library, Control, Element, InvisibleText, WizardStepRenderer, Button, F6Navigation, jQuery, TitlePropagationSupport, Log, Library, coreLibrary) {
 
 	"use strict";
 
@@ -42,7 +44,7 @@ sap.ui.define([
 	 * <li>If the execution needs to branch after a given step, you should set all possible next steps in the <code>subsequentSteps</code> aggregation.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @public
@@ -136,7 +138,7 @@ sap.ui.define([
 	var ButtonType = library.ButtonType;
 
 	// Add title propagation support
-	TitlePropagationSupport.call(WizardStep.prototype, "content", function () {return this.getId() + "-title";});
+	TitlePropagationSupport.call(WizardStep.prototype, "content", function () {return this.getId() + "-Title";});
 
 	WizardStep.prototype.init = function () {
 		this._oResourceBundle = Library.getResourceBundleFor("sap.m");
@@ -217,6 +219,24 @@ sap.ui.define([
 		}
 
 		return this;
+	};
+
+	/**
+	 * Handler for F6 Navigation.
+	 *
+	 * @param {Object} oEvent - The event object
+	 */
+	WizardStep.prototype.onsapskipforward = function(oEvent) {
+		oEvent.preventDefault();
+		const oEventF6 = new jQuery.Event("keydown");
+		oEventF6.target = oEvent.target;
+		oEventF6.key = 'F6';
+
+		if (this._oNextButton.hasStyleClass("sapMWizardNextButtonVisible")) {
+			this._oNextButton.focus();
+		} else {
+			F6Navigation.handleF6GroupNavigation(oEventF6);
+		}
 	};
 
 	/**

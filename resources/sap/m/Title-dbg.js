@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -74,7 +74,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IShrinkable
 	 *
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @since 1.27.0
 	 *
 	 * @constructor
@@ -336,6 +336,58 @@ sap.ui.define([
 		return false;
 	};
 
+	/**
+	* Get tooltip text
+	* @returns {string} Tooltip text
+	* @private
+	*/
+	Title.prototype._getTooltipText = function () {
+		const oAssoTitle = this._getTitle();
+
+		return oAssoTitle && !this.getContent() ? oAssoTitle.getTooltip_AsString() : this.getTooltip_AsString();
+	};
+
+	/**
+	* Handle the mouseover event
+	* @param {jQuery.Event} oEvent The event that occurred in the callout
+	* @private
+	*/
+	Title.prototype.onmouseover = function (oEvent) {
+		const oTarget = this.getDomRef();
+
+		if (!oTarget || oTarget.offsetWidth >= oTarget.scrollWidth) {
+			return;
+		}
+
+		const sTooltip = this._getTooltipText();
+		let sText = this.getText();
+
+		if (sTooltip) {
+			sText += " - " + sTooltip;
+		}
+
+		oTarget.setAttribute("title", sText);
+	};
+
+	/**
+	* Handle the onmouseout event
+	* @param {jQuery.Event} oEvent The event that occurred in the callout
+	* @private
+	*/
+	Title.prototype.onmouseout = function (oEvent) {
+		const oTarget = this.getDomRef();
+		const sTooltip = this._getTooltipText();
+
+		if (!oTarget) {
+			return;
+		}
+
+		if (sTooltip) {
+			oTarget.setAttribute("title", sTooltip);
+		} else {
+			oTarget.removeAttribute("title");
+		}
+	};
 
 	// Add hyphenation to Title functionality
 	HyphenationSupport.mixInto(Title.prototype);

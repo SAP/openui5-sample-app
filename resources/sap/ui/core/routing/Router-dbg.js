@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -230,6 +230,8 @@ sap.ui.define([
 				this._oRouter.ignoreState = true;
 				this._oRoutes = {};
 				this._oOwner = oOwner;
+
+				this._oConfig.router = this;
 
 				// temporarily: for checking the url param
 				function checkUrl() {

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -18,7 +18,18 @@ sap.ui.define([
 		return pShortcutInfo;
 	}
 
-	const mRegistry = new Map(); // Store {id -> { origin, port }}
+	function cleanupChannel(channel) {
+		try {
+			channel.port1.onmessage = null;
+			channel.port2.onmessage = null;
+			channel.port1.close();
+			channel.port2.close();
+		} catch (e) {
+			Log.warning('Error cleaning up channel:', e);
+		}
+	}
+
+	const mRegistry = new Map(); // Store {id -> { origin, port1, port2 }}
 
 	const mActions = {
 		/**
@@ -31,36 +42,43 @@ sap.ui.define([
 			const sId = oData?.id;
 
 			if (!sId) {
+				Log.warning("Received MessagePort request without an id. Ignoring.");
 				return;
 			}
 
 			const oKnownRequestor = mRegistry.get(sId);
 			if (oKnownRequestor) {
-				oEvent.source.postMessage({ service: "sap.ui.interaction.MessagePortReady"}, oEvent.origin, [oKnownRequestor.port]);
-			} else {
-				const oChannel = new MessageChannel();
+				Log.debug(`Detected already-used or neutered port for id '${sId}'. Cleaning up and establishing a new channel.`);
 
-				// register id with origin and port
-				mRegistry.set(sId, {
-					origin: oEvent.origin,
-					port: oChannel.port2
-				});
-
-				// Listen for messages on port1
-				oChannel.port1.onmessage = (oEvent) => {
-					const oData = oEvent.data;
-					const sService = oData?.service;
-					const fnAction = mActions[sService];
-
-					if (fnAction) {
-						fnAction(oEvent, oChannel.port1);
-					}
-				};
-
-				// Send port2 to requestor
-				oEvent.source.postMessage({ service: "sap.ui.interaction.MessagePortReady"}, oEvent.origin, [oChannel.port2]);
+				cleanupChannel(oKnownRequestor);
+				mRegistry.delete(sId);
 			}
 
+			const oChannel = new MessageChannel();
+
+			// register id with origin and port
+			mRegistry.set(sId, {
+				origin: oEvent.origin,
+				port1: oChannel.port1,
+				port2: oChannel.port2
+			});
+
+			// Listen for messages on port1
+			oChannel.port1.onmessage = (oEvent) => {
+				const oData = oEvent.data;
+				const sService = oData?.service;
+				const fnAction = mActions[sService];
+
+				if (fnAction) {
+					fnAction(oEvent, oChannel.port1);
+				}
+			};
+			try {
+				// Send port2 to requestor
+				oEvent.source.postMessage({ service: "sap.ui.interaction.MessagePortReady"}, oEvent.origin, [oChannel.port2]);
+			} catch (oError) {
+				Log.error(`Failed to postMessage with port for id '${sId}': ${oError.message}`, oError);
+			}
 		},
 
 		/**

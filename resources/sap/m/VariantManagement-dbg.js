@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -126,6 +126,9 @@ sap.ui.define([
 
 	// shortcut for sap.ui.core.TitleLevel
 	var TitleLevel = coreLibrary.TitleLevel;
+
+	// shortcut for sap.m.IllustratedMessageSize
+	const IllustratedMessageSize = mobileLibrary.IllustratedMessageSize;
 
 	/**
 	 * Constructor for a new <code>VariantManagement</code>.
@@ -1144,8 +1147,8 @@ sap.ui.define([
 				title: this._oRb.getText("VARIANT_MANAGEMENT_NODATA"),
 				description: this._oRb.getText("VARIANT_MANAGEMENT_NODATA_DESCR"),
 				enableVerticalResponsiveness: true,
-				illustrationSize: "Auto",
-				illustrationType: mobileLibrary.IllustratedMessageType.SimpleEmptyList
+				illustrationSize: IllustratedMessageSize.Auto,
+				illustrationType: mobileLibrary.IllustratedMessageType.NoEntries
 			});
 		}
 		if (!this._oNoDataFoundIllustratedMessage || this._oNoDataFoundIllustratedMessage.bIsDestroyed) {
@@ -1153,7 +1156,7 @@ sap.ui.define([
 				title: this._oRb.getText("VARIANT_MANAGEMENT_NODATA_FOUND"),
 				description: this._oRb.getText("VARIANT_MANAGEMENT_NODATA_FOUND_DESCR"),
 				enableVerticalResponsiveness: true,
-				illustrationSize: "Auto",
+				illustrationSize: IllustratedMessageSize.Auto,
 				illustrationType: mobileLibrary.IllustratedMessageType.NoSearchResults
 			});
 			this._oNoDataFoundIllustratedMessage.addStyleClass("sapMVarMngmtIllustratedMessage");

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -63,7 +63,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @author SAP SE
 	 *
 	 * @public
@@ -1241,7 +1241,7 @@ sap.ui.define([
 					return null;
 				}
 
-				return getCellDOM(oRow.getCells()[mPosition.colIndex], this.selectableCells);
+				return getCellDOM(oRow.getCells().filter((oCell) => oCell.getDomRef() || !oCell.getVisible())[mPosition.colIndex], this.selectableCells);
 			},
 			/**
 			 * Retrieve cell information for a given DOM element.

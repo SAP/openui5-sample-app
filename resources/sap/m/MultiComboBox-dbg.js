@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -145,7 +145,7 @@ function(
 	 * </ul>
 	 *
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @extends sap.m.ComboBoxBase
@@ -648,7 +648,7 @@ function(
 
 		//Open popover with items if in readonly mode and has Nmore indicator
 		if (!this.getEditable() && oTokenizer.getHiddenTokensCount() && oEvent.target === this.getFocusDomRef()) {
-			oTokenizer._togglePopup(oTokenizer.getTokensPopup());
+			oTokenizer._togglePopup(oTokenizer.getTokensPopup(), this.getDomRef());
 		}
 
 	};
@@ -875,7 +875,7 @@ function(
 	 * @private
 	 */
 	MultiComboBox.prototype.onkeydown = function(oEvent) {
-		if (this.areHotKeysPressed(oEvent) && this.isOpen()) {
+		if (this.areHotKeysPressed(oEvent) && this.isOpen()){
 			// Override the ComboBoxBase onkeydown method to prevent the default behavior
 			// of the ComboBoxBase when the hotkeys are pressed
 			// The default behavior would execute SuggestionsPopover handleKeyboardNavigation method
@@ -2084,7 +2084,7 @@ function(
 			oPicker = this.getPicker();
 			oPicker.open();
 		} else {
-			oTokenizer._togglePopup(oTokenizer.getTokensPopup());
+			oTokenizer._togglePopup(oTokenizer.getTokensPopup(), this.getDomRef());
 		}
 
 		if (this.isPickerDialog()) {

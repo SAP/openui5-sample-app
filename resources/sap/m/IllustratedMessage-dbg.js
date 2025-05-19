@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -92,7 +92,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @public
@@ -287,9 +287,14 @@ sap.ui.define([
 		NoMail: "NoMail",
 		NoSavedItems: "NoSavedItems",
 		NoTasks: "NoTasks",
-		UploadToCloud: "UploadToCloud",
 		NoDimensionsSet: "NoDimensionsSet",
-		AddDimensions: "AddDimensions"
+		AddPeople: "AddPeople",
+		AddColumn: "AddColumn",
+		SortColumn: "SortColumn",
+		FilterTable: "FilterTable",
+		ResizeColumn: "ResizeColumn",
+		GroupTable: "GroupTable",
+		UploadCollection: "UploadCollection"
 	};
 
 	IllustratedMessage.FALLBACK_TEXTS = {
@@ -316,6 +321,16 @@ sap.ui.define([
 		SimpleNotFoundMagnifier: IllustratedMessage.ORIGINAL_TEXTS.NoSearchResults,
 		SimpleReload: IllustratedMessage.ORIGINAL_TEXTS.UnableToLoad,
 		SimpleTask: IllustratedMessage.ORIGINAL_TEXTS.NoTasks,
+		NoChartData: IllustratedMessage.ORIGINAL_TEXTS.NoDimensionsSet,
+		AddingColumns: IllustratedMessage.ORIGINAL_TEXTS.AddColumn,
+		SortingColumns: IllustratedMessage.ORIGINAL_TEXTS.SortColumn,
+		FilteringColumns: IllustratedMessage.ORIGINAL_TEXTS.FilterTable,
+		ResizingColumns: IllustratedMessage.ORIGINAL_TEXTS.ResizeColumn,
+		GroupingColumns: IllustratedMessage.ORIGINAL_TEXTS.GroupTable,
+		AddPeopleToCalendar: IllustratedMessage.ORIGINAL_TEXTS.AddPeople,
+		DragFilesToUpload: IllustratedMessage.ORIGINAL_TEXTS.UploadCollection,
+		KeyTask: IllustratedMessage.ORIGINAL_TEXTS.SuccessScreen,
+		ReceiveAppreciation: IllustratedMessage.ORIGINAL_TEXTS.BalloonSky,
 		SuccessBalloon: IllustratedMessage.ORIGINAL_TEXTS.BalloonSky,
 		SuccessCheckMark: IllustratedMessage.ORIGINAL_TEXTS.SuccessScreen,
 		SuccessHighFive: IllustratedMessage.ORIGINAL_TEXTS.BalloonSky

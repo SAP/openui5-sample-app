@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -405,12 +405,6 @@ sap.ui.define(["sap/ui/base/DataType"], function(DataType) {
 		 * @deprecated As of version 1.135, replaced by {@link sap.m.IllustratedMessageType.NoData}
 		 */
 		Tent: "sapIllus-Tent",
-
-		/**
-		 * Empty illustration type. Do not use
-		 * @private
-		 */
-		Empty: "sapIllus-Empty",
 
 		/**
 		 * "No Chart Data" illustration type.

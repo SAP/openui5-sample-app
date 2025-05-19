@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -118,7 +118,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.135.0
+		 * @version 1.136.0
 		 *
 		 * @constructor
 		 * @private
@@ -200,15 +200,15 @@ sap.ui.define([
 					scaleFactor: {type: "float", group: "Data", defaultValue: 1},
 
 					/**
-			 	 	* If set, the calendar week numbering is used for display.
+			 	 	 * If set, the calendar week numbering is used for display.
 					 * If not set, the calendar week numbering of the global configuration is used.
 					 * @since 1.110.0
 					 */
 					calendarWeekNumbering : { type : "sap.base.i18n.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
 
 					/* Determines whether more than one day will be selectable.
-					* <b>Note:</b> selecting more than one day is possible with a combination of <code>Ctrl + mouse click</code>
-					*/
+					 * <b>Note:</b> selecting more than one day is possible with a combination of <code>Ctrl + mouse click</code>
+					 */
 					dateSelectionMode: { type: "sap.m.SinglePlanningCalendarSelectionMode", group: "Behavior", defaultValue: SinglePlanningCalendarSelectionMode.SingleSelect }
 				},
 				aggregations: {

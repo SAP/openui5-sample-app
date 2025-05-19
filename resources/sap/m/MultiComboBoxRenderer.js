@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["./ComboBoxBaseRenderer","./ComboBoxTextFieldRenderer","sap/ui/core/Lib","sap/ui/core/Renderer","sap/ui/core/library"],function(e,t,r,a,s){"use strict";var o=s.ValueState;var i=a.extend(e);i.apiVersion=2;i.CSS_CLASS_MULTICOMBOBOX="sapMMultiComboBox";i.addOuterClasses=function(t,r){e.addOuterClasses.apply(this,arguments);t.class(i.CSS_CLASS_MULTICOMBOBOX);if(r.getProperty("hasSelection")){t.class("sapMMultiComboBoxHasToken")}};i.getAriaDescribedBy=function(e){var r=t.getAriaDescribedBy.apply(this,arguments),a=e.getAggregation("tokenizer"),s=a&&a.getTokensInfoId();if(e.getValueState()!==o.Error&&e.getValueStateLinksForAcc().length){r=r?`${r} ${e.getValueStateLinksShortcutsId()}`:e.getValueStateLinksShortcutsId()}return(r?r+" ":"")+s};i.getAccessibilityState=function(t){var a=e.getAccessibilityState.apply(this,arguments),s=r.getResourceBundleFor("sap.m");a.roledescription=s.getText("MULTICOMBOBOX_ARIA_ROLE_DESCRIPTION");if(t.getValueState()===o.Error&&t.getValueStateLinksForAcc().length){a.errormessage=a.errormessage?`${a.errormessage} ${t.getValueStateLinksShortcutsId()}`:t.getValueStateLinksShortcutsId()}return a};i.prependInnerContent=function(e,t){e.renderControl(t.getAggregation("tokenizer"))};return i},true);

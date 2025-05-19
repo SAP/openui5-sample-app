@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -116,7 +116,7 @@ function(
 		 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
 		 *
 		 * @author SAP SE
-		 * @version 1.135.0
+		 * @version 1.136.0
 		 *
 		 * @constructor
 		 * @public
@@ -2226,7 +2226,7 @@ function(
 			// if sText's length is 2 or more characters that means that the user is still typing.
 			// If the user is still typing and the string/word is the starting of the currently
 			// selected item we shouldn't move to the next one.
-			if (sText.length > 1 && oSelectedItem.getText().toLowerCase().startsWith(sText.toLowerCase())){
+			if (sText.length > 1 && oSelectedItem && oSelectedItem.getText().toLowerCase().startsWith(sText.toLowerCase())){
 				return oSelectedItem;
 			}
 

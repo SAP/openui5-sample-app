@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 //Provides control sap.ui.unified.Calendar.
@@ -78,7 +78,7 @@ sap.ui.define([
 	 * Basic Calendar.
 	 * This calendar is used for DatePickers
 	 * @extends sap.ui.core.Control
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @public
@@ -1162,17 +1162,17 @@ sap.ui.define([
 	Calendar.prototype.setIntervalSelection = function(bEnabled){
 		const oMonthPicker = this._getMonthPicker();
 		if (oMonthPicker) {
-			oMonthPicker.setIntervalSelection(bEnabled);
+			oMonthPicker._setShowSelectedRange(bEnabled);
 		}
 
 		const oYearPicker = this._getYearPicker();
 		if (oYearPicker) {
-			oYearPicker.setIntervalSelection(bEnabled);
+			oYearPicker._setShowSelectedRange(bEnabled);
 		}
 
 		const oYearRangePicker = this._getYearRangePicker();
 		if (oYearRangePicker) {
-			oYearRangePicker.setIntervalSelection(bEnabled);
+			oYearRangePicker._setShowSelectedRange(bEnabled);
 		}
 
 		return this.setProperty("intervalSelection", bEnabled);

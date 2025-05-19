@@ -4,9 +4,9 @@
   <name>sap.m</name>
   <vendor>SAP SE</vendor>
   <copyright>OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
-  <version>1.135.0</version>
+  <version>1.136.0</version>
 
   <documentation>The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.</documentation>
 
@@ -45,7 +45,7 @@
     </packaging>
     <!-- Thirdparty references -->
     <thirdparty xmlns="http://www.sap.com/ui5/buildext/thirdparty" >
-        <lib name="DOMPurify" displayName="purify.js" npmName="dompurify" version="3.2.4" hash="f5e3f0b315448da532b33fe120eaf725" homepage="https://github.com/cure53/DOMPurify/" id="73554900106100137292">
+        <lib name="DOMPurify" displayName="purify.js" npmName="dompurify" version="3.2.4" hash="b8b770c2c5daf7e777d33af0270ec21d" homepage="https://github.com/cure53/DOMPurify/" id="73554900106100137292">
             <license url="https://github.com/cure53/DOMPurify/blob/main/LICENSE" type="Apache-2.0" />
             <copyright>Mario Heiderich</copyright>
             <pattern>sap/m/_thirdparty/purify.js</pattern>

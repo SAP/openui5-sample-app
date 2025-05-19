@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m.table.Util
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @since 1.96.0
 	 * @private
 	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp
@@ -180,6 +180,7 @@ sap.ui.define([
 	 * @param {int} [iMaxWidth=19] The maximum header width in rem
 	 * @param {int} [iMinWidth=2] The minimum header width in rem
 	 * @param {boolean} [bRequired=false] Determines whether the given column header is marked as required
+	 * @param {boolean} [bHasAction=false] Whether there is an action button on the column header
 	 * @returns {float} The calculated header width in rem
 	 * @private
 	 * @ui5-restricted sap.ui.comp
@@ -205,7 +206,7 @@ sap.ui.define([
 			sRequiredFont = "";
 		});
 
-		return function(sHeader, fContentWidth, iMaxWidth, iMinWidth, bRequired) {
+		return function(sHeader, fContentWidth, iMaxWidth, iMinWidth, bRequired, bHasAction) {
 			var iHeaderLength = sHeader.length;
 			var fRequired = 0;
 			iMaxWidth = iMaxWidth || 19;
@@ -220,6 +221,9 @@ sap.ui.define([
 
 			if (bRequired) {
 				fRequired = 0.125 /* margin */ + Util.measureText("*", fnGetRequiredFont());
+			}
+			if (bHasAction) {
+				fRequired += 1.75;
 			}
 
 			if (!fContentWidth) {
@@ -250,6 +254,7 @@ sap.ui.define([
 	 * @param {int} [mSettings.maxWidth=19] The maximum content width of the field in rem
 	 * @param {int} [mSettings.padding=1.0625] The sum of column padding(1rem) and border(1px) in rem
 	 * @param {float} [mSettings.gap=0] The additional content width in rem
+	 * @param {float} [mSettings.hasAction=false] Whether there is an action button on the column header
 	 * @param {boolean} [mSettings.headerGap=false] Whether icons in the header should be taken into account
 	 * @param {boolean} [mSettings.truncateLabel=true] Whether the header of the column can be truncated in the boundaries of <code>minWidth</code> and <code>maxWidth</code>
 	 * @param {boolean} [mSettings.verticalArrangement=false] Whether the fields are arranged vertically
@@ -298,7 +303,7 @@ sap.ui.define([
 		}, 0);
 
 		if (sHeader) {
-			fHeaderWidth = Util.calcHeaderWidth(sHeader, (mSettings.truncateLabel ? fContentWidth : 0), iMaxWidth, iMinWidth, mSettings.required);
+			fHeaderWidth = Util.calcHeaderWidth(sHeader, (mSettings.truncateLabel ? fContentWidth : 0), iMaxWidth, iMinWidth, mSettings.required, mSettings.hasAction);
 			fHeaderWidth += mSettings.headerGap ? (8 /* padding */ + 14 /* icon width */) / fBaseFontSize : 0;
 		}
 
@@ -320,7 +325,7 @@ sap.ui.define([
 		var oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 		var oIllustratedMessage = new IllustratedMessage({
-			illustrationType: MLibrary.IllustratedMessageType.AddColumn,
+			illustrationType: MLibrary.IllustratedMessageType.AddingColumns,
 			title: oResourceBundle.getText("TABLE_NO_COLUMNS_TITLE"),
 			description: oResourceBundle.getText("TABLE_NO_COLUMNS_DESCRIPTION")
 		});

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -79,7 +79,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @public
@@ -588,7 +588,7 @@ sap.ui.define([
 			return Element.getElementById(sLabelID);
 		});
 
-		return aLabeles.length ? aLabeles[0].getText() : oResourceBundle.getText("COMBOBOX_PICKER_TITLE");
+		return aLabeles.length ? aLabeles[0].getText?.() : oResourceBundle.getText("COMBOBOX_PICKER_TITLE");
 	};
 
 	/**
@@ -597,8 +597,8 @@ sap.ui.define([
 	 * @private
 	 * @ui5-restricted sap.m.MultiInput, sap.m.MultiComboBox
 	 */
-	Tokenizer.prototype._togglePopup = function (oPopover) {
-		var oDomRef = this.getDomRef(),
+	Tokenizer.prototype._togglePopup = function (oPopover, oOpener) {
+		var oOpenBy = oOpener || this.getDomRef(),
 			oPopoverIsOpen = oPopover.isOpen(),
 			bEditable = this.getEditable();
 
@@ -607,7 +607,7 @@ sap.ui.define([
 		if (oPopoverIsOpen) {
 			oPopover.close();
 		} else {
-			oPopover.openBy(oDomRef);
+			oPopover.openBy(oOpenBy);
 		}
 	};
 
@@ -953,10 +953,6 @@ sap.ui.define([
 		}, this);
 
 		this._setTokensAria();
-
-		if (this._oPopup) {
-			this._oPopup.setContentWidth(this.getWidth() || this.getMaxWidth());
-		}
 	};
 
 	/**
@@ -1385,9 +1381,13 @@ sap.ui.define([
 
 		this._bFocusFirstToken = oEvent.srcControl === this.getTokens()[0];
 
-		if (!this._bFocusFirstToken) {
+		if (!this._bFocusFirstToken && !this._bTokenToBeDeleted) {
 			this._ensureTokenVisible(oEvent.srcControl);
 		}
+	};
+
+	Tokenizer.prototype.onmousedown = function (oEvent) {
+		this._bTokenToBeDeleted = oEvent.target.matches(".sapMTokenIcon, .sapMTokenIcon *");
 	};
 
 	Tokenizer.prototype.ontap = function (oEvent) {
@@ -1735,8 +1735,7 @@ sap.ui.define([
 			return;
 		}
 
-		this._nMoreIndicatorPressed = !this.hasStyleClass("sapMTokenizerIndicatorDisabled") &&
-			oEvent.target.classList.contains("sapMTokenizerIndicator");
+		this._nMoreIndicatorPressed = (!this.hasOneTruncatedToken() && !this.hasStyleClass("sapMTokenizerIndicatorDisabled")) && oEvent.target.classList.contains("sapMTokenizerIndicator");
 
 		if (this._nMoreIndicatorPressed) {
 			this._handleNMoreIndicatorPress();

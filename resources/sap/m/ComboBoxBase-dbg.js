@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -70,7 +70,7 @@ sap.ui.define([
 		 * @abstract
 		 *
 		 * @author SAP SE
-		 * @version 1.135.0
+		 * @version 1.136.0
 		 *
 		 * @constructor
 		 * @public
@@ -566,10 +566,14 @@ sap.ui.define([
 			ComboBoxTextField.prototype.onkeydown.apply(this, arguments);
 
 			var oSuggestionsPopover = this._getSuggestionsPopover();
-			if (this.areHotKeysPressed(oEvent) && oSuggestionsPopover && oSuggestionsPopover.isOpen()) {
-				oSuggestionsPopover.setValueStateActiveState(true);
-				oSuggestionsPopover._handleValueStateLinkNav(this, oEvent);
-				oSuggestionsPopover.updateFocus(this, null);
+			if (this.areHotKeysPressed(oEvent)) {
+				if (oSuggestionsPopover && oSuggestionsPopover.isOpen()) {
+					oSuggestionsPopover.setValueStateActiveState(true);
+					oSuggestionsPopover._handleValueStateLinkNav(this, oEvent);
+					oSuggestionsPopover.updateFocus(this, null);
+				} else {
+					this._handleValueStateLinkNav();
+				}
 			}
 		};
 
@@ -706,7 +710,7 @@ sap.ui.define([
 				while the suggestions popover is open update the value state header.
 				If the input has FormattedText aggregation while the suggestions popover is open then
 				it's new, because the old is already switched to have the value state header as parent */
-				this._updateSuggestionsPopoverValueState();
+				this._updateSuggestionsPopoverValueState(true);
 			}
 		};
 
@@ -964,10 +968,10 @@ sap.ui.define([
 
 		/**
 		 * Updates the suggestions popover value state
-		 *
+		 * @param {boolean} bUpdateValueStateLinkDelagate Whether to reinitialize the value state link delegate
 		 * @private
 		 */
-		ComboBoxBase.prototype._updateSuggestionsPopoverValueState = function() {
+		ComboBoxBase.prototype._updateSuggestionsPopoverValueState = function(bUpdateValueStateLinkDelagate) {
 			var oSuggestionsPopover = this._getSuggestionsPopover();
 			if (!oSuggestionsPopover) {
 				return;
@@ -985,7 +989,7 @@ sap.ui.define([
 			if (oSuggestionsPopover.isOpen() && !bShouldPopoverBeUpdated) {
 				this.setFormattedValueStateText(oSuggestionsPopover._getValueStateHeader().getFormattedText());
 			}
-			oSuggestionsPopover.updateValueState(sValueState, (oNewFormattedValueStateText || sValueStateText), this.getShowValueStateMessage());
+			oSuggestionsPopover.updateValueState(sValueState, (oNewFormattedValueStateText || sValueStateText), this.getShowValueStateMessage(), bUpdateValueStateLinkDelagate);
 		};
 
 		ComboBoxBase.prototype.shouldValueStateMessageBeOpened = function() {

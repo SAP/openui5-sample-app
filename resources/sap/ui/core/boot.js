@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/base/Log","sap/base/config/_Configuration","sap/base/config/GlobalConfigurationProvider","sap/base/util/Deferred","sap/ui/core/boot/initDOM","sap/ui/core/boot/loadManifest","sap/ui/core/boot/onInit"],function(e,n,t,r,o,i){"use strict";var u=e.getLevel();e.setLevel(e.Level.WARNING);e.warning("sap-ui-boot.js: This is a private module, its API must not be used in production and is subject to change!");e.setLevel(u);var a=false;var s=new r;var c;var f={ready:function(e){if(e&&a){e()}else{s.promise.then(e)}return s.promise}};var p=o.run(f);function l(e){e=e||[];var n=new Promise(function(n,t){sap.ui.require(e,function(){n(Array.from(arguments))},t)});return n}function v(e,n){return Promise.all(e.map(function(e){return e.run(n)}))}i().then(function(e){c=e;return l(c.preBoot)}).then(function(e){return v(e)}).then(function(){t.freeze();return l(c.boot)}).then(function(e){return v(e,f)}).then(function(){return l(c.postBoot)}).then(function(e){return Promise.all([v(e),p])}).then(function(){s.resolve();a=true}).catch(s.reject);return f},true);

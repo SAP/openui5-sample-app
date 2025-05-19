@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["./_Helper","./_V2MetadataConverter","./_V4MetadataConverter","sap/base/Log","sap/ui/thirdparty/jquery"],function(e,t,a,r,jQuery){"use strict";return{create:function(n,i,s,o,d,u){var f={},c=e.buildQuery(o);return{read:function(l,p,h){var M;function g(e){var r=i==="4.0"||p?a:t,n=e.$XML,o=s&&!p;delete e.$XML;return Object.assign((new r).convertXMLMetadata(n,l,o),e)}if(l in f){if(h){throw new Error("Must not prefetch twice: "+l)}M=f[l].then(g);delete f[l]}else{M=new Promise(function(t,a){function i(){const s={method:"GET",headers:n};if(d){s.xhrFields={withCredentials:true}}jQuery.ajax(p?l:l+c,s).then(function(e,a,r){var n=r.getResponseHeader("Date"),i=r.getResponseHeader("ETag"),s={$XML:e},o=r.getResponseHeader("Last-Modified");if(n){s.$Date=n}if(i){s.$ETag=i}if(o){s.$LastModified=o}t(s)},function(t){var n=e.createError(t,"Could not load metadata");if(t.status===503&&t.getResponseHeader("Retry-After")&&u(n)){u().then(i,a)}else{r.error("GET "+l,n.message,"sap.ui.model.odata.v4.lib._MetadataRequestor");a(n)}})}const s=u();if(s){s.then(i,a)}else{i()}if(!p&&o&&"sap-context-token"in o){delete o["sap-context-token"];c=e.buildQuery(o)}});if(h){f[l]=M}else{M=M.then(g)}}return M}}}}},false);

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/base/assert","sap/base/Event"],function(t,n){"use strict";class e{#t={};attachEvent(n,e,i){t(typeof n==="string"&&n,"Eventing.attachEvent: sType must be a non-empty string");t(typeof e==="function","Eventing.attachEvent: fnFunction must be a function");let s=this.#t[n];if(!Array.isArray(s)){s=this.#t[n]=[]}s.push({fnFunction:e,oData:i})}attachEventOnce(t,n,e){const i=e=>{this.detachEvent(t,i);n.call(null,e)};i.oOriginal={fnFunction:n};this.attachEvent(t,i,e)}detachEvent(n,e){t(typeof n==="string"&&n,"Eventing.detachEvent: sType must be a non-empty string");t(typeof e==="function","Eventing.detachEvent: fnFunction must be a function");const i=this.#t[n];if(!Array.isArray(i)){return}let s;for(let t=0,n=i.length;t<n;t++){if(i[t].fnFunction===e){s=i[t];i.splice(t,1);break}}if(!s){for(let t=0,n=i.length;t<n;t++){const n=i[t].fnFunction.oOriginal;if(n&&n.fnFunction===e){i.splice(t,1);break}}}if(i.length==0){delete this.#t[n]}}fireEvent(t,e){let i,s,a,r,c;i=this.#t[t];if(Array.isArray(i)){i=i.slice();s=new n(t,e);for(a=0,r=i.length;a<r;a++){c=i[a];c.fnFunction.call(null,s)}}}}return e});

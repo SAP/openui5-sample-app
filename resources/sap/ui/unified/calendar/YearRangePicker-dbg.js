@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -45,7 +45,7 @@ sap.ui.define([
 	 * @extends sap.ui.unified.calendar.YearPicker
 	 *
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @private
@@ -240,6 +240,8 @@ sap.ui.define([
 	 */
 	YearRangePicker.prototype._isYearSelected = function(oCurrentYearRangeStart) {
 		const aSelectedDateRanges = this.getSelectedDates();
+		const bShowInterval = this._getShowSelectedRange();
+
 		if (!(aSelectedDateRanges && aSelectedDateRanges.length)) {
 			return false;
 		}
@@ -252,7 +254,7 @@ sap.ui.define([
 		const oStartDate = oDateRange.getStartDate();
 		const oEndDate = oDateRange.getEndDate();
 
-		if (this.getIntervalSelection() && oStartDate && oEndDate) {
+		if (bShowInterval && oStartDate && oEndDate) {
 
 			const oCalStartDate = CalendarDate.fromLocalJSDate(oStartDate, this._getPrimaryCalendarType());
 			oCalStartDate.setMonth(0, 1);

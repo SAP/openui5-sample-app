@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -59,7 +59,7 @@ function(
 	 *
 	* <b>Note:</b> This control should not be used with {@link sap.m.Label} or in Forms along with {@link sap.m.Label}.
 	 * @extends sap.ui.core.Control
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @public
@@ -232,6 +232,7 @@ function(
 	 * Lazy loads attachments icon.
 	 * @returns {object} The attachments icon
 	 * @private
+	 * @deprecated as of version 1.24.0
 	 */
 	ObjectIdentifier.prototype._getAttachmentsIcon = function() {
 
@@ -246,6 +247,7 @@ function(
 	 * Lazy loads people icon.
 	 * @returns {object} The people icon
 	 * @private
+	 * @deprecated as of version 1.24.0
 	 */
 	ObjectIdentifier.prototype._getPeopleIcon = function() {
 
@@ -260,6 +262,7 @@ function(
 	 * Lazy loads notes icon.
 	 * @returns {object} The notes icon
 	 * @private
+	 * @deprecated as of version 1.24.0
 	 */
 	ObjectIdentifier.prototype._getNotesIcon = function() {
 

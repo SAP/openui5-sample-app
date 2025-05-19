@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -75,7 +75,7 @@ sap.ui.define([
 	 * </pre>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @author SAP SE
 	 * @public
 	 * @since 1.124
@@ -166,7 +166,42 @@ sap.ui.define([
 				/**
 				  * The text of the CloudFile picker button. The default text is "Upload from cloud" (translated to the respective language).
 				  */
-				cloudFilePickerButtonText: { type: 'string', defaultValue: "" }
+				cloudFilePickerButtonText: { type: 'string', defaultValue: "" },
+
+				/**
+				 * @typedef {object} sap.m.plugins.UploadSetwithTable.FilenameValidationConfigMode
+				 * @description Key property of {@link sap.m.plugins.UploadSetwithTable.FilenameValidationConfig FileNameValidationConfig}. Used to determine the mode for file name validation.
+				 * @property {string} mode - The file name validation mode. The allowed values are 'include', 'exclude', or 'override'.
+				 * <br> <br> If the mode is 'include', the specified characters are added to the default restricted character set.
+				 * <br> If the mode is 'exclude', the specified characters are excluded from the default resrtricted character set.
+				 * <br> If the mode is 'override', the specified characters replace the entire default restricted character set.
+				 * <br> If the mode is not set, the default restricted file name character set is used.
+				 * @public
+				 * @since 1.136
+				 */
+
+				/**
+				 * @typedef {object} sap.m.plugins.UploadSetwithTable.FilenameValidationConfig An object type that represents the file name validation configuration.
+				 * @description This property type is used to define the file name validation configuration. Object is passed to {@link sap.m.plugins.UploadSetwithTable fileNameValidationConfig property}
+				 * @property {sap.m.plugins.UploadSetwithTable.FilenameValidationConfigMode} mode The file name validation config mode.
+				 * @property {string} characters The file name validation configuration characters.
+				 * <br> <br> The default restricted filename character set is: \:/*?"<>|[]{}@#$
+				 * @public
+				 * @since since 1.136
+				**/
+
+				/**
+				 * File name validation configuration.
+				 * <br> Set this property to configure the file name validation characters and the validation mode.
+				 * <br> This configuration is used to validate the file name when a file is selected for renaming.
+				 * <br> For the plugin to pick up this configuration, mode and characters of the property must be set to validate the file name.
+				 * <br> see {@link sap.m.plugins.UploadSetwithTable.FilenameValidationConfigMode mode} to configure the file name validation mode.
+				 * <br> <br> The default restricted filename character set is: \:/*?"<>|[]{}@#$
+				 * @type {sap.m.plugins.UploadSetwithTable.FilenameValidationConfig}
+				 * @public
+				 * @since 1.136
+				 */
+				fileNameValidationConfig: { type: 'object', defaultValue: null }
 			},
 				aggregations: {
 				/**
@@ -402,6 +437,8 @@ sap.ui.define([
 
 	UploadSetwithTable.findOn = PluginBase.findOn;
 
+	UploadSetwithTable.DEFAULT_INVALID_FILENAME_CHARACTERSET = "\\:/*?\"<>|[]{}@#$";
+
 	/**
 	 * Event Delegate that containts events, that need to be executed after control events.
 	 */
@@ -423,21 +460,19 @@ sap.ui.define([
 
 		oControl.addDelegate(EventDelegate, false, this);
 
-		this.getConfig("setPluginInstance", this);
-		this.getConfig("setControlInstance", this.getControl());
-		this.getConfig("setPluginDefaultSettings");
+		this.getConfig("setPluginDefaultSettings", this.getControl(), this);
 		this._setActions();
 
 		this.fireOnActivated({oPlugin: this});
 	};
 
 	UploadSetwithTable.prototype.onDeactivate = function (oControl) {
-		this.getConfig("cleanupPluginInstanceSettings");
+		this.getConfig("cleanupPluginInstanceSettings", oControl, this);
 		this.fireOnDeactivated({control: oControl});
 	};
 
 	UploadSetwithTable.prototype.exit = function() {
-		this.getConfig("cleanupPluginInstanceSettings");
+		this.getConfig("cleanupPluginInstanceSettings", this.getControl(), this);
 		PluginBase.prototype.exit.call(this);
 	};
 
@@ -514,11 +549,10 @@ sap.ui.define([
 		if (bEnable !== this.getUploadEnabled()) {
 			this.getDefaultFileUploader().setEnabled(bEnable);
 
-			const oPlugin = this.getConfig("getPluginInstance");
-			if (bEnable && !oPlugin._oDragDropConfig) {
-				this.getConfig("setDragDropConfig");
+			if (bEnable && !this._oDragDropConfig) {
+				this.getConfig("setDragDropConfig", this.getControl(), this);
 			} else if (!bEnable) {
-				this.getConfig("resetDragDropConfig");
+				this.getConfig("resetDragDropConfig", this.getControl(), this);
 			}
 
 			this.setProperty("uploadEnabled", bEnable, false);
@@ -539,12 +573,57 @@ sap.ui.define([
 
 	UploadSetwithTable.prototype.setNoDataIllustration = function(oNoDatIllustration) {
 		this._vNoDataIllustration = oNoDatIllustration;
-		this.getConfig("setDefaultIllustrations");
+		this.getConfig("setDefaultIllustrations", this.getControl(), this);
 		return this;
 	};
 
 	UploadSetwithTable.prototype.getNoDataIllustration = function() {
 		return this._vNoDataIllustration;
+	};
+
+	UploadSetwithTable.prototype.setFileNameValidationConfig = function (oConfig) {
+
+		// set property to null if no config is passed
+		if (oConfig === undefined || oConfig === null) {
+			this.setProperty("fileNameValidationConfig", null);
+			return this;
+		}
+
+		// Validate that it's an object
+		if (typeof oConfig !== 'object') {
+			throw new Error("fileNameValidationConfig must be a non-null object with mode and characters properties");
+		}
+
+		// Extract keys from the object
+		const keys = Object.keys(oConfig);
+		const expectedKeys = ['mode', 'characters'];
+
+		// Check for exact match in keys (no more, no less)
+		const missingKeys = expectedKeys.filter((key) => !keys.includes(key));
+		const extraKeys = keys.filter((key) => !expectedKeys.includes(key));
+
+		if (missingKeys.length > 0 || extraKeys.length > 0) {
+			throw new Error(
+				`fileNameValidationConfig must contain only the following properties: ${expectedKeys.join(', ')}. ` +
+				(missingKeys.length > 0 ? `Missing: ${missingKeys.join(', ')}. ` : '') +
+				(extraKeys.length > 0 ? `Unexpected: ${extraKeys.join(', ')}.` : '')
+			);
+		}
+
+		// Validate `mode` is a string and one of the allowed values
+		const validModes = ['include', 'exclude', 'override'];
+		if (typeof oConfig.mode !== 'string' || !validModes.includes(oConfig.mode)) {
+			throw new Error(`fileNameValidationConfig.mode must be one of ${validModes.join(', ')}`);
+		}
+
+		// Validate `characters` is a string
+		if (typeof oConfig.characters !== 'string') {
+			throw new Error("fileNameValidationConfig.characters must be a string.");
+		}
+
+		// Call the default property setter (important!)
+		this.setProperty("fileNameValidationConfig", oConfig);
+		return this;
 	};
 
 	// Public API's
@@ -704,7 +783,7 @@ sap.ui.define([
 			Log.error("Row configuration is not set for the plugin. File preview is not possible.");
 			return;
 		}
-		this.getConfig("openFilePreview", oBindingContext);
+		this.getConfig("openFilePreview", oBindingContext, this.getControl(), this);
 	};
 
 	/**
@@ -722,7 +801,7 @@ sap.ui.define([
 		this.getConfig("download", {
 			oBindingContext: oBindingContext,
 			bAskForLocation: bAskForLocation
-		});
+		}, this.getControl(), this);
 	};
 
 	/**
@@ -900,15 +979,49 @@ sap.ui.define([
 			return;
 		}
 
-		const oCharacterRegex = new RegExp(/[@#$]/);
+		const sValidationCharacterSet = this._getFileNameValidationChracters();
+		const sEscapedSpecialCharcters = sValidationCharacterSet.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+		const oCharacterRegex = new RegExp(`[${sEscapedSpecialCharcters}]`);
 		if (oCharacterRegex.test(sValue)) {
 			oInput.setShowValueStateMessage(true);
 			oInput.setProperty("valueState", "Error", true);
-			oInput.setValueStateText(this._oRb.getText("UPLOADSET_WITH_TABLE_DOCUMENT_RENAME_SPLC_VALIDATION_ERROR_MESSAGE", ['@#$']));
+			oInput.setValueStateText(this._oRb.getText("UPLOADSET_WITH_TABLE_DOCUMENT_RENAME_SPLC_VALIDATION_ERROR_MESSAGE", [sValidationCharacterSet]));
 		} else {
 			oInput.setShowValueStateMessage(false);
 			oInput.setProperty("valueState", "None", true);
 		}
+	};
+
+	UploadSetwithTable.prototype._getFileNameValidationChracters = function() {
+		const {mode, characters} = this.getFileNameValidationConfig() || {};
+		switch (mode) {
+			case "include": {
+				// remove duplicate characters and the concatenate with default invalid characters
+				const aUniqueChars = [...new Set((UploadSetwithTable.DEFAULT_INVALID_FILENAME_CHARACTERSET + characters).split(""))];
+				const sUniqueChars = aUniqueChars.join("");
+				return sUniqueChars;
+			}
+
+			case "exclude": {
+				const aExcludeChars = [...new Set(characters.split(""))];
+				const sExcludeChars = aExcludeChars.join("");
+				// remove duplicate characters and the concatenate with default invalid characters
+				return excludeCharacters(UploadSetwithTable.DEFAULT_INVALID_FILENAME_CHARACTERSET, sExcludeChars);
+			}
+
+			case "override":
+				return characters;
+
+			default:
+				return UploadSetwithTable.DEFAULT_INVALID_FILENAME_CHARACTERSET;
+		}
+
+		function excludeCharacters(inputStr, charsToRemove) {
+			for (var char of charsToRemove) {
+			  inputStr = inputStr.split(char).join("");
+			}
+			return inputStr;
+		  }
 	};
 
 	UploadSetwithTable.prototype._onFileUploaderChange = function (oEvent) {
@@ -1491,8 +1604,8 @@ sap.ui.define([
 
 	UploadSetwithTable.prototype._getDefaultNoDataIllustration = function() {
 		const oIllustratedMessage =  new IllustratedMessage({
-			illustrationType: IllustratedMessageType.UploadCollection,
-			illustrationSize: IllustratedMessageSize.Spot,
+			illustrationType: IllustratedMessageType.DragFilesToUpload,
+			illustrationSize: IllustratedMessageSize.Small,
 			title: this._oRb.getText("UPLOADSET_WITH_TABLE_NO_DATA_TEXT"),
 			description: this._oRb.getText("UPLOADSET_WITH_TABLE_NO_DATA_DESCRIPTION")
 		});
@@ -1661,28 +1774,13 @@ sap.ui.define([
 	function setPluginBaseConfigs() {
 		PluginBase.setConfigs({
 		 "sap.ui.mdc.Table": {
-			_oPluginInstance: null,
-			_oControlInstance: null,
 			_sModelName: undefined,
 			_bIsTableBound: false,
-			setPluginInstance: function(oPlugin) {
-				this._oPluginInstance = oPlugin;
-			},
-			getPluginInstance: function() {
-				return this._oPluginInstance;
-			},
-			setControlInstance: function(oControl) {
-				this._oControlInstance = oControl;
-			},
-			getControlInstance: function() {
-				return this._oControlInstance;
-			},
-			setPluginDefaultSettings: function() {
-				const oPlugin = this.getPluginInstance();
+			setPluginDefaultSettings: function(oControl, oPlugin) {
 				if (oPlugin.getUploadEnabled()) {
-					this.setDragDropConfig();
+					this.setDragDropConfig(oControl, oPlugin);
 				}
-				this.setDefaultIllustrations();
+				this.setDefaultIllustrations(oControl, oPlugin);
 			},
 			setIsTableBound: function(oControl) {
 				const oTable = oControl?._oTable;
@@ -1707,11 +1805,9 @@ sap.ui.define([
 				return this._sModelName;
 			},
 			// Set the drag and drop configuration for the table when the upload plugin is activated.
-			setDragDropConfig: function () {
+			setDragDropConfig: function (oControl, oPlugin) {
 				// Loading MDC library's Drag and Drop configuration for the table.
 				sap.ui.require(["sap/ui/mdc/table/DragDropConfig"], (MDCDragDropConfig) => {
-					const oPlugin = this.getPluginInstance();
-					const oControl = this.getControlInstance();
 					const oDragDropConfig = oPlugin._oDragDropConfig = new MDCDragDropConfig({
 						droppable: true
 					});
@@ -1721,18 +1817,14 @@ sap.ui.define([
 					Log.error("Failed to load MDC library for Drag and Drop configuration.");
 				});
 			},
-			resetDragDropConfig: function() {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			resetDragDropConfig: function(oControl, oPlugin) {
 				if (oPlugin && oControl && oPlugin._oDragDropConfig) {
 					oControl.removeDragDropConfig(oPlugin._oDragDropConfig);
 					oPlugin._oDragDropConfig = null;
 				}
 			},
 			// Set the default illustrations for the table when no data is available and only when the upload plugin is activated.
-			setDefaultIllustrations: function() {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			setDefaultIllustrations: function(oControl, oPlugin) {
 				const oNoDataIllustration = oPlugin?.getNoDataIllustration();
 				if (oControl && oPlugin) {
 					if (!oNoDataIllustration) {
@@ -1743,9 +1835,7 @@ sap.ui.define([
 					oControl.setNoData(oPlugin._illustratedMessage);
 			}
 			},
-			cleanupPluginInstanceSettings: function() {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			cleanupPluginInstanceSettings: function(oControl, oPlugin) {
 				// remove nodata aggregations added from plugin activation.
 				if (oControl) {
 					oControl.setNoData(null);
@@ -1760,9 +1850,7 @@ sap.ui.define([
 				}
 			},
 			// Handles the preview of the passed context. Requires access to all the contexts of inner table to setup the preview along with carousel.
-			openFilePreview: async function(oBindingContext) {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			openFilePreview: async function(oBindingContext, oControl, oPlugin) {
 				const oRowConfiguration = oPlugin.getRowConfiguration();
 				const oContexts = this.getTableContexts(oControl?._oTable);
 				let aUploadSetItems = [];
@@ -1775,9 +1863,8 @@ sap.ui.define([
 				}
 			},
 			// Handles the download of the file through the passed context.
-			download: async function(mDownloadInfo) {
+			download: async function(mDownloadInfo, oPlugin) {
 				const {oBindingContext, bAskForLocation} = mDownloadInfo;
-				const oPlugin = this.getPluginInstance();
 				const oItem = await oPlugin.getItemForContext(oBindingContext);
 				if (oItem && oItem.getUrl()) {
 					return oPlugin._initiateFileDownload(oItem, bAskForLocation);
@@ -1794,28 +1881,13 @@ sap.ui.define([
 			}
 		 },
 		 "sap.m.Table": {
-			_oPluginInstance: null,
-			_oControlInstance: null,
 			_sModelName: undefined,
 			_bIsTableBound: false,
-			setPluginInstance: function(oPlugin) {
-				this._oPluginInstance = oPlugin;
-			},
-			getPluginInstance: function() {
-				return this._oPluginInstance;
-			},
-			setControlInstance: function(oControl) {
-				this._oControlInstance = oControl;
-			},
-			getControlInstance: function() {
-				return this._oControlInstance;
-			},
-			setPluginDefaultSettings: function() {
-				const oPlugin = this.getPluginInstance();
+			setPluginDefaultSettings: function(oControl, oPlugin) {
 				if (oPlugin.getUploadEnabled()) {
-					this.setDragDropConfig();
+					this.setDragDropConfig(oControl, oPlugin);
 				}
-				this.setDefaultIllustrations();
+				this.setDefaultIllustrations(oControl, oPlugin);
 			},
 			setIsTableBound: function(oControl) {
 				if (oControl?.getBinding("items")) {
@@ -1836,9 +1908,7 @@ sap.ui.define([
 				return this._sModelName;
 			},
 			// Set the drag and drop configuration for the table when upload plugin is activated.
-			setDragDropConfig: function () {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			setDragDropConfig: function (oControl, oPlugin) {
 				var oDragDropConfig = oPlugin._oDragDropConfig = new DragDropInfo({
 					sourceAggregation: "items",
 					targetAggregation: "items"
@@ -1852,9 +1922,7 @@ sap.ui.define([
 				oControl?.addDragDropConfig(oDragDropConfig);
 				oControl?.addDragDropConfig(oDropConfig);
 			},
-			resetDragDropConfig: function() {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			resetDragDropConfig: function(oControl, oPlugin) {
 				if (oPlugin && oControl) {
 					oControl.removeDragDropConfig(oPlugin._oDragDropConfig);
 					oControl.removeDragDropConfig(oPlugin._oDropConfig);
@@ -1863,9 +1931,7 @@ sap.ui.define([
 				}
 			},
 			// Set default illustrations for the table when no data is available. Set only when the upload plugin is activated.
-			setDefaultIllustrations: function() {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			setDefaultIllustrations: function(oControl, oPlugin) {
 				const oNoDataIllustration = oPlugin?.getNoDataIllustration();
 				if (oControl && oPlugin) {
 					if (!oNoDataIllustration) {
@@ -1876,9 +1942,7 @@ sap.ui.define([
 					oControl.setNoData(oPlugin._illustratedMessage);
                                 }
 			},
-			cleanupPluginInstanceSettings: function() {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			cleanupPluginInstanceSettings: function(oControl, oPlugin) {
 				// remove nodata aggregations added from plugin activation.
 				if (oControl) {
 					oControl.setNoData(null);
@@ -1893,9 +1957,7 @@ sap.ui.define([
 				}
 			},
 			// Handles preview of the passed context. Requires access to all the contexts of inner table to setup the preview along with carousel.
-			openFilePreview: async function(oBindingContext) {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			openFilePreview: async function(oBindingContext, oControl, oPlugin) {
 				const oRowConfiguration = oPlugin.getRowConfiguration();
 				const oContexts = this.getTableContexts(oControl);
 				let aUploadSetItems = [];
@@ -1908,42 +1970,26 @@ sap.ui.define([
 				}
 			},
 			// Handles download of the file through the passed context.
-			download: async function(mDownloadInfo) {
+			download: async function(mDownloadInfo, oPlugin) {
 				const {oBindingContext, bAskForLocation} = mDownloadInfo;
-				const oPlugin = this.getPluginInstance();
 				const oItem = await oPlugin.getItemForContext(oBindingContext);
 				if (oItem && oItem.getUrl()) {
 					return oPlugin._initiateFileDownload(oItem, bAskForLocation);
 				}
-				return false;
+			return false;
 			},
 			getTableContexts: function(oTable) {
 				return oTable?.getBinding("items")?.getCurrentContexts() || null;
 			}
 		 },
 		 "sap.ui.table.Table": {
-			_oPluginInstance: null,
-			_oControlInstance: null,
 			_sModelName: undefined,
 			_bIsTableBound: false,
-			setPluginInstance: function(oPlugin) {
-				this._oPluginInstance = oPlugin;
-			},
-			getPluginInstance: function() {
-				return this._oPluginInstance;
-			},
-			setControlInstance: function(oControl) {
-				this._oControlInstance = oControl;
-			},
-			getControlInstance: function() {
-				return this._oControlInstance;
-			},
-			setPluginDefaultSettings: function() {
-				const oPlugin = this.getPluginInstance();
+			setPluginDefaultSettings: function(oControl, oPlugin) {
 				if (oPlugin.getUploadEnabled()) {
-					this.setDragDropConfig();
+					this.setDragDropConfig(oControl, oPlugin);
 				}
-				this.setDefaultIllustrations();
+				this.setDefaultIllustrations(oControl, oPlugin);
 			},
 			setIsTableBound: function(oControl) {
 				if (oControl?.getBinding("rows")) {
@@ -1964,9 +2010,7 @@ sap.ui.define([
 				return this._sModelName;
 			},
 			// Set the drag and drop configuration for the table when upload plugin is actived.
-			setDragDropConfig: function () {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			setDragDropConfig: function (oControl, oPlugin) {
 				var oDragDropConfig = oPlugin._oDragDropConfig = new DragDropInfo({
 					sourceAggregation: "rows",
 					targetAggregation: "rows"
@@ -1980,9 +2024,7 @@ sap.ui.define([
 				oControl?.addDragDropConfig(oDragDropConfig);
 				oControl?.addDragDropConfig(oDropConfig);
 			},
-			resetDragDropConfig: function() {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			resetDragDropConfig: function(oControl, oPlugin) {
 				if (oPlugin && oControl) {
 					oControl.removeDragDropConfig(oPlugin._oDragDropConfig);
 					oControl.removeDragDropConfig(oPlugin._oDropConfig);
@@ -1991,9 +2033,7 @@ sap.ui.define([
 				}
 			},
 			// Set the default illustrations for the table when no data is available. Set only when the upload plugin is activated.
-			setDefaultIllustrations: function() {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			setDefaultIllustrations: function(oControl, oPlugin) {
 				const oNoDataIllustration = oPlugin?.getNoDataIllustration();
 				if (oControl && oPlugin) {
 					if (!oNoDataIllustration) {
@@ -2004,9 +2044,7 @@ sap.ui.define([
 					oControl.setNoData(oPlugin._illustratedMessage);
                                 }
 			},
-			cleanupPluginInstanceSettings: function() {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			cleanupPluginInstanceSettings: function(oControl, oPlugin) {
 				// remove nodata aggregations added from plugin activation.
 				if (oControl) {
 					oControl.setNoData(null);
@@ -2021,9 +2059,7 @@ sap.ui.define([
 				}
 			},
 			// Handles preview of the passed context. Requires access to all the contexts of inner table to setup the preview along with carousel.
-			openFilePreview: async function(oBindingContext) {
-				const oPlugin = this.getPluginInstance();
-				const oControl = this.getControlInstance();
+			openFilePreview: async function(oBindingContext, oControl, oPlugin) {
 				const oRowConfiguration = oPlugin.getRowConfiguration();
 				const oContexts = this.getTableContexts(oControl);
 				let aUploadSetItems = [];
@@ -2036,9 +2072,8 @@ sap.ui.define([
 				}
 			},
 			// Handles download of the file through the context passed.
-			download: async function(mDownloadInfo) {
+			download: async function(mDownloadInfo, oPlugin) {
 				const {oBindingContext, bAskForLocation} = mDownloadInfo;
-				const oPlugin = this.getPluginInstance();
 				const oItem = await oPlugin.getItemForContext(oBindingContext);
 				if (oItem && oItem.getUrl()) {
 					return oPlugin._initiateFileDownload(oItem, bAskForLocation);

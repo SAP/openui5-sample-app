@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -4120,9 +4120,15 @@ sap.ui.define([
 	/**
 	 * Sets the cache's $count at the root level to 0.
 	 *
+	 * @throws {Error} If the cache instance is not newly created
+	 *
 	 * @protected
 	 */
 	_CollectionCache.prototype.setEmpty = function () {
+		if (this.iLimit !== Infinity || this.aElements.$count !== undefined
+				|| this.aElements.length) {
+			throw new Error("Unsupported");
+		}
 		this.iLimit = this.aElements.$count = 0;
 	};
 

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -142,7 +142,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @public
 	 * @alias sap.ui.core.Element
 	 */
@@ -1559,7 +1559,7 @@ sap.ui.define([
 			 * it also may not start with "sap-ui". When written to HTML, the key is prefixed with "data-".
 			 * If any restriction is violated, a warning will be logged and nothing will be written to the DOM.
 			 */
-			key : {type : "string", group : "Data", defaultValue : null},
+			key : {type : "string", defaultValue : null},
 
 			/**
 			 * The data stored in this CustomData object.
@@ -1567,7 +1567,7 @@ sap.ui.define([
 			 * (<code>writeToDom == true</code>) then it must be a string. If this restriction is violated,
 			 * a warning will be logged and nothing will be written to the DOM.
 			 */
-			value : {type : "any", group : "Data", defaultValue : null},
+			value : {type : "any", defaultValue : null},
 
 			/**
 			 * If set to "true" and the value is of type "string" and the key conforms to the documented restrictions,
@@ -1584,7 +1584,7 @@ sap.ui.define([
 			 * <b>ATTENTION:</b> use carefully to not create huge attributes or a large number of them.
 			 * @since 1.9.0
 			 */
-			writeToDom : {type : "boolean", group : "Data", defaultValue : false}
+			writeToDom : {type : "boolean", defaultValue : false}
 		},
 		designtime: "sap/ui/core/designtime/CustomData.designtime"
 	}});

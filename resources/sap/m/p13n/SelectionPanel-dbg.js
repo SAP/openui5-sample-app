@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -83,7 +83,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.BasePanel
 	 *
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @public
 	 * @since 1.96
@@ -161,7 +161,7 @@ sap.ui.define([
 		BasePanel.prototype.init.apply(this, arguments);
 
 		this.getModel(this.P13N_MODEL).setProperty("/showSelected", false);
-		this.getModel(this.P13N_MODEL).setProperty("/hideDescriptions", false);
+		this.getModel(this.P13N_MODEL).setProperty("/hideDescriptions", true);
 
 		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showSelectedText", this._getResourceText("p13n.SHOW_SELECTED"));
 		this.getModel(this.LOCALIZATION_MODEL).setProperty("/hideDescriptionsText", this._getResourceText("p13n.HIDE_DESCRIPTIONS"));
@@ -186,7 +186,6 @@ sap.ui.define([
 		this._displayColumns();
 		this._updateMovement(this.getEnableReorder());
 		this._oListControl.setMultiSelectMode(this.getMultiSelectMode());
-
 	};
 
 	SelectionPanel.prototype.setMultiSelectMode = function(sMultiSelectMode) {
@@ -343,14 +342,15 @@ sap.ui.define([
 		this.setProperty("showHeader", bShowHeader);
 		return this;
 	};
+
 	/**
 	 * @param {Object} oEvt Event object
 	 * @param {string} sPath Path of model property that should be updated
 	 */
 	SelectionPanel.prototype._triggerFilter = function() {
-			const bShowSelected = this.getModel(this.P13N_MODEL).getProperty("/showSelected");
-			const bHideDescriptions = this.getModel(this.P13N_MODEL).getProperty("/hideDescriptions");
-			this._filterList(bShowSelected, this._sSearch, bHideDescriptions);
+		const bShowSelected = this.getModel(this.P13N_MODEL).getProperty("/showSelected");
+		const bHideDescriptions = this.getModel(this.P13N_MODEL).getProperty("/hideDescriptions");
+		this._filterList(bShowSelected, this._sSearch, bHideDescriptions);
 	};
 
 	SelectionPanel.prototype._updateShowSelectedButton = function() {
@@ -456,7 +456,9 @@ sap.ui.define([
 			oSelectedFilter = new Filter(this.PRESENCE_ATTRIBUTE, "EQ", true);
 		}
 		if (bHideRedundant) {
-			oRedundantFilter = new Filter(this.REDUNDANT_ITEMS_ATTRIBUTE, "NE", true);
+			const oFilter1 = new Filter(this.PRESENCE_ATTRIBUTE, "EQ", true);
+			const oFilter2 = new Filter(this.REDUNDANT_ITEMS_ATTRIBUTE, "NE", true);
+			oRedundantFilter = new Filter([oFilter1, oFilter2], false);
 		}
 		if (sSearch) {
 			oSearchFilter = new Filter("label", "Contains", sSearch);
@@ -593,6 +595,10 @@ sap.ui.define([
 
 		// this is needed for updating the header toolbar of the table
 		this.setShowHeader(this.getShowHeader());
+		const bHasRedundantColumns = aP13nData.some((oItem) => oItem[this.REDUNDANT_ITEMS_ATTRIBUTE]);
+		if (bHasRedundantColumns) {
+			this._triggerFilter();
+		}
 		return this;
 	};
 

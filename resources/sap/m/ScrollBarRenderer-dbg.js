@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -44,6 +44,9 @@ function(Device, getScrollbarSize) {
 			// Middle div - ScrollBar itself.
 			oRm.openStart("div", sControlId + "-sb");
 			oRm.class("sapMScrollBarInnerDiv");
+			// prevent tabbing to the scrollbar, as scrollable
+			// elements are added to the tab chain
+			oRm.attr("tabindex", "-1");
 			oRm.openEnd();
 
 				oRm.openStart("div", sControlId + "-sbcnt");

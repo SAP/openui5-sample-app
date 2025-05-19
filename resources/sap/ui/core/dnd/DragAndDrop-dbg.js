@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -694,7 +694,7 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 		}
 
 		// mobile devices needs text data with a value set on the dataTransfer object to allow dragging
-		if (!Device.system.desktop && !oEvent.originalEvent.dataTransfer.getData("text")) {
+		if (Device.browser.mobile && !oEvent.originalEvent.dataTransfer.getData("text")) {
 			oEvent.originalEvent.dataTransfer.setData("text", " ");
 		}
 

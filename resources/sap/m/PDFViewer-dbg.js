@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -14,8 +14,7 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/base/assert",
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Lib",
-	"sap/m/IllustrationPool"
+	"sap/ui/core/Lib"
 ],
 	function(
 		library,
@@ -26,8 +25,7 @@ sap.ui.define([
 		Log,
 		assert,
 		jQuery,
-		CoreLib,
-		IllustrationPool
+		CoreLib
 	) {
 		"use strict";
 
@@ -47,7 +45,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.135.0
+		 * @version 1.136.0
 		 * @since 1.48
 		 *
 		 * @constructor
@@ -211,14 +209,6 @@ sap.ui.define([
 			this._initOverflowToolbarControl();
 
 			this._initControlState();
-
-			var oTntIllustrationSet = {
-				setFamily: "tnt",
-				setURI: sap.ui.require.toUrl("sap/tnt/themes/base/illustrations")
-			};
-
-			// register tnt illustration set
-			IllustrationPool.registerIllustrationSet(oTntIllustrationSet, false);
 		};
 
 		/**

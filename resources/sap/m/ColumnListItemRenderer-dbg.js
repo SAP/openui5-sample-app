@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -327,6 +327,13 @@ sap.ui.define([
 				oColumn.addDependent(oHeader);
 				oLI._addClonedHeader(oHeader);
 				rm.renderControl(oHeader);
+				const oColumnAction = oColumn.getAggregation("_action");
+				if (oColumnAction) {
+					const oColumnActionClone = oColumnAction.clone();
+					oColumn.addDependent(oColumnActionClone);
+					oLI._addClonedHeader(oColumnActionClone);
+					rm.renderControl(oColumnActionClone);
+				}
 				rm.openStart("span").class("sapMListTblSubCntSpr");
 				rm.attr("data-popin-colon", Library.getResourceBundleFor("sap.m").getText("TABLE_POPIN_LABEL_COLON"));
 				rm.openEnd().close("span");

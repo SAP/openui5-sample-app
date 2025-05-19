@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -56,7 +56,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 *
 	 * @constructor
 	 * @public
@@ -541,7 +541,7 @@ sap.ui.define([
 	 * @private
 	 */
 	RatingIndicator.prototype._calculateSelectedValue = function (oEvent) {
-		var selectedValue = -1.0,
+		var selectedValue = 0,
 			percentageWidth = 0.0,
 			oControlRoot = this.$(),
 			fControlPadding = (oControlRoot.innerWidth() - oControlRoot.width()) / 2,
@@ -751,6 +751,7 @@ sap.ui.define([
 				this._updateUI(fValue, true);
 				if (this._fStartValue !== fValue) {	// if the value if not the same
 					this.fireLiveChange({value: fValue});
+					this._fStartValue = fValue; // update the start value to the new one
 				}
 			}
 		}

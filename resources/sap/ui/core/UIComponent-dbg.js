@@ -1,6 +1,6 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -61,7 +61,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Component
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @alias sap.ui.core.UIComponent
 	 * @since 1.9.2
 	 */
@@ -363,7 +363,7 @@ sap.ui.define([
 			vRoutes = oRoutingManifestEntry.routes;
 
 		// If IAsyncContentCreation interface is implemented we enforce router view creation to async
-		if (this.isA("sap.ui.core.IAsyncContentCreation")) {
+		if (this.getManifestObject()?._getSchemaVersion() === 2 || this.isA("sap.ui.core.IAsyncContentCreation")) {
 			oRoutingConfig.async = true;
 		}
 
@@ -422,7 +422,13 @@ sap.ui.define([
 	function getConstructorFunctionFor (vRoutingObjectConstructor) {
 		var fnConstructor;
 		if (typeof vRoutingObjectConstructor === "string") {
-			const sRoutingClassName = vRoutingObjectConstructor.replace(/\./g, "/");
+			let sRoutingClassName;
+			if (vRoutingObjectConstructor.startsWith("module:")) {
+				sRoutingClassName = vRoutingObjectConstructor.slice("module:".length);
+			} else {
+				sRoutingClassName = vRoutingObjectConstructor.replace(/\./g, "/");
+			}
+
 			fnConstructor = sap.ui.require(sRoutingClassName);
 
 			/** @deprecated As of version 1.120**/
@@ -753,7 +759,7 @@ sap.ui.define([
 
 		if (oRootView && typeof oRootView === "object") {
 			// default ViewType to XML, except for typed views
-			if (!oRootView.type && !oRootView.name?.startsWith("module:")) {
+			if (!oRootView.type && !oRootView.viewName?.startsWith("module:")) {
 				oRootView.type = ViewType.XML;
 			}
 
@@ -761,6 +767,11 @@ sap.ui.define([
 			if (oRootView.id) {
 				oRootView.id = this.createId(oRootView.id);
 			}
+
+			if (this.getManifestObject()?._getSchemaVersion() === 2) {
+				oRootView.async = true;
+			}
+
 			/**
 			 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
 			 * in the next major release
@@ -922,19 +933,20 @@ sap.ui.define([
 		const oMetadata = this.getMetadata();
 
 		// lookup rootView class
-		let sRootViewType;
 		const oRootView = oMetadata._getManifestEntry("/sap.ui5/rootView");
-		if (typeof oRootView === "string") {
-			// String as rootView defaults to ViewType XML
+		const sRootViewName = typeof oRootView === "string" ? oRootView : oRootView?.viewName;
+		if (sRootViewName?.startsWith("module:")) {
+			mRoutingClasses["viewClass"] = sRootViewName;
+		} else if (sRootViewName) {
+			// View type defaults to ViewType XML
 			// See: UIComponent#createContent and UIComponentMetadata#_convertLegacyMetadata
-			sRootViewType = "XML";
-		} else if (oRootView && typeof oRootView === "object" && oRootView.type) {
-			sRootViewType = oRootView.type;
+			const sRootViewType = oRootView.type || "XML";
+			if (ViewType[sRootViewType]) {
+				const sViewClass = "sap/ui/core/mvc/" + ViewType[sRootViewType] + "View";
+				mRoutingClasses["viewClass"] = sViewClass;
+			}
 		}
-		if (sRootViewType && ViewType[sRootViewType]) {
-			const sViewClass = "sap/ui/core/mvc/" + ViewType[sRootViewType] + "View";
-			mRoutingClasses["viewClass"] = sViewClass;
-		}
+
 
 		// lookup of the router / targets and views class
 		// ASYNC Only: prevents lazy synchronous loading in UIComponent#init (regardless of manifirst or manilast)

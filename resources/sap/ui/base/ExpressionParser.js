@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/base/Log","sap/base/strings/escapeRegExp","sap/base/util/deepEqual","sap/base/util/JSTokenizer","sap/ui/performance/Measurement","sap/ui/thirdparty/URI"],function(e,n,t,r,i,u){"use strict";

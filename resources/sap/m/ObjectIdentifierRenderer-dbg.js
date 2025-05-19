@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -76,6 +76,7 @@ sap.ui.define(['./library', "sap/ui/core/Lib"],
 
 		oRm.openEnd();
 
+		/** @deprecated as of version 1.24.0 */
 		if (oOI.getBadgeAttachments()) {
 			oRm.openStart("span"); // Icon span begins
 			oRm.class("sapMObjectIdentifierIconSpan");
@@ -83,6 +84,7 @@ sap.ui.define(['./library', "sap/ui/core/Lib"],
 			oRm.renderControl(oOI._getAttachmentsIcon());
 			oRm.close("span"); // Icon span ends
 		}
+		/** @deprecated as of version 1.24.0 */
 		if (oOI.getBadgeNotes()) {
 			oRm.openStart("span"); // Icon span begins
 			oRm.class("sapMObjectIdentifierIconSpan");
@@ -90,6 +92,7 @@ sap.ui.define(['./library', "sap/ui/core/Lib"],
 			oRm.renderControl(oOI._getNotesIcon());
 			oRm.close("span"); // Icon span ends
 		}
+		/** @deprecated as of version 1.24.0 */
 		if (oOI.getBadgePeople()) {
 			oRm.openStart("span"); // Icon span begins
 			oRm.class("sapMObjectIdentifierIconSpan");

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["./ComboBoxBaseRenderer","sap/ui/core/Renderer","sap/m/inputUtils/ListHelpers"],function(e,s,t){"use strict";var a=s.extend(e);a.apiVersion=2;a.CSS_CLASS_COMBOBOX="sapMComboBox";a.addOuterClasses=function(s,t){e.addOuterClasses.apply(this,arguments);s.class(a.CSS_CLASS_COMBOBOX)};a.addInnerClasses=function(s,t){e.addInnerClasses.apply(this,arguments);s.class(a.CSS_CLASS_COMBOBOX+"Inner")};a.addButtonClasses=function(s,t){e.addButtonClasses.apply(this,arguments);s.class(a.CSS_CLASS_COMBOBOX+"Arrow")};a.addPlaceholderClasses=function(s,t){e.addPlaceholderClasses.apply(this,arguments);s.class(a.CSS_CLASS_COMBOBOX+"Placeholder")};a.writeInnerAttributes=function(s,a){var r=a.isOpen(),i,n,d;var o=a._getSuggestionsPopover();e.writeInnerAttributes.apply(this,arguments);s.attr("aria-expanded",r);if(!o){return}var l=o.getFocusedListItem();if(!r||!l){return}i=l.isA("sap.m.GroupHeaderListItem")||l.isA("sap.ui.core.SeparatorItem");n=a.getSelectedItem();d=n&&t.getListItem(n);l=i?l:d;if(l){s.attr("aria-activedescendant",l.getId())}};return a},true);

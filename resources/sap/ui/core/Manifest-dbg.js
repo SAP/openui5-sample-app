@@ -1,6 +1,6 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -165,7 +165,7 @@ sap.ui.define([
 	 * @class The Manifest class.
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.135.0
+	 * @version 1.136.0
 	 * @alias sap.ui.core.Manifest
 	 * @since 1.33.0
 	 */
@@ -287,13 +287,11 @@ sap.ui.define([
 				sBaseBundleUrlRelativeTo = "manifest",
 				vI18n = (oManifest["sap.app"] && oManifest["sap.app"]["i18n"]) || "i18n/i18n.properties";
 
-			const fnResourceBundleCreate = bAsync ? ResourceBundle.create : ResourceBundle._createSync;
-
 			if (typeof vI18n === "string") {
 				oI18nURI = new URI(vI18n);
 
 				// load the ResourceBundle relative to the manifest
-				return fnResourceBundleCreate({
+				return ResourceBundle.create({
 					url: this.resolveUri(oI18nURI, sBaseBundleUrlRelativeTo),
 					async: bAsync
 				});
@@ -317,7 +315,7 @@ sap.ui.define([
 					async: bAsync
 				}, vI18n);
 
-				return fnResourceBundleCreate(mParams);
+				return ResourceBundle.create(mParams);
 			}
 		},
 
@@ -425,6 +423,18 @@ sap.ui.define([
 			}
 		},
 
+		/**
+		 * Returns the major schema version of the manifest.
+		 * Only used internally to check the manifest schema version for feature toggles.
+		 * @private
+		 *
+		 * @returns {number} The major version of the manifest
+		 */
+		_getSchemaVersion: function() {
+			const oJsonContent = this.getJson();
+			const sVersion = getObject(oJsonContent, "/_version");
+			return new Version(sVersion).getMajor();
+		},
 
 		/**
 		 * Loads the included CSS and JavaScript resources. The resources will be
@@ -450,6 +460,10 @@ sap.ui.define([
 			 * @deprecated As of version 1.94, standard dependencies should be used instead.
 			 */
 			if (mResources["js"]) {
+				if (this._getSchemaVersion() === 2) {
+					throw new Error(`'sap.ui5/resources/js' is deprecated and not supported with manifest version 2 (component '${sComponentName}'.`);
+				}
+
 				var aJSResources = mResources["js"];
 				var requireAsync = function (sModule) {
 					// Wrap promise within function because OPA waitFor (sap/ui/test/autowaiter/_promiseWaiter.js)
