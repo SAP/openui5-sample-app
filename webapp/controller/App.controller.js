@@ -33,7 +33,7 @@ sap.ui.define([
 					enabled: "{/itemsRemovable}",
 					icon: "sap-icon://delete",
 					text: "{i18n>CLEAR_COMPLETED}",
-					tap: this.clearCompleted.bind(this),
+					tap: this.onClearCompleted.bind(this),
 				});
 
 				this.byId("toolbar").addContent(clearBtn);
