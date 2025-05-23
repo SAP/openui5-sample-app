@@ -2,7 +2,7 @@
 		<App>
 			<Page>
 				<customHeader>
-					<f:ShellBar core:require="{ Helper: 'sap/ui/demo/todo/util/Helper' }" title="{i18n>TITLE}">
+					<f:ShellBar title="{i18n>TITLE}">
 						<f:profile>
 							<f:Avatar id="avatar-profile" />
 						</f:profile>
@@ -35,7 +35,6 @@
 												<SegmentedButtonItem text="{i18n>LABEL_COMPLETED}" key="completed"/>
 											</items>
 										</SegmentedButton>
-										<Button id="clearCompleted" enabled="{/itemsRemovable}" icon="sap-icon://delete" text="{i18n>CLEAR_COMPLETED}" press=".onClearCompleted"/>
 									</OverflowToolbar>
 								</headerToolbar>
 								<infoToolbar>

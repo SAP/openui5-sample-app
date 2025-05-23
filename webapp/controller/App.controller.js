@@ -29,7 +29,7 @@ sap.ui.define([
 
 			sap.ui.require(["sap/m/Button"], (Button) => {
 				const clearBtn = new Button({
-					id: "clearCompleted",
+					id: this.createId("clearCompleted"),
 					enabled: "{/itemsRemovable}",
 					icon: "sap-icon://delete",
 					text: "{i18n>CLEAR_COMPLETED}",
