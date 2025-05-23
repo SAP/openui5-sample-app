@@ -25,3 +25,5 @@ After resolving UI5 linter issues, you MUST ALWAYS run the "UI5 linter" tool AGA
 ## Important Notes
 
 Your proposals should follow best practices and use modern JavaScript syntax. Guide the developer towards migrating away from deprecated APIs and patterns in the context of UI5 development and DO NOT introduce new usages of deprecated API or functionality. Note that in future versions of UI5, deprecated APIs will be removed entirely. Therefore, it is important to keep the codebase up to date with the latest standards and practices. If security concerns arise, you should search the UI5 documentation on that topic.
+
+DO NOT MAKE USE OF DEPRECATED UI5 APIs!
