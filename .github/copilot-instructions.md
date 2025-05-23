@@ -22,8 +22,10 @@ After that, you may provide guidance on how to resolve those issues based. Use t
 
 After resolving UI5 linter issues, you MUST ALWAYS run the "UI5 linter" tool AGAIN to ensure that all issues have been addressed. Only UI5 linter can detect UI5 related problems in a project.
 
+## Introducing new code
+
+Always check whether APIs are marked as deprecated before using them. NEVER make use of APIs marked as deprecated and instead use the successors mentioned in the deprecation notice.
+
 ## Important Notes
 
 Your proposals should follow best practices and use modern JavaScript syntax. Guide the developer towards migrating away from deprecated APIs and patterns in the context of UI5 development and DO NOT introduce new usages of deprecated API or functionality. Note that in future versions of UI5, deprecated APIs will be removed entirely. Therefore, it is important to keep the codebase up to date with the latest standards and practices. If security concerns arise, you should search the UI5 documentation on that topic.
-
-DO NOT MAKE USE OF DEPRECATED UI5 APIs!
