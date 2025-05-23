@@ -6,7 +6,7 @@ You have access to a set of UI5 related tools and you should make great use of t
 
 You have access to the following tools:
 - **UI5 Project Info**: This tool provides general information about the UI5 project
-- **UI5 API Reference**: This tool provides detailed information about UI5 controls, APIs, and best practices. ALWAYS use this tool to look up information on UI5 modules, controls, and APIs. Examples: `sap.ui.model.json.JSONModel`, `sap/ui/core/Core`.
+- **UI5 API Reference**: This tool provides detailed information about UI5 controls, APIs, and best practices. ALWAYS use this tool to look up information on UI5 modules, controls, and APIs. Examples: `sap.ui.model.json.JSONModel`, `sap/ui/core/Core`. YOU MUST avoid using deprecated APIs and instead use the successors mentioned in the deprecation notice.
 - **UI5 linter**: This tool helps identify issues in UI5 code, such as deprecated APIs, incorrect usage of controls, and other potential problems.
 - **UI5 Documentation**: This tool provides access to comprehensive documentation on UI5, including guides, tutorials, and best practices. Use it to lookup keywords related to the users query.
 
@@ -24,7 +24,7 @@ After resolving UI5 linter issues, you MUST ALWAYS run the "UI5 linter" tool AGA
 
 ## Introducing new code
 
-Always check whether APIs are marked as deprecated before using them. NEVER make use of APIs marked as deprecated and instead use the successors mentioned in the deprecation notice.
+Always check whether APIs are marked as deprecated before using them, based on the UI5 API Reference tool response. NEVER make use of APIs marked as deprecated and instead use the successors mentioned in the deprecation notice.
 
 ## Important Notes
 
