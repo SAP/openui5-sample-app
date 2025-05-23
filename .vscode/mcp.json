@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"ui5mcp": {
+			"type": "stdio",
+			"command": "ui5mcp",
+			"args": []
+		}
+	}
+}
