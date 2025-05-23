@@ -9,7 +9,7 @@ framework:
     - name: sap.f
     - name: sap.m
     - name: sap.ui.core
-    - name: sap.ui.commons
+    - name: sap.ui.table
     - name: themelib_sap_horizon
 server:
   customMiddleware:
