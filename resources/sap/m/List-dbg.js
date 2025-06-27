@@ -30,7 +30,7 @@ sap.ui.define(["./library", "./ListBase", "./ListRenderer", "sap/ui/core/Lib", "
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 *
 	 * @constructor
 	 * @public
@@ -89,6 +89,26 @@ sap.ui.define(["./library", "./ListBase", "./ListRenderer", "sap/ui/core/Lib", "
 	 */
 	List.prototype.applyAriaRole = function(sRole) {
 		this._sAriaRole = sRole;
+	};
+
+	List.prototype._sAriaRoleDescriptionKey = "LIST_ROLE_DESCRIPTION";
+
+	/**
+	 * Applies the aria role description with the given text key to the control.
+	 *
+	 * <b>Note:</b>
+	 * <ul>
+	 * <li>This method must be called before the control renders.</li>
+	 * <li>The description is only applied when the role is 'list'.</li>
+	 * </ul>
+	 *
+	 * @param {string} [sTextKey] role attribute for the control
+	 * @private
+	 * @ui5-restricted sap.m.UploadSet
+	 * @since 1.120
+	 */
+	List.prototype.applyAriaRoleDescription = function(sTextKey) {
+		this._sAriaRoleDescriptionKey = sTextKey;
 	};
 
 	List.prototype._skipGroupHeaderFocus = function() {

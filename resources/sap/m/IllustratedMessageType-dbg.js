@@ -152,12 +152,14 @@ sap.ui.define(["sap/ui/base/DataType"], function(DataType) {
 		/**
 		 * "Balloon Sky" illustration type.
 		 * @public
+		 * @deprecated As of version 1.136, replaced by {@link sap.m.IllustratedMessageType.ReceiveAppreciation}
 		 */
 		BalloonSky: "sapIllus-BalloonSky",
 
 		/**
 		 * "Connection" illustration type.
 		 * @public
+		 * @deprecated As of version 1.136, replaced by {@link sap.m.IllustratedMessageType.UnableToLoad}
 		 */
 		Connection: "sapIllus-Connection",
 
@@ -285,6 +287,7 @@ sap.ui.define(["sap/ui/base/DataType"], function(DataType) {
 		/**
 		 * "Simple Connection" illustration type.
 		 * @public
+		 * @deprecated As of version 1.136, replaced by {@link sap.m.IllustratedMessageType.UnableToLoad}
 		 */
 		SimpleConnection: "sapIllus-SimpleConnection",
 

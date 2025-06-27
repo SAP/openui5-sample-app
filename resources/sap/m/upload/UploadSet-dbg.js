@@ -56,7 +56,7 @@ sap.ui.define([
 	 * but it also helps to avoid template-related issues and ensures better data handling.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -1139,6 +1139,7 @@ sap.ui.define([
 				noDataText: this._setListNoDataText()
 			});
 			this._oList.addStyleClass("sapMUCList");
+			this._oList.applyAriaRoleDescription("UPLOAD_SET_LIST_ROLE_DESCRIPTION");
 			this.addDependent(this._oList);
 		}
 
@@ -2303,6 +2304,13 @@ sap.ui.define([
 		}
 		return null;
 	};
+
+	/**
+	 * private property to indicate that the UploadSet is delegating item handling (insertion / removal into the list) to the developer if items aggregation is bound to a model.
+	 * This property should not be modified by the developer. It is a read-only property.
+	 * @private
+	 */
+	UploadSet.prototype._bUploadSetDelegatesItemHandling = true;
 
 	return UploadSet;
 });

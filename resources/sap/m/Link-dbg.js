@@ -103,7 +103,7 @@ function(
 	 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
 	 *
 	 * @author SAP SE
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 *
 	 * @constructor
 	 * @public

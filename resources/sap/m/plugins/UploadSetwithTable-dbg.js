@@ -75,7 +75,7 @@ sap.ui.define([
 	 * </pre>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 * @author SAP SE
 	 * @public
 	 * @since 1.124
@@ -801,7 +801,7 @@ sap.ui.define([
 		this.getConfig("download", {
 			oBindingContext: oBindingContext,
 			bAskForLocation: bAskForLocation
-		}, this.getControl(), this);
+		}, this, this.getControl());
 	};
 
 	/**

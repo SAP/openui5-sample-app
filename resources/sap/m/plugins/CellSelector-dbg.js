@@ -63,7 +63,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 * @author SAP SE
 	 *
 	 * @public
@@ -245,7 +245,7 @@ sap.ui.define([
 			}
 		},
 		onmousedown: function(oEvent) {
-			if (oEvent.isMarked?.() || oEvent.button != 0) {
+			if (oEvent.isMarked?.() || oEvent.button != 0 || !this.getConfig("isSupported", this.getControl(), this)) {
 				return;
 			}
 

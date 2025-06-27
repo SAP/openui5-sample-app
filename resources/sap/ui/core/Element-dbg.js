@@ -142,7 +142,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 * @public
 	 * @alias sap.ui.core.Element
 	 */
@@ -2227,6 +2227,8 @@ sap.ui.define([
 		FocusHandler?.updateControlFocusInfo(oElement);
 	}
 
+	const fnGetNodeName = Object.getOwnPropertyDescriptor(Node.prototype, 'nodeName')?.get;
+
 	/**
 	 * Returns the nearest {@link sap.ui.core.Element UI5 Element} that wraps the given DOM element.
 	 *
@@ -2257,7 +2259,7 @@ sap.ui.define([
 			oDomRef = document.querySelector(vParam);
 		} else if (typeof vParam === "object"
 			&& vParam.nodeType === Node.ELEMENT_NODE
-			&& typeof vParam.nodeName === "string") {
+			&& typeof fnGetNodeName?.call(vParam) === "string") {
 			// can't use 'instanceof window.Element' because DOM node may be
 			// created by using the constructor in another frame in Chrome/Edge.
 			oDomRef = vParam;

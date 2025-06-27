@@ -89,7 +89,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 * @since 1.34.0
 	 *
 	 * @public
@@ -757,6 +757,15 @@ sap.ui.define([
 
 	GenericTile.prototype._isIconModeOfTypeTwoByHalf = function() {
 		return this._isIconMode() && this.getFrameType() === FrameType.TwoByHalf;
+	};
+
+	GenericTile.prototype._setHeaderContentBackgroundImage = function() {
+		if (this.getBackgroundImage() && this.getMode() === GenericTileMode.ArticleMode && this.getFrameType() === FrameType.Stretch) {
+			const oGenericTile = this.getDomRef();
+			const sBackgroundImage = oGenericTile.style.backgroundImage;
+			oGenericTile.style.backgroundImage = '';
+			this.getDomRef("hdrContent").style.backgroundImage = sBackgroundImage;
+		}
 	};
 
 	/**

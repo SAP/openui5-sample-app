@@ -78,7 +78,7 @@ sap.ui.define([
 	 *   {@link https://cldr.unicode.org/ Unicode CLDR}.
 	 * @hideconstructor
 	 * @public
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 */
 	var LocaleData = BaseObject.extend("sap.ui.core.LocaleData", /** @lends sap.ui.core.LocaleData.prototype */ {
 

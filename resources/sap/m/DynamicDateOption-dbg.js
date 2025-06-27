@@ -44,7 +44,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.136.0
+		 * @version 1.136.1
 		 *
 		 * @public
 		 * @since 1.92
@@ -463,6 +463,8 @@ sap.ui.define([
 						fnControlsUpdated(this);
 					}.bind(this));
 				}
+
+				oPopupContent.getClocks()._showFirstClock();
 
 				oPopupContent.getCalendar().attachSelect(function() {
 					fnControlsUpdated(this);

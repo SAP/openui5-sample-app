@@ -39,13 +39,13 @@ sap.ui.define([
 	 * Constructor for an OData primitive type <code>Edm.Stream</code>.
 	 *
 	 * @param {object} [oFormatOptions]
-	 *   Must be <code>undefined</code>
+	 *   Must be <code>undefined</code> or <code>null</code>
 	 * @param {object} [oConstraints]
 	 *   constraints; they are only stored for documentation purpose, since no validation can occur
 	 * @param {boolean} [oConstraints.nullable=true]
 	 *   if <code>true</code>, the server accepts the value <code>null</code>
 	 * @throws {Error}
-	 *   If format options are given or if the constraints are invalid
+	 *   If format options is not <code>undefined</code> or <code>null</code> or if the constraints are invalid
 	 *
 	 * @alias sap.ui.model.odata.type.Stream
 	 * @author SAP SE
@@ -60,12 +60,12 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 * @public
 	 * @since 1.51.0
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 */
 	var Stream = ODataType.extend("sap.ui.model.odata.type.Stream", {
 			constructor : function (oFormatOptions, oConstraints) {
 				ODataType.apply(this, arguments);
-				if (oFormatOptions !== undefined) {
+				if (oFormatOptions !== undefined && oFormatOptions !== null) {
 					throw new Error("Unsupported arguments");
 				}
 				setConstraints(this, oConstraints);

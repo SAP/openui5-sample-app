@@ -309,7 +309,7 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 				oRm.openStart("div", oControl.getId() + "-wrapper-content").class("sapMGTWrapperCnt").openEnd();
 			}
 
-			oRm.openStart("div");
+			oRm.openStart("div",oControl.getId() + "-hdrContent");
 			oRm.class("sapMGTHdrContent");
 			if (oControl._isIconMode() ){
 				if (frameType === frameTypes.OneByOne) {

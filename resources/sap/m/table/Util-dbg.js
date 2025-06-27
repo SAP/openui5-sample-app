@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.m.table.Util
 	 * @author SAP SE
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 * @since 1.96.0
 	 * @private
 	 * @ui5-restricted sap.fe, sap.ui.mdc, sap.ui.comp
@@ -504,6 +504,7 @@ sap.ui.define([
 	 */
 	Util.isExportable = function(oBinding) {
 		return !Util.isEmpty(oBinding)
+			&& oBinding?.getCount?.() !== 0
 			&& (!oBinding?.getDownloadUrl
 				|| (oBinding.isResolved() && oBinding.getDownloadUrl() !== null));
 	};

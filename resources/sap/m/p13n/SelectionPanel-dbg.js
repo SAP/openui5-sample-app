@@ -83,7 +83,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.BasePanel
 	 *
 	 * @author SAP SE
-	 * @version 1.136.0
+	 * @version 1.136.1
 	 *
 	 * @public
 	 * @since 1.96
@@ -448,22 +448,27 @@ sap.ui.define([
 	};
 
 	SelectionPanel.prototype._filterList = function(bShowSelected, sSearch, bHideRedundant) {
-		let oSearchFilter = [],
-			oSelectedFilter = [],
-			oRedundantFilter = [];
+		const aFilter = [];
 
-		if (bShowSelected) {
-			oSelectedFilter = new Filter(this.PRESENCE_ATTRIBUTE, "EQ", true);
-		}
-		if (bHideRedundant) {
+		if (bHideRedundant && bShowSelected) {
 			const oFilter1 = new Filter(this.PRESENCE_ATTRIBUTE, "EQ", true);
 			const oFilter2 = new Filter(this.REDUNDANT_ITEMS_ATTRIBUTE, "NE", true);
-			oRedundantFilter = new Filter([oFilter1, oFilter2], false);
+			const oRedundantFilter = new Filter({filters: [oFilter1, oFilter2], and: true});
+			aFilter.push(oRedundantFilter);
+		} else if (bShowSelected) {
+			const oSelectedFilter = new Filter(this.PRESENCE_ATTRIBUTE, "EQ", true);
+			aFilter.push(oSelectedFilter);
+		} else if (bHideRedundant) {
+			const oRedundantFilter = new Filter(this.REDUNDANT_ITEMS_ATTRIBUTE, "NE", true);
+			aFilter.push(oRedundantFilter);
 		}
+
 		if (sSearch) {
-			oSearchFilter = new Filter("label", "Contains", sSearch);
+			const oSearchFilter = new Filter("label", "Contains", sSearch);
+			aFilter.push(oSearchFilter);
 		}
-		this._oListControl.getBinding("items").filter(new Filter([].concat(oSelectedFilter, oSearchFilter, oRedundantFilter), true));
+
+		this._oListControl.getBinding("items").filter(new Filter(aFilter, true));
 	};
 
 	SelectionPanel.prototype._onSearchFieldLiveChange = function(oEvent) {
@@ -472,6 +477,8 @@ sap.ui.define([
 	};
 
 	SelectionPanel.prototype._handleActivated = function(oHoveredItem) {
+		const oModelEntry = this._getModelEntry(oHoveredItem);
+
 		// remove move buttons
 		// 1. if a new item is hovered OR
 		// 1. if the item is not selected
@@ -516,9 +523,11 @@ sap.ui.define([
 		this._oLastSelectedItem = null;
 		// 1. if checkbox is enabled (disabled checkbox might be the case for rta for ActionToolbar) AND
 		// 2. if checkbox is selected
-		// 3. OR if there is not checkbox
+		// 3. this is is only disabled in RTA for visibility actions (remove, reveal)
+		// 4. OR if there is not checkbox
 		if ((oHoveredItem.getMultiSelectControl()?.getEnabled() &&
 			oHoveredItem.getMultiSelectControl()?.getSelected()) ||
+			oModelEntry.enabled === "visibility" ||
 			!oHoveredItem.getMultiSelectControl()) {
 			this._updateEnableOfMoveButtons(oHoveredItem, false);
 			this._addMoveButtons(oHoveredItem);
@@ -599,6 +608,7 @@ sap.ui.define([
 		if (bHasRedundantColumns) {
 			this._triggerFilter();
 		}
+		this.getModel(this.P13N_MODEL).setProperty("/hideDescriptions", bHasRedundantColumns);
 		return this;
 	};
 
