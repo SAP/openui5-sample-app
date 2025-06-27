@@ -4,6 +4,7 @@
 		"config:recommended",
 		"github>ui5/renovate-config"
 	],
+	"rangeStrategy": "bump",
 	"lockFileMaintenance": {
 		"enabled": true,
 		"automerge": true,
