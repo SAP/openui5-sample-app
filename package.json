@@ -25,6 +25,6 @@
 		"globals": "^16.2.0",
 		"local-web-server": "^5.4.0",
 		"rimraf": "^6.0.1",
-		"ui5-test-runner": "^5.7.0"
+		"ui5-test-runner": "^5.8.1"
 	}
 }
