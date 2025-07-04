@@ -5,7 +5,10 @@ sap.ui.define([
 	"sap/base/strings/formatMessage",
 	"sap/ui/core/BarColor",
 	"sap/ui/demo/todo/util/Helper",
-], (Controller, Filter, FilterOperator, formatMessage, BarColor, Helper) => {
+	"sap/ui/core/Element",
+	"sap/ui/Device",
+	"sap/ui/model/json/JSONModel",
+], (Controller, Filter, FilterOperator, formatMessage, BarColor, Helper, Element, Device, JSONModel) => {
 	"use strict";
 
 	return Controller.extend("sap.ui.demo.todo.controller.App", {
@@ -15,8 +18,8 @@ sap.ui.define([
 			this.aTabFilters = [];
 			this.BarColor = BarColor;
 
-			this.getView().setModel(new sap.ui.model.json.JSONModel({
-				isMobile: sap.ui.Device.browser.mobile
+			this.getView().setModel(new JSONModel({
+				isMobile: Device.browser.mobile
 			}), "view");
 		},
 
@@ -31,7 +34,7 @@ sap.ui.define([
 					enabled: "{/itemsRemovable}",
 					icon: "sap-icon://delete",
 					text: "{i18n>CLEAR_COMPLETED}",
-					tap: this.onClearCompleted.bind(this),
+					press: this.onClearCompleted.bind(this),
 				});
 
 				this.byId("toolbar").addContent(clearBtn);
@@ -151,7 +154,7 @@ sap.ui.define([
 		},
 
 		_applyListFilters() {
-			const oList = sap.ui.getCore().byId("container-todo---app--todoList");
+			const oList = Element.getElementById("container-todo---app--todoList");
 			// const oList = this.byId("todoList");
 			const oBinding = oList.getBinding("items");
 
