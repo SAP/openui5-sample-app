@@ -1,4 +1,481 @@
+/* ===== TODO APP ENHANCED STYLES ===== */
+
 /* Strikes through the completed items */
 li[data-todo-item-completed="true"] span {
 	text-decoration: line-through;
+}
+
+/* Todo completed text styling */
+.todoCompleted {
+	text-decoration: line-through;
+	opacity: 0.6;
+	color: #666 !important;
+}
+
+/* Todo list item enhanced styling */
+.todoListItem {
+	border-left: 4px solid transparent;
+	transition: all 0.3s ease;
+	padding: 0.75rem !important;
+	margin-bottom: 0.5rem;
+	border-radius: 8px;
+	background: #fafafa;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.todoListItem:hover {
+	background: #f5f5f5;
+	box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+	transform: translateY(-1px);
+}
+
+/* Priority indicators */
+.todoListItem[data-todo-item-completed="false"] {
+	border-left-color: #4CAF50; /* Default - low priority */
+}
+
+/* Priority badges */
+.priorityBadge {
+	font-size: 0.75rem;
+	padding: 0.2rem 0.5rem;
+	border-radius: 12px;
+	background: #e0e0e0;
+	color: #666;
+	font-weight: 500;
+}
+
+/* Todo input enhanced */
+.todoInput {
+	border-radius: 8px;
+	border: 2px solid #e0e0e0;
+	transition: border-color 0.3s ease;
+}
+
+.todoInput:focus {
+	border-color: #2196F3;
+	box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+/* Enhanced buttons */
+.sapMBtn {
+	border-radius: 6px;
+	transition: all 0.2s ease;
+}
+
+.sapMBtn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Header styling */
+.sapFDynamicPageHeader {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+}
+
+.sapFDynamicPageHeader .sapMInput {
+	background: rgba(255,255,255,0.9);
+	border: none;
+	border-radius: 8px;
+}
+
+/* List container */
+.sapMList {
+	background: transparent;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+	.todoListItem {
+		padding: 1rem !important;
+	}
+	
+	.todoInput {
+		width: 100% !important;
+	}
+}
+
+/* Loading and animation effects */
+.sapMList .sapMLIB {
+	animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Priority color coding */
+.priority-high {
+	border-left-color: #FF5722 !important;
+}
+
+.priority-medium {
+	border-left-color: #FF9800 !important;
+}
+
+.priority-low {
+	border-left-color: #4CAF50 !important;
+}
+
+/* Enhanced toolbar */
+.sapMIBar {
+	background: rgba(255,255,255,0.95);
+	-webkit-backdrop-filter: blur(10px);
+	backdrop-filter: blur(10px);
+	border-radius: 8px;
+	margin: 0.5rem;
+}
+
+/* Custom scrollbar */
+.sapMScrollCont::-webkit-scrollbar {
+	width: 8px;
+}
+
+.sapMScrollCont::-webkit-scrollbar-track {
+	background: #f1f1f1;
+	border-radius: 4px;
+}
+
+.sapMScrollCont::-webkit-scrollbar-thumb {
+	background: #c1c1c1;
+	border-radius: 4px;
+}
+
+.sapMScrollCont::-webkit-scrollbar-thumb:hover {
+	background: #a8a8a8;
+}
+
+/* Success animations */
+@keyframes pulse {
+	0% { transform: scale(1); }
+	50% { transform: scale(1.05); }
+	100% { transform: scale(1); }
+}
+
+.todo-success {
+	animation: pulse 0.3s ease-in-out;
+}
+
+/* ===== NAVIGATION AND TAB STYLES ===== */
+
+/* Icon Tab Bar styling */
+.sapMITBHead {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	border-radius: 0;
+}
+
+.sapMITBFilter {
+	background: transparent;
+	border-radius: 8px 8px 0 0;
+	margin: 0 2px;
+	transition: all 0.3s ease;
+}
+
+.sapMITBFilter:hover {
+	background: rgba(255,255,255,0.1);
+	transform: translateY(-2px);
+}
+
+.sapMITBFilter.sapMITBFilterSelected {
+	background: rgba(255,255,255,0.2);
+	box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.sapMITBText {
+	color: white !important;
+	font-weight: 500;
+}
+
+.sapMITBFilter.sapMITBFilterSelected .sapMITBText {
+	color: white !important;
+	font-weight: 600;
+}
+
+/* Hello World specific styles */
+.helloWorldButton {
+	min-width: 200px;
+	min-height: 3rem;
+	font-size: 1.2rem;
+	font-weight: 600;
+	border-radius: 25px;
+	background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+	border: none;
+	color: white;
+	box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+	transition: all 0.3s ease;
+}
+
+.helloWorldButton:hover {
+	transform: translateY(-3px) scale(1.05);
+	box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.helloWorldButton:active {
+	transform: translateY(-1px) scale(1.02);
+}
+
+/* Enhanced panels for about section */
+.sapMPanel .sapMPanelHdr {
+	background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+	color: white;
+	border-radius: 8px 8px 0 0;
+}
+
+.sapMPanel .sapMPanelContent {
+	border-radius: 0 0 8px 8px;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Icon styling in about section */
+.sapUiIcon {
+	transition: all 0.3s ease;
+}
+
+.sapUiIcon:hover {
+	transform: scale(1.1);
+}
+
+/* Stats panel specific styling */
+.sapMPanel[aria-label*="Statistiche"] .sapMPanelHdr {
+	background: linear-gradient(135deg, #36D1DC 0%, #5B86E5 100%);
+}
+
+/* Main container height fix */
+.sapMPage .sapMPageContent {
+	height: 100%;
+}
+
+.sapMITBContainerContent {
+	height: calc(100vh - 200px);
+	overflow-y: auto;
+}
+
+/* Responsive tab styles */
+@media (max-width: 768px) {
+	.sapMITBFilter {
+		margin: 0 1px;
+	}
+	
+	.sapMITBText {
+		font-size: 0.875rem;
+	}
+	
+	.helloWorldButton {
+		min-width: 150px;
+		font-size: 1rem;
+	}
+}
+
+/* ===== DOCUMENTATION STYLES ===== */
+
+/* Documentation panels */
+.docPanel .sapMPanelHdr {
+	background: linear-gradient(135deg, #1976D2 0%, #42A5F5 100%);
+	color: white;
+	font-weight: 600;
+	border-radius: 8px 8px 0 0;
+}
+
+.docPanel .sapMPanelContent {
+	border: 1px solid #e0e0e0;
+	border-top: none;
+	border-radius: 0 0 8px 8px;
+	background: #fafafa;
+}
+
+/* Architecture and component boxes */
+.architectureBox, .componentBox, .techBox {
+	background: white;
+	border: 1px solid #e0e0e0;
+	border-radius: 8px;
+	padding: 1rem;
+	margin-bottom: 1rem;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	transition: all 0.3s ease;
+}
+
+.architectureBox:hover, .componentBox:hover, .techBox:hover {
+	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+	transform: translateY(-2px);
+}
+
+/* Code styling */
+.codeText {
+	font-family: 'Courier New', monospace;
+	background: #f5f5f5;
+	padding: 0.2rem 0.4rem;
+	border-radius: 4px;
+	border-left: 3px solid #2196F3;
+}
+
+.codeText.folder {
+	color: #FF9800;
+	font-weight: bold;
+}
+
+.codeText.file {
+	color: #4CAF50;
+	margin-left: 1rem;
+}
+
+.codeText.highlight {
+	background: #E3F2FD;
+	color: #1976D2;
+	font-weight: bold;
+}
+
+.codeText.arrow {
+	color: #666;
+	text-align: center;
+}
+
+/* Code examples styling */
+.codeExample {
+	background: #f8f9fa;
+	border-left: 4px solid #0073e6;
+	padding: 1rem;
+	border-radius: 4px;
+}
+
+/* Code blocks */
+.codeBlock {
+	font-family: 'Courier New', monospace !important;
+	background: #2d3748;
+	color: #e2e8f0;
+	padding: 1rem;
+	border-radius: 4px;
+	white-space: pre-wrap;
+	font-size: 0.875rem;
+	line-height: 1.4;
+	overflow-x: auto;
+}
+
+/* Flow diagrams */
+.flowBox {
+	background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
+	border-radius: 8px;
+	padding: 1rem;
+	border-left: 4px solid #9C27B0;
+}
+
+.flowStep {
+	background: white;
+	padding: 0.5rem;
+	margin: 0.25rem 0;
+	border-radius: 4px;
+	border-left: 3px solid #9C27B0;
+	position: relative;
+}
+
+.flowStep:before {
+	content: "→";
+	position: absolute;
+	left: -15px;
+	color: #9C27B0;
+	font-weight: bold;
+}
+
+.flowStep:first-child:before {
+	content: "▶";
+}
+
+.flowDiagram {
+	background: white;
+	padding: 1rem;
+	border-radius: 8px;
+	text-align: center;
+	font-weight: 500;
+	color: #1976D2;
+	border: 2px dashed #1976D2;
+}
+
+/* Tech boxes specific styling */
+.techBox {
+	background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%);
+	border-left: 4px solid #FBC02D;
+}
+
+.techBox .sapUiText {
+	line-height: 1.6;
+}
+
+/* Responsive documentation */
+@media (max-width: 768px) {
+	.architectureBox, .componentBox, .techBox {
+		margin-bottom: 0.5rem;
+		padding: 0.75rem;
+	}
+	
+	.codeBlock {
+		font-size: 0.875rem;
+		padding: 0.75rem;
+	}
+	
+	.flowStep {
+		padding: 0.375rem;
+		font-size: 0.875rem;
+	}
+}
+
+/* Animation for documentation elements */
+.docPanel {
+	animation: slideInDoc 0.5s ease-out;
+}
+
+@keyframes slideInDoc {
+	from {
+		opacity: 0;
+		transform: translateY(30px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Documentation specific styles */
+.documentationPage {
+	background-color: #ffffff !important;
+}
+
+.documentationContent {
+	background-color: #ffffff !important;
+	color: #333333 !important;
+}
+
+.documentationTitle {
+	color: #0070f2 !important;
+	font-size: 2rem !important;
+	font-weight: bold !important;
+}
+
+.documentationText {
+	color: #333333 !important;
+	font-size: 1rem !important;
+	line-height: 1.5 !important;
+	margin: 0.5rem 0 !important;
+}
+
+.documentationPanel .sapMPanelHdr {
+	background-color: #f8f9fa !important;
+	color: #0070f2 !important;
+	font-weight: bold !important;
+}
+
+.documentationPanel .sapMPanelContent {
+	background-color: #ffffff !important;
+	padding: 1rem !important;
+}
+
+.documentationPanel {
+	border: 1px solid #e1e5e9 !important;
+	border-radius: 8px !important;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
 }

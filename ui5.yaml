@@ -11,6 +11,9 @@ framework:
     - name: sap.ui.core
     - name: themelib_sap_horizon
 server:
+  settings:
+    httpPort: 8081
+    httpsPort: 8443
   customMiddleware:
     - name: "@ui5/middleware-code-coverage"
       afterMiddleware: compression

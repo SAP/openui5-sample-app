@@ -4,6 +4,11 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/core/ComponentSupport"], (UICo
 		metadata: {
 			manifest: "json",
 			interfaces: ["sap.ui.core.IAsyncContentCreation"],
+		},
+
+		init() {
+			// Call the base component's init function
+			UIComponent.prototype.init.apply(this, arguments);
 		}
 	});
 });

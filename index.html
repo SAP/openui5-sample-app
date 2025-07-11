@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>OpenUI5 Todo App</title>
+	<link rel="icon" href="data:,">
+	<script id="sap-ui-bootstrap"
+		src="resources/sap-ui-core.js"
+		data-sap-ui-libs="sap.m"
+		data-sap-ui-xx-wait-for-theme="true"
+		data-sap-ui-theme="sap_horizon"
+		data-sap-ui-resource-roots='{
+			"sap.ui.demo.todo": "./"
+		}'
+		data-sap-ui-on-init="module:sap/ui/core/ComponentSupport"
+		data-sap-ui-compat-version="edge"
+		data-sap-ui-async="true">
+	</script>
+</head>
+
+<body class="sapUiBody">
+	<div data-sap-ui-component data-name="sap.ui.demo.todo" data-id="container" data-settings='{"id" : "todo"}'></div>
+</body>
+</html>

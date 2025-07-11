@@ -8,7 +8,21 @@
 					<f:DynamicPage>
 						<f:header>
 							<f:DynamicPageHeader pinnable="false">
-								<Input class="todoInput" id="addTodoItemInput" value="{/newTodo}" placeholder="{i18n>INPUT_PLACEHOLDER}" change=".addTodo" />
+								<VBox class="sapUiMediumMargin">
+									<HBox alignItems="Center" class="sapUiSmallMarginBottom">
+										<Input class="todoInput" id="addTodoItemInput" value="{/newTodo}" placeholder="{i18n>INPUT_PLACEHOLDER}" change=".addTodo" width="60%" />
+										<Select class="sapUiTinyMarginBegin" selectedKey="{/newTodoPriority}" width="150px">
+											<core:Item key="high" text="Alta Priorità" />
+											<core:Item key="medium" text="Media Priorità" />
+											<core:Item key="low" text="Bassa Priorità" />
+										</Select>
+										<Button class="sapUiTinyMarginBegin" text="Aggiungi" type="Emphasized" press=".addTodo" />
+									</HBox>
+									<HBox alignItems="Center" justifyContent="SpaceBetween">
+										<Text text="{= ${/todos}.length > 0 ? 'Task totali: ' + ${/todos}.length : 'Nessun task presente' }" class="sapUiTinyText" />
+										<Text text="{path: '/completedCount', formatter: '.formatCompletedCount'}" class="sapUiTinyText" />
+									</HBox>
+								</VBox>
 							</f:DynamicPageHeader>
 						</f:header>
 						<f:content>
@@ -42,13 +56,40 @@
 										<Label id="filterLabel"/>
 									</OverflowToolbar>
 								</infoToolbar>
-								<CustomListItem>
-									<HBox>
-										<CheckBox selected="{completed}"  />
-										<VBox justifyContent="Center">
-											<Text text="{title}"/>
-										</VBox>
-									</HBox>
+								<CustomListItem class="todoListItem">
+									<VBox width="100%">
+										<HBox alignItems="Center" justifyContent="SpaceBetween" width="100%">
+											<HBox alignItems="Center" width="70%">
+												<CheckBox selected="{completed}" select=".onToggleComplete" />
+												
+												<!-- Priority Indicator -->
+												<core:Icon src="sap-icon://flag" color="{path: 'priority', formatter: '.formatPriorityColor'}" class="sapUiTinyMarginBegin sapUiTinyMarginEnd" />
+												
+												<!-- Editing Mode -->
+												<Input visible="{editing}" value="{title}" change=".onSaveTodo" width="100%" />
+												
+												<!-- Display Mode -->
+												<VBox visible="{= !${editing} }" justifyContent="Center" width="100%">
+													<Text text="{title}" class="{= ${completed} ? 'todoCompleted' : '' }" />
+													<HBox alignItems="Center" class="sapUiTinyMarginTop">
+														<Text text="{path: 'priority', formatter: '.formatPriorityText'}" class="priorityBadge sapUiTinyMarginEnd" />
+														<Text text="{= ${createdDate} ? 'Creato: ' + ${path: 'createdDate', formatter: '.formatDate'} : '' }" class="sapUiTinyText" />
+													</HBox>
+												</VBox>
+											</HBox>
+											
+											<!-- Action Buttons -->
+											<HBox>
+												<!-- Edit Mode Buttons -->
+												<Button visible="{editing}" icon="sap-icon://save" type="Emphasized" press=".onSaveTodo" tooltip="Salva" class="sapUiTinyMarginEnd" />
+												<Button visible="{editing}" icon="sap-icon://cancel" press=".onCancelEdit" tooltip="Annulla" class="sapUiTinyMarginEnd" />
+												
+												<!-- Normal Mode Buttons -->
+												<Button visible="{= !${editing} }" icon="sap-icon://edit" press=".onEditTodo" tooltip="Modifica" class="sapUiTinyMarginEnd" />
+												<Button visible="{= !${editing} }" icon="sap-icon://delete" type="Reject" press=".onDeleteTodo" tooltip="Elimina" />
+											</HBox>
+										</HBox>
+									</VBox>
 									<customData>
 										<core:CustomData key="todo-item-completed" value="{= String(${completed})}" writeToDom="true" />
 									</customData>

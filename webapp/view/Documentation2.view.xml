@@ -1,0 +1,7 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="sap.ui.demo.todo.controller.Documentation2">
+<VBox>
+<Text text="TEST - SE VEDI QUESTO LA VIEW FUNZIONA" />
+<Text text="Documentazione funzionante" />
+<Button text="Clicca qui" press="onTestPress" />
+</VBox>
+</mvc:View>

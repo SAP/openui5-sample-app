@@ -1,0 +1,91 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns="sap.m" xmlns:f="sap.f" controllerName="sap.ui.demo.todo.controller.Main" displayBlock="true">
+	<App>
+		<Page showNavButton="false">
+			<customHeader>
+				<f:ShellBar core:require="{ Helper: 'sap/ui/demo/todo/util/Helper' }" title="Multi-App Dashboard" homeIcon="{:= Helper.resolvePath('./img/logo_ui5.png') }" />
+			</customHeader>
+			<content>
+				<VBox height="100%">
+					<!-- Tab Navigation -->
+					<IconTabBar id="iconTabBar" selectedKey="todoApp" select=".onTabSelect" class="sapUiNoContentPadding">
+						<items>
+							<IconTabFilter key="todoApp" text="📝 Todo App" icon="sap-icon://task" iconColor="Positive">
+								<content>
+									<!-- Todo App View loaded dynamically -->
+									<VBox id="todoAppContainer" height="100%">
+										<!-- Content will be loaded dynamically -->
+									</VBox>
+								</content>
+							</IconTabFilter>
+							<IconTabFilter key="helloWorldApp" text="🌍 Hello World" icon="sap-icon://world" iconColor="Critical">
+								<content>
+									<!-- Hello World View will be loaded here -->
+									<VBox id="helloWorldContainer" height="100%">
+										<!-- Content will be loaded dynamically -->
+									</VBox>
+								</content>
+							</IconTabFilter>
+							<IconTabFilter key="aboutApp" text="ℹ️ About" icon="sap-icon://information" iconColor="Neutral">
+								<content>
+									<VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">
+										<core:Icon src="sap-icon://ui-notifications" size="4rem" color="#0070F2" class="sapUiLargeMarginBottom" />
+										<Title text="Multi-App UI5 Demo" class="sapUiMediumMarginBottom" />
+										<Text text="Questa applicazione dimostra come creare un sistema di navigazione con tab in UI5" textAlign="Center" class="sapUiMediumMarginBottom" />
+										<Panel headerText="Funzionalità" class="sapUiMediumMarginTop" width="500px">
+											<content>
+												<VBox class="sapUiMediumMargin">
+													<HBox alignItems="Center" class="sapUiSmallMarginBottom">
+														<core:Icon src="sap-icon://task" class="sapUiTinyMarginEnd" color="Positive" />
+														<Text text="Todo App completa con priorità e editing inline" />
+													</HBox>
+													<HBox alignItems="Center" class="sapUiSmallMarginBottom">
+														<core:Icon src="sap-icon://world" class="sapUiTinyMarginEnd" color="Critical" />
+														<Text text="Hello World App con statistiche interattive" />
+													</HBox>
+													<HBox alignItems="Center" class="sapUiSmallMarginBottom">
+														<core:Icon src="sap-icon://navigation-up-arrow" class="sapUiTinyMarginEnd" color="Neutral" />
+														<Text text="Navigazione fluida con IconTabBar" />
+													</HBox>
+													<HBox alignItems="Center" class="sapUiSmallMarginBottom">
+														<core:Icon src="sap-icon://responsive" class="sapUiTinyMarginEnd" color="Good" />
+														<Text text="Design responsive e moderno" />
+													</HBox>
+													<HBox alignItems="Center">
+														<core:Icon src="sap-icon://technical-object" class="sapUiTinyMarginEnd" color="Error" />
+														<Text text="Documentazione tecnica completa" />
+													</HBox>
+												</VBox>
+											</content>
+										</Panel>
+									</VBox>
+								</content>
+							</IconTabFilter>
+							<IconTabFilter key="documentationApp" text="📚 Documentation" icon="sap-icon://technical-object" iconColor="Error">
+								<content>
+									<!-- Documentation View will be loaded here -->
+									<VBox id="documentationContainer" height="100%">
+										<!-- Content will be loaded dynamically -->
+									</VBox>
+								</content>
+							</IconTabFilter>
+							<IconTabFilter key="documentation2App" text="📖 Docs Simple" icon="sap-icon://documents" iconColor="Information">
+								<content>
+									<!-- Documentation2 inline content for testing -->
+									<VBox class="sapUiMediumMargin">
+										<Title text="DOCUMENTAZIONE STATICA TEST" level="H2" />
+										<Text text="Questo è un test statico direttamente nel Main.view.xml" />
+										<Text text="Se vedi questo, il problema è nel caricamento dinamico" />
+										<Text text="Architettura: Pattern MVC con OpenUI5" />
+										<Text text="View: XML per interfaccia utente" />
+										<Text text="Controller: JavaScript per logica business" />
+										<Text text="Model: JSON per gestione dati" />
+									</VBox>
+								</content>
+							</IconTabFilter>
+						</items>
+					</IconTabBar>
+				</VBox>
+			</content>
+		</Page>
+	</App>
+</mvc:View>

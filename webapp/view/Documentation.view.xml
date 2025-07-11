@@ -1,0 +1,38 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="sap.ui.demo.todo.controller.Documentation">
+	<Page title="Technical Documentation" showNavButton="false">
+		<content>
+			
+				<Title text="🏗️ Documentazione Tecnica del Progetto" level="H2" />
+				<Text text="Documentazione completa dell'applicazione UI5 Multi-App" />
+				
+				<Title text="📱 Views (Interfacce Utente)" level="H3" class="sapUiMediumMarginTop" />
+				<Text text="Main.view.xml - Container principale con IconTabBar per navigazione" />
+				<Text text="App.view.xml - Todo List con funzionalità avanzate e priorità" />
+				<Text text="HelloWorld.view.xml - App demo con timer e statistiche" />
+				<Text text="Documentation.view.xml - Questa pagina di documentazione" />
+				
+				<Title text="🎮 Controllers (Logica Business)" level="H3" class="sapUiMediumMarginTop" />
+				<Text text="Main.controller.js - Orchestratore principale e caricamento dinamico" />
+				<Text text="App.controller.js - CRUD operations e gestione todo" />
+				<Text text="HelloWorld.controller.js - Timer e interazioni dinamiche" />
+				<Text text="Documentation.controller.js - Controller per questa documentazione" />
+				
+				<Title text="💾 Models e Dati" level="H3" class="sapUiMediumMarginTop" />
+				<Text text="todoitems.json - Dati statici per la Todo List" />
+				<Text text="JSONModel Runtime - Modelli dinamici nei controller" />
+				<Text text="Two-way data binding per aggiornamenti real-time" />
+				
+				<Title text="🛠️ Tecnologie" level="H3" class="sapUiMediumMarginTop" />
+				<Text text="OpenUI5 v1.136.1 - Framework JavaScript enterprise" />
+				<Text text="JavaScript ES6+ - Sintassi moderna" />
+				<Text text="XML Views - UI dichiarativa" />
+				<Text text="CSS3 - Styling moderno con animazioni" />
+				
+				<Title text="⚙️ Configurazione" level="H3" class="sapUiMediumMarginTop" />
+				<Text text="manifest.json - Configurazione app e dipendenze" />
+				<Text text="ui5.yaml - Server sviluppo e build" />
+				<Text text="package.json - Dipendenze Node.js e scripts" />
+			
+		</content>
+	</Page>
+</mvc:View>

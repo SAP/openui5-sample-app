@@ -1,14 +1,39 @@
 {
 	"newTodo": "",
+	"newTodoPriority": "medium",
 	"todos": [{
+			"id": "todo-1",
 			"title": "Start this app",
-			"completed": true
+			"completed": true,
+			"priority": "high",
+			"createdDate": "2025-07-10T10:00:00Z",
+			"dueDate": "2025-07-11T18:00:00Z",
+			"category": "Development",
+			"editing": false
 		},
 		{
+			"id": "todo-2",
 			"title": "Learn OpenUI5",
-			"completed": false
+			"completed": false,
+			"priority": "medium",
+			"createdDate": "2025-07-11T09:00:00Z",
+			"dueDate": "2025-07-15T17:00:00Z",
+			"category": "Learning",
+			"editing": false
 		}
 	],
 	"itemsRemovable": true,
-	"completedCount": 1
+	"completedCount": 1,
+	"itemsLeftCount": 1,
+	"priorities": [
+		{ "key": "high", "text": "Alta", "color": "#FF5722" },
+		{ "key": "medium", "text": "Media", "color": "#FF9800" },
+		{ "key": "low", "text": "Bassa", "color": "#4CAF50" }
+	],
+	"categories": [
+		{ "key": "work", "text": "Lavoro" },
+		{ "key": "personal", "text": "Personale" },
+		{ "key": "learning", "text": "Apprendimento" },
+		{ "key": "development", "text": "Sviluppo" }
+	]
 }

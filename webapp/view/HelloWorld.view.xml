@@ -1,0 +1,52 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns="sap.m" xmlns:f="sap.f" controllerName="sap.ui.demo.todo.controller.HelloWorld" displayBlock="true">
+	<Page title="Hello World App" showNavButton="false">
+		<content>
+			<f:DynamicPage>
+				<f:header>
+					<f:DynamicPageHeader pinnable="false">
+						<VBox class="sapUiMediumMargin" alignItems="Center">
+							<Title text="Benvenuto nella seconda app!" class="sapUiLargeMarginBottom" />
+							<Text text="Questa è una demo della navigazione multi-app" class="sapUiMediumMarginBottom" />
+						</VBox>
+					</f:DynamicPageHeader>
+				</f:header>
+				<f:content>
+					<VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">
+						<Button 
+							text="Hello World!" 
+							type="Emphasized" 
+							icon="sap-icon://world"
+							press=".onHelloWorldPress"
+							class="sapUiLargeMarginBottom helloWorldButton" />
+						
+						<Button 
+							text="Saluta l'utente" 
+							type="Accept" 
+							icon="sap-icon://hi"
+							press=".onGreetUser"
+							class="sapUiMediumMarginBottom" />
+						
+						<Panel headerText="Statistiche App" class="sapUiLargeMarginTop" width="400px">
+							<content>
+								<VBox class="sapUiMediumMargin">
+									<HBox justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
+										<Text text="Click Hello World:" />
+										<Text text="{/helloClickCount}" />
+									</HBox>
+									<HBox justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
+										<Text text="Click Saluta:" />
+										<Text text="{/greetClickCount}" />
+									</HBox>
+									<HBox justifyContent="SpaceBetween">
+										<Text text="Tempo trascorso:" />
+										<Text text="{/timeSpent}" />
+									</HBox>
+								</VBox>
+							</content>
+						</Panel>
+					</VBox>
+				</f:content>
+			</f:DynamicPage>
+		</content>
+	</Page>
+</mvc:View>

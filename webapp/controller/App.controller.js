@@ -4,8 +4,9 @@ sap.ui.define([
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
 	"sap/ui/model/json/JSONModel",
-	"sap/base/strings/formatMessage"
-], (Device, Controller, Filter, FilterOperator, JSONModel, formatMessage) => {
+	"sap/base/strings/formatMessage",
+	"sap/m/MessageToast"
+], (Device, Controller, Filter, FilterOperator, JSONModel, formatMessage, MessageToast) => {
 	"use strict";
 
 	return Controller.extend("sap.ui.demo.todo.controller.App", {
@@ -17,6 +18,11 @@ sap.ui.define([
 			this.getView().setModel(new JSONModel({
 				isMobile: Device.browser.mobile
 			}), "view");
+			
+			// Initialize counters when data is loaded
+			this.getView().attachAfterRendering(() => {
+				this.onUpdateItemsLeftCount();
+			});
 		},
 
 		/**
@@ -34,14 +40,39 @@ sap.ui.define([
 		addTodo() {
 			const oModel = this.getModel();
 			const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
+			const sNewTodo = oModel.getProperty("/newTodo");
+			const sPriority = oModel.getProperty("/newTodoPriority") || "medium";
 
-			aTodos.push({
-				title: oModel.getProperty("/newTodo"),
-				completed: false
-			});
+			if (!sNewTodo.trim()) {
+				MessageToast.show("Inserisci un task valido!", {
+					duration: 3000
+				});
+				return;
+			}
+
+			const newTodo = {
+				id: "todo-" + Date.now(),
+				title: sNewTodo,
+				completed: false,
+				priority: sPriority,
+				createdDate: new Date().toISOString(),
+				dueDate: null,
+				category: "personal",
+				editing: false
+			};
+
+			aTodos.push(newTodo);
 
 			oModel.setProperty("/todos", aTodos);
 			oModel.setProperty("/newTodo", "");
+			oModel.setProperty("/newTodoPriority", "medium");
+			
+			// Update counters
+			this.onUpdateItemsLeftCount();
+			
+			MessageToast.show("Task aggiunto con successo!", {
+				duration: 3000
+			});
 		},
 
 		/**
@@ -51,6 +82,9 @@ sap.ui.define([
 			const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
 			this.removeCompletedTodos(aTodos);
 			this.getModel().setProperty("/todos", aTodos);
+			
+			// Update counters
+			this.onUpdateItemsLeftCount();
 		},
 
 		/**
@@ -82,8 +116,12 @@ sap.ui.define([
 		 * Updates the number of items not yet completed
 		 */
 		onUpdateItemsLeftCount() {
-			const iItemsLeft = this.getTodos().filter((oTodo) => oTodo.completed !== true).length;
+			const aTodos = this.getTodos();
+			const iItemsLeft = aTodos.filter((oTodo) => oTodo.completed !== true).length;
+			const iCompletedCount = aTodos.filter((oTodo) => oTodo.completed === true).length;
+			
 			this.getModel().setProperty("/itemsLeftCount", iItemsLeft);
+			this.getModel().setProperty("/completedCount", iCompletedCount);
 		},
 
 		/**
@@ -159,7 +197,156 @@ sap.ui.define([
 			} else {
 				return "COMPLETED_ITEMS" + (sSearchQuery ? "_CONTAINING" : "");
 			}
+		},
+
+		/**
+		 * Enable editing mode for a todo item
+		 * @param {sap.ui.base.Event} oEvent Button press event
+		 */
+		onEditTodo(oEvent) {
+			const oBindingContext = oEvent.getSource().getBindingContext();
+			const sPath = oBindingContext.getPath();
+			const oModel = this.getModel();
+			
+			// Set editing mode to true
+			oModel.setProperty(sPath + "/editing", true);
+		},
+
+		/**
+		 * Save changes to a todo item
+		 * @param {sap.ui.base.Event} oEvent Input change event
+		 */
+		onSaveTodo(oEvent) {
+			const oBindingContext = oEvent.getSource().getBindingContext();
+			const sPath = oBindingContext.getPath();
+			const oModel = this.getModel();
+			const sNewTitle = oEvent.getParameter("value");
+
+			if (!sNewTitle.trim()) {
+				MessageToast.show("Il titolo non può essere vuoto!", {
+					duration: 3000
+				});
+				// Reset to original value
+				oEvent.getSource().setValue(oModel.getProperty(sPath + "/title"));
+				return;
+			}
+
+			// Update title and exit editing mode
+			oModel.setProperty(sPath + "/title", sNewTitle);
+			oModel.setProperty(sPath + "/editing", false);
+			
+			MessageToast.show("Task aggiornato!", {
+				duration: 3000
+			});
+		},
+
+		/**
+		 * Cancel editing mode
+		 * @param {sap.ui.base.Event} oEvent Button press event
+		 */
+		onCancelEdit(oEvent) {
+			const oBindingContext = oEvent.getSource().getBindingContext();
+			const sPath = oBindingContext.getPath();
+			const oModel = this.getModel();
+			
+			// Exit editing mode without saving
+			oModel.setProperty(sPath + "/editing", false);
+		},
+
+		/**
+		 * Delete a todo item
+		 * @param {sap.ui.base.Event} oEvent Button press event
+		 */
+		onDeleteTodo(oEvent) {
+			const oBindingContext = oEvent.getSource().getBindingContext();
+			const sPath = oBindingContext.getPath();
+			const oModel = this.getModel();
+			const aTodos = this.getTodos().map((oTodo) => Object.assign({}, oTodo));
+			const iIndex = parseInt(sPath.split("/").pop());
+
+			aTodos.splice(iIndex, 1);
+			oModel.setProperty("/todos", aTodos);
+			
+			// Update counters
+			this.onUpdateItemsLeftCount();
+			
+			MessageToast.show("Task eliminato!", {
+				duration: 3000
+			});
+		},
+
+		/**
+		 * Format priority color
+		 * @param {string} sPriority Priority level
+		 * @returns {string} Color value
+		 */
+		formatPriorityColor(sPriority) {
+			const oPriorities = {
+				"high": "#FF5722",
+				"medium": "#FF9800", 
+				"low": "#4CAF50"
+			};
+			return oPriorities[sPriority] || "#9E9E9E";
+		},
+
+		/**
+		 * Format priority text
+		 * @param {string} sPriority Priority level
+		 * @returns {string} Priority text
+		 */
+		formatPriorityText(sPriority) {
+			const oPriorities = {
+				"high": "Alta",
+				"medium": "Media",
+				"low": "Bassa"
+			};
+			return oPriorities[sPriority] || "Non definita";
+		},
+
+		/**
+		 * Format date for display
+		 * @param {string} sDate ISO date string
+		 * @returns {string} Formatted date
+		 */
+		formatDate(sDate) {
+			if (!sDate) return "";
+			const oDate = new Date(sDate);
+			return oDate.toLocaleDateString("it-IT", {
+				day: "2-digit",
+				month: "2-digit", 
+				year: "numeric"
+			});
+		},
+
+		/**
+		 * Toggle todo completion status
+		 * @param {sap.ui.base.Event} oEvent Checkbox select event
+		 */
+		onToggleComplete(oEvent) {
+			const oBindingContext = oEvent.getSource().getBindingContext();
+			const sPath = oBindingContext.getPath();
+			const oModel = this.getModel();
+			const bCompleted = oEvent.getParameter("selected");
+			
+			oModel.setProperty(sPath + "/completed", bCompleted);
+			
+			// Update items left count
+			this.onUpdateItemsLeftCount();
+			
+			MessageToast.show(bCompleted ? "Task completato!" : "Task riattivato!", {
+				duration: 3000
+			});
+		},
+
+		/**
+		 * Format completed count text
+		 * @param {number} iCount Number of completed items
+		 * @returns {string} Formatted text
+		 */
+		formatCompletedCount(iCount) {
+			return `Task completati: ${iCount || 0}`;
 		}
+
 	});
 
 });
