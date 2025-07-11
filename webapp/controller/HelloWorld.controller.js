@@ -8,6 +8,7 @@ sap.ui.define([
 	return Controller.extend("sap.ui.demo.todo.controller.HelloWorld", {
 
 		onInit() {
+			console.log("=== HelloWorld Controller onInit START ===");
 			// Initialize local model for this view
 			const oModel = new JSONModel({
 				helloClickCount: 0,
@@ -16,20 +17,28 @@ sap.ui.define([
 				startTime: Date.now()
 			});
 			
+			console.log("HelloWorld model created:", oModel);
 			this.getView().setModel(oModel, "helloWorld");
+			console.log("HelloWorld model set to view with name 'helloWorld'");
 			
 			// Start timer to track time spent
 			this._startTimer();
+			console.log("HelloWorld timer started");
+			console.log("=== HelloWorld Controller onInit END ===");
 		},
 
 		/**
 		 * Handle Hello World button press
 		 */
 		onHelloWorldPress() {
+			console.log("=== HelloWorld Button Pressed ===");
 			const oModel = this.getView().getModel("helloWorld");
+			console.log("HelloWorld model retrieved:", !!oModel);
 			const iCurrentCount = oModel.getProperty("/helloClickCount");
+			console.log("Current click count:", iCurrentCount);
 			
 			oModel.setProperty("/helloClickCount", iCurrentCount + 1);
+			console.log("Updated click count to:", iCurrentCount + 1);
 			
 			// Show different messages based on click count
 			let sMessage = "Hello World!";
@@ -43,6 +52,7 @@ sap.ui.define([
 				sMessage = `🏆 Incredibile! ${iCurrentCount + 1} click! Sei un campione!`;
 			}
 			
+			console.log("Showing message:", sMessage);
 			MessageToast.show(sMessage, {
 				duration: 3000
 			});
@@ -79,8 +89,13 @@ sap.ui.define([
 		 * Start timer to track time spent in the view
 		 */
 		_startTimer() {
+			console.log("=== HelloWorld Timer Starting ===");
 			this._timer = setInterval(() => {
 				const oModel = this.getView().getModel("helloWorld");
+				if (!oModel) {
+					console.error("HelloWorld model not found in timer!");
+					return;
+				}
 				const iStartTime = oModel.getProperty("/startTime");
 				const iElapsed = Math.floor((Date.now() - iStartTime) / 1000);
 				
@@ -94,7 +109,9 @@ sap.ui.define([
 				}
 				
 				oModel.setProperty("/timeSpent", sTimeText);
+				// console.log("Timer updated:", sTimeText); // Uncomment for detailed timer logs
 			}, 1000);
+			console.log("HelloWorld timer interval created");
 		},
 
 		/**

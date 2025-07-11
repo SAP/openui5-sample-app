@@ -31,15 +31,15 @@
 								<VBox class="sapUiMediumMargin">
 									<HBox justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
 										<Text text="Click Hello World:" />
-										<Text text="{/helloClickCount}" />
+										<Text text="{helloWorld>/helloClickCount}" />
 									</HBox>
 									<HBox justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
 										<Text text="Click Saluta:" />
-										<Text text="{/greetClickCount}" />
+										<Text text="{helloWorld>/greetClickCount}" />
 									</HBox>
 									<HBox justifyContent="SpaceBetween">
 										<Text text="Tempo trascorso:" />
-										<Text text="{/timeSpent}" />
+										<Text text="{helloWorld>/timeSpent}" />
 									</HBox>
 								</VBox>
 							</content>
