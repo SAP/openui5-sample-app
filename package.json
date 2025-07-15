@@ -1,5 +1,5 @@
 {
-	"name": "openui5-sample-app",
+	"name": "@ui5/sample-app",
 	"version": "0.5.0",
 	"description": "Sample of an OpenUI5 app",
 	"private": true,
