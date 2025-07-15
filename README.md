@@ -1,12 +1,12 @@
 ![OpenUI5 logo](http://openui5.org/images/OpenUI5_new_big_side.png)
 
-# openui5-sample-app
-> [OpenUI5](https://github.com/SAP/openui5) sample app using the [UI5 Tooling](https://github.com/SAP/ui5-tooling).
+# sample-app
+> [OpenUI5](https://github.com/UI5/openui5) sample app using the [UI5 Tooling](https://github.com/SAP/ui5-tooling).
 
-[![REUSE status](https://api.reuse.software/badge/github.com/SAP/openui5-sample-app)](https://api.reuse.software/info/github.com/SAP/openui5-sample-app)
+[![REUSE status](https://api.reuse.software/badge/github.com/UI5/sample-app)](https://api.reuse.software/info/github.com/UI5/sample-app)
 
 ## Live Demo
-A deployed version of the [openui5-sample-app](http://sap.github.io/openui5-sample-app/index.html) is hosted on GitHub Pages.
+A deployed version of the [sample-app](http://ui5.github.io/sample-app/index.html) is hosted on GitHub Pages.
 
 ## Prerequisites
 - The **UI5 CLI** of the [UI5 Tooling](https://github.com/SAP/ui5-tooling#installing-the-ui5-cli).
@@ -15,8 +15,8 @@ A deployed version of the [openui5-sample-app](http://sap.github.io/openui5-samp
 ## Getting started
 1. Clone this repository and navigate into it
     ```sh
-    git clone https://github.com/SAP/openui5-sample-app.git
-    cd openui5-sample-app
+    git clone https://github.com/UI5/sample-app.git
+    cd sample-app
     ```
 1. Install all dependencies
     ```sh
@@ -82,7 +82,7 @@ The following needs to be done just once per setup.
 1. Clone the OpenUI5 repository and navigate into it
     **Note:** The UI5 version must be 1.65.0 or higher, you can check that in the root `package.json` file
     ```sh
-    git clone https://github.com/SAP/openui5.git
+    git clone https://github.com/UI5/openui5.git
     cd openui5
     ```
 1. Install all dependencies (this also links all OpenUI5 libraries between each other)
