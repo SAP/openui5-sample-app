@@ -3,7 +3,7 @@
  * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(["sap/ui/core/mvc/View"], function(View) {
+sap.ui.define(["sap/ui/core/mvc/_ViewFactory"], function(_ViewFactory) {
 	"use strict";
 
 	/**
@@ -11,7 +11,7 @@ sap.ui.define(["sap/ui/core/mvc/View"], function(View) {
 	 * @private
 	 * @experimental
 	 * @since 1.33
-	 * @deprecated Since 1.90. Use a {@link sap.ui.core.routing.async.TargetCache async.TargetCache} instead
+	 * @deprecated Since 1.90
 	 */
 	return {
 
@@ -26,7 +26,7 @@ sap.ui.define(["sap/ui/core/mvc/View"], function(View) {
 			function fnCreateView() {
 				oOptions.viewName = oOptions.name;
 				delete oOptions.name;
-				return View._create(oOptions);
+				return _ViewFactory.create(oOptions);
 			}
 
 			var oView,

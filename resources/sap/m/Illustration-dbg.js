@@ -32,7 +32,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @public
@@ -62,7 +62,14 @@ sap.ui.define([
 				 *
 				 * @since 1.98
 				 */
-				type: {type: "string", defaultValue: null}
+				type: {type: "string", defaultValue: null},
+
+				/**
+				 * Defines whether the illustration is decorative.
+				 *
+				 * @experimental since 1.138
+				 */
+				decorative: {type: "boolean", group: "Appearance", defaultValue: false}
 			},
 			associations : {
 				/**

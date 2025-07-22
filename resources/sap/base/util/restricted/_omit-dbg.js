@@ -10,7 +10,7 @@
  * @alias module:sap/base/util/restricted/_omit
  * @author SAP SE
  * @since 1.71
- * @version 1.136.1
+ * @version 1.138.0
  * @private
  * @ui5-restricted
 */

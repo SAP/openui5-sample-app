@@ -63,7 +63,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 * @author SAP SE
 	 *
 	 * @public
@@ -291,8 +291,9 @@ sap.ui.define([
 			setTimeout(() => { this._startTarget = null; }, 0);
 		},
 		onclick: function(oEvent) {
-			var oTarget = this._getSelectableCell(oEvent.target);
-			if (oTarget && this._startTarget === oTarget) {
+			const oTarget = this._getSelectableCell(oEvent.target);
+			const oElement = Element.closestTo(oEvent.target);
+			if (oTarget && this._startTarget === oTarget && !oElement.isA("sap.m.Link")) {
 				oEvent.stopPropagation();
 			}
 		}

@@ -208,7 +208,7 @@ sap.ui.predefine("sap/m/designtime/ListBase.designtime", [],function(){"use stri
  * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.predefine("sap/m/designtime/ListItemBase.designtime", [],function(){"use strict";return{name:{singular:"LIST_ITEM_BASE_NAME",plural:"LIST_ITEM_BASE_NAME_PLURAL"},palette:{group:"LIST",icons:{svg:"sap/m/designtime/ListItemBase.icon.svg"}},actions:{remove:{changeType:"hideControl"},reveal:{changeType:"unhideControl"}}}});
+sap.ui.predefine("sap/m/designtime/ListItemBase.designtime", [],function(){"use strict";return{name:{singular:"LIST_ITEM_BASE_NAME",plural:"LIST_ITEM_BASE_NAME_PLURAL"},palette:{group:"LIST",icons:{svg:"sap/m/designtime/ListItemBase.icon.svg"}},aggregations:{actions:{ignore:true}},actions:{remove:{changeType:"hideControl"},reveal:{changeType:"unhideControl"}}}});
 /*!
  * OpenUI5
  * (c) Copyright 2025 SAP SE or an SAP affiliate company.

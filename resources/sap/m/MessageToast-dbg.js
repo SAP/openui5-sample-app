@@ -44,8 +44,8 @@ sap.ui.define([
 		 * sap.m.MessageToast.show("This message should appear in the message toast", {
 		 *     duration: 3000,                  // default
 		 *     width: "15em",                   // default
-		 *     my: "center bottom",             // default
-		 *     at: "center bottom",             // default
+		 *     my: "CenterBottom",             // default
+		 *     at: "CenterBottom",             // default
 		 *     of: window,                      // default
 		 *     offset: "0 0",                   // default
 		 *     collision: "fit fit",            // default
@@ -71,10 +71,12 @@ sap.ui.define([
 		 * <li>You want users to be able to copy some part of the message text. (In this case, show a success {@link sap.m.Dialog Message Dialog}.)</li>
 		 * </ul>
 		 * <h3>Responsive Behavior</h3>
-		 * The message toast has the same behavior on all devices. However, you can adjust the width of the control, for example, for use on a desktop device.
+		 * The message toast has the same behavior on all devices.
+		 * However, you can adjust the width of the control depending on the device you're using, for example desktop.
+		 * Note that the width can be customized up to a maximum of 15rem.
 		 *
 		 * @author SAP SE
-		 * @version 1.136.1
+		 * @version 1.138.0
 		 *
 		 * @namespace
 		 * @public
@@ -97,8 +99,8 @@ sap.ui.define([
 		MessageToast._mSettings = {
 			duration: 3000,
 			width: "15em",
-			my: "center bottom",
-			at: "center bottom",
+			my: "CenterBottom",
+			at: "CenterBottom",
 			of: document.defaultView,
 			offset: "0 0",
 			collision: "fit fit",

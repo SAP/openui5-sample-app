@@ -19,7 +19,7 @@ sap.ui.define(['sap/m/semantic/SemanticToggleButton', "sap/ui/core/Lib"], functi
 	 * @extends sap.m.semantic.SemanticToggleButton
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @public

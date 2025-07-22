@@ -2698,7 +2698,7 @@
 	/**
 	 * Root namespace for JavaScript functionality provided by SAP SE.
 	 *
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 * @namespace
 	 * @public
 	 * @name sap
@@ -4630,8 +4630,7 @@ globalThis["sap-ui-config"].xxMaxLoaderTaskDuration = 0;
 				'sinon': 'sap/ui/thirdparty/sinon',
 				'signals': 'sap/ui/thirdparty/signals',
 				'URI': 'sap/ui/thirdparty/URI',
-				'URITemplate': 'sap/ui/thirdparty/URITemplate',
-				'esprima': 'sap/ui/documentation/sdk/thirdparty/esprima'
+				'URITemplate': 'sap/ui/thirdparty/URITemplate'
 			}
 		},
 
@@ -4675,14 +4674,6 @@ globalThis["sap-ui-config"].xxMaxLoaderTaskDuration = 0;
 			'sap/ui/thirdparty/IPv6': {
 				amd: true,
 				exports: 'IPv6'
-			},
-			'sap/ui/thirdparty/iscroll-lite': {
-				amd: false,
-				exports: 'iScroll'
-			},
-			'sap/ui/thirdparty/iscroll': {
-				amd: false,
-				exports: 'iScroll'
 			},
 			'sap/ui/thirdparty/jquery': {
 				amd: true,
@@ -4794,14 +4785,6 @@ globalThis["sap-ui-config"].xxMaxLoaderTaskDuration = 0;
 			'sap/ui/thirdparty/zyngascroll': {
 				amd: false,
 				exports: 'Scroller' // 'requestAnimationFrame', 'cancelRequestAnimationFrame', 'core'
-			},
-			'sap/ui/demokit/js/esprima': {
-				amd: true,
-				exports: 'esprima'
-			},
-			'sap/ui/documentation/sdk/thirdparty/esprima': {
-				amd: true,
-				exports: 'esprima'
 			},
 			'sap/viz/libs/canvg': {
 				deps: ['sap/viz/libs/rgbcolor']

@@ -91,7 +91,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @public
@@ -896,7 +896,7 @@ sap.ui.define([
 	};
 
 	// In case when there are 3 initials set to the avatar and they are overflowing,
-	// we want to show icon inatead of the initials.
+	// we want to show icon instead of the initials.
 
 	Avatar.prototype._wideInitialsIcon = function() {
 		var $this = this.$(),

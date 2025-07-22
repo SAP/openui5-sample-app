@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.136.1"
+      "version": "1.138.0"
     },
     "title": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
     "description": "The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.",
@@ -34,17 +34,17 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.136",
+      "minUI5Version": "1.138",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.136.1"
+          "minVersion": "1.138.0"
         },
         "sap.ui.layout": {
-          "minVersion": "1.136.1",
+          "minVersion": "1.138.0",
           "lazy": true
         },
         "sap.ui.unified": {
-          "minVersion": "1.136.1",
+          "minVersion": "1.138.0",
           "lazy": true
         }
       }
@@ -177,6 +177,8 @@
           "sap.m.ListItemBase",
           "sap.m.MaskInput",
           "sap.m.Menu",
+          "sap.m.MenuItem",
+          "sap.m.MenuWrapper",
           "sap.m.MenuButton",
           "sap.m.MessagePage",
           "sap.m.MessagePopover",
@@ -323,9 +325,9 @@
           "sap.m.ImageCustomData",
           "sap.m.LightBoxItem",
           "sap.m.LinkTileContent",
+          "sap.m.ListItemAction",
           "sap.m.OverflowToolbarLayoutData",
           "sap.m.MaskInputRule",
-          "sap.m.MenuItem",
           "sap.m.MessageItem",
           "sap.m.MessagePopoverItem",
           "sap.m.PageAccessibleLandmarkInfo",
@@ -549,6 +551,7 @@
           "sap.m.IconTab",
           "sap.m.IScale",
           "sap.m.IMenuItem",
+          "sap.m.IMenuItemBehavior",
           "sap.m.semantic.IGroup",
           "sap.m.semantic.IFilter",
           "sap.m.semantic.ISort",

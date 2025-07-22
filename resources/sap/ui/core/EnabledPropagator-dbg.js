@@ -43,7 +43,7 @@ sap.ui.define(["./FocusMode"], function(FocusMode) {
 	 *
 	 * @param {boolean} [bDefault=true] Value that should be used as default value for the enhancement of the control.
 	 * @param {boolean} [bLegacy=false] Whether the introduced property should use the old name <code>Enabled</code>.
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 * @public
 	 * @class
 	 * @alias sap.ui.core.EnabledPropagator

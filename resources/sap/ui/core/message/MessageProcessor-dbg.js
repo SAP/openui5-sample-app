@@ -27,7 +27,7 @@ sap.ui.define(['sap/ui/base/EventProvider', "sap/base/util/uid"],
 	 * @extends sap.ui.base.EventProvider
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.message.MessageProcessor
@@ -52,7 +52,7 @@ sap.ui.define(['sap/ui/base/EventProvider', "sap/base/util/uid"],
 	/**
 	 * Map of event names, that are provided by the MessageProcessor.
 	 */
-	MessageProcessor.M_EVENTS = {
+	const M_EVENTS = {
 		/**
 		 * MessageChange should be fired when the MessageProcessor provides message changes
 		 *
@@ -98,7 +98,7 @@ sap.ui.define(['sap/ui/base/EventProvider', "sap/base/util/uid"],
 	 * @public
 	 */
 	MessageProcessor.prototype.attachMessageChange = function(oData, fnFunction, oListener) {
-		this.attachEvent("messageChange", oData, fnFunction, oListener);
+		this.attachEvent(M_EVENTS.messageChange, oData, fnFunction, oListener);
 		return this;
 	};
 
@@ -116,7 +116,7 @@ sap.ui.define(['sap/ui/base/EventProvider', "sap/base/util/uid"],
 	 * @public
 	 */
 	MessageProcessor.prototype.detachMessageChange = function(fnFunction, oListener) {
-		this.detachEvent("messageChange", fnFunction, oListener);
+		this.detachEvent(M_EVENTS.messageChange, fnFunction, oListener);
 		return this;
 	};
 
@@ -139,12 +139,12 @@ sap.ui.define(['sap/ui/base/EventProvider', "sap/base/util/uid"],
 		if (Messaging) {
 			Messaging.registerMessageProcessor(this);
 			Messaging.updateMessages(mParameters.oldMessages, mParameters.newMessages);
-			this.fireEvent("messageChange", mParameters);
+			this.fireEvent(M_EVENTS.messageChange, mParameters);
 		} else  {
 			sap.ui.require(["sap/ui/core/Messaging"], function(Messaging)  {
 				Messaging.registerMessageProcessor(this);
 				Messaging.updateMessages(mParameters.oldMessages, mParameters.newMessages);
-				this.fireEvent("messageChange", mParameters);
+				this.fireEvent(M_EVENTS.messageChange, mParameters);
 			}.bind(this));
 		}
 		return this;

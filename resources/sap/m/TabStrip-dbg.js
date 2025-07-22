@@ -89,7 +89,7 @@ function(
 		 * space is exceeded, a horizontal scrollbar appears.
 		 *
 		 * @extends sap.ui.core.Control
-		 * @version 1.136.1
+		 * @version 1.138.0
 		 *
 		 * @constructor
 		 * @private
@@ -721,8 +721,14 @@ function(
 		 * @param {jQuery.Event} oEvent The event object
 		 */
 		TabStrip.prototype.onsapdelete = function(oEvent) {
-			var oItem = Element.closestTo(oEvent.target),
-				bShouldChangeSelection = oItem.getId() === this.getSelectedItem(),
+			var oItem = Element.closestTo(oEvent.target);
+
+			//When delete is triggered from the keyboard on item in popover then the event.target is not instance of TabStripItem so get the correct target
+			if (!(oItem instanceof TabStripItem)) {
+				oItem = Element.getElementById(this.getSelectedItem());
+			}
+
+			var bShouldChangeSelection = oItem.getId() === this.getSelectedItem(),
 				fnSelectionCallback = function() {
 					this._moveToNextItem(bShouldChangeSelection);
 				};

@@ -78,7 +78,7 @@ sap.ui.define([
 	 * Basic Calendar.
 	 * This calendar is used for DatePickers
 	 * @extends sap.ui.core.Control
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @public
@@ -2648,34 +2648,6 @@ sap.ui.define([
 				oYearRangePicker.setColumns(2);
 				oYearRangePicker.setYears(8);
 			}
-		}
-	};
-
-	Calendar.prototype._getSpecialDates = function(){
-		var oParent = this.getParent();
-
-		if (this._oSpecialDatesControlOrigin) {
-			return this._oSpecialDatesControlOrigin._getSpecialDates();
-		}
-
-		if (oParent && oParent._getSpecialDates) {
-			return oParent._getSpecialDates();
-		} else {
-			var specialDates = this.getSpecialDates();
-			for (var i = 0; i < specialDates.length; i++) {
-				var bNeedsSecondTypeAdding = specialDates[i].getSecondaryType() === library.CalendarDayType.NonWorking
-					&& specialDates[i].getType() !== library.CalendarDayType.NonWorking;
-				if (bNeedsSecondTypeAdding) {
-					var newSpecialDate = new DateTypeRange();
-					newSpecialDate.setType(specialDates[i].getSecondaryType());
-					newSpecialDate.setStartDate(specialDates[i].getStartDate());
-					if (specialDates[i].getEndDate()) {
-						newSpecialDate.setEndDate(specialDates[i].getEndDate());
-					}
-					specialDates.push(newSpecialDate);
-				}
-			}
-			return specialDates;
 		}
 	};
 

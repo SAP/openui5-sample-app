@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.136.1
+		 * @version 1.138.0
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -1328,8 +1328,7 @@ sap.ui.define([
 			&& this.oBinding.getHeaderContext?.()
 			&& this.oBinding.getHeaderContext().isSelected() !== this.isSelected()
 			&& (mParameters.$$ownRequest || !this.oBinding.isRelative())
-			&& !_Helper.isDataAggregation(mParameters)
-			// check for key predicate in the last path segment
+			// check for "key predicate" (not index) in the last path segment
 			&& this.sPath.indexOf("(", this.sPath.lastIndexOf("/")) > 0;
 	};
 
@@ -2129,7 +2128,8 @@ sap.ui.define([
 			oBinding = oCandidate.oBinding;
 			sPath = oBinding.getPath();
 			oParentContext = oBinding.getContext();
-			if (oBinding.oCache && (!oContext || oBinding.oCache.hasChangeListeners())) {
+			if (oBinding.oCache?.hasChangeListeners() || !oContext && oBinding.oCache !== null) {
+				// Note: undefined cache looks like a refresh in progress
 				oContext = oCandidate; // active binding with own cache is a good target
 			}
 			if (oContext && sPath) {
@@ -2137,9 +2137,6 @@ sap.ui.define([
 				break;
 			}
 			if (!oBinding.getBoundContext) {
-				if (oBinding.oCache === undefined) {
-					return undefined; // nothing to do - looks like a refresh in progress
-				}
 				throw new Error("Not a context binding: " + oBinding);
 			}
 			oCandidate = oParentContext;

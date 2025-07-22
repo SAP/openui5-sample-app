@@ -208,7 +208,7 @@ sap.ui.define([
 	 * {@link sap.m.PlanningCalendarView PlanningCalendarView}'s properties.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @public
@@ -982,6 +982,11 @@ sap.ui.define([
 		this._toggleStickyClasses();
 
 		updateSelectedRows.call(this);
+
+		var bMultiSelect = this.getMultipleAppointmentsSelection();
+		this.getRows().forEach(function (oRow) {
+			getRowTimeline(oRow).setMultipleAppointmentsSelection(bMultiSelect);
+		});
 	};
 
 	PlanningCalendar.prototype._bindAggregation = function(sName, oBindingInfo) {
@@ -2238,6 +2243,7 @@ sap.ui.define([
 		}
 
 		this._updateTodayButtonState();
+		this._updateHeaderButtons();
 
 		return this;
 
@@ -3859,13 +3865,6 @@ sap.ui.define([
 		return this.setProperty("width", sWidth);
 	};
 
-	PlanningCalendar.prototype.setMultipleAppointmentsSelection = function (bMultiSelect) {
-		this.getRows().forEach(function (oRow) {
-			getRowTimeline(oRow).setMultipleAppointmentsSelection(bMultiSelect);
-		});
-		return this.setProperty("multipleAppointmentsSelection", bMultiSelect);
-	};
-
 	/**
 	 * Getter for custom appointments sorter (if any).
 	 * @since 1.54
@@ -5024,6 +5023,11 @@ sap.ui.define([
 			oMaxDate && oMaxDate.setHours(23, 59, 59, 999);
 			oStartDate.setHours(0, 0, 0, 0);
 			oEndDate.setHours(23, 59, 59, 999);
+		}
+
+		if (sCurrentViewIntervalType === CalendarIntervalType.Month) {
+			const oEndCalendarDate = CalendarDate.fromLocalJSDate(oEndDate);
+			oEndDate.setDate(CalendarUtils._daysInMonth(oEndCalendarDate));
 		}
 
 		this._getHeader()._oPrevBtn.setEnabled(!oMinDate || oStartDate.getTime() > oMinDate.getTime());

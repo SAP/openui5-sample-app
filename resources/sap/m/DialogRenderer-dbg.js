@@ -112,7 +112,7 @@ sap.ui.define([
 		}
 
 		oRM.accessibilityState(oDialog, {
-			role: sRole,
+			role: sRole.toLowerCase(),
 			modal: true
 		});
 
@@ -178,7 +178,9 @@ sap.ui.define([
 			oRM.openStart("header")
 				.openEnd();
 			if (oHeader) {
-				oHeader._applyContextClassFor("header");
+				if (oHeader._applyContextClassFor) {
+					oHeader._applyContextClassFor("header");
+				}
 				oRM.openStart("div")
 					.class("sapMDialogTitleGroup");
 
@@ -198,7 +200,9 @@ sap.ui.define([
 			}
 
 			if (oSubHeader && oSubHeader.getVisible()) {
-				oSubHeader._applyContextClassFor("subheader");
+				if (oSubHeader._applyContextClassFor) {
+					oSubHeader._applyContextClassFor("subheader");
+				}
 				oRM.openStart("div")
 					.class("sapMDialogSubHeader")
 					.openEnd()
@@ -241,10 +245,14 @@ sap.ui.define([
 				.class("sapMDialogFooter")
 				.openEnd();
 			if (oFooter) {
-				oFooter._applyContextClassFor("footer");
+				if (oFooter._applyContextClassFor) {
+					oFooter._applyContextClassFor("footer");
+				}
 				oRM.renderControl(oFooter);
 			} else {
-				oDialog._oToolbar._applyContextClassFor("footer");
+				if (oDialog._oToolbar._applyContextClassFor) {
+					oDialog._oToolbar._applyContextClassFor("footer");
+				}
 				oRM.renderControl(oDialog._oToolbar);
 			}
 			oRM.close("footer");

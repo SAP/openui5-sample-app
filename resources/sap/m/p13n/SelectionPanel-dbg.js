@@ -83,7 +83,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.BasePanel
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @public
 	 * @since 1.96
@@ -281,18 +281,8 @@ sap.ui.define([
 		const bHasRendundantColumns = aP13nData.some((oItem) => oItem[this.REDUNDANT_ITEMS_ATTRIBUTE]);
 
 		if (!bHasRendundantColumns) {
-			const oShowSelectedButton = new Button({
-				press: (oEvt) => {
-					const bShowSelected = this.getModel(this.P13N_MODEL).getProperty("/showSelected");
-					this.getModel(this.P13N_MODEL).setProperty("/showSelected", !bShowSelected);
-					this._triggerFilter();
-					this._updateShowSelectedButton();
-				},
-				text: `{${this.LOCALIZATION_MODEL}>/showSelectedText}`
-			});
-			this._updateShowSelectedButton();
-
-			return oShowSelectedButton;
+			const oShowSelectedContainer = this._getShowSelectedSwitch();
+			return oShowSelectedContainer;
 		} else {
 			const oFilterButton = new Button({
 				icon: "sap-icon://filter",
@@ -353,29 +343,15 @@ sap.ui.define([
 		this._filterList(bShowSelected, this._sSearch, bHideDescriptions);
 	};
 
-	SelectionPanel.prototype._updateShowSelectedButton = function() {
-		const sShowSelected = this._getResourceText("p13n.SHOW_SELECTED");
-		const sShowAll = this._getResourceText("p13n.SHOW_ALL");
-
-		const bShowSelected = this.getModel(this.P13N_MODEL).getProperty("/showSelected");
-		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showSelectedText", bShowSelected ? sShowAll : sShowSelected);
-	};
-
-	SelectionPanel.prototype._getFilterPopover = function() {
-		const oExistingPopover = this.getDependents().find((oDependent) => oDependent.isA("sap.m.Popover"));
-		if (oExistingPopover) {
-			return oExistingPopover;
+	SelectionPanel.prototype._getShowSelectedSwitch = function() {
+		if (this._oShowSelectedContainer) {
+			return this._oShowSelectedContainer;
 		}
 
 		const oShowSelectedText = new Label({
 			text: `{${this.LOCALIZATION_MODEL}>/showSelectedText}`
 		});
 		oShowSelectedText.addStyleClass("sapMSelectionPanelFilters");
-
-		const oHideDescriptionsText = new Label({
-			text: `{${this.LOCALIZATION_MODEL}>/hideDescriptionsText}`
-		});
-		oHideDescriptionsText.addStyleClass("sapMSelectionPanelFilters");
 
 		const oShowSelectedButton = new Switch({
 			state: `{${this.P13N_MODEL}>/showSelected}`,
@@ -384,6 +360,30 @@ sap.ui.define([
 			customTextOff: " ",
 			change: this._triggerFilter.bind(this)
 		});
+
+		const oShowSelectedContainer = new HBox({
+			alignItems: FlexAlignItems.Center,
+			items: [
+				oShowSelectedText,
+				oShowSelectedButton
+			]
+		});
+		oShowSelectedContainer.addStyleClass("sapMSelectionPanelFiltersContainer");
+
+		this._oShowSelectedContainer = oShowSelectedContainer;
+		return oShowSelectedContainer;
+	};
+
+	SelectionPanel.prototype._getFilterPopover = function() {
+		const oExistingPopover = this.getDependents().find((oDependent) => oDependent.isA("sap.m.Popover"));
+		if (oExistingPopover) {
+			return oExistingPopover;
+		}
+
+		const oHideDescriptionsText = new Label({
+			text: `{${this.LOCALIZATION_MODEL}>/hideDescriptionsText}`
+		});
+		oHideDescriptionsText.addStyleClass("sapMSelectionPanelFilters");
 
 		const oHideDescriptionsButton = new Switch({
 			state: `{${this.P13N_MODEL}>/hideDescriptions}`,
@@ -402,14 +402,7 @@ sap.ui.define([
 		});
 		oHideDescriptionsContainer.addStyleClass("sapMSelectionPanelFiltersContainer");
 
-		const oShowSelectedContainer = new HBox({
-			alignItems: FlexAlignItems.Center,
-			items: [
-				oShowSelectedText,
-				oShowSelectedButton
-			]
-		});
-		oShowSelectedContainer.addStyleClass("sapMSelectionPanelFiltersContainer");
+		const oShowSelectedContainer = this._getShowSelectedSwitch();
 
 		const oPopoverLayout = new VBox({
 			alignItems: FlexAlignItems.End,
@@ -616,7 +609,6 @@ sap.ui.define([
 		BasePanel.prototype.onReset.apply(this, arguments);
 		this._sSearch = "";
 		this.getModel(this.P13N_MODEL).setProperty("/showSelected", false);
-		this._updateShowSelectedButton();
 	};
 
 	SelectionPanel.prototype._updateCount = function() {
@@ -764,10 +756,8 @@ sap.ui.define([
 
 	SelectionPanel.prototype._updateLocalizationTexts = function() {
 		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showSelectedText", this._getResourceText("p13n.SHOW_SELECTED"));
-		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showAllText", this._getResourceText("p13n.SHOW_ALL"));
 		this.getModel(this.LOCALIZATION_MODEL).setProperty("/hideDescriptionsText", this._getResourceText("p13n.HIDE_DESCRIPTIONS"));
 		this.getModel(this.LOCALIZATION_MODEL).setProperty("/fieldColumn", this._getResourceText("p13n.DEFAULT_DESCRIPTION"));
-		this._updateShowSelectedButton();
 	};
 
 	SelectionPanel.prototype.exit = function() {
@@ -776,6 +766,7 @@ sap.ui.define([
 		this._oHoveredItem = null;
 		this._bShowFactory = null;
 		this._sSearch = null;
+		this._oShowSelectedContainer = null;
 	};
 	return SelectionPanel;
 });

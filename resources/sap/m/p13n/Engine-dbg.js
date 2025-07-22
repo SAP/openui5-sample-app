@@ -71,7 +71,7 @@ sap.ui.define([
 	 * @alias sap.m.p13n.Engine
 	 * @extends sap.m.p13n.modules.AdaptationProvider
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 * @public
 	 * @since 1.104
 	 */
@@ -246,10 +246,11 @@ sap.ui.define([
 	 * @public
 	 *
 	 * @param {function(sap.ui.base.Event):void} fnStateEventHandler The handler function to call when the event occurs
+	 * @param {object} [oListener] The context object to call the event handler with (value of <code>this</code> in the event handler function).
 	 * @returns {this} Returns <code>this</code> to allow method chaining
 	 */
-	Engine.prototype.attachStateChange = function(fnStateEventHandler) {
-		return this.stateHandlerRegistry.attachChange(fnStateEventHandler);
+	Engine.prototype.attachStateChange = function(fnStateEventHandler, oListener) {
+		return this.stateHandlerRegistry.attachChange(fnStateEventHandler, oListener);
 	};
 
 	/**
@@ -259,10 +260,11 @@ sap.ui.define([
 	 * @public
 	 *
 	 * @param {function(sap.ui.base.Event):void} fnStateEventHandler The handler function to detach from the event
+	 * @param {object} [oListener] The context object to call the event handler with (value of <code>this</code> in the event handler function).
 	 * @returns {this} Returns <code>this</code> to allow method chaining
 	 */
-	Engine.prototype.detachStateChange = function(fnStateEventHandler) {
-		return this.stateHandlerRegistry.detachChange(fnStateEventHandler);
+	Engine.prototype.detachStateChange = function(fnStateEventHandler, oListener) {
+		return this.stateHandlerRegistry.detachChange(fnStateEventHandler, oListener);
 	};
 
 	/**

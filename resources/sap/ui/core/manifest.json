@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.136.1"
+      "version": "1.138.0"
     },
     "title": "The SAPUI5 Core Runtime.",
     "description": "The SAPUI5 Core Runtime.\n\n  Contains the UI5 jQuery plugins (jQuery.sap.*), the Core and all its components,\n  base classes for Controls, Components and the Model View Controller classes.",
@@ -79,21 +79,6 @@
         "version": "1.1.1"
       },
       {
-        "name": "iscroll",
-        "packagedWithMySelf": true,
-        "version": "4.2.5"
-      },
-      {
-        "name": "iscroll-lite",
-        "packagedWithMySelf": true,
-        "version": "4.1.6"
-      },
-      {
-        "name": "swipeview",
-        "packagedWithMySelf": true,
-        "version": "1.0"
-      },
-      {
         "name": "zynga",
         "packagedWithMySelf": true,
         "version": "1.2.1-0-g5d43806"
@@ -127,11 +112,6 @@
         "name": "cldr",
         "packagedWithMySelf": true,
         "version": "46.1.0"
-      },
-      {
-        "name": "mobiscroll",
-        "packagedWithMySelf": true,
-        "version": "2.9.0"
       },
       {
         "name": "sinonjs",
@@ -259,7 +239,7 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.136",
+      "minUI5Version": "1.138",
       "libs": {}
     },
     "library": {

@@ -43,7 +43,7 @@ function(
 	 * <b><i>Note:</i></b>It is protected and should only be used within the framework itself.
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @extends sap.ui.core.Control
 	 * @constructor

@@ -20,6 +20,11 @@ sap.ui.define([],
 					svg: "sap/m/designtime/ListItemBase.icon.svg"
 				}
 			},
+			aggregations: {
+				actions: {
+					ignore: true
+				}
+			},
 			actions: {
 				remove: {
 					changeType: "hideControl"

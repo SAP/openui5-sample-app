@@ -60,6 +60,10 @@ sap.ui.define([
 		oBooleanType,
 		mCodeListUrl2Promise = {},
 		DEBUG = Log.Level.DEBUG,
+		oDynamicProperty = Object.freeze({
+			$kind : "Property",
+			$Type : "Edm.Untyped" // inspired by 4.01
+		}),
 		oGeoJSON = {
 			$kind : "ComplexType",
 			$OpenType : true,
@@ -195,7 +199,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.136.1
+		 * @version 1.138.0
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
@@ -570,6 +574,7 @@ sap.ui.define([
 			? [vAnnotationUri] : vAnnotationUri;
 		this.sDefaultBindingMode = BindingMode.OneTime;
 		this.mETags = {};
+		this.sForbiddenSchema = undefined; // data service's schema in case of a value help service
 		this.sLanguage = sLanguage;
 		// no need to use UI5Date.getInstance as only the timestamp is relevant
 		this.oLastModified = new Date(0);
@@ -918,6 +923,21 @@ sap.ui.define([
 	};
 
 	/**
+	 * Tells this meta model to not include the given schema. Use this to prevent inclusion of the
+	 * data service's schema into a value help service, which would be possible due to a
+	 * "cross-service reference" but would violate the constraints of {@link #requestValueListInfo}
+	 * regarding "Unexpected annotation ... with namespace of data service ...".
+	 *
+	 * @param {string} sSchema
+	 *   A namespace of a schema, for example "foo.bar."
+	 *
+	 * @private
+	 */
+	ODataMetaModel.prototype._setForbiddenSchema = function (sSchema) {
+		this.sForbiddenSchema = sSchema;
+	};
+
+	/**
 	 * See {@link sap.ui.base.EventProvider#attachEvent}
 	 *
 	 * @param {string} sEventId The identifier of the event to listen for
@@ -1184,6 +1204,7 @@ sap.ui.define([
 				vLocation, // {string[]|string} location of indirection
 				sName, // what "@sapui.name" refers to: OData or annotation name
 				bODataMode, // OData navigation mode with scope lookup etc.
+				bOpenType, // schema child is an open (entity or complex) type
 				// parent for next "17.2 SimpleIdentifier"...
 				// (normally the schema child containing the current object)
 				oSchemaChild, // ...as object
@@ -1229,8 +1250,8 @@ sap.ui.define([
 				if (vBindingParameterType) {
 					oSchemaChild = aOverloads = vResult.filter(isRightOverload);
 					if (aOverloads.length !== 1) {
-						return log(WARNING, "Expected a single overload, but found "
-							+ aOverloads.length);
+						return log(WARNING, "Expected a single overload, but found ",
+							aOverloads.length);
 					}
 					if (vBindingParameterType !== UNBOUND) {
 						sSignature = aOverloads[0].$Parameter[0].$isCollection
@@ -1443,6 +1464,10 @@ sap.ui.define([
 					}
 					// unknown qualified name: maybe schema is referenced and can be included?
 					sSchema = schema(sQualifiedName);
+					if (sSchema === that.sForbiddenSchema) {
+						return logWithLocation(WARNING, "Must not access schema '", sSchema,
+							"' from meta model for ", that.sUrl);
+					}
 					vResult = that._getOrFetchSchema(mScope, sSchema, logWithLocation);
 				}
 
@@ -1450,6 +1475,7 @@ sap.ui.define([
 					sTarget = sName = sSchemaChildName = sQualifiedName;
 					vResult = oSchemaChild = mScope[sSchemaChildName];
 					if (!SyncPromise.isThenable(vResult)) {
+						bOpenType = vResult.$OpenType;
 						return true; // qualified name found, steps may continue
 					}
 				}
@@ -1537,7 +1563,10 @@ sap.ui.define([
 								return scopeLookup(sSegment);
 							} else if (bResultIsObject && "$Type" in vResult) {
 								// implicit $Type insertion, e.g. at (navigation) property
-								if (!scopeLookup(vResult.$Type, "$Type")) {
+								if (bOpenType && vResult.$Type === "Edm.Untyped") {
+									// no use to lookup, type continues to be open
+									sName = undefined; // block "@sapui.name"
+								} else if (!scopeLookup(vResult.$Type, "$Type")) {
 									return false;
 								}
 							} else if (bResultIsObject && "$Action" in vResult) {
@@ -1651,9 +1680,9 @@ sap.ui.define([
 						function terminal(vValue) {
 							vResult = vValue;
 							if (vResult === undefined) {
-								log(WARNING, "Unsupported path before " + sSegment);
+								log(WARNING, "Unsupported path before ", sSegment);
 							} else if (i + 1 < aSegments.length) {
-								log(WARNING, "Unsupported path after " + sSegment);
+								log(WARNING, "Unsupported path after ", sSegment);
 							}
 							return false;
 						}
@@ -1698,7 +1727,9 @@ sap.ui.define([
 					}
 					sName = bODataMode || sSegment[0] === "@" ? sSegment : undefined;
 					sTarget = bODataMode ? sTarget + "/" + sSegment : undefined;
-					vResult = vResult[sSegment];
+					vResult = bOpenType && !bInsideAnnotation && !(sSegment in vResult)
+						? oDynamicProperty
+						: vResult[sSegment];
 				}
 				return true;
 			}
@@ -1956,7 +1987,7 @@ sap.ui.define([
 					sNavigationPath = _Helper.buildPath(sNavigationPath, sPropertyName);
 					oProperty = bInsideAnnotation ? {} : oType[sPropertyName];
 					if (!oProperty) {
-						if (sPropertyName.includes("@")) {
+						if (sPropertyName.includes("@") || oType.$OpenType) {
 							if (sPropertyName.includes("@$ui5.")
 									&& sPropertyName !== "@$ui5.context.isSelected") {
 								error("Read-only path must not be updated");
@@ -2556,13 +2587,17 @@ sap.ui.define([
 	 *   list model!
 	 * @param {boolean} [bAutoExpandSelect]
 	 *   Whether the model is to be created with autoExpandSelect
+	 * @param {string} [sQualifiedParentName]
+	 *   Only in case of a value list model: The qualified name of the structured type containing
+	 *   the property or the operation containing the parameter where value list info was requested.
+	 *   Used to derive the {@link #_setForbiddenSchema forbidden schema}.
 	 * @returns {sap.ui.model.odata.v4.ODataModel}
 	 *   The shared model
 	 *
 	 * @private
 	 */
 	ODataMetaModel.prototype.getOrCreateSharedModel = function (sUrl, bCopyAnnotations,
-			bAutoExpandSelect) {
+			bAutoExpandSelect, sQualifiedParentName) {
 		sUrl = this.getAbsoluteServiceUrl(sUrl);
 		const sMapKey = !!bAutoExpandSelect + sUrl; // no separator needed as sUrl.startsWith("/")
 		let mSharedModelByUrl = this.mSharedModelByUrl;
@@ -2583,6 +2618,9 @@ sap.ui.define([
 			});
 			if (bCopyAnnotations) {
 				oSharedModel.getMetaModel()._copyAnnotations(this.oMetaModelForAnnotations ?? this);
+			}
+			if (sQualifiedParentName) {
+				oSharedModel.getMetaModel()._setForbiddenSchema(schema(sQualifiedParentName));
 			}
 			oSharedModel.setRetryAfterHandler((oError) => {
 				return this.oModel.getOrCreateRetryAfterPromise(oError);
@@ -3224,7 +3262,9 @@ sap.ui.define([
 	 * placeholder for one. In this way, "/EMPLOYEES/" addresses the same entity type as
 	 * "/EMPLOYEES/$Type/". That entity type in turn is a map of all its OData children (that is,
 	 * structural and navigation properties) and determines the set of possible child names that
-	 * might be used after the trailing slash.
+	 * might be used after the trailing slash. Since 1.137.0, open (complex or entity) types are
+	 * supported as follows: A simple identifier that does not refer to an OData child is valid and
+	 * treated as a dynamic property of type "Edm.Untyped".
 	 *
 	 * "$" can be used as the last segment to continue a path and thus force scope lookup, but no
 	 * OData simple identifier preparations. In this way, it serves as a placeholder for a technical
@@ -3470,11 +3510,9 @@ sap.ui.define([
 			// flag for "fixed values"
 			this.requestObject(sPropertyMetaPath + sValueListWithFixedValues),
 			this.requestObject(sParentMetaPath + "/@$ui5.overload")
-		]).then(function (aResults) {
-			var mAnnotationByTerm = aResults[2],
-				bFixedValues = aResults[3],
-				mMappingUrlByQualifier = {},
-				oProperty = aResults[1],
+		]).then(function ([sQualifiedParentName, oProperty, mAnnotationByTerm, bFixedValues,
+				aOverloads]) {
+			var mMappingUrlByQualifier = {},
 				oValueListInfo = {};
 
 			/*
@@ -3489,7 +3527,7 @@ sap.ui.define([
 			function addMapping(mValueListMapping, sQualifier, sMappingUrl, oModel) {
 				if ("CollectionRoot" in mValueListMapping) {
 					oModel = that.getOrCreateSharedModel(mValueListMapping.CollectionRoot,
-						/*bCopyAnnotations*/true, bAutoExpandSelect);
+						/*bCopyAnnotations*/true, bAutoExpandSelect, sQualifiedParentName);
 					if (oValueListInfo[sQualifier]
 							&& oValueListInfo[sQualifier].$model === oModel) {
 						// same model -> allow overriding the qualifier
@@ -3524,11 +3562,11 @@ sap.ui.define([
 				// fetch mappings for each entry and wait for all
 				return Promise.all(aMappingUrls.map(function (sMappingUrl) {
 					var oValueListModel = that.getOrCreateSharedModel(sMappingUrl,
-							/*bCopyAnnotations*/true, bAutoExpandSelect);
+							/*bCopyAnnotations*/true, bAutoExpandSelect, sQualifiedParentName);
 
 					// fetch the mappings for the given mapping URL
-					return that.fetchValueListMappings(oValueListModel,
-						/*sQualifiedParentName*/aResults[0], oProperty, /*aOverloads*/aResults[4]
+					return that.fetchValueListMappings(oValueListModel, sQualifiedParentName,
+						oProperty, aOverloads
 					).then(function (mValueListMappingByQualifier) {
 						// enrich with oValueListModel
 						return {

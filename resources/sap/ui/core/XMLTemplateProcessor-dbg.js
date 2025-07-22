@@ -14,6 +14,7 @@ sap.ui.define([
 	'sap/ui/core/ElementRegistry',
 	'./mvc/View',
 	'./mvc/ViewType',
+	'./mvc/_ViewFactory',
 	'./mvc/XMLProcessingMode',
 	'./mvc/EventHandlerResolver',
 	'./ExtensionPoint',
@@ -38,6 +39,7 @@ function(
 	ElementRegistry,
 	View,
 	ViewType,
+	_ViewFactory,
 	XMLProcessingMode,
 	EventHandlerResolver,
 	ExtensionPoint,
@@ -1467,6 +1469,7 @@ function(
 							}
 						} else {
 							future.assertThrows(sName === 'xmlns', oView + ": encountered unknown setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "')");
+							/** @deprecated since 1.120.0 */
 							if (XMLTemplateProcessor._supportInfo) {
 								XMLTemplateProcessor._supportInfo({
 									context : node,
@@ -1764,7 +1767,7 @@ function(
 						}
 
 						vNewControlInstance = scopedRunWithOwner(function() {
-							return View._create(mSettings);
+							return _ViewFactory.create(mSettings);
 						});
 					}
 				} else if (oClass.getMetadata().isA("sap.ui.core.Fragment") && bAsync) {
@@ -1871,6 +1874,7 @@ function(
 					}
 
 					//apply support info if needed
+					/** @deprecated since 1.120.0 */
 					if (XMLTemplateProcessor._supportInfo && vFinalInstance) {
 						for (var i = 0, iLength = vFinalInstance.length; i < iLength; i++) {
 							var oInstance = vFinalInstance[i];

@@ -1,0 +1,7 @@
+/*!
+ * OpenUI5
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(["sap/ui/core/ControlBehavior"],function(e){"use strict";const t={apiVersion:2};t.render=function(t,r){const s=r._getVisibleItems(),i=e.isAccessibilityEnabled();if(s.length){t.openStart("ul",r);if(i){t.attr("role","menu");r._prepareItemsAccessibilityInfo()}t.class("sapMMenuList");if(!r._getItemsWithIconCount()){t.class("sapMMenuNoIcons")}t.openEnd();this.renderItems(t,r);t.close("ul")}};t.renderItems=function(e,t){const r=t._getVisibleItems();let s=null,i=null,n=false,o=false;r.forEach((t,r)=>{i=t.getAssociation("_group");if(n&&s!==i){e.close("div");n=false;this.renderSeparator(e);o=true}if((s!==i||t.getStartsSection())&&!o&&r!==0){this.renderSeparator(e)}if(i&&!n){e.openStart("div");e.attr("role","group");e.openEnd();n=true}s=i;o=false;e.renderControl(t)});if(n){e.close("div")}};t.renderSeparator=function(t){const r=e.isAccessibilityEnabled();t.openStart("li");t.class("sapMMenuSeparator");if(r){t.attr("role","separator")}t.openEnd();t.voidStart("hr").voidEnd();t.close("li")};return t},true);
+//# sourceMappingURL=MenuWrapperRenderer.js.map

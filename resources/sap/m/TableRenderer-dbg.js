@@ -149,7 +149,7 @@ sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/Renderer", "sap/ui/cor
 
 		if (iModeOrder == -1) {
 			openStartCell("ModeCol", "SelCol", "TABLE_SELECTION_COLUMNHEADER");
-			if (sMode == "MultiSelect") {
+			if (sMode == "MultiSelect" && sType == "Head") {
 				if (oTable.getMultiSelectMode() == MultiSelectMode.ClearAll) {
 					rm.attr("title", Library.getResourceBundleFor("sap.m").getText("TABLE_CLEARBUTTON_TOOLTIP"))
 						.class("sapMTableClearAll")
@@ -252,12 +252,20 @@ sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/Renderer", "sap/ui/cor
 			createBlankCell("DummyCell", "DummyCell");
 		}
 
+		const iActionCount = oTable._getItemActionCount();
+		if (iActionCount > 0) {
+			openStartCell("Actions", "ActionsCol", "TABLE_ROW_ACTION");
+			rm.class(`sapMTable${iActionCount}ActionsCol`);
+			rm.openEnd().close(sCellTag);
+			iIndex++;
+		}
+
 		if (oTable.doItemsNeedTypeColumn()) {
 			openStartCell("Nav", "NavCol", "TABLE_ROW_ACTION").openEnd().close(sCellTag);
 			iIndex++;
 		}
 
-		if (iModeOrder == 1) {
+		if (iActionCount === -1 && iModeOrder == 1) {
 			openStartCell("ModeCol", "SelCol", sMode == "Delete" ? "TABLE_ROW_ACTION" : "TABLE_SELECTION_COLUMNHEADER").openEnd().close(sCellTag);
 			iIndex++;
 		}
@@ -379,7 +387,7 @@ sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/Renderer", "sap/ui/cor
 	 */
 	TableRenderer.renderNoData = function(rm, oControl) {
 		rm.openStart("tr", oControl.getId("nodata"));
-		rm.class("sapMLIB").class("sapMListTblRow").class("sapMLIBTypeInactive");
+		rm.class("sapMLIB").class("sapMListTblRow").class("sapMLIBTypeInactive").class("sapMListTblRowNoData");
 		if (Device.system.desktop) {
 			rm.attr("tabindex", "-1");
 			rm.class("sapMLIBFocusable").class("sapMTableRowCustomFocus");

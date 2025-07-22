@@ -118,7 +118,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.136.1
+		 * @version 1.138.0
 		 *
 		 * @constructor
 		 * @private
@@ -2487,6 +2487,24 @@ sap.ui.define([
 			return sType === unifiedLibrary.CalendarDayType.NonWorking
 				|| sSecondaryType === unifiedLibrary.CalendarDayType.NonWorking
 				|| bNonWorkingWeekend;
+		};
+
+		/**
+		 * Returns whether now marker should be rendered in calendar view.
+		 *
+		 * @param {Date|module:sap/ui/core/date/UI5Date} oDate - date to check.
+		 * @returns {boolean}
+		 * @private
+		 */
+		SinglePlanningCalendarGrid.prototype._isNowMarkerInView = function(oDate) {
+			var oStartDate = this.getStartDate(),
+				iColumns = this._getColumns(),
+				oDateTimestamp = oDate.getTime(),
+				oEndDate = UI5Date.getInstance(oStartDate);
+
+			oEndDate.setDate(oEndDate.getDate() + iColumns);
+
+			return oDateTimestamp >= oStartDate.getTime() && oDateTimestamp < oEndDate.getTime();
 		};
 
 		function getResizeGhost() {

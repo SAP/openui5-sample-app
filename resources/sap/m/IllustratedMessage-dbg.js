@@ -92,7 +92,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @public
@@ -203,7 +203,16 @@ sap.ui.define([
 				 * @public
 				 * @since 1.111
 				 */
-				ariaTitleLevel: {type: "sap.ui.core.TitleLevel", group : "Appearance", defaultValue : TitleLevel.Auto}
+				ariaTitleLevel: {type: "sap.ui.core.TitleLevel", group : "Appearance", defaultValue : TitleLevel.Auto},
+
+				/**
+				 * Defines whether the illustration is decorative.
+				 *
+				 * When set to true, the attributes <code>role="presentation"</code> and <code>aria-hidden="true"</code> are applied to the SVG element.
+				 * @public
+				 * @experimental since 1.138
+				 */
+				decorative: {type: "boolean", group: "Appearance", defaultValue: false}
 			},
 			aggregations: {
 
@@ -434,9 +443,12 @@ sap.ui.define([
 		var aAriaLabelledBy = this.getAssociation("ariaLabelledBy"),
 			sTitleId = this._getTitle().sId;
 
-		// check if falsy or empty array
-		if (!aAriaLabelledBy || !aAriaLabelledBy.length) {
-			this.addIllustrationAriaLabelledBy(sTitleId);
+		// Set default aria-labelledby only if the Illustration is not decorative
+		if (!this.getDecorative()) {
+			// check if falsy or empty array
+			if (!aAriaLabelledBy || !aAriaLabelledBy.length) {
+				this.addIllustrationAriaLabelledBy(sTitleId);
+			}
 		}
 	};
 
@@ -548,11 +560,28 @@ sap.ui.define([
 		if (!oIllustration) {
 			oIllustration = new Illustration();
 
+			oIllustration.setDecorative(this.getDecorative());
 			this.setAggregation("_illustration", oIllustration);
 		}
 
 		return oIllustration;
 	};
+
+	/**
+	 * Pass the decorative property to the Illustration
+	 */
+	IllustratedMessage.prototype.setDecorative = function(bValue) {
+		var oIllustration = this.getAggregation("_illustration");
+
+		this.setProperty("decorative", bValue, true);
+
+		if (oIllustration) {
+			oIllustration.setDecorative(bValue);
+		}
+
+		return this;
+	};
+
 
 	IllustratedMessage.prototype._getResourceBundle = function () {
 		return Library.getResourceBundleFor("sap.m");
@@ -898,13 +927,18 @@ sap.ui.define([
 			sTitleId = this._getTitle().sId,
 			oIllustratedMessageIllustration = this._getIllustration();
 
-		this.addAssociation("ariaLabelledBy", sID, true);
+		// Add aria-labelledby only if the Illustration is not decorative
+		if (!this.getDecorative()) {
+			this.addAssociation("ariaLabelledBy", sID, true);
+		}
 
 		if (aAriaLabelledBy && aAriaLabelledBy.includes(sTitleId)) {
 			this.removeIllustrationAriaLabelledBy(sTitleId);
 		}
 
-		oIllustratedMessageIllustration.addAriaLabelledBy(sID);
+		if (!this.getDecorative()) {
+			oIllustratedMessageIllustration.addAriaLabelledBy(sID);
+		}
 
 		return this;
 	};
@@ -933,13 +967,17 @@ sap.ui.define([
 	};
 
 	IllustratedMessage.prototype.addIllustrationAriaDescribedBy = function(sID) {
-		this.addAssociation("ariaDescribedBy", sID, true);
+		// Add aria-describedby only if the Illustration is not decorative
+		if (!this.getDecorative()) {
+			this.addAssociation("ariaDescribedBy", sID, true);
 
-		var oIllustratedMessageIllustration = this._getIllustration();
-		oIllustratedMessageIllustration.addAriaDescribedBy(sID);
+			var oIllustratedMessageIllustration = this._getIllustration();
+			oIllustratedMessageIllustration.addAriaDescribedBy(sID);
+		}
 
 		return this;
 	};
+
 
 	IllustratedMessage.prototype.removeIllustrationAriaDescribedBy = function(sID) {
 		this.removeAssociation("ariaDescribedBy", sID, true);

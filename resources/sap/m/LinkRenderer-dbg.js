@@ -9,10 +9,11 @@
 	 "sap/ui/core/Renderer",
 	 "sap/ui/core/library",
 	 'sap/ui/core/AccessKeysEnablement',
+	 "sap/ui/core/InvisibleText",
 	 "sap/ui/util/defaultLinkTypes",
 	 './library'
 	],
-	function(Library, Renderer, coreLibrary, AccessKeysEnablement, defaultLinkTypes, mobileLibrary) {
+	function(Library, Renderer, coreLibrary, AccessKeysEnablement, InvisibleText, defaultLinkTypes, mobileLibrary) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TextDirection
@@ -75,12 +76,12 @@
 
 		if (oControl.getSubtle()) {
 			oRm.class("sapMLnkSubtle");
-			sTypeSemanticInfo += oControl._sAriaLinkSubtleId;
+			sTypeSemanticInfo += InvisibleText.getStaticId("sap.m", "LINK_SUBTLE");
 		}
 
 		if (oControl.getEmphasized()) {
 			oRm.class("sapMLnkEmphasized");
-			sTypeSemanticInfo += " " + oControl._sAriaLinkEmphasizedId;
+			sTypeSemanticInfo += " " + InvisibleText.getStaticId("sap.m", "LINK_EMPHASIZED");
 		}
 
 		if (sAcccessKey) {

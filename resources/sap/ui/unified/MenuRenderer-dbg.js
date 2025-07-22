@@ -15,7 +15,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior"],
 	 * Menu renderer.
 	 * @author SAP - TD Core UI&AM UI Infra
 	 *
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 * @namespace
 	 */
 	var MenuRenderer = {
@@ -96,6 +96,9 @@ sap.ui.define(["sap/ui/core/ControlBehavior"],
 			}
 			if (oSubmenu && oSubmenu._getItems().length) {
 				bHasSubMenus = true;
+				if (typeof aItems[i].getProperty("_expanded") !== "boolean") {
+					aItems[i].setProperty("_expanded", false);
+				}
 			}
 		}
 

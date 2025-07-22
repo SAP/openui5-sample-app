@@ -38,7 +38,7 @@ function(
 	 * @extends sap.m.Input
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @private
@@ -106,10 +106,10 @@ function(
 
 			return;
 		}
-
+		var oIsMinusSignAtZeroPosition =  iCursorPos === 0 && (oEvent.which === KeyCodes.SLASH || oEvent.which === KeyCodes.NUMPAD_MINUS);
 		sTypedValue = this.getValue().substring(0, iCursorPos) + oEvent.originalEvent.key + this.getValue().substring(iCursorPos);
 		fParsedValue = this._getNumberFormat().parse(sTypedValue);
-		if (!isKeyAllowed(oEvent.which) || (!fParsedValue && fParsedValue !== 0)) {
+		if (!isKeyAllowed(oEvent.which) || (!fParsedValue && fParsedValue !== 0 && !oIsMinusSignAtZeroPosition)) {
 			oEvent.preventDefault();
 		}
 	};

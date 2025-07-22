@@ -4,25 +4,13 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	'sap/base/config',
 	'sap/base/future',
 	'sap/base/Log'
-], function (BaseConfig, future, Log) {
+], function (future, Log) {
 	"use strict";
 
 	var mLibThemeMetadata = {};
 
-	/**
-	 * [COMPATIBILITY] in case deprecated (and removed) themes are still needed, the fallback might be deactivated
-	 * [  RESTRICTED ] This is not a public offering and must not be used by applications!
-	 * @ui5-transform-hint replace-local false
-	 */
-	const bThemeFallbackDeactivated = BaseConfig.get({
-		name: "sapUiXxDeactivateThemeFallback",
-		type: "boolean",
-		value: false,
-		external: false // must not be usable via URL parameter!
-	});
 
 	// Theme defaulting
 	const DEFAULT_THEME = "sap_horizon";
@@ -218,11 +206,6 @@ sap.ui.define([
 	 * @returns {string} the validated and transformed theme name
 	 */
 	ThemeHelper.validateAndFallbackTheme = function(sTheme, sThemeRoot) {
-		// refer to comment at the top of this module
-		if (bThemeFallbackDeactivated) {
-			return sTheme;
-		}
-
 		// check cache for already determined fallback
 		// only do this for themes from the default location (potential SAP standard themes)
 		if (sThemeRoot == null && mThemeFallbacks[sTheme]) {

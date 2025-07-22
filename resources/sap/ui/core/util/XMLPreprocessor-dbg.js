@@ -609,6 +609,7 @@ sap.ui.define([
 				mFragmentCache = {},
 				iNestingLevel = 0,
 				oScope = {}, // for BindingParser.complexParser()
+				/** @deprecated since 1.120.0 */
 				fnSupportInfo = oViewInfo._supportInfo,
 				bWarning = Log.isLoggable(Log.Level.WARNING, sXMLPreprocessor);
 
@@ -1778,6 +1779,7 @@ sap.ui.define([
 			 *   getting the binding's value fails.
 			 */
 			function visitAttribute(oElement, oAttribute, oWithControl) {
+				/** @deprecated since 1.120.0 */
 				if (fnSupportInfo) {
 					fnSupportInfo({
 						context : undefined /*context from node clone*/,
@@ -1788,6 +1790,7 @@ sap.ui.define([
 					});
 				}
 				return resolveAttributeBinding(oElement, oAttribute, oWithControl)
+					/** @deprecated since 1.120.0 */
 					.then(function () {
 						if (fnSupportInfo) {
 							fnSupportInfo({
@@ -1868,7 +1871,9 @@ sap.ui.define([
 				function visitAttributesAndChildren() {
 					return visitAttributes(oNode, oWithControl).then(function () {
 						return visitChildNodes(oNode, oWithControl);
-					}).then(function () {
+					})
+					/** @deprecated since 1.120.0 */
+					.then(function () {
 						if (fnSupportInfo) {
 							fnSupportInfo({context : oNode,
 								env : {caller : "visitNode", after : {name : oNode.tagName}}});
@@ -1880,6 +1885,7 @@ sap.ui.define([
 				if (oNode.nodeType !== 1 /* Node.ELEMENT_NODE */) {
 					return oSyncPromiseResolved;
 				}
+				/** @deprecated since 1.120.0 */
 				if (fnSupportInfo) {
 					fnSupportInfo({context : oNode,
 						env : {caller : "visitNode", before : {name : oNode.tagName}}});
@@ -1974,6 +1980,7 @@ sap.ui.define([
 					}
 				}
 			}
+			/** @deprecated since 1.120.0 */
 			if (fnSupportInfo) {
 				fnSupportInfo({
 						context : oRootElement,

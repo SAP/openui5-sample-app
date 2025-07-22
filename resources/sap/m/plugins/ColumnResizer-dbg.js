@@ -12,12 +12,13 @@ sap.ui.define([
 	"sap/ui/Device",
 	"sap/m/ColumnPopoverActionItem",
 	"sap/m/table/columnmenu/QuickAction",
+	"sap/m/table/columnmenu/QuickResize",
 	"sap/m/Button",
 	"sap/ui/core/Lib",
 	"sap/ui/thirdparty/jquery",
 	// jQuery Plugin "aria"
 	"sap/ui/dom/jquery/Aria"
-], function(PluginBase, Localization, Element, InvisibleText, Device, ColumnPopoverActionItem, QuickAction, Button, Library, jQuery) {
+], function(PluginBase, Localization, Element, InvisibleText, Device, ColumnPopoverActionItem, QuickAction, QuickResize, Button, Library, jQuery) {
 	"use strict";
 
 	/**
@@ -33,7 +34,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @public
 	 * @since 1.91
@@ -509,7 +510,7 @@ sap.ui.define([
 	 * @private
 	 */
 	ColumnResizer.prototype.getColumnResizeQuickAction = function(oColumn, oColumnMenu) {
-		if (!oColumn || !ColumnResizer._isInTouchMode()) {
+		if (!ColumnResizer._isInTouchMode()) {
 			return;
 		}
 
@@ -525,10 +526,33 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns an instance of <code>sap.m.table.columnmenu.QuickResize</code> that can be used for column resizing.
+	 * @param {sap.m.Column} oColumn Column instance
+	 * @returns {sap.m.table.columnmenu.QuickAction | undefined} Instance of <code>sap.m.table.columnmenu.QuickResize</code>
+	 * @ui5-restricted sap.ui.mdc
+	 * @private
+	 */
+	ColumnResizer.prototype.getColumnResizeInputQuickAction = function(oColumn) {
+		return new QuickResize({
+			width: parseInt(getComputedStyle(oColumn.getDomRef()).width),
+			change: [function(oEvent) {
+				const bExecuteDefault = this.fireColumnResize({
+					column: oColumn,
+					width: oEvent.getParameter("width") + "px"
+				});
+
+				if (bExecuteDefault) {
+					oColumn.setWidth(oEvent.getParameter("width") + "px");
+				}
+			}, this]
+		});
+	};
+
+	/**
 	 * Returns resizer button instance which on press calls the <code>startResizing</code> method.
 	 * @param {sap.m.Column} oColumn Column instance
 	 * @returns {sap.m.ColumnPopoverActionItem | undefined} column resize action item
-	 * @ui5-restricted
+	 * @ui5-restricted sap.ui.mdc
 	 * @private
 	 */
 	ColumnResizer.prototype.getColumnResizeButton = function(oColumn) {

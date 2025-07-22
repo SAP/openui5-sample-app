@@ -57,7 +57,7 @@ sap.ui.define([
 		 * Navigation via year picker switches to the corresponding year and the same month as before the navigation.
 		 *
 		 * @extends sap.ui.unified.CalendarDateInterval
-		 * @version 1.136.1
+		 * @version 1.138.0
 		 *
 		 * @constructor
 		 * @private

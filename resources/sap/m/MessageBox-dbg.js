@@ -179,7 +179,7 @@ sap.ui.define([
 		 * Shows no icon in the message box.
 		 * @public
 		 */
-		NONE: undefined,
+		NONE: "NONE",
 
 		/**
 		 * Shows the information icon in the message box.
@@ -581,7 +581,7 @@ sap.ui.define([
 		}
 
 		oDialog.addContent(vMessageContent);
-		oDialog.setProperty("role",  DialogRoleType.AlertDialog);
+		oDialog.setProperty("role", DialogRoleType.AlertDialog);
 
 		if (mClasses[mOptions.icon]) {
 			oDialog.addStyleClass(mClasses[mOptions.icon]);

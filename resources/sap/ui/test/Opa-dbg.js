@@ -611,8 +611,7 @@ sap.ui.define([
 						try {
 							options.success.apply(this, arguments);
 						} catch (oError) {
-							var sErrorMessage = "Failure in Opa success function\n" + getMessageForException(oError);
-							addErrorMessageToOptions(sErrorMessage, options, oError.stack);
+							this._handleErrorMessage(oError, options);
 							deferred.reject(options);
 							return {error: true, arguments: arguments};
 						} finally {
@@ -628,6 +627,19 @@ sap.ui.define([
 			});
 
 			return _this;
+		},
+
+		_handleErrorMessage: function (oError, options) {
+			var sErrorMessage = "Failure in Opa success function\n" + getMessageForException(oError);
+			addErrorMessageToOptions(sErrorMessage, options, oError.stack);
+		},
+
+		_ensureNewlyAddedWaitForStatementsPrepended: function (oWaitForCounter, options) {
+			ensureNewlyAddedWaitForStatementsPrepended(oWaitForCounter, options);
+		},
+
+		_getQueue : function () {
+			return queue.slice(0);
 		},
 
 		/**

@@ -104,7 +104,7 @@ sap.ui.define([
 		 *
 		 * @extends sap.ui.core.Control
 		 * @author SAP SE
-		 * @version 1.136.1
+		 * @version 1.138.0
 		 *
 		 * @constructor
 		 * @public
@@ -490,10 +490,16 @@ sap.ui.define([
 					},
 					complete: function () {
 						that._bScrollLocked = false;
+
+						if (that.isDestroyed()) {
+							return;
+						}
+
 						fnUpdateProgressNavigator.call(that);
 
 						if (bFocusFirstStepElement || bFocusFirstStepElement === undefined) {
 							that._focusFirstStepElement(oStep);
+							that.setPreviousStepButtonVisibility(oStep);
 						}
 					}
 				};
@@ -501,6 +507,16 @@ sap.ui.define([
 			jQuery(this.getDomRef("step-container")).animate(mScrollProps, mAnimProps);
 
 			return this;
+		};
+
+		Wizard.prototype.setPreviousStepButtonVisibility = function (oStep) {
+			const aStepPath = this._aStepPath;
+			const iCurrentStepIndex = aStepPath.indexOf(oStep);
+			const oPreviousStep = iCurrentStepIndex > 0 ? aStepPath[iCurrentStepIndex - 1] : null;
+
+			if (oPreviousStep) {
+				oPreviousStep.setButtonVisibility();
+			}
 		};
 
 		/**

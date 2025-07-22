@@ -67,7 +67,7 @@ function(
 	 * @extends sap.m.NotificationListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @public
@@ -259,5 +259,16 @@ function(
 		return this._footerIvisibleText.setText(ariaTexts.join(' '));
 	};
 
+	NotificationListItem.prototype.getList = function () {
+		let oParent = this.getParent();
+
+		while (oParent && !oParent.isA("sap.m.ListBase")) {
+			oParent = oParent.getParent();
+		}
+
+		return oParent;
+	};
+
 	return NotificationListItem;
 });
+

@@ -171,7 +171,7 @@ function(
 		*
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.136.1
+		* @version 1.138.0
 		*
 		* @constructor
 		* @public
@@ -646,6 +646,10 @@ function(
 				oHeader._setRootAccessibilityRole("heading");
 				oHeader._setRootAriaLevel("2");
 			}
+
+			[this._getAnyHeader(), this.getSubHeader(), this._getAnyFooter()].forEach(function (oControl) {
+				oControl?.addStyleClass("sapMIBar-CTX");
+			});
 
 			this._oAriaDescribedbyText.setText(this._getAriaDescribedByText());
 		};

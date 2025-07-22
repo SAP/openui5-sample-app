@@ -41,7 +41,7 @@ sap.ui.define([
 	* @extends sap.m.GenericTile
 	*
 	* @author SAP SE
-	* @version 1.136.1
+	* @version 1.138.0
 	*
 	* @public
 	* @since 1.122
@@ -171,7 +171,8 @@ sap.ui.define([
 				displaySize: AvatarSize.Custom,
 				customDisplaySize: "3.25rem",
 				displayShape: AvatarShape.Square,
-				backgroundColor: AvatarColor.Placeholder
+				backgroundColor: AvatarColor.Placeholder,
+				decorative: true
 			}).addStyleClass("sapMATIconFrame");
 			this.addDependent(this._oAvatar);
 

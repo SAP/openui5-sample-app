@@ -6,6 +6,7 @@
 
 // Provides the base class for all objects with managed properties and aggregations.
 sap.ui.define([
+	"./_runWithOwner",
 	"./DataType",
 	"./EventProvider",
 	"./ManagedObjectMetadata",
@@ -23,6 +24,7 @@ sap.ui.define([
 	"sap/base/util/extend",
 	"sap/base/util/isEmptyObject"
 ], function(
+	_runWithOwner,
 	DataType,
 	EventProvider,
 	ManagedObjectMetadata,
@@ -264,7 +266,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 * @public
 	 * @alias sap.ui.base.ManagedObject
 	 */
@@ -506,7 +508,7 @@ sap.ui.define([
 			this._oContextualSettings = defaultContextualSettings;
 
 			// apply the owner id if defined
-			this._sOwnerId = ManagedObject._sOwnerId;
+			this._sOwnerId = _runWithOwner.getCurrentOwnerId();
 
 			// make sure that the object is registered before initializing
 			// and to deregister the object in case of errors
@@ -552,18 +554,6 @@ sap.ui.define([
 		}
 
 	}, /* Metadata constructor */ ManagedObjectMetadata);
-
-	// The current BindingParser implementation is exposed via "ManagedObject.bindingParser".
-	// This is used in tests for switching the BindingParser implementation on the fly.
-	// We delegate any changes to this property back to the BindingInfo.
-	Object.defineProperty(ManagedObject, "bindingParser", {
-		set: function(v) {
-			BindingInfo.parse = v;
-		},
-		get: function() {
-			return BindingInfo.parse;
-		}
-	});
 
 	function assertModelName(sModelName) {
 		assert(sModelName === undefined || (typeof sModelName === "string" && !/^(undefined|null)?$/.test(sModelName)), "sModelName must be a string or omitted");
@@ -1187,31 +1177,6 @@ sap.ui.define([
 		} finally {
 			// always restore old preprocessor settings
 			[fnCurrentIdPreprocessor, fnCurrentSettingsPreprocessor] = aOldPreprocessors;
-		}
-
-	};
-
-	/**
-	 * Calls the function <code>fn</code> once and marks all ManagedObjects
-	 * created during that call as "owned" by the given ID.
-	 *
-	 * @param {function} fn Function to execute
-	 * @param {string} sOwnerId Id of the owner
-	 * @param {Object} [oThisArg=undefined] Value to use as <code>this</code> when executing <code>fn</code>
-	 * @return {any} result of function <code>fn</code>
-	 * @private
-	 * @ui5-restricted sap.ui.core
-	 */
-	 ManagedObject.runWithOwner = function(fn, sOwnerId, oThisArg) {
-
-		assert(typeof fn === "function", "fn must be a function");
-
-		var oldOwnerId = ManagedObject._sOwnerId;
-		try {
-			ManagedObject._sOwnerId = sOwnerId;
-			return fn.call(oThisArg);
-		} finally {
-			ManagedObject._sOwnerId = oldOwnerId;
 		}
 
 	};
@@ -3543,11 +3508,18 @@ sap.ui.define([
 		//   - no handling of parse/validate exceptions
 		//   - observers won't be called
 		if (bIsStaticOnly) {
-			var aValues = [];
+			const aValues = [];
+			let vValue;
 			oBindingInfo.parts.forEach(function(oPart) {
 				aValues.push(oPart.formatter ? oPart.formatter(oPart.value) : oPart.value);
 			});
-			var vValue = oBindingInfo.formatter ? oBindingInfo.formatter(aValues) : aValues.join(" ");
+			if (oBindingInfo.formatter) {
+				vValue = oBindingInfo.formatter(aValues);
+			} else if (aValues.length > 1) {
+				vValue = aValues.join(" ");
+			} else {
+				vValue = aValues[0];
+			}
 			var oPropertyInfo = this.getMetadata().getPropertyLikeSetting(sName);
 			this[oPropertyInfo._sMutator](vValue);
 		} else {
@@ -3816,7 +3788,7 @@ sap.ui.define([
 			var sOwnerId = this._sOwnerId;
 			vBindingInfo.factory = function(sId, oContext) {
 				// bind original factory with the two arguments: id and bindingContext
-				return ManagedObject.runWithOwner(fnOriginalFactory.bind(null, sId, oContext), sOwnerId);
+				return _runWithOwner(fnOriginalFactory.bind(null, sId, oContext), sOwnerId);
 			};
 			vBindingInfo.factory[BINDING_INFO_FACTORY_SYMBOL] = fnOriginalFactory;
 		}
@@ -4687,6 +4659,7 @@ sap.ui.define([
 			}
 		}
 
+		/** @deprecated since 1.120.0 */
 		// Clone the support info
 		if (ManagedObject._supportInfo) {
 			ManagedObject._supportInfo.addSupportInfo(oClone.getId(), ManagedObject._supportInfo.byId(this.getId()));

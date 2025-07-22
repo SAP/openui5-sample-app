@@ -13,6 +13,7 @@ sap.ui.define([
 	"sap/ui/core/support/controls/ObjectViewer",
 	"sap/ui/Device",
 	"sap/base/Log",
+	"sap/ui/base/BindingInfo",
 	"sap/ui/base/DataType",
 	"sap/ui/base/ManagedObject",
 	"sap/ui/thirdparty/jquery"
@@ -24,6 +25,7 @@ sap.ui.define([
 	ObjectViewer,
 	Device,
 	Log,
+	BindingInfo,
 	DataType,
 	ManagedObject,
 	$
@@ -34,7 +36,7 @@ sap.ui.define([
 		 * Creates an instance of sap.ui.core.support.plugins.ViewInfo.
 		 * @class This class represents the ViewInfo plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.136.1
+		 * @version 1.138.0
 		 * @private
 		 * @deprecated As of version 1.118
 		 * @alias sap.ui.core.support.plugins.ViewInfo
@@ -426,7 +428,7 @@ sap.ui.define([
 		ViewInfo.prototype.parseScalarType = function(sType, sValue, sName, oController) {
 			// check for a binding expression (string)
 			try {
-				var oBindingInfo =  ManagedObject.bindingParser(sValue, oController, true);
+				var oBindingInfo = BindingInfo.parse(sValue, oController, true);
 				if ( oBindingInfo && typeof oBindingInfo === "object" ) {
 					return {binding:oBindingInfo};
 				}

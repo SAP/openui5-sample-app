@@ -97,7 +97,7 @@ sap.ui.define([
 	 * @extends sap.m.table.columnmenu.MenuBase
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @public
 	 * @since 1.110
@@ -228,8 +228,8 @@ sap.ui.define([
 			return this;
 		}
 
-		if (this._oPopover.getEndButton() && !bShowTableSettingsButton) {
-			this._oPopover.getEndButton().destroy();
+		if (!bShowTableSettingsButton) {
+			this._oPopover.getEndButton()?.destroy();
 			this._oPopover.setEndButton(null);
 		} else {
 			this._oPopover.setEndButton(createTableSettingsButton(this));

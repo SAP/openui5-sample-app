@@ -60,7 +60,7 @@ sap.ui.define([
 	 * See also {@link module:sap/ui/core/ComponentSupport}.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.ComponentContainer
@@ -421,7 +421,27 @@ sap.ui.define([
 		}
 
 		// Finally, create the component instance
-		return Component._createComponent(mConfig, oOwnerComponent);
+		function createComponent() {
+			/**
+			 * @ui5-transform-hint replace-local true
+			 */
+			const bAsync = mConfig.async;
+			if (bAsync === true) {
+				return Component.create(mConfig);
+			} else {
+				return sap.ui.component(mConfig); // legacy-relevant: use deprecated factory for sync use case only
+			}
+		}
+
+		if (oOwnerComponent) {
+			if (!oOwnerComponent.isActive()) {
+				throw new Error("Creation of component '" + mConfig.name + "' is not possible due to inactive owner component '" + oOwnerComponent.getId() + "'");
+			}
+			// create the nested component in the context of this component
+			return oOwnerComponent.runAsOwner(createComponent);
+		} else {
+			return createComponent();
+		}
 	};
 
 	/*

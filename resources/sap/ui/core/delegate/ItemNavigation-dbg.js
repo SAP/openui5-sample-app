@@ -82,7 +82,7 @@ sap.ui.define([
 	 * @param {Element[]} aItemDomRefs Array of DOM references representing the items for the navigation
 	 * @param {boolean} [bNotInTabChain=false] Whether the selected element should be in the tab chain or not
 	 *
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 * @alias sap.ui.core.delegate.ItemNavigation
 	 * @public
 	 */
@@ -568,7 +568,7 @@ sap.ui.define([
 					}
 				}
 				if (iIndex != iOldIndex) {
-					this.focusItem(iIndex, oEvent);
+					this.focusItem(iIndex, oEvent, bPreventScroll);
 				}
 			}
 			return;

@@ -142,7 +142,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 * @public
 	 * @alias sap.ui.core.Element
 	 */
@@ -1476,8 +1476,6 @@ sap.ui.define([
 	Element.prototype.getTooltip = function() {
 		return this.getAggregation("tooltip");
 	};
-
-	Element.runWithPreprocessors = ManagedObject.runWithPreprocessors;
 
 	/**
 	 * Returns the tooltip for this element but only if it is a simple string.

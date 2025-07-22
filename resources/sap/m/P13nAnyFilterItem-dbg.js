@@ -17,7 +17,7 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Type for <code>filterItems</code> aggregation in P13nFilterPanel control.
 	 * @extends sap.m.P13nFilterItem
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 * @constructor
 	 * @private
 	 * @since 1.56.0

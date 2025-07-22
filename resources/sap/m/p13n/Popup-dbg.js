@@ -58,7 +58,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @public
 	 * @since 1.97
@@ -463,6 +463,8 @@ sap.ui.define([
 					MessageBox.warning(sResetText, {
 						actions: [MessageBox.Action.OK, MessageBox.Action.CANCEL],
 						emphasizedAction: MessageBox.Action.OK,
+						closeOnNavigation: true,
+						dependentOn: this,
 						onClose: (sAction) => {
 							if (sAction === MessageBox.Action.OK) {
 								// --> focus "OK" button after 'reset' has been triggered

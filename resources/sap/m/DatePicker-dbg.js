@@ -186,7 +186,7 @@ sap.ui.define([
 	 * the close event), or select Cancel.
 	 *
 	 * @extends sap.m.DateTimeField
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @public
@@ -1668,26 +1668,6 @@ sap.ui.define([
 			}
 		}
 
-	};
-
-
-	DatePicker.prototype._getSpecialDates = function() {
-		var specialDates = this.getSpecialDates();
-		for (var i = 0; i < specialDates.length; i++) {
-			var bNeedsSecondTypeAdding = specialDates[i].getSecondaryType() === unifiedLibrary.CalendarDayType.NonWorking
-					&& specialDates[i].getType() !== unifiedLibrary.CalendarDayType.NonWorking;
-			if (bNeedsSecondTypeAdding) {
-				var newSpecialDate = new DateTypeRange();
-				newSpecialDate.setType(specialDates[i].getSecondaryType());
-				newSpecialDate.setStartDate(specialDates[i].getStartDate());
-				if (specialDates[i].getEndDate()) {
-					newSpecialDate.setEndDate(specialDates[i].getEndDate());
-				}
-				specialDates.push(newSpecialDate);
-			}
-		}
-
-		return specialDates;
 	};
 
 	function _handleOpen() {

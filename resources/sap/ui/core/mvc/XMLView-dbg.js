@@ -113,7 +113,7 @@ sap.ui.define([
 	 * bound content aggregation. An error will be thrown when the above combination is detected.
 	 *
 	 * @extends sap.ui.core.mvc.View
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.XMLView
@@ -564,6 +564,7 @@ sap.ui.define([
 		function processView(xContent) {
 			that._xContent = xContent;
 
+			/** @deprecated since 1.120.0 */
 			if (View._supportInfo) {
 				View._supportInfo({context: that._xContent, env: {caller:"view", viewinfo: merge({}, that), settings: merge({}, mSettings || {}), type: "xmlview"}});
 			}

@@ -59,7 +59,7 @@ sap.ui.define([
 	 * @implements sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @public

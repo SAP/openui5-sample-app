@@ -84,7 +84,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.136.1
+	 * @version 1.138.0
 	 *
 	 * @constructor
 	 * @public
@@ -355,7 +355,8 @@ sap.ui.define([
 	};
 
 	MessageStrip.prototype._ariaReferenceId = function () {
-		return this.getId() + "-info" + " " + this.getAggregation("_text").getId();
+		var sTextId = this.getEnableFormattedText() ? this.getAggregation("_formattedText").getId() : this.getAggregation("_text").getId();
+		return this.getId() + "-info" + " " + sTextId;
 	};
 
 

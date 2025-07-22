@@ -121,7 +121,7 @@ sap.ui.define([
 		* @extends sap.ui.core.Control
 		* @implements sap.ui.core.PopupInterface
 		* @author SAP SE
-		* @version 1.136.1
+		* @version 1.138.0
 		*
 		* @public
 		* @alias sap.m.Popover
@@ -739,6 +739,9 @@ sap.ui.define([
 				oHeader.setTitleAlignment(this.getTitleAlignment());
 			}
 
+			[oHeader, this.getSubHeader(), this.getFooter()].forEach(function (oControl) {
+				oControl?.addStyleClass("sapMIBar-CTX");
+			});
 		};
 
 		/**
@@ -3012,6 +3015,10 @@ sap.ui.define([
 		 * Helps to prevent temporary appearance of a scrollbar in documentElement during Popover calculations.
 		 */
 		Popover.prototype._preventDocumentElementScrolling = function () {
+			if (this._sDocumentElementOverflow !== undefined) {
+				return;
+			}
+
 			const bDocumentElementHasVerticalScrollbar = document.documentElement.scrollHeight > document.documentElement.clientHeight;
 
 			if (!bDocumentElementHasVerticalScrollbar) {

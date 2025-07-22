@@ -10,7 +10,7 @@
 }
 
 .sapMBtnEmphasized {
-	font-family: var(--sapFontBoldFamily);
+	font-family: var(--sapButton_Emphasized_FontFamily);
 }
 
 .sapMIBar-CTX .sapMBarLeft .sapMBtn:hover {
@@ -80,7 +80,7 @@
 }
 
 .sapMBtnInner.sapMBtnText {
-	font-family: var(--sapFontSemiboldDuplexFamily);
+	font-family: var(--sapButton_FontFamily);
 	padding-left: 0.5625rem;
 	padding-right: 0.5625rem;
 }
@@ -213,7 +213,7 @@ html.sap-desktop .sapMBtn:focus > .sapMBtnSuccess.sapMFocusable:not(.sapMBtnActi
 /* (add separators, remove top/bottom border)       */
 /* ------------------------------------------------ */
 
-.sapMIBar .sapMBtn .sapMBtnInner.sapMBtnDefault:not(.sapMToggleBtnPressed),
+.sapMIBar .sapMBtn .sapMBtnInner.sapMBtnDefault:not(.sapMToggleBtnPressed):not(:hover),
 .sapMIBar .sapMBtn .sapMBtnInner.sapMBtnDefault .sapUiIcon,
 .sapUxAPObjectPageHeaderIdentifierActions .sapMBtn .sapMBtnInner.sapMBtnDefault,
 .sapUxAPObjectPageHeaderIdentifierActions .sapMBtn .sapMBtnInner.sapMBtnDefault .sapUiIcon {
@@ -310,7 +310,7 @@ html.sap-desktop .sapMFooter-CTX .sapMBtnInner.sapMBtnReject {
 
 .sapMBtn .sapMBadge .sapMBadgeIndicator::after {
 	background-color: var(--sapContent_BadgeBackground);
-	border-color: var(--sapContent_BadgeBackground);
+	border-color: var(--sapContent_BadgeBorderColor);
 	color: var(--sapContent_BadgeTextColor);
 	font-size: var(--sapFontSmallSize);
 	text-align: center;

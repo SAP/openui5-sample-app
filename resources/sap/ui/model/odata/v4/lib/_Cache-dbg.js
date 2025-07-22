@@ -1323,6 +1323,22 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns this cache's query options corresponding to the given path (already cloned!) as
+	 * suitable for a single-entity GET request.
+	 *
+	 * @param {string} sPath
+	 *   The entity collection's path within this cache, may be <code>""</code>
+	 * @returns {object|undefined} The query options as a clone, if any
+	 *
+	 * @protected
+	 * @see #getQueryOptions
+	 * @see #refreshSingle
+	 */
+	_Cache.prototype.getQueryOptions4Single = function (sPath) {
+		return _Helper.clone(_Helper.getQueryOptionsForPath(this.mQueryOptions, sPath));
+	};
+
+	/**
 	 * Gets the cache's resource path.
 	 *
 	 * @returns {string} The resource path
@@ -1485,8 +1501,7 @@ sap.ui.define([
 					&& that.oRequestor.getModelInterface().fetchMetadata(
 						that.sMetaPath + "/@com.sap.vocabularies.Common.v1.Messages/$Path"
 					).getResult(),
-				mQueryOptions = _Helper.clone(
-					_Helper.getQueryOptionsForPath(that.mQueryOptions, sPath)),
+				mQueryOptions = that.getQueryOptions4Single(sPath),
 				sReadUrl;
 
 			if (iIndex >= 0) {
@@ -1820,7 +1835,7 @@ sap.ui.define([
 	 * @param {boolean} [bKeepReportedMessagesPath]
 	 *   Whether <code>this.sReportedMessagesPath</code> should be kept unchanged
 	 *
-	 * @private
+	 * @protected
 	 */
 	_Cache.prototype.replaceElement = function (aElements, iIndex, sPredicate, oElement,
 			mTypeForMetaPath, sPath, bKeepReportedMessagesPath) {
@@ -3805,8 +3820,9 @@ sap.ui.define([
 				end : iEnd,
 				promise : new SyncPromise(function (resolve, reject) {
 					fnResolve = resolve;
-					fnReject = function () {
-						const oError = new Error("$$separate: canceled " + sProperty);
+					fnReject = function (oError0) {
+						const oError = new Error("$$separate: canceled " + sProperty,
+							{cause : oError0});
 						oError.canceled = true;
 						reject(oError);
 					};
@@ -3819,9 +3835,9 @@ sap.ui.define([
 				const oResult = await this.oRequestor.request("GET", sReadUrl,
 					this.oRequestor.lockGroup("$single", this));
 
-				let bMainFailed;
-				await oMainPromise.catch(() => { /* handled by caller */
-					bMainFailed = true;
+				let oMainError;
+				await oMainPromise.catch((oError) => { /* handled by caller */
+					oMainError = oError;
 				});
 
 				const iIndex = this.mSeparateProperty2ReadRequests[sProperty].indexOf(oReadRange);
@@ -3831,8 +3847,8 @@ sap.ui.define([
 				}
 
 				this.mSeparateProperty2ReadRequests[sProperty].splice(iIndex, 1);
-				if (bMainFailed) {
-					fnReject();
+				if (oMainError) {
+					fnReject(oMainError);
 					return;
 				}
 
@@ -3842,6 +3858,10 @@ sap.ui.define([
 					const oElement = this.aElements.$byPredicate[sPredicate];
 					if (oElement) {
 						if (oElement["@odata.etag"] === oSeparateData["@odata.etag"]) {
+							if (oElement[sProperty]?.["@odata.etag"]
+									!== oSeparateData[sProperty]?.["@odata.etag"]) {
+								delete oElement[sProperty];
+							}
 							_Helper.updateSelected(this.mChangeListeners, sPredicate, oElement,
 								oSeparateData, [sProperty]);
 						} else {
@@ -3853,7 +3873,7 @@ sap.ui.define([
 				fnResolve();
 				fnSeparateReceived(sProperty, iStart, iEnd);
 			} catch (oError) {
-				fnReject();
+				fnReject(oError);
 				// do not clean up mSeparateProperty2ReadRequests to avoid late property requests
 				fnSeparateReceived(sProperty, iStart, iEnd, oError);
 			}
@@ -4537,7 +4557,8 @@ sap.ui.define([
 
 						if (bConfirm) {
 							delete mHeaders["Prefer"];
-							return post(oGroupLock0.getUnlockedCopy());
+							// decomposed error indicates request inside change set (but not alone)
+							return post(oGroupLock0.getUnlockedCopy(!oError.decomposed));
 						}
 
 						oCanceledError = Error("Action canceled due to strict handling");

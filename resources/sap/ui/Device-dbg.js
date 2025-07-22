@@ -11,7 +11,7 @@
  * This API is independent from any other part of the UI5 framework. This allows it to be loaded beforehand, if it is needed, to create the UI5 bootstrap
  * dynamically depending on the capabilities of the browser or device.
  *
- * @version 1.136.1
+ * @version 1.138.0
  * @namespace
  * @name sap.ui.Device
  * @public
@@ -33,7 +33,7 @@ if (typeof window.sap.ui !== "object") {
 	// Skip initialization if API is already available
 	// ui5lint-disable no-globals
 	if (typeof window.sap.ui.Device === "object" || typeof window.sap.ui.Device === "function") {
-		var apiVersion = "1.136.1";
+		var apiVersion = "1.138.0";
 		window.sap.ui.Device._checkAPIVersion(apiVersion);
 		return;
 	}
@@ -107,7 +107,7 @@ if (typeof window.sap.ui !== "object") {
 
 	//Only used internal to make clear when Device API is loaded in wrong version
 	Device._checkAPIVersion = function(sVersion) {
-		var v = "1.136.1";
+		var v = "1.138.0";
 		if (v != sVersion) {
 			oLogger.log(WARNING, "Device API version differs: " + v + " <-> " + sVersion);
 		}
